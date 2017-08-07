@@ -146,6 +146,8 @@ namespace HeliosDisplayManagement.UIForms
             }
         }
 
+        // ReSharper disable once CyclomaticComplexity
+        // ReSharper disable once FunctionComplexityOverflow
         private void RefreshArrangementSettings()
         {
             gb_arrangement.Enabled = false;
@@ -258,8 +260,9 @@ namespace HeliosDisplayManagement.UIForms
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+                // ignored
             }
         }
 
