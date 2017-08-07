@@ -70,9 +70,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\DisplaySwitcher_x16.png" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\HeliosDisplayManagement.Shared\HeliosDisplayManagement.Shared.csproj">
       <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
       <Name>HeliosDisplayManagement.Shared</Name>
@@ -83,6 +80,7 @@
       <Link>srm.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\Icon_x16.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

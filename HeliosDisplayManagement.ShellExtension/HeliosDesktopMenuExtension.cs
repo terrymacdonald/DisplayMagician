@@ -37,12 +37,12 @@ namespace HeliosDisplayManagement.ShellExtension
         {
             var explorerMenu = new ContextMenuStrip();
             var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
-                Properties.Resources.DisplaySwitcher_x16);
+                Properties.Resources.Icon_x16);
             foreach (var profile in Profile.GetAllProfiles())
                 extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
             extensionMenu.DropDownItems.Add(new ToolStripSeparator());
             extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
-                Properties.Resources.DisplaySwitcher_x16,
+                Properties.Resources.Icon_x16,
                 (sender, args) => { HeliosDisplayManagement.Open(); }));
             explorerMenu.Items.Add(extensionMenu);
             explorerMenu.Items.Add(new ToolStripSeparator());
