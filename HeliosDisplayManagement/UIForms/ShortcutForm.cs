@@ -23,10 +23,14 @@ namespace HeliosDisplayManagement.UIForms
             Profile = profile;
         }
 
-        public Profile Profile
+        public string Arguments
         {
-            get { return dv_profile.Profile; }
-            set { dv_profile.Profile = value; }
+            get { return cb_args.Checked ? txt_args.Text : string.Empty; }
+            set
+            {
+                txt_args.Text = value;
+                cb_args.Checked = !string.IsNullOrWhiteSpace(txt_args.Text);
+            }
         }
 
         public string FileName
@@ -43,15 +47,10 @@ namespace HeliosDisplayManagement.UIForms
             }
         }
 
-        public string Arguments
-        {
-            get { return cb_args.Checked ? txt_args.Text : string.Empty; }
-            set
-            {
-                txt_args.Text = value;
-                cb_args.Checked = !string.IsNullOrWhiteSpace(txt_args.Text);
-            }
-        }
+        public static string IconCache
+            =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                Assembly.GetExecutingAssembly().GetName().Name, @"IconCache");
 
         public string ProcessName
         {
@@ -64,6 +63,12 @@ namespace HeliosDisplayManagement.UIForms
                 txt_process.Text = value;
                 cb_process.Checked = !string.IsNullOrWhiteSpace(txt_process.Text);
             }
+        }
+
+        public Profile Profile
+        {
+            get { return dv_profile.Profile; }
+            set { dv_profile.Profile = value; }
         }
 
         public uint SteamAppId
@@ -102,34 +107,6 @@ namespace HeliosDisplayManagement.UIForms
             }
         }
 
-        private void Controls_CheckedChanged(object sender, EventArgs e)
-        {
-            g_temp.Enabled = cb_temp.Checked;
-
-            p_standalone.Enabled = rb_standalone.Checked;
-            txt_process.Enabled = cb_process.Checked;
-            nud_timeout.Enabled = cb_process.Checked;
-
-            p_steam.Enabled = rb_steam.Checked;
-
-            txt_args.Enabled = cb_args.Checked;
-
-            if (rb_steam.Checked)
-                nud_steamappid_ValueChanged(rb_steam, e);
-        }
-
-        private void nud_steamappid_ValueChanged(object sender, EventArgs e)
-        {
-            lbl_steamname.Text = new SteamGame((uint) nud_steamappid.Value).ToString();
-        }
-
-        private void nud_steamapps_Click(object sender, EventArgs e)
-        {
-            var steamGamesForm = new SteamGamesForm();
-            if ((steamGamesForm.ShowDialog(this) == DialogResult.OK) && (steamGamesForm.SteamGame != null))
-                nud_steamappid.Value = steamGamesForm.SteamGame.AppId;
-        }
-
         private void btn_app_executable_Click(object sender, EventArgs e)
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
@@ -148,12 +125,53 @@ namespace HeliosDisplayManagement.UIForms
                 }
         }
 
-        public static string IconCache
-            =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                Assembly.GetExecutingAssembly().GetName().Name, @"IconCache");
+        private void btn_save_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.None;
+            try
+            {
+                if (dialog_save.ShowDialog(this) == DialogResult.OK)
+                {
+                    if (CreateShortcut(dialog_save.FileName))
+                        MessageBox.Show(
+                            Language.Shortcut_place_successfully,
+                            Language.Shortcut,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    else
+                        MessageBox.Show(
+                            Language.Failed_to_create_the_shortcut_Unexpected_exception_occurred,
+                            Language.Shortcut,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                    dialog_save.FileName = string.Empty;
+                    DialogResult = DialogResult.OK;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void Controls_CheckedChanged(object sender, EventArgs e)
+        {
+            g_temp.Enabled = cb_temp.Checked;
+
+            p_standalone.Enabled = rb_standalone.Checked;
+            txt_process.Enabled = cb_process.Checked;
+            nud_timeout.Enabled = cb_process.Checked;
+
+            p_steam.Enabled = rb_steam.Checked;
+
+            txt_args.Enabled = cb_args.Checked;
+
+            if (rb_steam.Checked)
+                nud_steamappid_ValueChanged(rb_steam, e);
+        }
 
         // ReSharper disable once FunctionComplexityOverflow
+        // ReSharper disable once CyclomaticComplexity
         private bool CreateShortcut(string fileName)
         {
             var programName = Path.GetFileNameWithoutExtension(txt_executable.Text);
@@ -186,7 +204,7 @@ namespace HeliosDisplayManagement.UIForms
                         new ProfileIcon(Profile).ToIconOverly(txt_executable.Text)
                             .Save(icon, MultiIconFormat.ICO);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         icon = $"{txt_executable.Text.Trim()},0";
                     }
@@ -194,9 +212,7 @@ namespace HeliosDisplayManagement.UIForms
                 else if (rb_steam.Checked)
                 {
                     if (!SteamGame.SteamInstalled)
-                    {
                         throw new Exception(Language.Steam_is_not_installed);
-                    }
                     var steamGame = new SteamGame((uint) nud_steamappid.Value);
                     args.Add($"-s {(int) nud_steamappid.Value}");
                     args.Add($"-t {(int) nud_steamtimeout.Value}");
@@ -204,22 +220,18 @@ namespace HeliosDisplayManagement.UIForms
                         Profile.Name);
                     var steamIcon = steamGame.GetIcon().Result;
                     if (!string.IsNullOrWhiteSpace(steamIcon))
-                    {
                         try
                         {
                             icon = Path.Combine(IconCache, Guid.NewGuid() + ".ico");
                             new ProfileIcon(Profile).ToIconOverly(steamIcon)
                                 .Save(icon, MultiIconFormat.ICO);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             icon = steamIcon;
                         }
-                    }
                     else
-                    {
                         icon = $"{SteamGame.SteamAddress},0";
-                    }
                 }
                 if (cb_args.Checked && !string.IsNullOrWhiteSpace(txt_args.Text))
                     args.Add($"--arguments \"{txt_args.Text.Trim()}\"");
@@ -259,9 +271,7 @@ namespace HeliosDisplayManagement.UIForms
                             shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
                                                         string.Empty;
                             if (!string.IsNullOrWhiteSpace(icon))
-                            {
                                 shortcut.IconLocation = icon;
-                            }
                             shortcut.Save();
                         }
                         finally
@@ -283,33 +293,16 @@ namespace HeliosDisplayManagement.UIForms
             return (fileName != null) && File.Exists(fileName);
         }
 
-        private void btn_save_Click(object sender, EventArgs e)
+        private void nud_steamappid_ValueChanged(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.None;
-            try
-            {
-                if (dialog_save.ShowDialog(this) == DialogResult.OK)
-                {
-                    if (CreateShortcut(dialog_save.FileName))
-                        MessageBox.Show(
-                            Language.Shortcut_place_successfully,
-                            Language.Shortcut,
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    else
-                        MessageBox.Show(
-                            Language.Failed_to_create_the_shortcut_Unexpected_exception_occurred,
-                            Language.Shortcut,
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                    dialog_save.FileName = string.Empty;
-                    DialogResult = DialogResult.OK;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
+            lbl_steamname.Text = new SteamGame((uint) nud_steamappid.Value).ToString();
+        }
+
+        private void nud_steamapps_Click(object sender, EventArgs e)
+        {
+            var steamGamesForm = new SteamGamesForm();
+            if ((steamGamesForm.ShowDialog(this) == DialogResult.OK) && (steamGamesForm.SteamGame != null))
+                nud_steamappid.Value = steamGamesForm.SteamGame.AppId;
         }
 
         private void txt_executable_TextChanged(object sender, EventArgs e)
