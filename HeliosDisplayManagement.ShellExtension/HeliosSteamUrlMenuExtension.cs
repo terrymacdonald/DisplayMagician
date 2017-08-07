@@ -61,7 +61,7 @@ namespace HeliosDisplayManagement.ShellExtension
             try
             {
                 var fileAddress = SelectedItemPaths.FirstOrDefault();
-                if (!string.IsNullOrWhiteSpace(fileAddress) && File.Exists(fileAddress))
+                if (!string.IsNullOrWhiteSpace(fileAddress) && File.Exists(fileAddress) && new FileInfo(fileAddress).Length < 1024)
                 {
                     var fileContent = File.ReadAllText(fileAddress);
                     if (!fileContent.Contains(@"[InternetShortcut]"))
