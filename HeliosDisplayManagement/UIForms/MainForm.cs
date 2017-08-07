@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using HeliosDisplayManagement.Resources;
@@ -22,9 +21,6 @@ namespace HeliosDisplayManagement.UIForms
             lv_profiles.Groups.Add(GroupSaved, Language.Saved_Profiles);
         }
 
-        [DllImport("user32", EntryPoint = "SendMessage", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
-
         private ListViewItem AddProfile(Profile profile = null)
         {
             il_profiles.Images.Add(
@@ -33,7 +29,7 @@ namespace HeliosDisplayManagement.UIForms
                     il_profiles.ImageSize.Height));
             return lv_profiles.Items.Add(new ListViewItem
             {
-                Text = profile?.ToString() ?? Language.Current,
+                Text = profile?.Name ?? Language.Current,
                 ImageIndex = il_profiles.Images.Count - 1,
                 Tag = profile,
                 Group =
@@ -144,7 +140,7 @@ namespace HeliosDisplayManagement.UIForms
         private void lv_profiles_AfterLabelEdit(object sender, LabelEditEventArgs e)
         {
             var selectedProfile = (Profile) lv_profiles.Items[e.Item].Tag;
-            if (selectedProfile == null || e.Label == null || selectedProfile.Name == e.Label)
+            if ((selectedProfile == null) || (e.Label == null) || (selectedProfile.Name == e.Label))
             {
                 e.CancelEdit = true;
                 return;
@@ -164,22 +160,14 @@ namespace HeliosDisplayManagement.UIForms
                 e.CancelEdit = true;
                 return;
             }
-            selectedProfile.Name = e.Label;
-            lv_profiles.Items[e.Item].Text = selectedProfile.ToString();
+
+            lv_profiles.Items[e.Item].Text = selectedProfile.Name = e.Label;
             SaveProfiles();
         }
 
         private void lv_profiles_BeforeLabelEdit(object sender, LabelEditEventArgs e)
         {
-            var item = lv_profiles.Items[e.Item];
-            if (!(item.Tag is Profile))
-            {
-                e.CancelEdit = true;
-                return;
-            }
-            var editHandle = SendMessage(lv_profiles.Handle, 0x1018, IntPtr.Zero, null);
-            if (editHandle != IntPtr.Zero)
-                SendMessage(editHandle, 0xC, IntPtr.Zero, ((Profile) item.Tag).Name);
+            e.CancelEdit = !(lv_profiles.Items[e.Item].Tag is Profile);
         }
 
         private void lv_profiles_DoubleClick(object sender, EventArgs e)
