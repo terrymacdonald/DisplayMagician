@@ -354,4 +354,10 @@
   <data name="Not_Owned" xml:space="preserve">
     <value>[Not Owned]</value>
   </data>
+  <data name="Active_Profiles" xml:space="preserve">
+    <value>Active Profiles</value>
+  </data>
+  <data name="Saved_Profiles" xml:space="preserve">
+    <value>Saved Profiles</value>
+  </data>
 </root>

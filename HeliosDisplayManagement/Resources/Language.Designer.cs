@@ -79,6 +79,15 @@ namespace HeliosDisplayManagement.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Active Profiles.
+        /// </summary>
+        internal static string Active_Profiles {
+            get {
+                return ResourceManager.GetString("Active_Profiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Another instance of this program is in working state. Please close other instances before trying to switch profile..
         /// </summary>
         internal static string Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile {
@@ -544,6 +553,15 @@ namespace HeliosDisplayManagement.Resources {
         internal static string Save_and_Apply {
             get {
                 return ResourceManager.GetString("Save_and_Apply", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Saved Profiles.
+        /// </summary>
+        internal static string Saved_Profiles {
+            get {
+                return ResourceManager.GetString("Saved_Profiles", resourceCulture);
             }
         }
         

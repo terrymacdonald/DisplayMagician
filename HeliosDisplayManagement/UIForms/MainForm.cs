@@ -17,9 +17,9 @@ namespace HeliosDisplayManagement.UIForms
         public MainForm()
         {
             InitializeComponent();
-            lv_profiles.Groups.Add(GroupCurrent, "Current");
-            lv_profiles.Groups.Add(GroupActive, "Active Profiles");
-            lv_profiles.Groups.Add(GroupSaved, "Saved Profiles");
+            lv_profiles.Groups.Add(GroupCurrent, Language.Current);
+            lv_profiles.Groups.Add(GroupActive, Language.Active_Profiles);
+            lv_profiles.Groups.Add(GroupSaved, Language.Saved_Profiles);
         }
 
         [DllImport("user32", EntryPoint = "SendMessage", CharSet = CharSet.Auto, SetLastError = true)]
