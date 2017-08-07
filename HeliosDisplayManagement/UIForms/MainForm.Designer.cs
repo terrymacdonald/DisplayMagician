@@ -215,6 +215,8 @@ namespace HeliosDisplayManagement.UIForms
             this.lv_profiles.SmallImageList = this.il_profiles;
             this.lv_profiles.TabIndex = 11;
             this.lv_profiles.UseCompatibleStateImageBehavior = false;
+            this.lv_profiles.AfterLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.lv_profiles_AfterLabelEdit);
+            this.lv_profiles.BeforeLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.lv_profiles_BeforeLabelEdit);
             this.lv_profiles.SelectedIndexChanged += new System.EventHandler(this.lv_profiles_SelectedIndexChanged);
             this.lv_profiles.DoubleClick += new System.EventHandler(this.lv_profiles_DoubleClick);
             this.lv_profiles.MouseUp += new System.Windows.Forms.MouseEventHandler(this.lv_profiles_MouseUp);
