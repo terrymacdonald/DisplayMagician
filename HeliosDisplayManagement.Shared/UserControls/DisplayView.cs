@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using System.Drawing.IconLib;
 using System.Windows.Forms;
 using HeliosDisplayManagement.Shared.Topology;
 
@@ -33,9 +32,7 @@ namespace HeliosDisplayManagement.Shared.UserControls
         {
             base.OnPaint(e);
             if (_profile != null)
-            {
                 DrawView(e.Graphics);
-            }
         }
 
         private void DrawPath(Graphics g, Path path)
@@ -115,7 +112,8 @@ namespace HeliosDisplayManagement.Shared.UserControls
 
                 if (!display.Overlap.IsEmpty)
                     DrawString(g, $"[{-display.Overlap.X}, {-display.Overlap.Y}]", targetRect.Size,
-                        new PointF(targetRect.X + PaddingY/2, targetRect.Y + PaddingY/2), StringAlignment.Near, StringAlignment.Near);
+                        new PointF(targetRect.X + PaddingY/2, targetRect.Y + PaddingY/2), StringAlignment.Near,
+                        StringAlignment.Near);
 
                 // Invert to real monitor resolution
                 var res = ProfileIcon.NormalizeResolution(target.SurroundTopology.Resolution, display.Rotation);

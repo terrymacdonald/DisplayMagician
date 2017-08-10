@@ -15,12 +15,20 @@ namespace HeliosDisplayManagement.InterProcess
             Status = InstanceStatus.Busy;
         }
 
-        public InstanceStatus Status { get; set; }
         public int HoldProcessId { get; set; } = 0;
+
+        public InstanceStatus Status { get; set; }
 
         public void StopHold()
         {
             Application.Exit();
+        }
+
+        public static IPCService GetInstance()
+        {
+            if ((_serviceHost != null) || StartService())
+                return _serviceHost?.SingletonInstance as IPCService;
+            return null;
         }
 
         public static bool StartService()
@@ -51,13 +59,6 @@ namespace HeliosDisplayManagement.InterProcess
                     _serviceHost = null;
                 }
             return false;
-        }
-
-        public static IPCService GetInstance()
-        {
-            if ((_serviceHost != null) || StartService())
-                return _serviceHost?.SingletonInstance as IPCService;
-            return null;
         }
     }
 }

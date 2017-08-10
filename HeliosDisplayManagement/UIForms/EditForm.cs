@@ -77,6 +77,37 @@ namespace HeliosDisplayManagement.UIForms
                 DialogResult = DialogResult.OK;
         }
 
+        private void cb_clone_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if ((cb_clone.SelectedItem != null) && (SelectedDisplay != null))
+            {
+                Path newSource;
+                if (cb_clone.SelectedItem is string)
+                {
+                    newSource = new Path();
+                    Profile.Paths = Profile.Paths.Concat(new[] {newSource}).ToArray();
+                }
+                else
+                {
+                    newSource = cb_clone.SelectedItem as Path;
+                }
+                if (newSource != null)
+                {
+                    var target = SelectedDisplay.GetPathTarget(Profile);
+                    var source = SelectedDisplay.GetPathSource(Profile);
+                    source.Targets = source.Targets.Where(pathTarget => pathTarget != target).ToArray();
+                    newSource.Targets = newSource.Targets.Concat(new[] {target}).ToArray();
+                    if (source.Targets.Length == 0)
+                        Profile.Paths = Profile.Paths.Where(path => path != source).ToArray();
+                }
+                cb_resolution_SelectionChangeCommitted(null, null);
+                cb_colordepth_SelectionChangeCommitted(null, null);
+                cb_frequency_SelectionChangeCommitted(null, null);
+                cb_rotation_SelectionChangeCommitted(null, null);
+            }
+            RefreshArrangementSettings();
+        }
+
         private void cb_colordepth_SelectionChangeCommitted(object sender, EventArgs e)
         {
             if ((cb_colordepth.SelectedItem != null) && (SelectedDisplay != null))
@@ -97,6 +128,31 @@ namespace HeliosDisplayManagement.UIForms
             if ((cb_resolution.SelectedItem != null) && (SelectedDisplay != null))
                 SelectedDisplay.GetPathSource(Profile).Resolution = (Size) cb_resolution.SelectedItem;
             RefreshArrangementSettings();
+        }
+
+        private void cb_rotation_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if ((cb_rotation.SelectedItem != null) && (SelectedDisplay != null))
+                switch (cb_rotation.SelectedIndex)
+                {
+                    case 1:
+                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Rotate90;
+                        break;
+                    case 2:
+                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Rotate180;
+                        break;
+                    case 3:
+                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Rotate270;
+                        break;
+                    default:
+                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Identity;
+                        break;
+                }
+            RefreshArrangementSettings();
+        }
+
+        private void cb_surround_applybezel_CheckedChanged(object sender, EventArgs e)
+        {
         }
 
         private DisplayConfigPixelFormat ColorDepthToPixelFormat(ColorDepth depth)
@@ -126,6 +182,14 @@ namespace HeliosDisplayManagement.UIForms
             if (lv_monitors.SelectedItems.Count > 0)
                 SelectedDisplay = lv_monitors.SelectedItems[0].Tag as DisplayRepresentation;
             RefreshArrangementSettings();
+        }
+
+        private void nud_x_ValueChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void nud_y_ValueChanged(object sender, EventArgs e)
+        {
         }
 
 
@@ -173,7 +237,7 @@ namespace HeliosDisplayManagement.UIForms
                         foreach (var resolution in possibleSettings.Select(setting => setting.Resolution).Distinct())
                         {
                             cb_resolution.Items.Add(resolution);
-                            if ((Size)cb_resolution.Items[cb_resolution.Items.Count - 1] == pathSource.Resolution)
+                            if ((Size) cb_resolution.Items[cb_resolution.Items.Count - 1] == pathSource.Resolution)
                                 cb_resolution.SelectedIndex = cb_resolution.Items.Count - 1;
                         }
                         foreach (
@@ -183,7 +247,7 @@ namespace HeliosDisplayManagement.UIForms
                                 .Distinct())
                         {
                             cb_colordepth.Items.Add(colorDepth);
-                            if ((ColorDepth)cb_colordepth.Items[cb_colordepth.Items.Count - 1] ==
+                            if ((ColorDepth) cb_colordepth.Items[cb_colordepth.Items.Count - 1] ==
                                 PixelFormatToColorDepth(pathSource.PixelFormat))
                                 cb_colordepth.SelectedIndex = cb_colordepth.Items.Count - 1;
                         }
@@ -197,8 +261,8 @@ namespace HeliosDisplayManagement.UIForms
                                 .Distinct())
                         {
                             cb_frequency.Items.Add(frequency);
-                            if ((int)cb_frequency.Items[cb_frequency.Items.Count - 1] ==
-                                (int)(pathTarget.FrequencyInMillihertz / 1000))
+                            if ((int) cb_frequency.Items[cb_frequency.Items.Count - 1] ==
+                                (int) (pathTarget.FrequencyInMillihertz/1000))
                                 cb_frequency.SelectedIndex = cb_frequency.Items.Count - 1;
                         }
                     }
@@ -208,7 +272,7 @@ namespace HeliosDisplayManagement.UIForms
                         cb_resolution.SelectedIndex = 0;
                         cb_colordepth.Items.Add(PixelFormatToColorDepth(pathSource.PixelFormat));
                         cb_colordepth.SelectedIndex = 0;
-                        cb_frequency.Items.Add((int)(pathTarget.FrequencyInMillihertz / 1000));
+                        cb_frequency.Items.Add((int) (pathTarget.FrequencyInMillihertz/1000));
                         cb_frequency.SelectedIndex = 0;
                     }
                     nud_x.Value = pathSource.Position.X;
@@ -218,13 +282,14 @@ namespace HeliosDisplayManagement.UIForms
                     cb_clone.SelectedIndex = 0;
                     foreach (
                         var potentialClone in
-                        Profile.Paths.Where(path => path.Resolution == pathSource.Resolution && path.Targets.First().DevicePath != SelectedDisplay.Path))
+                        Profile.Paths.Where(
+                            path =>
+                                (path.Resolution == pathSource.Resolution) &&
+                                (path.Targets.First().DevicePath != SelectedDisplay.Path)))
                     {
                         cb_clone.Items.Add(potentialClone);
                         if (potentialClone.Targets.Contains(pathTarget))
-                        {
                             cb_clone.SelectedIndex = cb_clone.Items.Count - 1;
-                        }
                     }
                     cb_rotation.Items.Clear();
                     cb_rotation.Items.Add("Identity");
@@ -250,14 +315,9 @@ namespace HeliosDisplayManagement.UIForms
                             break;
                     }
                     if (pathTarget.SurroundTopology != null)
-                    {
-                        //gb_surround.Enabled = true;
                         cb_surround_applybezel.Checked = pathTarget.SurroundTopology.ApplyWithBezelCorrectedResolution;
-                    }
                     else
-                    {
                         cb_surround_applybezel.Checked = false;
-                    }
                 }
             }
             catch (Exception)
@@ -300,77 +360,6 @@ namespace HeliosDisplayManagement.UIForms
 
             Profile.Name = txt_name.Text.Trim();
             return true;
-        }
-
-        private void cb_rotation_SelectionChangeCommitted(object sender, EventArgs e)
-        {
-            if ((cb_rotation.SelectedItem != null) && (SelectedDisplay != null))
-            {
-                switch (cb_rotation.SelectedIndex)
-                {
-                    case 1:
-                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Rotate90;
-                        break;
-                    case 2:
-                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Rotate180;
-                        break;
-                    case 3:
-                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Rotate270;
-                        break;
-                    default:
-                        SelectedDisplay.GetPathTarget(Profile).Rotation = Rotation.Identity;
-                        break;
-                }
-            }
-            RefreshArrangementSettings();
-        }
-
-        private void cb_clone_SelectionChangeCommitted(object sender, EventArgs e)
-        {
-            if ((cb_clone.SelectedItem != null) && (SelectedDisplay != null))
-            {
-                Path newSource;
-                if (cb_clone.SelectedItem is string)
-                {
-                    newSource = new Path();
-                    Profile.Paths = Profile.Paths.Concat(new[] {newSource}).ToArray();
-                }
-                else
-                {
-                    newSource = cb_clone.SelectedItem as Path;
-                }
-                if (newSource != null)
-                {
-                    var target = SelectedDisplay.GetPathTarget(Profile);
-                    var source = SelectedDisplay.GetPathSource(Profile);
-                    source.Targets = source.Targets.Where(pathTarget => pathTarget != target).ToArray();
-                    newSource.Targets = newSource.Targets.Concat(new[] { target }).ToArray();
-                    if (source.Targets.Length == 0)
-                    {
-                        Profile.Paths = Profile.Paths.Where(path => path != source).ToArray();
-                    }
-                }
-                cb_resolution_SelectionChangeCommitted(null, null);
-                cb_colordepth_SelectionChangeCommitted(null, null);
-                cb_frequency_SelectionChangeCommitted(null, null);
-                cb_rotation_SelectionChangeCommitted(null, null);
-            }
-            RefreshArrangementSettings();
-        }
-
-        private void cb_surround_applybezel_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void nud_x_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void nud_y_ValueChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

@@ -15,7 +15,7 @@ namespace HeliosDisplayManagement.ShellExtension
     {
         protected override bool CanShowMenu()
         {
-            return Shared.Helios.IsInstalled &&
+            return Helios.IsInstalled &&
                    (SelectedItemPaths.Count() == 1) &&
                    Profile.GetAllProfiles().Any() &&
                    (Path.GetExtension(SelectedItemPaths.First())?.ToLower() == @".exe");
@@ -49,7 +49,8 @@ namespace HeliosDisplayManagement.ShellExtension
                     HeliosDisplayManagement.Open(HeliosStartupAction.SwitchProfile, profile,
                         SelectedItemPaths.FirstOrDefault(), true)));
             profileMenu.DropDownItems.Add(new ToolStripSeparator());
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, Properties.Resources.Shortcut_x16,
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut,
+                Properties.Resources.Shortcut_x16,
                 (sender, args) =>
                     HeliosDisplayManagement.Open(HeliosStartupAction.CreateShortcut, profile,
                         SelectedItemPaths.FirstOrDefault())));

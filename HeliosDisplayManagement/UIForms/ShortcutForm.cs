@@ -183,7 +183,6 @@ namespace HeliosDisplayManagement.UIForms
                 $"-p \"{dv_profile.Profile.Name}\""
             };
             if (!Directory.Exists(IconCache))
-            {
                 try
                 {
                     Directory.CreateDirectory(IconCache);
@@ -192,7 +191,6 @@ namespace HeliosDisplayManagement.UIForms
                 {
                     // ignored
                 }
-            }
             if (cb_temp.Checked)
             {
                 if (rb_standalone.Checked)

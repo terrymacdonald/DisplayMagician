@@ -10,18 +10,18 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using Microsoft.Win32;
-using Newtonsoft.Json;
 using HeliosDisplayManagement.Resources;
 using HtmlAgilityPack;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 
 namespace HeliosDisplayManagement.Steam
 {
     public class SteamGame
     {
         private static List<SteamAppIdNamePair> _allGames;
-        private static readonly object AllGamesLock = new object();
         private static bool _allGamesUpdated;
+        private static readonly object AllGamesLock = new object();
         private string _name;
 
         static SteamGame()
@@ -35,20 +35,6 @@ namespace HeliosDisplayManagement.Steam
             AppId = appId;
         }
 
-        public static bool SteamInstalled => !string.IsNullOrWhiteSpace(SteamAddress);
-
-        public static string SteamAddress
-        {
-            get
-            {
-                using (
-                    var key = Registry.CurrentUser.OpenSubKey(RegistrySteam, RegistryKeyPermissionCheck.ReadSubTree))
-                {
-                    return (string) key?.GetValue(@"SteamExe", string.Empty) ?? string.Empty;
-                }
-            }
-        }
-
         public uint AppId { get; }
 
         public static string GameIdsPath
@@ -60,55 +46,6 @@ namespace HeliosDisplayManagement.Steam
             =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 Assembly.GetExecutingAssembly().GetName().Name, @"SteamIconCache");
-
-        public string Name => _name ?? (_name = GetAppName(AppId));
-
-        public static string GetAppName(uint appId)
-        {
-            return GetAllGames()?.FirstOrDefault(g => g.AppId == appId)?.Name;
-        }
-
-        private string RegistryApp => $@"{RegistryApps}\\{AppId}";
-        private static string RegistrySteam => @"SOFTWARE\\Valve\\Steam";
-        private static string RegistryApps => $@"{RegistrySteam}\\Apps";
-
-        public bool IsRunning
-        {
-            get
-            {
-                try
-                {
-                    using (
-                        var key = Registry.CurrentUser.OpenSubKey(RegistryApp, RegistryKeyPermissionCheck.ReadSubTree))
-                    {
-                        return (int) (key?.GetValue(@"Running", 0) ?? 0) > 0;
-                    }
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-        }
-
-        public bool IsUpdating
-        {
-            get
-            {
-                try
-                {
-                    using (
-                        var key = Registry.CurrentUser.OpenSubKey(RegistryApp, RegistryKeyPermissionCheck.ReadSubTree))
-                    {
-                        return (int) (key?.GetValue(@"Updating", 0) ?? 0) > 0;
-                    }
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-        }
 
         public bool IsInstalled
         {
@@ -148,46 +85,167 @@ namespace HeliosDisplayManagement.Steam
             }
         }
 
-        public Task<string> GetIcon()
+        public bool IsRunning
         {
-            return Task.Run(() =>
+            get
             {
-                if (!Directory.Exists(IconCache))
+                try
                 {
-                    try
+                    using (
+                        var key = Registry.CurrentUser.OpenSubKey(RegistryApp, RegistryKeyPermissionCheck.ReadSubTree))
                     {
-                        Directory.CreateDirectory(IconCache);
-                    }
-                    catch
-                    {
-                        return null;
+                        return (int) (key?.GetValue(@"Running", 0) ?? 0) > 0;
                     }
                 }
-                var localPath = Path.Combine(IconCache, AppId + ".ico");
-                if (File.Exists(localPath))
+                catch
                 {
-                    return localPath;
+                    return false;
                 }
-                var iconUrl = new HtmlWeb().Load("https://steamdb.info/app/" + AppId)
-                    .DocumentNode.SelectNodes("//a[@href]")
-                    .Select(node => node.Attributes["href"].Value)
-                    .FirstOrDefault(attribute => attribute.EndsWith(".ico") && attribute.Contains("/" + AppId + "/"));
-                if (!string.IsNullOrWhiteSpace(iconUrl))
+            }
+        }
+
+        public bool IsUpdating
+        {
+            get
+            {
+                try
                 {
-                    try
+                    using (
+                        var key = Registry.CurrentUser.OpenSubKey(RegistryApp, RegistryKeyPermissionCheck.ReadSubTree))
                     {
-                        using (var client = new WebClient())
+                        return (int) (key?.GetValue(@"Updating", 0) ?? 0) > 0;
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
+        public string Name => _name ?? (_name = GetAppName(AppId));
+
+        private string RegistryApp => $@"{RegistryApps}\\{AppId}";
+        private static string RegistryApps => $@"{RegistrySteam}\\Apps";
+        private static string RegistrySteam => @"SOFTWARE\\Valve\\Steam";
+
+        public static string SteamAddress
+        {
+            get
+            {
+                using (
+                    var key = Registry.CurrentUser.OpenSubKey(RegistrySteam, RegistryKeyPermissionCheck.ReadSubTree))
+                {
+                    return (string) key?.GetValue(@"SteamExe", string.Empty) ?? string.Empty;
+                }
+            }
+        }
+
+        public static bool SteamInstalled => !string.IsNullOrWhiteSpace(SteamAddress);
+
+        public static List<SteamAppIdNamePair> GetAllGames()
+        {
+            lock (AllGamesLock)
+            {
+                if (_allGames == null)
+                    _allGames = GetCachedGameIds()?.ToList();
+            }
+            // Update only once
+            if (!_allGamesUpdated)
+                if (_allGames?.Count > 0)
+                    UpdateGamesFromWeb();
+                else
+                    UpdateGamesFromWeb()?.Join();
+            return _allGames;
+        }
+
+        public static SteamGame[] GetAllOwnedGames()
+        {
+            var list = new List<SteamGame>();
+            try
+            {
+                using (
+                    var subKey = Registry.CurrentUser.OpenSubKey(RegistryApps, RegistryKeyPermissionCheck.ReadSubTree))
+                {
+                    if (subKey != null)
+                        foreach (var keyName in subKey.GetSubKeyNames())
                         {
-                            client.DownloadFile(iconUrl, localPath);
+                            uint gameId;
+                            if (uint.TryParse(keyName, out gameId))
+                                list.Add(new SteamGame(gameId));
+                        }
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+            return list.ToArray();
+        }
+
+        public static string GetAppName(uint appId)
+        {
+            return GetAllGames()?.FirstOrDefault(g => g.AppId == appId)?.Name;
+        }
+
+        private static void CacheGameIds(IEnumerable<SteamAppIdNamePair> gameIds)
+        {
+            try
+            {
+                var serializer = new XmlSerializer(typeof(SteamAppIdNamePair[]));
+                var sb = new StringBuilder();
+                using (var writer = XmlWriter.Create(sb))
+                {
+                    serializer.Serialize(writer, gameIds.ToArray());
+                }
+                var xml = sb.ToString();
+                try
+                {
+                    var doc = XDocument.Parse(xml);
+                    xml = doc.ToString();
+                }
+                catch
+                {
+                    // ignored
+                }
+                if (!string.IsNullOrWhiteSpace(xml))
+                {
+                    var dir = Path.GetDirectoryName(GameIdsPath);
+                    if (dir != null)
+                    {
+                        Directory.CreateDirectory(dir);
+                        File.WriteAllText(GameIdsPath, xml, Encoding.Unicode);
+                    }
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        private static SteamAppIdNamePair[] GetCachedGameIds()
+        {
+            try
+            {
+                if (File.Exists(GameIdsPath))
+                {
+                    var xml = File.ReadAllText(GameIdsPath, Encoding.Unicode);
+                    if (!string.IsNullOrWhiteSpace(xml))
+                    {
+                        var serializer = new XmlSerializer(typeof(SteamAppIdNamePair[]));
+                        using (var reader = XmlReader.Create(new StringReader(xml)))
+                        {
+                            return (SteamAppIdNamePair[]) serializer.Deserialize(reader);
                         }
                     }
-                    catch
-                    {
-                        return null;
-                    }
                 }
-                return File.Exists(localPath) ? localPath : null;
-            });
+            }
+            catch
+            {
+                // ignored
+            }
+            return null;
         }
 
         private static Thread UpdateGamesFromWeb()
@@ -248,46 +306,6 @@ namespace HeliosDisplayManagement.Steam
             return thread;
         }
 
-        public static List<SteamAppIdNamePair> GetAllGames()
-        {
-            lock (AllGamesLock)
-            {
-                if (_allGames == null)
-                    _allGames = GetCachedGameIds()?.ToList();
-            }
-            // Update only once
-            if (!_allGamesUpdated)
-                if (_allGames?.Count > 0)
-                    UpdateGamesFromWeb();
-                else
-                    UpdateGamesFromWeb()?.Join();
-            return _allGames;
-        }
-
-        public static SteamGame[] GetAllOwnedGames()
-        {
-            var list = new List<SteamGame>();
-            try
-            {
-                using (
-                    var subKey = Registry.CurrentUser.OpenSubKey(RegistryApps, RegistryKeyPermissionCheck.ReadSubTree))
-                {
-                    if (subKey != null)
-                        foreach (var keyName in subKey.GetSubKeyNames())
-                        {
-                            uint gameId;
-                            if (uint.TryParse(keyName, out gameId))
-                                list.Add(new SteamGame(gameId));
-                        }
-                }
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-            return list.ToArray();
-        }
-
         public override string ToString()
         {
             var name = Name;
@@ -303,65 +321,41 @@ namespace HeliosDisplayManagement.Steam
                 return name + " " + Language.Not_Installed;
             return name + " " + Language.Not_Owned;
         }
-        
-        private static SteamAppIdNamePair[] GetCachedGameIds()
+
+        public Task<string> GetIcon()
         {
-            try
+            return Task.Run(() =>
             {
-                if (File.Exists(GameIdsPath))
-                {
-                    var xml = File.ReadAllText(GameIdsPath, Encoding.Unicode);
-                    if (!string.IsNullOrWhiteSpace(xml))
+                if (!Directory.Exists(IconCache))
+                    try
                     {
-                        var serializer = new XmlSerializer(typeof(SteamAppIdNamePair[]));
-                        using (var reader = XmlReader.Create(new StringReader(xml)))
+                        Directory.CreateDirectory(IconCache);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                var localPath = Path.Combine(IconCache, AppId + ".ico");
+                if (File.Exists(localPath))
+                    return localPath;
+                var iconUrl = new HtmlWeb().Load("https://steamdb.info/app/" + AppId)
+                    .DocumentNode.SelectNodes("//a[@href]")
+                    .Select(node => node.Attributes["href"].Value)
+                    .FirstOrDefault(attribute => attribute.EndsWith(".ico") && attribute.Contains("/" + AppId + "/"));
+                if (!string.IsNullOrWhiteSpace(iconUrl))
+                    try
+                    {
+                        using (var client = new WebClient())
                         {
-                            return (SteamAppIdNamePair[]) serializer.Deserialize(reader);
+                            client.DownloadFile(iconUrl, localPath);
                         }
                     }
-                }
-            }
-            catch
-            {
-                // ignored
-            }
-            return null;
-        }
-
-        private static void CacheGameIds(IEnumerable<SteamAppIdNamePair> gameIds)
-        {
-            try
-            {
-                var serializer = new XmlSerializer(typeof(SteamAppIdNamePair[]));
-                var sb = new StringBuilder();
-                using (var writer = XmlWriter.Create(sb))
-                {
-                    serializer.Serialize(writer, gameIds.ToArray());
-                }
-                var xml = sb.ToString();
-                try
-                {
-                    var doc = XDocument.Parse(xml);
-                    xml = doc.ToString();
-                }
-                catch
-                {
-                    // ignored
-                }
-                if (!string.IsNullOrWhiteSpace(xml))
-                {
-                    var dir = Path.GetDirectoryName(GameIdsPath);
-                    if (dir != null)
+                    catch
                     {
-                        Directory.CreateDirectory(dir);
-                        File.WriteAllText(GameIdsPath, xml, Encoding.Unicode);
+                        return null;
                     }
-                }
-            }
-            catch
-            {
-                // ignored
-            }
+                return File.Exists(localPath) ? localPath : null;
+            });
         }
     }
 }

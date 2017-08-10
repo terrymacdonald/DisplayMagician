@@ -9,10 +9,10 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using WindowsDisplayAPI.DisplayConfig;
+using HeliosDisplayManagement.Shared.Resources;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using HeliosDisplayManagement.Shared.Resources;
 using Path = HeliosDisplayManagement.Shared.Topology.Path;
 
 namespace HeliosDisplayManagement.Shared
@@ -163,7 +163,7 @@ namespace HeliosDisplayManagement.Shared
         {
             try
             {
-                var serializer = XmlSerializer.FromTypes(new[] { typeof(Profile[]) })[0];
+                var serializer = XmlSerializer.FromTypes(new[] {typeof(Profile[])})[0];
                 var sb = new StringBuilder();
                 using (var writer = XmlWriter.Create(sb))
                 {

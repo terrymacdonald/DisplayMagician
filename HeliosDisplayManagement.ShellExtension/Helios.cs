@@ -15,7 +15,7 @@ namespace HeliosDisplayManagement.ShellExtension
         {
             try
             {
-                Shared.Helios.Open(action, profile, programAddress, asAdmin);
+                Helios.Open(action, profile, programAddress, asAdmin);
             }
             catch (Exception e)
             {
@@ -31,7 +31,7 @@ namespace HeliosDisplayManagement.ShellExtension
         {
             try
             {
-                Shared.Helios.OpenSteamGame(action, profile, steamAppId);
+                Helios.OpenSteamGame(action, profile, steamAppId);
             }
             catch (Exception e)
             {

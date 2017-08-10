@@ -20,7 +20,7 @@ namespace HeliosDisplayManagement.Shared.Topology
         public Path()
         {
         }
-        
+
         public DisplayConfigPixelFormat PixelFormat { get; set; }
 
         public Point Position { get; set; }
@@ -66,7 +66,7 @@ namespace HeliosDisplayManagement.Shared.Topology
         {
             unchecked
             {
-                var hashCode = (int)PixelFormat;
+                var hashCode = (int) PixelFormat;
                 hashCode = (hashCode*397) ^ Position.GetHashCode();
                 hashCode = (hashCode*397) ^ Resolution.GetHashCode();
                 hashCode = (hashCode*397) ^ (Targets?.GetHashCode() ?? 0);
@@ -84,10 +84,8 @@ namespace HeliosDisplayManagement.Shared.Topology
         {
             var targets = Targets.Select(target => target.ToPathTargetInfo()).ToArray();
             if (targets.Any())
-            {
                 return new PathInfo(new PathDisplaySource(targets.First().DisplayTarget.Adapter, SourceId), Position,
                     Resolution, PixelFormat, targets);
-            }
             return null;
         }
     }

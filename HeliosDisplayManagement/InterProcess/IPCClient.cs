@@ -17,8 +17,9 @@ namespace HeliosDisplayManagement.InterProcess
         {
         }
 
-        public InstanceStatus Status => Channel.Status;
         public int HoldProcessId => Channel.HoldProcessId;
+
+        public InstanceStatus Status => Channel.Status;
 
         public void StopHold()
         {

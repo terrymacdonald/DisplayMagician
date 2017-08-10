@@ -6,6 +6,6 @@
 
         Busy,
 
-        OnHold,
+        OnHold
     }
 }

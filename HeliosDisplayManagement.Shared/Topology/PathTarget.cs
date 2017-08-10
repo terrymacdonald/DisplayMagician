@@ -8,9 +8,6 @@ namespace HeliosDisplayManagement.Shared.Topology
 {
     public class PathTarget : IEquatable<PathTarget>
     {
-
-        public SurroundTopology SurroundTopology { get; set; }
-
         public PathTarget(PathTargetInfo targetInfo, SurroundTopology surround = null)
         {
             DevicePath = targetInfo.DisplayTarget.DevicePath;
@@ -32,18 +29,21 @@ namespace HeliosDisplayManagement.Shared.Topology
             }
             SurroundTopology = surround ?? SurroundTopology.FromPathTargetInfo(targetInfo);
         }
-        
+
 
         public PathTarget()
         {
         }
-        
+
+        public string DevicePath { get; set; }
+
         public string DisplayName { get; set; }
         public ulong FrequencyInMillihertz { get; set; }
         public Rotation Rotation { get; set; }
         public DisplayConfigScaling Scaling { get; set; }
         public DisplayConfigScanLineOrdering ScanLineOrdering { get; set; }
-        public string DevicePath { get; set; }
+
+        public SurroundTopology SurroundTopology { get; set; }
 
         /// <inheritdoc />
         public bool Equals(PathTarget other)
@@ -103,11 +103,10 @@ namespace HeliosDisplayManagement.Shared.Topology
         {
             var targetDevice =
                 PathDisplayTarget.GetDisplayTargets()
-                    .FirstOrDefault(target => target.DevicePath.StartsWith(DevicePath, StringComparison.InvariantCultureIgnoreCase));
+                    .FirstOrDefault(
+                        target => target.DevicePath.StartsWith(DevicePath, StringComparison.InvariantCultureIgnoreCase));
             if (targetDevice == null)
-            {
                 return null;
-            }
             return new PathTargetInfo(new PathDisplayTarget(targetDevice.Adapter, targetDevice.TargetId),
                 FrequencyInMillihertz, ScanLineOrdering, Rotation.ToDisplayConfigRotation(), Scaling);
         }

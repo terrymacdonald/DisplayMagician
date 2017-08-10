@@ -20,7 +20,7 @@ namespace HeliosDisplayManagement
         {
             if (profile.IsActive)
                 return true;
-            var currentStatsus = IPCService.GetInstance().Status;
+            var instanceStatus = IPCService.GetInstance().Status;
             try
             {
                 IPCService.GetInstance().Status = InstanceStatus.Busy;
@@ -42,7 +42,7 @@ namespace HeliosDisplayManagement
             }
             finally
             {
-                IPCService.GetInstance().Status = currentStatsus;
+                IPCService.GetInstance().Status = instanceStatus;
             }
         }
 
@@ -81,8 +81,8 @@ namespace HeliosDisplayManagement
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //try
-            //{
+            try
+            {
                 if (!IPCService.StartService())
                     throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
 
@@ -111,15 +111,15 @@ namespace HeliosDisplayManagement
                         Application.Run(new MainForm());
                         break;
                 }
-            //}
-            //catch (Exception e)
-            //{
-            //    MessageBox.Show(
-            //        string.Format(Language.Operation_Failed, e.Message),
-            //        Language.Fatal_Error,
-            //        MessageBoxButtons.OK,
-            //        MessageBoxIcon.Error);
-            //}
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(
+                    string.Format(Language.Operation_Failed, e.Message),
+                    Language.Fatal_Error,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         // ReSharper disable once CyclomaticComplexity

@@ -16,7 +16,7 @@ namespace HeliosDisplayManagement.ShellExtension
     {
         protected override bool CanShowMenu()
         {
-            return Shared.Helios.IsInstalled &&
+            return Helios.IsInstalled &&
                    (SelectedItemPaths.Count() == 1) &&
                    Profile.GetAllProfiles().Any() &&
                    (ParseSteamAppId() > 0);
@@ -47,7 +47,8 @@ namespace HeliosDisplayManagement.ShellExtension
                     HeliosDisplayManagement.OpenSteamGame(HeliosStartupAction.SwitchProfile, profile,
                         appId)));
             profileMenu.DropDownItems.Add(new ToolStripSeparator());
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, Properties.Resources.Shortcut_x16,
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut,
+                Properties.Resources.Shortcut_x16,
                 (sender, args) =>
                     HeliosDisplayManagement.OpenSteamGame(HeliosStartupAction.CreateShortcut, profile,
                         appId)));
@@ -59,7 +60,8 @@ namespace HeliosDisplayManagement.ShellExtension
             try
             {
                 var fileAddress = SelectedItemPaths.FirstOrDefault();
-                if (!string.IsNullOrWhiteSpace(fileAddress) && File.Exists(fileAddress) && new FileInfo(fileAddress).Length < 1024)
+                if (!string.IsNullOrWhiteSpace(fileAddress) && File.Exists(fileAddress) &&
+                    (new FileInfo(fileAddress).Length < 1024))
                 {
                     var fileContent = File.ReadAllText(fileAddress);
                     if (!fileContent.Contains(@"[InternetShortcut]"))

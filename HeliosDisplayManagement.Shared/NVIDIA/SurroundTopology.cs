@@ -32,54 +32,6 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
 
         public SurroundTopology()
         {
-            
-        }
-
-        public static SurroundTopology FromPathTargetInfo(PathTargetInfo pathTargetInfo)
-        {
-            // We go through the code if only the path belongs to a NVIDIA virtual surround display
-            if (pathTargetInfo.DisplayTarget.EDIDManufactureCode != "NVS")
-            {
-                return null;
-            }
-            try
-            {
-                var correspondingWindowsPathInfo =
-                PathInfo.GetAllPaths().FirstOrDefault(info => info.TargetsInfo.Any(targetInfo => targetInfo.DisplayTarget == pathTargetInfo.DisplayTarget));
-                if (correspondingWindowsPathInfo != null)
-                {
-                    // If position is same, then the two paths are equal, after all position is whats important in path sources
-                    var correspondingNvidiaPathInfo =
-                        NvAPIWrapper.Display.PathInfo.GetDisplaysConfig()
-                            .FirstOrDefault(
-                                info =>
-                                    info.Position.X == correspondingWindowsPathInfo.Position.X &&
-                                    info.Position.Y == correspondingWindowsPathInfo.Position.Y &&
-                                    info.Resolution.Width == correspondingWindowsPathInfo.Resolution.Width &&
-                                    info.Resolution.Height == correspondingWindowsPathInfo.Resolution.Height);
-                    if (correspondingNvidiaPathInfo != null)
-                    {
-                        // We now assume that there is only one target for a NVS path
-                        var correspondingNvidiaTargetInfo = correspondingNvidiaPathInfo.TargetsInfo.FirstOrDefault();
-                        if (correspondingNvidiaTargetInfo != null)
-                        {
-                            var correspondingNvidiaTopology =
-                                GridTopology.GetGridTopologies()
-                                    .FirstOrDefault(
-                                        topology => topology.Displays.Select(display => display.DisplayDevice).Contains(correspondingNvidiaTargetInfo.DisplayDevice));
-                            if (correspondingNvidiaTopology != null)
-                            {
-                                return new SurroundTopology(correspondingNvidiaTopology);
-                            }
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // ignored
-            }
-            return null;
         }
 
         public bool AcceleratePrimaryDisplay { get; set; }
@@ -107,6 +59,55 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                    (DriverReloadAllowed == other.DriverReloadAllowed) && (Frequency == other.Frequency) &&
                    (ImmersiveGaming == other.ImmersiveGaming) && Resolution.Equals(other.Resolution) &&
                    (Rows == other.Rows);
+        }
+
+        public static SurroundTopology FromPathTargetInfo(PathTargetInfo pathTargetInfo)
+        {
+            // We go through the code if only the path belongs to a NVIDIA virtual surround display
+            if (pathTargetInfo.DisplayTarget.EDIDManufactureCode != "NVS")
+                return null;
+            try
+            {
+                var correspondingWindowsPathInfo =
+                    PathInfo.GetAllPaths()
+                        .FirstOrDefault(
+                            info =>
+                                info.TargetsInfo.Any(
+                                    targetInfo => targetInfo.DisplayTarget == pathTargetInfo.DisplayTarget));
+                if (correspondingWindowsPathInfo != null)
+                {
+                    // If position is same, then the two paths are equal, after all position is whats important in path sources
+                    var correspondingNvidiaPathInfo =
+                        NvAPIWrapper.Display.PathInfo.GetDisplaysConfig()
+                            .FirstOrDefault(
+                                info =>
+                                    (info.Position.X == correspondingWindowsPathInfo.Position.X) &&
+                                    (info.Position.Y == correspondingWindowsPathInfo.Position.Y) &&
+                                    (info.Resolution.Width == correspondingWindowsPathInfo.Resolution.Width) &&
+                                    (info.Resolution.Height == correspondingWindowsPathInfo.Resolution.Height));
+                    if (correspondingNvidiaPathInfo != null)
+                    {
+                        // We now assume that there is only one target for a NVS path
+                        var correspondingNvidiaTargetInfo = correspondingNvidiaPathInfo.TargetsInfo.FirstOrDefault();
+                        if (correspondingNvidiaTargetInfo != null)
+                        {
+                            var correspondingNvidiaTopology =
+                                GridTopology.GetGridTopologies()
+                                    .FirstOrDefault(
+                                        topology =>
+                                            topology.Displays.Select(display => display.DisplayDevice)
+                                                .Contains(correspondingNvidiaTargetInfo.DisplayDevice));
+                            if (correspondingNvidiaTopology != null)
+                                return new SurroundTopology(correspondingNvidiaTopology);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+            return null;
         }
 
         /// <inheritdoc />
