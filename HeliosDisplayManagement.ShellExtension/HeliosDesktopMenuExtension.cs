@@ -30,22 +30,33 @@ namespace HeliosDisplayManagement.ShellExtension
 
         protected override bool CanShowMenu()
         {
-            return Shared.Helios.IsInstalled && Profile.GetAllProfiles().Any();
+            return Helios.IsInstalled;
         }
 
         protected override ContextMenuStrip CreateMenu()
         {
             var explorerMenu = new ContextMenuStrip();
-            var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
-                Properties.Resources.Icon_x16);
-            foreach (var profile in Profile.GetAllProfiles())
-                extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
-            extensionMenu.DropDownItems.Add(new ToolStripSeparator());
-            extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
-                Properties.Resources.Icon_x16,
-                (sender, args) => { HeliosDisplayManagement.Open(); }));
-            explorerMenu.Items.Add(extensionMenu);
-            explorerMenu.Items.Add(new ToolStripSeparator());
+            if (Profile.GetAllProfiles().Any())
+            {
+                var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
+                    Properties.Resources.Icon_x16);
+                foreach (var profile in Profile.GetAllProfiles())
+                    extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
+                extensionMenu.DropDownItems.Add(new ToolStripSeparator());
+                extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
+                    Properties.Resources.Icon_x16,
+                    (sender, args) => { HeliosDisplayManagement.Open(); }));
+                explorerMenu.Items.Add(extensionMenu);
+                explorerMenu.Items.Add(new ToolStripSeparator());
+            }
+            else
+            {
+                var extensionMenu = new ToolStripMenuItem(Language.Manage_Profiles,
+                    Properties.Resources.Icon_x16,
+                    (sender, args) => { HeliosDisplayManagement.Open(); });
+                explorerMenu.Items.Add(extensionMenu);
+                explorerMenu.Items.Add(new ToolStripSeparator());
+            }
             return explorerMenu;
         }
     }
