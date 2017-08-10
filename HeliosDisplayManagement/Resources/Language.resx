@@ -360,4 +360,7 @@
   <data name="Saved_Profiles" xml:space="preserve">
     <value>Saved Profiles</value>
   </data>
+  <data name="Waiting_for_the_0_to_terminate" xml:space="preserve">
+    <value>Waiting for the '{0}' to terminate</value>
+  </data>
 </root>

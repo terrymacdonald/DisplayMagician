@@ -122,6 +122,7 @@ namespace HeliosDisplayManagement
             //}
         }
 
+        // ReSharper disable once CyclomaticComplexity
         private static void SwitchProfile(IReadOnlyList<Profile> profiles, int profileIndex)
         {
             var rollbackProfile = Profile.GetCurrent(string.Empty);
@@ -163,6 +164,23 @@ namespace HeliosDisplayManagement
                     processes = new[] {process};
                 IPCService.GetInstance().HoldProcessId = processes.FirstOrDefault()?.Id ?? 0;
                 IPCService.GetInstance().Status = InstanceStatus.OnHold;
+                NotifyIcon notify = null;
+                try
+                {
+                    notify = new NotifyIcon
+                    {
+                        Icon = Properties.Resources.Icon,
+                        Text = string.Format(
+                            Language.Waiting_for_the_0_to_terminate,
+                            processes[0].ProcessName),
+                        Visible = true
+                    };
+                    Application.DoEvents();
+                }
+                catch
+                {
+                    // ignored
+                }
                 foreach (var p in processes)
                     try
                     {
@@ -172,6 +190,12 @@ namespace HeliosDisplayManagement
                     {
                         // ignored
                     }
+                if (notify != null)
+                {
+                    notify.Visible = false;
+                    notify.Dispose();
+                    Application.DoEvents();
+                }
                 IPCService.GetInstance().Status = InstanceStatus.Busy;
                 if (!rollbackProfile.IsActive)
                     if (!GoProfile(rollbackProfile))
@@ -206,6 +230,23 @@ namespace HeliosDisplayManagement
                 }
                 IPCService.GetInstance().HoldProcessId = steamProcess?.Id ?? 0;
                 IPCService.GetInstance().Status = InstanceStatus.OnHold;
+                NotifyIcon notify = null;
+                try
+                {
+                    notify = new NotifyIcon
+                    {
+                        Icon = Properties.Resources.Icon,
+                        Text = string.Format(
+                            Language.Waiting_for_the_0_to_terminate,
+                            steamGame.Name),
+                        Visible = true
+                    };
+                    Application.DoEvents();
+                }
+                catch
+                {
+                    // ignored
+                }
                 // Wait for the game to exit
                 if (steamGame.IsRunning)
                     while (true)
@@ -214,6 +255,12 @@ namespace HeliosDisplayManagement
                             break;
                         Thread.Sleep(300);
                     }
+                if (notify != null)
+                {
+                    notify.Visible = false;
+                    notify.Dispose();
+                    Application.DoEvents();
+                }
                 IPCService.GetInstance().Status = InstanceStatus.Busy;
                 if (!rollbackProfile.IsActive)
                     if (!GoProfile(rollbackProfile))

@@ -773,6 +773,15 @@ namespace HeliosDisplayManagement.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Waiting for the &apos;{0}&apos; to terminate.
+        /// </summary>
+        internal static string Waiting_for_the_0_to_terminate {
+            get {
+                return ResourceManager.GetString("Waiting_for_the_0_to_terminate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Waiting Process.
         /// </summary>
         internal static string Waiting_Process {
