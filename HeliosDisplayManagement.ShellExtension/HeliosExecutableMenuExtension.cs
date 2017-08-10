@@ -49,8 +49,6 @@ namespace HeliosDisplayManagement.ShellExtension
                     HeliosDisplayManagement.Open(HeliosStartupAction.SwitchProfile, profile,
                         SelectedItemPaths.FirstOrDefault(), true)));
             profileMenu.DropDownItems.Add(new ToolStripSeparator());
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Edit, null,
-                (sender, args) => HeliosDisplayManagement.Open(HeliosStartupAction.EditProfile, profile)));
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, Properties.Resources.Shortcut_x16,
                 (sender, args) =>
                     HeliosDisplayManagement.Open(HeliosStartupAction.CreateShortcut, profile,
