@@ -182,7 +182,17 @@ namespace HeliosDisplayManagement.UIForms
                 $"-a {HeliosStartupAction.SwitchProfile}",
                 $"-p \"{dv_profile.Profile.Name}\""
             };
-
+            if (!Directory.Exists(IconCache))
+            {
+                try
+                {
+                    Directory.CreateDirectory(IconCache);
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
             if (cb_temp.Checked)
             {
                 if (rb_standalone.Checked)
