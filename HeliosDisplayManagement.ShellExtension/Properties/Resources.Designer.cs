@@ -63,9 +63,39 @@ namespace HeliosDisplayManagement.ShellExtension.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Edit_x16 {
+            get {
+                object obj = ResourceManager.GetObject("Edit_x16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Icon_x16 {
             get {
                 object obj = ResourceManager.GetObject("Icon_x16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Run_x16 {
+            get {
+                object obj = ResourceManager.GetObject("Run_x16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Shortcut_x16 {
+            get {
+                object obj = ResourceManager.GetObject("Shortcut_x16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

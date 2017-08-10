@@ -80,7 +80,13 @@
       <Link>srm.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\Run_x16.png" />
+    <None Include="Resources\Shortcut_x16.png" />
+    <None Include="Resources\Edit_x16.png" />
     <None Include="Resources\Icon_x16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Shield.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

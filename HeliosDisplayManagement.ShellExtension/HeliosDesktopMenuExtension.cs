@@ -15,15 +15,15 @@ namespace HeliosDisplayManagement.ShellExtension
         private static ToolStripMenuItem CreateProfileMenu(Profile profile)
         {
             var profileMenu = new ToolStripMenuItem(profile.Name, new ProfileIcon(profile).ToBitmap(16, 16));
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Apply, null,
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Apply, Properties.Resources.Run_x16,
                 (sender, args) => HeliosDisplayManagement.Open(HeliosStartupAction.SwitchProfile, profile))
             {
                 Enabled = profile.IsPossible && !profile.IsActive
             });
             profileMenu.DropDownItems.Add(new ToolStripSeparator());
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Edit, null,
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Edit, Properties.Resources.Edit_x16,
                 (sender, args) => HeliosDisplayManagement.Open(HeliosStartupAction.EditProfile, profile)));
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, null,
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, Properties.Resources.Shortcut_x16,
                 (sender, args) => HeliosDisplayManagement.Open(HeliosStartupAction.CreateShortcut, profile)));
             return profileMenu;
         }

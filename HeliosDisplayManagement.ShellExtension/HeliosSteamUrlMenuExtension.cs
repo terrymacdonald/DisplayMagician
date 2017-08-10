@@ -42,14 +42,14 @@ namespace HeliosDisplayManagement.ShellExtension
         {
             var appId = ParseSteamAppId();
             var profileMenu = new ToolStripMenuItem(profile.Name, new ProfileIcon(profile).ToBitmap(16, 16));
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Run, null,
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Run, Properties.Resources.Run_x16,
                 (sender, args) =>
                     HeliosDisplayManagement.OpenSteamGame(HeliosStartupAction.SwitchProfile, profile,
                         appId)));
             profileMenu.DropDownItems.Add(new ToolStripSeparator());
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Edit, null,
                 (sender, args) => HeliosDisplayManagement.Open(HeliosStartupAction.EditProfile, profile)));
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, null,
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, Properties.Resources.Shortcut_x16,
                 (sender, args) =>
                     HeliosDisplayManagement.OpenSteamGame(HeliosStartupAction.CreateShortcut, profile,
                         appId)));
