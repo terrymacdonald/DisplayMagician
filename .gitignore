@@ -243,3 +243,5 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+HeliosDisplayManagement.Setup/HeliosDisplayManagement.Setup Data/*
+HeliosDisplayManagement.Setup/HeliosDisplayManagement.Setup/*

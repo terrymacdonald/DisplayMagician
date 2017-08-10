@@ -2,14 +2,14 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<!-- Select a Product Configuration -->
-		<InstallShieldProductConfiguration>Express</InstallShieldProductConfiguration>
+		<InstallShieldProductConfiguration>x64 Configuration</InstallShieldProductConfiguration>
 		<!-- Select a Visual Studio Configuration / InstallShield Release -->
 		<Configuration>Debug</Configuration>
 		<InstallShieldRelease>$(Configuration)</InstallShieldRelease>
 	</PropertyGroup>
 	<ItemGroup>
 		<!-- The InstallShieldProject item selects the project to build -->
-		<InstallShieldProject Include="$(MSBuildProjectDirectory)\$(MSBuildProjectName).isl"/>
+		<InstallShieldProject Include="$(MSBuildProjectDirectory)\$(MSBuildProjectName).ism"/>
 		<!-- The InstallShieldReleaseFlags sets Release Flags -->
 		<!--<InstallShieldReleaseFlags Include=""/>-->
 		<!-- The InstallShieldMergeModulePath specifies what directories are
@@ -27,11 +27,15 @@
 			<TargetPath>My Test Exe.exe</TargetPath>
 		</TaggedOutputs> -->
 	</ItemGroup>
-	<Import Project="$(MSBuildExtensionsPath32)\InstallShield\2015Limited\InstallShield.targets"/>
+	<Import Project="$(MSBuildExtensionsPath32)\InstallShield\2016\InstallShield.targets"/>
 	<ItemGroup>
 		<ProjectReference Include="..\HeliosDisplayManagement\HeliosDisplayManagement.csproj">
 			<Name>HeliosDisplayManagement</Name>
 			<Project>{608D941A-B431-400C-A91D-C6F971C29577}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\HeliosDisplayManagement.Shared\HeliosDisplayManagement.Shared.csproj">
+			<Name>HeliosDisplayManagement.Shared</Name>
+			<Project>{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}</Project>
 		</ProjectReference>
 		<ProjectReference Include="..\HeliosDisplayManagement.ShellExtension\HeliosDisplayManagement.ShellExtension.csproj">
 			<Name>HeliosDisplayManagement.ShellExtension</Name>
