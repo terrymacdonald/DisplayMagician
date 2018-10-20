@@ -84,7 +84,7 @@ namespace HeliosDisplayManagement.Shared.Topology
 
         public PathInfo ToPathInfo()
         {
-            var targets = Targets.Select(target => target.ToPathTargetInfo()).ToArray();
+            var targets = Targets.Select(target => target.ToPathTargetInfo()).Where(info => info != null).ToArray();
             if (targets.Any())
                 return new PathInfo(new PathDisplaySource(targets.First().DisplayTarget.Adapter, SourceId), Position,
                     Resolution, PixelFormat, targets);

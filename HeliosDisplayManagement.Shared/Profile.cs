@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -23,7 +24,7 @@ namespace HeliosDisplayManagement.Shared
     {
         private static Profile _currentProfile;
 
-        public static Version Version = new Version(1, 0);
+        public static Version Version = new Version(2, 0);
 
         static Profile()
         {
@@ -235,15 +236,21 @@ namespace HeliosDisplayManagement.Shared
                 {
                     // ignored
                 }
-                Thread.Sleep(19000);
-                PathInfo.ApplyPathInfos(Paths.Select(path => path.ToPathInfo()), true, true);
-                Thread.Sleep(9000);
+                Thread.Sleep(18000);
+                var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+                if (!pathInfos.Any())
+                {
+                    throw new InvalidOperationException(@"Display configuration changed since this profile is created. Please re-create this profile.");
+                }
+                PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+                Thread.Sleep(10000);
                 RefreshActiveStatus();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 RefreshActiveStatus();
+                MessageBox.Show(ex.Message, @"Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
         }
