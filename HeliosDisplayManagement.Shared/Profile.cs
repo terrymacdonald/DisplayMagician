@@ -10,9 +10,11 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using WindowsDisplayAPI.DisplayConfig;
 using HeliosDisplayManagement.Shared.Resources;
+using Newtonsoft.Json;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
+using Formatting = Newtonsoft.Json.Formatting;
 using Path = HeliosDisplayManagement.Shared.Topology.Path;
 
 namespace HeliosDisplayManagement.Shared
@@ -35,6 +37,7 @@ namespace HeliosDisplayManagement.Shared
             }
         }
 
+        [JsonIgnore]
         public bool IsActive
         {
             get
@@ -45,6 +48,7 @@ namespace HeliosDisplayManagement.Shared
             }
         }
 
+        [JsonIgnore]
         public bool IsPossible
         {
             get
@@ -96,9 +100,10 @@ namespace HeliosDisplayManagement.Shared
         public Path[] Paths { get; set; } = new Path[0];
 
         public static string ProfilesPath
-            =>
-            System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                Assembly.GetExecutingAssembly().GetName().Name, $"DisplayProfiles_{Version.ToString(2)}.xml");
+        {
+            get => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                Assembly.GetExecutingAssembly().GetName().Name, $"DisplayProfiles_{Version.ToString(2)}.json");
+        }
 
         /// <inheritdoc />
         public bool Equals(Profile other)
@@ -114,14 +119,10 @@ namespace HeliosDisplayManagement.Shared
             {
                 if (File.Exists(ProfilesPath))
                 {
-                    var xml = File.ReadAllText(ProfilesPath, Encoding.Unicode);
-                    if (!string.IsNullOrWhiteSpace(xml))
+                    var json = File.ReadAllText(ProfilesPath, Encoding.Unicode);
+                    if (!string.IsNullOrWhiteSpace(json))
                     {
-                        var serializer = XmlSerializer.FromTypes(new[] {typeof(Profile[])})[0];
-                        using (var reader = XmlReader.Create(new StringReader(xml)))
-                        {
-                            return (Profile[]) serializer.Deserialize(reader);
-                        }
+                        return JsonConvert.DeserializeObject<Profile[]>(json);
                     }
                 }
             }
@@ -161,29 +162,14 @@ namespace HeliosDisplayManagement.Shared
         {
             try
             {
-                var serializer = XmlSerializer.FromTypes(new[] {typeof(Profile[])})[0];
-                var sb = new StringBuilder();
-                using (var writer = XmlWriter.Create(sb))
-                {
-                    serializer.Serialize(writer, array.ToArray());
-                }
-                var xml = sb.ToString();
-                try
-                {
-                    var doc = XDocument.Parse(xml);
-                    xml = doc.ToString();
-                }
-                catch
-                {
-                    // ignored
-                }
-                if (!string.IsNullOrWhiteSpace(xml))
+                var json = JsonConvert.SerializeObject(array.ToArray(), Formatting.Indented);
+                if (!string.IsNullOrWhiteSpace(json))
                 {
                     var dir = System.IO.Path.GetDirectoryName(ProfilesPath);
                     if (dir != null)
                     {
                         Directory.CreateDirectory(dir);
-                        File.WriteAllText(ProfilesPath, xml, Encoding.Unicode);
+                        File.WriteAllText(ProfilesPath, json, Encoding.Unicode);
                         return true;
                     }
                 }
@@ -264,15 +250,14 @@ namespace HeliosDisplayManagement.Shared
 
         public Profile Clone()
         {
-            var serializer = XmlSerializer.FromTypes(new[] {typeof(Profile)})[0];
-            var sb = new StringBuilder();
-            using (var writer = XmlWriter.Create(sb))
+            try
             {
-                serializer.Serialize(writer, this);
+                var serialized = JsonConvert.SerializeObject(this);
+                return JsonConvert.DeserializeObject<Profile>(serialized);
             }
-            using (var reader = XmlReader.Create(new StringReader(sb.ToString())))
+            catch
             {
-                return (Profile) serializer.Deserialize(reader);
+                return null;
             }
         }
     }

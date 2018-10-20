@@ -40,7 +40,7 @@ namespace HeliosDisplayManagement.Steam
         public static string GameIdsPath
             =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                Assembly.GetExecutingAssembly().GetName().Name, @"SteamGames.xml");
+                Assembly.GetExecutingAssembly().GetName().Name, @"SteamGames.json");
 
         public static string IconCache
             =>
@@ -192,29 +192,14 @@ namespace HeliosDisplayManagement.Steam
         {
             try
             {
-                var serializer = new XmlSerializer(typeof(SteamAppIdNamePair[]));
-                var sb = new StringBuilder();
-                using (var writer = XmlWriter.Create(sb))
-                {
-                    serializer.Serialize(writer, gameIds.ToArray());
-                }
-                var xml = sb.ToString();
-                try
-                {
-                    var doc = XDocument.Parse(xml);
-                    xml = doc.ToString();
-                }
-                catch
-                {
-                    // ignored
-                }
-                if (!string.IsNullOrWhiteSpace(xml))
+                var json = JsonConvert.SerializeObject(gameIds);
+                if (!string.IsNullOrWhiteSpace(json))
                 {
                     var dir = Path.GetDirectoryName(GameIdsPath);
                     if (dir != null)
                     {
                         Directory.CreateDirectory(dir);
-                        File.WriteAllText(GameIdsPath, xml, Encoding.Unicode);
+                        File.WriteAllText(GameIdsPath, json, Encoding.Unicode);
                     }
                 }
             }
@@ -230,14 +215,10 @@ namespace HeliosDisplayManagement.Steam
             {
                 if (File.Exists(GameIdsPath))
                 {
-                    var xml = File.ReadAllText(GameIdsPath, Encoding.Unicode);
-                    if (!string.IsNullOrWhiteSpace(xml))
+                    var json = File.ReadAllText(GameIdsPath, Encoding.Unicode);
+                    if (!string.IsNullOrWhiteSpace(json))
                     {
-                        var serializer = new XmlSerializer(typeof(SteamAppIdNamePair[]));
-                        using (var reader = XmlReader.Create(new StringReader(xml)))
-                        {
-                            return (SteamAppIdNamePair[]) serializer.Deserialize(reader);
-                        }
+                        return JsonConvert.DeserializeObject<SteamAppIdNamePair[]>(json);
                     }
                 }
             }

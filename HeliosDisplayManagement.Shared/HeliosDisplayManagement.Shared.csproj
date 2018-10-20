@@ -32,17 +32,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EDIDParser, Version=1.1.6347.28506, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EDIDParser.1.1.6347.28506\lib\net45\EDIDParser.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="EDIDParser, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\EDIDParser.1.2.0.1\lib\net45\EDIDParser.dll</HintPath>
     </Reference>
     <Reference Include="IconLib, Version=0.73.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\IconLib.Unofficial.0.73.0\lib\net20\IconLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="NvAPIWrapper.Net, Version=0.5.6315.41439, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\NvAPIWrapper.Net.0.5.6315.41439\lib\net45\NvAPIWrapper.Net.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NvAPIWrapper, Version=0.6.0.3, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NvAPIWrapper.Net.0.6.0.4\lib\net45\NvAPIWrapper.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -50,9 +51,8 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Xml" />
-    <Reference Include="WindowsDisplayAPI, Version=1.0.6336.17084, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\WindowsDisplayAPI.1.0.6336.17084\lib\net45\WindowsDisplayAPI.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="WindowsDisplayAPI, Version=1.1.0.1, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\WindowsDisplayAPI.1.1.0.2\lib\net45\WindowsDisplayAPI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
