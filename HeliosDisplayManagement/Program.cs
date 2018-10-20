@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -81,6 +82,7 @@ namespace HeliosDisplayManagement
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             try
             {
                 if (!IPCService.StartService())
