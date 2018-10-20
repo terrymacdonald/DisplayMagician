@@ -39,6 +39,7 @@ namespace HeliosDisplayManagement.ShellExtension
             var explorerMenu = new ContextMenuStrip();
             if (Profile.GetAllProfiles().Any())
             {
+                Profile.RefreshActiveStatus();
                 var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
                     Properties.Resources.Icon_x16);
                 foreach (var profile in Profile.GetAllProfiles())
