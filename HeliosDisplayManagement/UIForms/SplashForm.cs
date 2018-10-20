@@ -116,8 +116,13 @@ namespace HeliosDisplayManagement.UIForms
                 var minY = screens.Select(screen => screen.Bounds.Y).Concat(new[] {0}).Min();
                 var maxY = screens.Select(screen => screen.Bounds.Height + screen.Bounds.Y).Concat(new[] {0}).Max();
 
+#if !DEBUG
                 Size = new Size(maxX + Math.Abs(minX), maxY + Math.Abs(minY));
                 Location = new Point(minX, minY);
+#else
+                Size = new Size((int)((maxX + Math.Abs(minX)) * 0.8d), (int)((maxY + Math.Abs(minY)) * 0.8d));
+                Location = new Point(minX + (int)(Size.Width / 8d), minY + (int)(Size.Height / 8d));
+#endif
 
                 _progressPositions.Clear();
                 _progressPositions.AddRange(
@@ -128,8 +133,8 @@ namespace HeliosDisplayManagement.UIForms
             }
 #if !DEBUG
             TopMost = true;
-#endif
             Activate();
+#endif
             Invalidate();
         }
 
