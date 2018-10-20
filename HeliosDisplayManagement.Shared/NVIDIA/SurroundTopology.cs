@@ -61,11 +61,17 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                    (Rows == other.Rows);
         }
 
+        // ReSharper disable once ExcessiveIndentation
         public static SurroundTopology FromPathTargetInfo(PathTargetInfo pathTargetInfo)
         {
             // We go through the code if only the path belongs to a NVIDIA virtual surround display
-            if (pathTargetInfo.DisplayTarget.EDIDManufactureCode != "NVS")
+            // Bug: Sometimes fails to detect as Surround display. Probably a bug on the NVAPI part. Should we try to resolve every target info to be sure?
+            if (pathTargetInfo.DisplayTarget.EDIDManufactureCode != "NVS" &&
+                pathTargetInfo.DisplayTarget.FriendlyName != "NV Surround")
+            {
                 return null;
+            }
+
             try
             {
                 var correspondingWindowsPathInfo =
@@ -73,7 +79,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                         .FirstOrDefault(
                             info =>
                                 info.TargetsInfo.Any(
-                                    targetInfo => targetInfo.DisplayTarget == pathTargetInfo.DisplayTarget));
+                                    targetInfo => targetInfo.DisplayTarget?.Equals(pathTargetInfo.DisplayTarget) == true));
                 if (correspondingWindowsPathInfo != null)
                 {
                     // If position is same, then the two paths are equal, after all position is whats important in path sources
@@ -87,16 +93,17 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                                     (info.Resolution.Height == correspondingWindowsPathInfo.Resolution.Height));
                     if (correspondingNvidiaPathInfo != null)
                     {
-                        // We now assume that there is only one target for a NVS path
+                        // We now assume that there is only one target for a NVS path, in an other word, for now, it is not possible to have a cloned surround display
                         var correspondingNvidiaTargetInfo = correspondingNvidiaPathInfo.TargetsInfo.FirstOrDefault();
                         if (correspondingNvidiaTargetInfo != null)
                         {
+                            // We also assume that the NVS monitor uses a similar display id to one of real physical monitors
                             var correspondingNvidiaTopology =
                                 GridTopology.GetGridTopologies()
                                     .FirstOrDefault(
-                                        topology =>
-                                            topology.Displays.Select(display => display.DisplayDevice)
-                                                .Contains(correspondingNvidiaTargetInfo.DisplayDevice));
+                                        topology => topology.Displays.Any(display =>
+                                            display.DisplayDevice.DisplayId ==
+                                            correspondingNvidiaTargetInfo.DisplayDevice.DisplayId));
                             if (correspondingNvidiaTopology != null)
                                 return new SurroundTopology(correspondingNvidiaTopology);
                         }
