@@ -112,12 +112,12 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         
         public static bool operator ==(SurroundTopology left, SurroundTopology right)
         {
-            return Equals(left, right);
+            return Equals(left, right) || left?.Equals(right) == true;
         }
         
         public static bool operator !=(SurroundTopology left, SurroundTopology right)
         {
-            return !Equals(left, right);
+            return !(left == right);
         }
 
         /// <inheritdoc />

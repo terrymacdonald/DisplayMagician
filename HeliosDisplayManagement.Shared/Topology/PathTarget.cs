@@ -58,12 +58,12 @@ namespace HeliosDisplayManagement.Shared.Topology
 
         public static bool operator ==(PathTarget left, PathTarget right)
         {
-            return Equals(left, right);
+            return Equals(left, right) || left?.Equals(right) == true;
         }
 
         public static bool operator !=(PathTarget left, PathTarget right)
         {
-            return !Equals(left, right);
+            return !(left == right);
         }
 
         /// <inheritdoc />

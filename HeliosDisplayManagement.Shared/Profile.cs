@@ -145,12 +145,12 @@ namespace HeliosDisplayManagement.Shared
 
         public static bool operator ==(Profile left, Profile right)
         {
-            return Equals(left, right);
+            return Equals(left, right) || left?.Equals(right) == true;
         }
 
         public static bool operator !=(Profile left, Profile right)
         {
-            return !Equals(left, right);
+            return !(left == right);
         }
 
         public static void RefreshActiveStatus()
