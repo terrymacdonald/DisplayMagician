@@ -340,13 +340,23 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
-		<row><td>HeliosDisplayManagement.Primary_output</td><td>{C98B2E12-CFE3-4F16-B5AE-4A0626E2CE8D}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.prim</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HeliosDisplayManagement.Shared.Primary_output</td><td>{E4522202-6521-4971-AD46-6CD79E264F53}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.shar</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HeliosDisplayManagement.ShellExtension.Primary_output</td><td>{6B5F56F1-052B-4A13-9C37-26C6FAEBA75F}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.shel</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>AllOtherFiles</td><td>{96C13FF7-EE4F-435A-BD06-49D9DD3FE87B}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>CircularProgressBar.dll</td><td>{6C32BF19-96AB-4CE5-B117-DF83B59DBFA1}</td><td>INSTALLDIR</td><td>8</td><td/><td>circularprogressbar.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>CommandLine.dll</td><td>{BBFBA96C-ECCC-42A8-85EE-E07F4DD829E9}</td><td>INSTALLDIR</td><td>8</td><td/><td>commandline.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>EDIDParser.dll</td><td>{393778B9-3275-4E47-9531-5724BF8288ED}</td><td>INSTALLDIR</td><td>8</td><td/><td>edidparser.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HeliosDisplayManagement.Shared.dll</td><td>{CDF3E565-CDC6-476A-97C0-45CFC7AC1A98}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.shar</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HeliosDisplayManagement.ShellExtension.dll</td><td>{599CB9F2-A9B2-47A2-AA5D-6E1D556AB631}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.shel</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HeliosDisplayManagement.exe</td><td>{C08B9EB7-4384-4F10-A1B6-BF6219DA78AB}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HtmlAgilityPack.dll</td><td>{B007A52E-8919-4F47-ABEB-3D75157C28DA}</td><td>INSTALLDIR</td><td>8</td><td/><td>htmlagilitypack.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISRegistryComponent_x64</td><td>{0DDC43B7-3C06-4771-A25E-C8703C1D4910}</td><td>INSTALLDIR</td><td>264</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISRegistryComponent_x86</td><td>{93342B85-8938-429F-8F25-24BEE9281E27}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>IconLib.dll</td><td>{729448C4-167D-4037-8B8B-B36EF8FD1033}</td><td>INSTALLDIR</td><td>8</td><td/><td>iconlib.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>srm.exe</td><td>{1BB54DB8-C279-4352-8400-07C4EDE7110A}</td><td>INSTALLDIR</td><td>8</td><td/><td>srm.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>IconLib.dll</td><td>{8D018671-7C2A-4D78-BD44-B073E5AF5D0E}</td><td>INSTALLDIR</td><td>8</td><td/><td>iconlib.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Newtonsoft.Json.dll</td><td>{83183DE3-98B7-4D58-B7ED-4446B67F44BD}</td><td>INSTALLDIR</td><td>8</td><td/><td>newtonsoft.json.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>NvAPIWrapper.Net.dll</td><td>{C6671E19-D856-4D9A-B605-2B7EFA5D126A}</td><td>INSTALLDIR</td><td>8</td><td/><td>nvapiwrapper.net.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>SharpShell.dll</td><td>{E71E3E18-3CA6-4B67-8C75-0BC7228A42CB}</td><td>INSTALLDIR</td><td>8</td><td/><td>sharpshell.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>WinFormAnimation.dll</td><td>{2CCD59CA-C906-4B3A-A97C-F8FF6E18337F}</td><td>INSTALLDIR</td><td>8</td><td/><td>winformanimation.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>WindowsDisplayAPI.dll</td><td>{E5DFC90D-6223-479E-A2E9-D97BA9A8C5C6}</td><td>INSTALLDIR</td><td>8</td><td/><td>windowsdisplayapi.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>srm.exe</td><td>{AEDCEF8A-A216-4304-A695-1EE869CF5FE7}</td><td>INSTALLDIR</td><td>8</td><td/><td>srm.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -559,23 +569,6 @@
 		<row><td>LicenseAgreement</td><td>ISPrintButton</td><td>PushButton</td><td>301</td><td>188</td><td>65</td><td>17</td><td>3</td><td/><td>##IDS_PRINT_BUTTON##</td><td>Agree</td><td/><td>0</td><td/><td/><td/></row>
 		<row><td>LicenseAgreement</td><td>Memo</td><td>ScrollableText</td><td>8</td><td>55</td><td>358</td><td>130</td><td>7</td><td/><td/><td/><td/><td>0</td><td/><td>&lt;ISProductFolder&gt;\Redist\0409\Eula.rtf</td><td/></row>
 		<row><td>LicenseAgreement</td><td>Next</td><td>PushButton</td><td>230</td><td>243</td><td>66</td><td>17</td><td>3</td><td/><td>##IDS_NEXT##</td><td>Cancel</td><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Back</td><td>PushButton</td><td>164</td><td>243</td><td>66</td><td>17</td><td>3</td><td/><td>##IDS_BACK##</td><td>Next</td><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Banner</td><td>Bitmap</td><td>0</td><td>0</td><td>374</td><td>44</td><td>1</td><td/><td/><td/><td/><td>0</td><td/><td/><td>NewBinary1</td></row>
-		<row><td>MaintenanceType</td><td>BannerLine</td><td>Line</td><td>0</td><td>44</td><td>374</td><td>0</td><td>1</td><td/><td/><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Branding1</td><td>Text</td><td>4</td><td>229</td><td>50</td><td>13</td><td>3</td><td/><td>##IDS_INSTALLSHIELD_FORMATTED##</td><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Branding2</td><td>Text</td><td>3</td><td>228</td><td>50</td><td>13</td><td>65537</td><td/><td>##IDS_INSTALLSHIELD##</td><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Cancel</td><td>PushButton</td><td>301</td><td>243</td><td>66</td><td>17</td><td>3</td><td/><td>##IDS_CANCEL##</td><td>RadioGroup</td><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>DlgDesc</td><td>Text</td><td>21</td><td>23</td><td>292</td><td>25</td><td>65539</td><td/><td>##IDS__IsMaintenanceDlg_MaitenanceOptions##</td><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>DlgLine</td><td>Line</td><td>48</td><td>234</td><td>326</td><td>0</td><td>1</td><td/><td/><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>DlgTitle</td><td>Text</td><td>13</td><td>6</td><td>292</td><td>25</td><td>65539</td><td/><td>##IDS__IsMaintenanceDlg_ProgramMaintenance##</td><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Ico1</td><td>Icon</td><td>35</td><td>75</td><td>24</td><td>24</td><td>5242881</td><td/><td/><td/><td/><td>0</td><td/><td/><td>NewBinary6</td></row>
-		<row><td>MaintenanceType</td><td>Ico2</td><td>Icon</td><td>35</td><td>135</td><td>24</td><td>24</td><td>5242881</td><td/><td/><td/><td/><td>0</td><td/><td/><td>NewBinary7</td></row>
-		<row><td>MaintenanceType</td><td>Ico3</td><td>Icon</td><td>35</td><td>195</td><td>24</td><td>24</td><td>5242881</td><td/><td/><td/><td/><td>0</td><td/><td/><td>NewBinary8</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>PushButton</td><td>230</td><td>243</td><td>66</td><td>17</td><td>3</td><td/><td>##IDS_NEXT##</td><td>Cancel</td><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>RadioGroup</td><td>RadioButtonGroup</td><td>21</td><td>55</td><td>290</td><td>170</td><td>3</td><td>_IsMaintenance</td><td/><td>Back</td><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Text1</td><td>Text</td><td>80</td><td>72</td><td>260</td><td>35</td><td>3</td><td/><td>##IDS__IsMaintenanceDlg_ChangeFeatures##</td><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Text2</td><td>Text</td><td>80</td><td>135</td><td>260</td><td>35</td><td>3</td><td/><td>##IDS__IsMaintenanceDlg_RepairMessage##</td><td/><td/><td>0</td><td/><td/><td/></row>
-		<row><td>MaintenanceType</td><td>Text3</td><td>Text</td><td>80</td><td>192</td><td>260</td><td>35</td><td>131075</td><td/><td>##IDS__IsMaintenanceDlg_RemoveProductName##</td><td/><td/><td>0</td><td/><td/><td/></row>
 		<row><td>MaintenanceWelcome</td><td>Back</td><td>PushButton</td><td>164</td><td>243</td><td>66</td><td>17</td><td>1</td><td/><td>##IDS_BACK##</td><td>Next</td><td/><td>0</td><td/><td/><td/></row>
 		<row><td>MaintenanceWelcome</td><td>Cancel</td><td>PushButton</td><td>301</td><td>243</td><td>66</td><td>17</td><td>3</td><td/><td>##IDS_CANCEL##</td><td>Back</td><td/><td>0</td><td/><td/><td/></row>
 		<row><td>MaintenanceWelcome</td><td>DlgLine</td><td>Line</td><td>0</td><td>234</td><td>374</td><td>0</td><td>1</td><td/><td/><td/><td/><td>0</td><td/><td/><td/></row>
@@ -874,7 +867,7 @@
 		<row><td>AdminWelcome</td><td>Next</td><td>NewDialog</td><td>AdminNetworkLocation</td><td>1</td><td>0</td></row>
 		<row><td>CancelSetup</td><td>No</td><td>EndDialog</td><td>Return</td><td>1</td><td>0</td></row>
 		<row><td>CancelSetup</td><td>Yes</td><td>EndDialog</td><td>Exit</td><td>1</td><td>2</td></row>
-		<row><td>CustomSetup</td><td>Back</td><td>NewDialog</td><td>MaintenanceType</td><td>Installed</td><td>0</td></row>
+		<row><td>CustomSetup</td><td>Back</td><td>NewDialog</td><td>NoDialog</td><td>Installed</td><td>0</td></row>
 		<row><td>CustomSetup</td><td>Back</td><td>NewDialog</td><td>SetupType</td><td>NOT Installed</td><td>0</td></row>
 		<row><td>CustomSetup</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
 		<row><td>CustomSetup</td><td>ChangeFolder</td><td>SelectionBrowse</td><td>InstallChangeFolder</td><td>1</td><td>0</td></row>
@@ -917,23 +910,8 @@
 		<row><td>LicenseAgreement</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
 		<row><td>LicenseAgreement</td><td>ISPrintButton</td><td>DoAction</td><td>ISPrint</td><td>1</td><td>0</td></row>
 		<row><td>LicenseAgreement</td><td>Next</td><td>NewDialog</td><td>DestinationFolder</td><td>AgreeToLicense = "Yes"</td><td>0</td></row>
-		<row><td>MaintenanceType</td><td>Back</td><td>NewDialog</td><td>MaintenanceWelcome</td><td>1</td><td>0</td></row>
-		<row><td>MaintenanceType</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>NewDialog</td><td>CustomSetup</td><td>_IsMaintenance = "Change"</td><td>12</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>NewDialog</td><td>ReadyToInstall</td><td>_IsMaintenance = "Reinstall"</td><td>13</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>NewDialog</td><td>ReadyToRemove</td><td>_IsMaintenance = "Remove"</td><td>11</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>Reinstall</td><td>ALL</td><td>_IsMaintenance = "Reinstall"</td><td>10</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>ReinstallMode</td><td>[ReinstallModeText]</td><td>_IsMaintenance = "Reinstall"</td><td>9</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType0]</td><td>Modify</td><td>_IsMaintenance = "Change"</td><td>2</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType0]</td><td>Repair</td><td>_IsMaintenance = "Reinstall"</td><td>1</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType1]</td><td>Modifying</td><td>_IsMaintenance = "Change"</td><td>3</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType1]</td><td>Repairing</td><td>_IsMaintenance = "Reinstall"</td><td>4</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType2]</td><td>modified</td><td>_IsMaintenance = "Change"</td><td>6</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType2]</td><td>repairs</td><td>_IsMaintenance = "Reinstall"</td><td>5</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType3]</td><td>modifies</td><td>_IsMaintenance = "Change"</td><td>7</td></row>
-		<row><td>MaintenanceType</td><td>Next</td><td>[ProgressType3]</td><td>repairs</td><td>_IsMaintenance = "Reinstall"</td><td>8</td></row>
 		<row><td>MaintenanceWelcome</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
-		<row><td>MaintenanceWelcome</td><td>Next</td><td>NewDialog</td><td>MaintenanceType</td><td>1</td><td>0</td></row>
+		<row><td>MaintenanceWelcome</td><td>Next</td><td>NewDialog</td><td>ReadyToRemove</td><td>1</td><td>0</td></row>
 		<row><td>MsiRMFilesInUse</td><td>Cancel</td><td>EndDialog</td><td>Exit</td><td>1</td><td>1</td></row>
 		<row><td>MsiRMFilesInUse</td><td>OK</td><td>EndDialog</td><td>Return</td><td>1</td><td>1</td></row>
 		<row><td>MsiRMFilesInUse</td><td>OK</td><td>RMShutdownAndRestart</td><td>0</td><td>RestartManagerOption="CloseRestart"</td><td>2</td></row>
@@ -946,7 +924,7 @@
 		<row><td>PatchWelcome</td><td>Next</td><td>ReinstallMode</td><td>omus</td><td>PATCH And REINSTALLMODE=""</td><td>2</td></row>
 		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>CustomSetup</td><td>Installed OR _IsSetupTypeMin = "Custom"</td><td>2</td></row>
 		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>DestinationFolder</td><td>NOT Installed AND _IsSetupTypeMin &lt;&gt; "Custom"</td><td>1</td></row>
-		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>MaintenanceType</td><td>Installed AND _IsMaintenance = "Reinstall"</td><td>3</td></row>
+		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>NoDialog</td><td>Installed AND _IsMaintenance = "Reinstall"</td><td>3</td></row>
 		<row><td>ReadyToInstall</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
 		<row><td>ReadyToInstall</td><td>InstallNow</td><td>EndDialog</td><td>Return</td><td>OutOfNoRbDiskSpace &lt;&gt; 1</td><td>0</td></row>
 		<row><td>ReadyToInstall</td><td>InstallNow</td><td>NewDialog</td><td>OutOfSpace</td><td>OutOfNoRbDiskSpace = 1</td><td>0</td></row>
@@ -967,7 +945,7 @@
 		<row><td>ReadyToInstall</td><td>InstallPerUser</td><td>[ProgressType1]</td><td>Installing</td><td>1</td><td>0</td></row>
 		<row><td>ReadyToInstall</td><td>InstallPerUser</td><td>[ProgressType2]</td><td>installed</td><td>1</td><td>0</td></row>
 		<row><td>ReadyToInstall</td><td>InstallPerUser</td><td>[ProgressType3]</td><td>installs</td><td>1</td><td>0</td></row>
-		<row><td>ReadyToRemove</td><td>Back</td><td>NewDialog</td><td>MaintenanceType</td><td>1</td><td>0</td></row>
+		<row><td>ReadyToRemove</td><td>Back</td><td>NewDialog</td><td>MaintenanceWelcome</td><td>1</td><td>0</td></row>
 		<row><td>ReadyToRemove</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
 		<row><td>ReadyToRemove</td><td>RemoveNow</td><td>EndDialog</td><td>Return</td><td>OutOfNoRbDiskSpace &lt;&gt; 1</td><td>2</td></row>
 		<row><td>ReadyToRemove</td><td>RemoveNow</td><td>NewDialog</td><td>OutOfSpace</td><td>OutOfNoRbDiskSpace = 1</td><td>2</td></row>
@@ -1032,14 +1010,15 @@
 		<row><td>ISSelfRegisterFinalize</td><td>1</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterFinalize</td><td/><td/></row>
 		<row><td>ISSetAllUsers</td><td>257</td><td>SetAllUsers.dll</td><td>SetAllUsers</td><td/><td/></row>
 		<row><td>ISUnSelfRegisterFiles</td><td>3073</td><td>ISSELFREG.DLL</td><td>ISUnSelfRegisterFiles</td><td/><td/></row>
-		<row><td>InstallShell</td><td>1042</td><td>srm.exe</td><td>install "[INSTALLDIR]HeliosDisplayManagement.ShellExtension.dll" -codebase</td><td/><td/></row>
+		<row><td>InstallShell</td><td>1042</td><td>srm.exe</td><td>install "[INSTALLDIR]HeliosDisplayManagement.ShellExtension.dll" -codebase</td><td>0</td><td/></row>
 		<row><td>PreventX86Installation</td><td>19</td><td/><td>This installer is only valid on the 32bit versions of the Windows.</td><td/><td/></row>
 		<row><td>SetARPINSTALLLOCATION</td><td>51</td><td>ARPINSTALLLOCATION</td><td>[INSTALLDIR]</td><td/><td/></row>
 		<row><td>SetAllUsersProfileNT</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%SystemRoot]\Profiles\All Users</td><td/><td/></row>
 		<row><td>SetX64INSTALLDIR</td><td>51</td><td>INSTALLDIR</td><td>[ProgramFiles64Folder]\Helios Display Management\</td><td/><td/></row>
 		<row><td>ShowMsiLog</td><td>226</td><td>SystemFolder</td><td>[SystemFolder]notepad.exe "[MsiLogFileLocation]"</td><td/><td>Shows Property-driven MSI Log</td></row>
-		<row><td>UninstallShell</td><td>1042</td><td>srm.exe</td><td>uninstall "[INSTALLDIR]HeliosDisplayManagement.ShellExtension.dll"</td><td/><td/></row>
+		<row><td>UninstallShell</td><td>1122</td><td>srm.exe</td><td>uninstall "[INSTALLDIR]HeliosDisplayManagement.ShellExtension.dll"</td><td>0</td><td/></row>
 		<row><td>setAllUsersProfile2K</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%ALLUSERSPROFILE]</td><td/><td/></row>
+		<row><td>setPublicProfileVista</td><td>51</td><td>PUBLIC</td><td>[%PUBLIC]</td><td/><td/></row>
 		<row><td>setUserProfileNT</td><td>51</td><td>USERPROFILE</td><td>[%USERPROFILE]</td><td/><td/></row>
 	</table>
 
@@ -1072,7 +1051,6 @@
 		<row><td>InstallChangeFolder</td><td>50</td><td>50</td><td>374</td><td>266</td><td>3</td><td>##IDS_PRODUCTNAME_INSTALLSHIELD##</td><td>Tail</td><td>OK</td><td>Cancel</td><td>Browse</td><td/><td>0</td><td/></row>
 		<row><td>InstallWelcome</td><td>50</td><td>50</td><td>374</td><td>266</td><td>3</td><td>##IDS_PRODUCTNAME_INSTALLSHIELD##</td><td>Next</td><td>Next</td><td>Cancel</td><td>Welcome Panel</td><td/><td>0</td><td/></row>
 		<row><td>LicenseAgreement</td><td>50</td><td>50</td><td>374</td><td>266</td><td>2</td><td>##IDS_PRODUCTNAME_INSTALLSHIELD##</td><td>Agree</td><td>Next</td><td>Cancel</td><td>License Agreement</td><td/><td>0</td><td/></row>
-		<row><td>MaintenanceType</td><td>50</td><td>50</td><td>374</td><td>266</td><td>3</td><td>##IDS_PRODUCTNAME_INSTALLSHIELD##</td><td>RadioGroup</td><td>Next</td><td>Cancel</td><td>Change, Reinstall, Remove</td><td/><td>0</td><td/></row>
 		<row><td>MaintenanceWelcome</td><td>50</td><td>50</td><td>374</td><td>266</td><td>3</td><td>##IDS_PRODUCTNAME_INSTALLSHIELD##</td><td>Next</td><td>Next</td><td>Cancel</td><td>Maintenance Welcome</td><td/><td>0</td><td/></row>
 		<row><td>MsiRMFilesInUse</td><td>50</td><td>50</td><td>374</td><td>266</td><td>19</td><td>##IDS_PRODUCTNAME_INSTALLSHIELD##</td><td>OK</td><td>OK</td><td>Cancel</td><td>RestartManager Files in Use</td><td/><td>0</td><td/></row>
 		<row><td>OutOfSpace</td><td>50</td><td>50</td><td>374</td><td>266</td><td>3</td><td>##IDS_PRODUCTNAME_INSTALLSHIELD##</td><td>Resume</td><td>Resume</td><td>Resume</td><td>Out Of Disk Space</td><td/><td>0</td><td/></row>
@@ -1118,6 +1096,7 @@
 		<row><td>LocalAppDataFolder</td><td>TARGETDIR</td><td>.:LocalA~1|LocalAppData</td><td/><td>0</td><td/></row>
 		<row><td>MY_PRODUCT_NAME</td><td>FALAHATI.NET</td><td>MYPROD~1|My Product Name</td><td/><td>0</td><td/></row>
 		<row><td>MyPicturesFolder</td><td>TARGETDIR</td><td>.:MyPict~1|MyPictures</td><td/><td>0</td><td/></row>
+		<row><td>PUBLIC</td><td>TARGETDIR</td><td>.:PUBLIC~1|Public</td><td/><td>0</td><td/></row>
 		<row><td>PersonalFolder</td><td>TARGETDIR</td><td>.:Personal</td><td/><td>0</td><td/></row>
 		<row><td>PrimaryVolumePath</td><td>TARGETDIR</td><td>.:Primar~1|PrimaryVolumePath</td><td/><td>0</td><td/></row>
 		<row><td>ProgramFiles64Folder</td><td>TARGETDIR</td><td>.:Prog64~1|Program Files 64</td><td/><td>0</td><td/></row>
@@ -1135,6 +1114,9 @@
 		<row><td>USERPROFILE</td><td>TARGETDIR</td><td>.:USERPR~1|UserProfile</td><td/><td>0</td><td/></row>
 		<row><td>WindowsFolder</td><td>TARGETDIR</td><td>.:Windows</td><td/><td>0</td><td/></row>
 		<row><td>WindowsVolume</td><td>TARGETDIR</td><td>.:WinRoot</td><td/><td>0</td><td/></row>
+		<row><td>falahati.net</td><td>ProgramMenuFolder</td><td>Falahati.net</td><td/><td>1</td><td/></row>
+		<row><td>helios_1_helios_display_management</td><td>falahati.net</td><td>HELIOS~1|Helios Display Management</td><td/><td>1</td><td/></row>
+		<row><td>srm.exe</td><td>TARGETDIR</td><td>srm.exe</td><td/><td>0</td><td/></row>
 	</table>
 
 	<table name="DrLocator">
@@ -1820,19 +1802,29 @@
 		<col def="S255">ISComments</col>
 		<col def="S255">ISFeatureCabName</col>
 		<col def="S255">ISProFeatureName</col>
-		<row><td>AnyCPU</td><td>Helios_Display_Management_Files</td><td>##IDS_FEATURE_DISPLAY_NAME2##</td><td/><td>4</td><td>1</td><td>INSTALLDIR</td><td>0</td><td/><td/><td/><td/></row>
-		<row><td>Helios_Display_Management_Files</td><td/><td>##IDS_FEATURE_DISPLAY_NAME1##</td><td/><td>2</td><td>1</td><td>INSTALLDIR</td><td>0</td><td/><td/><td/><td/></row>
-		<row><td>x64</td><td>Helios_Display_Management_Files</td><td>##IDS_FEATURE_DISPLAY_NAME4##</td><td/><td>6</td><td>1</td><td>INSTALLDIR</td><td>0</td><td>x64</td><td/><td/><td/></row>
-		<row><td>x86</td><td>Helios_Display_Management_Files</td><td>##IDS_FEATURE_DISPLAY_NAME3##</td><td/><td>6</td><td>1</td><td>INSTALLDIR</td><td>0</td><td>x86</td><td/><td/><td/></row>
+		<row><td>AnyCPU</td><td>Helios_Display_Management_Files</td><td>##IDS_FEATURE_DISPLAY_NAME2##</td><td/><td>0</td><td>1</td><td>INSTALLDIR</td><td>16</td><td/><td/><td/><td/></row>
+		<row><td>Helios_Display_Management_Files</td><td/><td>##IDS_FEATURE_DISPLAY_NAME1##</td><td/><td>0</td><td>1</td><td>INSTALLDIR</td><td>16</td><td/><td/><td/><td/></row>
+		<row><td>x64</td><td>Helios_Display_Management_Files</td><td>##IDS_FEATURE_DISPLAY_NAME4##</td><td/><td>0</td><td>1</td><td>INSTALLDIR</td><td>0</td><td>x64</td><td/><td/><td/></row>
+		<row><td>x86</td><td>Helios_Display_Management_Files</td><td>##IDS_FEATURE_DISPLAY_NAME3##</td><td/><td>0</td><td>1</td><td>INSTALLDIR</td><td>0</td><td>x86</td><td/><td/><td/></row>
 	</table>
 
 	<table name="FeatureComponents">
 		<col key="yes" def="s38">Feature_</col>
 		<col key="yes" def="s72">Component_</col>
-		<row><td>AnyCPU</td><td>HeliosDisplayManagement.Primary_output</td></row>
-		<row><td>AnyCPU</td><td>HeliosDisplayManagement.Shared.Primary_output</td></row>
-		<row><td>AnyCPU</td><td>HeliosDisplayManagement.ShellExtension.Primary_output</td></row>
+		<row><td>AnyCPU</td><td>AllOtherFiles</td></row>
+		<row><td>AnyCPU</td><td>CircularProgressBar.dll</td></row>
+		<row><td>AnyCPU</td><td>CommandLine.dll</td></row>
+		<row><td>AnyCPU</td><td>EDIDParser.dll</td></row>
+		<row><td>AnyCPU</td><td>HeliosDisplayManagement.Shared.dll</td></row>
+		<row><td>AnyCPU</td><td>HeliosDisplayManagement.ShellExtension.dll</td></row>
+		<row><td>AnyCPU</td><td>HeliosDisplayManagement.exe</td></row>
+		<row><td>AnyCPU</td><td>HtmlAgilityPack.dll</td></row>
 		<row><td>AnyCPU</td><td>IconLib.dll</td></row>
+		<row><td>AnyCPU</td><td>Newtonsoft.Json.dll</td></row>
+		<row><td>AnyCPU</td><td>NvAPIWrapper.Net.dll</td></row>
+		<row><td>AnyCPU</td><td>SharpShell.dll</td></row>
+		<row><td>AnyCPU</td><td>WinFormAnimation.dll</td></row>
+		<row><td>AnyCPU</td><td>WindowsDisplayAPI.dll</td></row>
 		<row><td>AnyCPU</td><td>srm.exe</td></row>
 		<row><td>x64</td><td>ISRegistryComponent_x64</td></row>
 		<row><td>x86</td><td>ISRegistryComponent_x86</td></row>
@@ -1850,11 +1842,21 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
-		<row><td>heliosdisplaymanagement.prim</td><td>HeliosDisplayManagement.Primary_output</td><td>HeliosDisplayManagement.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;HeliosDisplayManagement&gt;|Built</td><td>3</td><td/></row>
-		<row><td>heliosdisplaymanagement.shar</td><td>HeliosDisplayManagement.Shared.Primary_output</td><td>HeliosDisplayManagement.Shared.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;HeliosDisplayManagement.Shared&gt;|Built</td><td>3</td><td/></row>
-		<row><td>heliosdisplaymanagement.shel</td><td>HeliosDisplayManagement.ShellExtension.Primary_output</td><td>HeliosDisplayManagement.ShellExtension.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;HeliosDisplayManagement.ShellExtension&gt;|Built</td><td>3</td><td/></row>
-		<row><td>iconlib.dll</td><td>IconLib.dll</td><td>IconLib.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;VSSolutionFolder&gt;\packages\IconLib.Unofficial.0.73.0\lib\net20\IconLib.dll</td><td>1</td><td/></row>
-		<row><td>srm.exe</td><td>srm.exe</td><td>srm.exe</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;VSSolutionFolder&gt;\packages\SharpShellTools.2.2.0.0\lib\srm.exe</td><td>1</td><td/></row>
+		<row><td>circularprogressbar.dll</td><td>CircularProgressBar.dll</td><td>CIRCUL~1.DLL|CircularProgressBar.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\CircularProgressBar.dll</td><td>1</td><td/></row>
+		<row><td>commandline.dll</td><td>CommandLine.dll</td><td>COMMAN~1.DLL|CommandLine.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\CommandLine.dll</td><td>1</td><td/></row>
+		<row><td>edidparser.dll</td><td>EDIDParser.dll</td><td>EDIDPA~1.DLL|EDIDParser.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\EDIDParser.dll</td><td>1</td><td/></row>
+		<row><td>heliosdisplaymanagement.exe</td><td>HeliosDisplayManagement.exe</td><td>HELIOS~1.EXE|HeliosDisplayManagement.exe</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\HeliosDisplayManagement.exe</td><td>1</td><td/></row>
+		<row><td>heliosdisplaymanagement.exe.</td><td>AllOtherFiles</td><td>HELIOS~1.CON|HeliosDisplayManagement.exe.config</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\HeliosDisplayManagement.exe.config</td><td>1</td><td/></row>
+		<row><td>heliosdisplaymanagement.shar</td><td>HeliosDisplayManagement.Shared.dll</td><td>HELIOS~1.DLL|HeliosDisplayManagement.Shared.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\HeliosDisplayManagement.Shared.dll</td><td>1</td><td/></row>
+		<row><td>heliosdisplaymanagement.shel</td><td>HeliosDisplayManagement.ShellExtension.dll</td><td>HELIOS~1.DLL|HeliosDisplayManagement.ShellExtension.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\HeliosDisplayManagement.ShellExtension.dll</td><td>1</td><td/></row>
+		<row><td>htmlagilitypack.dll</td><td>HtmlAgilityPack.dll</td><td>HTMLAG~1.DLL|HtmlAgilityPack.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\HtmlAgilityPack.dll</td><td>1</td><td/></row>
+		<row><td>iconlib.dll</td><td>IconLib.dll</td><td>IconLib.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\IconLib.dll</td><td>1</td><td/></row>
+		<row><td>newtonsoft.json.dll</td><td>Newtonsoft.Json.dll</td><td>NEWTON~1.DLL|Newtonsoft.Json.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\Newtonsoft.Json.dll</td><td>1</td><td/></row>
+		<row><td>nvapiwrapper.net.dll</td><td>NvAPIWrapper.Net.dll</td><td>NVAPIW~1.DLL|NvAPIWrapper.Net.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\NvAPIWrapper.Net.dll</td><td>1</td><td/></row>
+		<row><td>sharpshell.dll</td><td>SharpShell.dll</td><td>SHARPS~1.DLL|SharpShell.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\SharpShell.dll</td><td>1</td><td/></row>
+		<row><td>srm.exe</td><td>srm.exe</td><td>srm.exe</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_LIB_FILES&gt;\srm.exe</td><td>1</td><td/></row>
+		<row><td>windowsdisplayapi.dll</td><td>WindowsDisplayAPI.dll</td><td>WINDOW~1.DLL|WindowsDisplayAPI.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\WindowsDisplayAPI.dll</td><td>1</td><td/></row>
+		<row><td>winformanimation.dll</td><td>WinFormAnimation.dll</td><td>WINFOR~1.DLL|WinFormAnimation.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_RELEASE_FILES&gt;\WinFormAnimation.dll</td><td>1</td><td/></row>
 	</table>
 
 	<table name="FileSFPCatalog">
@@ -1870,6 +1872,10 @@
 	<table name="ISAssistantTag">
 		<col key="yes" def="s72">Tag</col>
 		<col def="S255">Data</col>
+		<row><td>BiildCDROMEnabled</td><td/></row>
+		<row><td>BiildInternetEnabled</td><td/></row>
+		<row><td>BiildSingleExeEnabled</td><td/></row>
+		<row><td>BiildSingleMSIEnabled</td><td/></row>
 		<row><td>PROJECT_ASSISTANT_DEFAULT_FEATURE</td><td>Helios_Display_Management_Files</td></row>
 		<row><td>PROJECT_ASSISTANT_FEATURES</td><td>Selectable</td></row>
 		<row><td>RegistryPageEnabled</td><td>Yes</td></row>
@@ -1999,13 +2005,23 @@
 		<col def="S0">FTPLocation</col>
 		<col def="S0">HTTPLocation</col>
 		<col def="S0">Miscellaneous</col>
-		<row><td>HeliosDisplayManagement.Primary_output</td><td/><td/><td>_7A28F7A6_BDE9_4252_A25E_60AFA5E43359_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>HeliosDisplayManagement.Shared.Primary_output</td><td/><td/><td>_CC5AEDDC_6626_4500_B17B_F6E19D4D0B33_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>HeliosDisplayManagement.ShellExtension.Primary_output</td><td/><td/><td>_CD075F61_4D86_4BEC_B0D9_8C55614C2932_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>AllOtherFiles</td><td/><td/><td>_9FF41C68_AA3D_4278_ADA3_317D83340593_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>CircularProgressBar.dll</td><td/><td/><td>_F90C1C78_BA11_4054_9AEF_1E739C79580B_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>CommandLine.dll</td><td/><td/><td>_C6573A3C_C756_42C4_9A74_C23B3BA58D93_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>EDIDParser.dll</td><td/><td/><td>_DC7E4263_6F7D_41CF_ABC2_94602B395012_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>HeliosDisplayManagement.Shared.dll</td><td/><td/><td>_A691C9D8_C626_4EEE_9C10_0921BD3A4841_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>HeliosDisplayManagement.ShellExtension.dll</td><td/><td/><td>_C9983587_0C98_4C2B_B77D_A8B7641968CD_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>HeliosDisplayManagement.exe</td><td/><td/><td>_6E3F482C_C666_454E_A110_5385D896FAFB_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>HtmlAgilityPack.dll</td><td/><td/><td>_16530768_FD43_47DD_9EA7_4790CB7389B2_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISRegistryComponent_x64</td><td/><td/><td>_D142D511_E2BA_42E1_B680_E016E3A3FF89_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISRegistryComponent_x86</td><td/><td/><td>_B1FD1BCB_DD7D_4D5D_859B_1BCE162317CD_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>IconLib.dll</td><td/><td/><td>_7D10CCD1_528B_491E_85A1_3924DFA542B9_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>srm.exe</td><td/><td/><td>_54D1E4CD_1616_494E_B862_27F31029F6F8_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>IconLib.dll</td><td/><td/><td>_5AB95C66_5860_49B9_BAD8_B4BE547EA9BE_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>Newtonsoft.Json.dll</td><td/><td/><td>_4536E971_BE17_49EE_9FD7_D362D96391A1_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>NvAPIWrapper.Net.dll</td><td/><td/><td>_24DDB8F6_312E_4231_A75F_5F16BAB02B41_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>SharpShell.dll</td><td/><td/><td>_18DC7FEF_1D2B_49AD_A602_863EB15C2269_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>WinFormAnimation.dll</td><td/><td/><td>_64281AC9_B32B_4F81_A05D_550D8C6DB58D_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>WindowsDisplayAPI.dll</td><td/><td/><td>_239E5F9A_0E45_4898_88EC_33BDA74BFB37_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>srm.exe</td><td/><td/><td>_8EDE9649_BFD0_4624_863D_1062074D9F9F_FILTER</td><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="ISCustomActionReference">
@@ -2309,13 +2325,12 @@
 		<col def="S255">TestValue</col>
 		<col def="i4">Type</col>
 		<row><td>CommonFilesFolder</td><td/><td/><td>1</td></row>
-		<row><td>HeliosDisplayManagement</td><td>HeliosDisplayManagement\HeliosDisplayManagement.csproj</td><td/><td>2</td></row>
-		<row><td>HeliosDisplayManagement.Shared</td><td>HeliosDisplayManagement.Shared\HeliosDisplayManagement.Shared.csproj</td><td/><td>2</td></row>
-		<row><td>HeliosDisplayManagement.ShellExtension</td><td>HeliosDisplayManagement.ShellExtension\HeliosDisplayManagement.ShellExtension.csproj</td><td/><td>2</td></row>
 		<row><td>ISPROJECTDIR</td><td/><td/><td>1</td></row>
 		<row><td>ISProductFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectFolder</td><td/><td/><td>1</td></row>
+		<row><td>PATH_TO_LIB_FILES</td><td>&lt;ISProjectFolder&gt;\..\packages\SharpShellTools.2.2.1\lib</td><td/><td>2</td></row>
+		<row><td>PATH_TO_RELEASE_FILES</td><td>&lt;ISProjectFolder&gt;\..\Release</td><td/><td>2</td></row>
 		<row><td>ProgramFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>SystemFolder</td><td/><td/><td>1</td></row>
 		<row><td>WindowsFolder</td><td/><td/><td>1</td></row>
@@ -2627,6 +2642,19 @@
 		<col def="S255">ISReleaseFlags</col>
 	</table>
 
+	<table name="ISSetupType">
+		<col key="yes" def="s38">ISSetupType</col>
+		<col def="L255">Description</col>
+		<col def="L255">Display_Name</col>
+		<col def="i2">Display</col>
+		<col def="S255">Comments</col>
+	</table>
+
+	<table name="ISSetupTypeFeatures">
+		<col key="yes" def="s38">ISSetupType_</col>
+		<col key="yes" def="s38">Feature_</col>
+	</table>
+
 	<table name="ISStorages">
 		<col key="yes" def="s72">Name</col>
 		<col def="S0">ISBuildSourcePath</col>
@@ -2639,15 +2667,53 @@
 		<col def="I2">Encoded</col>
 		<col def="S0">Comment</col>
 		<col def="I4">TimeStamp</col>
-		<row><td>COMPANY_NAME</td><td>1033</td><td>Falahati.net</td><td>0</td><td/><td>1411746001</td></row>
+		<row><td>COMPANY_NAME</td><td>1033</td><td>Falahati.net</td><td>0</td><td/><td>883354416</td></row>
 		<row><td>DN_AlwaysInstall</td><td>1033</td><td>Always Install</td><td>0</td><td/><td>178626753</td></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ACROBAT5FOLDER</td><td>1033</td><td>   Adobe Acrobat 5 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ADOBEREADER10FOLDER</td><td>1033</td><td>Adobe Reader 10 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ADOBEREADER11FOLDER</td><td>1033</td><td>Adobe Reader 11 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ADOBEREADER6FOLDER</td><td>1033</td><td>Adobe Reader 6 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ADOBEREADER7FOLDER</td><td>1033</td><td>Adobe Reader 7 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ADOBEREADER8FOLDER</td><td>1033</td><td>Adobe Reader 8 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ADOBEREADER9FOLDER</td><td>1033</td><td>Adobe Reader 9 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_ADOBEREADERDCFOLDER</td><td>1033</td><td>Adobe Reader DC needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_COLOR</td><td>1033</td><td>The color settings of your system are not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION10</td><td>1033</td><td>Microsoft .NET Framework 1.0 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION11</td><td>1033</td><td>Microsoft .NET Framework 1.1 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION20</td><td>1033</td><td>Microsoft .NET Framework 2.0 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION20SP1</td><td>1033</td><td>Microsoft .NET Framework 2.0 SP1 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION30</td><td>1033</td><td>Microsoft .NET Framework 3.0 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION30SP1</td><td>1033</td><td>Microsoft .NET Framework 3.0 SP1 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION35</td><td>1033</td><td>Microsoft .NET Framework 3.5 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION35SP1</td><td>1033</td><td>Microsoft .NET Framework 3.5 SP1 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION40CLIENT</td><td>1033</td><td>Microsoft .NET Framework 4.0 Client Package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION40FULL</td><td>1033</td><td>Microsoft .NET Framework 4.0 Full package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION451FULL</td><td>1033</td><td>Microsoft .NET Framework 4.5.1 Full package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td>1411768529</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION452FULL</td><td>1033</td><td>Microsoft .NET Framework 4.5.2 Full package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td>1411762385</td></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION45FULL</td><td>1033</td><td>Microsoft .NET Framework 4.5 Full package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION461FULL</td><td>1033</td><td>Microsoft .NET Framework 4.6.1 Full package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION46FULL</td><td>1033</td><td>Microsoft .NET Framework 4.6 Full package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_IE10FOUND</td><td>1033</td><td>Internet Explorer 10 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_IE11FOUND</td><td>1033</td><td>Internet Explorer 11 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_IE5FOUND</td><td>1033</td><td>Internet Explorer 5 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_IE6FOUND</td><td>1033</td><td>Internet Explorer 6 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_IE7FOUND</td><td>1033</td><td>Internet Explorer 7 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_IE8FOUND</td><td>1033</td><td>Internet Explorer 8 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_IE9FOUND</td><td>1033</td><td>Internet Explorer 9 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MDAC27FOUND</td><td>1033</td><td>MDAC 2.7 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MDACFOUND</td><td>1033</td><td>MDAC 2.6 SP2 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MSOFFICE2003</td><td>1033</td><td>Microsoft Office 2003 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MSOFFICE2007</td><td>1033</td><td>Microsoft Office 2007 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MSOFFICE2010</td><td>1033</td><td>Microsoft Office 2010 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MSOFFICE2013x64</td><td>1033</td><td>Microsoft Office 2013 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MSOFFICE2013x86</td><td>1033</td><td>Microsoft Office 2013 or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_MSOFFICE2016</td><td>1033</td><td>Microsoft Office 2016 Click-to-Run or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_OS</td><td>1033</td><td>The operating system is not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_POWERSHELLVERSION</td><td>1033</td><td>Windows PowerShell needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_PROCESSOR</td><td>1033</td><td>The processor is not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_SCREEN</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
+		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_SQLEXP2008SP1FOUND</td><td>1033</td><td>SQL Server 2008 Express SP1 needs to be installed for this installation to continue.</td><td>0</td><td/><td/></row>
 		<row><td>IDPROP_SETUPTYPE_COMPACT</td><td>1033</td><td>Compact</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDPROP_SETUPTYPE_COMPACT_DESC</td><td>1033</td><td>Compact Description</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDPROP_SETUPTYPE_COMPLETE</td><td>1033</td><td>Complete</td><td>0</td><td/><td>178626753</td></row>
@@ -2823,7 +2889,7 @@
 		<row><td>IDS_ERROR_119</td><td>1033</td><td>Error unregistering COM+ application.  Contact your support personnel for more information.</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS_ERROR_12</td><td>1033</td><td>Action start [Time]: [1].</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS_ERROR_120</td><td>1033</td><td>Removing older versions of this application</td><td>0</td><td/><td>178626753</td></row>
-		<row><td>IDS_ERROR_121</td><td>1033</td><td>Preparing to remove older versions of this application</td><td>0</td><td/><td>178626753</td></row>
+		<row><td>IDS_ERROR_121</td><td>1033</td><td>Preparing to remove older versions of this application</td><td>0</td><td/><td/></row>
 		<row><td>IDS_ERROR_122</td><td>1033</td><td>Error applying patch to file [2].  It has probably been updated by other means, and can no longer be modified by this patch.  For more information contact your patch vendor.  {{System Error: [3]}}</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS_ERROR_123</td><td>1033</td><td>[2] cannot install one of its required products. Contact your technical support group.  {{System Error: [3].}}</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS_ERROR_124</td><td>1033</td><td>The older version of [2] cannot be removed.  Contact your technical support group.  {{System Error [3].}}</td><td>0</td><td/><td>178626753</td></row>
@@ -3460,6 +3526,7 @@
 		<row><td>IDS_SHORTCUT_DISPLAY_NAME1</td><td>1033</td><td>LAUNCH~1.EXE|Launch srm.exe</td><td>0</td><td/><td>1411754257</td></row>
 		<row><td>IDS_SHORTCUT_DISPLAY_NAME2</td><td>1033</td><td>LAUNCH~1.EXE|Launch srm.exe</td><td>0</td><td/><td>1411717425</td></row>
 		<row><td>IDS_SHORTCUT_DISPLAY_NAME3</td><td>1033</td><td>HELIOS~1|Helios Display Management</td><td>0</td><td/><td>1411742929</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME4</td><td>1033</td><td>HELIOS~1|Helios Display Management</td><td>0</td><td/><td>883346256</td></row>
 		<row><td>IDS_SQLBROWSE_INTRO</td><td>1033</td><td>From the list of servers below, select the database server you would like to target.</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS_SQLBROWSE_INTRO_DB</td><td>1033</td><td>From the list of catalog names below, select the database catalog you would like to target.</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS_SQLBROWSE_INTRO_TEMPLATE</td><td>1033</td><td>[IS_SQLBROWSE_INTRO]</td><td>0</td><td/><td>178626753</td></row>
@@ -3567,6 +3634,10 @@
 		<row><td>IDS__IsAdminInstallPoint_NetworkLocationFormatted</td><td>1033</td><td>{&amp;MSSansBold8}Network Location</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsAdminInstallPoint_SpecifyNetworkLocation</td><td>1033</td><td>Specify a network location for the server image of the product.</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsBrowseButton</td><td>1033</td><td>&amp;Browse...</td><td>0</td><td/><td>178626753</td></row>
+		<row><td>IDS__IsBrowseCertficateDlg_CertificatePath</td><td>1033</td><td>&amp;SSL Certificate Path:</td><td>0</td><td/><td/></row>
+		<row><td>IDS__IsBrowseCertficateDlg_Description</td><td>1033</td><td>SSL Certificate settings.</td><td>0</td><td/><td/></row>
+		<row><td>IDS__IsBrowseCertficateDlg_Password</td><td>1033</td><td>SSL Certificate &amp;Password:</td><td>0</td><td/><td/></row>
+		<row><td>IDS__IsBrowseCertficateDlg_Title</td><td>1033</td><td>{&amp;MSSansBold8}Configure SSL for IIS.</td><td>0</td><td/><td/></row>
 		<row><td>IDS__IsBrowseFolderDlg_11</td><td>1033</td><td/><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsBrowseFolderDlg_4</td><td>1033</td><td/><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsBrowseFolderDlg_8</td><td>1033</td><td/><td>0</td><td/><td>178626753</td></row>
@@ -3613,7 +3684,7 @@
 		<row><td>IDS__IsErrorDlg_Yes</td><td>1033</td><td>&amp;Yes</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsExitDialog_Finish</td><td>1033</td><td>&amp;Finish</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsExitDialog_InstallSuccess</td><td>1033</td><td>The InstallShield Wizard has successfully installed [ProductName]. Click Finish to exit the wizard.</td><td>0</td><td/><td>178626753</td></row>
-		<row><td>IDS__IsExitDialog_LaunchProgram</td><td>1033</td><td>Launch [ProductName]</td><td>0</td><td/><td>1411766673</td></row>
+		<row><td>IDS__IsExitDialog_LaunchProgram</td><td>1033</td><td>Launch [ProductName]</td><td>0</td><td/><td>883307376</td></row>
 		<row><td>IDS__IsExitDialog_ShowReadMe</td><td>1033</td><td>Show the readme file</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsExitDialog_UninstallSuccess</td><td>1033</td><td>The InstallShield Wizard has successfully uninstalled [ProductName]. Click Finish to exit the wizard.</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__IsExitDialog_Update_InternetConnection</td><td>1033</td><td>Your Internet connection can be used to make sure that you have the latest updates.</td><td>0</td><td/><td>178626753</td></row>
@@ -3750,12 +3821,13 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<row><td>IDS__TargetReq_DESC_PROCESSOR</td><td>1033</td><td>The processor is not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>178626753</td></row>
-		<row><td>ID_STRING1</td><td>1033</td><td>http://www.Falahati.net</td><td>0</td><td/><td>1411748049</td></row>
+		<row><td>ID_STRING1</td><td>1033</td><td>http://www.falahati.net</td><td>0</td><td/><td>1420216128</td></row>
 		<row><td>ID_STRING2</td><td>1033</td><td>Helios Display Management</td><td>0</td><td/><td>1411727793</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>Helios Display Management Installation</td><td>0</td><td/><td>1411723825</td></row>
 		<row><td>ID_STRING4</td><td>1033</td><td>Github Issue Tracker</td><td>0</td><td/><td>1411756593</td></row>
-		<row><td>ID_STRING5</td><td>1033</td><td>https://github.com/falahati/HeliosDisplayManagement/issues</td><td>0</td><td/><td>1411760689</td></row>
+		<row><td>ID_STRING5</td><td>1033</td><td>https://github.com/falahati/HeliosDisplayManagement/issues</td><td>0</td><td/><td>883354416</td></row>
 		<row><td>ID_STRING6</td><td>1033</td><td>HELIOS~1|Helios Display Management</td><td>0</td><td/><td>1411736785</td></row>
+		<row><td>ID_STRING7</td><td>1033</td><td>NewFeature1</td><td>0</td><td/><td>883302960</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>178626753</td></row>
 	</table>
 
@@ -3879,6 +3951,7 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I2">ISIconIndex</col>
 		<row><td>ARPPRODUCTICON.exe</td><td/><td>&lt;ISProductFolder&gt;\redist\Language Independent\OS Independent\setupicon.ico</td><td>0</td></row>
+		<row><td>HeliosDisplayManag_BA5F44F6682E43ECB8CC91E2D184DF74.exe</td><td/><td>E:\Personal\Open-Source Projects\HeliosDisplayManagement\Release\HeliosDisplayManagement.exe</td><td>0</td></row>
 	</table>
 
 	<table name="IniFile">
@@ -3927,7 +4000,7 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<row><td>ISUnSelfRegisterFiles</td><td/><td>2202</td><td/><td/></row>
 		<row><td>InstallFiles</td><td/><td>4000</td><td>InstallFiles</td><td/></row>
 		<row><td>InstallFinalize</td><td/><td>6600</td><td>InstallFinalize</td><td/></row>
-		<row><td>InstallInitialize</td><td/><td>1501</td><td>InstallInitialize</td><td/></row>
+		<row><td>InstallInitialize</td><td/><td>1502</td><td>InstallInitialize</td><td/></row>
 		<row><td>InstallODBC</td><td/><td>5400</td><td>InstallODBC</td><td/></row>
 		<row><td>InstallServices</td><td>VersionNT</td><td>5800</td><td>InstallServices</td><td/></row>
 		<row><td>InstallShell</td><td>NOT Installed</td><td>4045</td><td/><td/></row>
@@ -3957,7 +4030,7 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<row><td>RegisterUser</td><td/><td>6000</td><td>RegisterUser</td><td/></row>
 		<row><td>RemoveDuplicateFiles</td><td/><td>3400</td><td>RemoveDuplicateFiles</td><td/></row>
 		<row><td>RemoveEnvironmentStrings</td><td/><td>3300</td><td>RemoveEnvironmentStrings</td><td/></row>
-		<row><td>RemoveExistingProducts</td><td/><td>1410</td><td>RemoveExistingProducts</td><td/></row>
+		<row><td>RemoveExistingProducts</td><td/><td>1500</td><td>RemoveExistingProducts</td><td/></row>
 		<row><td>RemoveFiles</td><td/><td>3500</td><td>RemoveFiles</td><td/></row>
 		<row><td>RemoveFolders</td><td/><td>3600</td><td>RemoveFolders</td><td/></row>
 		<row><td>RemoveIniValues</td><td/><td>3100</td><td>RemoveIniValues</td><td/></row>
@@ -3974,7 +4047,7 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<row><td>SetX64INSTALLDIR</td><td>ISReleaseFlags&gt;&lt;"x64"</td><td>6</td><td/><td/></row>
 		<row><td>StartServices</td><td>VersionNT</td><td>5900</td><td>StartServices</td><td/></row>
 		<row><td>StopServices</td><td>VersionNT</td><td>1900</td><td>StopServices</td><td/></row>
-		<row><td>UninstallShell</td><td>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</td><td>3050</td><td/><td/></row>
+		<row><td>UninstallShell</td><td>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</td><td>1950</td><td/><td/></row>
 		<row><td>UnpublishComponents</td><td/><td>1700</td><td>UnpublishComponents</td><td/></row>
 		<row><td>UnpublishFeatures</td><td/><td>1800</td><td>UnpublishFeatures</td><td/></row>
 		<row><td>UnregisterClassInfo</td><td/><td>2700</td><td>UnregisterClassInfo</td><td/></row>
@@ -3989,6 +4062,7 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<row><td>WriteIniValues</td><td/><td>5100</td><td>WriteIniValues</td><td/></row>
 		<row><td>WriteRegistryValues</td><td/><td>5000</td><td>WriteRegistryValues</td><td/></row>
 		<row><td>setAllUsersProfile2K</td><td>VersionNT &gt;= 500</td><td>980</td><td/><td/></row>
+		<row><td>setPublicProfileVista</td><td>VersionNT &gt;= 600</td><td>981</td><td/><td/></row>
 		<row><td>setUserProfileNT</td><td>VersionNT</td><td>960</td><td/><td/></row>
 	</table>
 
@@ -3997,10 +4071,10 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<col def="S0">Value</col>
 		<row><td>ActiveLanguage</td><td>1033</td></row>
 		<row><td>Comments</td><td/></row>
-		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="513e5dc4db1c7c1eb8ad05ec6c08aa82">
-eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
+		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="d6eb23e3af2ee1f1fd63e7787908e7a2">
+eAA2ADQAIABSAGUAbABlAGEAcwBlAAEAeAA2ADQAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 			</td></row>
-		<row><td>DefaultProductConfiguration</td><td>x64 Configuration</td></row>
+		<row><td>DefaultProductConfiguration</td><td>x86 Configuration</td></row>
 		<row><td>EnableSwidtag</td><td>1</td></row>
 		<row><td>ISCompilerOption_CompileBeforeBuild</td><td>1</td></row>
 		<row><td>ISCompilerOption_Debug</td><td>0</td></row>
@@ -4025,7 +4099,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>SaveAsSchema</td><td/></row>
 		<row><td>SccEnabled</td><td>0</td></row>
 		<row><td>SccPath</td><td/></row>
-		<row><td>SchemaVersion</td><td>777</td></row>
+		<row><td>SchemaVersion</td><td>779</td></row>
 		<row><td>Type</td><td>MSI</td></row>
 	</table>
 
@@ -4063,6 +4137,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>SetupResume</td><td>Installed And (RESUME Or Preselected) And Not PATCH</td><td>1220</td><td>SetupResume</td><td/></row>
 		<row><td>ValidateProductID</td><td/><td>700</td><td>ValidateProductID</td><td/></row>
 		<row><td>setAllUsersProfile2K</td><td>VersionNT &gt;= 500</td><td>980</td><td/><td/></row>
+		<row><td>setPublicProfileVista</td><td>VersionNT &gt;= 600</td><td>981</td><td/><td/></row>
 		<row><td>setUserProfileNT</td><td>VersionNT</td><td>960</td><td/><td/></row>
 	</table>
 
@@ -4324,7 +4399,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>ALLUSERS</td><td>1</td><td/></row>
 		<row><td>ARPCONTACT</td><td>##ID_STRING4##</td><td/></row>
 		<row><td>ARPHELPLINK</td><td>##ID_STRING5##</td><td/></row>
-		<row><td>ARPNOREMOVE</td><td>1</td><td/></row>
+		<row><td>ARPNOMODIFY</td><td>1</td><td/></row>
 		<row><td>ARPNOREPAIR</td><td>1</td><td/></row>
 		<row><td>ARPPRODUCTICON</td><td>ARPPRODUCTICON.exe</td><td/></row>
 		<row><td>ARPURLINFOABOUT</td><td>##ID_STRING1##</td><td/></row>
@@ -4362,6 +4437,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>IS_SQLSERVER_SERVER</td><td/><td/></row>
 		<row><td>IS_SQLSERVER_USERNAME</td><td>sa</td><td/></row>
 		<row><td>InstallChoice</td><td>AR</td><td/></row>
+		<row><td>MSIFASTINSTALL</td><td>0</td><td/></row>
 		<row><td>Manufacturer</td><td>##COMPANY_NAME##</td><td/></row>
 		<row><td>PIDTemplate</td><td>12345&lt;###-%%%%%%%&gt;@@@@@</td><td/></row>
 		<row><td>PROGMSG_IIS_CREATEAPPPOOL</td><td>##IDS_PROGMSG_IIS_CREATEAPPPOOL##</td><td/></row>
@@ -4391,7 +4467,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>ProductID</td><td>none</td><td/></row>
 		<row><td>ProductLanguage</td><td>1033</td><td/></row>
 		<row><td>ProductName</td><td>Helios Display Management</td><td/></row>
-		<row><td>ProductVersion</td><td>0.9.1</td><td/></row>
+		<row><td>ProductVersion</td><td>0.9.3</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>
@@ -4432,9 +4508,8 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>ApplicationUsers</td><td>2</td><td>OnlyCurrentUser</td><td>1</td><td>23</td><td>290</td><td>14</td><td>##IDS__IsRegisterUserDlg_OnlyMe##</td><td/><td/></row>
 		<row><td>RestartManagerOption</td><td>1</td><td>CloseRestart</td><td>6</td><td>9</td><td>331</td><td>14</td><td>##IDS__IsMsiRMFilesInUse_CloseRestart##</td><td/><td/></row>
 		<row><td>RestartManagerOption</td><td>2</td><td>Reboot</td><td>6</td><td>21</td><td>331</td><td>14</td><td>##IDS__IsMsiRMFilesInUse_RebootAfter##</td><td/><td/></row>
-		<row><td>_IsMaintenance</td><td>1</td><td>Change</td><td>0</td><td>0</td><td>290</td><td>14</td><td>##IDS__IsMaintenanceDlg_Modify##</td><td/><td/></row>
-		<row><td>_IsMaintenance</td><td>2</td><td>Reinstall</td><td>0</td><td>60</td><td>290</td><td>14</td><td>##IDS__IsMaintenanceDlg_Repair##</td><td/><td/></row>
-		<row><td>_IsMaintenance</td><td>3</td><td>Remove</td><td>0</td><td>120</td><td>290</td><td>14</td><td>##IDS__IsMaintenanceDlg_Remove##</td><td/><td/></row>
+		<row><td>_IsMaintenance</td><td>1</td><td>Remove</td><td>0</td><td>0</td><td>290</td><td>14</td><td>##IDS__IsMaintenanceDlg_Remove##</td><td/><td>0</td></row>
+		<row><td>_IsMaintenance</td><td>3</td><td>Remove</td><td>0</td><td>0</td><td>290</td><td>14</td><td>##IDS__IsMaintenanceDlg_Remove##</td><td/><td>0</td></row>
 		<row><td>_IsSetupTypeMin</td><td>1</td><td>Typical</td><td>0</td><td>0</td><td>264</td><td>14</td><td>##IDS__IsSetupTypeMinDlg_Complete##</td><td/><td/></row>
 		<row><td>_IsSetupTypeMin</td><td>2</td><td>Custom</td><td>0</td><td>60</td><td>264</td><td>14</td><td>##IDS__IsSetupTypeMinDlg_Custom##</td><td/><td/></row>
 	</table>
@@ -4472,6 +4547,9 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<col def="L255">FileName</col>
 		<col def="s72">DirProperty</col>
 		<col def="i2">InstallMode</col>
+		<row><td>FileKey1</td><td>HeliosDisplayManagement.exe</td><td/><td>falahati.net</td><td>2</td></row>
+		<row><td>FileKey2</td><td>HeliosDisplayManagement.exe</td><td/><td>helios_1_helios_display_management</td><td>2</td></row>
+		<row><td>HeliosDisplayManagement.exe</td><td>HeliosDisplayManagement.exe</td><td/><td>helios_1_helios_display_management</td><td>2</td></row>
 	</table>
 
 	<table name="RemoveIniFile">
@@ -4557,8 +4635,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<col def="S255">ISComments</col>
 		<col def="S255">ISShortcutName</col>
 		<col def="I4">ISAttributes</col>
-		<row><td>_Built1</td><td>DesktopFolder</td><td>##IDS_SHORTCUT_DISPLAY_NAME3##</td><td>HeliosDisplayManagement.Primary_output</td><td>AnyCPU</td><td/><td/><td/><td/><td/><td>1</td><td/><td/><td/><td/><td/><td/><td/><td/></row>
-		<row><td>_Built2</td><td>ProgramMenuFolder</td><td>##ID_STRING6##</td><td>HeliosDisplayManagement.Primary_output</td><td>AnyCPU</td><td/><td/><td/><td/><td/><td>1</td><td/><td/><td/><td/><td/><td/><td/><td/></row>
+		<row><td>HeliosDisplayManagement.exe</td><td>helios_1_helios_display_management</td><td>##IDS_SHORTCUT_DISPLAY_NAME4##</td><td>HeliosDisplayManagement.exe</td><td>AnyCPU</td><td/><td/><td/><td>HeliosDisplayManag_BA5F44F6682E43ECB8CC91E2D184DF74.exe</td><td>1</td><td>1</td><td>INSTALLDIR</td><td/><td/><td/><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="Signature">
@@ -5382,6 +5459,13 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>ISSetupPrerequisites</td><td>ISSetupLocation</td><td>Y</td><td/><td/><td/><td/><td/><td>0;1;2</td><td/></row>
 		<row><td>ISSetupPrerequisites</td><td>ISSetupPrerequisites</td><td>N</td><td/><td/><td/><td/><td/><td/><td/></row>
 		<row><td>ISSetupPrerequisites</td><td>Order</td><td>Y</td><td/><td/><td/><td/><td/><td/><td/></row>
+		<row><td>ISSetupType</td><td>Comments</td><td>Y</td><td/><td/><td/><td/><td>Text</td><td/><td>User Comments.</td></row>
+		<row><td>ISSetupType</td><td>Description</td><td>Y</td><td/><td/><td/><td/><td>Text</td><td/><td>Longer descriptive text describing a visible feature item.</td></row>
+		<row><td>ISSetupType</td><td>Display</td><td>N</td><td>0</td><td>32767</td><td/><td/><td/><td/><td>Numeric sort order, used to force a specific display ordering.</td></row>
+		<row><td>ISSetupType</td><td>Display_Name</td><td>Y</td><td/><td/><td/><td/><td>Formatted</td><td/><td>A string used to set the initial text contained within a control (if appropriate).</td></row>
+		<row><td>ISSetupType</td><td>ISSetupType</td><td>N</td><td/><td/><td/><td/><td>Identifier</td><td/><td>Primary key used to identify a particular feature record.</td></row>
+		<row><td>ISSetupTypeFeatures</td><td>Feature_</td><td>N</td><td/><td/><td>Feature</td><td>1</td><td>Identifier</td><td/><td>Foreign key into Feature table.</td></row>
+		<row><td>ISSetupTypeFeatures</td><td>ISSetupType_</td><td>N</td><td/><td/><td>ISSetupType</td><td>1</td><td>Identifier</td><td/><td>Foreign key into ISSetupType table.</td></row>
 		<row><td>ISStorages</td><td>ISBuildSourcePath</td><td>Y</td><td/><td/><td/><td/><td/><td/><td>Path to the file to stream into sub-storage</td></row>
 		<row><td>ISStorages</td><td>Name</td><td>N</td><td/><td/><td/><td/><td/><td/><td>Name of the sub-storage key</td></row>
 		<row><td>ISString</td><td>Comment</td><td>Y</td><td/><td/><td/><td/><td>Text</td><td/><td>Comment</td></row>

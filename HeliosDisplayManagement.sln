@@ -1,6 +1,4 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
 # Visual Studio 15
 VisualStudioVersion = 15.0.28010.2003
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -10,12 +8,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosDisplayManagement.She
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosDisplayManagement.Shared", "HeliosDisplayManagement.Shared\HeliosDisplayManagement.Shared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
 EndProject
-Project("{E729F059-12D4-455F-A2A4-FDA8DD25E08A}") = "HeliosDisplayManagement.Setup", "HeliosDisplayManagement.Setup\HeliosDisplayManagement.Setup.isproj", "{8B2508A9-8167-46D0-83C7-D24BE7407910}"
-	ProjectSection(ProjectDependencies) = postProject
-		{608D941A-B431-400C-A91D-C6F971C29577} = {608D941A-B431-400C-A91D-C6F971C29577}
-		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC} = {1CACDA43-01C7-4CD4-BF6E-9421A29510FC}
-		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68} = {55D4FF65-EDC7-48EF-933E-B6E7F3809B68}
-	EndProjectSection
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosDisplayManagement.Reporting", "HeliosDisplayManagement.Reporting\HeliosDisplayManagement.Reporting.csproj", "{76DF2BCF-911B-4820-B63E-8F3468DB5E79}"
 EndProject
 Global
@@ -36,8 +28,6 @@ Global
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|AnyCPU.ActiveCfg = Release|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|AnyCPU.Build.0 = Release|Any CPU
-		{8B2508A9-8167-46D0-83C7-D24BE7407910}.Debug|AnyCPU.ActiveCfg = x64 Release
-		{8B2508A9-8167-46D0-83C7-D24BE7407910}.Release|AnyCPU.ActiveCfg = x64 Release
 		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
 		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|AnyCPU.ActiveCfg = Release|Any CPU
