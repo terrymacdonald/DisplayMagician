@@ -142,13 +142,11 @@ namespace HeliosDisplayManagement.Shared
             return _currentProfile;
         }
 
-        /// <inheritdoc />
         public static bool operator ==(Profile left, Profile right)
         {
             return Equals(left, right);
         }
 
-        /// <inheritdoc />
         public static bool operator !=(Profile left, Profile right)
         {
             return !Equals(left, right);

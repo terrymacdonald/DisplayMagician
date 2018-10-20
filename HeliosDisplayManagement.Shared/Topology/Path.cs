@@ -40,13 +40,11 @@ namespace HeliosDisplayManagement.Shared.Topology
                    (Targets.Length == other.Targets.Length) && Targets.All(target => other.Targets.Contains(target));
         }
 
-        /// <inheritdoc />
         public static bool operator ==(Path left, Path right)
         {
             return Equals(left, right);
         }
 
-        /// <inheritdoc />
         public static bool operator !=(Path left, Path right)
         {
             return !Equals(left, right);

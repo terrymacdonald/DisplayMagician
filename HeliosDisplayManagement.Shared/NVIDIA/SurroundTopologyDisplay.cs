@@ -52,13 +52,11 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                    (PixelShiftType == other.PixelShiftType) && (Rotation == other.Rotation);
         }
 
-        /// <inheritdoc />
         public static bool operator ==(SurroundTopologyDisplay left, SurroundTopologyDisplay right)
         {
             return Equals(left, right);
         }
 
-        /// <inheritdoc />
         public static bool operator !=(SurroundTopologyDisplay left, SurroundTopologyDisplay right)
         {
             return !Equals(left, right);

@@ -109,14 +109,12 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             }
             return null;
         }
-
-        /// <inheritdoc />
+        
         public static bool operator ==(SurroundTopology left, SurroundTopology right)
         {
             return Equals(left, right);
         }
-
-        /// <inheritdoc />
+        
         public static bool operator !=(SurroundTopology left, SurroundTopology right)
         {
             return !Equals(left, right);
@@ -157,6 +155,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             return $"SurroundTopology[{Rows}, {Columns}] ({Resolution.Width}, {Resolution.Height}) @ {Frequency}";
         }
 
+        // ReSharper disable once ExcessiveIndentation
         public GridTopology ToGridTopology()
         {
             var gridTopology = new GridTopology(Rows, Columns,

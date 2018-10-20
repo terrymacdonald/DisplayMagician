@@ -56,13 +56,11 @@ namespace HeliosDisplayManagement.Shared.Topology
                    (SurroundTopology == other.SurroundTopology);
         }
 
-        /// <inheritdoc />
         public static bool operator ==(PathTarget left, PathTarget right)
         {
             return Equals(left, right);
         }
 
-        /// <inheritdoc />
         public static bool operator !=(PathTarget left, PathTarget right)
         {
             return !Equals(left, right);

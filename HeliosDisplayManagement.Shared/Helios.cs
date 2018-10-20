@@ -34,6 +34,8 @@ namespace HeliosDisplayManagement.Shared
 
         public static bool IsInstalled => !string.IsNullOrWhiteSpace(Address);
 
+        // ReSharper disable once MethodTooLong
+        // ReSharper disable once TooManyArguments
         public static void Open(HeliosStartupAction action = HeliosStartupAction.None,
             Profile profile = null,
             string programAddress = null, bool asAdmin = false)

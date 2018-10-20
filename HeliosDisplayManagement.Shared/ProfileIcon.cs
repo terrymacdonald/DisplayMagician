@@ -22,6 +22,7 @@ namespace HeliosDisplayManagement.Shared
 
         public Profile Profile { get; }
 
+        // ReSharper disable once TooManyArguments
         public static RectangleF CalculateViewSize(
             Path[] paths,
             bool withPadding = false,
@@ -216,6 +217,7 @@ namespace HeliosDisplayManagement.Shared
                     rows > 1 ? i : 0, cols > 1 ? i : 0, rows, cols);
         }
 
+        // ReSharper disable once TooManyArguments
         private void DrawTarget(Graphics g, Path path, PathTarget target, Rectangle rect, int row, int col, int rows,
             int cols)
         {
