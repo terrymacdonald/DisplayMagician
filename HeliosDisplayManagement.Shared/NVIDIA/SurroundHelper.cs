@@ -1,4 +1,5 @@
 ﻿using NvAPIWrapper.Native.Display;
+using NvAPIWrapper.Native.Mosaic;
 
 namespace HeliosDisplayManagement.Shared.NVIDIA
 {
@@ -36,6 +37,32 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                     return Rotation.Rotate270;
                 default:
                     return Rotation.Unknown;
+            }
+        }
+        
+        public static PixelShiftType ToPixelShiftType(this PixelShift pixelShift)
+        {
+            switch (pixelShift)
+            {
+                case PixelShift.TopLeft2X2Pixels:
+                    return PixelShiftType.TopLeft2X2Pixels;
+                case PixelShift.BottomRight2X2Pixels:
+                    return PixelShiftType.BottomRight2X2Pixels;
+                default:
+                    return PixelShiftType.NoPixelShift;
+            }
+        }
+
+        public static PixelShift ToPixelShift(this PixelShiftType pixelShift)
+        {
+            switch (pixelShift)
+            {
+                case PixelShiftType.TopLeft2X2Pixels:
+                    return PixelShift.TopLeft2X2Pixels;
+                case PixelShiftType.BottomRight2X2Pixels:
+                    return PixelShift.BottomRight2X2Pixels;
+                default:
+                    return PixelShift.NoPixelShift;
             }
         }
     }

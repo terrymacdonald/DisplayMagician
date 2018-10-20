@@ -3,6 +3,8 @@ using System.Linq;
 using WindowsDisplayAPI.DisplayConfig;
 using WindowsDisplayAPI.Native.DisplayConfig;
 using HeliosDisplayManagement.Shared.NVIDIA;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace HeliosDisplayManagement.Shared.Topology
 {
@@ -17,8 +19,8 @@ namespace HeliosDisplayManagement.Shared.Topology
 
             FrequencyInMillihertz = targetInfo.FrequencyInMillihertz;
             Rotation = targetInfo.Rotation.ToRotation();
-            Scaling = targetInfo.Scaling;
-            ScanLineOrdering = targetInfo.ScanLineOrdering;
+            Scaling = targetInfo.Scaling.ToScaling();
+            ScanLineOrdering = targetInfo.ScanLineOrdering.ToScanLineOrdering();
             try
             {
                 DisplayName = targetInfo.DisplayTarget.FriendlyName;
@@ -38,10 +40,17 @@ namespace HeliosDisplayManagement.Shared.Topology
         public string DevicePath { get; set; }
 
         public string DisplayName { get; set; }
+
         public ulong FrequencyInMillihertz { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
         public Rotation Rotation { get; set; }
-        public DisplayConfigScaling Scaling { get; set; }
-        public DisplayConfigScanLineOrdering ScanLineOrdering { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public Scaling Scaling { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public ScanLineOrdering ScanLineOrdering { get; set; }
 
         public SurroundTopology SurroundTopology { get; set; }
 
@@ -106,7 +115,7 @@ namespace HeliosDisplayManagement.Shared.Topology
             if (targetDevice == null)
                 return null;
             return new PathTargetInfo(new PathDisplayTarget(targetDevice.Adapter, targetDevice.TargetId),
-                FrequencyInMillihertz, ScanLineOrdering, Rotation.ToDisplayConfigRotation(), Scaling);
+                FrequencyInMillihertz, ScanLineOrdering.ToDisplayConfigScanLineOrdering(), Rotation.ToDisplayConfigRotation(), Scaling.ToDisplayConfigScaling());
         }
     }
 }

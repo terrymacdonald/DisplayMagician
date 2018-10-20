@@ -4,6 +4,8 @@ using System.Linq;
 using EDIDParser;
 using EDIDParser.Descriptors;
 using EDIDParser.Enums;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
 
@@ -16,7 +18,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             DisplayId = display.DisplayDevice.DisplayId;
             Rotation = display.Rotation.ToRotation();
             Overlap = new Point(display.Overlap.HorizontalOverlap, display.Overlap.VerticalOverlap);
-            PixelShiftType = display.PixelShiftType;
+            PixelShift = display.PixelShiftType.ToPixelShift();
             try
             {
                 var bytes = display.DisplayDevice.PhysicalGPU.ReadEDIDData(display.DisplayDevice.Output);
@@ -40,7 +42,11 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         public string DisplayName { get; set; }
 
         public Point Overlap { get; set; }
-        public PixelShiftType PixelShiftType { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public PixelShift PixelShift { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
         public Rotation Rotation { get; set; }
 
         /// <inheritdoc />
@@ -49,7 +55,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return (DisplayId == other.DisplayId) && Overlap.Equals(other.Overlap) &&
-                   (PixelShiftType == other.PixelShiftType) && (Rotation == other.Rotation);
+                   (PixelShift == other.PixelShift) && (Rotation == other.Rotation);
         }
 
         public static bool operator ==(SurroundTopologyDisplay left, SurroundTopologyDisplay right)
@@ -78,7 +84,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             {
                 var hashCode = (int) DisplayId;
                 hashCode = (hashCode*397) ^ Overlap.GetHashCode();
-                hashCode = (hashCode*397) ^ (int) PixelShiftType;
+                hashCode = (hashCode*397) ^ (int) PixelShift;
                 hashCode = (hashCode*397) ^ (int) Rotation;
                 return hashCode;
             }
@@ -93,7 +99,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         public GridTopologyDisplay ToGridTopologyDisplay()
         {
             return new GridTopologyDisplay(DisplayId, new Overlap(Overlap.X, Overlap.Y), Rotation.ToRotate(), 0,
-                PixelShiftType);
+                PixelShift.ToPixelShiftType());
         }
     }
 }

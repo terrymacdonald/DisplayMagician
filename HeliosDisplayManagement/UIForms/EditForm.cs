@@ -193,20 +193,20 @@ namespace HeliosDisplayManagement.UIForms
         }
 
 
-        private ColorDepth PixelFormatToColorDepth(DisplayConfigPixelFormat format)
+        private WindowsDisplayAPI.ColorDepth PixelFormatToColorDepth(DisplayConfigPixelFormat format)
         {
             switch (format)
             {
                 case DisplayConfigPixelFormat.PixelFormat8Bpp:
-                    return ColorDepth.Depth8Bit;
+                    return WindowsDisplayAPI.ColorDepth.Depth8Bit;
                 case DisplayConfigPixelFormat.PixelFormat16Bpp:
-                    return ColorDepth.Depth16Bit;
+                    return WindowsDisplayAPI.ColorDepth.Depth16Bit;
                 case DisplayConfigPixelFormat.PixelFormat24Bpp:
-                    return ColorDepth.Depth24Bit;
+                    return WindowsDisplayAPI.ColorDepth.Depth24Bit;
                 case DisplayConfigPixelFormat.PixelFormat32Bpp:
-                    return ColorDepth.Depth32Bit;
+                    return WindowsDisplayAPI.ColorDepth.Depth32Bit;
                 default:
-                    return ColorDepth.Depth4Bit;
+                    return WindowsDisplayAPI.ColorDepth.Depth4Bit;
             }
         }
 
@@ -247,7 +247,7 @@ namespace HeliosDisplayManagement.UIForms
                                 .Distinct())
                         {
                             cb_colordepth.Items.Add(colorDepth);
-                            if ((ColorDepth) cb_colordepth.Items[cb_colordepth.Items.Count - 1] ==
+                            if ((WindowsDisplayAPI.ColorDepth) cb_colordepth.Items[cb_colordepth.Items.Count - 1] ==
                                 PixelFormatToColorDepth(pathSource.PixelFormat))
                                 cb_colordepth.SelectedIndex = cb_colordepth.Items.Count - 1;
                         }

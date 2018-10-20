@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Linq;
 using WindowsDisplayAPI.DisplayConfig;
 using WindowsDisplayAPI.Native.DisplayConfig;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace HeliosDisplayManagement.Shared.Topology
 {
@@ -21,11 +23,13 @@ namespace HeliosDisplayManagement.Shared.Topology
         {
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public DisplayConfigPixelFormat PixelFormat { get; set; }
 
         public Point Position { get; set; }
 
         public Size Resolution { get; set; }
+
         public uint SourceId { get; set; }
 
         public PathTarget[] Targets { get; set; }
