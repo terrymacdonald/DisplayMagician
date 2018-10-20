@@ -27,6 +27,7 @@ namespace HeliosDisplayManagement.UIForms
                 new ProfileIcon(profile ?? Profile.GetCurrent()).ToBitmap(
                     il_profiles.ImageSize.Width,
                     il_profiles.ImageSize.Height));
+
             return lv_profiles.Items.Add(new ListViewItem
             {
                 Text = profile?.Name ?? Language.Current,
@@ -40,25 +41,33 @@ namespace HeliosDisplayManagement.UIForms
 
         private void Apply_Click(object sender, EventArgs e)
         {
-            if ((dv_profile.Profile != null) && (lv_profiles.SelectedIndices.Count > 0) &&
-                (lv_profiles.SelectedItems[0].Tag != null))
+            if (dv_profile.Profile != null &&
+                lv_profiles.SelectedIndices.Count > 0 &&
+                lv_profiles.SelectedItems[0].Tag != null)
             {
                 if (!dv_profile.Profile.IsPossible)
                 {
-                    MessageBox.Show(this, Language.This_profile_is_currently_impossible_to_apply, Language.Apply_Profile,
+                    MessageBox.Show(this, Language.This_profile_is_currently_impossible_to_apply,
+                        Language.Apply_Profile,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
                     return;
                 }
 
                 Enabled = false;
                 Visible = false;
+
                 if (
                     new SplashForm(
                         () =>
                         {
                             Task.Factory.StartNew(() => dv_profile.Profile.Apply(), TaskCreationOptions.LongRunning);
-                        }, 3, 30).ShowDialog(this) != DialogResult.Cancel)
+                        }, 3, 30).ShowDialog(this) !=
+                    DialogResult.Cancel)
+                {
                     ReloadProfiles();
+                }
+
                 Visible = true;
                 Enabled = true;
                 Activate();
@@ -77,14 +86,20 @@ namespace HeliosDisplayManagement.UIForms
                 var clone = dv_profile.Profile.Clone();
                 var i = 0;
                 string name;
+
                 while (true)
                 {
                     i++;
                     name = $"{clone.Name} ({i})";
+
                     if (lv_profiles.Items.OfType<Profile>().Any(profile => profile.Name == name))
+                    {
                         continue;
+                    }
+
                     break;
                 }
+
                 clone.Name = name;
                 AddProfile(clone).Selected = true;
                 SaveProfiles();
@@ -94,8 +109,9 @@ namespace HeliosDisplayManagement.UIForms
 
         private void CreateShortcut_Click(object sender, EventArgs e)
         {
-            if ((dv_profile.Profile != null) && (lv_profiles.SelectedIndices.Count > 0) &&
-                (lv_profiles.SelectedItems[0].Tag != null))
+            if (dv_profile.Profile != null &&
+                lv_profiles.SelectedIndices.Count > 0 &&
+                lv_profiles.SelectedItems[0].Tag != null)
             {
                 var shortcutForm = new ShortcutForm(dv_profile.Profile);
                 shortcutForm.ShowDialog(this);
@@ -105,46 +121,56 @@ namespace HeliosDisplayManagement.UIForms
 
         private void Delete_Click(object sender, EventArgs e)
         {
-            if ((dv_profile.Profile != null) && (lv_profiles.SelectedIndices.Count > 0) &&
-                (lv_profiles.SelectedItems[0].Tag != null))
+            if (dv_profile.Profile != null &&
+                lv_profiles.SelectedIndices.Count > 0 &&
+                lv_profiles.SelectedItems[0].Tag != null)
             {
                 var selectedIndex = lv_profiles.SelectedIndices[0];
+
                 if (
                     MessageBox.Show(this, Language.Are_you_sure, Language.Deletion, MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Warning) == DialogResult.Yes)
+                        MessageBoxIcon.Warning) ==
+                    DialogResult.Yes)
                 {
                     il_profiles.Images.RemoveAt(lv_profiles.Items[selectedIndex].ImageIndex);
                     lv_profiles.Items.RemoveAt(selectedIndex);
                     SaveProfiles();
                 }
             }
+
             ReloadProfiles();
         }
 
         private void Edit_Click(object sender, EventArgs e)
         {
-            if ((dv_profile.Profile != null) && (lv_profiles.SelectedIndices.Count > 0) &&
-                (lv_profiles.SelectedItems[0].Tag != null))
+            if (dv_profile.Profile != null &&
+                lv_profiles.SelectedIndices.Count > 0 &&
+                lv_profiles.SelectedItems[0].Tag != null)
             {
                 var selectedIndex = lv_profiles.SelectedIndices[0];
                 var editForm = new EditForm(dv_profile.Profile);
+
                 if (editForm.ShowDialog(this) == DialogResult.OK)
                 {
                     lv_profiles.Items[selectedIndex].Tag = editForm.Profile;
                     SaveProfiles();
                 }
             }
+
             ReloadProfiles();
         }
 
         private void lv_profiles_AfterLabelEdit(object sender, LabelEditEventArgs e)
         {
             var selectedProfile = (Profile) lv_profiles.Items[e.Item].Tag;
-            if ((selectedProfile == null) || (e.Label == null) || (selectedProfile.Name == e.Label))
+
+            if (selectedProfile == null || e.Label == null || selectedProfile.Name == e.Label)
             {
                 e.CancelEdit = true;
+
                 return;
             }
+
             if (string.IsNullOrWhiteSpace(e.Label) ||
                 lv_profiles.Items.Cast<ListViewItem>()
                     .Select(item => item.Tag as Profile)
@@ -158,6 +184,7 @@ namespace HeliosDisplayManagement.UIForms
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 e.CancelEdit = true;
+
                 return;
             }
 
@@ -177,32 +204,44 @@ namespace HeliosDisplayManagement.UIForms
 
         private void lv_profiles_MouseUp(object sender, MouseEventArgs e)
         {
-            if ((e.Button == MouseButtons.Right) && (lv_profiles.SelectedItems.Count > 0))
+            if (e.Button == MouseButtons.Right && lv_profiles.SelectedItems.Count > 0)
             {
                 var itemRect = lv_profiles.GetItemRect(lv_profiles.SelectedIndices[0]);
-                if ((e.Location.X > itemRect.X) && (e.Location.X <= itemRect.Right) && (e.Location.Y > itemRect.Y) &&
-                    (e.Location.Y <= itemRect.Bottom))
+
+                if (e.Location.X > itemRect.X &&
+                    e.Location.X <= itemRect.Right &&
+                    e.Location.Y > itemRect.Y &&
+                    e.Location.Y <= itemRect.Bottom)
+                {
                     menu_profiles.Show(lv_profiles, e.Location);
+                }
             }
         }
 
         private void lv_profiles_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lv_profiles.SelectedItems.Count > 0)
-                dv_profile.Profile = lv_profiles.SelectedItems[0].Tag as Profile ?? Profile.GetCurrent(Language.Current);
+            {
+                dv_profile.Profile =
+                    lv_profiles.SelectedItems[0].Tag as Profile ?? Profile.GetCurrent(Language.Current);
+            }
             else
+            {
                 dv_profile.Profile = null;
+            }
+
             lbl_profile.Text = dv_profile.Profile?.Name ?? Language.None;
             applyToolStripMenuItem.Enabled =
-                btn_apply.Enabled = (dv_profile.Profile != null) && (lv_profiles.SelectedItems[0].Tag != null) &&
+                btn_apply.Enabled = dv_profile.Profile != null &&
+                                    lv_profiles.SelectedItems[0].Tag != null &&
                                     !dv_profile.Profile.IsActive;
             editToolStripMenuItem.Enabled =
-                btn_edit.Enabled = (dv_profile.Profile != null) && (lv_profiles.SelectedItems[0].Tag != null);
+                btn_edit.Enabled = dv_profile.Profile != null && lv_profiles.SelectedItems[0].Tag != null;
             deleteToolStripMenuItem.Enabled =
-                btn_delete.Enabled = (dv_profile.Profile != null) && (lv_profiles.SelectedItems[0].Tag != null);
+                btn_delete.Enabled = dv_profile.Profile != null && lv_profiles.SelectedItems[0].Tag != null;
             cloneToolStripMenuItem.Enabled = btn_clone.Enabled = dv_profile.Profile != null;
             createShortcutToolStripMenuItem.Enabled =
-                btn_shortcut.Enabled = (dv_profile.Profile != null) && (lv_profiles.SelectedItems[0].Tag != null);
+                btn_shortcut.Enabled = dv_profile.Profile != null && lv_profiles.SelectedItems[0].Tag != null;
             RefreshProfilesStatus();
         }
 
@@ -228,10 +267,17 @@ namespace HeliosDisplayManagement.UIForms
             var profiles = Profile.GetAllProfiles().ToArray();
             lv_profiles.Items.Clear();
             il_profiles.Images.Clear();
+
             if (!profiles.Any(profile => profile.IsActive))
+            {
                 AddProfile().Selected = true;
+            }
+
             foreach (var profile in profiles)
+            {
                 AddProfile(profile);
+            }
+
             lv_profiles.SelectedIndices.Clear();
             lv_profiles.Invalidate();
         }

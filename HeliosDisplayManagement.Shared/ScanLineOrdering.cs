@@ -5,6 +5,6 @@
         NotSpecified,
         Progressive,
         InterlacedWithUpperFieldFirst,
-        InterlacedWithLowerFieldFirst,
+        InterlacedWithLowerFieldFirst
     }
 }

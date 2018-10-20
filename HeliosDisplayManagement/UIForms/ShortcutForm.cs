@@ -25,7 +25,7 @@ namespace HeliosDisplayManagement.UIForms
 
         public string Arguments
         {
-            get { return cb_args.Checked ? txt_args.Text : string.Empty; }
+            get => cb_args.Checked ? txt_args.Text : string.Empty;
             set
             {
                 txt_args.Text = value;
@@ -35,7 +35,7 @@ namespace HeliosDisplayManagement.UIForms
 
         public string FileName
         {
-            get { return cb_temp.Checked && rb_standalone.Checked ? txt_executable.Text : string.Empty; }
+            get => cb_temp.Checked && rb_standalone.Checked ? txt_executable.Text : string.Empty;
             set
             {
                 if (!string.IsNullOrWhiteSpace(value))
@@ -48,16 +48,14 @@ namespace HeliosDisplayManagement.UIForms
         }
 
         public static string IconCache
-            =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        {
+            get => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 Assembly.GetExecutingAssembly().GetName().Name, @"IconCache");
+        }
 
         public string ProcessName
         {
-            get
-            {
-                return cb_temp.Checked && rb_standalone.Checked && cb_process.Checked ? txt_process.Text : string.Empty;
-            }
+            get => cb_temp.Checked && rb_standalone.Checked && cb_process.Checked ? txt_process.Text : string.Empty;
             set
             {
                 txt_process.Text = value;
@@ -67,13 +65,13 @@ namespace HeliosDisplayManagement.UIForms
 
         public Profile Profile
         {
-            get { return dv_profile.Profile; }
-            set { dv_profile.Profile = value; }
+            get => dv_profile.Profile;
+            set => dv_profile.Profile = value;
         }
 
         public uint SteamAppId
         {
-            get { return cb_temp.Checked && rb_steam.Checked ? (uint) nud_steamappid.Value : 0; }
+            get => cb_temp.Checked && rb_steam.Checked ? (uint) nud_steamappid.Value : 0;
             set
             {
                 if (value > 0)
@@ -90,11 +88,20 @@ namespace HeliosDisplayManagement.UIForms
             get
             {
                 if (!cb_temp.Checked)
+                {
                     return 0;
+                }
+
                 if (!rb_standalone.Checked)
+                {
                     return (uint) nud_steamtimeout.Value;
+                }
+
                 if (cb_process.Checked)
+                {
                     return (uint) nud_timeout.Value;
+                }
+
                 return 0;
             }
             set
@@ -110,7 +117,8 @@ namespace HeliosDisplayManagement.UIForms
         private void btn_app_executable_Click(object sender, EventArgs e)
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
-                if (File.Exists(dialog_open.FileName) && (Path.GetExtension(dialog_open.FileName) == @".exe"))
+            {
+                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
                 {
                     txt_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -123,27 +131,34 @@ namespace HeliosDisplayManagement.UIForms
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }
+            }
         }
 
         private void btn_save_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.None;
+
             try
             {
                 if (dialog_save.ShowDialog(this) == DialogResult.OK)
                 {
                     if (CreateShortcut(dialog_save.FileName))
+                    {
                         MessageBox.Show(
                             Language.Shortcut_place_successfully,
                             Language.Shortcut,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
+                    }
                     else
+                    {
                         MessageBox.Show(
                             Language.Failed_to_create_the_shortcut_Unexpected_exception_occurred,
                             Language.Shortcut,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Exclamation);
+                    }
+
                     dialog_save.FileName = string.Empty;
                     DialogResult = DialogResult.OK;
                 }
@@ -167,7 +182,9 @@ namespace HeliosDisplayManagement.UIForms
             txt_args.Enabled = cb_args.Checked;
 
             if (rb_steam.Checked)
+            {
                 nud_steamappid_ValueChanged(rb_steam, e);
+            }
         }
 
         // ReSharper disable once FunctionComplexityOverflow
@@ -182,7 +199,9 @@ namespace HeliosDisplayManagement.UIForms
                 $"-a {HeliosStartupAction.SwitchProfile}",
                 $"-p \"{dv_profile.Profile.Name}\""
             };
+
             if (!Directory.Exists(IconCache))
+            {
                 try
                 {
                     Directory.CreateDirectory(IconCache);
@@ -191,21 +210,32 @@ namespace HeliosDisplayManagement.UIForms
                 {
                     // ignored
                 }
+            }
+
             if (cb_temp.Checked)
             {
                 if (rb_standalone.Checked)
                 {
                     if (string.IsNullOrWhiteSpace(txt_executable.Text))
+                    {
                         throw new Exception(Language.Executable_address_can_not_be_empty);
+                    }
+
                     if (!File.Exists(txt_executable.Text))
+                    {
                         throw new Exception(Language.Executable_file_not_found);
+                    }
+
                     args.Add($"-e \"{txt_executable.Text.Trim()}\"");
+
                     if (!string.IsNullOrWhiteSpace(txt_process.Text))
                     {
                         args.Add($"-w \"{txt_process.Text.Trim()}\"");
                         args.Add($"-t {(int) nud_timeout.Value}");
                     }
+
                     description = string.Format(Language.Executing_application_with_profile, programName, Profile.Name);
+
                     try
                     {
                         icon = Path.Combine(IconCache, Guid.NewGuid() + ".ico");
@@ -220,14 +250,19 @@ namespace HeliosDisplayManagement.UIForms
                 else if (rb_steam.Checked)
                 {
                     if (!SteamGame.SteamInstalled)
+                    {
                         throw new Exception(Language.Steam_is_not_installed);
+                    }
+
                     var steamGame = new SteamGame((uint) nud_steamappid.Value);
                     args.Add($"-s {(int) nud_steamappid.Value}");
                     args.Add($"-t {(int) nud_steamtimeout.Value}");
                     description = string.Format(Language.Executing_application_with_profile, steamGame.Name,
                         Profile.Name);
                     var steamIcon = steamGame.GetIcon().Result;
+
                     if (!string.IsNullOrWhiteSpace(steamIcon))
+                    {
                         try
                         {
                             icon = Path.Combine(IconCache, Guid.NewGuid() + ".ico");
@@ -238,15 +273,22 @@ namespace HeliosDisplayManagement.UIForms
                         {
                             icon = steamIcon;
                         }
+                    }
                     else
+                    {
                         icon = $"{SteamGame.SteamAddress},0";
+                    }
                 }
+
                 if (cb_args.Checked && !string.IsNullOrWhiteSpace(txt_args.Text))
+                {
                     args.Add($"--arguments \"{txt_args.Text.Trim()}\"");
+                }
             }
             else
             {
                 description = string.Format(Language.Switching_display_profile_to_profile, Profile.Name);
+
                 try
                 {
                     icon = Path.Combine(IconCache, Guid.NewGuid() + ".ico");
@@ -259,18 +301,24 @@ namespace HeliosDisplayManagement.UIForms
             }
 
             fileName = Path.ChangeExtension(fileName, @"lnk");
+
             if (fileName != null)
+            {
                 try
                 {
                     // Remove the old file to replace it
                     if (File.Exists(fileName))
+                    {
                         File.Delete(fileName);
+                    }
 
                     var wshShellType = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
                     dynamic wshShell = Activator.CreateInstance(wshShellType);
+
                     try
                     {
                         var shortcut = wshShell.CreateShortcut(fileName);
+
                         try
                         {
                             shortcut.TargetPath = Application.ExecutablePath;
@@ -278,8 +326,12 @@ namespace HeliosDisplayManagement.UIForms
                             shortcut.Description = description;
                             shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
                                                         string.Empty;
+
                             if (!string.IsNullOrWhiteSpace(icon))
+                            {
                                 shortcut.IconLocation = icon;
+                            }
+
                             shortcut.Save();
                         }
                         finally
@@ -296,9 +348,13 @@ namespace HeliosDisplayManagement.UIForms
                 {
                     // Clean up a failed attempt
                     if (File.Exists(fileName))
+                    {
                         File.Delete(fileName);
+                    }
                 }
-            return (fileName != null) && File.Exists(fileName);
+            }
+
+            return fileName != null && File.Exists(fileName);
         }
 
         private void nud_steamappid_ValueChanged(object sender, EventArgs e)
@@ -309,8 +365,11 @@ namespace HeliosDisplayManagement.UIForms
         private void nud_steamapps_Click(object sender, EventArgs e)
         {
             var steamGamesForm = new SteamGamesForm();
-            if ((steamGamesForm.ShowDialog(this) == DialogResult.OK) && (steamGamesForm.SteamGame != null))
+
+            if (steamGamesForm.ShowDialog(this) == DialogResult.OK && steamGamesForm.SteamGame != null)
+            {
                 nud_steamappid.Value = steamGamesForm.SteamGame.AppId;
+            }
         }
 
         private void txt_executable_TextChanged(object sender, EventArgs e)

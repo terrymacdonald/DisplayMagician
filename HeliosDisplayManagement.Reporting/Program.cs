@@ -88,7 +88,8 @@ namespace HeliosDisplayManagement.Reporting
 
             try
             {
-                Dump(PathDisplayAdapter.GetAdapters(), "WindowsDisplayAPI.DisplayConfig.PathDisplayAdapter.GetAdapters()",
+                Dump(PathDisplayAdapter.GetAdapters(),
+                    "WindowsDisplayAPI.DisplayConfig.PathDisplayAdapter.GetAdapters()",
                     new[]
                     {
                         new Tuple<Func<PathDisplayAdapter, object>, string>(adapter => adapter.ToDisplayAdapter(),
@@ -132,7 +133,8 @@ namespace HeliosDisplayManagement.Reporting
             {
                 if (PathInfo.IsSupported)
                 {
-                    Dump(PathInfo.GetActivePaths(), "WindowsDisplayAPI.DisplayConfig.PathInfo.GetActivePaths()", null, 2);
+                    Dump(PathInfo.GetActivePaths(), "WindowsDisplayAPI.DisplayConfig.PathInfo.GetActivePaths()", null,
+                        2);
                 }
             }
             catch (Exception e)
@@ -162,7 +164,8 @@ namespace HeliosDisplayManagement.Reporting
             {
                 Dump(NvAPIWrapper.Display.Display.GetDisplays(), "NvAPIWrapper.Display.Display.GetDisplays()", new[]
                 {
-                    new Tuple<Func<NvAPIWrapper.Display.Display, object>, string>(display => display.GetSupportedViews(),
+                    new Tuple<Func<NvAPIWrapper.Display.Display, object>, string>(
+                        display => display.GetSupportedViews(),
                         "GetSupportedViews()")
                 });
             }
@@ -183,7 +186,8 @@ namespace HeliosDisplayManagement.Reporting
 
             try
             {
-                Dump(NvAPIWrapper.Display.PathInfo.GetDisplaysConfig(), "NvAPIWrapper.Display.PathInfo.GetDisplaysConfig()",
+                Dump(NvAPIWrapper.Display.PathInfo.GetDisplaysConfig(),
+                    "NvAPIWrapper.Display.PathInfo.GetDisplaysConfig()",
                     null, 3);
             }
             catch (Exception e)
@@ -244,6 +248,7 @@ namespace HeliosDisplayManagement.Reporting
                     {
                         _writer.WriteLine(new string('_', Console.BufferWidth));
                     }
+
                     _writer.WriteLine("({0}) {{", obj.GetType().Name);
                 }
 
@@ -257,7 +262,8 @@ namespace HeliosDisplayManagement.Reporting
 
                     foreach (var arrayItem in (IEnumerable) obj)
                     {
-                        _writer.WriteLine(new string(' ', padding * 3 + 2) + "[{0}]: ({1}) {{", i, arrayItem?.GetType().Name);
+                        _writer.WriteLine(new string(' ', padding * 3 + 2) + "[{0}]: ({1}) {{", i,
+                            arrayItem?.GetType().Name);
                         WriteObject(arrayItem, padding + 1, default(TimeSpan), null, deepIn - 1);
                         _writer.WriteLine(new string(' ', padding * 3 + 2) + "},");
                         i++;
@@ -289,7 +295,8 @@ namespace HeliosDisplayManagement.Reporting
                                 !value.GetType().IsValueType &&
                                 value.GetType() != typeof(string))
                             {
-                                _writer.WriteLine(new string(' ', padding * 3 + 2) + "{0}: ({1}) {{", propertyInfo.Name, propertyInfo.PropertyType.Name);
+                                _writer.WriteLine(new string(' ', padding * 3 + 2) + "{0}: ({1}) {{", propertyInfo.Name,
+                                    propertyInfo.PropertyType.Name);
                                 WriteObject(value, padding + 1, default(TimeSpan), null, deepIn - 1);
                                 _writer.WriteLine(new string(' ', padding * 3 + 2) + "},");
                             }
@@ -306,7 +313,8 @@ namespace HeliosDisplayManagement.Reporting
                 {
                     foreach (var extraProperty in extraProperties)
                     {
-                        _writer.WriteLine(new string(' ', padding * 3 + 2) + "{0}: ({1}) {{", extraProperty.Item1, extraProperty.Item2?.GetType().Name);
+                        _writer.WriteLine(new string(' ', padding * 3 + 2) + "{0}: ({1}) {{", extraProperty.Item1,
+                            extraProperty.Item2?.GetType().Name);
                         WriteObject(extraProperty.Item2, padding + 1, default(TimeSpan), null, deepIn);
                         _writer.WriteLine(new string(' ', padding * 3 + 2) + "},");
                     }

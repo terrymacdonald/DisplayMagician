@@ -26,6 +26,7 @@ namespace HeliosDisplayManagement.ShellExtension
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut,
                 Properties.Resources.Shortcut_x16,
                 (sender, args) => HeliosDisplayManagement.Open(HeliosStartupAction.CreateShortcut, profile)));
+
             return profileMenu;
         }
 
@@ -37,17 +38,25 @@ namespace HeliosDisplayManagement.ShellExtension
         protected override ContextMenuStrip CreateMenu()
         {
             var explorerMenu = new ContextMenuStrip();
+
             if (Profile.GetAllProfiles().Any())
             {
                 Profile.RefreshActiveStatus();
                 var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
                     Properties.Resources.Icon_x16);
+
                 foreach (var profile in Profile.GetAllProfiles())
+                {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
+                }
+
                 extensionMenu.DropDownItems.Add(new ToolStripSeparator());
                 extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
                     Properties.Resources.Icon_x16,
-                    (sender, args) => { HeliosDisplayManagement.Open(); }));
+                    (sender, args) =>
+                    {
+                        HeliosDisplayManagement.Open();
+                    }));
                 explorerMenu.Items.Add(extensionMenu);
                 explorerMenu.Items.Add(new ToolStripSeparator());
             }
@@ -55,10 +64,14 @@ namespace HeliosDisplayManagement.ShellExtension
             {
                 var extensionMenu = new ToolStripMenuItem(Language.Manage_Profiles,
                     Properties.Resources.Icon_x16,
-                    (sender, args) => { HeliosDisplayManagement.Open(); });
+                    (sender, args) =>
+                    {
+                        HeliosDisplayManagement.Open();
+                    });
                 explorerMenu.Items.Add(extensionMenu);
                 explorerMenu.Items.Add(new ToolStripSeparator());
             }
+
             return explorerMenu;
         }
     }

@@ -8,6 +8,6 @@
         Stretched,
         AspectRatioCenteredMax,
         Custom,
-        Preferred,
+        Preferred
     }
 }

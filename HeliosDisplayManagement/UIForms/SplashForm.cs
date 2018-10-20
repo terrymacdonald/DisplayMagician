@@ -47,24 +47,33 @@ namespace HeliosDisplayManagement.UIForms
             lock (_progressPositions)
             {
                 progressPanel.DrawToBitmap(_progressImage, new Rectangle(Point.Empty, progressPanel.Size));
+
                 foreach (var position in _progressPositions)
+                {
                     e.Graphics.DrawImage(_progressImage, new Rectangle(position, progressPanel.Size));
+                }
             }
+
             base.OnPaint(e);
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData != Keys.Escape)
+            {
                 return base.ProcessCmdKey(ref msg, keyData);
+            }
+
             if (t_start.Enabled)
             {
                 t_start.Stop();
                 t_countdown.Stop();
                 DialogResult = DialogResult.Cancel;
                 Close();
+
                 return true;
             }
+
             return true;
         }
 
@@ -72,6 +81,7 @@ namespace HeliosDisplayManagement.UIForms
         {
             lbl_message.Text = CountdownMessage;
             progressBar.ProgressColor = Color.OrangeRed;
+
             if (_countdownCounter > 0)
             {
                 progressBar.Text = (progressBar.Value = progressBar.Maximum = _countdownCounter).ToString();
@@ -95,6 +105,7 @@ namespace HeliosDisplayManagement.UIForms
         {
             lbl_message.Text = CancellationMessage;
             progressBar.ProgressColor = Color.DodgerBlue;
+
             if (_startCounter > 0)
             {
                 progressBar.Text = (progressBar.Value = progressBar.Maximum = _startCounter).ToString();
@@ -128,8 +139,8 @@ namespace HeliosDisplayManagement.UIForms
                 _progressPositions.AddRange(
                     screens.Select(
                         screen =>
-                            new Point(screen.Bounds.X - minX + (screen.Bounds.Width - progressPanel.Width)/2,
-                                screen.Bounds.Y - minY + (screen.Bounds.Height - progressPanel.Height)/2)));
+                            new Point(screen.Bounds.X - minX + (screen.Bounds.Width - progressPanel.Width) / 2,
+                                screen.Bounds.Y - minY + (screen.Bounds.Height - progressPanel.Height) / 2)));
             }
 #if !DEBUG
             TopMost = true;
@@ -141,7 +152,10 @@ namespace HeliosDisplayManagement.UIForms
         private void SplashForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (_isClosing)
+            {
                 return;
+            }
+
             _isClosing = true;
             e.Cancel = true;
             var dialogResult = DialogResult;
@@ -191,8 +205,10 @@ namespace HeliosDisplayManagement.UIForms
                 t_countdown.Stop();
                 DialogResult = DialogResult.OK;
                 Close();
+
                 return;
             }
+
             progressBar.Value = _countdownCounter;
             progressBar.Text = progressBar.Value.ToString();
             _countdownCounter--;
@@ -205,8 +221,10 @@ namespace HeliosDisplayManagement.UIForms
             {
                 t_start.Stop();
                 DoJob();
+
                 return;
             }
+
             progressBar.Value = _startCounter;
             progressBar.Text = progressBar.Value.ToString();
             _startCounter--;

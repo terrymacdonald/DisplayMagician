@@ -16,9 +16,9 @@ namespace HeliosDisplayManagement.ShellExtension
         protected override bool CanShowMenu()
         {
             return Helios.IsInstalled &&
-                   (SelectedItemPaths.Count() == 1) &&
+                   SelectedItemPaths.Count() == 1 &&
                    Profile.GetAllProfiles().Any() &&
-                   (Path.GetExtension(SelectedItemPaths.First())?.ToLower() == @".exe");
+                   Path.GetExtension(SelectedItemPaths.First())?.ToLower() == @".exe";
         }
 
         protected override ContextMenuStrip CreateMenu()
@@ -26,18 +26,28 @@ namespace HeliosDisplayManagement.ShellExtension
             var explorerMenu = new ContextMenuStrip();
             var extensionMenu = new ToolStripMenuItem(Language.Open_under_Display_Profile,
                 Properties.Resources.Icon_x16);
+
             if (Profile.GetAllProfiles().Any())
             {
                 Profile.RefreshActiveStatus();
+
                 foreach (var profile in Profile.GetAllProfiles())
+                {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
+                }
+
                 extensionMenu.DropDownItems.Add(new ToolStripSeparator());
             }
+
             extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
                 Properties.Resources.Icon_x16,
-                (sender, args) => { HeliosDisplayManagement.Open(); }));
+                (sender, args) =>
+                {
+                    HeliosDisplayManagement.Open();
+                }));
             explorerMenu.Items.Add(extensionMenu);
             explorerMenu.Items.Add(new ToolStripSeparator());
+
             return explorerMenu;
         }
 
@@ -58,6 +68,7 @@ namespace HeliosDisplayManagement.ShellExtension
                 (sender, args) =>
                     HeliosDisplayManagement.Open(HeliosStartupAction.CreateShortcut, profile,
                         SelectedItemPaths.FirstOrDefault())));
+
             return profileMenu;
         }
     }

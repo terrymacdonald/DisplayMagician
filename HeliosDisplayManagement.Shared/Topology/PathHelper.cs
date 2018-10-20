@@ -1,6 +1,4 @@
-﻿using System;
-using WindowsDisplayAPI.Native.DisplayConfig;
-using NvAPIWrapper.Native.Mosaic;
+﻿using WindowsDisplayAPI.Native.DisplayConfig;
 
 namespace HeliosDisplayManagement.Shared.Topology
 {

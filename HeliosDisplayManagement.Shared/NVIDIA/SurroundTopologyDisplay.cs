@@ -7,7 +7,6 @@ using EDIDParser.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NvAPIWrapper.Mosaic;
-using NvAPIWrapper.Native.Mosaic;
 
 namespace HeliosDisplayManagement.Shared.NVIDIA
 {
@@ -19,6 +18,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             Rotation = display.Rotation.ToRotation();
             Overlap = new Point(display.Overlap.HorizontalOverlap, display.Overlap.VerticalOverlap);
             PixelShift = display.PixelShiftType.ToPixelShift();
+
             try
             {
                 var bytes = display.DisplayDevice.PhysicalGPU.ReadEDIDData(display.DisplayDevice.Output);
@@ -52,10 +52,20 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         /// <inheritdoc />
         public bool Equals(SurroundTopologyDisplay other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return (DisplayId == other.DisplayId) && Overlap.Equals(other.Overlap) &&
-                   (PixelShift == other.PixelShift) && (Rotation == other.Rotation);
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return DisplayId == other.DisplayId &&
+                   Overlap.Equals(other.Overlap) &&
+                   PixelShift == other.PixelShift &&
+                   Rotation == other.Rotation;
         }
 
         public static bool operator ==(SurroundTopologyDisplay left, SurroundTopologyDisplay right)
@@ -71,9 +81,21 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
             return Equals((SurroundTopologyDisplay) obj);
         }
 
@@ -83,9 +105,10 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             unchecked
             {
                 var hashCode = (int) DisplayId;
-                hashCode = (hashCode*397) ^ Overlap.GetHashCode();
-                hashCode = (hashCode*397) ^ (int) PixelShift;
-                hashCode = (hashCode*397) ^ (int) Rotation;
+                hashCode = (hashCode * 397) ^ Overlap.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int) PixelShift;
+                hashCode = (hashCode * 397) ^ (int) Rotation;
+
                 return hashCode;
             }
         }

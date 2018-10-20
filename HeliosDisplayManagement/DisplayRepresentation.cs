@@ -16,11 +16,18 @@ namespace HeliosDisplayManagement
             Name = display.DeviceName;
             Path = display.DevicePath;
             var index = Path.IndexOf("{", StringComparison.InvariantCultureIgnoreCase);
+
             if (index > 0)
+            {
                 Path = Path.Substring(0, index).TrimEnd('#');
+            }
+
             IsAvailable = display.IsAvailable;
+
             if (IsAvailable)
+            {
                 PossibleSettings = GetDisplay()?.GetPossibleSettings()?.ToArray() ?? new DisplayPossibleSetting[0];
+            }
         }
 
         public DisplayRepresentation(PathTarget display)
@@ -28,15 +35,18 @@ namespace HeliosDisplayManagement
             Name = display.DisplayName;
             Path = display.DevicePath;
             IsAvailable = GetDisplay()?.IsAvailable ?? false;
+
             if (IsAvailable)
+            {
                 PossibleSettings = GetDisplay()?.GetPossibleSettings()?.ToArray() ?? new DisplayPossibleSetting[0];
+            }
         }
 
         public bool IsAvailable { get; }
-        public string Name { get; private set; }
+        public string Name { get; }
         public string Path { get; }
 
-        public DisplayPossibleSetting[] PossibleSettings { get; private set; }
+        public DisplayPossibleSetting[] PossibleSettings { get; }
 
         public static IEnumerable<DisplayRepresentation> GetDisplays(Profile profile = null)
         {
@@ -47,10 +57,18 @@ namespace HeliosDisplayManagement
             //        .GroupBy(representation => representation.Path)
             //        .Select(grouping => grouping.First()).ToList();
             var displays = new List<DisplayRepresentation>();
+
             if (profile != null)
+            {
                 foreach (var target in profile.Paths.SelectMany(path => path.Targets))
+                {
                     if (displays.All(display => display.Path != target.DevicePath))
+                    {
                         displays.Add(new DisplayRepresentation(target));
+                    }
+                }
+            }
+
             return displays;
         }
 
@@ -82,16 +100,21 @@ namespace HeliosDisplayManagement
         {
             var targetInfo = GetTargetInfo();
             var resolution = Size.Empty;
-            if ((targetInfo != null) && targetInfo.IsAvailable)
+
+            if (targetInfo != null && targetInfo.IsAvailable)
             {
                 resolution = targetInfo.PreferredResolution;
             }
             else if (profile != null)
             {
                 var targetPath = GetPathSource(profile);
+
                 if (targetPath != null)
+                {
                     resolution = targetPath.Resolution;
+                }
             }
+
             var p = new Profile {Paths = new Path[1]};
             p.Paths[0] = new Path
             {
@@ -100,12 +123,17 @@ namespace HeliosDisplayManagement
                 Targets = new PathTarget[1]
             };
             p.Paths[0].Targets[0] = new PathTarget {DevicePath = Path};
+
             if (profile != null)
             {
                 var targetPath = GetPathTarget(profile);
+
                 if (targetPath != null)
+                {
                     p.Paths[0].Targets[0].SurroundTopology = targetPath.SurroundTopology;
+                }
             }
+
             return new ProfileIcon(p).ToBitmap(size.Width, size.Height);
         }
     }

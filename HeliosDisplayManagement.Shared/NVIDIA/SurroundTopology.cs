@@ -19,8 +19,8 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             Displays =
                 topology.Displays.Where(
                         display =>
-                            (Resolution.Width > display.Overlap.HorizontalOverlap) &&
-                            (Resolution.Height > display.Overlap.VerticalOverlap))
+                            Resolution.Width > display.Overlap.HorizontalOverlap &&
+                            Resolution.Height > display.Overlap.VerticalOverlap)
                     .Select(display => new SurroundTopologyDisplay(display))
                     .ToArray();
             ApplyWithBezelCorrectedResolution = topology.ApplyWithBezelCorrectedResolution;
@@ -49,16 +49,28 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         /// <inheritdoc />
         public bool Equals(SurroundTopology other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return (AcceleratePrimaryDisplay == other.AcceleratePrimaryDisplay) &&
-                   (ApplyWithBezelCorrectedResolution == other.ApplyWithBezelCorrectedResolution) &&
-                   (BaseMosaicPanoramic == other.BaseMosaicPanoramic) && (ColorDepth == other.ColorDepth) &&
-                   (Columns == other.Columns) && (Displays.Length == other.Displays.Length) &&
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return AcceleratePrimaryDisplay == other.AcceleratePrimaryDisplay &&
+                   ApplyWithBezelCorrectedResolution == other.ApplyWithBezelCorrectedResolution &&
+                   BaseMosaicPanoramic == other.BaseMosaicPanoramic &&
+                   ColorDepth == other.ColorDepth &&
+                   Columns == other.Columns &&
+                   Displays.Length == other.Displays.Length &&
                    Displays.All(display => other.Displays.Contains(display)) &&
-                   (DriverReloadAllowed == other.DriverReloadAllowed) && (Frequency == other.Frequency) &&
-                   (ImmersiveGaming == other.ImmersiveGaming) && Resolution.Equals(other.Resolution) &&
-                   (Rows == other.Rows);
+                   DriverReloadAllowed == other.DriverReloadAllowed &&
+                   Frequency == other.Frequency &&
+                   ImmersiveGaming == other.ImmersiveGaming &&
+                   Resolution.Equals(other.Resolution) &&
+                   Rows == other.Rows;
         }
 
         // ReSharper disable once ExcessiveIndentation
@@ -79,7 +91,9 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                         .FirstOrDefault(
                             info =>
                                 info.TargetsInfo.Any(
-                                    targetInfo => targetInfo.DisplayTarget?.Equals(pathTargetInfo.DisplayTarget) == true));
+                                    targetInfo =>
+                                        targetInfo.DisplayTarget?.Equals(pathTargetInfo.DisplayTarget) == true));
+
                 if (correspondingWindowsPathInfo != null)
                 {
                     // If position is same, then the two paths are equal, after all position is whats important in path sources
@@ -87,14 +101,16 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                         NvAPIWrapper.Display.PathInfo.GetDisplaysConfig()
                             .FirstOrDefault(
                                 info =>
-                                    (info.Position.X == correspondingWindowsPathInfo.Position.X) &&
-                                    (info.Position.Y == correspondingWindowsPathInfo.Position.Y) &&
-                                    (info.Resolution.Width == correspondingWindowsPathInfo.Resolution.Width) &&
-                                    (info.Resolution.Height == correspondingWindowsPathInfo.Resolution.Height));
+                                    info.Position.X == correspondingWindowsPathInfo.Position.X &&
+                                    info.Position.Y == correspondingWindowsPathInfo.Position.Y &&
+                                    info.Resolution.Width == correspondingWindowsPathInfo.Resolution.Width &&
+                                    info.Resolution.Height == correspondingWindowsPathInfo.Resolution.Height);
+
                     if (correspondingNvidiaPathInfo != null)
                     {
                         // We now assume that there is only one target for a NVS path, in an other word, for now, it is not possible to have a cloned surround display
                         var correspondingNvidiaTargetInfo = correspondingNvidiaPathInfo.TargetsInfo.FirstOrDefault();
+
                         if (correspondingNvidiaTargetInfo != null)
                         {
                             // We also assume that the NVS monitor uses a similar display id to one of real physical monitors
@@ -104,8 +120,11 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                                         topology => topology.Displays.Any(display =>
                                             display.DisplayDevice.DisplayId ==
                                             correspondingNvidiaTargetInfo.DisplayDevice.DisplayId));
+
                             if (correspondingNvidiaTopology != null)
+                            {
                                 return new SurroundTopology(correspondingNvidiaTopology);
+                            }
                         }
                     }
                 }
@@ -114,14 +133,15 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             {
                 // ignored
             }
+
             return null;
         }
-        
+
         public static bool operator ==(SurroundTopology left, SurroundTopology right)
         {
             return Equals(left, right) || left?.Equals(right) == true;
         }
-        
+
         public static bool operator !=(SurroundTopology left, SurroundTopology right)
         {
             return !(left == right);
@@ -130,9 +150,21 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
             return Equals((SurroundTopology) obj);
         }
 
@@ -142,16 +174,17 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
             unchecked
             {
                 var hashCode = AcceleratePrimaryDisplay.GetHashCode();
-                hashCode = (hashCode*397) ^ ApplyWithBezelCorrectedResolution.GetHashCode();
-                hashCode = (hashCode*397) ^ BaseMosaicPanoramic.GetHashCode();
-                hashCode = (hashCode*397) ^ ColorDepth;
-                hashCode = (hashCode*397) ^ Columns;
-                hashCode = (hashCode*397) ^ (Displays?.GetHashCode() ?? 0);
-                hashCode = (hashCode*397) ^ DriverReloadAllowed.GetHashCode();
-                hashCode = (hashCode*397) ^ Frequency;
-                hashCode = (hashCode*397) ^ ImmersiveGaming.GetHashCode();
-                hashCode = (hashCode*397) ^ Resolution.GetHashCode();
-                hashCode = (hashCode*397) ^ Rows;
+                hashCode = (hashCode * 397) ^ ApplyWithBezelCorrectedResolution.GetHashCode();
+                hashCode = (hashCode * 397) ^ BaseMosaicPanoramic.GetHashCode();
+                hashCode = (hashCode * 397) ^ ColorDepth;
+                hashCode = (hashCode * 397) ^ Columns;
+                hashCode = (hashCode * 397) ^ (Displays?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ DriverReloadAllowed.GetHashCode();
+                hashCode = (hashCode * 397) ^ Frequency;
+                hashCode = (hashCode * 397) ^ ImmersiveGaming.GetHashCode();
+                hashCode = (hashCode * 397) ^ Resolution.GetHashCode();
+                hashCode = (hashCode * 397) ^ Rows;
+
                 return hashCode;
             }
         }
@@ -175,34 +208,45 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
                 AcceleratePrimaryDisplay = AcceleratePrimaryDisplay
             };
             IDisplaySettings bestDisplaySettings = null;
+
             foreach (var displaySetting in gridTopology.GetPossibleDisplaySettings())
-                if ((displaySetting.Width == Resolution.Width) &&
-                    (displaySetting.Height == Resolution.Height))
+            {
+                if (displaySetting.Width == Resolution.Width &&
+                    displaySetting.Height == Resolution.Height)
                 {
                     if (displaySetting.BitsPerPixel == ColorDepth)
                     {
                         if (displaySetting.Frequency == Frequency)
                         {
                             bestDisplaySettings = displaySetting;
+
                             break;
                         }
-                        if ((bestDisplaySettings == null) || (displaySetting.Frequency > bestDisplaySettings.Frequency))
+
+                        if (bestDisplaySettings == null || displaySetting.Frequency > bestDisplaySettings.Frequency)
+                        {
                             bestDisplaySettings = displaySetting;
+                        }
                     }
-                    else if ((bestDisplaySettings == null) ||
-                             (displaySetting.BitsPerPixel > bestDisplaySettings.BitsPerPixel))
+                    else if (bestDisplaySettings == null ||
+                             displaySetting.BitsPerPixel > bestDisplaySettings.BitsPerPixel)
                     {
                         bestDisplaySettings = displaySetting;
                     }
                 }
-                else if ((bestDisplaySettings == null) ||
-                         (displaySetting.Width*displaySetting.Height >
-                          bestDisplaySettings.Width*bestDisplaySettings.Height))
+                else if (bestDisplaySettings == null ||
+                         displaySetting.Width * displaySetting.Height >
+                         bestDisplaySettings.Width * bestDisplaySettings.Height)
                 {
                     bestDisplaySettings = displaySetting;
                 }
+            }
+
             if (bestDisplaySettings != null)
+            {
                 gridTopology.SetDisplaySettings(bestDisplaySettings);
+            }
+
             return gridTopology;
         }
     }

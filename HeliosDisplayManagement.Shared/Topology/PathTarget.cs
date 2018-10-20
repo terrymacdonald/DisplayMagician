@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using WindowsDisplayAPI.DisplayConfig;
-using WindowsDisplayAPI.Native.DisplayConfig;
 using HeliosDisplayManagement.Shared.NVIDIA;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -14,13 +13,17 @@ namespace HeliosDisplayManagement.Shared.Topology
         {
             DevicePath = targetInfo.DisplayTarget.DevicePath;
             var index = DevicePath.IndexOf("{", StringComparison.InvariantCultureIgnoreCase);
+
             if (index > 0)
+            {
                 DevicePath = DevicePath.Substring(0, index).TrimEnd('#');
+            }
 
             FrequencyInMillihertz = targetInfo.FrequencyInMillihertz;
             Rotation = targetInfo.Rotation.ToRotation();
             Scaling = targetInfo.Scaling.ToScaling();
             ScanLineOrdering = targetInfo.ScanLineOrdering.ToScanLineOrdering();
+
             try
             {
                 DisplayName = targetInfo.DisplayTarget.FriendlyName;
@@ -29,6 +32,7 @@ namespace HeliosDisplayManagement.Shared.Topology
             {
                 DisplayName = null;
             }
+
             SurroundTopology = surround ?? SurroundTopology.FromPathTargetInfo(targetInfo);
         }
 
@@ -57,12 +61,22 @@ namespace HeliosDisplayManagement.Shared.Topology
         /// <inheritdoc />
         public bool Equals(PathTarget other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return (FrequencyInMillihertz == other.FrequencyInMillihertz) &&
-                   (Rotation == other.Rotation) && (Scaling == other.Scaling) &&
-                   (ScanLineOrdering == other.ScanLineOrdering) && (DevicePath == other.DevicePath) &&
-                   (SurroundTopology == other.SurroundTopology);
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return FrequencyInMillihertz == other.FrequencyInMillihertz &&
+                   Rotation == other.Rotation &&
+                   Scaling == other.Scaling &&
+                   ScanLineOrdering == other.ScanLineOrdering &&
+                   DevicePath == other.DevicePath &&
+                   SurroundTopology == other.SurroundTopology;
         }
 
         public static bool operator ==(PathTarget left, PathTarget right)
@@ -78,9 +92,21 @@ namespace HeliosDisplayManagement.Shared.Topology
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
             return Equals((PathTarget) obj);
         }
 
@@ -90,11 +116,12 @@ namespace HeliosDisplayManagement.Shared.Topology
             unchecked
             {
                 var hashCode = FrequencyInMillihertz.GetHashCode();
-                hashCode = (hashCode*397) ^ (int) Rotation;
-                hashCode = (hashCode*397) ^ (int) Scaling;
-                hashCode = (hashCode*397) ^ (int) ScanLineOrdering;
-                hashCode = (hashCode*397) ^ DevicePath.GetHashCode();
-                hashCode = (hashCode*397) ^ SurroundTopology?.GetHashCode() ?? 0;
+                hashCode = (hashCode * 397) ^ (int) Rotation;
+                hashCode = (hashCode * 397) ^ (int) Scaling;
+                hashCode = (hashCode * 397) ^ (int) ScanLineOrdering;
+                hashCode = (hashCode * 397) ^ DevicePath.GetHashCode();
+                hashCode = (hashCode * 397) ^ SurroundTopology?.GetHashCode() ?? 0;
+
                 return hashCode;
             }
         }
@@ -111,11 +138,17 @@ namespace HeliosDisplayManagement.Shared.Topology
             var targetDevice =
                 PathDisplayTarget.GetDisplayTargets()
                     .FirstOrDefault(
-                        target => target.DevicePath.StartsWith(DevicePath, StringComparison.InvariantCultureIgnoreCase));
+                        target => target.DevicePath.StartsWith(DevicePath,
+                            StringComparison.InvariantCultureIgnoreCase));
+
             if (targetDevice == null)
+            {
                 return null;
+            }
+
             return new PathTargetInfo(new PathDisplayTarget(targetDevice.Adapter, targetDevice.TargetId),
-                FrequencyInMillihertz, ScanLineOrdering.ToDisplayConfigScanLineOrdering(), Rotation.ToDisplayConfigRotation(), Scaling.ToDisplayConfigScaling());
+                FrequencyInMillihertz, ScanLineOrdering.ToDisplayConfigScanLineOrdering(),
+                Rotation.ToDisplayConfigRotation(), Scaling.ToDisplayConfigScaling());
         }
     }
 }

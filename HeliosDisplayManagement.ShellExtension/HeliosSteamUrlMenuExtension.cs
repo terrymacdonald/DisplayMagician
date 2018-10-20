@@ -17,9 +17,9 @@ namespace HeliosDisplayManagement.ShellExtension
         protected override bool CanShowMenu()
         {
             return Helios.IsInstalled &&
-                   (SelectedItemPaths.Count() == 1) &&
+                   SelectedItemPaths.Count() == 1 &&
                    Profile.GetAllProfiles().Any() &&
-                   (ParseSteamAppId() > 0);
+                   ParseSteamAppId() > 0;
         }
 
         protected override ContextMenuStrip CreateMenu()
@@ -27,18 +27,28 @@ namespace HeliosDisplayManagement.ShellExtension
             var explorerMenu = new ContextMenuStrip();
             var extensionMenu = new ToolStripMenuItem(Language.Open_under_Display_Profile,
                 Properties.Resources.Icon_x16);
+
             if (Profile.GetAllProfiles().Any())
             {
                 Profile.RefreshActiveStatus();
+
                 foreach (var profile in Profile.GetAllProfiles())
+                {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
+                }
+
                 extensionMenu.DropDownItems.Add(new ToolStripSeparator());
             }
+
             extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
                 Properties.Resources.Icon_x16,
-                (sender, args) => { HeliosDisplayManagement.Open(); }));
+                (sender, args) =>
+                {
+                    HeliosDisplayManagement.Open();
+                }));
             explorerMenu.Items.Add(extensionMenu);
             explorerMenu.Items.Add(new ToolStripSeparator());
+
             return explorerMenu;
         }
 
@@ -56,6 +66,7 @@ namespace HeliosDisplayManagement.ShellExtension
                 (sender, args) =>
                     HeliosDisplayManagement.OpenSteamGame(HeliosStartupAction.CreateShortcut, profile,
                         appId)));
+
             return profileMenu;
         }
 
@@ -64,31 +75,49 @@ namespace HeliosDisplayManagement.ShellExtension
             try
             {
                 var fileAddress = SelectedItemPaths.FirstOrDefault();
-                if (!string.IsNullOrWhiteSpace(fileAddress) && File.Exists(fileAddress) &&
-                    (new FileInfo(fileAddress).Length < 1024))
+
+                if (!string.IsNullOrWhiteSpace(fileAddress) &&
+                    File.Exists(fileAddress) &&
+                    new FileInfo(fileAddress).Length < 1024)
                 {
                     var fileContent = File.ReadAllText(fileAddress);
+
                     if (!fileContent.Contains(@"[InternetShortcut]"))
+                    {
                         return 0;
+                    }
+
                     var steamUrlPattern = @"steam://rungameid/";
                     var urlIndex = fileContent.IndexOf(steamUrlPattern, StringComparison.InvariantCultureIgnoreCase);
+
                     if (urlIndex < 0)
+                    {
                         return 0;
+                    }
+
                     var nextLine = fileContent.IndexOf(@"\r", urlIndex + steamUrlPattern.Length,
                         StringComparison.InvariantCultureIgnoreCase);
+
                     if (nextLine < 0)
+                    {
                         nextLine = fileContent.Length - 1;
+                    }
+
                     var appIdString = fileContent.Substring(urlIndex + steamUrlPattern.Length,
                         nextLine - urlIndex - steamUrlPattern.Length);
                     uint appId;
+
                     if (uint.TryParse(appIdString, out appId))
+                    {
                         return appId;
+                    }
                 }
             }
             catch
             {
                 // ignored
             }
+
             return 0;
         }
     }

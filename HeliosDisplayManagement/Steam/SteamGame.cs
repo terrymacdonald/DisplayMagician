@@ -7,9 +7,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
 using HeliosDisplayManagement.Resources;
 using HtmlAgilityPack;
 using Microsoft.Win32;
@@ -38,14 +35,16 @@ namespace HeliosDisplayManagement.Steam
         public uint AppId { get; }
 
         public static string GameIdsPath
-            =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        {
+            get => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 Assembly.GetExecutingAssembly().GetName().Name, @"SteamGames.json");
+        }
 
         public static string IconCache
-            =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        {
+            get => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 Assembly.GetExecutingAssembly().GetName().Name, @"SteamIconCache");
+        }
 
         public bool IsInstalled
         {
@@ -123,11 +122,25 @@ namespace HeliosDisplayManagement.Steam
             }
         }
 
-        public string Name => _name ?? (_name = GetAppName(AppId));
+        public string Name
+        {
+            get => _name ?? (_name = GetAppName(AppId));
+        }
 
-        private string RegistryApp => $@"{RegistryApps}\\{AppId}";
-        private static string RegistryApps => $@"{RegistrySteam}\\Apps";
-        private static string RegistrySteam => @"SOFTWARE\\Valve\\Steam";
+        private string RegistryApp
+        {
+            get => $@"{RegistryApps}\\{AppId}";
+        }
+
+        private static string RegistryApps
+        {
+            get => $@"{RegistrySteam}\\Apps";
+        }
+
+        private static string RegistrySteam
+        {
+            get => @"SOFTWARE\\Valve\\Steam";
+        }
 
         public static string SteamAddress
         {
@@ -141,45 +154,65 @@ namespace HeliosDisplayManagement.Steam
             }
         }
 
-        public static bool SteamInstalled => !string.IsNullOrWhiteSpace(SteamAddress);
+        public static bool SteamInstalled
+        {
+            get => !string.IsNullOrWhiteSpace(SteamAddress);
+        }
 
         public static List<SteamAppIdNamePair> GetAllGames()
         {
             lock (AllGamesLock)
             {
                 if (_allGames == null)
+                {
                     _allGames = GetCachedGameIds()?.ToList();
+                }
             }
+
             // Update only once
             if (!_allGamesUpdated)
+            {
                 if (_allGames?.Count > 0)
+                {
                     UpdateGamesFromWeb();
+                }
                 else
+                {
                     UpdateGamesFromWeb()?.Join();
+                }
+            }
+
             return _allGames;
         }
 
         public static SteamGame[] GetAllOwnedGames()
         {
             var list = new List<SteamGame>();
+
             try
             {
                 using (
                     var subKey = Registry.CurrentUser.OpenSubKey(RegistryApps, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     if (subKey != null)
+                    {
                         foreach (var keyName in subKey.GetSubKeyNames())
                         {
                             uint gameId;
+
                             if (uint.TryParse(keyName, out gameId))
+                            {
                                 list.Add(new SteamGame(gameId));
+                            }
                         }
+                    }
                 }
             }
             catch (Exception)
             {
                 // ignored
             }
+
             return list.ToArray();
         }
 
@@ -193,9 +226,11 @@ namespace HeliosDisplayManagement.Steam
             try
             {
                 var json = JsonConvert.SerializeObject(gameIds);
+
                 if (!string.IsNullOrWhiteSpace(json))
                 {
                     var dir = Path.GetDirectoryName(GameIdsPath);
+
                     if (dir != null)
                     {
                         Directory.CreateDirectory(dir);
@@ -216,6 +251,7 @@ namespace HeliosDisplayManagement.Steam
                 if (File.Exists(GameIdsPath))
                 {
                     var json = File.ReadAllText(GameIdsPath, Encoding.Unicode);
+
                     if (!string.IsNullOrWhiteSpace(json))
                     {
                         return JsonConvert.DeserializeObject<SteamAppIdNamePair[]>(json);
@@ -226,36 +262,47 @@ namespace HeliosDisplayManagement.Steam
             {
                 // ignored
             }
+
             return null;
         }
 
         private static Thread UpdateGamesFromWeb()
         {
             if (_allGamesUpdated)
+            {
                 return null;
+            }
+
             _allGamesUpdated = true;
             var thread = new Thread(() =>
             {
                 try
                 {
                     var newGames = new List<SteamAppIdNamePair>();
+
                     using (var webClient = new WebClient())
                     {
                         webClient.Headers.Add(@"User-Agent",
                             @"Mozilla/5.0 (Windows NT 10.0; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
                         webClient.Headers.Add(@"Accept", @"text/html,application/xhtml+xml,application/xml;");
                         var response = webClient.OpenRead(@"https://steamdb.info/api/GetAppList/");
+
                         if (response != null)
+                        {
                             using (response)
                             {
                                 using (var reader = new StreamReader(response))
                                 {
                                     var content = reader.ReadToEnd();
+
                                     if (!string.IsNullOrWhiteSpace(content))
                                     {
                                         dynamic appids = JsonConvert.DeserializeObject(content);
-                                        if ((appids != null) && (appids.success == true))
+
+                                        if (appids != null && appids.success == true)
+                                        {
                                             foreach (var app in appids.data)
+                                            {
                                                 try
                                                 {
                                                     newGames.Add(new SteamAppIdNamePair(uint.Parse(app.Name),
@@ -265,18 +312,26 @@ namespace HeliosDisplayManagement.Steam
                                                 {
                                                     // ignored
                                                 }
+                                            }
+                                        }
                                     }
+
                                     reader.Close();
                                 }
+
                                 response.Close();
                             }
+                        }
                     }
+
                     if (newGames.Count > 0)
+                    {
                         lock (AllGamesLock)
                         {
                             _allGames = newGames;
                             CacheGameIds(_allGames);
                         }
+                    }
                 }
                 catch
                 {
@@ -284,22 +339,39 @@ namespace HeliosDisplayManagement.Steam
                 }
             });
             thread.Start();
+
             return thread;
         }
 
         public override string ToString()
         {
             var name = Name;
+
             if (string.IsNullOrWhiteSpace(name))
+            {
                 name = Language.Unknown;
+            }
+
             if (IsRunning)
+            {
                 return name + " " + Language.Running;
+            }
+
             if (IsUpdating)
+            {
                 return name + " " + Language.Updating;
+            }
+
             if (IsInstalled)
+            {
                 return name + " " + Language.Installed;
+            }
+
             if (IsOwned)
+            {
                 return name + " " + Language.Not_Installed;
+            }
+
             return name + " " + Language.Not_Owned;
         }
 
@@ -308,6 +380,7 @@ namespace HeliosDisplayManagement.Steam
             return Task.Run(() =>
             {
                 if (!Directory.Exists(IconCache))
+                {
                     try
                     {
                         Directory.CreateDirectory(IconCache);
@@ -316,14 +389,22 @@ namespace HeliosDisplayManagement.Steam
                     {
                         return null;
                     }
+                }
+
                 var localPath = Path.Combine(IconCache, AppId + ".ico");
+
                 if (File.Exists(localPath))
+                {
                     return localPath;
+                }
+
                 var iconUrl = new HtmlWeb().Load("https://steamdb.info/app/" + AppId)
                     .DocumentNode.SelectNodes("//a[@href]")
                     .Select(node => node.Attributes["href"].Value)
                     .FirstOrDefault(attribute => attribute.EndsWith(".ico") && attribute.Contains("/" + AppId + "/"));
+
                 if (!string.IsNullOrWhiteSpace(iconUrl))
+                {
                     try
                     {
                         using (var client = new WebClient())
@@ -335,6 +416,8 @@ namespace HeliosDisplayManagement.Steam
                     {
                         return null;
                     }
+                }
+
                 return File.Exists(localPath) ? localPath : null;
             });
         }

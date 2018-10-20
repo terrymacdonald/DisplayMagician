@@ -17,9 +17,15 @@ namespace HeliosDisplayManagement.InterProcess
         {
         }
 
-        public int HoldProcessId => Channel.HoldProcessId;
+        public int HoldProcessId
+        {
+            get => Channel.HoldProcessId;
+        }
 
-        public InstanceStatus Status => Channel.Status;
+        public InstanceStatus Status
+        {
+            get => Channel.Status;
+        }
 
         public void StopHold()
         {
@@ -29,11 +35,16 @@ namespace HeliosDisplayManagement.InterProcess
         public static IEnumerable<IPCClient> QueryAll()
         {
             var thisProcess = Process.GetCurrentProcess();
+
             foreach (var process in Process.GetProcessesByName(thisProcess.ProcessName))
             {
                 if (process.Id == thisProcess.Id)
+                {
                     continue;
+                }
+
                 IPCClient processChannel = null;
+
                 try
                 {
                     processChannel = new IPCClient(process);
@@ -42,26 +53,38 @@ namespace HeliosDisplayManagement.InterProcess
                 {
                     // ignored
                 }
+
                 if (processChannel != null)
+                {
                     yield return processChannel;
+                }
             }
         }
 
         public static IPCClient QueryByStatus(InstanceStatus status)
         {
             var thisProcess = Process.GetCurrentProcess();
+
             foreach (var process in Process.GetProcessesByName(thisProcess.ProcessName))
+            {
                 if (process.Id != thisProcess.Id)
+                {
                     try
                     {
                         var processChannel = new IPCClient(process);
+
                         if (processChannel.Status == status)
+                        {
                             return processChannel;
+                        }
                     }
                     catch
                     {
                         // ignored
                     }
+                }
+            }
+
             return null;
         }
     }

@@ -6,16 +6,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
 using WindowsDisplayAPI.DisplayConfig;
 using HeliosDisplayManagement.Shared.Resources;
 using Newtonsoft.Json;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using Formatting = Newtonsoft.Json.Formatting;
 using Path = HeliosDisplayManagement.Shared.Topology.Path;
 
 namespace HeliosDisplayManagement.Shared
@@ -44,7 +40,10 @@ namespace HeliosDisplayManagement.Shared
             get
             {
                 if (_currentProfile == null)
+                {
                     _currentProfile = GetCurrent(string.Empty);
+                }
+
                 return _currentProfile.Equals(this);
             }
         }
@@ -58,6 +57,7 @@ namespace HeliosDisplayManagement.Shared
                     Paths.SelectMany(path => path.Targets)
                         .Select(target => target.SurroundTopology)
                         .Where(topology => topology != null).ToArray();
+
                 if (surroundTopologies.Length > 0)
                 {
                     try
@@ -74,14 +74,20 @@ namespace HeliosDisplayManagement.Shared
                             PhysicalGPU.GetPhysicalGPUs()
                                 .SelectMany(gpu => gpu.GetDisplayDevices())
                                 .Select(device => device.DisplayId);
+
                         if (!
                             surroundTopologies.All(
-                                topology => topology.Displays.All(display => displayDevices.Contains(display.DisplayId))))
+                                topology =>
+                                    topology.Displays.All(display => displayDevices.Contains(display.DisplayId))))
+                        {
                             return false;
+                        }
 
                         // And to see if one path have two surround targets
                         if (Paths.Any(path => path.Targets.Count(target => target.SurroundTopology != null) > 1))
+                        {
                             return false;
+                        }
 
                         return true;
                     }
@@ -89,8 +95,10 @@ namespace HeliosDisplayManagement.Shared
                     {
                         // ignore
                     }
+
                     return false;
                 }
+
                 return true;
                 //return PathInfo.ValidatePathInfos(Paths.Select(path => path.ToPathInfo()));
             }
@@ -109,8 +117,16 @@ namespace HeliosDisplayManagement.Shared
         /// <inheritdoc />
         public bool Equals(Profile other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
             return Paths.All(path => other.Paths.Contains(path));
         }
 
@@ -121,6 +137,7 @@ namespace HeliosDisplayManagement.Shared
                 if (File.Exists(ProfilesPath))
                 {
                     var json = File.ReadAllText(ProfilesPath, Encoding.Unicode);
+
                     if (!string.IsNullOrWhiteSpace(json))
                     {
                         return JsonConvert.DeserializeObject<Profile[]>(json);
@@ -131,6 +148,7 @@ namespace HeliosDisplayManagement.Shared
             {
                 // ignored
             }
+
             return new Profile[0];
         }
 
@@ -141,6 +159,7 @@ namespace HeliosDisplayManagement.Shared
                 Name = name,
                 Paths = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
             };
+
             return _currentProfile;
         }
 
@@ -164,13 +183,16 @@ namespace HeliosDisplayManagement.Shared
             try
             {
                 var json = JsonConvert.SerializeObject(array.ToArray(), Formatting.Indented);
+
                 if (!string.IsNullOrWhiteSpace(json))
                 {
                     var dir = System.IO.Path.GetDirectoryName(ProfilesPath);
+
                     if (dir != null)
                     {
                         Directory.CreateDirectory(dir);
                         File.WriteAllText(ProfilesPath, json, Encoding.Unicode);
+
                         return true;
                     }
                 }
@@ -179,15 +201,28 @@ namespace HeliosDisplayManagement.Shared
             {
                 // ignored
             }
+
             return false;
         }
 
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
             return Equals((Profile) obj);
         }
 
@@ -196,7 +231,7 @@ namespace HeliosDisplayManagement.Shared
         {
             unchecked
             {
-                return (Paths?.GetHashCode() ?? 0)*397;
+                return (Paths?.GetHashCode() ?? 0) * 397;
             }
         }
 
@@ -211,6 +246,7 @@ namespace HeliosDisplayManagement.Shared
             try
             {
                 Thread.Sleep(2000);
+
                 try
                 {
                     var surroundTopologies =
@@ -219,38 +255,51 @@ namespace HeliosDisplayManagement.Shared
                             .Where(topology => topology != null)
                             .Select(topology => topology.ToGridTopology())
                             .ToArray();
+
                     if (surroundTopologies.Length == 0)
                     {
                         var currentTopologies = GridTopology.GetGridTopologies();
-                        if (currentTopologies.Any(topology => topology.Rows*topology.Columns > 1))
+
+                        if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
+                        {
                             surroundTopologies =
                                 GridTopology.GetGridTopologies()
                                     .SelectMany(topology => topology.Displays)
                                     .Select(displays => new GridTopology(1, 1, new[] {displays}))
                                     .ToArray();
+                        }
                     }
+
                     if (surroundTopologies.Length > 0)
+                    {
                         GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
+                    }
                 }
                 catch
                 {
                     // ignored
                 }
+
                 Thread.Sleep(18000);
                 var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+
                 if (!pathInfos.Any())
                 {
-                    throw new InvalidOperationException(@"Display configuration changed since this profile is created. Please re-create this profile.");
+                    throw new InvalidOperationException(
+                        @"Display configuration changed since this profile is created. Please re-create this profile.");
                 }
+
                 PathInfo.ApplyPathInfos(pathInfos, true, true, true);
                 Thread.Sleep(10000);
                 RefreshActiveStatus();
+
                 return true;
             }
             catch (Exception ex)
             {
                 RefreshActiveStatus();
                 MessageBox.Show(ex.Message, @"Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
                 return false;
             }
         }
@@ -260,6 +309,7 @@ namespace HeliosDisplayManagement.Shared
             try
             {
                 var serialized = JsonConvert.SerializeObject(this);
+
                 return JsonConvert.DeserializeObject<Profile>(serialized);
             }
             catch

@@ -37,11 +37,21 @@ namespace HeliosDisplayManagement.Shared.Topology
         /// <inheritdoc />
         public bool Equals(Path other)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return (PixelFormat == other.PixelFormat) &&
-                   Position.Equals(other.Position) && Resolution.Equals(other.Resolution) &&
-                   (Targets.Length == other.Targets.Length) && Targets.All(target => other.Targets.Contains(target));
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return PixelFormat == other.PixelFormat &&
+                   Position.Equals(other.Position) &&
+                   Resolution.Equals(other.Resolution) &&
+                   Targets.Length == other.Targets.Length &&
+                   Targets.All(target => other.Targets.Contains(target));
         }
 
         public static bool operator ==(Path left, Path right)
@@ -57,9 +67,21 @@ namespace HeliosDisplayManagement.Shared.Topology
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
             return Equals((Path) obj);
         }
 
@@ -69,9 +91,10 @@ namespace HeliosDisplayManagement.Shared.Topology
             unchecked
             {
                 var hashCode = (int) PixelFormat;
-                hashCode = (hashCode*397) ^ Position.GetHashCode();
-                hashCode = (hashCode*397) ^ Resolution.GetHashCode();
-                hashCode = (hashCode*397) ^ (Targets?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ Position.GetHashCode();
+                hashCode = (hashCode * 397) ^ Resolution.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Targets?.GetHashCode() ?? 0);
+
                 return hashCode;
             }
         }
@@ -85,9 +108,13 @@ namespace HeliosDisplayManagement.Shared.Topology
         public PathInfo ToPathInfo()
         {
             var targets = Targets.Select(target => target.ToPathTargetInfo()).Where(info => info != null).ToArray();
+
             if (targets.Any())
+            {
                 return new PathInfo(new PathDisplaySource(targets.First().DisplayTarget.Adapter, SourceId), Position,
                     Resolution, PixelFormat, targets);
+            }
+
             return null;
         }
     }

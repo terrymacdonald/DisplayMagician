@@ -26,14 +26,18 @@ namespace HeliosDisplayManagement.InterProcess
 
         public static IPCService GetInstance()
         {
-            if ((_serviceHost != null) || StartService())
+            if (_serviceHost != null || StartService())
+            {
                 return _serviceHost?.SingletonInstance as IPCService;
+            }
+
             return null;
         }
 
         public static bool StartService()
         {
             if (_serviceHost == null)
+            {
                 try
                 {
                     var process = Process.GetCurrentProcess();
@@ -44,6 +48,7 @@ namespace HeliosDisplayManagement.InterProcess
 
                     _serviceHost.AddServiceEndpoint(typeof(IService), new NetNamedPipeBinding(), "Service");
                     _serviceHost.Open();
+
                     return true;
                 }
                 catch (Exception)
@@ -56,8 +61,11 @@ namespace HeliosDisplayManagement.InterProcess
                     {
                         // ignored
                     }
+
                     _serviceHost = null;
                 }
+            }
+
             return false;
         }
     }

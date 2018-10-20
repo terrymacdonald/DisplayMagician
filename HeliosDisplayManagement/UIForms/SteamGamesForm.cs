@@ -19,15 +19,22 @@ namespace HeliosDisplayManagement.UIForms
         private void lv_games_DoubleClick(object sender, EventArgs e)
         {
             if (btn_ok.Enabled)
+            {
                 btn_ok.PerformClick();
+            }
         }
 
         private void lv_games_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lv_games.SelectedItems.Count > 0)
+            {
                 SteamGame = lv_games.SelectedItems[0].Tag as SteamGame;
+            }
             else
+            {
                 SteamGame = null;
+            }
+
             btn_ok.Enabled = SteamGame != null;
         }
 
@@ -38,7 +45,9 @@ namespace HeliosDisplayManagement.UIForms
                 SteamGame.GetAllOwnedGames().OrderByDescending(game => game.IsInstalled).ThenBy(game => game.Name))
             {
                 var iconAddress = await game.GetIcon();
+
                 if (!string.IsNullOrWhiteSpace(iconAddress))
+                {
                     try
                     {
                         using (var fileReader = File.OpenRead(iconAddress))
@@ -51,10 +60,17 @@ namespace HeliosDisplayManagement.UIForms
                     {
                         il_games.Images.Add(Properties.Resources.SteamIcon);
                     }
+                }
                 else
+                {
                     il_games.Images.Add(Properties.Resources.SteamIcon);
+                }
+
                 if (!Visible)
+                {
                     return;
+                }
+
                 lv_games.Items.Add(new ListViewItem
                 {
                     Text = game.Name,
