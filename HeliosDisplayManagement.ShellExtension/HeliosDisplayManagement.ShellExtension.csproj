@@ -34,8 +34,8 @@
     <Reference Include="Apex.WinForms, Version=1.6.0.0, Culture=neutral, PublicKeyToken=98d06957926c086d, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpShellTools.2.2.1\lib\Apex.WinForms.dll</HintPath>
     </Reference>
-    <Reference Include="SharpShell, Version=2.2.1.0, Culture=neutral, PublicKeyToken=f14dc899472fe6fb, processorArchitecture=MSIL">
-      <HintPath>..\packages\SharpShellTools.2.2.1\lib\SharpShell.dll</HintPath>
+    <Reference Include="SharpShell, Version=2.4.3.0, Culture=neutral, PublicKeyToken=f14dc899472fe6fb, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpShell.2.4.3\lib\net40-client\SharpShell.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
