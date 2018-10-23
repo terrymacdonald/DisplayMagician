@@ -77,9 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Resources\Run_x16.png" />
-    <None Include="Resources\Shortcut_x16.png" />
-    <None Include="Resources\Edit_x16.png" />
     <None Include="Resources\Icon_x16.png" />
   </ItemGroup>
   <ItemGroup>
