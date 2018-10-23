@@ -50,6 +50,7 @@ namespace HeliosDisplayManagement.UIForms
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lv_profiles = new System.Windows.Forms.ListView();
             this.il_profiles = new System.Windows.Forms.ImageList(this.components);
+            this.lbl_version = new System.Windows.Forms.Label();
             this.menu_profiles.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -100,13 +101,13 @@ namespace HeliosDisplayManagement.UIForms
             // 
             // lbl_profile
             // 
-            this.lbl_profile.AutoSize = true;
             this.lbl_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(178)));
             this.lbl_profile.Location = new System.Drawing.Point(262, 8);
             this.lbl_profile.Name = "lbl_profile";
-            this.lbl_profile.Size = new System.Drawing.Size(45, 13);
+            this.lbl_profile.Size = new System.Drawing.Size(382, 13);
             this.lbl_profile.TabIndex = 3;
             this.lbl_profile.Text = global::HeliosDisplayManagement.Resources.Language.None;
+            this.lbl_profile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btn_delete
             // 
@@ -227,6 +228,17 @@ namespace HeliosDisplayManagement.UIForms
             this.il_profiles.ImageSize = new System.Drawing.Size(48, 48);
             this.il_profiles.TransparentColor = System.Drawing.Color.Transparent;
             // 
+            // lbl_version
+            // 
+            this.lbl_version.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbl_version.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(178)));
+            this.lbl_version.Location = new System.Drawing.Point(650, 8);
+            this.lbl_version.Name = "lbl_version";
+            this.lbl_version.Size = new System.Drawing.Size(157, 13);
+            this.lbl_version.TabIndex = 12;
+            this.lbl_version.Text = "v{0}";
+            this.lbl_version.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
             // MainForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -235,6 +247,7 @@ namespace HeliosDisplayManagement.UIForms
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(174)))), ((int)(((byte)(184)))), ((int)(((byte)(196)))));
             this.CancelButton = this.btn_cancel;
             this.ClientSize = new System.Drawing.Size(819, 472);
+            this.Controls.Add(this.lbl_version);
             this.Controls.Add(this.lv_profiles);
             this.Controls.Add(this.btn_shortcut);
             this.Controls.Add(this.btn_delete);
@@ -254,7 +267,6 @@ namespace HeliosDisplayManagement.UIForms
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menu_profiles.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -277,6 +289,7 @@ namespace HeliosDisplayManagement.UIForms
         private System.Windows.Forms.ToolStripMenuItem createShortcutToolStripMenuItem;
         private System.Windows.Forms.ListView lv_profiles;
         private System.Windows.Forms.ImageList il_profiles;
+        private System.Windows.Forms.Label lbl_version;
     }
 }
 

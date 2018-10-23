@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using HeliosDisplayManagement.Resources;
@@ -19,6 +20,7 @@ namespace HeliosDisplayManagement.UIForms
             lv_profiles.Groups.Add(GroupCurrent, Language.Current);
             lv_profiles.Groups.Add(GroupActive, Language.Active_Profiles);
             lv_profiles.Groups.Add(GroupSaved, Language.Saved_Profiles);
+            lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);
         }
 
         private ListViewItem AddProfile(Profile profile = null)
