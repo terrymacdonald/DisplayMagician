@@ -225,7 +225,7 @@ namespace HeliosDisplayManagement.Steam
         {
             try
             {
-                var json = JsonConvert.SerializeObject(gameIds);
+                var json = JsonConvert.SerializeObject(gameIds, Formatting.Indented);
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
