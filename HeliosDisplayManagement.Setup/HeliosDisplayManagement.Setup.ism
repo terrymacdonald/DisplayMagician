@@ -4468,7 +4468,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>ProductID</td><td>none</td><td/></row>
 		<row><td>ProductLanguage</td><td>1033</td><td/></row>
 		<row><td>ProductName</td><td>Helios Display Management</td><td/></row>
-		<row><td>ProductVersion</td><td>0.9.3.3</td><td/></row>
+		<row><td>ProductVersion</td><td>0.9.3.4</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>
