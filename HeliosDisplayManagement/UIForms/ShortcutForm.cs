@@ -197,7 +197,7 @@ namespace HeliosDisplayManagement.UIForms
             var args = new List<string>
             {
                 $"-a {HeliosStartupAction.SwitchProfile}",
-                $"-p \"{dv_profile.Profile.Name}\""
+                $"-p \"{dv_profile.Profile.Id}\""
             };
 
             if (!Directory.Exists(IconCache))

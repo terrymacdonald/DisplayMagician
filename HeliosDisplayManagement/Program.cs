@@ -116,11 +116,11 @@ namespace HeliosDisplayManagement
                 }
 
                 var profiles = Profile.GetAllProfiles().ToArray();
-                var profileIndex = !string.IsNullOrWhiteSpace(CommandLineOptions.Default.ProfileName) &&
+                var profileIndex = !string.IsNullOrWhiteSpace(CommandLineOptions.Default.ProfileId) &&
                                    profiles.Length > 0
                     ? Array.FindIndex(profiles,
                         p =>
-                            p.Name.Equals(CommandLineOptions.Default.ProfileName,
+                            p.Id.Equals(CommandLineOptions.Default.ProfileId,
                                 StringComparison.InvariantCultureIgnoreCase))
                     : -1;
 

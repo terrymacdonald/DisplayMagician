@@ -70,8 +70,8 @@ namespace HeliosDisplayManagement
         [ParserState]
         public IParserState LastParserState { get; set; }
 
-        [Option('p', @"p", HelpText = @"Profile name to switch to.", DefaultValue = null)]
-        public string ProfileName { get; set; }
+        [Option('p', @"p", HelpText = @"Profile identification string to switch to.", DefaultValue = null)]
+        public string ProfileId { get; set; }
 
         [HelpOption]
         // ReSharper disable once UnusedMember.Global

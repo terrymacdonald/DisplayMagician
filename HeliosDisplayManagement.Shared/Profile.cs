@@ -34,6 +34,8 @@ namespace HeliosDisplayManagement.Shared
             }
         }
 
+        public string Id { get; set; } = Guid.NewGuid().ToString("B");
+
         [JsonIgnore]
         public bool IsActive
         {
@@ -140,7 +142,20 @@ namespace HeliosDisplayManagement.Shared
 
                     if (!string.IsNullOrWhiteSpace(json))
                     {
-                        return JsonConvert.DeserializeObject<Profile[]>(json);
+                        var profiles = JsonConvert.DeserializeObject<Profile[]>(json, new JsonSerializerSettings
+                        {
+                            MissingMemberHandling = MissingMemberHandling.Ignore,
+                            NullValueHandling = NullValueHandling.Ignore,
+                            DefaultValueHandling = DefaultValueHandling.Include,
+                            TypeNameHandling = TypeNameHandling.Auto
+                        });
+
+                        if (profiles.Any())
+                        {
+                            SetAllProfiles(profiles);
+                        }
+
+                        return profiles;
                     }
                 }
             }
@@ -182,7 +197,12 @@ namespace HeliosDisplayManagement.Shared
         {
             try
             {
-                var json = JsonConvert.SerializeObject(array.ToArray(), Formatting.Indented);
+                var json = JsonConvert.SerializeObject(array.ToArray(), Formatting.Indented, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Include,
+                    DefaultValueHandling = DefaultValueHandling.Populate,
+                    TypeNameHandling = TypeNameHandling.Auto
+                });
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {

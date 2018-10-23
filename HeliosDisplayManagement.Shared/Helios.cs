@@ -60,7 +60,7 @@ namespace HeliosDisplayManagement.Shared
 
                 if (profile != null)
                 {
-                    args.Add($"-p \"{profile.Name}\"");
+                    args.Add($"-p \"{profile.Id}\"");
                 }
 
                 if (!string.IsNullOrWhiteSpace(programAddress))
@@ -108,7 +108,7 @@ namespace HeliosDisplayManagement.Shared
 
                 if (profile != null)
                 {
-                    args.Add($"-p \"{profile.Name}\"");
+                    args.Add($"-p \"{profile.Id}\"");
                 }
 
                 if (steamAppId > 0)
