@@ -60,6 +60,7 @@ namespace HeliosDisplayManagement.UIForms
             this.btn_topo = new System.Windows.Forms.Button();
             this.gb_eyefinity = new System.Windows.Forms.GroupBox();
             this.label10 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
             this.gb_arrangement.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_y)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_x)).BeginInit();
@@ -70,6 +71,7 @@ namespace HeliosDisplayManagement.UIForms
             // btn_save
             // 
             this.btn_save.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_save.Enabled = false;
             this.btn_save.Location = new System.Drawing.Point(569, 572);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(75, 23);
@@ -81,6 +83,7 @@ namespace HeliosDisplayManagement.UIForms
             // btn_apply
             // 
             this.btn_apply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_apply.Enabled = false;
             this.btn_apply.Location = new System.Drawing.Point(472, 572);
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(91, 23);
@@ -380,6 +383,15 @@ namespace HeliosDisplayManagement.UIForms
             this.label10.Text = "Not Available";
             this.label10.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // label5
+            // 
+            this.label5.BackColor = System.Drawing.SystemColors.Window;
+            this.label5.Location = new System.Drawing.Point(12, 318);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(632, 29);
+            this.label5.TabIndex = 18;
+            this.label5.Text = resources.GetString("label5.Text");
+            // 
             // EditForm
             // 
             this.AcceptButton = this.btn_save;
@@ -387,6 +399,7 @@ namespace HeliosDisplayManagement.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btn_cancel;
             this.ClientSize = new System.Drawing.Size(656, 607);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.gb_eyefinity);
             this.Controls.Add(this.gb_surround);
             this.Controls.Add(this.gb_arrangement);
@@ -447,5 +460,6 @@ namespace HeliosDisplayManagement.UIForms
         private System.Windows.Forms.NumericUpDown nud_x;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.CheckBox cb_surround_applybezel;
+        private System.Windows.Forms.Label label5;
     }
 }
