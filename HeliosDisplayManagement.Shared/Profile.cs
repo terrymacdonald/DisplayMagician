@@ -330,7 +330,10 @@ namespace HeliosDisplayManagement.Shared
             {
                 var serialized = JsonConvert.SerializeObject(this);
 
-                return JsonConvert.DeserializeObject<Profile>(serialized);
+                var cloned = JsonConvert.DeserializeObject<Profile>(serialized);
+                cloned.Id = Guid.NewGuid().ToString("B");
+
+                return cloned;
             }
             catch
             {
