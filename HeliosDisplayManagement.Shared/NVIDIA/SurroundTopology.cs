@@ -77,7 +77,7 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         public static SurroundTopology FromPathTargetInfo(PathTargetInfo pathTargetInfo)
         {
             // We go through the code if only the path belongs to a NVIDIA virtual surround display
-            // Bug: Sometimes fails to detect as Surround display. Probably a bug on the NVAPI part. Should we try to resolve every target info to be sure?
+            // TODO: Should we try to resolve every target info to be sure?
             if (pathTargetInfo.DisplayTarget.EDIDManufactureCode != "NVS" &&
                 pathTargetInfo.DisplayTarget.FriendlyName != "NV Surround")
             {
@@ -86,16 +86,18 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
 
             try
             {
+                // Get parent DisplayConfig PathInfo by checking display targets
                 var correspondingWindowsPathInfo =
-                    PathInfo.GetAllPaths()
+                    PathInfo.GetActivePaths()
                         .FirstOrDefault(
                             info =>
                                 info.TargetsInfo.Any(
                                     targetInfo =>
-                                        targetInfo.DisplayTarget?.Equals(pathTargetInfo.DisplayTarget) == true));
+                                        targetInfo.DisplayTarget == pathTargetInfo.DisplayTarget));
 
                 if (correspondingWindowsPathInfo != null)
                 {
+                    // Get corresponding NvAPI PathInfo
                     // If position is same, then the two paths are equal, after all position is whats important in path sources
                     var correspondingNvidiaPathInfo =
                         NvAPIWrapper.Display.PathInfo.GetDisplaysConfig()
@@ -108,18 +110,19 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
 
                     if (correspondingNvidiaPathInfo != null)
                     {
-                        // We now assume that there is only one target for a NVS path, in an other word, for now, it is not possible to have a cloned surround display
+                        // Get corresponding NvAPI PathTargetInfo
+                        // We now assume that there is only one target for a NvAPI PathInfo, in an other word, for now, it is not possible to have a cloned surround display
                         var correspondingNvidiaTargetInfo = correspondingNvidiaPathInfo.TargetsInfo.FirstOrDefault();
 
                         if (correspondingNvidiaTargetInfo != null)
                         {
+                            // Get corresponding NvAPI Grid Topology
                             // We also assume that the NVS monitor uses a similar display id to one of real physical monitors
                             var correspondingNvidiaTopology =
                                 GridTopology.GetGridTopologies()
                                     .FirstOrDefault(
                                         topology => topology.Displays.Any(display =>
-                                            display.DisplayDevice.DisplayId ==
-                                            correspondingNvidiaTargetInfo.DisplayDevice.DisplayId));
+                                            display.DisplayDevice == correspondingNvidiaTargetInfo.DisplayDevice));
 
                             if (correspondingNvidiaTopology != null)
                             {
