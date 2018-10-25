@@ -264,6 +264,7 @@
 		<row><td>NewBinary16</td><td/><td>&lt;ISProductFolder&gt;\Redist\Language Independent\OS Independent\InstallFirstUse.ico</td></row>
 		<row><td>NewBinary17</td><td/><td>&lt;ISProductFolder&gt;\Redist\Language Independent\OS Independent\InstallPartial.ico</td></row>
 		<row><td>NewBinary18</td><td/><td>&lt;ISProductFolder&gt;\Redist\Language Independent\OS Independent\InstallStateMenu.ico</td></row>
+		<row><td>NewBinary19</td><td/><td>&lt;PATH_TO_RELEASE_FILES1&gt;\SharedDLLCleanup.exe</td></row>
 		<row><td>NewBinary2</td><td/><td>&lt;ISProductFolder&gt;\Redist\Language Independent\OS Independent\New.ibd</td></row>
 		<row><td>NewBinary3</td><td/><td>&lt;ISProductFolder&gt;\Redist\Language Independent\OS Independent\Up.ibd</td></row>
 		<row><td>NewBinary4</td><td/><td>&lt;ISProductFolder&gt;\Redist\Language Independent\OS Independent\WarningIcon.ibd</td></row>
@@ -340,22 +341,22 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
-		<row><td>CircularProgressBar</td><td>{BC8E9FFA-1BFC-4241-B198-69C51DD20799}</td><td>INSTALLDIR</td><td>0</td><td/><td>circularprogressbar.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>CommandLine</td><td>{34823859-6F39-49FA-8A2E-4447CC2FA943}</td><td>INSTALLDIR</td><td>0</td><td/><td>commandline.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>EDIDParser</td><td>{A54B9BA7-A297-4EC8-86D1-F65276C54F4B}</td><td>INSTALLDIR</td><td>0</td><td/><td>edidparser.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HeliosDisplayManagement</td><td>{56E5EC50-7CAC-4D85-B373-C573D5863745}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HeliosDisplayManagement.Shared</td><td>{9C88D919-CFDE-48E7-94D3-A00F38FD851D}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.shar</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HtmlAgilityPack</td><td>{AF83AD00-09DD-4158-AF08-6D35EED5E5CB}</td><td>INSTALLDIR</td><td>0</td><td/><td>htmlagilitypack.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ISRegistryComponent_x64</td><td>{0DDC43B7-3C06-4771-A25E-C8703C1D4910}</td><td>INSTALLDIR</td><td>256</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ISRegistryComponent_x86</td><td>{93342B85-8938-429F-8F25-24BEE9281E27}</td><td>INSTALLDIR</td><td>0</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>IconLib</td><td>{576781D5-45BE-41D9-9811-8195BCC40BC7}</td><td>INSTALLDIR</td><td>0</td><td/><td>iconlib.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Newtonsoft.Json</td><td>{A9A78925-41FE-4705-A17A-3738663FA389}</td><td>INSTALLDIR</td><td>0</td><td/><td>newtonsoft.json.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>NvAPIWrapper</td><td>{DDC68F4E-A4E1-43C4-858C-13A275D5B2DE}</td><td>INSTALLDIR</td><td>0</td><td/><td>nvapiwrapper.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>SharpShell</td><td>{90F609FD-91C0-4DAA-9D7D-C3724C7B0AC5}</td><td>INSTALLDIR</td><td>0</td><td/><td>sharpshell.dll1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>SharpShell.SRM</td><td>{2C4DCE7E-F755-4A87-A116-166281A6C6CC}</td><td>INSTALLDIR</td><td>0</td><td/><td>serverregistrationmanager.ex</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ShellExtension</td><td>{29AB2739-A27E-438E-938D-2E57B6D2F050}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.shel1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>WinFormAnimation</td><td>{2E818663-29F3-4694-AEDC-C95733CE975C}</td><td>INSTALLDIR</td><td>0</td><td/><td>winformanimation.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>WindowsDisplayAPI</td><td>{CAFD0FEF-D7C4-4813-9262-EA11BE90C49B}</td><td>INSTALLDIR</td><td>0</td><td/><td>windowsdisplayapi.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>CircularProgressBar</td><td>{43B21D35-D57D-4A6B-9908-0C3FFFED497E}</td><td>INSTALLDIR</td><td>0</td><td/><td>circularprogressbar.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>CommandLine</td><td>{66DBC223-2E52-44F1-883A-C3923FBAC007}</td><td>INSTALLDIR</td><td>0</td><td/><td>commandline.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>EDIDParser</td><td>{27EAE7CB-64B9-4CE2-8818-0947674F7EF4}</td><td>INSTALLDIR</td><td>0</td><td/><td>edidparser.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HeliosDisplayManagement</td><td>{31A5D698-9BC2-4BDE-8819-D3B13DA823E6}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HeliosDisplayManagement.Shared</td><td>{C3C71E3A-E861-4DDB-A47D-16F399E70E5E}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.shar</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HtmlAgilityPack</td><td>{CBDB180A-8E19-4BED-84A7-AAB16770352E}</td><td>INSTALLDIR</td><td>0</td><td/><td>htmlagilitypack.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ISRegistryComponent_x64</td><td>{61B1931E-707B-4C9A-BC24-1FB7D14675B4}</td><td>INSTALLDIR</td><td>256</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ISRegistryComponent_x86</td><td>{227658AA-5072-4635-A501-E5C11526BF6E}</td><td>INSTALLDIR</td><td>0</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>IconLib</td><td>{FAB06EEF-A878-4FF4-837F-C934076354E9}</td><td>INSTALLDIR</td><td>0</td><td/><td>iconlib.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Newtonsoft.Json</td><td>{9557D866-A2B6-4E5F-8FA0-CA648F54563D}</td><td>INSTALLDIR</td><td>0</td><td/><td>newtonsoft.json.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>NvAPIWrapper</td><td>{CCB28F2A-3F9E-4DD5-8301-9D149F115675}</td><td>INSTALLDIR</td><td>0</td><td/><td>nvapiwrapper.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>SharpShell</td><td>{D50208AE-A5C2-49AE-8BE5-07B5B8DA7D80}</td><td>INSTALLDIR</td><td>0</td><td/><td>sharpshell.dll1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>SharpShell.SRM</td><td>{9BC75F95-1900-489C-A84A-82A12DCFDBF6}</td><td>INSTALLDIR</td><td>0</td><td/><td>serverregistrationmanager.ex</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ShellExtension</td><td>{98A9003B-B1C5-4675-8305-8CA3C999DDB8}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.shel1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>WinFormAnimation</td><td>{0F7371A5-05C2-43C7-815C-AE38B5F60389}</td><td>INSTALLDIR</td><td>0</td><td/><td>winformanimation.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>WindowsDisplayAPI</td><td>{180D4F3B-9C01-43A8-9066-58F45E5B2934}</td><td>INSTALLDIR</td><td>0</td><td/><td>windowsdisplayapi.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -1014,6 +1015,7 @@
 		<row><td>SetARPINSTALLLOCATION</td><td>51</td><td>ARPINSTALLLOCATION</td><td>[INSTALLDIR]</td><td/><td/></row>
 		<row><td>SetAllUsersProfileNT</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%SystemRoot]\Profiles\All Users</td><td/><td/></row>
 		<row><td>SetX64INSTALLDIR</td><td>51</td><td>INSTALLDIR</td><td>[ProgramFiles64Folder]\Helios Display Management\</td><td/><td/></row>
+		<row><td>SharedDLLCleanup</td><td>3074</td><td>NewBinary19</td><td>[INSTALLDIR]</td><td>0</td><td/></row>
 		<row><td>ShowMsiLog</td><td>226</td><td>SystemFolder</td><td>[SystemFolder]notepad.exe "[MsiLogFileLocation]"</td><td/><td>Shows Property-driven MSI Log</td></row>
 		<row><td>UninstallShell</td><td>1122</td><td>ServerRegistrationManager.exe</td><td>uninstall "[INSTALLDIR]HeliosDisplayManagement.ShellExtension.dll"</td><td>0</td><td/></row>
 		<row><td>setAllUsersProfile2K</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%ALLUSERSPROFILE]</td><td/><td/></row>
@@ -2325,6 +2327,7 @@
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectFolder</td><td/><td/><td>1</td></row>
 		<row><td>PATH_TO_RELEASE_FILES</td><td>&lt;ISProjectFolder&gt;\..\Release</td><td/><td>2</td></row>
+		<row><td>PATH_TO_RELEASE_FILES1</td><td>C:\Users\s_fal\Documents\Visual Studio 2017\Projects\SharedDLLCleanup\SharedDLLCleanup\bin\x86\Release</td><td/><td>2</td></row>
 		<row><td>ProgramFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>SystemFolder</td><td/><td/><td>1</td></row>
 		<row><td>WindowsFolder</td><td/><td/><td>1</td></row>
@@ -4046,6 +4049,7 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<row><td>SetAllUsersProfileNT</td><td>VersionNT = 400</td><td>970</td><td/><td/></row>
 		<row><td>SetODBCFolders</td><td/><td>1200</td><td>SetODBCFolders</td><td/></row>
 		<row><td>SetX64INSTALLDIR</td><td>ISReleaseFlags&gt;&lt;"x64"</td><td>6</td><td/><td/></row>
+		<row><td>SharedDLLCleanup</td><td>Not Installed</td><td>1526</td><td/><td/></row>
 		<row><td>StartServices</td><td>VersionNT</td><td>5900</td><td>StartServices</td><td/></row>
 		<row><td>StopServices</td><td>VersionNT</td><td>1900</td><td>StopServices</td><td/></row>
 		<row><td>UninstallShell</td><td>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL") AND !Shell_Extension=3</td><td>1950</td><td/><td/></row>
@@ -4072,8 +4076,8 @@ QwBvAHAAeQByAGkAZwBoAHQAIAAoAEMAKQAgADIAMAAxADcAIABTAG8AcgBvAHUAcwBoACAARgBhAGwA
 		<col def="S0">Value</col>
 		<row><td>ActiveLanguage</td><td>1033</td></row>
 		<row><td>Comments</td><td/></row>
-		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="513e5dc4db1c7c1eb8ad05ec6c08aa82">
-eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
+		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="d6eb23e3af2ee1f1fd63e7787908e7a2">
+eAA2ADQAIABSAGUAbABlAGEAcwBlAAEAeAA2ADQAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 			</td></row>
 		<row><td>DefaultProductConfiguration</td><td>x86 Configuration</td></row>
 		<row><td>EnableSwidtag</td><td>1</td></row>
