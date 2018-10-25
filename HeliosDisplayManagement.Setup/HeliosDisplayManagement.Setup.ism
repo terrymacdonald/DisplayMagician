@@ -340,22 +340,22 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
-		<row><td>CircularProgressBar</td><td>{BC8E9FFA-1BFC-4241-B198-69C51DD20799}</td><td>INSTALLDIR</td><td>8</td><td/><td>circularprogressbar.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>CommandLine</td><td>{34823859-6F39-49FA-8A2E-4447CC2FA943}</td><td>INSTALLDIR</td><td>8</td><td/><td>commandline.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>EDIDParser</td><td>{A54B9BA7-A297-4EC8-86D1-F65276C54F4B}</td><td>INSTALLDIR</td><td>8</td><td/><td>edidparser.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HeliosDisplayManagement</td><td>{56E5EC50-7CAC-4D85-B373-C573D5863745}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HeliosDisplayManagement.Shared</td><td>{9C88D919-CFDE-48E7-94D3-A00F38FD851D}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.shar</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>HtmlAgilityPack</td><td>{AF83AD00-09DD-4158-AF08-6D35EED5E5CB}</td><td>INSTALLDIR</td><td>8</td><td/><td>htmlagilitypack.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ISRegistryComponent_x64</td><td>{0DDC43B7-3C06-4771-A25E-C8703C1D4910}</td><td>INSTALLDIR</td><td>264</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ISRegistryComponent_x86</td><td>{93342B85-8938-429F-8F25-24BEE9281E27}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>IconLib</td><td>{576781D5-45BE-41D9-9811-8195BCC40BC7}</td><td>INSTALLDIR</td><td>8</td><td/><td>iconlib.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Newtonsoft.Json</td><td>{A9A78925-41FE-4705-A17A-3738663FA389}</td><td>INSTALLDIR</td><td>8</td><td/><td>newtonsoft.json.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>NvAPIWrapper</td><td>{DDC68F4E-A4E1-43C4-858C-13A275D5B2DE}</td><td>INSTALLDIR</td><td>8</td><td/><td>nvapiwrapper.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>SharpShell</td><td>{90F609FD-91C0-4DAA-9D7D-C3724C7B0AC5}</td><td>INSTALLDIR</td><td>8</td><td/><td>sharpshell.dll1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>SharpShell.SRM</td><td>{2C4DCE7E-F755-4A87-A116-166281A6C6CC}</td><td>INSTALLDIR</td><td>8</td><td/><td>serverregistrationmanager.ex</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ShellExtension</td><td>{29AB2739-A27E-438E-938D-2E57B6D2F050}</td><td>INSTALLDIR</td><td>8</td><td/><td>heliosdisplaymanagement.shel1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>WinFormAnimation</td><td>{2E818663-29F3-4694-AEDC-C95733CE975C}</td><td>INSTALLDIR</td><td>8</td><td/><td>winformanimation.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>WindowsDisplayAPI</td><td>{CAFD0FEF-D7C4-4813-9262-EA11BE90C49B}</td><td>INSTALLDIR</td><td>8</td><td/><td>windowsdisplayapi.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>CircularProgressBar</td><td>{BC8E9FFA-1BFC-4241-B198-69C51DD20799}</td><td>INSTALLDIR</td><td>0</td><td/><td>circularprogressbar.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>CommandLine</td><td>{34823859-6F39-49FA-8A2E-4447CC2FA943}</td><td>INSTALLDIR</td><td>0</td><td/><td>commandline.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>EDIDParser</td><td>{A54B9BA7-A297-4EC8-86D1-F65276C54F4B}</td><td>INSTALLDIR</td><td>0</td><td/><td>edidparser.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HeliosDisplayManagement</td><td>{56E5EC50-7CAC-4D85-B373-C573D5863745}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HeliosDisplayManagement.Shared</td><td>{9C88D919-CFDE-48E7-94D3-A00F38FD851D}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.shar</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>HtmlAgilityPack</td><td>{AF83AD00-09DD-4158-AF08-6D35EED5E5CB}</td><td>INSTALLDIR</td><td>0</td><td/><td>htmlagilitypack.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ISRegistryComponent_x64</td><td>{0DDC43B7-3C06-4771-A25E-C8703C1D4910}</td><td>INSTALLDIR</td><td>256</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ISRegistryComponent_x86</td><td>{93342B85-8938-429F-8F25-24BEE9281E27}</td><td>INSTALLDIR</td><td>0</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>IconLib</td><td>{576781D5-45BE-41D9-9811-8195BCC40BC7}</td><td>INSTALLDIR</td><td>0</td><td/><td>iconlib.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Newtonsoft.Json</td><td>{A9A78925-41FE-4705-A17A-3738663FA389}</td><td>INSTALLDIR</td><td>0</td><td/><td>newtonsoft.json.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>NvAPIWrapper</td><td>{DDC68F4E-A4E1-43C4-858C-13A275D5B2DE}</td><td>INSTALLDIR</td><td>0</td><td/><td>nvapiwrapper.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>SharpShell</td><td>{90F609FD-91C0-4DAA-9D7D-C3724C7B0AC5}</td><td>INSTALLDIR</td><td>0</td><td/><td>sharpshell.dll1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>SharpShell.SRM</td><td>{2C4DCE7E-F755-4A87-A116-166281A6C6CC}</td><td>INSTALLDIR</td><td>0</td><td/><td>serverregistrationmanager.ex</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ShellExtension</td><td>{29AB2739-A27E-438E-938D-2E57B6D2F050}</td><td>INSTALLDIR</td><td>0</td><td/><td>heliosdisplaymanagement.shel1</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>WinFormAnimation</td><td>{2E818663-29F3-4694-AEDC-C95733CE975C}</td><td>INSTALLDIR</td><td>0</td><td/><td>winformanimation.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>WindowsDisplayAPI</td><td>{CAFD0FEF-D7C4-4813-9262-EA11BE90C49B}</td><td>INSTALLDIR</td><td>0</td><td/><td>windowsdisplayapi.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -4464,11 +4464,11 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>PROGMSG_IIS_ROLLBACKAPPPOOLS</td><td>##IDS_PROGMSG_IIS_ROLLBACKAPPPOOLS##</td><td/></row>
 		<row><td>PROGMSG_IIS_ROLLBACKVROOTS</td><td>##IDS_PROGMSG_IIS_ROLLBACKVROOTS##</td><td/></row>
 		<row><td>PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS</td><td>##IDS_PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS##</td><td/></row>
-		<row><td>ProductCode</td><td>{B37030E3-E99E-4631-A575-0CBBBFE594CE}</td><td/></row>
+		<row><td>ProductCode</td><td>{B8604031-5564-43A5-B457-97708BBF5E38}</td><td/></row>
 		<row><td>ProductID</td><td>none</td><td/></row>
 		<row><td>ProductLanguage</td><td>1033</td><td/></row>
 		<row><td>ProductName</td><td>Helios Display Management</td><td/></row>
-		<row><td>ProductVersion</td><td>0.9.3.4</td><td/></row>
+		<row><td>ProductVersion</td><td>0.9.4.4</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>
@@ -4477,7 +4477,7 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>ReinstallModeText</td><td>omus</td><td/></row>
 		<row><td>RestartManagerOption</td><td>CloseRestart</td><td/></row>
 		<row><td>SHOWLAUNCHPROGRAM</td><td>0</td><td/></row>
-		<row><td>SecureCustomProperties</td><td>ISFOUNDNEWERPRODUCTVERSION;USERNAME;COMPANYNAME;ISX_SERIALNUM;SUPPORTDIR;INSTALLDIR;DOTNETVERSION451FULL;LAUNCHPROGRAM</td><td/></row>
+		<row><td>SecureCustomProperties</td><td>ISFOUNDNEWERPRODUCTVERSION;USERNAME;COMPANYNAME;ISX_SERIALNUM;SUPPORTDIR;INSTALLDIR;DOTNETVERSION451FULL;LAUNCHPROGRAM;ISACTIONPROP1</td><td/></row>
 		<row><td>ServerRegistrationManager.exe</td><td/><td/></row>
 		<row><td>SetupType</td><td>Typical</td><td/></row>
 		<row><td>UpgradeCode</td><td>{64733800-54B5-4DA7-B31F-8CF2E52F3405}</td><td/></row>
@@ -4756,7 +4756,8 @@ eAA4ADYAIABSAGUAbABlAGEAcwBlAAEAeAA4ADYAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<col def="S255">Remove</col>
 		<col def="s72">ActionProperty</col>
 		<col def="S72">ISDisplayName</col>
-		<row><td>{00000000-0000-0000-0000-000000000000}</td><td></td><td>***ALL_VERSIONS***</td><td></td><td>258</td><td/><td>ISFOUNDNEWERPRODUCTVERSION</td><td>ISPreventDowngrade</td></row>
+		<row><td>{00000000-0000-0000-0000-000000000000}</td><td>***ALL_VERSIONS***</td><td></td><td></td><td>258</td><td/><td>ISFOUNDNEWERPRODUCTVERSION</td><td>ISPreventDowngrade</td></row>
+		<row><td>{64733800-54B5-4DA7-B31F-8CF2E52F3405}</td><td>0.9.0.0</td><td>0.9.4.4</td><td></td><td>773</td><td/><td>ISACTIONPROP1</td><td>MajorUpgrade0.9.4.4</td></row>
 	</table>
 
 	<table name="Verb">
