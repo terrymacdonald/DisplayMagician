@@ -2327,7 +2327,7 @@
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectFolder</td><td/><td/><td>1</td></row>
 		<row><td>PATH_TO_RELEASE_FILES</td><td>&lt;ISProjectFolder&gt;\..\Release</td><td/><td>2</td></row>
-		<row><td>PATH_TO_RELEASE_FILES1</td><td>C:\Users\s_fal\Documents\Visual Studio 2017\Projects\SharedDLLCleanup\SharedDLLCleanup\bin\x86\Release</td><td/><td>2</td></row>
+		<row><td>PATH_TO_RELEASE_FILES1</td><td>&lt;ISProjectFolder&gt;\..\..\SharedDLLCleanup\SharedDLLCleanup\bin\x86\Release</td><td/><td>2</td></row>
 		<row><td>ProgramFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>SystemFolder</td><td/><td/><td>1</td></row>
 		<row><td>WindowsFolder</td><td/><td/><td>1</td></row>
@@ -4472,7 +4472,7 @@ eAA2ADQAIABSAGUAbABlAGEAcwBlAAEAeAA2ADQAIABDAG8AbgBmAGkAZwB1AHIAYQB0AGkAbwBuAA==
 		<row><td>ProductID</td><td>none</td><td/></row>
 		<row><td>ProductLanguage</td><td>1033</td><td/></row>
 		<row><td>ProductName</td><td>Helios Display Management</td><td/></row>
-		<row><td>ProductVersion</td><td>0.9.4.4</td><td/></row>
+		<row><td>ProductVersion</td><td>0.9.5.0</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>
