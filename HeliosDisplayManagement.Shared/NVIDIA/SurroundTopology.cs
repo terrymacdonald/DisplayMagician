@@ -78,8 +78,17 @@ namespace HeliosDisplayManagement.Shared.NVIDIA
         {
             // We go through the code if only the path belongs to a NVIDIA virtual surround display
             // TODO: Should we try to resolve every target info to be sure?
-            if (pathTargetInfo.DisplayTarget.EDIDManufactureCode != "NVS" &&
-                pathTargetInfo.DisplayTarget.FriendlyName != "NV Surround")
+            if (!string.Equals(
+                    pathTargetInfo.DisplayTarget.EDIDManufactureCode,
+                    "NVS",
+                    StringComparison.InvariantCultureIgnoreCase
+                ) &&
+                !string.Equals(
+                    pathTargetInfo.DisplayTarget.FriendlyName,
+                    "NV Surround",
+                    StringComparison.InvariantCultureIgnoreCase
+                ) &&
+                !pathTargetInfo.DisplayTarget.DevicePath.ToLower().Contains("&UID5120".ToLower()))
             {
                 return null;
             }
