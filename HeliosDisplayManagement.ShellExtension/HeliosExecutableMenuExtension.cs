@@ -11,6 +11,7 @@ namespace HeliosDisplayManagement.ShellExtension
 {
     [ComVisible(true)]
     [COMServerAssociation(AssociationType.ClassOfExtension, @".exe")]
+    [Guid("48B49131-2258-4694-879F-A3F96310A220")]
     internal class HeliosExecutableMenuExtension : SharpContextMenu
     {
         protected override bool CanShowMenu()

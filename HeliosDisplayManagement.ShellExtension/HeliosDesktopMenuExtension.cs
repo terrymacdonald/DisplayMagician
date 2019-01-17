@@ -10,6 +10,7 @@ namespace HeliosDisplayManagement.ShellExtension
 {
     [ComVisible(true)]
     [COMServerAssociation(AssociationType.Class, @"DesktopBackground")]
+    [Guid("2EC0C798-715B-458E-8C86-5D846F67FBA1")]
     internal class HeliosDesktopMenuExtension : SharpContextMenu
     {
         private static ToolStripMenuItem CreateProfileMenu(Profile profile)

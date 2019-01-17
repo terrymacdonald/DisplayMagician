@@ -12,6 +12,7 @@ namespace HeliosDisplayManagement.ShellExtension
 {
     [ComVisible(true)]
     [COMServerAssociation(AssociationType.ClassOfExtension, @".url")]
+    [Guid("E41ECFB2-3E7D-4A47-8A51-8627F1B21AE5")]
     internal class HeliosSteamUrlMenuExtension : SharpContextMenu
     {
         protected override bool CanShowMenu()
