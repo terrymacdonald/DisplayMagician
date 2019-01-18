@@ -1,4 +1,7 @@
 # Helios Display Management
+[![](https://img.shields.io/github/license/falahati/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/blob/master/LICENSE)
+[![](https://img.shields.io/github/commit-activity/y/falahati/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/commits/master)
+[![](https://img.shields.io/github/issues/falahati/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/issues)
 
 An open source tool for display profile management. Readily switch between display profiles & settings.
 
@@ -7,10 +10,17 @@ An open source tool for display profile management. Readily switch between displ
 <div style="text-align:center"><img src="READMEAssets/Preview.png"/></div>
 
 ## Download
+[![](https://img.shields.io/github/downloads/falahati/HeliosDisplayManagement/total.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/releases)
+[![](https://img.shields.io/github/tag-date/falahati/HeliosDisplayManagement.svg?label=version&style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/releases)
+
 The latest version of this application is available for download via the [release](https://github.com/falahati/HeliosDisplayManagement/releases) page.
 
 ## Donation
-[<img width="24" height="24" src="http://icons.iconarchive.com/icons/sonya/swarm/256/Coffee-icon.png"/>Every coffee counts! :) -- Also, donations assist development and are greatly appreciated](https://www.coinpayments.net/index.php?cmd=_donate&reset=1&merchant=820707aded07845511b841f9c4c335cd&item_name=Donate&currency=USD&amountf=10.00000000&allow_amount=1&want_shipping=0&allow_extra=1) (Crypto - PayPal)
+Donations assist development and are greatly appreciated; also always remember that [every coffee counts!](https://media.makeameme.org/created/one-simply-does-i9k8kx.jpg) :)
+
+[![](https://img.shields.io/badge/donation-Fiat-8a00a3.svg?style=flat-square)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=WR3KK2B6TYYQ4&item_name=Donation&currency_code=USD&source=url)
+[![](https://img.shields.io/badge/donation-Crypto-8a00a3.svg?style=flat-square)](https://www.coinpayments.net/index.php?cmd=_donate&reset=1&merchant=820707aded07845511b841f9c4c335cd&item_name=Donate&currency=USD&amountf=20.00000000&allow_amount=1&want_shipping=0&allow_extra=1)
+[![](https://img.shields.io/badge/donation-Shetab-8a00a3.svg?style=flat-square)](https://zarinp.al/@falahati)
 
 **--OR--**
 
