@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Diagnostics;
 using HeliosDisplayManagement.Resources;
 using WinFormAnimation;
 
@@ -16,6 +17,8 @@ namespace HeliosDisplayManagement.UIForms
         private int _countdownCounter;
         private bool _isClosing;
         private int _startCounter;
+
+
 
         public SplashForm()
         {
@@ -229,6 +232,41 @@ namespace HeliosDisplayManagement.UIForms
             progressBar.Text = progressBar.Value.ToString();
             _startCounter--;
             Reposition();
+        }
+
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_SETTINGCHANGE = 0x001A;
+            const int SPI_SETWORKAREA = 0x02F;
+            const int WM_DISPLAYCHANGE = 0x007E;
+
+            const int x_bitshift = 0;
+            const int y_bitshift = 16;
+            const int xy_mask = 0xFFFF;
+
+            switch (m.Msg)
+            {
+                case WM_SETTINGCHANGE:
+                    Debug.Print("Message: " + m.ToString());
+                    Debug.Print("WM_SETTINGCHANGE");
+                    switch ((int) m.WParam)
+                    {
+                        case SPI_SETWORKAREA:
+                            Debug.Print("SPI_SETWORKAREA");
+                            break;
+                    }
+                    break;
+                case WM_DISPLAYCHANGE:
+                    int cxScreen = (xy_mask & ((int)m.LParam) >> x_bitshift);
+                    int cyScreen = (xy_mask & ((int)m.LParam) >> y_bitshift);
+                    Debug.Print("Message: " + m.ToString());
+                    Debug.Print("WM_DISPLAYCHANGE");
+                    Debug.Print("cxScreen: " + cxScreen  + " cyScreen: " + cyScreen);
+                    break;
+
+            }
+            base.WndProc(ref m);
         }
     }
 }
