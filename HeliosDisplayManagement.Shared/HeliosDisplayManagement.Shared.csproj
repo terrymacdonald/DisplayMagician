@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Appccelerate.StateMachine, Version=4.4.0.0, Culture=neutral, PublicKeyToken=917bca444d1f2b4c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Appccelerate.StateMachine.4.4.0\lib\netstandard1.0\Appccelerate.StateMachine.dll</HintPath>
+    </Reference>
     <Reference Include="EDIDParser, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\EDIDParser.1.2.0.1\lib\net45\EDIDParser.dll</HintPath>
     </Reference>
