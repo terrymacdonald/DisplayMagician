@@ -6,12 +6,14 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Diagnostics;
 using WindowsDisplayAPI.DisplayConfig;
 using HeliosDisplayManagement.Shared.Resources;
 using Newtonsoft.Json;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
+using Appccelerate.StateMachine;
 using Path = HeliosDisplayManagement.Shared.Topology.Path;
 
 namespace HeliosDisplayManagement.Shared
@@ -109,6 +111,9 @@ namespace HeliosDisplayManagement.Shared
         public string Name { get; set; }
 
         public Path[] Paths { get; set; } = new Path[0];
+
+        [JsonIgnore]
+        public PassiveStateMachine<States, StateCmd> fsm = _profileStateMachine();
 
         public static string ProfilesPath
         {
@@ -261,12 +266,9 @@ namespace HeliosDisplayManagement.Shared
             return (Name ?? Language.UN_TITLED_PROFILE) + (IsActive ? " " + Language._Active_ : "");
         }
 
-        public bool Apply()
+        private void _applyTopos() 
         {
-            try
-            {
-                Thread.Sleep(2000);
-
+            
                 try
                 {
                     var surroundTopologies =
@@ -299,9 +301,11 @@ namespace HeliosDisplayManagement.Shared
                 {
                     // ignored
                 }
+        }
 
-                Thread.Sleep(18000);
-                var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+        private void _applyPathInfos() 
+        {
+               var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
 
                 if (!pathInfos.Any())
                 {
@@ -310,7 +314,66 @@ namespace HeliosDisplayManagement.Shared
                 }
 
                 PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+        }
+
+        public enum States 
+        {
+            Idle,
+            SettingTopos,
+            SettingPathInfo
+        }
+        
+        public enum StateCmd 
+        {
+            Begin,
+            Next
+        }
+
+        private PassiveStateMachine<States, StateCmd> _profileStateMachine() 
+        {
+            var fsm = new PassiveStateMachine<States, StateCmd>();
+            fsm.In(States.Idle)
+                .On(StateCmd.Begin)
+                .Goto(States.SettingTopos)
+                .Execute(_applyTopos);
+            
+            fsm.In(States.SettingTopos)
+                .On(StateCmd.Next)
+                .Goto(States.SettingPathInfo)
+                .Execute(_applyPathInfos);
+
+            fsm.In(States.SettingPathInfo)
+                .On(StateCmd.Next)
+                .Goto(States.Idle);
+            
+            return fsm;
+        }
+
+        public bool Apply()
+        {
+            try
+            {
+                var fsm = profileStateMachine();
+                fsm.Initialize(States.Idle);
+                fsm.Start();
+                Debug.Print("Begin profile change");
+                Thread.Sleep(2000);
+                fsm.Fire(StateCmd.Begin);
+
+                Debug.Print("Finished setting topologies");
+                Debug.Print("Sleep");
+                Thread.Sleep(18000);
+                Debug.Print("Awake");
+
+                fsm.Fire(StateCmd.Next);
+ 
+                Debug.Print("Applying pathInfos");
+                Debug.Print("Sleep");
                 Thread.Sleep(10000);
+                Debug.Print("Awake");
+
+                fsm.Fire(StateCmd.Next);
+
                 RefreshActiveStatus();
 
                 return true;
