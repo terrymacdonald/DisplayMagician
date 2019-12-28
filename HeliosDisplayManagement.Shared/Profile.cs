@@ -331,13 +331,13 @@ namespace HeliosDisplayManagement.Shared
                 { "Applying_Topos", Language.Applying_Topos },
                 { "Applying_Paths", Language.Applying_Paths } 
             };
-            return list;
+            return dict;
         }
 
         public List<string> applyProfileSequence()
         {
             var list = new List<string>() { "Applying_Topos", "Applying_Paths" };
-            return list
+            return list;
         }
 
         public bool Apply()
