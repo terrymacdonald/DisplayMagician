@@ -112,8 +112,6 @@ namespace HeliosDisplayManagement.Shared
 
         public Path[] Paths { get; set; } = new Path[0];
 
-        [JsonIgnore]
-        public PassiveStateMachine<States, StateCmd> fsm = _profileStateMachine();
 
         public static string ProfilesPath
         {
@@ -248,7 +246,7 @@ namespace HeliosDisplayManagement.Shared
                 return false;
             }
 
-            return Equals((Profile) obj);
+            return Equals((Profile)obj);
         }
 
         /// <inheritdoc />
@@ -266,113 +264,86 @@ namespace HeliosDisplayManagement.Shared
             return (Name ?? Language.UN_TITLED_PROFILE) + (IsActive ? " " + Language._Active_ : "");
         }
 
-        private void _applyTopos() 
+        private void _applyTopos()
         {
-            
-                try
+
+            try
+            {
+                var surroundTopologies =
+                    Paths.SelectMany(path => path.Targets)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .ToArray();
+
+                if (surroundTopologies.Length == 0)
                 {
-                    var surroundTopologies =
-                        Paths.SelectMany(path => path.Targets)
-                            .Select(target => target.SurroundTopology)
-                            .Where(topology => topology != null)
-                            .Select(topology => topology.ToGridTopology())
-                            .ToArray();
+                    var currentTopologies = GridTopology.GetGridTopologies();
 
-                    if (surroundTopologies.Length == 0)
+                    if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
                     {
-                        var currentTopologies = GridTopology.GetGridTopologies();
-
-                        if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
-                        {
-                            surroundTopologies =
-                                GridTopology.GetGridTopologies()
-                                    .SelectMany(topology => topology.Displays)
-                                    .Select(displays => new GridTopology(1, 1, new[] {displays}))
-                                    .ToArray();
-                        }
-                    }
-
-                    if (surroundTopologies.Length > 0)
-                    {
-                        GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
+                        surroundTopologies =
+                            GridTopology.GetGridTopologies()
+                                .SelectMany(topology => topology.Displays)
+                                .Select(displays => new GridTopology(1, 1, new[] { displays }))
+                                .ToArray();
                     }
                 }
-                catch
+
+                if (surroundTopologies.Length > 0)
                 {
-                    // ignored
+                    GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
                 }
+            }
+            catch
+            {
+                // ignored
+            }
         }
 
-        private void _applyPathInfos() 
+        private void _applyPathInfos()
         {
-               var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+            var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
 
-                if (!pathInfos.Any())
-                {
-                    throw new InvalidOperationException(
-                        @"Display configuration changed since this profile is created. Please re-create this profile.");
-                }
+            if (!pathInfos.Any())
+            {
+                throw new InvalidOperationException(
+                    @"Display configuration changed since this profile is created. Please re-create this profile.");
+            }
 
-                PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+            PathInfo.ApplyPathInfos(pathInfos, true, true, true);
         }
 
-        public enum States 
+        public List<Action> applySequence() 
         {
-            Idle,
-            SettingTopos,
-            SettingPathInfo
-        }
-        
-        public enum StateCmd 
-        {
-            Begin,
-            Next
-        }
-
-        private PassiveStateMachine<States, StateCmd> _profileStateMachine() 
-        {
-            var fsm = new PassiveStateMachine<States, StateCmd>();
-            fsm.In(States.Idle)
-                .On(StateCmd.Begin)
-                .Goto(States.SettingTopos)
-                .Execute(_applyTopos);
-            
-            fsm.In(States.SettingTopos)
-                .On(StateCmd.Next)
-                .Goto(States.SettingPathInfo)
-                .Execute(_applyPathInfos);
-
-            fsm.In(States.SettingPathInfo)
-                .On(StateCmd.Next)
-                .Goto(States.Idle);
-            
-            return fsm;
-        }
+            var list = new List<Action>()
+            {
+                _applyTopos,
+                _applyPathInfos
+            };
+            return list;
+        } 
 
         public bool Apply()
         {
             try
             {
-                var fsm = profileStateMachine();
-                fsm.Initialize(States.Idle);
-                fsm.Start();
+               
                 Debug.Print("Begin profile change");
                 Thread.Sleep(2000);
-                fsm.Fire(StateCmd.Begin);
+                _applyTopos();
 
                 Debug.Print("Finished setting topologies");
                 Debug.Print("Sleep");
                 Thread.Sleep(18000);
                 Debug.Print("Awake");
 
-                fsm.Fire(StateCmd.Next);
+                _applyPathInfos();
  
                 Debug.Print("Applying pathInfos");
                 Debug.Print("Sleep");
                 Thread.Sleep(10000);
                 Debug.Print("Awake");
-
-                fsm.Fire(StateCmd.Next);
 
                 RefreshActiveStatus();
 
