@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Diagnostics;
 using HeliosDisplayManagement.Resources;
 using WinFormAnimation;
 
@@ -14,8 +15,14 @@ namespace HeliosDisplayManagement.UIForms
         private readonly Bitmap _progressImage;
         private readonly List<Point> _progressPositions = new List<Point>();
         private int _countdownCounter;
+
+        private readonly int _displayChangeMaxDelta = -1;
+        private int _displayChangeDelta;
+        private int _lastCount;
         private bool _isClosing;
         private int _startCounter;
+
+
 
         public SplashForm()
         {
@@ -32,6 +39,13 @@ namespace HeliosDisplayManagement.UIForms
             _job = job;
             _startCounter = cancellationTimeout;
             _countdownCounter = countdown;
+            _lastCount = _countdownCounter;
+        }
+
+        public SplashForm(Action job, int cancellationTimeout = 0, int countdown = 0, int displayChangeMaxDelta = 5, string state = null) : this(job, cancellationTimeout, countdown) 
+        {
+            _displayChangeMaxDelta = displayChangeMaxDelta;
+            if (!string.IsNullOrEmpty(state)) CountdownMessage = state;
         }
 
         public string CancellationMessage { get; set; } = Language.Starting_in;
@@ -77,6 +91,18 @@ namespace HeliosDisplayManagement.UIForms
             return true;
         }
 
+        private void HandleDisplayChangeDelta()
+        {
+            if (_displayChangeMaxDelta <= -1) return;
+            _displayChangeDelta = _lastCount - _countdownCounter;
+            if (_displayChangeDelta > _displayChangeMaxDelta)
+            {
+                Debug.Print("_displayChangeDelta > _displayChangeMaxDelta! " + _displayChangeDelta + " > " + _displayChangeMaxDelta);
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+        }
+
         private void DoJob()
         {
             lbl_message.Text = CountdownMessage;
@@ -99,6 +125,7 @@ namespace HeliosDisplayManagement.UIForms
                 DialogResult = DialogResult.OK;
                 Close();
             }
+            HandleDisplayChangeDelta();
         }
 
         private void DoTimeout()
@@ -115,6 +142,7 @@ namespace HeliosDisplayManagement.UIForms
             {
                 DoJob();
             }
+            HandleDisplayChangeDelta();
         }
 
         private void Reposition()
@@ -209,6 +237,8 @@ namespace HeliosDisplayManagement.UIForms
                 return;
             }
 
+            HandleDisplayChangeDelta();
+
             progressBar.Value = _countdownCounter;
             progressBar.Text = progressBar.Value.ToString();
             _countdownCounter--;
@@ -229,6 +259,51 @@ namespace HeliosDisplayManagement.UIForms
             progressBar.Text = progressBar.Value.ToString();
             _startCounter--;
             Reposition();
+        }
+
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_SETTINGCHANGE = 0x001A;
+            const int SPI_SETWORKAREA = 0x02F;
+            const int WM_DISPLAYCHANGE = 0x007E;
+
+            const int x_bitshift = 0;
+            const int y_bitshift = 16;
+            const int xy_mask = 0xFFFF;
+
+            bool displayChange = false;
+
+            switch (m.Msg)
+            {
+                case WM_SETTINGCHANGE:
+                    Debug.Print("Message: " + m.ToString());
+                    Debug.Print("WM_SETTINGCHANGE");
+                    switch ((int)m.WParam)
+                    {
+                        case SPI_SETWORKAREA:
+                            Debug.Print("SPI_SETWORKAREA");
+                            displayChange = true;
+                            break;
+                    }
+                    break;
+                case WM_DISPLAYCHANGE:
+                    int cxScreen = (xy_mask & ((int)m.LParam) >> x_bitshift);
+                    int cyScreen = (xy_mask & ((int)m.LParam) >> y_bitshift);
+                    Debug.Print("Message: " + m.ToString());
+                    Debug.Print("WM_DISPLAYCHANGE");
+                    Debug.Print("cxScreen: " + cxScreen + " cyScreen: " + cyScreen);
+                    displayChange = true;
+                    break;
+            }
+            if (displayChange)
+            {
+                _displayChangeDelta = _lastCount - _countdownCounter;
+                _lastCount = _countdownCounter;
+                Debug.Print("Display Change Detected at t " + _lastCount + " difference between changes is " + _displayChangeDelta);
+            }
+
+            base.WndProc(ref m);
         }
     }
 }

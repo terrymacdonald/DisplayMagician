@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -59,14 +60,32 @@ namespace HeliosDisplayManagement.UIForms
                 Enabled = false;
                 Visible = false;
 
+                IDictionary<string, Action> actions  = dv_profile.Profile.applyProfileActions();
+                IDictionary<string, string> messages = dv_profile.Profile.applyProfileMsgs();
+                List<string> sequence                = dv_profile.Profile.applyProfileSequence();
+
+
+
                 if (
                     new SplashForm(
                         () =>
                         {
-                            Task.Factory.StartNew(() => dv_profile.Profile.Apply(), TaskCreationOptions.LongRunning);
-                        }, 3, 30).ShowDialog(this) !=
-                    DialogResult.Cancel)
+                            Task.Factory.StartNew(() => 
+                            {
+                                System.Threading.Thread.Sleep(2000);
+                                actions[sequence[0]]();    
+                            }, TaskCreationOptions.LongRunning);
+                        }, 3, 30, 5, messages[sequence[0]]
+                    ).ShowDialog(this) != DialogResult.Cancel)
                 {
+                    for (int i = 1; i < sequence.Count; i++)
+                    {
+                        new SplashForm(
+                        () =>
+                        {
+                            Task.Factory.StartNew(() => actions[sequence[i]](), TaskCreationOptions.LongRunning);
+                        }, 0, 30, 5, messages[sequence[i]]).ShowDialog(this);
+                    }
                     ReloadProfiles();
                 }
 

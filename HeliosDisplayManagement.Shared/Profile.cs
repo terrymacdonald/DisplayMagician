@@ -6,12 +6,14 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Diagnostics;
 using WindowsDisplayAPI.DisplayConfig;
 using HeliosDisplayManagement.Shared.Resources;
 using Newtonsoft.Json;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
+using Appccelerate.StateMachine;
 using Path = HeliosDisplayManagement.Shared.Topology.Path;
 
 namespace HeliosDisplayManagement.Shared
@@ -109,6 +111,7 @@ namespace HeliosDisplayManagement.Shared
         public string Name { get; set; }
 
         public Path[] Paths { get; set; } = new Path[0];
+
 
         public static string ProfilesPath
         {
@@ -243,7 +246,7 @@ namespace HeliosDisplayManagement.Shared
                 return false;
             }
 
-            return Equals((Profile) obj);
+            return Equals((Profile)obj);
         }
 
         /// <inheritdoc />
@@ -261,56 +264,104 @@ namespace HeliosDisplayManagement.Shared
             return (Name ?? Language.UN_TITLED_PROFILE) + (IsActive ? " " + Language._Active_ : "");
         }
 
+        private void _applyTopos()
+        {
+            Debug.Print("_applyTopos()");
+            try
+            {
+                var surroundTopologies =
+                    Paths.SelectMany(path => path.Targets)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .ToArray();
+
+                if (surroundTopologies.Length == 0)
+                {
+                    var currentTopologies = GridTopology.GetGridTopologies();
+
+                    if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
+                    {
+                        surroundTopologies =
+                            GridTopology.GetGridTopologies()
+                                .SelectMany(topology => topology.Displays)
+                                .Select(displays => new GridTopology(1, 1, new[] { displays }))
+                                .ToArray();
+                    }
+                }
+
+                if (surroundTopologies.Length > 0)
+                {
+                    GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        private void _applyPathInfos()
+        {
+            Debug.Print("_applyPathInfos()");
+            var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+
+            if (!pathInfos.Any())
+            {
+                throw new InvalidOperationException(
+                    @"Display configuration changed since this profile is created. Please re-create this profile.");
+            }
+
+            PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+        }
+
+        public IDictionary<string, Action> applyProfileActions() 
+        {
+            var dict = new Dictionary<string, Action>()
+            {
+                { "Applying_Topos", _applyTopos },
+                { "Applying_Paths", _applyPathInfos }
+            };
+            return dict;
+        }
+        
+        public IDictionary<string, string> applyProfileMsgs() 
+        {
+            var dict = new Dictionary<string, string>()
+            {
+                { "Applying_Topos", Language.Applying_Topos },
+                { "Applying_Paths", Language.Applying_Paths } 
+            };
+            return dict;
+        }
+
+        public List<string> applyProfileSequence()
+        {
+            var list = new List<string>() { "Applying_Topos", "Applying_Paths" };
+            return list;
+        }
+
         public bool Apply()
         {
             try
             {
+               
+                Debug.Print("Begin profile change");
                 Thread.Sleep(2000);
+                _applyTopos();
 
-                try
-                {
-                    var surroundTopologies =
-                        Paths.SelectMany(path => path.Targets)
-                            .Select(target => target.SurroundTopology)
-                            .Where(topology => topology != null)
-                            .Select(topology => topology.ToGridTopology())
-                            .ToArray();
-
-                    if (surroundTopologies.Length == 0)
-                    {
-                        var currentTopologies = GridTopology.GetGridTopologies();
-
-                        if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
-                        {
-                            surroundTopologies =
-                                GridTopology.GetGridTopologies()
-                                    .SelectMany(topology => topology.Displays)
-                                    .Select(displays => new GridTopology(1, 1, new[] {displays}))
-                                    .ToArray();
-                        }
-                    }
-
-                    if (surroundTopologies.Length > 0)
-                    {
-                        GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
-                    }
-                }
-                catch
-                {
-                    // ignored
-                }
-
+                Debug.Print("Finished setting topologies");
+                Debug.Print("Sleep");
                 Thread.Sleep(18000);
-                var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+                Debug.Print("Awake");
 
-                if (!pathInfos.Any())
-                {
-                    throw new InvalidOperationException(
-                        @"Display configuration changed since this profile is created. Please re-create this profile.");
-                }
-
-                PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+                _applyPathInfos();
+ 
+                Debug.Print("Applying pathInfos");
+                Debug.Print("Sleep");
                 Thread.Sleep(10000);
+                Debug.Print("Awake");
+
                 RefreshActiveStatus();
 
                 return true;
