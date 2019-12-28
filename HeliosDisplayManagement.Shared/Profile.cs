@@ -266,7 +266,7 @@ namespace HeliosDisplayManagement.Shared
 
         private void _applyTopos()
         {
-
+            Debug.Print("_applyTopos()");
             try
             {
                 var surroundTopologies =
@@ -303,6 +303,7 @@ namespace HeliosDisplayManagement.Shared
 
         private void _applyPathInfos()
         {
+            Debug.Print("_applyPathInfos()");
             var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
 
             if (!pathInfos.Any())
