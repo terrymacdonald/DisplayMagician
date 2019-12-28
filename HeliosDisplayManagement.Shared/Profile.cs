@@ -314,24 +314,30 @@ namespace HeliosDisplayManagement.Shared
             PathInfo.ApplyPathInfos(pathInfos, true, true, true);
         }
 
-        public List<IDictionary<string, Action>> applySequence() 
+        public IDictionary<string, Action> applyProfileActions() 
         {
-            var list = new List<IDictionary<string, Action>>()
+            var dict = new Dictionary<string, Action>()
             {
-                new Dictionary<string, Action>(){ { "Applying_Topos", _applyTopos } },
-                new Dictionary<string, Action>(){ { "Applying_Paths", _applyPathInfos } }
+                { "Applying_Topos", _applyTopos },
+                { "Applying_Paths", _applyPathInfos }
+            };
+            return dict;
+        }
+        
+        public IDictionary<string, string> applyProfileMsgs() 
+        {
+            var dict = new Dictionary<string, string>()
+            {
+                { "Applying_Topos", Language.Applying_Topos },
+                { "Applying_Paths", Language.Applying_Paths } 
             };
             return list;
         }
-        
-        public List<IDictionary<string, string>> applySequenceMsgs() 
+
+        public List<string> applyProfileSequence()
         {
-            var list = new List<IDictionary<string, string>>()
-            {
-                new Dictionary<string, string>(){ { "Applying_Topos", Language.Applying_Topos } },
-                new Dictionary<string, string>(){ { "Applying_Paths", Language.Applying_Paths } }
-            };
-            return list;
+            var list = new List<string>() { "Applying_Topos", "Applying_Paths" };
+            return list
         }
 
         public bool Apply()
