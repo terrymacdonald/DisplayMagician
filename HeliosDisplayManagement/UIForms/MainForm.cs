@@ -70,16 +70,20 @@ namespace HeliosDisplayManagement.UIForms
                     new SplashForm(
                         () =>
                         {
-                            Task.Factory.StartNew(() => actions[sequence[0]], TaskCreationOptions.LongRunning);
+                            Task.Factory.StartNew(() => 
+                            {
+                                System.Threading.Thread.Sleep(2000);
+                                actions[sequence[0]]();    
+                            }, TaskCreationOptions.LongRunning);
                         }, 3, 30, 5, messages[sequence[0]]
-                    ).ShowDialog(this) !=DialogResult.Cancel)
+                    ).ShowDialog(this) != DialogResult.Cancel)
                 {
                     for (int i = 1; i < sequence.Count; i++)
                     {
                         new SplashForm(
                         () =>
                         {
-                            Task.Factory.StartNew(() => actions[sequence[i]], TaskCreationOptions.LongRunning);
+                            Task.Factory.StartNew(() => actions[sequence[i]](), TaskCreationOptions.LongRunning);
                         }, 0, 30, 5, messages[sequence[i]]).ShowDialog(this);
                     }
                     ReloadProfiles();
