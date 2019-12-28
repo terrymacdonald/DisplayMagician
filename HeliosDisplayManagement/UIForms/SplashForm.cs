@@ -94,6 +94,7 @@ namespace HeliosDisplayManagement.UIForms
         private void HandleDisplayChangeDelta()
         {
             if (_displayChangeMaxDelta <= -1) return;
+            _displayChangeDelta = _lastCount - _countdownCounter;
             if (_displayChangeDelta > _displayChangeMaxDelta)
             {
                 Debug.Print("_displayChangeDelta > _displayChangeMaxDelta! " + _displayChangeDelta + " > " + _displayChangeMaxDelta);
@@ -124,6 +125,7 @@ namespace HeliosDisplayManagement.UIForms
                 DialogResult = DialogResult.OK;
                 Close();
             }
+            HandleDisplayChangeDelta();
         }
 
         private void DoTimeout()
@@ -140,6 +142,7 @@ namespace HeliosDisplayManagement.UIForms
             {
                 DoJob();
             }
+            HandleDisplayChangeDelta();
         }
 
         private void Reposition()
@@ -233,6 +236,8 @@ namespace HeliosDisplayManagement.UIForms
 
                 return;
             }
+
+            HandleDisplayChangeDelta();
 
             progressBar.Value = _countdownCounter;
             progressBar.Text = progressBar.Value.ToString();
