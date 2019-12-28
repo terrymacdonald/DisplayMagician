@@ -96,6 +96,8 @@ namespace HeliosDisplayManagement.UIForms
             if (_displayChangeMaxDelta <= -1) return;
             if (_displayChangeDelta > _displayChangeMaxDelta)
             {
+                Debug.Print("_displayChangeDelta > _displayChangeMaxDelta! " + _displayChangeDelta + " > " + _displayChangeMaxDelta);
+                DialogResult = DialogResult.OK;
                 Close();
             }
         }
