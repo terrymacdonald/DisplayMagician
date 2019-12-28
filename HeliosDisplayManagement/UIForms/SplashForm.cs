@@ -17,6 +17,7 @@ namespace HeliosDisplayManagement.UIForms
         private int _countdownCounter;
 
         private readonly int _displayChangeMaxDelta = -1;
+        private int _displayChangeDelta;
         private int _lastCount;
         private bool _isClosing;
         private int _startCounter;
@@ -88,6 +89,15 @@ namespace HeliosDisplayManagement.UIForms
             }
 
             return true;
+        }
+
+        private void HandleDisplayChangeDelta()
+        {
+            if (_displayChangeMaxDelta <= -1) return;
+            if (_displayChangeDelta > _displayChangeMaxDelta)
+            {
+                Close();
+            }
         }
 
         private void DoJob()
@@ -281,9 +291,9 @@ namespace HeliosDisplayManagement.UIForms
             }
             if (displayChange)
             {
-                int diff = _lastCount - _countdownCounter;
+                _displayChangeDelta = _lastCount - _countdownCounter;
                 _lastCount = _countdownCounter;
-                Debug.Print("Display Change Detected at t " + _lastCount + " difference between changes is " + diff);
+                Debug.Print("Display Change Detected at t " + _lastCount + " difference between changes is " + _displayChangeDelta);
             }
 
             base.WndProc(ref m);
