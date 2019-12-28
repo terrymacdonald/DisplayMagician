@@ -116,24 +116,6 @@ namespace HeliosDisplayManagement.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Applying Paths.
-        /// </summary>
-        internal static string Applying_Paths {
-            get {
-                return ResourceManager.GetString("Applying_Paths", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Applying Topologies.
-        /// </summary>
-        internal static string Applying_Topos {
-            get {
-                return ResourceManager.GetString("Applying_Topos", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Are you sure?.
         /// </summary>
         internal static string Are_you_sure {
