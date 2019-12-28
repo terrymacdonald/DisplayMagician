@@ -363,4 +363,12 @@
   <data name="Waiting_for_the_0_to_terminate" xml:space="preserve">
     <value>Waiting for the '{0}' to terminate</value>
   </data>
+  <data name="Applying_Paths" xml:space="preserve">
+    <value>Applying Paths</value>
+    <comment>Displayed by Splash Form When Paths Infos Are Applied</comment>
+  </data>
+  <data name="Applying_Topos" xml:space="preserve">
+    <value>Applying Topologies</value>
+    <comment>Displayed by the Splash Form When Topologies Are Applied</comment>
+  </data>
 </root>
