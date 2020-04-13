@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-//using System.CommandLine;
-//using System.CommandLine.Invocation;
-using System.CommandLine.DragonFruit;
+using System.CommandLine;
+using System.CommandLine.Invocation;
+//using System.CommandLine.DragonFruit;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -102,88 +103,160 @@ namespace HeliosDisplayManagement
             }
         }
 
-        [STAThread]
+
         /// <summary>
         ///     The main entry point for the application.
         /// </summary>
-        /// <param name="action">(required) The startup action to perform: None (Do nothing), SwitchProfile (Change to another profile and optionally run an application/game), CreateShortcut (Create a Desktop Shortcut), EditProfile (Edit a profile)</param>
-        /// <param name="profileId">(required) UUID string that selects the profile to use.</param>
-        /// <param name="arguments">(optional) Extra arguments to pass to the application/game when we're switching profile and running the application/game. Also can be used when creating a shortcut.</param>
-        /// <param name="execute">(optional) The application/game to start when we're switching profile and running the application/game. Also can be used when creating a shortcut.</param>
-        /// <param name="processName">(optional) The process name to wait for when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.</param>
-        /// <param name="processTimeout">(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.</param>
-        /// <param name="steamId">(optional) The Steam AppID wait for when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.</param>
-        private static void Main(
-            HeliosStartupAction action, 
-            string profileId = null, 
-            string arguments = null, 
-            string execute = null, 
-            string processName = null, 
-            uint processTimeout = 30u, 
-            uint steamId = 0u)
+        [STAThread]
+        private static int Main(string[] args)
         {
+            var cmd = new RootCommand();
+            cmd.Description = "This is an application and things.";
+            cmd.Add(new Option<HeliosStartupAction>(
+                aliases: new string[] {"--action", "-a"}, 
+                getDefaultValue :() => HeliosStartupAction.None,
+                description: "(required) The startup action to perform: None (Do nothing), SwitchProfile (Change to another profile and optionally run an application/game), CreateShortcut (Create a Desktop Shortcut), EditProfile (Edit a profile)"
+                )
+            );
+            cmd.Add(new Option<string>(
+                aliases: new string[] { "--profile-id", "-p" },
+                description: "(required) UUID string that selects the profile to use."
+                )
+            );
+            cmd.Add(new Option<string>(
+                aliases: new string[] { "--arguments" },
+                description: "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            ); 
+            cmd.Add(new Option<string>(
+                aliases: new string[] { "--execute", "-e" },
+                description: "(optional) The application/game to start when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            );
+            cmd.Add(new Option<string>(
+                aliases: new string[] { "--waitfor", "-w" },
+                description: "(optional) The process name to wait for when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            );
+            cmd.Add(new Option<uint>(
+                aliases: new string[] { "--timeout", "-t" },
+                description: "(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            );
+            cmd.Add(new Option<uint>(
+                aliases: new string[] { "--steam", "-s" },
+                description: "(optional)The Steam AppID to run for when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            );
+            /*cmd.Add(new Option<uint>(
+                aliases: new string[] { "--uplay" },
+                description: "(optional)The Uplay ID to run when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            );
+            cmd.Add(new Option<uint>(
+                aliases: new string[] { "--epic" },
+                description: "(optional)The Epic ID to run when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            );
+            cmd.Add(new Option<uint>(
+                aliases: new string[] { "--origin" },
+                description: "(optional)The Origin ID to run when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut."
+                )
+            );*/
 
-            // Save these in CommandLineOptions for easy access from other parts of the application
-            CommandLineOptions.Action = action;
-            CommandLineOptions.ProfileId = profileId;
-            CommandLineOptions.ExecuteArguments = arguments;
-            CommandLineOptions.ExecuteFilename = execute;
-            CommandLineOptions.ExecuteProcessName = processName;
-            CommandLineOptions.ExecuteProcessTimeout = processTimeout;
-            CommandLineOptions.ExecuteSteamApp = steamId;
-
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-            try
+            cmd.Handler = CommandHandler.Create<HeliosStartupAction, string, string, string, string, uint, uint>((action, profileId, arguments, execute, waitfor, timeout, steam) =>
             {
-                if (!IPCService.StartService())
+
+                // Validate combinations of Command line options
+                // If a profileId is supplied then we need an action other than None
+                if (action == HeliosStartupAction.None && !String.IsNullOrEmpty(profileId))
                 {
-                    throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
+                    Console.WriteLine("Error - If you supply a Profile ID or Name then you must also provide an Action.");
+                    return 1;
                 }
 
-                var profiles = Profile.GetAllProfiles().ToArray();
-                var profileIndex = !string.IsNullOrWhiteSpace(CommandLineOptions.ProfileId) &&
-                                   profiles.Length > 0
-                    ? Array.FindIndex(profiles,
-                        p =>
-                            p.Id.Equals(null,
-                                StringComparison.InvariantCultureIgnoreCase))
-                    : -1;
+                //var help = new System.CommandLine.Help.HelpBuilder(invocationContext.Console);
+                //Console.WriteLine(help);
 
-                switch (CommandLineOptions.Action)
+
+                // Save these in CommandLineOptions for easy access from other parts of the application
+                CommandLineOptions.Action = action;
+                CommandLineOptions.ProfileId = profileId;
+                CommandLineOptions.ExecuteArguments = arguments;
+                CommandLineOptions.ExecuteFilename = execute;
+                CommandLineOptions.ExecuteProcessName = waitfor;
+                CommandLineOptions.ExecuteProcessTimeout = timeout;
+                CommandLineOptions.ExecuteSteamApp = steam;
+
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                try
                 {
-                    case HeliosStartupAction.SwitchProfile:
-                        SwitchProfile(profiles, profileIndex);
+                    if (!IPCService.StartService())
+                    {
+                        throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
+                    }
 
-                        break;
-                    case HeliosStartupAction.EditProfile:
-                        EditProfile(profiles, profileIndex);
+                    // Create an array of profiles
+                    var profiles = Profile.GetAllProfiles().ToArray();
+                    // Show the user the profiles if they want to look
+                    foreach (Profile profile in profiles)
+                    {
+                        Console.WriteLine($"Found Profile: {profile.Name} (ID:{profile.Id})");
+                    }
+                    // Try and lookup the profileId in the profileIndex
+                    var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(CommandLineOptions.ProfileId, StringComparison.InvariantCultureIgnoreCase)) : -1;
+                    // If the profileID wasn't there, maybe they used the profile name?
+                    if (profileIndex == -1)
+                    {
+                        profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Name.Equals(CommandLineOptions.ProfileId, StringComparison.InvariantCultureIgnoreCase)) : -1;
+                    }
+                    Console.WriteLine($"Using Profile: {profiles[profileIndex].Name} (ID:{profiles[profileIndex].Id})");
 
-                        break;
-                    case HeliosStartupAction.CreateShortcut:
-                        CreateShortcut(profiles, profileIndex);
 
-                        break;
-                    default:
-                        IPCService.GetInstance().Status = InstanceStatus.User;
-                        Application.Run(new MainForm());
+                    switch (CommandLineOptions.Action)
+                    {
+                        case HeliosStartupAction.SwitchProfile:
+                            SwitchProfile(profiles, profileIndex);
 
-                        break;
+                            break;
+                        case HeliosStartupAction.EditProfile:
+                            EditProfile(profiles, profileIndex);
+
+                            break;
+                        case HeliosStartupAction.CreateShortcut:
+                            CreateShortcut(profiles, profileIndex);
+
+                            break;
+                        default:
+                            IPCService.GetInstance().Status = InstanceStatus.User;
+                            Application.Run(new MainForm());
+
+                            break;
+                    }
+
+
                 }
+                catch (Exception e)
+                {
+                    MessageBox.Show(
+                        string.Format(Language.Operation_Failed, e.Message),
+                        Language.Fatal_Error,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+                return 0;
+            });
+
+            var result = cmd.InvokeAsync(args).Result;
+
+            return result;
 
 
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(
-                    string.Format(Language.Operation_Failed, e.Message),
-                    Language.Fatal_Error,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
         }
+
 
         // ReSharper disable once CyclomaticComplexity
         private static void SwitchProfile(IReadOnlyList<Profile> profiles, int profileIndex)
