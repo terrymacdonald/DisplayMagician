@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>HeliosDisplayManagement.ShellExtension</RootNamespace>
     <AssemblyName>HeliosDisplayManagement.ShellExtension</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -31,12 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ServerRegistrationManager, Version=2.6.0.0, Culture=neutral, PublicKeyToken=68bd4561cc3495fc, processorArchitecture=MSIL">
-      <HintPath>..\packages\ServerRegistrationManager.2.6.0\lib\net45\ServerRegistrationManager.exe</HintPath>
-    </Reference>
-    <Reference Include="SharpShell, Version=2.6.0.0, Culture=neutral, PublicKeyToken=f14dc899472fe6fb, processorArchitecture=MSIL">
-      <HintPath>..\packages\SharpShell.2.6.0\lib\net40-client\SharpShell.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -76,11 +70,18 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="Resources\Icon_x16.png" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Shield.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ServerRegistrationManager">
+      <Version>2.7.2</Version>
+    </PackageReference>
+    <PackageReference Include="SharpShell">
+      <Version>2.7.2</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

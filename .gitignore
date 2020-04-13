@@ -24,6 +24,7 @@ bld/
 
 # Visual Studio 2015 cache/options directory
 .vs/
+.vscode/
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
@@ -245,3 +246,6 @@ ModelManifest.xml
 .fake/
 HeliosDisplayManagement.Setup/HeliosDisplayManagement.Setup Data/*
 HeliosDisplayManagement.Setup/HeliosDisplayManagement.Setup/*
+/nuget.exe
+/vs_community__1091181154.1584848614.exe
+/MigrationBackup

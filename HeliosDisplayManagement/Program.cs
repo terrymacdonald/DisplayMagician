@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+//using System.CommandLine;
+//using System.CommandLine.Invocation;
+using System.CommandLine.DragonFruit;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -17,6 +20,7 @@ namespace HeliosDisplayManagement
 {
     internal static class Program
     {
+
         internal static bool GoProfile(Profile profile)
         {
             if (profile.IsActive)
@@ -69,11 +73,11 @@ namespace HeliosDisplayManagement
             IPCService.GetInstance().Status = InstanceStatus.User;
             new ShortcutForm(profiles[profileIndex])
             {
-                FileName = CommandLineOptions.Default.ExecuteFilename,
-                SteamAppId = CommandLineOptions.Default.ExecuteSteamApp,
-                Arguments = CommandLineOptions.Default.ExecuteArguments,
-                ProcessName = CommandLineOptions.Default.ExecuteProcessName,
-                Timeout = CommandLineOptions.Default.ExecuteProcessTimeout
+                FileName = CommandLineOptions.ExecuteFilename,
+                SteamAppId = CommandLineOptions.ExecuteSteamApp,
+                Arguments = CommandLineOptions.ExecuteArguments,
+                ProcessName = CommandLineOptions.ExecuteProcessName,
+                Timeout = CommandLineOptions.ExecuteProcessTimeout
             }.ShowDialog();
         }
 
@@ -98,12 +102,36 @@ namespace HeliosDisplayManagement
             }
         }
 
+        [STAThread]
         /// <summary>
         ///     The main entry point for the application.
         /// </summary>
-        [STAThread]
-        private static void Main()
+        /// <param name="action">(required) The startup action to perform: None (Do nothing), SwitchProfile (Change to another profile and optionally run an application/game), CreateShortcut (Create a Desktop Shortcut), EditProfile (Edit a profile)</param>
+        /// <param name="profileId">(required) UUID string that selects the profile to use.</param>
+        /// <param name="arguments">(optional) Extra arguments to pass to the application/game when we're switching profile and running the application/game. Also can be used when creating a shortcut.</param>
+        /// <param name="execute">(optional) The application/game to start when we're switching profile and running the application/game. Also can be used when creating a shortcut.</param>
+        /// <param name="processName">(optional) The process name to wait for when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.</param>
+        /// <param name="processTimeout">(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.</param>
+        /// <param name="steamId">(optional) The Steam AppID wait for when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.</param>
+        private static void Main(
+            HeliosStartupAction action, 
+            string profileId = null, 
+            string arguments = null, 
+            string execute = null, 
+            string processName = null, 
+            uint processTimeout = 30u, 
+            uint steamId = 0u)
         {
+
+            // Save these in CommandLineOptions for easy access from other parts of the application
+            CommandLineOptions.Action = action;
+            CommandLineOptions.ProfileId = profileId;
+            CommandLineOptions.ExecuteArguments = arguments;
+            CommandLineOptions.ExecuteFilename = execute;
+            CommandLineOptions.ExecuteProcessName = processName;
+            CommandLineOptions.ExecuteProcessTimeout = processTimeout;
+            CommandLineOptions.ExecuteSteamApp = steamId;
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -116,15 +144,15 @@ namespace HeliosDisplayManagement
                 }
 
                 var profiles = Profile.GetAllProfiles().ToArray();
-                var profileIndex = !string.IsNullOrWhiteSpace(CommandLineOptions.Default.ProfileId) &&
+                var profileIndex = !string.IsNullOrWhiteSpace(CommandLineOptions.ProfileId) &&
                                    profiles.Length > 0
                     ? Array.FindIndex(profiles,
                         p =>
-                            p.Id.Equals(CommandLineOptions.Default.ProfileId,
+                            p.Id.Equals(null,
                                 StringComparison.InvariantCultureIgnoreCase))
                     : -1;
 
-                switch (CommandLineOptions.Default.Action)
+                switch (CommandLineOptions.Action)
                 {
                     case HeliosStartupAction.SwitchProfile:
                         SwitchProfile(profiles, profileIndex);
@@ -144,6 +172,8 @@ namespace HeliosDisplayManagement
 
                         break;
                 }
+
+
             }
             catch (Exception e)
             {
@@ -182,9 +212,9 @@ namespace HeliosDisplayManagement
                         .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
             }
 
-            if (!string.IsNullOrWhiteSpace(CommandLineOptions.Default.ExecuteFilename))
+            if (!string.IsNullOrWhiteSpace(CommandLineOptions.ExecuteFilename))
             {
-                if (!File.Exists(CommandLineOptions.Default.ExecuteFilename))
+                if (!File.Exists(CommandLineOptions.ExecuteFilename))
                 {
                     throw new Exception(Language.Executable_file_not_found);
                 }
@@ -194,17 +224,17 @@ namespace HeliosDisplayManagement
                     throw new Exception(Language.Can_not_change_active_profile);
                 }
 
-                var process = Process.Start(CommandLineOptions.Default.ExecuteFilename,
-                    CommandLineOptions.Default.ExecuteArguments);
-                var processes = new Process[0];
+                var process = System.Diagnostics.Process.Start(CommandLineOptions.ExecuteFilename,
+                    CommandLineOptions.ExecuteArguments);
+                var processes = new System.Diagnostics.Process[0];
 
-                if (!string.IsNullOrWhiteSpace(CommandLineOptions.Default.ExecuteProcessName))
+                if (!string.IsNullOrWhiteSpace(CommandLineOptions.ExecuteProcessName))
                 {
                     var ticks = 0;
 
-                    while (ticks < CommandLineOptions.Default.ExecuteProcessTimeout * 1000)
+                    while (ticks < CommandLineOptions.ExecuteProcessTimeout * 1000)
                     {
-                        processes = Process.GetProcessesByName(CommandLineOptions.Default.ExecuteProcessName);
+                        processes = System.Diagnostics.Process.GetProcessesByName(CommandLineOptions.ExecuteProcessName);
 
                         if (processes.Length > 0)
                         {
@@ -271,9 +301,9 @@ namespace HeliosDisplayManagement
                     }
                 }
             }
-            else if (CommandLineOptions.Default.ExecuteSteamApp > 0)
+            else if (CommandLineOptions.ExecuteSteamApp > 0)
             {
-                var steamGame = new SteamGame(CommandLineOptions.Default.ExecuteSteamApp);
+                var steamGame = new SteamGame(CommandLineOptions.ExecuteSteamApp);
 
                 if (!SteamGame.SteamInstalled)
                 {
@@ -302,16 +332,16 @@ namespace HeliosDisplayManagement
 
                 var address = $"steam://rungameid/{steamGame.AppId}";
 
-                if (!string.IsNullOrWhiteSpace(CommandLineOptions.Default.ExecuteArguments))
+                if (!string.IsNullOrWhiteSpace(CommandLineOptions.ExecuteArguments))
                 {
-                    address += "/" + CommandLineOptions.Default.ExecuteArguments;
+                    address += "/" + CommandLineOptions.ExecuteArguments;
                 }
 
-                var steamProcess = Process.Start(address);
+                var steamProcess = System.Diagnostics.Process.Start(address);
                 // Wait for steam game to update and then run
                 var ticks = 0;
 
-                while (ticks < CommandLineOptions.Default.ExecuteProcessTimeout * 1000)
+                while (ticks < CommandLineOptions.ExecuteProcessTimeout * 1000)
                 {
                     if (steamGame.IsRunning)
                     {
