@@ -33,7 +33,5 @@ namespace HeliosDisplayManagement
         [Option("arguments", Required = false, HelpText = "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.")]
         public string ExecuteArguments { get; set; }
 
-
-
     }
 }

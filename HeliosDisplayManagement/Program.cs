@@ -112,46 +112,37 @@ namespace HeliosDisplayManagement
         private static int Main(string[] args)
         {
 
-            /*return Parser.Default.ParseArguments<CommandLineOptions>(args).MapResult(
-                options => RunOptions(options),
-                _ => 1);*/
-            //var parser = new CommandLine.Parser(with => with.HelpWriter = null);
-            //var parserResult = parser.ParseArguments<CommandLineOptions, object>(args)
-            var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
-                .MapResult(
-                    options => RunOptions(options),
-                    _ => 1);
-            return result;
+            var parser = new Parser(config => config.HelpWriter = null);
+            var parserResult = parser.ParseArguments<CommandLineOptions>(args);
+            parserResult.WithParsed<CommandLineOptions>(options => RunOptions(parserResult, options));
+            parserResult.WithNotParsed<CommandLineOptions>(errs => DisplayHelp(parserResult, errs));
+            
+            return 0;
         }
 
         static void DisplayHelp<T>(ParserResult<T> result, IEnumerable<Error> errs)
         {
-            var helpText = HelpText.AutoBuild(result, h =>
-            {
-                h.AdditionalNewLineAfterOption = false;
-                h.Heading = "Myapp 2.0.0-beta"; //change header
-                h.Copyright = "Copyright (c) 2019 Global.com"; //change copyright text
-                return HelpText.DefaultParsingErrorsHandler(result, h);
-            }, e => e);
+            var helpText = errs.ToList();
             Console.WriteLine(helpText);
         }
 
-        static int RunOptions(CommandLineOptions options)
+        static void RunOptions(ParserResult<CommandLineOptions> parserResult, CommandLineOptions options)
         {
+
+           
             // Validate combinations of Command line options
             // If a profileId is supplied then we need an action other than None
             if (options.Action == HeliosStartupAction.None && !String.IsNullOrEmpty(options.Profile))
             {
                 Console.WriteLine("Error - If you supply a Profile ID or Name then you must also provide an Action.");
-                return 1;
+                Environment.Exit(1);
             }
 
-            Console.WriteLine(CommandLine.Parser.Default.FormatCommandLine(options));
 
             if (options.Action != HeliosStartupAction.None && String.IsNullOrEmpty(options.Profile))
             {
                 Console.WriteLine("Error - If you want to perform an Action then you must also provide a Profile ID or Name.");
-                return 1;
+                Environment.Exit(2);
             }
 
             Application.EnableVisualStyles();
@@ -170,7 +161,7 @@ namespace HeliosDisplayManagement
                 // Show the user the profiles if they want to look
                 foreach (Profile aprofile in profiles)
                 {
-                    Console.WriteLine($"Found Profile: {aprofile.Name} (ID:{aprofile.Id})");
+                    Console.WriteLine($"Found Profile: '{aprofile.Name}' (ID:{aprofile.Id})");
                 }
                 // Try and lookup the profile in the profiles' ID fields
                 var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(options.Profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
@@ -178,15 +169,22 @@ namespace HeliosDisplayManagement
                 if (profileIndex == -1)
                 {
                     // Try and lookup the profile in the profiles' Name fields
-                    profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Name.Equals(options.Profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
+                    profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Name.StartsWith(options.Profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
                 }
                 // If the profileID still isn't there, then raise the alarm
                 if (profileIndex == -1)
                 {
-                    Console.WriteLine($"Error - Couldn't find Profile Name or ID supplied via command line: \"{options.Profile}\". Please check the Profile Name or ID you supplied is correct.");
-                    return 1;
+                    if (!string.IsNullOrEmpty(options.Profile))
+                    {
+                        Console.WriteLine($"ERROR - Couldn't find Profile Name or ID supplied via command line: '{options.Profile}'. Please check the Profile Name or ID you supplied on the command line is correct.");
+                        Environment.Exit(3);
+                    }
                 }
-                Console.WriteLine($"Using Profile: {profiles[profileIndex].Name} (ID:{profiles[profileIndex].Id})");
+                else
+                {
+                    Console.WriteLine($"Using Profile: '{profiles[profileIndex].Name}' (ID:{profiles[profileIndex].Id})");
+                }
+                
 
 
                 switch (options.Action)
@@ -220,7 +218,7 @@ namespace HeliosDisplayManagement
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
-            return 0;
+            
         }
         static void HandleParseError(IEnumerable<Error> errs)
         {
