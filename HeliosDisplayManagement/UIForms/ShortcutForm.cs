@@ -25,11 +25,11 @@ namespace HeliosDisplayManagement.UIForms
 
         public string Arguments
         {
-            get => cb_args.Checked ? txt_args.Text : string.Empty;
+            get => rb_args.Checked ? txt_args_executable.Text : string.Empty;
             set
             {
-                txt_args.Text = value;
-                cb_args.Checked = !string.IsNullOrWhiteSpace(txt_args.Text);
+                txt_args_executable.Text = value;
+                rb_args.Checked = !string.IsNullOrWhiteSpace(txt_args_executable.Text);
             }
         }
 
@@ -71,14 +71,14 @@ namespace HeliosDisplayManagement.UIForms
 
         public uint SteamAppId
         {
-            get => cb_temp.Checked && rb_steam.Checked ? (uint) nud_steamappid.Value : 0;
+            get => cb_temp.Checked && rb_launcher.Checked ? (uint) nud_appid.Value : 0;
             set
             {
                 if (value > 0)
                 {
                     cb_temp.Checked = true;
-                    rb_steam.Checked = true;
-                    nud_steamappid.Value = value;
+                    rb_launcher.Checked = true;
+                    nud_appid.Value = value;
                 }
             }
         }
@@ -177,13 +177,13 @@ namespace HeliosDisplayManagement.UIForms
             txt_process.Enabled = cb_process.Checked;
             nud_timeout.Enabled = cb_process.Checked;
 
-            p_steam.Enabled = rb_steam.Checked;
+            p_steam.Enabled = rb_launcher.Checked;
 
-            txt_args.Enabled = cb_args.Checked;
+            txt_args_executable.Enabled = cb_args.Checked;
 
-            if (rb_steam.Checked)
+            if (rb_launcher.Checked)
             {
-                nud_steamappid_ValueChanged(rb_steam, e);
+                nud_steamappid_ValueChanged(rb_launcher, e);
             }
         }
 
@@ -247,15 +247,15 @@ namespace HeliosDisplayManagement.UIForms
                         icon = $"{txt_executable.Text.Trim()},0";
                     }
                 }
-                else if (rb_steam.Checked)
+                else if (rb_launcher.Checked)
                 {
                     if (!SteamGame.SteamInstalled)
                     {
                         throw new Exception(Language.Steam_is_not_installed);
                     }
 
-                    var steamGame = new SteamGame((uint) nud_steamappid.Value);
-                    args.Add($"-s {(int) nud_steamappid.Value}");
+                    var steamGame = new SteamGame((uint) nud_appid.Value);
+                    args.Add($"-s {(int) nud_appid.Value}");
                     args.Add($"-t {(int) nud_steamtimeout.Value}");
                     description = string.Format(Language.Executing_application_with_profile, steamGame.Name,
                         Profile.Name);
@@ -280,9 +280,9 @@ namespace HeliosDisplayManagement.UIForms
                     }
                 }
 
-                if (cb_args.Checked && !string.IsNullOrWhiteSpace(txt_args.Text))
+                if (cb_args.Checked && !string.IsNullOrWhiteSpace(txt_args_executable.Text))
                 {
-                    args.Add($"--arguments \"{txt_args.Text.Trim()}\"");
+                    args.Add($"--arguments \"{txt_args_executable.Text.Trim()}\"");
                 }
             }
             else
@@ -359,7 +359,7 @@ namespace HeliosDisplayManagement.UIForms
 
         private void nud_steamappid_ValueChanged(object sender, EventArgs e)
         {
-            lbl_steamname.Text = new SteamGame((uint) nud_steamappid.Value).ToString();
+            lbl_steamname.Text = new SteamGame((uint) nud_appid.Value).ToString();
         }
 
         private void nud_steamapps_Click(object sender, EventArgs e)
@@ -368,7 +368,7 @@ namespace HeliosDisplayManagement.UIForms
 
             if (steamGamesForm.ShowDialog(this) == DialogResult.OK && steamGamesForm.SteamGame != null)
             {
-                nud_steamappid.Value = steamGamesForm.SteamGame.AppId;
+                nud_appid.Value = steamGamesForm.SteamGame.AppId;
             }
         }
 
@@ -382,6 +382,39 @@ namespace HeliosDisplayManagement.UIForms
             {
                 // ignored
             }
+        }
+
+        private void rb_switch_temp_CheckedChanged(object sender, EventArgs e)
+        {
+            g_temp.Enabled = rb_switch_temp.Checked;
+
+            p_standalone.Enabled = rb_standalone.Checked;
+            txt_process.Enabled = cb_process.Checked;
+            nud_timeout.Enabled = cb_process.Checked;
+
+            p_steam.Enabled = rb_launcher.Checked;
+
+            txt_args_executable.Enabled = cb_args.Checked;
+
+            if (rb_launcher.Checked)
+            {
+                nud_steamappid_ValueChanged(rb_launcher, e);
+            }
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cb_args_executable_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }
