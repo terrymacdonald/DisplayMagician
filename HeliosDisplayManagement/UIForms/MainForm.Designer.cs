@@ -106,7 +106,7 @@ namespace HeliosDisplayManagement.UIForms
             this.lbl_profile.Name = "lbl_profile";
             this.lbl_profile.Size = new System.Drawing.Size(382, 13);
             this.lbl_profile.TabIndex = 3;
-            this.lbl_profile.Text = global::HeliosDisplayManagement.Resources.Language.None;
+            this.lbl_profile.Text = "[None]";
             this.lbl_profile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btn_delete
@@ -206,6 +206,8 @@ namespace HeliosDisplayManagement.UIForms
             | System.Windows.Forms.AnchorStyles.Left)));
             this.lv_profiles.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(248)))), ((int)(((byte)(248)))));
             this.lv_profiles.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lv_profiles.GridLines = true;
+            this.lv_profiles.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.lv_profiles.HideSelection = false;
             this.lv_profiles.LabelEdit = true;
             this.lv_profiles.LargeImageList = this.il_profiles;
@@ -262,7 +264,7 @@ namespace HeliosDisplayManagement.UIForms
             this.MinimumSize = new System.Drawing.Size(800, 400);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = global::HeliosDisplayManagement.Resources.Language.Helios_Display_Management;
+            this.Text = "Helios Display Management";
             this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menu_profiles.ResumeLayout(false);

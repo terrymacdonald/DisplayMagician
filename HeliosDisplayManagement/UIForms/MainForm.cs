@@ -204,6 +204,8 @@ namespace HeliosDisplayManagement.UIForms
             btn_edit.PerformClick();
         }
 
+        // Need to check why we did it this way rather than just using the 
+        // list items themselves for clicking? That way we'd avoid selecting nothing...
         private void lv_profiles_MouseUp(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right && lv_profiles.SelectedItems.Count > 0)
@@ -224,37 +226,54 @@ namespace HeliosDisplayManagement.UIForms
         {
             if (lv_profiles.SelectedItems.Count > 0)
             {
-                dv_profile.Profile =
-                    lv_profiles.SelectedItems[0].Tag as Profile ?? Profile.GetCurrent(Language.Current);
+                dv_profile.Profile = lv_profiles.SelectedItems[0].Tag as Profile ?? Profile.GetCurrent(Language.Current);
             }
             else
             {
                 dv_profile.Profile = null;
             }
 
+            // Set the Profile name
             lbl_profile.Text = dv_profile.Profile?.Name ?? Language.None;
-            applyToolStripMenuItem.Enabled =
-                btn_apply.Enabled = dv_profile.Profile != null &&
-                                    lv_profiles.SelectedItems[0].Tag != null &&
-                                    !dv_profile.Profile.IsActive;
-            editToolStripMenuItem.Enabled =
-                btn_edit.Enabled = dv_profile.Profile != null && lv_profiles.SelectedItems[0].Tag != null;
-            deleteToolStripMenuItem.Enabled =
-                btn_delete.Enabled = dv_profile.Profile != null && lv_profiles.SelectedItems[0].Tag != null;
-            cloneToolStripMenuItem.Enabled = btn_clone.Enabled = dv_profile.Profile != null;
-            createShortcutToolStripMenuItem.Enabled =
-                btn_shortcut.Enabled = dv_profile.Profile != null && lv_profiles.SelectedItems[0].Tag != null;
+
+            // Turn on the buttons if the 
+            if (dv_profile.Profile != null) {
+                if (lv_profiles.SelectedItems[0].Tag != null)
+                {
+                    editToolStripMenuItem.Enabled = true;
+                    btn_edit.Enabled = true;
+                    deleteToolStripMenuItem.Enabled = true;
+                    btn_delete.Enabled = true;
+                    createShortcutToolStripMenuItem.Enabled = true;
+                    btn_shortcut.Enabled = true;
+
+                    if (!dv_profile.Profile.IsActive)
+                    {
+                        applyToolStripMenuItem.Enabled = true;
+                        btn_apply.Enabled = true;
+                    }
+                }
+                cloneToolStripMenuItem.Enabled = true;
+                btn_clone.Enabled = true;
+
+            }
+            
+            // Refresh the profiles again in case anything changed
             RefreshProfilesStatus();
         }
 
         private void MainForm_Activated(object sender, EventArgs e)
         {
-            ReloadProfiles();
+            //ReloadProfiles();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
             ReloadProfiles();
+            // Select the first item in the profiles list so pressing the buttons makes sense!
+            lv_profiles.Items[0].Selected = true;
+            lv_profiles.Items[0].Focused = true;
+            lv_profiles.Items[0].Checked = true;
         }
 
         private void RefreshProfilesStatus()

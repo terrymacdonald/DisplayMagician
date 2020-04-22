@@ -22,9 +22,17 @@ using System.Net.NetworkInformation;
 namespace HeliosDisplayManagement
 {
 
+    public enum SupportedGameLibrary
+    {
+        Unknown,
+        Steam,
+        Uplay
+    }
+
 
     internal static class Program
     {
+
 
         internal static Profile GetProfile(string profileName)
         {
@@ -90,12 +98,10 @@ namespace HeliosDisplayManagement
             IPCService.GetInstance().Status = InstanceStatus.User;
             new ShortcutForm(profile)
             {
-                FileName = executableToRun,
-                SteamAppId = 0,
-                UplayAppId = 0,
-                Arguments = executableArguments,
-                ProcessName = processToMonitor,
-                Timeout = timeout
+                ExecutableNameAndPath = executableToRun,
+                ExecutableArguments = executableArguments,
+                ProcessNameToMonitor = processToMonitor,
+                ExecutableTimeout = timeout
             }.ShowDialog();
         }
 
@@ -105,12 +111,10 @@ namespace HeliosDisplayManagement
             IPCService.GetInstance().Status = InstanceStatus.User;
             new ShortcutForm(profile)
             {
-                FileName = null,
-                SteamAppId = Convert.ToUInt32(steamGameIdToRun),
-                UplayAppId = 0,
-                Arguments = executableArguments,
-                ProcessName = null,
-                Timeout = timeout
+                GameLibrary = SupportedGameLibrary.Steam,
+                GameAppId = Convert.ToUInt32(steamGameIdToRun),
+                GameTimeout = timeout,
+                GameArguments = executableArguments,
             }.ShowDialog();
         }
 
@@ -120,12 +124,10 @@ namespace HeliosDisplayManagement
             IPCService.GetInstance().Status = InstanceStatus.User;
             new ShortcutForm(profile)
             {
-                FileName = null,
-                SteamAppId = 0,
-                UplayAppId = Convert.ToUInt32(uplayGameIdToRun),
-                Arguments = executableArguments,
-                ProcessName = null,
-                Timeout = timeout
+                GameLibrary = SupportedGameLibrary.Uplay,
+                GameAppId = Convert.ToUInt32(uplayGameIdToRun),
+                GameTimeout = timeout,
+                GameArguments = executableArguments,
             }.ShowDialog();
         }
 
@@ -378,11 +380,18 @@ namespace HeliosDisplayManagement
 
             });
 
+            app.OnExecute(() =>
+            {
+
+                Console.WriteLine("Starting Normally...");
+                StartUpNormally();
+                return 0;
+            });
+
 
             try
             {
                 // This begins the actual execution of the application
-                Console.WriteLine("ConsoleArgs app executing...");
                 app.Execute(args);
             }
             catch (CommandParsingException ex)
