@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing.IconLib;
+using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using HeliosDisplayManagement.Resources;
-using HeliosDisplayManagement.Shared;
-using HeliosDisplayManagement.Steam;
+using HeliosPlus.Resources;
+using HeliosPlus.Shared;
+using HeliosPlus.Steam;
 using NvAPIWrapper.Native.GPU;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     public partial class ShortcutForm : Form
     {
@@ -45,18 +47,39 @@ namespace HeliosDisplayManagement.UIForms
             }
             set
             {
-                if (File.Exists(txt_executable.Text))
-                {
-                    txt_process_name.Text = value;
-                    rb_wait_executable.Checked = true;
-                }
+                // We we're setting this entry, then we want to set it to a particular entry
+                txt_process_name.Text = value;
+                rb_wait_executable.Checked = true;
             }
         }
 
         public Profile Profile
         {
             get => dv_profile.Profile;
-            set => dv_profile.Profile = value;
+            set
+            {
+                // Check the profile is valid
+                // Create an array of display profiles we have
+                var profiles = Profile.GetAllProfiles().ToArray();
+                // Check if the user supplied a --profile option using the profiles' ID
+                var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(value.Id, StringComparison.InvariantCultureIgnoreCase)) : -1;
+                // If the profileID wasn't there, maybe they used the profile name?
+                if (profileIndex == -1)
+                {
+                    // Try and lookup the profile in the profiles' Name fields
+                    profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Name.StartsWith(value.Name, StringComparison.InvariantCultureIgnoreCase)) : -1;
+                }
+                // If the profileID still isn't there, then raise the alarm
+                if (profileIndex == -1)
+                {
+                    MessageBox.Show(
+                        $"ShortcutForm: Couldn't find Profile Name or ID supplied to Profile propoerty.",
+                        Language.Executable,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+                dv_profile.Profile = value;
+            }
         }
 
 
@@ -566,18 +589,25 @@ namespace HeliosDisplayManagement.UIForms
 
         }
 
-        private void ShortcutForm_Load(object sender, EventArgs e)
+        private async void ShortcutForm_Load(object sender, EventArgs e)
         {
 
             // Make the game launcher selector read only.
             cmb_game_launcher.DropDownStyle = ComboBoxStyle.DropDownList;
             // Fill the list of supported game libraries
-            foreach (var gameLibirary in Enum.GetNames(typeof(SupportedGameLibrary))) {
-                cmb_game_launcher.Items.Add(gameLibirary);
+            foreach (var gameLibrary in Enum.GetNames(typeof(SupportedGameLibrary))) {
+                if (gameLibrary != "Unknown")
+                {
+                    cmb_game_launcher.Items.Add(gameLibrary);
+                }
             }
 
+
+            // Set the Profile name
+            lbl_profile.Text = $"Selected Profile: {dv_profile.Profile?.Name ?? Language.None}";
+
             // Start finding the games and loading the tree_games
-            /*foreach (var game in SteamGame.GetAllOwnedGames().OrderByDescending(game => game.IsInstalled).ThenBy(game => game.Name))
+            foreach (var game in SteamGame.GetAllOwnedGames().OrderByDescending(game => game.IsInstalled).ThenBy(game => game.Name))
                 {
                 var iconAddress = await game.GetIcon();
 
@@ -612,7 +642,7 @@ namespace HeliosDisplayManagement.UIForms
                     Tag = game,
                     ImageIndex = il_games.Images.Count - 1
                 });
-            }*/
+            }
         }
 
         private void rb_wait_process_CheckedChanged(object sender, EventArgs e)
@@ -621,6 +651,9 @@ namespace HeliosDisplayManagement.UIForms
             {
                 // Enable the Process Name Text field
                 txt_process_name.Enabled = true;
+            } else
+            {
+                txt_process_name.Enabled = false;
             }
         }
 
@@ -630,28 +663,13 @@ namespace HeliosDisplayManagement.UIForms
             {
                 // Disable the Process Name Text field
                 txt_process_name.Enabled = false;
+            } else
+            {
+                txt_process_name.Enabled = true;
             }
-        }
-
-        private void nud_timeout_executable_ValueChanged(object sender, EventArgs e)
-        {
 
         }
 
-        private void nud_timeout_game_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txt_args_executable_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txt_game_name_TextChanged(object sender, EventArgs e)
-        {
-
-        }
 
         private void btn_app_process_Click(object sender, EventArgs e)
         {
@@ -670,6 +688,17 @@ namespace HeliosDisplayManagement.UIForms
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                 }
+            }
+        }
+
+        private void cb_args_game_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cb_args_game.Checked)
+            {
+                txt_args_game.Enabled = true;
+            } else
+            {
+                txt_args_game.Enabled = false;
             }
         }
     }

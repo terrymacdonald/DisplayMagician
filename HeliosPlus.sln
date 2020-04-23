@@ -1,14 +1,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2003
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosDisplayManagement", "HeliosDisplayManagement\HeliosDisplayManagement.csproj", "{608D941A-B431-400C-A91D-C6F971C29577}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus", "HeliosDisplayManagement\HeliosPlus.csproj", "{608D941A-B431-400C-A91D-C6F971C29577}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosDisplayManagement.ShellExtension", "HeliosDisplayManagement.ShellExtension\HeliosDisplayManagement.ShellExtension.csproj", "{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.ShellExtension", "HeliosDisplayManagement.ShellExtension\HeliosPlus.ShellExtension.csproj", "{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosDisplayManagement.Shared", "HeliosDisplayManagement.Shared\HeliosDisplayManagement.Shared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Shared", "HeliosDisplayManagement.Shared\HeliosPlus.Shared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosDisplayManagement.Reporting", "HeliosDisplayManagement.Reporting\HeliosDisplayManagement.Reporting.csproj", "{76DF2BCF-911B-4820-B63E-8F3468DB5E79}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Reporting", "HeliosDisplayManagement.Reporting\HeliosPlus.Reporting.csproj", "{76DF2BCF-911B-4820-B63E-8F3468DB5E79}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

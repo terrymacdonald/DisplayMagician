@@ -3,12 +3,12 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using HeliosDisplayManagement.Shared;
-using HeliosDisplayManagement.ShellExtension.Resources;
+using HeliosPlus.Shared;
+using HeliosPlus.ShellExtension.Resources;
 using SharpShell.Attributes;
 using SharpShell.SharpContextMenu;
 
-namespace HeliosDisplayManagement.ShellExtension
+namespace HeliosPlus.ShellExtension
 {
     [ComVisible(true)]
     [COMServerAssociation(AssociationType.ClassOfExtension, @".url")]

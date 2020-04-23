@@ -1,4 +1,4 @@
-﻿namespace HeliosDisplayManagement.Shared.UserControls
+﻿namespace HeliosPlus.Shared.UserControls
 {
     partial class DisplayView
     {

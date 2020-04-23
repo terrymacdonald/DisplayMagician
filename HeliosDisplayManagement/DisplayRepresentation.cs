@@ -4,10 +4,10 @@ using System.Drawing;
 using System.Linq;
 using WindowsDisplayAPI;
 using WindowsDisplayAPI.DisplayConfig;
-using HeliosDisplayManagement.Shared;
-using HeliosDisplayManagement.Shared.Topology;
+using HeliosPlus.Shared;
+using HeliosPlus.Shared.Topology;
 
-namespace HeliosDisplayManagement
+namespace HeliosPlus
 {
     internal class DisplayRepresentation
     {

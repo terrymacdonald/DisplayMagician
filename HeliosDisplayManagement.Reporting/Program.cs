@@ -7,11 +7,11 @@ using System.Linq;
 using System.Reflection;
 using WindowsDisplayAPI;
 using WindowsDisplayAPI.DisplayConfig;
-using HeliosDisplayManagement.Shared;
+using HeliosPlus.Shared;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 
-namespace HeliosDisplayManagement.Reporting
+namespace HeliosPlus.Reporting
 {
     internal class Program
     {

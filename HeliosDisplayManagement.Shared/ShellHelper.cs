@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace HeliosDisplayManagement.Shared
+namespace HeliosPlus.Shared
 {
     public static class ShellHelper
     {

@@ -6,7 +6,7 @@ using WindowsDisplayAPI.Native.DisplayConfig;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace HeliosDisplayManagement.Shared.Topology
+namespace HeliosPlus.Shared.Topology
 {
     public class Path : IEquatable<Path>
     {

@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace HeliosDisplayManagement.Shared
+namespace HeliosPlus.Shared
 {
     /// <summary>
     ///     Represents a Restart Manager session. The Restart Manager enables all but the critical system services to be shut

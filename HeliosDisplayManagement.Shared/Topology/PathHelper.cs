@@ -1,6 +1,6 @@
 ﻿using WindowsDisplayAPI.Native.DisplayConfig;
 
-namespace HeliosDisplayManagement.Shared.Topology
+namespace HeliosPlus.Shared.Topology
 {
     internal static class PathHelper
     {

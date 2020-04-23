@@ -1,6 +1,6 @@
 ﻿using System.ServiceModel;
 
-namespace HeliosDisplayManagement.InterProcess
+namespace HeliosPlus.InterProcess
 {
     [ServiceContract]
     internal interface IService

@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("Helios DM+")]
+[assembly: AssemblyTitle("HeliosPlus")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Helios DM+")]
-[assembly: AssemblyCopyright("Copyright © Soroush Falahati 2017")]
+[assembly: AssemblyProduct("HeliosPlus")]
+[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021, Copyright © Soroush Falahati 2017-2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
-[assembly: Guid("608d941a-b431-400c-a91d-c6f971c29577")]
+[assembly: Guid("1cbf2d06-199b-4d40-a15d-34fb9ed526c7")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -35,5 +35,5 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("0.9.6.*")]
-[assembly: AssemblyFileVersion("0.9.6.0")]
+[assembly: AssemblyVersion("0.9.9.*")]
+[assembly: AssemblyFileVersion("0.9.9.0")]

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Win32;
 
-namespace HeliosDisplayManagement.Shared
+namespace HeliosPlus.Shared
 {
     public class TaskBarSettings
     {

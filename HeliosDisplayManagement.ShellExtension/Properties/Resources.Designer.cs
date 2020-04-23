@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace HeliosDisplayManagement.ShellExtension.Properties {
+namespace HeliosPlus.ShellExtension.Properties {
     using System;
     
     

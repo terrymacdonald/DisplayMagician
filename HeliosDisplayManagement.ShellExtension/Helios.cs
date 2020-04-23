@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Windows.Forms;
-using HeliosDisplayManagement.Shared;
-using HeliosDisplayManagement.ShellExtension.Resources;
+using HeliosPlus.Shared;
+using HeliosPlus.ShellExtension.Resources;
 
-namespace HeliosDisplayManagement.ShellExtension
+namespace HeliosPlus.ShellExtension
 {
     internal class HeliosDisplayManagement
     {

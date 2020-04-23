@@ -1,7 +1,7 @@
-﻿using HeliosDisplayManagement.Resources;
-using HeliosDisplayManagement.Shared.UserControls;
+﻿using HeliosPlus.Resources;
+using HeliosPlus.Shared.UserControls;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     partial class MainForm
     {
@@ -33,13 +33,13 @@ namespace HeliosDisplayManagement.UIForms
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.btn_clone = new System.Windows.Forms.Button();
+            this.btn_copy = new System.Windows.Forms.Button();
             this.btn_apply = new System.Windows.Forms.Button();
             this.btn_edit = new System.Windows.Forms.Button();
             this.btn_cancel = new System.Windows.Forms.Button();
             this.lbl_profile = new System.Windows.Forms.Label();
             this.btn_delete = new System.Windows.Forms.Button();
-            this.dv_profile = new HeliosDisplayManagement.Shared.UserControls.DisplayView();
+            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.btn_shortcut = new System.Windows.Forms.Button();
             this.menu_profiles = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.applyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -54,36 +54,36 @@ namespace HeliosDisplayManagement.UIForms
             this.menu_profiles.SuspendLayout();
             this.SuspendLayout();
             // 
-            // btn_clone
+            // btn_copy
             // 
-            this.btn_clone.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_clone.Location = new System.Drawing.Point(488, 437);
-            this.btn_clone.Name = "btn_clone";
-            this.btn_clone.Size = new System.Drawing.Size(75, 23);
-            this.btn_clone.TabIndex = 6;
-            this.btn_clone.Text = global::HeliosDisplayManagement.Resources.Language.Clone;
-            this.btn_clone.UseVisualStyleBackColor = true;
-            this.btn_clone.Click += new System.EventHandler(this.Clone_Click);
+            this.btn_copy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_copy.Location = new System.Drawing.Point(367, 506);
+            this.btn_copy.Name = "btn_copy";
+            this.btn_copy.Size = new System.Drawing.Size(75, 23);
+            this.btn_copy.TabIndex = 6;
+            this.btn_copy.Text = "&Copy";
+            this.btn_copy.UseVisualStyleBackColor = true;
+            this.btn_copy.Click += new System.EventHandler(this.Copy_Click);
             // 
             // btn_apply
             // 
             this.btn_apply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_apply.Location = new System.Drawing.Point(731, 437);
+            this.btn_apply.Location = new System.Drawing.Point(610, 506);
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(75, 23);
             this.btn_apply.TabIndex = 9;
-            this.btn_apply.Text = global::HeliosDisplayManagement.Resources.Language.Apply;
+            this.btn_apply.Text = global::HeliosPlus.Resources.Language.Apply;
             this.btn_apply.UseVisualStyleBackColor = true;
             this.btn_apply.Click += new System.EventHandler(this.Apply_Click);
             // 
             // btn_edit
             // 
             this.btn_edit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_edit.Location = new System.Drawing.Point(650, 437);
+            this.btn_edit.Location = new System.Drawing.Point(529, 506);
             this.btn_edit.Name = "btn_edit";
             this.btn_edit.Size = new System.Drawing.Size(75, 23);
             this.btn_edit.TabIndex = 8;
-            this.btn_edit.Text = global::HeliosDisplayManagement.Resources.Language.Edit;
+            this.btn_edit.Text = global::HeliosPlus.Resources.Language.Edit;
             this.btn_edit.UseVisualStyleBackColor = true;
             this.btn_edit.Click += new System.EventHandler(this.Edit_Click);
             // 
@@ -91,13 +91,13 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.btn_cancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btn_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btn_cancel.Location = new System.Drawing.Point(265, 437);
+            this.btn_cancel.Location = new System.Drawing.Point(803, 506);
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(75, 23);
             this.btn_cancel.TabIndex = 5;
-            this.btn_cancel.Text = global::HeliosDisplayManagement.Resources.Language.Cancel;
+            this.btn_cancel.Text = "E&xit";
             this.btn_cancel.UseVisualStyleBackColor = true;
-            this.btn_cancel.Click += new System.EventHandler(this.Cancel_Click);
+            this.btn_cancel.Click += new System.EventHandler(this.Exit_Click);
             // 
             // lbl_profile
             // 
@@ -112,11 +112,11 @@ namespace HeliosDisplayManagement.UIForms
             // btn_delete
             // 
             this.btn_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_delete.Location = new System.Drawing.Point(569, 437);
+            this.btn_delete.Location = new System.Drawing.Point(448, 506);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(75, 23);
             this.btn_delete.TabIndex = 7;
-            this.btn_delete.Text = global::HeliosDisplayManagement.Resources.Language.Delete;
+            this.btn_delete.Text = global::HeliosPlus.Resources.Language.Delete;
             this.btn_delete.UseVisualStyleBackColor = true;
             this.btn_delete.Click += new System.EventHandler(this.Delete_Click);
             // 
@@ -134,17 +134,17 @@ namespace HeliosDisplayManagement.UIForms
             this.dv_profile.PaddingX = 100;
             this.dv_profile.PaddingY = 100;
             this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(560, 413);
+            this.dv_profile.Size = new System.Drawing.Size(634, 482);
             this.dv_profile.TabIndex = 4;
             // 
             // btn_shortcut
             // 
             this.btn_shortcut.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_shortcut.Location = new System.Drawing.Point(392, 437);
+            this.btn_shortcut.Location = new System.Drawing.Point(271, 506);
             this.btn_shortcut.Name = "btn_shortcut";
             this.btn_shortcut.Size = new System.Drawing.Size(90, 23);
             this.btn_shortcut.TabIndex = 10;
-            this.btn_shortcut.Text = global::HeliosDisplayManagement.Resources.Language.Create_Shortcut;
+            this.btn_shortcut.Text = "Create &Shortcut";
             this.btn_shortcut.UseVisualStyleBackColor = true;
             this.btn_shortcut.Click += new System.EventHandler(this.CreateShortcut_Click);
             // 
@@ -164,7 +164,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.applyToolStripMenuItem.Name = "applyToolStripMenuItem";
             this.applyToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
-            this.applyToolStripMenuItem.Text = global::HeliosDisplayManagement.Resources.Language.Apply;
+            this.applyToolStripMenuItem.Text = global::HeliosPlus.Resources.Language.Apply;
             this.applyToolStripMenuItem.Click += new System.EventHandler(this.Apply_Click);
             // 
             // toolStripMenuItem2
@@ -176,28 +176,28 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.cloneToolStripMenuItem.Name = "cloneToolStripMenuItem";
             this.cloneToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
-            this.cloneToolStripMenuItem.Text = global::HeliosDisplayManagement.Resources.Language.Clone;
-            this.cloneToolStripMenuItem.Click += new System.EventHandler(this.Clone_Click);
+            this.cloneToolStripMenuItem.Text = global::HeliosPlus.Resources.Language.Clone;
+            this.cloneToolStripMenuItem.Click += new System.EventHandler(this.Copy_Click);
             // 
             // createShortcutToolStripMenuItem
             // 
             this.createShortcutToolStripMenuItem.Name = "createShortcutToolStripMenuItem";
             this.createShortcutToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
-            this.createShortcutToolStripMenuItem.Text = global::HeliosDisplayManagement.Resources.Language.Create_Shortcut;
+            this.createShortcutToolStripMenuItem.Text = global::HeliosPlus.Resources.Language.Create_Shortcut;
             this.createShortcutToolStripMenuItem.Click += new System.EventHandler(this.CreateShortcut_Click);
             // 
             // editToolStripMenuItem
             // 
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
-            this.editToolStripMenuItem.Text = global::HeliosDisplayManagement.Resources.Language.Edit;
+            this.editToolStripMenuItem.Text = global::HeliosPlus.Resources.Language.Edit;
             this.editToolStripMenuItem.Click += new System.EventHandler(this.Edit_Click);
             // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
             this.deleteToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
-            this.deleteToolStripMenuItem.Text = global::HeliosDisplayManagement.Resources.Language.Delete;
+            this.deleteToolStripMenuItem.Text = global::HeliosPlus.Resources.Language.Delete;
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.Delete_Click);
             // 
             // lv_profiles
@@ -214,7 +214,7 @@ namespace HeliosDisplayManagement.UIForms
             this.lv_profiles.Location = new System.Drawing.Point(-1, -1);
             this.lv_profiles.MultiSelect = false;
             this.lv_profiles.Name = "lv_profiles";
-            this.lv_profiles.Size = new System.Drawing.Size(254, 475);
+            this.lv_profiles.Size = new System.Drawing.Size(254, 544);
             this.lv_profiles.SmallImageList = this.il_profiles;
             this.lv_profiles.TabIndex = 11;
             this.lv_profiles.UseCompatibleStateImageBehavior = false;
@@ -234,7 +234,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.lbl_version.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lbl_version.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(178)));
-            this.lbl_version.Location = new System.Drawing.Point(650, 8);
+            this.lbl_version.Location = new System.Drawing.Point(724, 8);
             this.lbl_version.Name = "lbl_version";
             this.lbl_version.Size = new System.Drawing.Size(157, 13);
             this.lbl_version.TabIndex = 12;
@@ -248,7 +248,7 @@ namespace HeliosDisplayManagement.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(174)))), ((int)(((byte)(184)))), ((int)(((byte)(196)))));
             this.CancelButton = this.btn_cancel;
-            this.ClientSize = new System.Drawing.Size(819, 472);
+            this.ClientSize = new System.Drawing.Size(893, 541);
             this.Controls.Add(this.lbl_version);
             this.Controls.Add(this.lv_profiles);
             this.Controls.Add(this.btn_shortcut);
@@ -258,13 +258,13 @@ namespace HeliosDisplayManagement.UIForms
             this.Controls.Add(this.btn_edit);
             this.Controls.Add(this.btn_apply);
             this.Controls.Add(this.dv_profile);
-            this.Controls.Add(this.btn_clone);
+            this.Controls.Add(this.btn_copy);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimumSize = new System.Drawing.Size(800, 400);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Helios Display Management";
+            this.Text = "HeliosPlus";
             this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menu_profiles.ResumeLayout(false);
@@ -274,7 +274,7 @@ namespace HeliosDisplayManagement.UIForms
 
         #endregion
 
-        private System.Windows.Forms.Button btn_clone;
+        private System.Windows.Forms.Button btn_copy;
         private DisplayView dv_profile;
         private System.Windows.Forms.Button btn_apply;
         private System.Windows.Forms.Button btn_edit;

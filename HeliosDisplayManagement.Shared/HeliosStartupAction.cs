@@ -1,4 +1,4 @@
-﻿namespace HeliosDisplayManagement.Shared
+﻿namespace HeliosPlus.Shared
 {
     public enum HeliosStartupAction
     {

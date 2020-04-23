@@ -1,7 +1,7 @@
-﻿using HeliosDisplayManagement.Resources;
-using HeliosDisplayManagement.Shared.UserControls;
+﻿using HeliosPlus.Resources;
+using HeliosPlus.Shared.UserControls;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     partial class ShortcutForm
     {
@@ -31,6 +31,7 @@ namespace HeliosDisplayManagement.UIForms
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutForm));
             this.btn_save = new System.Windows.Forms.Button();
             this.btn_cancel = new System.Windows.Forms.Button();
@@ -43,14 +44,15 @@ namespace HeliosDisplayManagement.UIForms
             this.label4 = new System.Windows.Forms.Label();
             this.btn_choose_game = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
-            this.tree_games = new System.Windows.Forms.TreeView();
             this.txt_args_game = new System.Windows.Forms.TextBox();
             this.cb_args_game = new System.Windows.Forms.CheckBox();
             this.nud_steamapps = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
             this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
+            this.lv_games = new System.Windows.Forms.ListView();
             this.p_standalone = new System.Windows.Forms.Panel();
+            this.lbl_process_name = new System.Windows.Forms.Label();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
             this.cb_args_executable = new System.Windows.Forms.CheckBox();
             this.btn_app_process = new System.Windows.Forms.Button();
@@ -64,12 +66,16 @@ namespace HeliosDisplayManagement.UIForms
             this.nud_timeout_executable = new System.Windows.Forms.NumericUpDown();
             this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.rb_standalone = new System.Windows.Forms.RadioButton();
-            this.dv_profile = new HeliosDisplayManagement.Shared.UserControls.DisplayView();
+            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.dialog_open = new System.Windows.Forms.OpenFileDialog();
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.rb_switch_perm = new System.Windows.Forms.RadioButton();
             this.rb_switch_temp = new System.Windows.Forms.RadioButton();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.lbl_profile = new System.Windows.Forms.Label();
+            this.il_games = new System.Windows.Forms.ImageList(this.components);
+            this.clm_images = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.g_temporary.SuspendLayout();
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_game_appid)).BeginInit();
@@ -80,7 +86,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             // btn_save
             // 
-            this.btn_save.Location = new System.Drawing.Point(700, 749);
+            this.btn_save.Location = new System.Drawing.Point(602, 859);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(94, 23);
             this.btn_save.TabIndex = 6;
@@ -91,7 +97,7 @@ namespace HeliosDisplayManagement.UIForms
             // btn_cancel
             // 
             this.btn_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btn_cancel.Location = new System.Drawing.Point(601, 749);
+            this.btn_cancel.Location = new System.Drawing.Point(704, 859);
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(94, 23);
             this.btn_cancel.TabIndex = 5;
@@ -106,7 +112,7 @@ namespace HeliosDisplayManagement.UIForms
             this.g_temporary.Controls.Add(this.rb_standalone);
             this.g_temporary.Location = new System.Drawing.Point(12, 388);
             this.g_temporary.Name = "g_temporary";
-            this.g_temporary.Size = new System.Drawing.Size(786, 355);
+            this.g_temporary.Size = new System.Drawing.Size(786, 465);
             this.g_temporary.TabIndex = 4;
             this.g_temporary.TabStop = false;
             this.g_temporary.Text = "Application or Game Information";
@@ -120,22 +126,22 @@ namespace HeliosDisplayManagement.UIForms
             this.p_game.Controls.Add(this.label4);
             this.p_game.Controls.Add(this.btn_choose_game);
             this.p_game.Controls.Add(this.label1);
-            this.p_game.Controls.Add(this.tree_games);
             this.p_game.Controls.Add(this.txt_args_game);
             this.p_game.Controls.Add(this.cb_args_game);
             this.p_game.Controls.Add(this.nud_steamapps);
             this.p_game.Controls.Add(this.label5);
             this.p_game.Controls.Add(this.nud_timeout_game);
             this.p_game.Controls.Add(this.label3);
+            this.p_game.Controls.Add(this.lv_games);
             this.p_game.Enabled = false;
             this.p_game.Location = new System.Drawing.Point(26, 198);
             this.p_game.Name = "p_game";
-            this.p_game.Size = new System.Drawing.Size(730, 145);
+            this.p_game.Size = new System.Drawing.Size(730, 253);
             this.p_game.TabIndex = 3;
             // 
             // txt_game_name
             // 
-            this.txt_game_name.Location = new System.Drawing.Point(408, 73);
+            this.txt_game_name.Location = new System.Drawing.Point(408, 133);
             this.txt_game_name.Name = "txt_game_name";
             this.txt_game_name.ReadOnly = true;
             this.txt_game_name.Size = new System.Drawing.Size(302, 20);
@@ -144,31 +150,22 @@ namespace HeliosDisplayManagement.UIForms
             // nud_game_appid
             // 
             this.nud_game_appid.Enabled = false;
-            this.nud_game_appid.Location = new System.Drawing.Point(408, 45);
+            this.nud_game_appid.Location = new System.Drawing.Point(408, 105);
             this.nud_game_appid.Maximum = new decimal(new int[] {
             1410065407,
             2,
             0,
             0});
-            this.nud_game_appid.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
             this.nud_game_appid.Name = "nud_game_appid";
+            this.nud_game_appid.ReadOnly = true;
             this.nud_game_appid.Size = new System.Drawing.Size(89, 20);
             this.nud_game_appid.TabIndex = 1;
-            this.nud_game_appid.Value = new decimal(new int[] {
-            730,
-            0,
-            0,
-            0});
             this.nud_game_appid.ValueChanged += new System.EventHandler(this.nud_game_appid_ValueChanged);
             // 
             // cmb_game_launcher
             // 
             this.cmb_game_launcher.FormattingEnabled = true;
-            this.cmb_game_launcher.Location = new System.Drawing.Point(408, 18);
+            this.cmb_game_launcher.Location = new System.Drawing.Point(408, 78);
             this.cmb_game_launcher.Name = "cmb_game_launcher";
             this.cmb_game_launcher.Size = new System.Drawing.Size(163, 21);
             this.cmb_game_launcher.TabIndex = 20;
@@ -176,7 +173,7 @@ namespace HeliosDisplayManagement.UIForms
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(323, 21);
+            this.label6.Location = new System.Drawing.Point(323, 81);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(86, 13);
             this.label6.TabIndex = 18;
@@ -185,7 +182,7 @@ namespace HeliosDisplayManagement.UIForms
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(340, 76);
+            this.label4.Location = new System.Drawing.Point(340, 136);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(69, 13);
             this.label4.TabIndex = 17;
@@ -194,7 +191,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             // btn_choose_game
             // 
-            this.btn_choose_game.Location = new System.Drawing.Point(224, 58);
+            this.btn_choose_game.Location = new System.Drawing.Point(224, 117);
             this.btn_choose_game.Name = "btn_choose_game";
             this.btn_choose_game.Size = new System.Drawing.Size(29, 31);
             this.btn_choose_game.TabIndex = 16;
@@ -205,24 +202,17 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.label1.AutoSize = true;
             this.label1.BackColor = System.Drawing.Color.Transparent;
-            this.label1.Location = new System.Drawing.Point(72, 11);
+            this.label1.Location = new System.Drawing.Point(70, 7);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(88, 13);
             this.label1.TabIndex = 15;
             this.label1.Text = "Games detected:";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // tree_games
-            // 
-            this.tree_games.Location = new System.Drawing.Point(6, 19);
-            this.tree_games.Name = "tree_games";
-            this.tree_games.Size = new System.Drawing.Size(212, 120);
-            this.tree_games.TabIndex = 14;
-            // 
             // txt_args_game
             // 
             this.txt_args_game.Enabled = false;
-            this.txt_args_game.Location = new System.Drawing.Point(408, 100);
+            this.txt_args_game.Location = new System.Drawing.Point(408, 160);
             this.txt_args_game.Name = "txt_args_game";
             this.txt_args_game.Size = new System.Drawing.Size(302, 20);
             this.txt_args_game.TabIndex = 13;
@@ -230,17 +220,18 @@ namespace HeliosDisplayManagement.UIForms
             // cb_args_game
             // 
             this.cb_args_game.AutoSize = true;
-            this.cb_args_game.Location = new System.Drawing.Point(265, 102);
+            this.cb_args_game.Location = new System.Drawing.Point(265, 162);
             this.cb_args_game.Name = "cb_args_game";
             this.cb_args_game.Size = new System.Drawing.Size(147, 17);
             this.cb_args_game.TabIndex = 12;
             this.cb_args_game.Text = "Pass arguments to Game:";
             this.cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_args_game.UseVisualStyleBackColor = true;
+            this.cb_args_game.CheckedChanged += new System.EventHandler(this.cb_args_game_CheckedChanged);
             // 
             // nud_steamapps
             // 
-            this.nud_steamapps.Location = new System.Drawing.Point(505, 45);
+            this.nud_steamapps.Location = new System.Drawing.Point(505, 105);
             this.nud_steamapps.Name = "nud_steamapps";
             this.nud_steamapps.Size = new System.Drawing.Size(24, 20);
             this.nud_steamapps.TabIndex = 2;
@@ -250,7 +241,7 @@ namespace HeliosDisplayManagement.UIForms
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(589, 20);
+            this.label5.Location = new System.Drawing.Point(589, 80);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(48, 13);
             this.label5.TabIndex = 4;
@@ -258,7 +249,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             // nud_timeout_game
             // 
-            this.nud_timeout_game.Location = new System.Drawing.Point(640, 17);
+            this.nud_timeout_game.Location = new System.Drawing.Point(640, 77);
             this.nud_timeout_game.Maximum = new decimal(new int[] {
             240,
             0,
@@ -277,20 +268,34 @@ namespace HeliosDisplayManagement.UIForms
             0,
             0,
             0});
-            this.nud_timeout_game.ValueChanged += new System.EventHandler(this.nud_timeout_game_ValueChanged);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(357, 47);
+            this.label3.Location = new System.Drawing.Point(357, 107);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(52, 13);
             this.label3.TabIndex = 0;
             this.label3.Text = "Game ID:";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // lv_games
+            // 
+            this.lv_games.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.clm_images,
+            this.clm_name});
+            this.lv_games.HideSelection = false;
+            this.lv_games.LargeImageList = this.il_games;
+            this.lv_games.Location = new System.Drawing.Point(6, 18);
+            this.lv_games.Name = "lv_games";
+            this.lv_games.Size = new System.Drawing.Size(212, 229);
+            this.lv_games.SmallImageList = this.il_games;
+            this.lv_games.TabIndex = 22;
+            this.lv_games.UseCompatibleStateImageBehavior = false;
+            // 
             // p_standalone
             // 
+            this.p_standalone.Controls.Add(this.lbl_process_name);
             this.p_standalone.Controls.Add(this.txt_args_executable);
             this.p_standalone.Controls.Add(this.cb_args_executable);
             this.p_standalone.Controls.Add(this.btn_app_process);
@@ -307,6 +312,15 @@ namespace HeliosDisplayManagement.UIForms
             this.p_standalone.Size = new System.Drawing.Size(730, 118);
             this.p_standalone.TabIndex = 1;
             // 
+            // lbl_process_name
+            // 
+            this.lbl_process_name.AutoSize = true;
+            this.lbl_process_name.Location = new System.Drawing.Point(357, 57);
+            this.lbl_process_name.Name = "lbl_process_name";
+            this.lbl_process_name.Size = new System.Drawing.Size(97, 13);
+            this.lbl_process_name.TabIndex = 12;
+            this.lbl_process_name.Text = "Process to monitor:";
+            // 
             // txt_args_executable
             // 
             this.txt_args_executable.Enabled = false;
@@ -314,7 +328,6 @@ namespace HeliosDisplayManagement.UIForms
             this.txt_args_executable.Name = "txt_args_executable";
             this.txt_args_executable.Size = new System.Drawing.Size(520, 20);
             this.txt_args_executable.TabIndex = 11;
-            this.txt_args_executable.TextChanged += new System.EventHandler(this.txt_args_executable_TextChanged);
             // 
             // cb_args_executable
             // 
@@ -330,7 +343,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             // btn_app_process
             // 
-            this.btn_app_process.Location = new System.Drawing.Point(527, 55);
+            this.btn_app_process.Location = new System.Drawing.Point(654, 53);
             this.btn_app_process.Name = "btn_app_process";
             this.btn_app_process.Size = new System.Drawing.Size(56, 21);
             this.btn_app_process.TabIndex = 9;
@@ -341,19 +354,19 @@ namespace HeliosDisplayManagement.UIForms
             // txt_process_name
             // 
             this.txt_process_name.Enabled = false;
-            this.txt_process_name.Location = new System.Drawing.Point(296, 56);
+            this.txt_process_name.Location = new System.Drawing.Point(454, 54);
             this.txt_process_name.Name = "txt_process_name";
-            this.txt_process_name.Size = new System.Drawing.Size(225, 20);
+            this.txt_process_name.Size = new System.Drawing.Size(194, 20);
             this.txt_process_name.TabIndex = 4;
             // 
             // rb_wait_process
             // 
             this.rb_wait_process.AutoSize = true;
-            this.rb_wait_process.Location = new System.Drawing.Point(6, 59);
+            this.rb_wait_process.Location = new System.Drawing.Point(6, 55);
             this.rb_wait_process.Name = "rb_wait_process";
-            this.rb_wait_process.Size = new System.Drawing.Size(296, 17);
+            this.rb_wait_process.Size = new System.Drawing.Size(327, 17);
             this.rb_wait_process.TabIndex = 8;
-            this.rb_wait_process.Text = "Change Display Profile back when this process is closed: ";
+            this.rb_wait_process.Text = "Change Display Profile back when a different process is closed: ";
             this.rb_wait_process.UseVisualStyleBackColor = true;
             this.rb_wait_process.CheckedChanged += new System.EventHandler(this.rb_wait_process_CheckedChanged);
             // 
@@ -361,12 +374,12 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.rb_wait_executable.AutoSize = true;
             this.rb_wait_executable.Checked = true;
-            this.rb_wait_executable.Location = new System.Drawing.Point(6, 37);
+            this.rb_wait_executable.Location = new System.Drawing.Point(6, 32);
             this.rb_wait_executable.Name = "rb_wait_executable";
-            this.rb_wait_executable.Size = new System.Drawing.Size(304, 17);
+            this.rb_wait_executable.Size = new System.Drawing.Size(337, 17);
             this.rb_wait_executable.TabIndex = 7;
             this.rb_wait_executable.TabStop = true;
-            this.rb_wait_executable.Text = "Change Display Profile back when the executable is closed";
+            this.rb_wait_executable.Text = "Change Display Profile back when the executable above is closed";
             this.rb_wait_executable.UseVisualStyleBackColor = true;
             this.rb_wait_executable.CheckedChanged += new System.EventHandler(this.rb_wait_executable_CheckedChanged);
             // 
@@ -409,7 +422,6 @@ namespace HeliosDisplayManagement.UIForms
             // 
             // nud_timeout_executable
             // 
-            this.nud_timeout_executable.Enabled = false;
             this.nud_timeout_executable.Location = new System.Drawing.Point(640, 6);
             this.nud_timeout_executable.Maximum = new decimal(new int[] {
             240,
@@ -429,7 +441,6 @@ namespace HeliosDisplayManagement.UIForms
             0,
             0,
             0});
-            this.nud_timeout_executable.ValueChanged += new System.EventHandler(this.nud_timeout_executable_ValueChanged);
             // 
             // rb_launcher
             // 
@@ -476,7 +487,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.dialog_open.DefaultExt = "exe";
             this.dialog_open.FileName = "*.exe";
-            this.dialog_open.Filter = global::HeliosDisplayManagement.Resources.Language.Executable_Files_Filter;
+            this.dialog_open.Filter = global::HeliosPlus.Resources.Language.Executable_Files_Filter;
             this.dialog_open.RestoreDirectory = true;
             this.dialog_open.SupportMultiDottedExtensions = true;
             // 
@@ -484,7 +495,7 @@ namespace HeliosDisplayManagement.UIForms
             // 
             this.dialog_save.DefaultExt = "lnk";
             this.dialog_save.DereferenceLinks = false;
-            this.dialog_save.Filter = global::HeliosDisplayManagement.Resources.Language.Shortcuts_Filter;
+            this.dialog_save.Filter = global::HeliosPlus.Resources.Language.Shortcuts_Filter;
             this.dialog_save.RestoreDirectory = true;
             // 
             // rb_switch_perm
@@ -516,6 +527,23 @@ namespace HeliosDisplayManagement.UIForms
             this.openFileDialog1.FileName = "openFileDialog1";
             this.openFileDialog1.Title = "Title";
             // 
+            // lbl_profile
+            // 
+            this.lbl_profile.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(174)))), ((int)(((byte)(184)))), ((int)(((byte)(196)))));
+            this.lbl_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(178)));
+            this.lbl_profile.Location = new System.Drawing.Point(12, 9);
+            this.lbl_profile.Name = "lbl_profile";
+            this.lbl_profile.Size = new System.Drawing.Size(382, 13);
+            this.lbl_profile.TabIndex = 10;
+            this.lbl_profile.Text = "[None]";
+            this.lbl_profile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // il_games
+            // 
+            this.il_games.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+            this.il_games.ImageSize = new System.Drawing.Size(32, 32);
+            this.il_games.TransparentColor = System.Drawing.Color.Transparent;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -523,7 +551,8 @@ namespace HeliosDisplayManagement.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(248)))), ((int)(((byte)(248)))));
             this.CancelButton = this.btn_cancel;
-            this.ClientSize = new System.Drawing.Size(810, 782);
+            this.ClientSize = new System.Drawing.Size(810, 890);
+            this.Controls.Add(this.lbl_profile);
             this.Controls.Add(this.rb_switch_temp);
             this.Controls.Add(this.rb_switch_perm);
             this.Controls.Add(this.g_temporary);
@@ -585,7 +614,6 @@ namespace HeliosDisplayManagement.UIForms
         private System.Windows.Forms.CheckBox cb_args_game;
         private System.Windows.Forms.TextBox txt_args_executable;
         private System.Windows.Forms.CheckBox cb_args_executable;
-        private System.Windows.Forms.TreeView tree_games;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button btn_choose_game;
@@ -593,5 +621,11 @@ namespace HeliosDisplayManagement.UIForms
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txt_game_name;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.ListView lv_games;
+        private System.Windows.Forms.Label lbl_process_name;
+        private System.Windows.Forms.Label lbl_profile;
+        private System.Windows.Forms.ImageList il_games;
+        private System.Windows.Forms.ColumnHeader clm_images;
+        private System.Windows.Forms.ColumnHeader clm_name;
     }
 }

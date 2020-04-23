@@ -7,14 +7,14 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using WindowsDisplayAPI.DisplayConfig;
-using HeliosDisplayManagement.Shared.Resources;
+using HeliosPlus.Shared.Resources;
 using Newtonsoft.Json;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using Path = HeliosDisplayManagement.Shared.Topology.Path;
+using Path = HeliosPlus.Shared.Topology.Path;
 
-namespace HeliosDisplayManagement.Shared
+namespace HeliosPlus.Shared
 {
     public class Profile : IEquatable<Profile>
     {

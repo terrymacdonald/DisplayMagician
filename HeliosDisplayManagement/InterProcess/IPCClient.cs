@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.ServiceModel.Description;
 
-namespace HeliosDisplayManagement.InterProcess
+namespace HeliosPlus.InterProcess
 {
     internal class IPCClient : ClientBase<IService>, IService
     {

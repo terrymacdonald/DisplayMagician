@@ -1,7 +1,7 @@
 ﻿using System.Windows.Forms;
-using HeliosDisplayManagement.Resources;
+using HeliosPlus.Resources;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     sealed partial class SplashForm
     {
@@ -121,7 +121,7 @@ namespace HeliosDisplayManagement.UIForms
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = global::HeliosDisplayManagement.Resources.Language.Helios_Display_Management_Please_Wait;
+            this.Text = global::HeliosPlus.Resources.Language.Helios_Display_Management_Please_Wait;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SplashForm_FormClosing);
             this.Load += new System.EventHandler(this.SplashForm_Reposition);
             this.Shown += new System.EventHandler(this.SplashForm_Shown);

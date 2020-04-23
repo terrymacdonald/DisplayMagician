@@ -1,7 +1,7 @@
-﻿using HeliosDisplayManagement.Resources;
-using HeliosDisplayManagement.Shared.UserControls;
+﻿using HeliosPlus.Resources;
+using HeliosPlus.Shared.UserControls;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     partial class EditForm
     {
@@ -36,7 +36,7 @@ namespace HeliosDisplayManagement.UIForms
             this.btn_save = new System.Windows.Forms.Button();
             this.btn_apply = new System.Windows.Forms.Button();
             this.btn_cancel = new System.Windows.Forms.Button();
-            this.dv_profile = new HeliosDisplayManagement.Shared.UserControls.DisplayView();
+            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.txt_name = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.lv_monitors = new System.Windows.Forms.ListView();
@@ -76,7 +76,7 @@ namespace HeliosDisplayManagement.UIForms
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(75, 23);
             this.btn_save.TabIndex = 5;
-            this.btn_save.Text = global::HeliosDisplayManagement.Resources.Language.Save;
+            this.btn_save.Text = global::HeliosPlus.Resources.Language.Save;
             this.btn_save.UseVisualStyleBackColor = true;
             this.btn_save.Click += new System.EventHandler(this.btn_save_Click);
             // 
@@ -88,7 +88,7 @@ namespace HeliosDisplayManagement.UIForms
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(91, 23);
             this.btn_apply.TabIndex = 6;
-            this.btn_apply.Text = global::HeliosDisplayManagement.Resources.Language.Save_and_Apply;
+            this.btn_apply.Text = global::HeliosPlus.Resources.Language.Save_and_Apply;
             this.btn_apply.UseVisualStyleBackColor = true;
             this.btn_apply.Click += new System.EventHandler(this.btn_apply_Click);
             // 
@@ -100,7 +100,7 @@ namespace HeliosDisplayManagement.UIForms
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(75, 23);
             this.btn_cancel.TabIndex = 7;
-            this.btn_cancel.Text = global::HeliosDisplayManagement.Resources.Language.Cancel;
+            this.btn_cancel.Text = global::HeliosPlus.Resources.Language.Cancel;
             this.btn_cancel.UseVisualStyleBackColor = true;
             // 
             // dv_profile

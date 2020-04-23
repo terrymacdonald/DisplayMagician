@@ -1,18 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using HeliosDisplayManagement.Resources;
-using HeliosDisplayManagement.Shared;
+using HeliosPlus.Resources;
+using HeliosPlus.Shared;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     internal partial class MainForm : Form
     {
         private const string GroupActive = "active";
         private const string GroupCurrent = "current";
         private const string GroupSaved = "saved";
+        private static Profile SelectedProfile;
 
         public MainForm()
         {
@@ -76,12 +78,12 @@ namespace HeliosDisplayManagement.UIForms
             }
         }
 
-        private void Cancel_Click(object sender, EventArgs e)
+        private void Exit_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }
 
-        private void Clone_Click(object sender, EventArgs e)
+        private void Copy_Click(object sender, EventArgs e)
         {
             if (dv_profile.Profile != null)
             {
@@ -234,7 +236,7 @@ namespace HeliosDisplayManagement.UIForms
             }
 
             // Set the Profile name
-            lbl_profile.Text = dv_profile.Profile?.Name ?? Language.None;
+            lbl_profile.Text = $"Selected Profile: {dv_profile.Profile?.Name ?? Language.None}";
 
             // Turn on the buttons if the 
             if (dv_profile.Profile != null) {
@@ -254,7 +256,7 @@ namespace HeliosDisplayManagement.UIForms
                     }
                 }
                 cloneToolStripMenuItem.Enabled = true;
-                btn_clone.Enabled = true;
+                btn_copy.Enabled = true;
 
             }
             
@@ -264,7 +266,13 @@ namespace HeliosDisplayManagement.UIForms
 
         private void MainForm_Activated(object sender, EventArgs e)
         {
-            //ReloadProfiles();
+            // Reload the profiles in case we swapped to another program to change it
+            ReloadProfiles();
+            // If nothing is selected then select the currently used profile
+            if (lv_profiles.SelectedItems.Count == 0)
+            {
+                lv_profiles.Items[0].Selected = true;
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -311,5 +319,6 @@ namespace HeliosDisplayManagement.UIForms
                     .Where(profile => profile != null));
             ReloadProfiles();
         }
+
     }
 }

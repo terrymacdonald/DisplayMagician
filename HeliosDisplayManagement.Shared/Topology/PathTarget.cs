@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using WindowsDisplayAPI.DisplayConfig;
-using HeliosDisplayManagement.Shared.NVIDIA;
+using HeliosPlus.Shared.NVIDIA;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace HeliosDisplayManagement.Shared.Topology
+namespace HeliosPlus.Shared.Topology
 {
     public class PathTarget : IEquatable<PathTarget>
     {

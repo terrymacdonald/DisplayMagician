@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using McMaster.Extensions.CommandLineUtils.Validation;
 using System.ComponentModel.DataAnnotations;
-using HeliosDisplayManagement.Shared;
-using HeliosDisplayManagement.Steam;
+using HeliosPlus.Shared;
+using HeliosPlus.Steam;
 
-namespace HeliosDisplayManagement
+namespace HeliosPlus
 {
     class ProfileMustExistValidator : IOptionValidator
     {

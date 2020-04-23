@@ -1,4 +1,4 @@
-﻿namespace HeliosDisplayManagement.Uplay
+﻿namespace HeliosPlus.Uplay
 {
     public class UplayAppIdNamePair
     {

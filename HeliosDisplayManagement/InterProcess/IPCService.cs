@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.Windows.Forms;
 
-namespace HeliosDisplayManagement.InterProcess
+namespace HeliosPlus.InterProcess
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     internal class IPCService : IService

@@ -1,6 +1,6 @@
-﻿using HeliosDisplayManagement.Resources;
+﻿using HeliosPlus.Resources;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     partial class SteamGamesForm
     {
@@ -46,7 +46,7 @@ namespace HeliosDisplayManagement.UIForms
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(75, 23);
             this.btn_cancel.TabIndex = 1;
-            this.btn_cancel.Text = global::HeliosDisplayManagement.Resources.Language.Cancel;
+            this.btn_cancel.Text = global::HeliosPlus.Resources.Language.Cancel;
             this.btn_cancel.UseVisualStyleBackColor = true;
             // 
             // btn_ok
@@ -58,7 +58,7 @@ namespace HeliosDisplayManagement.UIForms
             this.btn_ok.Name = "btn_ok";
             this.btn_ok.Size = new System.Drawing.Size(75, 23);
             this.btn_ok.TabIndex = 2;
-            this.btn_ok.Text = global::HeliosDisplayManagement.Resources.Language.Ok;
+            this.btn_ok.Text = global::HeliosPlus.Resources.Language.Ok;
             this.btn_ok.UseVisualStyleBackColor = true;
             // 
             // il_games
@@ -103,7 +103,7 @@ namespace HeliosDisplayManagement.UIForms
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = global::HeliosDisplayManagement.Resources.Language.Steam_Games;
+            this.Text = global::HeliosPlus.Resources.Language.Steam_Games;
             this.Load += new System.EventHandler(this.SteamGamesForm_Load);
             this.ResumeLayout(false);
 

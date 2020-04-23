@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
-using HeliosDisplayManagement.Shared.Topology;
+using HeliosPlus.Shared.Topology;
 
-namespace HeliosDisplayManagement.Shared.UserControls
+namespace HeliosPlus.Shared.UserControls
 {
     public partial class DisplayView : UserControl
     {

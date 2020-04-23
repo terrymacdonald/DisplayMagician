@@ -1,4 +1,4 @@
-﻿namespace HeliosDisplayManagement.InterProcess
+﻿namespace HeliosPlus.InterProcess
 {
     internal enum InstanceStatus
     {

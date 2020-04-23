@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace HeliosDisplayManagement.Shared.Resources {
+namespace HeliosPlus.Shared.Resources {
     using System;
     
     

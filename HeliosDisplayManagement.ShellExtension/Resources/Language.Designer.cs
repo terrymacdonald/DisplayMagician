@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace HeliosDisplayManagement.ShellExtension.Resources {
+namespace HeliosPlus.ShellExtension.Resources {
     using System;
     
     

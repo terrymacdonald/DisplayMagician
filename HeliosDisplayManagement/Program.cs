@@ -11,16 +11,15 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using HeliosDisplayManagement.InterProcess;
-using HeliosDisplayManagement.Resources;
-using HeliosDisplayManagement.Steam;
-using HeliosDisplayManagement.Shared;
-using HeliosDisplayManagement.Uplay;
-using HeliosDisplayManagement.UIForms;
+using HeliosPlus.InterProcess;
+using HeliosPlus.Resources;
+using HeliosPlus.Steam;
+using HeliosPlus.Shared;
+using HeliosPlus.Uplay;
+using HeliosPlus.UIForms;
 using System.Net.NetworkInformation;
 
-namespace HeliosDisplayManagement
-{
+namespace HeliosPlus {
 
     public enum SupportedGameLibrary
     {

@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
 
-namespace HeliosDisplayManagement.ShellExtension
+namespace HeliosPlus.ShellExtension
 {
     public static class Shield
     {

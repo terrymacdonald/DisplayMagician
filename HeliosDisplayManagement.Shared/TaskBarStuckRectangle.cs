@@ -5,7 +5,7 @@ using WindowsDisplayAPI.DisplayConfig;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
-namespace HeliosDisplayManagement.Shared
+namespace HeliosPlus.Shared
 {
     public class TaskBarStuckRectangle
     {

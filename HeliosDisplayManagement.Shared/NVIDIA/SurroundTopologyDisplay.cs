@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NvAPIWrapper.Mosaic;
 
-namespace HeliosDisplayManagement.Shared.NVIDIA
+namespace HeliosPlus.Shared.NVIDIA
 {
     public class SurroundTopologyDisplay : IEquatable<SurroundTopologyDisplay>
     {

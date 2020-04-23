@@ -4,9 +4,9 @@ using System.Drawing.Drawing2D;
 using System.Drawing.IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
-using HeliosDisplayManagement.Shared.Topology;
+using HeliosPlus.Shared.Topology;
 
-namespace HeliosDisplayManagement.Shared
+namespace HeliosPlus.Shared
 {
     public class ProfileIcon
     {

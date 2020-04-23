@@ -5,7 +5,7 @@ using WindowsDisplayAPI.DisplayConfig;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Interfaces.Mosaic;
 
-namespace HeliosDisplayManagement.Shared.NVIDIA
+namespace HeliosPlus.Shared.NVIDIA
 {
     public class SurroundTopology : IEquatable<SurroundTopology>
     {

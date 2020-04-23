@@ -1,4 +1,4 @@
-﻿namespace HeliosDisplayManagement.Steam
+﻿namespace HeliosPlus.Steam
 {
     public class SteamAppIdNamePair
     {

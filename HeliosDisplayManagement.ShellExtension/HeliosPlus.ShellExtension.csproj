@@ -64,9 +64,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HeliosDisplayManagement.Shared\HeliosDisplayManagement.Shared.csproj">
+    <ProjectReference Include="..\HeliosDisplayManagement.Shared\HeliosPlus.Shared.csproj">
       <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
-      <Name>HeliosDisplayManagement.Shared</Name>
+      <Name>HeliosPlus.Shared</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

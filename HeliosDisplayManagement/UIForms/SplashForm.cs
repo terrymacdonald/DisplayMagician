@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using HeliosDisplayManagement.Resources;
+using HeliosPlus.Resources;
 using WinFormAnimation;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     public sealed partial class SplashForm : Form
     {

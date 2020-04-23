@@ -7,12 +7,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using HeliosDisplayManagement.Resources;
+using HeliosPlus.Resources;
 using HtmlAgilityPack;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
-namespace HeliosDisplayManagement.Uplay
+namespace HeliosPlus.Uplay
 {
     public class UplayGame
     {

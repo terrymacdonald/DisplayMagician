@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
 
-namespace HeliosDisplayManagement.Shared
+namespace HeliosPlus.Shared
 {
     public class Helios
     {

@@ -1,7 +1,7 @@
 ﻿using NvAPIWrapper.Native.Display;
 using NvAPIWrapper.Native.Mosaic;
 
-namespace HeliosDisplayManagement.Shared.NVIDIA
+namespace HeliosPlus.Shared.NVIDIA
 {
     internal static class SurroundHelper
     {

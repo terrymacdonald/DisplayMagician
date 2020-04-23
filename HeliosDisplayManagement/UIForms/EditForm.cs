@@ -4,11 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WindowsDisplayAPI.Native.DisplayConfig;
-using HeliosDisplayManagement.Resources;
-using HeliosDisplayManagement.Shared;
-using HeliosDisplayManagement.Shared.Topology;
+using HeliosPlus.Resources;
+using HeliosPlus.Shared;
+using HeliosPlus.Shared.Topology;
 
-namespace HeliosDisplayManagement.UIForms
+namespace HeliosPlus.UIForms
 {
     public partial class EditForm : Form
     {
