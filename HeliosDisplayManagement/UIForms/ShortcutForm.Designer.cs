@@ -51,6 +51,9 @@ namespace HeliosPlus.UIForms
             this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
             this.lv_games = new System.Windows.Forms.ListView();
+            this.clm_images = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.il_games = new System.Windows.Forms.ImageList(this.components);
             this.p_standalone = new System.Windows.Forms.Panel();
             this.lbl_process_name = new System.Windows.Forms.Label();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
@@ -73,9 +76,6 @@ namespace HeliosPlus.UIForms
             this.rb_switch_temp = new System.Windows.Forms.RadioButton();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.lbl_profile = new System.Windows.Forms.Label();
-            this.il_games = new System.Windows.Forms.ImageList(this.components);
-            this.clm_images = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.g_temporary.SuspendLayout();
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_game_appid)).BeginInit();
@@ -133,7 +133,6 @@ namespace HeliosPlus.UIForms
             this.p_game.Controls.Add(this.nud_timeout_game);
             this.p_game.Controls.Add(this.label3);
             this.p_game.Controls.Add(this.lv_games);
-            this.p_game.Enabled = false;
             this.p_game.Location = new System.Drawing.Point(26, 198);
             this.p_game.Name = "p_game";
             this.p_game.Size = new System.Drawing.Size(730, 253);
@@ -191,7 +190,7 @@ namespace HeliosPlus.UIForms
             // 
             // btn_choose_game
             // 
-            this.btn_choose_game.Location = new System.Drawing.Point(224, 117);
+            this.btn_choose_game.Location = new System.Drawing.Point(218, 117);
             this.btn_choose_game.Name = "btn_choose_game";
             this.btn_choose_game.Size = new System.Drawing.Size(29, 31);
             this.btn_choose_game.TabIndex = 16;
@@ -286,12 +285,18 @@ namespace HeliosPlus.UIForms
             this.clm_name});
             this.lv_games.HideSelection = false;
             this.lv_games.LargeImageList = this.il_games;
-            this.lv_games.Location = new System.Drawing.Point(6, 18);
+            this.lv_games.Location = new System.Drawing.Point(23, 18);
             this.lv_games.Name = "lv_games";
-            this.lv_games.Size = new System.Drawing.Size(212, 229);
+            this.lv_games.Size = new System.Drawing.Size(182, 229);
             this.lv_games.SmallImageList = this.il_games;
             this.lv_games.TabIndex = 22;
             this.lv_games.UseCompatibleStateImageBehavior = false;
+            // 
+            // il_games
+            // 
+            this.il_games.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+            this.il_games.ImageSize = new System.Drawing.Size(32, 32);
+            this.il_games.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // p_standalone
             // 
@@ -307,6 +312,7 @@ namespace HeliosPlus.UIForms
             this.p_standalone.Controls.Add(this.lbl_app_executable);
             this.p_standalone.Controls.Add(this.label2);
             this.p_standalone.Controls.Add(this.nud_timeout_executable);
+            this.p_standalone.Enabled = false;
             this.p_standalone.Location = new System.Drawing.Point(26, 42);
             this.p_standalone.Name = "p_standalone";
             this.p_standalone.Size = new System.Drawing.Size(730, 118);
@@ -445,10 +451,12 @@ namespace HeliosPlus.UIForms
             // rb_launcher
             // 
             this.rb_launcher.AutoSize = true;
+            this.rb_launcher.Checked = true;
             this.rb_launcher.Location = new System.Drawing.Point(9, 178);
             this.rb_launcher.Name = "rb_launcher";
             this.rb_launcher.Size = new System.Drawing.Size(259, 17);
             this.rb_launcher.TabIndex = 2;
+            this.rb_launcher.TabStop = true;
             this.rb_launcher.Text = "Launch Game already installed by Steam or Uplay";
             this.rb_launcher.UseVisualStyleBackColor = true;
             this.rb_launcher.CheckedChanged += new System.EventHandler(this.rb_launcher_CheckedChanged);
@@ -456,12 +464,10 @@ namespace HeliosPlus.UIForms
             // rb_standalone
             // 
             this.rb_standalone.AutoSize = true;
-            this.rb_standalone.Checked = true;
             this.rb_standalone.Location = new System.Drawing.Point(9, 19);
             this.rb_standalone.Name = "rb_standalone";
             this.rb_standalone.Size = new System.Drawing.Size(177, 17);
             this.rb_standalone.TabIndex = 0;
-            this.rb_standalone.TabStop = true;
             this.rb_standalone.Text = "Standalone Application or Game";
             this.rb_standalone.UseVisualStyleBackColor = true;
             this.rb_standalone.CheckedChanged += new System.EventHandler(this.rb_standalone_CheckedChanged);
@@ -537,12 +543,6 @@ namespace HeliosPlus.UIForms
             this.lbl_profile.TabIndex = 10;
             this.lbl_profile.Text = "[None]";
             this.lbl_profile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // il_games
-            // 
-            this.il_games.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-            this.il_games.ImageSize = new System.Drawing.Size(32, 32);
-            this.il_games.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // ShortcutForm
             // 
