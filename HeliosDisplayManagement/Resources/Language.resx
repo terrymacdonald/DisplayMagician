@@ -219,8 +219,8 @@
   <data name="Switching_display_profile_to_profile" xml:space="preserve">
     <value>Switching display profile to '{0}'.</value>
   </data>
-  <data name="Shortcut_place_successfully" xml:space="preserve">
-    <value>Shortcut place successfully.</value>
+  <data name="Shortcut_placed_successfully" xml:space="preserve">
+    <value>Shortcut placed successfully.</value>
   </data>
   <data name="Shortcut" xml:space="preserve">
     <value>Shortcut</value>

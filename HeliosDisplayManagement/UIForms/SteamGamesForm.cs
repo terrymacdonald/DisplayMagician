@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using HeliosPlus.Steam;
+using HeliosPlus.GameLibraries;
 
 namespace HeliosPlus.UIForms
 {
@@ -40,31 +40,9 @@ namespace HeliosPlus.UIForms
 
         private async void SteamGamesForm_Load(object sender, EventArgs e)
         {
-            foreach (
-                var game in
-                SteamGame.GetAllOwnedGames().OrderByDescending(game => game.IsInstalled).ThenBy(game => game.Name))
+            foreach (var game in SteamGame.GetAllInstalledGames().OrderByDescending(game => game.GameName))
             {
-                var iconAddress = await game.GetIcon();
-
-                if (!string.IsNullOrWhiteSpace(iconAddress))
-                {
-                    try
-                    {
-                        using (var fileReader = File.OpenRead(iconAddress))
-                        {
-                            var icon = new Icon(fileReader, il_games.ImageSize);
-                            il_games.Images.Add(icon);
-                        }
-                    }
-                    catch
-                    {
-                        il_games.Images.Add(Properties.Resources.SteamIcon);
-                    }
-                }
-                else
-                {
-                    il_games.Images.Add(Properties.Resources.SteamIcon);
-                }
+                il_games.Images.Add(game.GameIcon);
 
                 if (!Visible)
                 {
@@ -73,7 +51,7 @@ namespace HeliosPlus.UIForms
 
                 lv_games.Items.Add(new ListViewItem
                 {
-                    Text = game.Name,
+                    Text = game.GameName,
                     Tag = game,
                     ImageIndex = il_games.Images.Count - 1
                 });

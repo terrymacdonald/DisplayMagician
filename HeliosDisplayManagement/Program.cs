@@ -13,14 +13,12 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using HeliosPlus.InterProcess;
 using HeliosPlus.Resources;
-using HeliosPlus.Steam;
+using HeliosPlus.GameLibraries;
 using HeliosPlus.Shared;
-using HeliosPlus.Uplay;
 using HeliosPlus.UIForms;
 using System.Net.NetworkInformation;
 
 namespace HeliosPlus {
-
     public enum SupportedGameLibrary
     {
         Unknown,
@@ -28,10 +26,10 @@ namespace HeliosPlus {
         Uplay
     }
 
-
     internal static class Program
     {
 
+        internal static string ShortcutIconCachePath;
 
         internal static Profile GetProfile(string profileName)
         {
@@ -157,6 +155,21 @@ namespace HeliosPlus {
         [STAThread]
         private static int Main(string[] args)
         {
+
+            // Figure out where the shortcut's will go
+            ShortcutIconCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                Assembly.GetExecutingAssembly().GetName().Name, @"ShortcutIconCache");
+            // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
+            if (!Directory.Exists(ShortcutIconCachePath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(ShortcutIconCachePath);
+                }
+                catch
+                {
+                }
+            }
 
             var app = new CommandLineApplication();
 
@@ -549,6 +562,13 @@ namespace HeliosPlus {
         private static void SwitchToSteamGame(Profile profile, string steamGameIdToRun, uint timeout, string steamGameArguments)
         {
 
+            // Convert the steamGameIdToRun string to a uint for Steam Games
+            uint steamGameIdUint = 0;
+            if (!uint.TryParse(steamGameIdToRun, out steamGameIdUint))
+            {
+                throw new Exception("ERROR - Couldn't convert the string steamGameIdToRun parameter to steamGameIdUint in SwitchToSteamGame!");
+            }
+
             var rollbackProfile = Profile.GetCurrent(string.Empty);
 
             if (!profile.IsPossible)
@@ -569,28 +589,22 @@ namespace HeliosPlus {
             }
 
 
+            List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
 
-
-            var steamGame = new SteamGame(Convert.ToUInt32(steamGameIdToRun));
+            SteamGame steamGameToRun = null;
+            foreach (SteamGame steamGameToCheck in allSteamGames)
+            {
+                if (steamGameToCheck.GameId == steamGameIdUint)
+                {
+                    steamGameToRun = steamGameToCheck;
+                    break;
+                }
+                    
+            }
 
             if (!SteamGame.SteamInstalled)
             {
                 throw new Exception(Language.Steam_is_not_installed);
-            }
-
-            if (!File.Exists(SteamGame.SteamAddress))
-            {
-                throw new Exception(Language.Steam_executable_file_not_found);
-            }
-
-            if (!steamGame.IsInstalled)
-            {
-                throw new Exception(Language.Steam_game_is_not_installed);
-            }
-
-            if (!steamGame.IsOwned)
-            {
-                throw new Exception(Language.Steam_game_is_not_owned);
             }
 
             if (!GoProfile(profile))
@@ -598,7 +612,7 @@ namespace HeliosPlus {
                 throw new Exception(Language.Can_not_change_active_profile);
             }
 
-            var address = $"steam://rungameid/{steamGame.AppId}";
+            var address = $"steam://rungameid/{steamGameToRun.GameId}";
 
             if (!string.IsNullOrWhiteSpace(steamGameArguments))
             {
@@ -611,14 +625,14 @@ namespace HeliosPlus {
 
             while (ticks < timeout * 1000)
             {
-                if (steamGame.IsRunning)
+                if (steamGameToRun.IsRunning)
                 {
                     break;
                 }
 
                 Thread.Sleep(300);
 
-                if (!steamGame.IsUpdating)
+                if (!steamGameToRun.IsUpdating)
                 {
                     ticks += 300;
                 }
@@ -635,7 +649,7 @@ namespace HeliosPlus {
                     Icon = Properties.Resources.Icon,
                     Text = string.Format(
                         Language.Waiting_for_the_0_to_terminate,
-                        steamGame.Name),
+                        steamGameToRun.GameName),
                     Visible = true
                 };
                 Application.DoEvents();
@@ -646,11 +660,11 @@ namespace HeliosPlus {
             }
 
             // Wait for the game to exit
-            if (steamGame.IsRunning)
+            if (steamGameToRun.IsRunning)
             {
                 while (true)
                 {
-                    if (!steamGame.IsRunning)
+                    if (!steamGameToRun.IsRunning)
                     {
                         break;
                     }
@@ -703,14 +717,14 @@ namespace HeliosPlus {
 
 
 
-            var steamGame = new SteamGame(Convert.ToUInt32(uplayGameIdToRun));
+            /*var steamGame = new SteamGame(Convert.ToUInt32(uplayGameIdToRun));
 
             if (!SteamGame.SteamInstalled)
             {
                 throw new Exception(Language.Steam_is_not_installed);
             }
 
-            if (!File.Exists(SteamGame.SteamAddress))
+            if (!File.Exists(SteamGame.SteamExe))
             {
                 throw new Exception(Language.Steam_executable_file_not_found);
             }
@@ -718,11 +732,6 @@ namespace HeliosPlus {
             if (!steamGame.IsInstalled)
             {
                 throw new Exception(Language.Steam_game_is_not_installed);
-            }
-
-            if (!steamGame.IsOwned)
-            {
-                throw new Exception(Language.Steam_game_is_not_owned);
             }
 
             if (!GoProfile(profile))
@@ -806,7 +815,7 @@ namespace HeliosPlus {
                 {
                     throw new Exception(Language.Can_not_change_active_profile);
                 }
-            }
+            }*/
 
         }
 

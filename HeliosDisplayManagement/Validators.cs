@@ -8,7 +8,7 @@ using McMaster.Extensions.CommandLineUtils;
 using McMaster.Extensions.CommandLineUtils.Validation;
 using System.ComponentModel.DataAnnotations;
 using HeliosPlus.Shared;
-using HeliosPlus.Steam;
+using HeliosPlus.GameLibraries;
 
 namespace HeliosPlus
 {

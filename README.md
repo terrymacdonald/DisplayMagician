@@ -1,29 +1,22 @@
-# Helios Display Management
-[![](https://img.shields.io/github/license/falahati/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/blob/master/LICENSE)
-[![](https://img.shields.io/github/commit-activity/y/falahati/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/commits/master)
-[![](https://img.shields.io/github/issues/falahati/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/issues)
+# HeliosPlus
+[![](https://img.shields.io/github/license/temacdonald/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/blob/master/LICENSE)
+[![](https://img.shields.io/github/commit-activity/y/temacdonald/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/commits/master)
+[![](https://img.shields.io/github/issues/temacdonald/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/issues)
 
-An open source tool for display profile management. Readily switch between display profiles & settings.
+An open source tool for automatically changing your display settings from a Windows Shortcut. Allows you to temporarily change your display settings while you play a game.
 
-**This program is still in development and currently in the pre-release stage; expect missing features, incomplete features and bugs**
+**This program is heavily based on the amazing HeliosDisplayManagement created by Soroush Falahati!**
 
 <div style="text-align:center"><img src="READMEAssets/Preview.png"/></div>
 
 ## Download
-[![](https://img.shields.io/github/downloads/falahati/HeliosDisplayManagement/total.svg?style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/releases)
-[![](https://img.shields.io/github/tag-date/falahati/HeliosDisplayManagement.svg?label=version&style=flat-square)](https://github.com/falahati/HeliosDisplayManagement/releases)
+[![](https://img.shields.io/github/downloads/temacdonald/HeliosDisplayManagement/total.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/releases)
+[![](https://img.shields.io/github/tag-date/temacdonald/HeliosDisplayManagement.svg?label=version&style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/releases)
 
-The latest version of this application is available for download via the [release](https://github.com/falahati/HeliosDisplayManagement/releases) page.
+The latest version of this application is available for download via the [release](https://github.com/temacdonald/HeliosDisplayManagement/releases) page.
 
 ## Donation
-Donations assist development and are greatly appreciated; also always remember that [every coffee counts!](https://media.makeameme.org/created/one-simply-does-i9k8kx.jpg) :)
-
-[![](https://img.shields.io/badge/crypto-CoinPayments-8a00a3.svg?style=flat-square)](https://www.coinpayments.net/index.php?cmd=_donate&reset=1&merchant=820707aded07845511b841f9c4c335cd&item_name=Donate&currency=USD&amountf=20.00000000&allow_amount=1&want_shipping=0&allow_extra=1)
-[![](https://img.shields.io/badge/shetab-ZarinPal-8a00a3.svg?style=flat-square)](https://zarinp.al/@falahati)
-
-**--OR--**
-
-You can always donate your time by contributing to the project or by introducing it to others.
+No need to donate! I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. Thanks to Soroush for making HeliosDisplayMangement and licensing it under GPL2 so I could make the improvements I was longing for!
 
 ## What it does
 
@@ -31,7 +24,7 @@ Provides an overview of saved profiles for easy editing and switching, as well a
 
 Please read through the README for features (current and planned) and issues you may encounter while using the program. 
 
-Feel free to report missing features or bugs using the project [issue tracker](https://github.com/falahati/HeliosDisplayManagement/issues).
+Feel free to report missing features or bugs using the project [issue tracker](https://github.com/temacdonald/HeliosDisplayManagement/issues).
 
 ## Current features
 
@@ -119,7 +112,7 @@ Feel free to report missing features or bugs using the project [issue tracker](h
 ### Switch via Command Line
 **Command:**
 
-`HeliosDisplayManagement.exe {arguments}`
+`HeliosPlus.exe {arguments}`
 
 **Arguments:**
 
@@ -144,14 +137,16 @@ Feel free to report missing features or bugs using the project [issue tracker](h
 
 ## Related Projects
 
-- [**WindowsDisplayAPI**](https://github.com/falahati/WindowsDisplayAPI/): WindowsDisplayAPI is a .Net wrapper for Windows Display and Windows CCD APIs
+- [**WindowsDisplayAPI**](https://github.com/temacdonald/WindowsDisplayAPI/): WindowsDisplayAPI is a .Net wrapper for Windows Display and Windows CCD APIs
 
-- [**EDIDParser**](https://github.com/falahati/EDIDParser/): EDIDParser is a library allowing all .Net developers to parse and to extract information from raw EDID binary data. (Extended Display Identification Data)
+- [**EDIDParser**](https://github.com/temacdonald/EDIDParser/): EDIDParser is a library allowing all .Net developers to parse and to extract information from raw EDID binary data. (Extended Display Identification Data)
 
-- [**NvAPIWrapper**](https://github.com/falahati/NvAPIWrapper/): NvAPIWrapper is a .Net wrapper for NVIDIA public API, capable of managing all aspects of a display setup using NVIDIA GPUs
+- [**NvAPIWrapper**](https://github.com/temacdonald/NvAPIWrapper/): NvAPIWrapper is a .Net wrapper for NVIDIA public API, capable of managing all aspects of a display setup using NVIDIA GPUs
 
 ## License
-Copyright (C) 2019 Soroush Falahati
+
+Copyright © Terry MacDonald 2020-2021
+Original HelioDisplayManagement copyright © Soroush Falahati 2017-2020
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -171,4 +166,5 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ## Credits
 Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the name of some of these people:
 
+* Original HelioDisplayManagement project created by the amazing Soroush Falahati 
 * Readme file created by @timegrinder

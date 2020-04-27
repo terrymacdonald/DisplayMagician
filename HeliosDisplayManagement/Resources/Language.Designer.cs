@@ -611,11 +611,11 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Shortcut place successfully..
+        ///   Looks up a localized string similar to Shortcut placed successfully..
         /// </summary>
-        internal static string Shortcut_place_successfully {
+        internal static string Shortcut_placed_successfully {
             get {
-                return ResourceManager.GetString("Shortcut_place_successfully", resourceCulture);
+                return ResourceManager.GetString("Shortcut_placed_successfully", resourceCulture);
             }
         }
         

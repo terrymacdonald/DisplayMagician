@@ -9,13 +9,14 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using HeliosPlus.Resources;
 using HeliosPlus.Shared;
-using HeliosPlus.Steam;
+using HeliosPlus.GameLibraries;
 using NvAPIWrapper.Native.GPU;
 
 namespace HeliosPlus.UIForms
 {
     public partial class ShortcutForm : Form
     {
+            
         public ShortcutForm()
         {
             InitializeComponent();
@@ -24,13 +25,6 @@ namespace HeliosPlus.UIForms
         public ShortcutForm(Profile profile) : this()
         {
             Profile = profile;
-        }
-
-
-        public static string IconCache
-        {
-            get => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                Assembly.GetExecutingAssembly().GetName().Name, @"IconCache");
         }
 
         public string ProcessNameToMonitor
@@ -223,12 +217,30 @@ namespace HeliosPlus.UIForms
 
             try
             {
+                // Try to set up some sensible suggestions for the Shortcut name
+                if (rb_switch_perm.Checked)
+                {
+                    dialog_save.FileName = Profile.Name;
+                } 
+                else
+                {
+                    if (rb_standalone.Checked)
+                    {
+                        dialog_save.FileName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
+                    }
+                    else
+                    {
+                        dialog_save.FileName = GameName;
+                    }
+                }
+
+                // Show the Save Shortcut window
                 if (dialog_save.ShowDialog(this) == DialogResult.OK)
                 {
                     if (CreateShortcut(dialog_save.FileName))
                     {
                         MessageBox.Show(
-                            Language.Shortcut_place_successfully,
+                            Language.Shortcut_placed_successfully,
                             Language.Shortcut,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
@@ -256,29 +268,18 @@ namespace HeliosPlus.UIForms
         // ReSharper disable once CyclomaticComplexity
         private bool CreateShortcut(string fileName)
         {
-            var programName = Path.GetFileNameWithoutExtension(txt_executable.Text);
-            var description = string.Empty;
-            var icon = string.Empty;
+            string programName = Path.GetFileNameWithoutExtension(txt_executable.Text);
+            string shortcutDescription = string.Empty;
+            Icon shortcutIcon = null;
+            string shortcutIconFileName = string.Empty;
 
             var args = new List<string>
             {
                 // Add the SwitchProfile command as the first argument to start to switch to another profile
                 $"{HeliosStartupAction.SwitchProfile}",
                 // Add the Profile Name as the second argument (use that rather than ID - though ID still will work!)
-                $"--profile \"{dv_profile.Profile.Name}\""
+                $"--profile \"{Profile.Name}\""
             };
-
-            if (!Directory.Exists(IconCache))
-            {
-                try
-                {
-                    Directory.CreateDirectory(IconCache);
-                }
-                catch
-                {
-                    // ignored
-                }
-            }
 
             // Only add the rest of the options if the temporary switch radio button is set
             if (rb_switch_temp.Checked)
@@ -287,52 +288,55 @@ namespace HeliosPlus.UIForms
                 if (rb_standalone.Checked)
                 {
                     // Doublecheck the Executable text field is filled in
-                    if (string.IsNullOrWhiteSpace(txt_executable.Text))
+                    if (string.IsNullOrWhiteSpace(ExecutableNameAndPath))
                     {
                         throw new Exception(Language.Executable_address_can_not_be_empty);
                     }
 
                     // Doublecheck the Executable text field is a path to a real file
-                    if (!File.Exists(txt_executable.Text))
+                    if (!File.Exists(ExecutableNameAndPath))
                     {
                         throw new Exception(Language.Executable_file_not_found);
                     }
 
                     // Add the executable command and the executable name to the shortcut arguments
-                    args.Add($"execute \"{txt_executable.Text.Trim()}\"");
+                    args.Add($"execute \"{ExecutableNameAndPath}\"");
 
                     // Check that the wait for executable radiobutton is on
                     if (rb_wait_executable.Checked)
                     {
                         // Doublecheck the process name has text in it
-                        if (!string.IsNullOrWhiteSpace(txt_process_name.Text))
+                        if (!string.IsNullOrWhiteSpace(ProcessNameToMonitor))
                         {
                             // Add the waitfor argument and the process name to the shortcut arguments
-                            args.Add($"--waitfor \"{txt_process_name.Text.Trim()}\"");
+                            args.Add($"--waitfor \"{ProcessNameToMonitor}\"");
                         }
                     }
 
                     // Add the timeout argument and the timeout duration in seconds to the shortcut arguments
-                    args.Add($"--timeout {(int)nud_timeout_executable.Value}");
+                    args.Add($"--timeout {ExecutableTimeout}");
 
-                    if (cb_args_executable.Checked && !string.IsNullOrWhiteSpace(txt_args_executable.Text))
+                    if (cb_args_executable.Checked)
                     {
-                        args.Add($"--arguments \"{txt_args_executable.Text.Trim()}\"");
+                        args.Add($"--arguments \"{ExecutableArguments}\"");
                     }
 
                     // Prepare text for the shortcut description field
-                    description = string.Format(Language.Executing_application_with_profile, programName, Profile.Name);
+                    shortcutDescription = string.Format(Language.Executing_application_with_profile, programName, Profile.Name);
+
+                    // Work out the name of the shortcut we'll save.
+                    shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
 
                     // Grab an icon for the selected executable
                     try
                     {
-                        icon = Path.Combine(IconCache, Guid.NewGuid() + ".ico");
-                        new ProfileIcon(Profile).ToIconOverly(txt_executable.Text)
-                            .Save(icon, MultiIconFormat.ICO);
+                        // We'll first try to extract the Icon from the executable the user provided
+                        shortcutIcon = Icon.ExtractAssociatedIcon(ExecutableNameAndPath);
                     }
                     catch (Exception)
                     {
-                        icon = $"{txt_executable.Text.Trim()},0";
+                        // but if that doesn't work, then we use our own one.
+                        shortcutIcon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
                     }
                 }
                 // Only add the rest of the options if the temporary switch radio button is set
@@ -341,47 +345,75 @@ namespace HeliosPlus.UIForms
                 {
                     // TODO need to make this work so at least one game library is installed
                     // i.e. if (!SteamGame.SteamInstalled && !UplayGame.UplayInstalled )
-                    if (!SteamGame.SteamInstalled)
+                    if (GameLibrary == SupportedGameLibrary.Steam)
                     {
-                        throw new Exception(Language.Steam_is_not_installed);
+                        if (!SteamGame.SteamInstalled)
+                        {
+                            throw new Exception(Language.Steam_is_not_installed);
+                        }
+
+                        List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
+
+                        SteamGame steamGameToRun = null;
+                        foreach (SteamGame steamGameToCheck in allSteamGames)
+                        {
+                            if (steamGameToCheck.GameId == GameAppId)
+                            {
+                                steamGameToRun = steamGameToCheck;
+                                break;
+                            }
+
+                        }
+
+                        shortcutIcon = steamGameToRun.GameIcon;
+
+                        // Work out the name of the shortcut we'll save.
+                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, @"Uplay", String.Concat(GameAppId.ToString(), @".ico"));
+
+                        args.Add($"--steam {GameAppId}");
+
+                    }
+                    else if (GameLibrary == SupportedGameLibrary.Uplay)
+                    {
+
+                        if (!UplayGame.UplayInstalled)
+                        {
+                            throw new Exception(Language.Steam_is_not_installed);
+                        }
+
+                        List<UplayGame> allUplayGames = UplayGame.GetAllInstalledGames();
+
+                        UplayGame uplayGameToRun = null;
+                        foreach (UplayGame uplayGameToCheck in allUplayGames)
+                        {
+                            if (uplayGameToCheck.GameId == GameAppId)
+                            {
+                                uplayGameToRun = uplayGameToCheck;
+                                break;
+                            }
+
+                        }
+
+                        shortcutIcon = uplayGameToRun.GameIcon;
+
+                        // Work out the name of the shortcut we'll save.
+                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, @"Uplay", String.Concat(GameAppId.ToString(), @".ico"));
+
+                        args.Add($"--uplay {GameAppId}");
+
                     }
 
-                    // TODO - Add in Uplay game as well depending on which one was requested
-                    // Add the Steam Game ID to the shortcut arguments
-                    var steamGame = new SteamGame((uint) nud_game_appid.Value);
-                    args.Add($"--steam {(int) nud_game_appid.Value}");
-
                     // Add the game timeout argument and the timeout duration in seconds to the shortcut arguments
-                    args.Add($"--timeout {(int) nud_timeout_game.Value}");
+                    args.Add($"--timeout {GameTimeout}");
 
-                    if (cb_args_game.Checked && !string.IsNullOrWhiteSpace(txt_args_game.Text))
+                    if (cb_args_game.Checked)
                     {
-                        args.Add($"--arguments \"{txt_args_game.Text.Trim()}\"");
+                        args.Add($"--arguments \"{GameArguments}\"");
                     }
 
                     // Prepare text for the shortcut description field
-                    description = string.Format(Language.Executing_application_with_profile, steamGame.Name,
-                        Profile.Name);
-                    var steamIcon = steamGame.GetIcon().Result;
+                    shortcutDescription = string.Format(Language.Executing_application_with_profile, GameName, Profile.Name);
 
-                    // Grab an icon for the selected game
-                    if (!string.IsNullOrWhiteSpace(steamIcon))
-                    {
-                        try
-                        {
-                            icon = Path.Combine(IconCache, Guid.NewGuid() + ".ico");
-                            new ProfileIcon(Profile).ToIconOverly(steamIcon)
-                                .Save(icon, MultiIconFormat.ICO);
-                        }
-                        catch (Exception)
-                        {
-                            icon = steamIcon;
-                        }
-                    }
-                    else
-                    {
-                        icon = $"{SteamGame.SteamAddress},0";
-                    }
                 }
 
             }
@@ -389,23 +421,30 @@ namespace HeliosPlus.UIForms
             else
             {
                 // Prepare text for the shortcut description field
-                description = string.Format(Language.Switching_display_profile_to_profile, Profile.Name);
+                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, Profile.Name);
+
+                // Work out the name of the shortcut we'll save.
+                shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(Profile.Name, @".ico"));
 
                 // Grab an icon for the selected profile
                 try
                 {
-                    icon = Path.Combine(IconCache, Guid.NewGuid() + ".ico");
-                    new ProfileIcon(Profile).ToIcon().Save(icon, MultiIconFormat.ICO);
+                    MultiIcon profileMultiIcon = new ProfileIcon(Profile).ToIcon();
+                    shortcutIcon = profileMultiIcon[0].Icon;
                 }
                 catch
                 {
-                    icon = string.Empty;
+                    // but if that doesn't work, then we use our own one.
+                    shortcutIcon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
                 }
             }
 
-            // TODO - Make this semi-automatic if its a game to be launched. Maybe still show
-            // a save prompt, but suggest the name of the game extracted from the game launcher
-            // or the executable itself.
+            // Save the Icon to the Shortcut Icon cache as the Shortcut will need to refer to it.
+            if (!File.Exists(shortcutIconFileName))
+            {
+                using (StreamWriter fs = File.AppendText(shortcutIconFileName))
+                    shortcutIcon.Save(fs.BaseStream);
+            }
 
             // Now we are ready to create a shortcut based on the filename the user gave us
             fileName = Path.ChangeExtension(fileName, @"lnk");
@@ -433,14 +472,11 @@ namespace HeliosPlus.UIForms
                         {
                             shortcut.TargetPath = Application.ExecutablePath;
                             shortcut.Arguments = string.Join(" ", args);
-                            shortcut.Description = description;
+                            shortcut.Description = shortcutDescription;
                             shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
                                                         string.Empty;
 
-                            if (!string.IsNullOrWhiteSpace(icon))
-                            {
-                                shortcut.IconLocation = icon;
-                            }
+                            shortcut.IconLocation = shortcutIconFileName;
 
                             shortcut.Save();
                         }
@@ -524,20 +560,6 @@ namespace HeliosPlus.UIForms
                 g_temporary.Enabled = true;
             }
 
-            /*g_temporary.Enabled = rb_switch_temp.Checked;
-
-            p_standalone.Enabled = rb_standalone.Checked;
-            txt_process_name.Enabled = cb_process.Checked;
-            nud_timeout.Enabled = cb_process.Checked;
-
-            p_game.Enabled = rb_launcher.Checked;
-
-            txt_args_executable.Enabled = cb_args.Checked;
-
-            if (rb_launcher.Checked)
-            {
-                nud_steamappid_ValueChanged(rb_launcher, e);
-            }*/
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -606,30 +628,12 @@ namespace HeliosPlus.UIForms
             // Set the Profile name
             lbl_profile.Text = $"Selected Profile: {dv_profile.Profile?.Name ?? Language.None}";
 
-            // Start finding the games and loading the tree_games
-            foreach (var game in SteamGame.GetAllOwnedGames().OrderByDescending(game => game.IsInstalled).ThenBy(game => game.Name))
+            // Start finding the games and loading the Games ListView
+            List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
+            foreach (var game in allSteamGames.OrderBy(game => game.GameName))
                 {
-                var iconAddress = await game.GetIcon();
-
-                if (!string.IsNullOrWhiteSpace(iconAddress))
-                {
-                    try
-                    {
-                        using (var fileReader = File.OpenRead(iconAddress))
-                        {
-                            var icon = new Icon(fileReader, il_games.ImageSize);
-                            il_games.Images.Add(icon);
-                        }
-                    }
-                    catch
-                    {
-                        il_games.Images.Add(Properties.Resources.SteamIcon);
-                    }
-                }
-                else
-                {
-                    il_games.Images.Add(Properties.Resources.SteamIcon);
-                }
+                //var iconAddress = await game.GetIcon();
+                il_games.Images.Add(game.GameIcon);
 
                 if (!Visible)
                 {
@@ -638,7 +642,7 @@ namespace HeliosPlus.UIForms
 
                 lv_games.Items.Add(new ListViewItem
                 {
-                    Text = game.Name,
+                    Text = game.GameName,
                     Tag = game,
                     ImageIndex = il_games.Images.Count - 1
                 });

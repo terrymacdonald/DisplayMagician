@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,7 +15,8 @@ namespace HeliosPlus.UIForms
         private const string GroupActive = "active";
         private const string GroupCurrent = "current";
         private const string GroupSaved = "saved";
-        private static Profile SelectedProfile;
+        private Profile SelectedProfile;
+
 
         public MainForm()
         {
