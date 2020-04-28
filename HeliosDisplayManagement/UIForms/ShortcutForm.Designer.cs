@@ -38,15 +38,12 @@ namespace HeliosPlus.UIForms
             this.g_temporary = new System.Windows.Forms.GroupBox();
             this.p_game = new System.Windows.Forms.Panel();
             this.txt_game_name = new System.Windows.Forms.TextBox();
-            this.nud_game_appid = new System.Windows.Forms.NumericUpDown();
-            this.cmb_game_launcher = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.btn_choose_game = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.txt_args_game = new System.Windows.Forms.TextBox();
             this.cb_args_game = new System.Windows.Forms.CheckBox();
-            this.nud_steamapps = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
             this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
@@ -76,9 +73,10 @@ namespace HeliosPlus.UIForms
             this.rb_switch_temp = new System.Windows.Forms.RadioButton();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.lbl_profile = new System.Windows.Forms.Label();
+            this.txt_game_launcher = new System.Windows.Forms.TextBox();
+            this.txt_game_id = new System.Windows.Forms.TextBox();
             this.g_temporary.SuspendLayout();
             this.p_game.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_game_appid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
             this.p_standalone.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_executable)).BeginInit();
@@ -119,16 +117,15 @@ namespace HeliosPlus.UIForms
             // 
             // p_game
             // 
+            this.p_game.Controls.Add(this.txt_game_id);
+            this.p_game.Controls.Add(this.txt_game_launcher);
             this.p_game.Controls.Add(this.txt_game_name);
-            this.p_game.Controls.Add(this.nud_game_appid);
-            this.p_game.Controls.Add(this.cmb_game_launcher);
             this.p_game.Controls.Add(this.label6);
             this.p_game.Controls.Add(this.label4);
             this.p_game.Controls.Add(this.btn_choose_game);
             this.p_game.Controls.Add(this.label1);
             this.p_game.Controls.Add(this.txt_args_game);
             this.p_game.Controls.Add(this.cb_args_game);
-            this.p_game.Controls.Add(this.nud_steamapps);
             this.p_game.Controls.Add(this.label5);
             this.p_game.Controls.Add(this.nud_timeout_game);
             this.p_game.Controls.Add(this.label3);
@@ -145,29 +142,6 @@ namespace HeliosPlus.UIForms
             this.txt_game_name.ReadOnly = true;
             this.txt_game_name.Size = new System.Drawing.Size(302, 20);
             this.txt_game_name.TabIndex = 21;
-            // 
-            // nud_game_appid
-            // 
-            this.nud_game_appid.Enabled = false;
-            this.nud_game_appid.Location = new System.Drawing.Point(408, 105);
-            this.nud_game_appid.Maximum = new decimal(new int[] {
-            1410065407,
-            2,
-            0,
-            0});
-            this.nud_game_appid.Name = "nud_game_appid";
-            this.nud_game_appid.ReadOnly = true;
-            this.nud_game_appid.Size = new System.Drawing.Size(89, 20);
-            this.nud_game_appid.TabIndex = 1;
-            this.nud_game_appid.ValueChanged += new System.EventHandler(this.nud_game_appid_ValueChanged);
-            // 
-            // cmb_game_launcher
-            // 
-            this.cmb_game_launcher.FormattingEnabled = true;
-            this.cmb_game_launcher.Location = new System.Drawing.Point(408, 78);
-            this.cmb_game_launcher.Name = "cmb_game_launcher";
-            this.cmb_game_launcher.Size = new System.Drawing.Size(163, 21);
-            this.cmb_game_launcher.TabIndex = 20;
             // 
             // label6
             // 
@@ -196,6 +170,7 @@ namespace HeliosPlus.UIForms
             this.btn_choose_game.TabIndex = 16;
             this.btn_choose_game.Text = ">>";
             this.btn_choose_game.UseVisualStyleBackColor = true;
+            this.btn_choose_game.Click += new System.EventHandler(this.btn_choose_game_Click);
             // 
             // label1
             // 
@@ -227,15 +202,6 @@ namespace HeliosPlus.UIForms
             this.cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_args_game.UseVisualStyleBackColor = true;
             this.cb_args_game.CheckedChanged += new System.EventHandler(this.cb_args_game_CheckedChanged);
-            // 
-            // nud_steamapps
-            // 
-            this.nud_steamapps.Location = new System.Drawing.Point(505, 105);
-            this.nud_steamapps.Name = "nud_steamapps";
-            this.nud_steamapps.Size = new System.Drawing.Size(24, 20);
-            this.nud_steamapps.TabIndex = 2;
-            this.nud_steamapps.Text = "...";
-            this.nud_steamapps.UseVisualStyleBackColor = true;
             // 
             // label5
             // 
@@ -544,6 +510,22 @@ namespace HeliosPlus.UIForms
             this.lbl_profile.Text = "[None]";
             this.lbl_profile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // txt_game_launcher
+            // 
+            this.txt_game_launcher.Location = new System.Drawing.Point(408, 78);
+            this.txt_game_launcher.Name = "txt_game_launcher";
+            this.txt_game_launcher.ReadOnly = true;
+            this.txt_game_launcher.Size = new System.Drawing.Size(175, 20);
+            this.txt_game_launcher.TabIndex = 23;
+            // 
+            // txt_game_id
+            // 
+            this.txt_game_id.Location = new System.Drawing.Point(408, 104);
+            this.txt_game_id.Name = "txt_game_id";
+            this.txt_game_id.ReadOnly = true;
+            this.txt_game_id.Size = new System.Drawing.Size(75, 20);
+            this.txt_game_id.TabIndex = 24;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -572,7 +554,6 @@ namespace HeliosPlus.UIForms
             this.g_temporary.PerformLayout();
             this.p_game.ResumeLayout(false);
             this.p_game.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_game_appid)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
             this.p_standalone.ResumeLayout(false);
             this.p_standalone.PerformLayout();
@@ -599,10 +580,8 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.RadioButton rb_launcher;
         private System.Windows.Forms.Panel p_game;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.NumericUpDown nud_game_appid;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.NumericUpDown nud_timeout_game;
-        private System.Windows.Forms.Button nud_steamapps;
         private System.Windows.Forms.OpenFileDialog dialog_open;
         private System.Windows.Forms.SaveFileDialog dialog_save;
         private System.Windows.Forms.RadioButton rb_switch_perm;
@@ -617,7 +596,6 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button btn_choose_game;
-        private System.Windows.Forms.ComboBox cmb_game_launcher;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txt_game_name;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
@@ -627,5 +605,7 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.ImageList il_games;
         private System.Windows.Forms.ColumnHeader clm_images;
         private System.Windows.Forms.ColumnHeader clm_name;
+        private System.Windows.Forms.TextBox txt_game_id;
+        private System.Windows.Forms.TextBox txt_game_launcher;
     }
 }

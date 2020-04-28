@@ -16,7 +16,9 @@ namespace HeliosPlus.UIForms
 {
     public partial class ShortcutForm : Form
     {
-            
+
+        List<SteamGame> _allSteamGames;
+
         public ShortcutForm()
         {
             InitializeComponent();
@@ -122,12 +124,12 @@ namespace HeliosPlus.UIForms
 
         public uint GameAppId
         {
-            get => rb_switch_temp.Checked && rb_launcher.Checked ? (uint) nud_game_appid.Value : 0;
+            get => rb_switch_temp.Checked && rb_launcher.Checked ? (uint) Convert.ToInt32(txt_game_id.Text) : 0;
             set
             {
                 rb_switch_temp.Checked = true;
                 rb_launcher.Checked = true;
-                nud_game_appid.Value = value;
+                txt_game_id.Text = value.ToString();
             }
         }
 
@@ -144,7 +146,22 @@ namespace HeliosPlus.UIForms
 
         public SupportedGameLibrary GameLibrary
         {
-            get => rb_switch_temp.Checked && rb_launcher.Checked ? (SupportedGameLibrary) nud_game_appid.Value : SupportedGameLibrary.Unknown;
+            get
+            {
+                if (rb_switch_temp.Checked && rb_launcher.Checked)
+                {
+                    if (txt_game_launcher.Text.Contains("Steam"))
+                    {
+                        return SupportedGameLibrary.Steam;
+                    }
+                    else if (txt_game_launcher.Text.Contains("Uplay"))
+                    {
+                        return SupportedGameLibrary.Uplay;
+                    }
+
+                }
+                return SupportedGameLibrary.Unknown;
+            }
             set
             {
                 rb_switch_temp.Checked = true;
@@ -152,9 +169,11 @@ namespace HeliosPlus.UIForms
                 switch (value)
                 {
                     case SupportedGameLibrary.Steam:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibrary), SupportedGameLibrary.Steam);
                         break;
 
                     case SupportedGameLibrary.Uplay:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibrary), SupportedGameLibrary.Uplay);
                         break;
 
                 }
@@ -217,6 +236,8 @@ namespace HeliosPlus.UIForms
 
             try
             {
+                // Set the Shortcut save folder to the Desktop as that's where people will want it most likely
+                dialog_save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 // Try to set up some sensible suggestions for the Shortcut name
                 if (rb_switch_perm.Checked)
                 {
@@ -226,11 +247,11 @@ namespace HeliosPlus.UIForms
                 {
                     if (rb_standalone.Checked)
                     {
-                        dialog_save.FileName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
+                        dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(ExecutableNameAndPath),@" (", Profile.Name, @")");
                     }
                     else
                     {
-                        dialog_save.FileName = GameName;
+                        dialog_save.FileName = String.Concat(GameName, @" (", Profile.Name, @")");
                     }
                 }
 
@@ -276,9 +297,7 @@ namespace HeliosPlus.UIForms
             var args = new List<string>
             {
                 // Add the SwitchProfile command as the first argument to start to switch to another profile
-                $"{HeliosStartupAction.SwitchProfile}",
-                // Add the Profile Name as the second argument (use that rather than ID - though ID still will work!)
-                $"--profile \"{Profile.Name}\""
+                $"{HeliosStartupAction.SwitchProfile}"
             };
 
             // Only add the rest of the options if the temporary switch radio button is set
@@ -301,6 +320,9 @@ namespace HeliosPlus.UIForms
 
                     // Add the executable command and the executable name to the shortcut arguments
                     args.Add($"execute \"{ExecutableNameAndPath}\"");
+
+                    // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
+                    args.Add($"--profile \"{Profile.Name}\"");
 
                     // Check that the wait for executable radiobutton is on
                     if (rb_wait_executable.Checked)
@@ -325,7 +347,7 @@ namespace HeliosPlus.UIForms
                     shortcutDescription = string.Format(Language.Executing_application_with_profile, programName, Profile.Name);
 
                     // Work out the name of the shortcut we'll save.
-                    shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
+                    shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"executable-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
 
                     // Grab an icon for the selected executable
                     try
@@ -368,7 +390,7 @@ namespace HeliosPlus.UIForms
                         shortcutIcon = steamGameToRun.GameIcon;
 
                         // Work out the name of the shortcut we'll save.
-                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, @"Uplay", String.Concat(GameAppId.ToString(), @".ico"));
+                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"steam-", GameAppId.ToString(), @".ico"));
 
                         args.Add($"--steam {GameAppId}");
 
@@ -397,11 +419,14 @@ namespace HeliosPlus.UIForms
                         shortcutIcon = uplayGameToRun.GameIcon;
 
                         // Work out the name of the shortcut we'll save.
-                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, @"Uplay", String.Concat(GameAppId.ToString(), @".ico"));
+                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"uplay-", GameAppId.ToString(), @".ico"));
 
                         args.Add($"--uplay {GameAppId}");
 
                     }
+
+                    // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
+                    args.Add($"--profile \"{Profile.Name}\"");
 
                     // Add the game timeout argument and the timeout duration in seconds to the shortcut arguments
                     args.Add($"--timeout {GameTimeout}");
@@ -420,11 +445,17 @@ namespace HeliosPlus.UIForms
             // Only add the rest of the options if the permanent switch radio button is set
             else
             {
+                // Add the action switch to make the permanent switch to a different profile
+                args.Add($"permanent");
+                
+                // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
+                args.Add($"--profile \"{Profile.Name}\"");
+
                 // Prepare text for the shortcut description field
                 shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, Profile.Name);
 
                 // Work out the name of the shortcut we'll save.
-                shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(Profile.Name, @".ico"));
+                shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"permanent-", Profile.Name, @".ico"));
 
                 // Grab an icon for the selected profile
                 try
@@ -504,31 +535,6 @@ namespace HeliosPlus.UIForms
             // true if it was a success or false if it was not
             return fileName != null && File.Exists(fileName);
         }
-
-        private void nud_game_appid_ValueChanged(object sender, EventArgs e)
-        {
-            //lbl_steamname.Text = new SteamGame((uint) nud_game_appid.Value).ToString();
-        }
-
-        /*private void nud_steamapps_Click(object sender, EventArgs e)
-        {
-            var steamGamesForm = new SteamGamesForm();
-
-            if (steamGamesForm.ShowDialog(this) == DialogResult.OK && steamGamesForm.SteamGame != null)
-            {
-                nud_game_appid.Value = steamGamesForm.SteamGame.AppId;
-            }
-        }*/
-
-/*        private void rb_wait_process_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_wait_process.Checked)
-            {
-                // Enable the Process Name Text field
-                txt_process_name.Enabled = true;
-            }
-        }
-*/
 
         private void txt_executable_TextChanged(object sender, EventArgs e)
         {
@@ -614,22 +620,12 @@ namespace HeliosPlus.UIForms
         private async void ShortcutForm_Load(object sender, EventArgs e)
         {
 
-            // Make the game launcher selector read only.
-            cmb_game_launcher.DropDownStyle = ComboBoxStyle.DropDownList;
-            // Fill the list of supported game libraries
-            foreach (var gameLibrary in Enum.GetNames(typeof(SupportedGameLibrary))) {
-                if (gameLibrary != "Unknown")
-                {
-                    cmb_game_launcher.Items.Add(gameLibrary);
-                }
-            }
-
-
             // Set the Profile name
             lbl_profile.Text = $"Selected Profile: {dv_profile.Profile?.Name ?? Language.None}";
 
             // Start finding the games and loading the Games ListView
             List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
+            _allSteamGames = allSteamGames;
             foreach (var game in allSteamGames.OrderBy(game => game.GameName))
                 {
                 //var iconAddress = await game.GetIcon();
@@ -704,6 +700,24 @@ namespace HeliosPlus.UIForms
             {
                 txt_args_game.Enabled = false;
             }
+        }
+
+        private void btn_choose_game_Click(object sender, EventArgs e)
+        {
+            if (lv_games.SelectedItems.Count > 0)
+            {
+
+                txt_game_name.Text = lv_games.SelectedItems[0].Text;
+                foreach (SteamGame game in _allSteamGames)
+                {
+                    if (game.GameName == txt_game_name.Text)
+                    {
+                        txt_game_launcher.Text = game.GameLibrary.ToString();
+                        txt_game_id.Text = game.GameId.ToString();
+                    }
+                }
+            }
+            
         }
     }
 }
