@@ -44,7 +44,7 @@ namespace HeliosPlus.InterProcess
                     var service = new IPCService();
                     _serviceHost = new ServiceHost(
                         service,
-                        new Uri($"net.pipe://localhost/HeliosDisplayManagement_IPC{process.Id}"));
+                        new Uri($"net.pipe://localhost/HeliosPlus_IPC{process.Id}"));
 
                     _serviceHost.AddServiceEndpoint(typeof(IService), new NetNamedPipeBinding(), "Service");
                     _serviceHost.Open();

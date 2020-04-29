@@ -13,7 +13,7 @@ namespace HeliosPlus.InterProcess
                     ContractDescription.GetContract(typeof(IService)),
                     new NetNamedPipeBinding(),
                     new EndpointAddress(
-                        $"net.pipe://localhost/HeliosDisplayManagement_IPC{process.Id}/Service")))
+                        $"net.pipe://localhost/HeliosPlus_IPC{process.Id}/Service")))
         {
         }
 

@@ -5,7 +5,7 @@ using HeliosPlus.ShellExtension.Resources;
 
 namespace HeliosPlus.ShellExtension
 {
-    internal class HeliosDisplayManagement
+    internal class HeliosPlus
     {
         public static void Open(
             HeliosStartupAction action = HeliosStartupAction.None,

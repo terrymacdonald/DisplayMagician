@@ -17,7 +17,7 @@ namespace HeliosPlus.Shared
                 {
                     using (
                         var key =
-                            Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Helios Display Management", false))
+                            Registry.LocalMachine.OpenSubKey(@"SOFTWARE\HeliosPlus", false))
                     {
                         var executableAddress = key?.GetValue(@"ExecutableAddress", null) as string;
 

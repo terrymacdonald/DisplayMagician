@@ -68,6 +68,15 @@ namespace HeliosPlus.GameLibraries
             _steamGameExe = steamGameExe;
             _steamGameIcon = steamGameIcon;
 
+            // Find the SteamExe location, and the SteamPath for later
+            using (var key = Registry.CurrentUser.OpenSubKey(_registrySteamKey, RegistryKeyPermissionCheck.ReadSubTree))
+            {
+                _steamExe = (string)key?.GetValue(@"SteamExe", string.Empty) ?? string.Empty;
+                _steamExe = _steamExe.Replace('/', '\\');
+                _steamPath = (string)key?.GetValue(@"SteamPath", string.Empty) ?? string.Empty;
+                _steamPath = _steamPath.Replace('/', '\\');
+            }
+
         }
 
         public uint GameId { get => _steamGameId; }

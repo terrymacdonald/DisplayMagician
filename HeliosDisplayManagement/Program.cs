@@ -591,16 +591,17 @@ namespace HeliosPlus {
                 throw new Exception("ERROR - Couldn't convert the string steamGameIdToRun parameter to steamGameIdUint in SwitchToSteamGame!");
             }
 
+            // Save the profile we're on now
             var rollbackProfile = Profile.GetCurrent(string.Empty);
 
+            // Check that the profile we've been asked to change to will actually work
             if (!profile.IsPossible)
             {
                 throw new Exception(Language.Selected_profile_is_not_possible);
             }
 
-            if (
-                IPCClient.QueryAll()
-                    .Any(
+            // 
+            if ( IPCClient.QueryAll().Any(
                         client =>
                             client.Status == InstanceStatus.Busy ||
                             client.Status == InstanceStatus.OnHold))
@@ -610,9 +611,17 @@ namespace HeliosPlus {
                         .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
             }
 
-
+            // Create the SteamGame objects so we can use them shortly
+            // Get the game information relevant to the game we're switching to
             List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
 
+            // Check if Steam is installed and error if it isn't
+            if (!SteamGame.SteamInstalled)
+            {
+                throw new Exception(Language.Steam_is_not_installed);
+            }
+
+            // Otherwise try to find the game we've been asked to run
             SteamGame steamGameToRun = null;
             foreach (SteamGame steamGameToCheck in allSteamGames)
             {
@@ -624,22 +633,20 @@ namespace HeliosPlus {
                     
             }
 
-            if (!SteamGame.SteamInstalled)
-            {
-                throw new Exception(Language.Steam_is_not_installed);
-            }
-
+            // Attempt to change to a different profile if it's needed
             if (!GoProfile(profile))
             {
                 throw new Exception(Language.Can_not_change_active_profile);
             }
 
+            // Prepare to start the steam game using the URI interface 
+            // as used by Steam for it's own desktop shortcuts.
             var address = $"steam://rungameid/{steamGameToRun.GameId}";
-
             if (!string.IsNullOrWhiteSpace(steamGameArguments))
             {
                 address += "/" + steamGameArguments;
             }
+
 
             var steamProcess = System.Diagnostics.Process.Start(address);
             // Wait for steam game to update and then run

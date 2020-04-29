@@ -51,7 +51,7 @@ namespace HeliosPlus.Reporting
         private static void Main(string[] args)
         {
             _writer = new StreamWriter(new FileStream(
-                string.Format("HeliosDisplayManagement.Reporting.{0}.log", Process.GetCurrentProcess().Id),
+                string.Format("HeliosPlus.Reporting.{0}.log", Process.GetCurrentProcess().Id),
                 FileMode.CreateNew));
 
             try
@@ -207,7 +207,7 @@ namespace HeliosPlus.Reporting
 
             try
             {
-                Dump(Profile.GetAllProfiles(), "HeliosDisplayManagement.Shared.Profile.GetAllProfiles()", null, 99);
+                Dump(Profile.GetAllProfiles(), "HeliosPlus.Shared.Profile.GetAllProfiles()", null, 99);
             }
             catch (Exception e)
             {
