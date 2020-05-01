@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing.IconLib;
+using System.Drawing.IconLib.Exceptions;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,9 @@ using HeliosPlus.Resources;
 using HeliosPlus.Shared;
 using HeliosPlus.GameLibraries;
 using NvAPIWrapper.Native.GPU;
+using TsudaKageyu;
+using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace HeliosPlus.UIForms
 {
@@ -26,7 +30,7 @@ namespace HeliosPlus.UIForms
 
         public ShortcutForm(Profile profile) : this()
         {
-            Profile = profile;
+            SelectedProfile = profile;
         }
 
         public string ProcessNameToMonitor
@@ -49,7 +53,7 @@ namespace HeliosPlus.UIForms
             }
         }
 
-        public Profile Profile
+        public Profile SelectedProfile
         {
             get => dv_profile.Profile;
             set
@@ -69,7 +73,7 @@ namespace HeliosPlus.UIForms
                 if (profileIndex == -1)
                 {
                     MessageBox.Show(
-                        $"ShortcutForm: Couldn't find Profile Name or ID supplied to Profile propoerty.",
+                        $"ShortcutForm: Setting SelectProfile: Couldn't find either Profile Name '{SelectedProfile.Name}'or ID '{SelectedProfile.Id}' supplied to Profile property.",
                         Language.Executable,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
@@ -209,6 +213,57 @@ namespace HeliosPlus.UIForms
             }
         }
 
+        private static bool IsLowQuality(IconImage iconImage)
+        {
+            return iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format1bppIndexed ||
+                    iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format4bppIndexed ||
+                    iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed;
+        }
+
+        private static Bitmap ExtractVistaIcon(Icon icoIcon)
+        {
+            Bitmap bmpPngExtracted = null;
+            try
+            {
+                byte[] srcBuf = null;
+                using (System.IO.MemoryStream stream = new System.IO.MemoryStream())
+                { icoIcon.Save(stream); srcBuf = stream.ToArray(); }
+                const int SizeICONDIR = 6;
+                const int SizeICONDIRENTRY = 16;
+                int iCount = BitConverter.ToInt16(srcBuf, 4);
+                for (int iIndex = 0; iIndex < iCount; iIndex++)
+                {
+                    int iWidth = srcBuf[SizeICONDIR + SizeICONDIRENTRY * iIndex];
+                    int iHeight = srcBuf[SizeICONDIR + SizeICONDIRENTRY * iIndex + 1];
+                    int iBitCount = BitConverter.ToInt16(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 6);
+                    if (iWidth == 0 && iHeight == 0 && iBitCount == 32)
+                    {
+                        int iImageSize = BitConverter.ToInt32(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 8);
+                        int iImageOffset = BitConverter.ToInt32(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 12);
+                        System.IO.MemoryStream destStream = new System.IO.MemoryStream();
+                        System.IO.BinaryWriter writer = new System.IO.BinaryWriter(destStream);
+                        writer.Write(srcBuf, iImageOffset, iImageSize);
+                        destStream.Seek(0, System.IO.SeekOrigin.Begin);
+                        bmpPngExtracted = new Bitmap(destStream); // This is PNG! :)
+                        break;
+                    }
+                }
+            }
+            catch { return null; }
+            return bmpPngExtracted;
+        }
+
+        private static string GetValidFilename(string uncheckedFilename)
+        {
+            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            foreach (char c in invalid)
+            {
+                uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
+            }
+            return uncheckedFilename;
+        }
+
+
 
         private void btn_app_executable_Click(object sender, EventArgs e)
         {
@@ -241,17 +296,18 @@ namespace HeliosPlus.UIForms
                 // Try to set up some sensible suggestions for the Shortcut name
                 if (rb_switch_perm.Checked)
                 {
-                    dialog_save.FileName = Profile.Name;
+                    
+                    dialog_save.FileName = SelectedProfile.Name;
                 } 
                 else
                 {
                     if (rb_standalone.Checked)
                     {
-                        dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(ExecutableNameAndPath),@" (", Profile.Name, @")");
+                        dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(ExecutableNameAndPath),@" (", SelectedProfile.Name.ToLower(), @")");
                     }
                     else
                     {
-                        dialog_save.FileName = String.Concat(GameName, @" (", Profile.Name, @")");
+                        dialog_save.FileName = String.Concat(GameName, @" (", SelectedProfile.Name, @")");
                     }
                 }
 
@@ -291,7 +347,7 @@ namespace HeliosPlus.UIForms
         {
             string programName = Path.GetFileNameWithoutExtension(txt_executable.Text);
             string shortcutDescription = string.Empty;
-            Icon shortcutIcon = null;
+            MultiIcon shortcutIcon;
             string shortcutIconFileName = string.Empty;
 
             var args = new List<string>
@@ -322,7 +378,7 @@ namespace HeliosPlus.UIForms
                     args.Add($"execute \"{ExecutableNameAndPath}\"");
 
                     // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
-                    args.Add($"--profile \"{Profile.Name}\"");
+                    args.Add($"--profile \"{SelectedProfile.Name}\"");
 
                     // Check that the wait for executable radiobutton is on
                     if (rb_wait_executable.Checked)
@@ -344,21 +400,21 @@ namespace HeliosPlus.UIForms
                     }
 
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Executing_application_with_profile, programName, Profile.Name);
+                    shortcutDescription = string.Format(Language.Executing_application_with_profile, programName, SelectedProfile.Name);
 
                     // Work out the name of the shortcut we'll save.
-                    shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"executable-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
+                    shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"executable-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), "-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
 
                     // Grab an icon for the selected executable
                     try
                     {
                         // We'll first try to extract the Icon from the executable the user provided
-                        shortcutIcon = Icon.ExtractAssociatedIcon(ExecutableNameAndPath);
+                        //shortcutIcon.Load(ExecutableNameAndPath);
                     }
                     catch (Exception)
                     {
                         // but if that doesn't work, then we use our own one.
-                        shortcutIcon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
+                        //shortcutIcon.Load(Assembly.GetExecutingAssembly().Location);
                     }
                 }
                 // Only add the rest of the options if the temporary switch radio button is set
@@ -387,12 +443,14 @@ namespace HeliosPlus.UIForms
 
                         }
 
-                        shortcutIcon = steamGameToRun.GameIcon;
 
                         // Work out the name of the shortcut we'll save.
-                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"steam-", GameAppId.ToString(), @".ico"));
+                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"steam-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
 
-                        args.Add($"--steam {GameAppId}");
+                        shortcutIcon = new ProfileIcon(SelectedProfile).ToIconOverly(steamGameToRun.GameIconPath);
+                        shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
+
+                        args.Add($"steam {GameAppId}");
 
                     }
                     else if (GameLibrary == SupportedGameLibrary.Uplay)
@@ -416,17 +474,20 @@ namespace HeliosPlus.UIForms
 
                         }
 
-                        shortcutIcon = uplayGameToRun.GameIcon;
+                        //shortcutIcon = uplayGameToRun.GameIcon;
 
                         // Work out the name of the shortcut we'll save.
-                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"uplay-", GameAppId.ToString(), @".ico"));
+                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"uplay-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), "-" , GameAppId.ToString(), @".ico"));
 
-                        args.Add($"--uplay {GameAppId}");
+                        shortcutIcon = new ProfileIcon(SelectedProfile).ToIconOverly(uplayGameToRun.GameIconPath);
+                        shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
+
+                        args.Add($"uplay {GameAppId}");
 
                     }
 
                     // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
-                    args.Add($"--profile \"{Profile.Name}\"");
+                    args.Add($"--profile \"{SelectedProfile.Name}\"");
 
                     // Add the game timeout argument and the timeout duration in seconds to the shortcut arguments
                     args.Add($"--timeout {GameTimeout}");
@@ -437,7 +498,7 @@ namespace HeliosPlus.UIForms
                     }
 
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Executing_application_with_profile, GameName, Profile.Name);
+                    shortcutDescription = string.Format(Language.Executing_application_with_profile, GameName, SelectedProfile.Name);
 
                 }
 
@@ -449,32 +510,27 @@ namespace HeliosPlus.UIForms
                 args.Add($"permanent");
                 
                 // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
-                args.Add($"--profile \"{Profile.Name}\"");
+                args.Add($"--profile \"{SelectedProfile.Name}\"");
 
                 // Prepare text for the shortcut description field
-                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, Profile.Name);
+                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, SelectedProfile.Name);
 
                 // Work out the name of the shortcut we'll save.
-                shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"permanent-", Profile.Name, @".ico"));
+                shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"permanent-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
 
                 // Grab an icon for the selected profile
                 try
                 {
-                    MultiIcon profileMultiIcon = new ProfileIcon(Profile).ToIcon();
-                    shortcutIcon = profileMultiIcon[0].Icon;
+                    shortcutIcon = new ProfileIcon(SelectedProfile).ToIcon();
+                    shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
+                    
                 }
                 catch
                 {
                     // but if that doesn't work, then we use our own one.
-                    shortcutIcon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
+                    shortcutIcon = new ProfileIcon(SelectedProfile).ToIconOverly(Assembly.GetExecutingAssembly().Location);
+                    shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
                 }
-            }
-
-            // Save the Icon to the Shortcut Icon cache as the Shortcut will need to refer to it.
-            if (!File.Exists(shortcutIconFileName))
-            {
-                using (StreamWriter fs = File.AppendText(shortcutIconFileName))
-                    shortcutIcon.Save(fs.BaseStream);
             }
 
             // Now we are ready to create a shortcut based on the filename the user gave us
@@ -538,14 +594,31 @@ namespace HeliosPlus.UIForms
 
         private void txt_executable_TextChanged(object sender, EventArgs e)
         {
-            try
+            if (File.Exists(txt_executable.Text))
             {
-                txt_process_name.Text = Path.GetFileNameWithoutExtension(txt_executable.Text)?.ToLower() ?? txt_process_name.Text;
 
-            }
-            catch
+                // Turn on the CreateShortcut Button
+                btn_save.Enabled = true;
+
+                // Try and discern the process name for this
+                // if the user hasn't entered anything already
+                if (txt_process_name.Text == String.Empty)
+                {
+                    try
+                    {
+                        txt_process_name.Text = Path.GetFileNameWithoutExtension(txt_executable.Text)?.ToLower() ?? txt_process_name.Text;
+
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+
+            } else
             {
-                // ignored
+                // Turn off the CreateShortcut Button
+                btn_save.Enabled = false;
             }
         }
 
@@ -556,6 +629,8 @@ namespace HeliosPlus.UIForms
                 // Disable the Temporary Group
                 g_temporary.Enabled = false;
             }
+            // Turn on the CreateShortcut Button
+            btn_save.Enabled = true;
 
         }
         private void rb_switch_temp_CheckedChanged(object sender, EventArgs e)
@@ -564,8 +639,27 @@ namespace HeliosPlus.UIForms
             {
                 // Enable the Temporary Group
                 g_temporary.Enabled = true;
-            }
 
+                // If it's been set already to a valid gamelauncher, then enable the button
+                if (txt_game_launcher.Text.Length > 0 && txt_game_id.Text.Length > 0 && txt_game_name.Text.Length > 0)
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = true;
+                }
+                // else if it's a valid executable
+                else if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text))
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = true;
+                }
+                else
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = false;
+                }
+
+            }
+            
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -586,7 +680,19 @@ namespace HeliosPlus.UIForms
                 p_standalone.Enabled = true;
                 // Disable the Game Panel
                 p_game.Enabled = false;
+
+                if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text))
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = true;
+                }
+                else
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = false;
+                }
             }
+           
         }
 
         private void rb_launcher_CheckedChanged(object sender, EventArgs e)
@@ -597,6 +703,19 @@ namespace HeliosPlus.UIForms
                 p_game.Enabled = true;
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
+
+                // If it's been set already to a valid gamelauncher, then enable the button
+                if (txt_game_launcher.Text.Length > 0 && txt_game_id.Text.Length > 0 && txt_game_name.Text.Length > 0)
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = true;
+                }
+                else
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = false;
+                }
+
             }
         }
 
@@ -627,9 +746,84 @@ namespace HeliosPlus.UIForms
             List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
             _allSteamGames = allSteamGames;
             foreach (var game in allSteamGames.OrderBy(game => game.GameName))
+            {
+                if (File.Exists(game.GameIconPath))
                 {
-                //var iconAddress = await game.GetIcon();
-                il_games.Images.Add(game.GameIcon);
+                    try
+                    {
+                        if (game.GameIconPath.EndsWith(".ico"))
+                        {
+                            // if it's an icon try to load it as a bitmap
+                            il_games.Images.Add(Image.FromFile(game.GameIconPath));
+                        }
+                        else if (game.GameIconPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase) || game.GameIconPath.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // otherwise use IconExtractor
+                            /*IconExtractor IconEx = new IconExtractor(game.GameIconPath);
+                            Icon icoAppIcon = IconEx.GetIcon(0); // Because standard System.Drawing.Icon.ExtractAssociatedIcon() returns ONLY 32x32.*/
+
+                            Icon icoAppIcon = Icon.ExtractAssociatedIcon(game.GameIconPath);
+                            // We first try high quality icons
+                            Bitmap extractedBitmap = ExtractVistaIcon(icoAppIcon);
+                            if (extractedBitmap == null)
+                                extractedBitmap = icoAppIcon.ToBitmap();
+                            il_games.Images.Add(extractedBitmap);
+                        }
+                    } 
+                    catch (Exception)
+                    {
+                        il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
+                    }
+                } else
+                {
+                    //(Icon)global::Calculate.Properties.Resources.ResourceManager.GetObject("Steam.ico");
+                    il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
+                }
+
+                /*using (TKageyu.Utils.IconExtractor IconEx = new TKageyu.Utils.IconExtractor(Application.ExecutablePath))
+                {
+                    Icon icoAppIcon = IconEx.GetIcon(0); // Because standard System.Drawing.Icon.ExtractAssociatedIcon() returns ONLY 32x32.
+                    picboxAppLogo.Image = ExtractVistaIcon(icoAppIcon);
+                }
+
+
+                try
+                {
+                    MultiIcon shortcutIcon = new MultiIcon();
+                    shortcutIcon.Load(game.GameIconPath);
+                    il_games.Images.Add(shortcutIcon[0].Icon.ToBitmap());
+                }
+                catch (InvalidFileException)
+                {
+                    try
+                    {
+                        Icon chosenIcon;
+                        IconExtractor ie = new IconExtractor(game.GameIconPath);
+                        if (ie.Count > 0)
+                        {
+                            chosenIcon = ie.GetIcon(0);
+
+                            foreach (Icon gameIcon in ie.GetAllIcons())
+                            {
+                                if (gameIcon.Size.Height > chosenIcon.Size.Height)
+                                {
+                                    chosenIcon = gameIcon;
+                                }
+                            }
+
+                            il_games.Images.Add(chosenIcon.ToBitmap());
+                        }
+                        else
+                        {
+                            il_games.Images.Add(Icon.ExtractAssociatedIcon(game.GameIconPath).ToBitmap());
+                        }
+                    } 
+                    catch (System.ComponentModel.Win32Exception)
+                    {
+                        il_games.Images.Add(Icon.ExtractAssociatedIcon(game.GameIconPath).ToBitmap());
+                    }
+
+                }*/
 
                 if (!Visible)
                 {
@@ -706,16 +900,18 @@ namespace HeliosPlus.UIForms
         {
             if (lv_games.SelectedItems.Count > 0)
             {
-
                 txt_game_name.Text = lv_games.SelectedItems[0].Text;
                 foreach (SteamGame game in _allSteamGames)
                 {
                     if (game.GameName == txt_game_name.Text)
                     {
-                        txt_game_launcher.Text = game.GameLibrary.ToString();
+                        txt_game_launcher.Text = SteamGame.GameLibrary.ToString();
                         txt_game_id.Text = game.GameId.ToString();
                     }
                 }
+
+                // Turn on the CreateShortcut Button
+                btn_save.Enabled = true;
             }
             
         }

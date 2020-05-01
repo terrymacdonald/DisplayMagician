@@ -105,12 +105,6 @@
     <Compile Include="UIForms\SplashForm.Designer.cs">
       <DependentUpon>SplashForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="UIForms\SteamGamesForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UIForms\SteamGamesForm.Designer.cs">
-      <DependentUpon>SteamGamesForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="UIForms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -131,9 +125,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\ShortcutForm.resx">
       <DependentUpon>ShortcutForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UIForms\SteamGamesForm.resx">
-      <DependentUpon>SteamGamesForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\EditForm.resx">
       <DependentUpon>EditForm.cs</DependentUpon>

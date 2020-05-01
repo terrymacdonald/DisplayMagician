@@ -37,6 +37,8 @@ namespace HeliosPlus.UIForms
             this.btn_cancel = new System.Windows.Forms.Button();
             this.g_temporary = new System.Windows.Forms.GroupBox();
             this.p_game = new System.Windows.Forms.Panel();
+            this.txt_game_id = new System.Windows.Forms.TextBox();
+            this.txt_game_launcher = new System.Windows.Forms.TextBox();
             this.txt_game_name = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
@@ -73,8 +75,6 @@ namespace HeliosPlus.UIForms
             this.rb_switch_temp = new System.Windows.Forms.RadioButton();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.lbl_profile = new System.Windows.Forms.Label();
-            this.txt_game_launcher = new System.Windows.Forms.TextBox();
-            this.txt_game_id = new System.Windows.Forms.TextBox();
             this.g_temporary.SuspendLayout();
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
@@ -84,6 +84,7 @@ namespace HeliosPlus.UIForms
             // 
             // btn_save
             // 
+            this.btn_save.Enabled = false;
             this.btn_save.Location = new System.Drawing.Point(602, 859);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(94, 23);
@@ -134,6 +135,22 @@ namespace HeliosPlus.UIForms
             this.p_game.Name = "p_game";
             this.p_game.Size = new System.Drawing.Size(730, 253);
             this.p_game.TabIndex = 3;
+            // 
+            // txt_game_id
+            // 
+            this.txt_game_id.Location = new System.Drawing.Point(408, 104);
+            this.txt_game_id.Name = "txt_game_id";
+            this.txt_game_id.ReadOnly = true;
+            this.txt_game_id.Size = new System.Drawing.Size(75, 20);
+            this.txt_game_id.TabIndex = 24;
+            // 
+            // txt_game_launcher
+            // 
+            this.txt_game_launcher.Location = new System.Drawing.Point(408, 78);
+            this.txt_game_launcher.Name = "txt_game_launcher";
+            this.txt_game_launcher.ReadOnly = true;
+            this.txt_game_launcher.Size = new System.Drawing.Size(175, 20);
+            this.txt_game_launcher.TabIndex = 23;
             // 
             // txt_game_name
             // 
@@ -509,22 +526,6 @@ namespace HeliosPlus.UIForms
             this.lbl_profile.TabIndex = 10;
             this.lbl_profile.Text = "[None]";
             this.lbl_profile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // txt_game_launcher
-            // 
-            this.txt_game_launcher.Location = new System.Drawing.Point(408, 78);
-            this.txt_game_launcher.Name = "txt_game_launcher";
-            this.txt_game_launcher.ReadOnly = true;
-            this.txt_game_launcher.Size = new System.Drawing.Size(175, 20);
-            this.txt_game_launcher.TabIndex = 23;
-            // 
-            // txt_game_id
-            // 
-            this.txt_game_id.Location = new System.Drawing.Point(408, 104);
-            this.txt_game_id.Name = "txt_game_id";
-            this.txt_game_id.ReadOnly = true;
-            this.txt_game_id.Size = new System.Drawing.Size(75, 20);
-            this.txt_game_id.TabIndex = 24;
             // 
             // ShortcutForm
             // 

@@ -16,13 +16,15 @@ using HtmlAgilityPack;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 //using VdfParser;
-using Gameloop.Vdf;
+//using Gameloop.Vdf;
 using System.Collections.ObjectModel;
 using ValveKeyValue;
 using System.Security.Cryptography;
 using System.ServiceModel.Configuration;
 using HeliosPlus.GameLibraries.SteamAppInfoParser;
-
+using TsudaKageyu;
+using System.Drawing.IconLib;
+using System.Drawing.IconLib.Exceptions;
 
 namespace HeliosPlus.GameLibraries
 {
@@ -33,13 +35,12 @@ namespace HeliosPlus.GameLibraries
         private static string _steamConfigVdfFile;
         private static string _registrySteamKey = @"SOFTWARE\\Valve\\Steam";
         private static string _registryAppsKey = $@"{_registrySteamKey}\\Apps";
-        private static SupportedGameLibrary _library = SupportedGameLibrary.Steam;
         private string _gameRegistryKey;
         private uint _steamGameId;
         private string _steamGameName;
         private string _steamGamePath;
         private string _steamGameExe;
-        private Icon _steamGameIcon;
+        private string _steamGameIconPath;
         private static List<SteamGame> _allSteamGames;
 
         private struct SteamAppInfo
@@ -58,7 +59,7 @@ namespace HeliosPlus.GameLibraries
         }
 
 
-        public SteamGame(uint steamGameId, string steamGameName, string steamGamePath, string steamGameExe, Icon steamGameIcon)
+        public SteamGame(uint steamGameId, string steamGameName, string steamGamePath, string steamGameExe, string steamGameIconPath)
         {
 
             _gameRegistryKey = $@"{_registryAppsKey}\\{steamGameId}";
@@ -66,7 +67,7 @@ namespace HeliosPlus.GameLibraries
             _steamGameName = steamGameName;
             _steamGamePath = steamGamePath;
             _steamGameExe = steamGameExe;
-            _steamGameIcon = steamGameIcon;
+            _steamGameIconPath = steamGameIconPath;
 
             // Find the SteamExe location, and the SteamPath for later
             using (var key = Registry.CurrentUser.OpenSubKey(_registrySteamKey, RegistryKeyPermissionCheck.ReadSubTree))
@@ -81,9 +82,9 @@ namespace HeliosPlus.GameLibraries
 
         public uint GameId { get => _steamGameId; }
 
-        public SupportedGameLibrary GameLibrary { get => SupportedGameLibrary.Steam; }
+        public static SupportedGameLibrary GameLibrary { get => SupportedGameLibrary.Steam; }
 
-        public Icon GameIcon { get => _steamGameIcon; }
+        public string GameIconPath { get => _steamGameIconPath; }
                   
         public bool IsRunning
         {
@@ -195,7 +196,11 @@ namespace HeliosPlus.GameLibraries
                     return steamGameList;
                 }
 
-                Icon _steamIcon = Icon.ExtractAssociatedIcon(_steamExe);
+                //Icon _steamIcon = Icon.ExtractAssociatedIcon(_steamExe);
+                //IconExtractor steamIconExtractor = new IconExtractor(_steamExe);
+                //Icon _steamIcon = steamIconExtractor.GetIcon(0);
+                MultiIcon _steamIcon = new MultiIcon();
+                _steamIcon.Load(_steamExe);
 
                 List<uint> steamAppIdsInstalled = new List<uint>();
                 // Now look for what games app id's are actually installed on this computer
@@ -349,7 +354,7 @@ namespace HeliosPlus.GameLibraries
                 }
 
                 // Now we go off and find the details for the games in each Steam Library
-                foreach (string steamLibraryPath in steamLibrariesPaths)
+                foreach (string steamLibraryPath in steamLibrariesPaths) 
                 {
                     // Work out the path to the appmanifests for this steamLibrary
                     string steamLibraryAppManifestPath = Path.Combine(steamLibraryPath, @"steamapps");
@@ -380,12 +385,12 @@ namespace HeliosPlus.GameLibraries
                                     string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
 
                                     // Next, we need to get the Icons we want to use, and make sure it's the latest one.
-                                    Icon steamGameIcon = null;
+                                    string steamGameIconPath = "";
                                     // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
                                     if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath))
                                     {
-                                        steamGameIcon = Icon.ExtractAssociatedIcon(steamAppInfo[steamGameId].GameSteamIconPath);
-                                    } 
+                                        steamGameIconPath = steamAppInfo[steamGameId].GameSteamIconPath;
+                                    }
                                     // If there isn't an icon for us to use, then we need to extract one from the Game Executables
                                     else if (steamAppInfo[steamGameId].GameExes.Count > 0)
                                     {
@@ -396,17 +401,7 @@ namespace HeliosPlus.GameLibraries
                                             if (File.Exists(steamGameExe))
                                             {
                                                 // Now we need to get the Icon from the app if possible if it's not in the games folder
-                                                try
-                                                {
-
-                                                    steamGameIcon = Icon.ExtractAssociatedIcon(steamGameExe);
-                                                    break;
-                                                }
-                                                catch (ArgumentException e)
-                                                {
-                                                    // We drop out here if the executable didn't have an Icon
-                                                    // That's fine, let's just try the next one!
-                                                }
+                                                steamGameIconPath = steamGameExe;
                                             }
                                         }
 
@@ -415,7 +410,8 @@ namespace HeliosPlus.GameLibraries
                                     else
                                     {
                                         // And we have to make do with a Steam Icon
-                                        steamGameIcon = _steamIcon;
+                                        steamGameIconPath = _steamPath;
+
                                     }
 
                                     // And finally we try to populate the 'where', to see what gets run
@@ -435,7 +431,7 @@ namespace HeliosPlus.GameLibraries
                                     }
 
                                     // And we add the Game to the list of games we have!
-                                    steamGameList.Add(new SteamGame(steamGameId, steamGameName, steamGameInstallDir, steamGameExe, steamGameIcon));
+                                    steamGameList.Add(new SteamGame(steamGameId, steamGameName, steamGameInstallDir, steamGameExe, steamGameIconPath));
 
                                 }
                             }

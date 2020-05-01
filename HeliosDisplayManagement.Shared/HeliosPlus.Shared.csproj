@@ -84,6 +84,9 @@
     <PackageReference Include="EDIDParser">
       <Version>1.2.0.1</Version>
     </PackageReference>
+    <PackageReference Include="IconExtractor.dll">
+      <Version>1.0.2.1-beta</Version>
+    </PackageReference>
     <PackageReference Include="IconLib.Unofficial">
       <Version>0.73.0</Version>
     </PackageReference>
