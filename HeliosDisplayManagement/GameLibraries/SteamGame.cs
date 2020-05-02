@@ -488,12 +488,7 @@ namespace HeliosPlus.GameLibraries
                 return name + " " + Language.Updating;
             }
 
-            /*if (IsInstalled)
-            {
-                return name + " " + Language.Installed;
-            }*/
-
-            return name + " " + Language.Not_Installed;
+            return name;
         }
 
     }

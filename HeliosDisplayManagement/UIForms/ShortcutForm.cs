@@ -780,51 +780,6 @@ namespace HeliosPlus.UIForms
                     il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
                 }
 
-                /*using (TKageyu.Utils.IconExtractor IconEx = new TKageyu.Utils.IconExtractor(Application.ExecutablePath))
-                {
-                    Icon icoAppIcon = IconEx.GetIcon(0); // Because standard System.Drawing.Icon.ExtractAssociatedIcon() returns ONLY 32x32.
-                    picboxAppLogo.Image = ExtractVistaIcon(icoAppIcon);
-                }
-
-
-                try
-                {
-                    MultiIcon shortcutIcon = new MultiIcon();
-                    shortcutIcon.Load(game.GameIconPath);
-                    il_games.Images.Add(shortcutIcon[0].Icon.ToBitmap());
-                }
-                catch (InvalidFileException)
-                {
-                    try
-                    {
-                        Icon chosenIcon;
-                        IconExtractor ie = new IconExtractor(game.GameIconPath);
-                        if (ie.Count > 0)
-                        {
-                            chosenIcon = ie.GetIcon(0);
-
-                            foreach (Icon gameIcon in ie.GetAllIcons())
-                            {
-                                if (gameIcon.Size.Height > chosenIcon.Size.Height)
-                                {
-                                    chosenIcon = gameIcon;
-                                }
-                            }
-
-                            il_games.Images.Add(chosenIcon.ToBitmap());
-                        }
-                        else
-                        {
-                            il_games.Images.Add(Icon.ExtractAssociatedIcon(game.GameIconPath).ToBitmap());
-                        }
-                    } 
-                    catch (System.ComponentModel.Win32Exception)
-                    {
-                        il_games.Images.Add(Icon.ExtractAssociatedIcon(game.GameIconPath).ToBitmap());
-                    }
-
-                }*/
-
                 if (!Visible)
                 {
                     return;
