@@ -44,7 +44,7 @@ namespace HeliosPlus.ShellExtension
                 Properties.Resources.Icon_x16,
                 (sender, args) =>
                 {
-                    HeliosDisplayManagement.Open();
+                    HeliosPlus.Open();
                 }));
             explorerMenu.Items.Add(extensionMenu);
             explorerMenu.Items.Add(new ToolStripSeparator());
@@ -57,16 +57,16 @@ namespace HeliosPlus.ShellExtension
             var profileMenu = new ToolStripMenuItem(profile.Name, new ProfileIcon(profile).ToBitmap(16, 16));
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Run, null,
                 (sender, args) =>
-                    HeliosDisplayManagement.Open(HeliosStartupAction.SwitchProfile, profile,
+                    HeliosPlus.Open(HeliosStartupAction.SwitchProfile, profile,
                         SelectedItemPaths.FirstOrDefault())));
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Run_as_administrator, Shield.SmallIcon,
                 (sender, args) =>
-                    HeliosDisplayManagement.Open(HeliosStartupAction.SwitchProfile, profile,
+                    HeliosPlus.Open(HeliosStartupAction.SwitchProfile, profile,
                         SelectedItemPaths.FirstOrDefault(), true)));
             profileMenu.DropDownItems.Add(new ToolStripSeparator());
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, null,
                 (sender, args) =>
-                    HeliosDisplayManagement.Open(HeliosStartupAction.CreateShortcut, profile,
+                    HeliosPlus.Open(HeliosStartupAction.CreateShortcut, profile,
                         SelectedItemPaths.FirstOrDefault())));
 
             return profileMenu;

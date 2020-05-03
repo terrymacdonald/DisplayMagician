@@ -22,10 +22,38 @@ namespace HeliosPlus.UIForms
     {
 
         List<SteamGame> _allSteamGames;
+        private const string GroupActive = "active";
+        private const string GroupCurrent = "current";
+        private const string GroupSaved = "saved";
+        internal Profile[] _allProfiles; 
+
+        /* private ListViewItem AddProfile(Profile profile = null)
+        {
+            il_profiles.Images.Add(
+                new ProfileIcon(profile ?? Profile.GetCurrent()).ToBitmap(
+                    il_profiles.ImageSize.Width,
+                    il_profiles.ImageSize.Height));
+
+            return lv_profiles.Items.Add(new ListViewItem
+            {
+                Text = profile?.Name ?? Language.Current,
+                ImageIndex = il_profiles.Images.Count - 1,
+                Tag = profile,
+                Group =
+                    lv_profiles.Groups[profile == null ? GroupCurrent : (profile.IsActive ? GroupActive : GroupSaved)]
+            });
+
+        }*/
+
 
         public ShortcutForm()
         {
             InitializeComponent();
+            
+            /*lv_profiles.Groups.Add(GroupCurrent, Language.Current);
+            lv_profiles.Groups.Add(GroupActive, Language.Active_Profiles);
+            lv_profiles.Groups.Add(GroupSaved, Language.Saved_Profiles);
+            lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);*/
         }
 
         public ShortcutForm(Profile profile) : this()
@@ -61,6 +89,7 @@ namespace HeliosPlus.UIForms
                 // Check the profile is valid
                 // Create an array of display profiles we have
                 var profiles = Profile.GetAllProfiles().ToArray();
+                _allProfiles = profiles;
                 // Check if the user supplied a --profile option using the profiles' ID
                 var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(value.Id, StringComparison.InvariantCultureIgnoreCase)) : -1;
                 // If the profileID wasn't there, maybe they used the profile name?
@@ -81,7 +110,6 @@ namespace HeliosPlus.UIForms
                 dv_profile.Profile = value;
             }
         }
-
 
         public string ExecutableNameAndPath
         {
@@ -662,16 +690,6 @@ namespace HeliosPlus.UIForms
             
         }
 
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label7_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void rb_standalone_CheckedChanged(object sender, EventArgs e)
         {
             if (rb_standalone.Checked)
@@ -742,6 +760,14 @@ namespace HeliosPlus.UIForms
             // Set the Profile name
             lbl_profile.Text = $"Selected Profile: {dv_profile.Profile?.Name ?? Language.None}";
 
+            /*// Reload the profiles in case we swapped to another program to change it
+            ReloadProfiles();
+            // If nothing is selected then select the currently used profile
+            if (lv_profiles.SelectedItems.Count == 0)
+            {
+                lv_profiles.Items[0].Selected = true;
+            }
+*/
             // Start finding the games and loading the Games ListView
             List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
             _allSteamGames = allSteamGames;
@@ -867,6 +893,45 @@ namespace HeliosPlus.UIForms
 
                 // Turn on the CreateShortcut Button
                 btn_save.Enabled = true;
+            }
+            
+        }
+
+        /*private void RefreshProfilesStatus()
+        {
+            Profile.RefreshActiveStatus();
+            lv_profiles.Invalidate();
+        }
+
+        private void ReloadProfiles()
+        {
+            Profile.RefreshActiveStatus();
+            var profiles = Profile.GetAllProfiles().ToArray();
+            lv_profiles.Items.Clear();
+            il_profiles.Images.Clear();
+
+            if (!profiles.Any(profile => profile.IsActive))
+            {
+                AddProfile().Selected = true;
+            }
+
+            foreach (var profile in profiles)
+            {
+                AddProfile(profile);
+            }
+
+            lv_profiles.SelectedIndices.Clear();
+            lv_profiles.Invalidate();
+        }
+*/
+        private void cb_selected_profile_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            foreach (Profile profile in _allProfiles)
+            {
+                if (SelectedProfile.Name == cb_selected_profile.SelectedItem.ToString())
+                {
+                    SelectedProfile = profile;
+                }
             }
             
         }

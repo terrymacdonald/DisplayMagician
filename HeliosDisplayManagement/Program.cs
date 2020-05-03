@@ -461,7 +461,7 @@ namespace HeliosPlus {
 
 
                 IPCService.GetInstance().Status = InstanceStatus.User;
-                Application.Run(new MainForm());
+                Application.Run(new UIForms.MainForm());
 
             }
             catch (Exception e)

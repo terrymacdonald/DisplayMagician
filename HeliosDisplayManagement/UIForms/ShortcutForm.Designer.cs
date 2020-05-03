@@ -75,6 +75,7 @@ namespace HeliosPlus.UIForms
             this.rb_switch_temp = new System.Windows.Forms.RadioButton();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.lbl_profile = new System.Windows.Forms.Label();
+            this.cb_selected_profile = new System.Windows.Forms.ComboBox();
             this.g_temporary.SuspendLayout();
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
@@ -527,6 +528,15 @@ namespace HeliosPlus.UIForms
             this.lbl_profile.Text = "[None]";
             this.lbl_profile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // cb_selected_profile
+            // 
+            this.cb_selected_profile.FormattingEnabled = true;
+            this.cb_selected_profile.Location = new System.Drawing.Point(168, 277);
+            this.cb_selected_profile.Name = "cb_selected_profile";
+            this.cb_selected_profile.Size = new System.Drawing.Size(203, 21);
+            this.cb_selected_profile.TabIndex = 11;
+            this.cb_selected_profile.SelectedIndexChanged += new System.EventHandler(this.cb_selected_profile_SelectedIndexChanged);
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -535,6 +545,7 @@ namespace HeliosPlus.UIForms
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(248)))), ((int)(((byte)(248)))));
             this.CancelButton = this.btn_cancel;
             this.ClientSize = new System.Drawing.Size(810, 890);
+            this.Controls.Add(this.cb_selected_profile);
             this.Controls.Add(this.lbl_profile);
             this.Controls.Add(this.rb_switch_temp);
             this.Controls.Add(this.rb_switch_perm);
@@ -549,7 +560,7 @@ namespace HeliosPlus.UIForms
             this.Name = "ShortcutForm";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Create Shortcut";
+            this.Text = "HeliosPlus - Setup Game Shortcuts";
             this.Load += new System.EventHandler(this.ShortcutForm_Load);
             this.g_temporary.ResumeLayout(false);
             this.g_temporary.PerformLayout();
@@ -608,5 +619,6 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.ColumnHeader clm_name;
         private System.Windows.Forms.TextBox txt_game_id;
         private System.Windows.Forms.TextBox txt_game_launcher;
+        private System.Windows.Forms.ComboBox cb_selected_profile;
     }
 }
