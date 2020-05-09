@@ -22,9 +22,6 @@ namespace HeliosPlus.UIForms
     {
 
         List<SteamGame> _allSteamGames;
-        private const string GroupActive = "active";
-        private const string GroupCurrent = "current";
-        private const string GroupSaved = "saved";
         internal Profile[] _allProfiles; 
 
         /* private ListViewItem AddProfile(Profile profile = null)
@@ -88,7 +85,7 @@ namespace HeliosPlus.UIForms
             {
                 // Check the profile is valid
                 // Create an array of display profiles we have
-                var profiles = Profile.GetAllProfiles().ToArray();
+                var profiles = Profile.LoadAllProfiles().ToArray();
                 _allProfiles = profiles;
                 // Check if the user supplied a --profile option using the profiles' ID
                 var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(value.Id, StringComparison.InvariantCultureIgnoreCase)) : -1;

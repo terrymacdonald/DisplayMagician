@@ -19,7 +19,7 @@ namespace HeliosPlus.ShellExtension
         {
             return Helios.IsInstalled &&
                    SelectedItemPaths.Count() == 1 &&
-                   Profile.GetAllProfiles().Any() &&
+                   Profile.LoadAllProfiles().Any() &&
                    ParseSteamAppId() > 0;
         }
 
@@ -29,11 +29,11 @@ namespace HeliosPlus.ShellExtension
             var extensionMenu = new ToolStripMenuItem(Language.Open_under_Display_Profile,
                 Properties.Resources.Icon_x16);
 
-            if (Profile.GetAllProfiles().Any())
+            if (Profile.LoadAllProfiles().Any())
             {
                 Profile.RefreshActiveStatus();
 
-                foreach (var profile in Profile.GetAllProfiles())
+                foreach (var profile in Profile.LoadAllProfiles())
                 {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
                 }

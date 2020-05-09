@@ -35,6 +35,7 @@
             this.btn_setup_game_shortcuts = new System.Windows.Forms.Button();
             this.btn_exit = new System.Windows.Forms.Button();
             this.pb_game_shortcut = new System.Windows.Forms.PictureBox();
+            this.lbl_version = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -56,6 +57,7 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.lbl_version);
             this.splitContainer1.Panel2.Controls.Add(this.btn_setup_game_shortcuts);
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
             this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
@@ -64,6 +66,8 @@
             // btn_setup_display_profiles
             // 
             resources.ApplyResources(this.btn_setup_display_profiles, "btn_setup_display_profiles");
+            this.btn_setup_display_profiles.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_setup_display_profiles.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_setup_display_profiles.ForeColor = System.Drawing.Color.White;
             this.btn_setup_display_profiles.Name = "btn_setup_display_profiles";
             this.btn_setup_display_profiles.UseVisualStyleBackColor = true;
@@ -79,6 +83,8 @@
             // btn_setup_game_shortcuts
             // 
             resources.ApplyResources(this.btn_setup_game_shortcuts, "btn_setup_game_shortcuts");
+            this.btn_setup_game_shortcuts.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_setup_game_shortcuts.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_setup_game_shortcuts.ForeColor = System.Drawing.Color.Transparent;
             this.btn_setup_game_shortcuts.Name = "btn_setup_game_shortcuts";
             this.btn_setup_game_shortcuts.UseVisualStyleBackColor = true;
@@ -87,6 +93,8 @@
             // btn_exit
             // 
             resources.ApplyResources(this.btn_exit, "btn_exit");
+            this.btn_exit.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_exit.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_exit.ForeColor = System.Drawing.Color.White;
             this.btn_exit.Name = "btn_exit";
             this.btn_exit.UseVisualStyleBackColor = true;
@@ -99,17 +107,27 @@
             this.pb_game_shortcut.TabStop = false;
             this.pb_game_shortcut.Click += new System.EventHandler(this.pb_game_shortcut_Click);
             // 
+            // lbl_version
+            // 
+            resources.ApplyResources(this.lbl_version, "lbl_version");
+            this.lbl_version.BackColor = System.Drawing.Color.Transparent;
+            this.lbl_version.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.lbl_version.ForeColor = System.Drawing.Color.White;
+            this.lbl_version.Name = "lbl_version";
+            // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ControlBox = false;
             this.Controls.Add(this.splitContainer1);
+            this.MaximizeBox = false;
             this.Name = "MainForm";
+            this.ShowIcon = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pb_display_profile)).EndInit();
@@ -126,5 +144,6 @@
         private System.Windows.Forms.Button btn_exit;
         private System.Windows.Forms.Button btn_setup_display_profiles;
         private System.Windows.Forms.Button btn_setup_game_shortcuts;
+        private System.Windows.Forms.Label lbl_version;
     }
 }

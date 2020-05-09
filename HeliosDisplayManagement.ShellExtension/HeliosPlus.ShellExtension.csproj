@@ -7,8 +7,8 @@
     <ProjectGuid>{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>HeliosDisplayManagement.ShellExtension</RootNamespace>
-    <AssemblyName>HeliosDisplayManagement.ShellExtension</AssemblyName>
+    <RootNamespace>HeliosPlus.ShellExtension</RootNamespace>
+    <AssemblyName>HeliosPlus.ShellExtension</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -64,15 +64,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HeliosDisplayManagement.Shared\HeliosPlus.Shared.csproj">
-      <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
-      <Name>HeliosPlus.Shared</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Icon_x16.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Shield.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -82,6 +73,15 @@
     <PackageReference Include="SharpShell">
       <Version>2.7.2</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\HeliosPlus.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HeliosDisplayManagement.Shared\HeliosPlus.Shared.csproj">
+      <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
+      <Name>HeliosPlus.Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

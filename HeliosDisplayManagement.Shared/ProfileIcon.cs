@@ -10,9 +10,12 @@ namespace HeliosPlus.Shared
 {
     public class ProfileIcon
     {
+
+        private Profile _profile;
+
         public ProfileIcon(Profile profile, int paddingX = 100, int paddingY = 100)
         {
-            Profile = profile;
+            _profile = profile;
             PaddingX = paddingX;
             PaddingY = paddingY;
         }
@@ -20,11 +23,11 @@ namespace HeliosPlus.Shared
         public int PaddingX { get; }
         public int PaddingY { get; }
 
-        public Profile Profile { get; }
+        //public Profile Profile { get; }
 
         // ReSharper disable once TooManyArguments
         public static RectangleF CalculateViewSize(
-            Path[] paths,
+            ProfilePath[] paths,
             bool withPadding = false,
             int paddingX = 0,
             int paddingY = 0)
@@ -67,7 +70,7 @@ namespace HeliosPlus.Shared
             return resolution;
         }
 
-        public static Size NormalizeResolution(Path path)
+        public static Size NormalizeResolution(ProfilePath path)
         {
             var bigest = Size.Empty;
 
@@ -140,7 +143,7 @@ namespace HeliosPlus.Shared
 
         public Bitmap ToBitmapOverly(Bitmap bitmap)
         {
-            var viewSize = CalculateViewSize(Profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
             var width = bitmap.Width * 0.7f;
             var height = width / viewSize.Width * viewSize.Height;
 
@@ -243,7 +246,7 @@ namespace HeliosPlus.Shared
             return multiIcon;
         }
 
-        private void DrawPath(Graphics g, Path path)
+        private void DrawPath(Graphics g, ProfilePath path)
         {
             var res = NormalizeResolution(path);
             var rect = new Rectangle(path.Position, res);
@@ -265,8 +268,8 @@ namespace HeliosPlus.Shared
         // ReSharper disable once TooManyArguments
         private void DrawTarget(
             Graphics g,
-            Path path,
-            PathTarget target,
+            ProfilePath path,
+            ProfilePathTarget target,
             Rectangle rect,
             int row,
             int col,
@@ -301,7 +304,7 @@ namespace HeliosPlus.Shared
 
         private void DrawView(Graphics g, float width, float height)
         {
-            var viewSize = CalculateViewSize(Profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
             var standPadding = height * 0.005f;
             height -= standPadding * 8;
             var factor = Math.Min((width - 2 * standPadding - 1) / viewSize.Width,
@@ -338,7 +341,7 @@ namespace HeliosPlus.Shared
                     viewSize.Width, viewSize.Height);
             }
 
-            foreach (var path in Profile.Paths)
+            foreach (var path in _profile.Paths)
             {
                 DrawPath(g, path);
             }

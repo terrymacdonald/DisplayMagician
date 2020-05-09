@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using HeliosPlus.GameLibraries;
 using System.Threading;
+using System.Reflection;
 
 namespace HeliosPlus.UIForms
 {
@@ -19,6 +20,8 @@ namespace HeliosPlus.UIForms
             InitializeComponent();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
+            lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);
+
         }
 
         private void btn_exit_Click(object sender, EventArgs e)

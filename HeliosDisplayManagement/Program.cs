@@ -29,12 +29,14 @@ namespace HeliosPlus {
     internal static class Program
     {
 
+        internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
         internal static string ShortcutIconCachePath;
+
 
         internal static Profile GetProfile(string profileName)
         {
             // Create an array of display profiles we have
-            var profiles = Profile.GetAllProfiles().ToArray();
+            var profiles = Profile.LoadAllProfiles().ToArray();
             // Check if the user supplied a --profile option using the profiles' ID
             var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(profileName, StringComparison.InvariantCultureIgnoreCase)) : -1;
             // If the profileID wasn't there, maybe they used the profile name?
@@ -141,8 +143,8 @@ namespace HeliosPlus {
                 profile = editForm.Profile;
             }
 
-            var profiles = Profile.GetAllProfiles().ToArray();
-            if (!Profile.SetAllProfiles(profiles))
+            var profiles = Profile.LoadAllProfiles().ToArray();
+            if (!Profile.SaveAllProfiles())
             {
                 throw new Exception(Language.Failed_to_save_profile);
             }
@@ -167,8 +169,20 @@ namespace HeliosPlus {
             Console.WriteLine(@"Based on Helios Display Management - Copyright © Soroush Falahati 2017-2020");
 
             // Figure out where the shortcut's will go
-            ShortcutIconCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                Assembly.GetExecutingAssembly().GetName().Name, @"ShortcutIconCache");
+            ShortcutIconCachePath = Path.Combine(AppDataPath, @"ShortcutIconCache");
+
+            // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
+            if (!Directory.Exists(AppDataPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(ShortcutIconCachePath);
+                }
+                catch
+                {
+                }
+            }
+
             // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
             if (!Directory.Exists(ShortcutIconCachePath))
             {
@@ -479,7 +493,7 @@ namespace HeliosPlus {
 
         private static void SwitchToExecutable(Profile profile, string executableToRun, string processToMonitor, uint timeout, string executableArguments)
         {
-            var rollbackProfile = Profile.GetCurrent(string.Empty);
+            var rollbackProfile = Profile.CurrentProfile;
 
             if (!profile.IsPossible)
             {
@@ -536,7 +550,7 @@ namespace HeliosPlus {
             {
                 notify = new NotifyIcon
                 {
-                    Icon = Properties.Resources.Icon,
+                    Icon = Properties.Resources.HeliosPlus,
                     Text = string.Format(
                         Language.Waiting_for_the_0_to_terminate,
                         processes[0].ProcessName),
@@ -592,7 +606,7 @@ namespace HeliosPlus {
             }
 
             // Save the profile we're on now
-            var rollbackProfile = Profile.GetCurrent(string.Empty);
+            var rollbackProfile = Profile.CurrentProfile;
 
             // Check that the profile we've been asked to change to will actually work
             if (!profile.IsPossible)
@@ -675,7 +689,7 @@ namespace HeliosPlus {
             {
                 notify = new NotifyIcon
                 {
-                    Icon = Properties.Resources.Icon,
+                    Icon = Properties.Resources.HeliosPlus,
                     Text = string.Format(
                         Language.Waiting_for_the_0_to_terminate,
                         steamGameToRun.GameName),
@@ -724,7 +738,7 @@ namespace HeliosPlus {
         private static void SwitchToUplayGame(Profile profile, string uplayGameIdToRun, uint timeout, string uplayGameArguments)
         {
 
-            var rollbackProfile = Profile.GetCurrent(string.Empty);
+            var rollbackProfile = Profile.CurrentProfile;
 
             if (!profile.IsPossible)
             {
@@ -852,7 +866,7 @@ namespace HeliosPlus {
         // ReSharper disable once CyclomaticComplexity
         private static void SwitchToProfile(Profile profile)
         {
-            var rollbackProfile = Profile.GetCurrent(string.Empty);
+            var rollbackProfile = Profile.CurrentProfile;
 
             if (
                 IPCClient.QueryAll()

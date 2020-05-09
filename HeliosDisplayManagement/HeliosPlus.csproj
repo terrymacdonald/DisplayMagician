@@ -52,7 +52,8 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>HeliosPlus.Program</StartupObject>
@@ -168,11 +169,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Icon.ico" />
-    <None Include="Icon.png" />
-    <None Include="Icon.psd" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Properties\DataSources\HeliosDisplayManagement.UIForms.ShortcutForm.datasource" />
   </ItemGroup>
   <ItemGroup>
@@ -205,6 +201,9 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
     </PackageReference>
+    <PackageReference Include="ObjectListView.Official">
+      <Version>2.9.1</Version>
+    </PackageReference>
     <PackageReference Include="ValveKeyValue">
       <Version>0.3.0.144</Version>
     </PackageReference>
@@ -231,7 +230,7 @@
     <None Include="Resources\HeliosPlus.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\HeliosPlusIcon.ico" />
+    <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

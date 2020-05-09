@@ -21,7 +21,7 @@ namespace HeliosPlus
             var profile = optionProfile.Value();
 
             // Create an array of display profiles we have
-            var profiles = Profile.GetAllProfiles().ToArray();
+            var profiles = Profile.LoadAllProfiles().ToArray();
             // Check if the user supplied a --profile option using the profiles' ID
             var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
             // If the profileID wasn't there, maybe they used the profile name?

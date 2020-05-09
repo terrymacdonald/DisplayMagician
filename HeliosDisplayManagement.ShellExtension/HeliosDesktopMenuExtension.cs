@@ -39,13 +39,13 @@ namespace HeliosPlus.ShellExtension
         {
             var explorerMenu = new ContextMenuStrip();
 
-            if (Profile.GetAllProfiles().Any())
+            if (Profile.LoadAllProfiles().Any())
             {
                 Profile.RefreshActiveStatus();
                 var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
                     Properties.Resources.Icon_x16);
 
-                foreach (var profile in Profile.GetAllProfiles())
+                foreach (var profile in Profile.LoadAllProfiles())
                 {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
                 }

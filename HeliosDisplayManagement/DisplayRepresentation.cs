@@ -30,7 +30,7 @@ namespace HeliosPlus
             }
         }
 
-        public DisplayRepresentation(PathTarget display)
+        public DisplayRepresentation(ProfilePathTarget display)
         {
             Name = display.DisplayName;
             Path = display.DevicePath;
@@ -77,12 +77,12 @@ namespace HeliosPlus
             return Display.GetDisplays().FirstOrDefault(display => display.DevicePath.StartsWith(Path));
         }
 
-        public Path GetPathSource(Profile profile)
+        public ProfilePath GetPathSource(Profile profile)
         {
             return profile.Paths.FirstOrDefault(path => path.Targets.Any(target => target.DevicePath == Path));
         }
 
-        public PathTarget GetPathTarget(Profile profile)
+        public ProfilePathTarget GetPathTarget(Profile profile)
         {
             return profile.Paths.SelectMany(path => path.Targets).FirstOrDefault(target => target.DevicePath == Path);
         }
@@ -115,14 +115,14 @@ namespace HeliosPlus
                 }
             }
 
-            var p = new Profile {Paths = new Path[1]};
-            p.Paths[0] = new Path
+            var p = new Profile {Paths = new ProfilePath[1]};
+            p.Paths[0] = new ProfilePath
             {
                 Resolution = resolution,
                 Position = new Point(),
-                Targets = new PathTarget[1]
+                Targets = new ProfilePathTarget[1]
             };
-            p.Paths[0].Targets[0] = new PathTarget {DevicePath = Path};
+            p.Paths[0].Targets[0] = new ProfilePathTarget {DevicePath = Path};
 
             if (profile != null)
             {

@@ -12,15 +12,81 @@ using Newtonsoft.Json;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using Path = HeliosPlus.Shared.Topology.Path;
+using HeliosPlus.Shared.Topology;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace HeliosPlus.Shared
 {
     public class Profile : IEquatable<Profile>
     {
         private static Profile _currentProfile;
+        private static List<Profile> _allSavedProfiles = new List<Profile>();
+        private ProfileIcon _profileIcon;
+        private Bitmap _profileBitmap;
 
-        public static Version Version = new Version(2, 0);
+        internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
+
+
+        #region JsonConverterBitmap
+        internal class CustomBitmapConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType)
+            {
+                return true;
+            }
+
+            //convert from byte to bitmap (deserialize)
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            {
+                string image = (string)reader.Value;
+
+                byte[] byteBuffer = Convert.FromBase64String(image);
+                MemoryStream memoryStream = new MemoryStream(byteBuffer);
+                memoryStream.Position = 0;
+
+                return (Bitmap)Bitmap.FromStream(memoryStream);
+            }
+
+            //convert bitmap to byte (serialize)
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                Bitmap bitmap = (Bitmap)value;
+
+                ImageConverter converter = new ImageConverter();
+                writer.WriteValue((byte[])converter.ConvertTo(bitmap, typeof(byte[])));
+            }
+
+            public static System.Drawing.Imaging.ImageFormat GetImageFormat(Bitmap bitmap)
+            {
+                ImageFormat img = bitmap.RawFormat;
+
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Jpeg))
+                    return System.Drawing.Imaging.ImageFormat.Jpeg;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Bmp))
+                    return System.Drawing.Imaging.ImageFormat.Bmp;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Png))
+                    return System.Drawing.Imaging.ImageFormat.Png;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Emf))
+                    return System.Drawing.Imaging.ImageFormat.Emf;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Exif))
+                    return System.Drawing.Imaging.ImageFormat.Exif;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Gif))
+                    return System.Drawing.Imaging.ImageFormat.Gif;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Icon))
+                    return System.Drawing.Imaging.ImageFormat.Icon;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.MemoryBmp))
+                    return System.Drawing.Imaging.ImageFormat.MemoryBmp;
+                if (img.Equals(System.Drawing.Imaging.ImageFormat.Tiff))
+                    return System.Drawing.Imaging.ImageFormat.Tiff;
+                else
+                    return System.Drawing.Imaging.ImageFormat.Wmf;
+            }
+
+        }
+
+        #endregion
 
         static Profile()
         {
@@ -32,7 +98,10 @@ namespace HeliosPlus.Shared
             {
                 // ignored
             }
+
         }
+
+        public static Version Version = new Version(2, 1);
 
         public string Id { get; set; } = Guid.NewGuid().ToString("B");
 
@@ -41,11 +110,6 @@ namespace HeliosPlus.Shared
         {
             get
             {
-                if (_currentProfile == null)
-                {
-                    _currentProfile = GetCurrent(string.Empty);
-                }
-
                 return _currentProfile.Equals(this);
             }
         }
@@ -108,12 +172,43 @@ namespace HeliosPlus.Shared
 
         public string Name { get; set; }
 
-        public Path[] Paths { get; set; } = new Path[0];
+        public ProfilePath[] Paths { get; set; } = new ProfilePath[0];
 
         public static string ProfilesPath
         {
-            get => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                Assembly.GetExecutingAssembly().GetName().Name, $"DisplayProfiles_{Version.ToString(2)}.json");
+            get => System.IO.Path.Combine(AppDataPath, $"DisplayProfiles_{Version.ToString(2)}.json");
+        }
+
+        public static List<Profile> AllSavedProfiles 
+        { 
+            get => _allSavedProfiles;
+        }
+
+        public static Profile CurrentProfile
+        {
+            get => _currentProfile;
+        }
+
+
+        public ProfileIcon ProfileIcon
+        {
+            get => _profileIcon;
+            set
+            {
+                _profileIcon = value;
+            }
+
+        }
+
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public Bitmap ProfileBitmap
+        {
+            get => _profileBitmap;
+            set
+            {
+                _profileBitmap = value;
+            }
+
         }
 
         /// <inheritdoc />
@@ -132,7 +227,7 @@ namespace HeliosPlus.Shared
             return Paths.All(path => other.Paths.Contains(path));
         }
 
-        public static IEnumerable<Profile> GetAllProfiles()
+        public static IEnumerable<Profile> LoadAllProfiles()
         {
             try
             {
@@ -142,7 +237,8 @@ namespace HeliosPlus.Shared
 
                     if (!string.IsNullOrWhiteSpace(json))
                     {
-                        var profiles = JsonConvert.DeserializeObject<Profile[]>(json, new JsonSerializerSettings
+                        //var profiles = JsonConvert.DeserializeObject<Profile[]>(json, new JsonSerializerSettings
+                        var profiles = JsonConvert.DeserializeObject<List<Profile>>(json, new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
@@ -150,33 +246,62 @@ namespace HeliosPlus.Shared
                             TypeNameHandling = TypeNameHandling.Auto
                         });
 
-                        if (profiles.Any())
+                        //Convert array to list
+                        //List<Profile> profilesList = profiles.ToList<Profile>();
+
+                        // Find which entry is being used now, and save that info in a class variable
+                        Profile myCurrentProfile = new Profile
                         {
-                            SetAllProfiles(profiles);
+                            Name = "Current Display Profile",
+                            Paths = PathInfo.GetActivePaths().Select(info => new ProfilePath(info)).ToArray()
+                        };
+
+                        _currentProfile = myCurrentProfile;
+
+                        foreach (Profile loadedProfile in profiles)
+                        {
+                            // Save a profile Icon to the profile
+                            loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
+                            loadedProfile.ProfileBitmap = loadedProfile.ProfileIcon.ToBitmap(128,128);
+
+                            if (loadedProfile == myCurrentProfile) {
+                                _currentProfile = loadedProfile;
+                            }
+
                         }
 
-                        return profiles;
+                        _allSavedProfiles = profiles;
+
+                        return _allSavedProfiles;
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 // ignored
+                Console.WriteLine("Unable to deserialize profile: " + ex.Message);
             }
 
-            return new Profile[0];
-        }
-
-        public static Profile GetCurrent(string name = null)
-        {
+            // If we get here, then we don't have any profiles saved!
+            // So we gotta start from scratch
+            // Create a new profile based on our current display settings
             _currentProfile = new Profile
             {
-                Name = name,
-                Paths = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
+                Name = "Current Display Profile",
+                Paths = PathInfo.GetActivePaths().Select(info => new ProfilePath(info)).ToArray()
             };
 
-            return _currentProfile;
+            // Save a profile Icon to the profile
+            _currentProfile.ProfileIcon = new ProfileIcon(_currentProfile);
+            _currentProfile.ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(128, 128);
+
+            // Create a new empty list of all our display profiles as we don't have any saved!
+            _allSavedProfiles = new List<Profile>();
+
+            return _allSavedProfiles;
         }
+
+        
 
         public static bool operator ==(Profile left, Profile right)
         {
@@ -188,16 +313,43 @@ namespace HeliosPlus.Shared
             return !(left == right);
         }
 
-        public static void RefreshActiveStatus()
+        public static bool IsValidName(string testName)
         {
-            _currentProfile = null;
+            foreach (Profile loadedProfile in _allSavedProfiles)
+            {
+                if (loadedProfile.Name == testName)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
-        public static bool SetAllProfiles(IEnumerable<Profile> array)
+        public static bool IsValidId(string testId)
+        {
+            foreach (Profile loadedProfile in _allSavedProfiles)
+            {
+                if (loadedProfile.Id == testId)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        public static void RefreshActiveStatus()
+        {
+            //_currentProfile = null;
+        }
+
+        public static bool SaveAllProfiles()
         {
             try
             {
-                var json = JsonConvert.SerializeObject(array.ToArray(), Formatting.Indented, new JsonSerializerSettings
+                var json = JsonConvert.SerializeObject(_allSavedProfiles, Formatting.Indented, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Populate,
@@ -217,10 +369,52 @@ namespace HeliosPlus.Shared
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 // ignored
+                Console.WriteLine("Unable to serialize profile: " + ex.Message);
             }
+
+            return false;
+        }
+
+        public static bool SaveAllProfiles(List<Profile> profilesToSave)
+        {
+
+            List<string> jsonParsingErrors = new List<string>();
+
+            try
+            {
+                var json = JsonConvert.SerializeObject(profilesToSave, Formatting.Indented, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Include,
+                    DefaultValueHandling = DefaultValueHandling.Populate,
+                    TypeNameHandling = TypeNameHandling.Auto
+
+                });
+
+
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    var dir = System.IO.Path.GetDirectoryName(ProfilesPath);
+
+                    if (dir != null)
+                    {
+                        Directory.CreateDirectory(dir);
+                        File.WriteAllText(ProfilesPath, json, Encoding.Unicode);
+
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // ignored
+                Console.WriteLine("Unable to serialize profile: " + ex.Message);
+            }
+
+            // Overright the list of saved profiles as the new lot we received.
+            _allSavedProfiles = profilesToSave;
 
             return false;
         }

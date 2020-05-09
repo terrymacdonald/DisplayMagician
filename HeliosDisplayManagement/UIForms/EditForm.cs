@@ -49,7 +49,7 @@ namespace HeliosPlus.UIForms
                     return;
                 }
 
-                var currentProfile = Profile.GetCurrent(string.Empty);
+                var currentProfile = Profile.CurrentProfile;
                 Enabled = false;
                 var failed = false;
 
@@ -97,16 +97,16 @@ namespace HeliosPlus.UIForms
         {
             if (cb_clone.SelectedItem != null && SelectedDisplay != null)
             {
-                Path newSource;
+                ProfilePath newSource;
 
                 if (cb_clone.SelectedItem is string)
                 {
-                    newSource = new Path();
+                    newSource = new ProfilePath();
                     Profile.Paths = Profile.Paths.Concat(new[] {newSource}).ToArray();
                 }
                 else
                 {
-                    newSource = cb_clone.SelectedItem as Path;
+                    newSource = cb_clone.SelectedItem as ProfilePath;
                 }
 
                 if (newSource != null)
@@ -430,7 +430,7 @@ namespace HeliosPlus.UIForms
         private bool SaveProfile()
         {
             if (string.IsNullOrWhiteSpace(txt_name.Text) ||
-                Profile.GetAllProfiles()
+                Profile.LoadAllProfiles()
                     .Any(
                         profile =>
                             !profile.Equals(Profile) &&
