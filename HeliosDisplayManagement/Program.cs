@@ -489,8 +489,6 @@ namespace HeliosPlus {
             
         }
 
-
-
         private static void SwitchToExecutable(Profile profile, string executableToRun, string processToMonitor, uint timeout, string executableArguments)
         {
             var rollbackProfile = Profile.CurrentProfile;

@@ -46,19 +46,15 @@ namespace HeliosPlus.UIForms
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.il_profiles = new System.Windows.Forms.ImageList(this.components);
-            this.olv_profiles = new BrightIdeasSoftware.ObjectListView();
-            this.olvImageColumn = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-            this.olvNameColumn = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.btn_view_current = new System.Windows.Forms.Button();
             this.btn_save_or_rename = new System.Windows.Forms.Button();
             this.pb_down_arrow = new System.Windows.Forms.PictureBox();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.txt_profile_save_name = new System.Windows.Forms.TextBox();
-            this.errorProvider1 = new System.Windows.Forms.ErrorProvider(this.components);
+            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
+            this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.menu_profiles.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.olv_profiles)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.errorProvider1)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_apply
@@ -139,7 +135,7 @@ namespace HeliosPlus.UIForms
             this.dv_profile.PaddingX = 100;
             this.dv_profile.PaddingY = 100;
             this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(974, 602);
+            this.dv_profile.Size = new System.Drawing.Size(974, 579);
             this.dv_profile.TabIndex = 4;
             // 
             // menu_profiles
@@ -165,18 +161,6 @@ namespace HeliosPlus.UIForms
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
             this.toolStripMenuItem2.Size = new System.Drawing.Size(64, 6);
             // 
-            // cloneToolStripMenuItem
-            // 
-            this.cloneToolStripMenuItem.Name = "cloneToolStripMenuItem";
-            this.cloneToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
-            this.cloneToolStripMenuItem.Click += new System.EventHandler(this.Copy_Click);
-            // 
-            // createShortcutToolStripMenuItem
-            // 
-            this.createShortcutToolStripMenuItem.Name = "createShortcutToolStripMenuItem";
-            this.createShortcutToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
-            this.createShortcutToolStripMenuItem.Click += new System.EventHandler(this.CreateShortcut_Click);
-            // 
             // editToolStripMenuItem
             // 
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
@@ -195,47 +179,6 @@ namespace HeliosPlus.UIForms
             this.il_profiles.ImageSize = new System.Drawing.Size(64, 64);
             this.il_profiles.TransparentColor = System.Drawing.Color.Transparent;
             // 
-            // olv_profiles
-            // 
-            this.olv_profiles.AllColumns.Add(this.olvImageColumn);
-            this.olv_profiles.AllColumns.Add(this.olvNameColumn);
-            this.olv_profiles.CellEditActivation = BrightIdeasSoftware.ObjectListView.CellEditActivateMode.SingleClick;
-            this.olv_profiles.CellEditUseWholeCell = false;
-            this.olv_profiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.olvImageColumn,
-            this.olvNameColumn});
-            this.olv_profiles.ContextMenuStrip = this.menu_profiles;
-            this.olv_profiles.Cursor = System.Windows.Forms.Cursors.Default;
-            this.olv_profiles.GroupImageList = this.il_profiles;
-            this.olv_profiles.HasCollapsibleGroups = false;
-            this.olv_profiles.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-            this.olv_profiles.HideSelection = false;
-            this.olv_profiles.LargeImageList = this.il_profiles;
-            this.olv_profiles.Location = new System.Drawing.Point(1, 601);
-            this.olv_profiles.Name = "olv_profiles";
-            this.olv_profiles.OwnerDraw = false;
-            this.olv_profiles.ShowGroups = false;
-            this.olv_profiles.Size = new System.Drawing.Size(974, 125);
-            this.olv_profiles.SmallImageList = this.il_profiles;
-            this.olv_profiles.TabIndex = 13;
-            this.olv_profiles.TileSize = new System.Drawing.Size(128, 128);
-            this.olv_profiles.UseCompatibleStateImageBehavior = false;
-            this.olv_profiles.View = System.Windows.Forms.View.Tile;
-            this.olv_profiles.SelectedIndexChanged += new System.EventHandler(this.olv_profiles_SelectedIndexChanged);
-            // 
-            // olvImageColumn
-            // 
-            this.olvImageColumn.AspectName = "";
-            this.olvImageColumn.ImageAspectName = "ProfileBitmap";
-            this.olvImageColumn.Width = 256;
-            // 
-            // olvNameColumn
-            // 
-            this.olvNameColumn.AspectName = "Name";
-            this.olvNameColumn.Groupable = false;
-            this.olvNameColumn.ShowTextInHeader = false;
-            this.olvNameColumn.Width = 256;
-            // 
             // btn_view_current
             // 
             this.btn_view_current.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -250,6 +193,7 @@ namespace HeliosPlus.UIForms
             this.btn_view_current.TabIndex = 6;
             this.btn_view_current.Text = "View &Current";
             this.btn_view_current.UseVisualStyleBackColor = true;
+            this.btn_view_current.Click += new System.EventHandler(this.btn_view_current_Click);
             // 
             // btn_save_or_rename
             // 
@@ -259,7 +203,7 @@ namespace HeliosPlus.UIForms
             this.btn_save_or_rename.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save_or_rename.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save_or_rename.ForeColor = System.Drawing.Color.White;
-            this.btn_save_or_rename.Location = new System.Drawing.Point(221, 545);
+            this.btn_save_or_rename.Location = new System.Drawing.Point(221, 520);
             this.btn_save_or_rename.Name = "btn_save_or_rename";
             this.btn_save_or_rename.Size = new System.Drawing.Size(151, 33);
             this.btn_save_or_rename.TabIndex = 1;
@@ -271,7 +215,7 @@ namespace HeliosPlus.UIForms
             // 
             this.pb_down_arrow.BackColor = System.Drawing.Color.DimGray;
             this.pb_down_arrow.Image = ((System.Drawing.Image)(resources.GetObject("pb_down_arrow.Image")));
-            this.pb_down_arrow.Location = new System.Drawing.Point(461, 576);
+            this.pb_down_arrow.Location = new System.Drawing.Point(461, 551);
             this.pb_down_arrow.Name = "pb_down_arrow";
             this.pb_down_arrow.Size = new System.Drawing.Size(54, 27);
             this.pb_down_arrow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -293,15 +237,35 @@ namespace HeliosPlus.UIForms
             // txt_profile_save_name
             // 
             this.txt_profile_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_profile_save_name.Location = new System.Drawing.Point(372, 544);
+            this.txt_profile_save_name.Location = new System.Drawing.Point(372, 519);
             this.txt_profile_save_name.MaxLength = 200;
             this.txt_profile_save_name.Name = "txt_profile_save_name";
             this.txt_profile_save_name.Size = new System.Drawing.Size(384, 35);
             this.txt_profile_save_name.TabIndex = 20;
             // 
-            // errorProvider1
+            // imageList1
             // 
-            this.errorProvider1.ContainerControl = this;
+            this.imageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
+            this.imageList1.ImageSize = new System.Drawing.Size(16, 16);
+            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
+            // 
+            // ilv_saved_profiles
+            // 
+            this.ilv_saved_profiles.AllowCheckBoxClick = false;
+            this.ilv_saved_profiles.AllowColumnClick = false;
+            this.ilv_saved_profiles.AllowColumnResize = false;
+            this.ilv_saved_profiles.AllowItemReorder = false;
+            this.ilv_saved_profiles.AllowPaneResize = false;
+            this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 578);
+            this.ilv_saved_profiles.MultiSelect = false;
+            this.ilv_saved_profiles.Name = "ilv_saved_profiles";
+            this.ilv_saved_profiles.PersistentCacheDirectory = "";
+            this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(974, 128);
+            this.ilv_saved_profiles.TabIndex = 21;
+            this.ilv_saved_profiles.UseWIC = true;
+            this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
+            this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
             // 
             // DisplayProfileForm
             // 
@@ -311,6 +275,7 @@ namespace HeliosPlus.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 812);
+            this.Controls.Add(this.ilv_saved_profiles);
             this.Controls.Add(this.txt_profile_save_name);
             this.Controls.Add(this.lbl_profile_shown);
             this.Controls.Add(this.btn_save_or_rename);
@@ -319,9 +284,9 @@ namespace HeliosPlus.UIForms
             this.Controls.Add(this.btn_back);
             this.Controls.Add(this.btn_edit);
             this.Controls.Add(this.btn_apply);
-            this.Controls.Add(this.olv_profiles);
             this.Controls.Add(this.pb_down_arrow);
             this.Controls.Add(this.dv_profile);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimumSize = new System.Drawing.Size(800, 400);
@@ -333,9 +298,7 @@ namespace HeliosPlus.UIForms
             this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menu_profiles.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.olv_profiles)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.errorProvider1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -355,15 +318,13 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem createShortcutToolStripMenuItem;
         private System.Windows.Forms.ImageList il_profiles;
-        private BrightIdeasSoftware.ObjectListView olv_profiles;
-        private BrightIdeasSoftware.OLVColumn olvNameColumn;
-        private BrightIdeasSoftware.OLVColumn olvImageColumn;
         private System.Windows.Forms.Button btn_view_current;
         private System.Windows.Forms.Button btn_save_or_rename;
         private System.Windows.Forms.PictureBox pb_down_arrow;
         private System.Windows.Forms.Label lbl_profile_shown;
         private System.Windows.Forms.TextBox txt_profile_save_name;
-        private System.Windows.Forms.ErrorProvider errorProvider1;
+        private System.Windows.Forms.ImageList imageList1;
+        private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
     }
 }
 

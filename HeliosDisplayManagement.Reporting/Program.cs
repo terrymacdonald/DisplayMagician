@@ -16,6 +16,7 @@ namespace HeliosPlus.Reporting
     internal class Program
     {
         private static StreamWriter _writer;
+        internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
 
         private static void Dump<T>(
             IEnumerable<T> items,
