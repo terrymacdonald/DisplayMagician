@@ -222,17 +222,61 @@ namespace HeliosPlus.Shared
         /// <inheritdoc />
         public bool Equals(Profile other)
         {
+            //if the other profile points to null, it's not equal
             if (ReferenceEquals(null, other))
             {
                 return false;
             }
 
+            //if the other profile is the same object, it's equal
             if (ReferenceEquals(this, other))
             {
                 return true;
             }
 
-            return Paths.All(path => other.Paths.Contains(path));
+            //return Paths.All(path => other.Paths.Contains(path));
+            if (Paths.Length != other.Paths.Length)
+            {
+                return false;
+            }
+
+            int thisToOtherPathCount = 0;
+            int otherToThisPathCount = 0;
+
+            foreach (ProfilePath myProfilePath in Paths)
+            {
+                foreach (ProfilePath otherProfilePath in other.Paths)
+                {
+                    if (myProfilePath.Equals(otherProfilePath))
+                    {
+                        thisToOtherPathCount++;
+                    }
+                }
+                
+            }
+
+            foreach (ProfilePath otherProfilePath in other.Paths)
+            {
+                foreach (ProfilePath myProfilePath in Paths)
+                {
+                    if (myProfilePath.Equals(otherProfilePath))
+                    {
+                        otherToThisPathCount++;
+                    }
+                }
+
+            }
+
+            if (thisToOtherPathCount == otherToThisPathCount)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+            return false;
         }
 
         public static IEnumerable<Profile> LoadAllProfiles()
@@ -281,7 +325,7 @@ namespace HeliosPlus.Shared
                         loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
                         loadedProfile.ProfileBitmap = loadedProfile.ProfileIcon.ToBitmap(128,128);
 
-                        if (loadedProfile == myCurrentProfile) {
+                        if (loadedProfile.Equals(myCurrentProfile)) {
                             _currentProfile = loadedProfile;
                         }
 

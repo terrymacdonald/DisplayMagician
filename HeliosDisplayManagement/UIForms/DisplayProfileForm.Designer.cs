@@ -53,6 +53,7 @@ namespace HeliosPlus.UIForms
             this.txt_profile_save_name = new System.Windows.Forms.TextBox();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
+            this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -161,6 +162,16 @@ namespace HeliosPlus.UIForms
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
             this.toolStripMenuItem2.Size = new System.Drawing.Size(64, 6);
             // 
+            // cloneToolStripMenuItem
+            // 
+            this.cloneToolStripMenuItem.Name = "cloneToolStripMenuItem";
+            this.cloneToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
+            // 
+            // createShortcutToolStripMenuItem
+            // 
+            this.createShortcutToolStripMenuItem.Name = "createShortcutToolStripMenuItem";
+            this.createShortcutToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
+            // 
             // editToolStripMenuItem
             // 
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
@@ -242,6 +253,7 @@ namespace HeliosPlus.UIForms
             this.txt_profile_save_name.Name = "txt_profile_save_name";
             this.txt_profile_save_name.Size = new System.Drawing.Size(384, 35);
             this.txt_profile_save_name.TabIndex = 20;
+            this.txt_profile_save_name.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_profile_save_name_KeyDown);
             // 
             // imageList1
             // 
@@ -267,6 +279,18 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
             this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
             // 
+            // lbl_profile_shown_subtitle
+            // 
+            this.lbl_profile_shown_subtitle.AutoSize = true;
+            this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
+            this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
+            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(21, 45);
+            this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
+            this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(132, 20);
+            this.lbl_profile_shown_subtitle.TabIndex = 22;
+            this.lbl_profile_shown_subtitle.Text = "My Display Profile";
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -275,6 +299,7 @@ namespace HeliosPlus.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 812);
+            this.Controls.Add(this.lbl_profile_shown_subtitle);
             this.Controls.Add(this.ilv_saved_profiles);
             this.Controls.Add(this.txt_profile_save_name);
             this.Controls.Add(this.lbl_profile_shown);
@@ -325,6 +350,7 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.TextBox txt_profile_save_name;
         private System.Windows.Forms.ImageList imageList1;
         private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
+        private System.Windows.Forms.Label lbl_profile_shown_subtitle;
     }
 }
 

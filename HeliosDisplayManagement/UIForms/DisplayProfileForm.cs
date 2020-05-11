@@ -140,7 +140,7 @@ namespace HeliosPlus.UIForms
         public DisplayProfileForm()
         {
             InitializeComponent();
-
+            this.AcceptButton = this.btn_save_or_rename;
             //txt_profile_save_name.Validating += new System.ComponentModel.CancelEventHandler(txt_profile_save_name_Validating);
             //lv_profiles.Groups.Add(GroupCurrent, Language.Current);
             //lv_profiles.Groups.Add(GroupActive, Language.Active_Profiles);
@@ -381,8 +381,9 @@ namespace HeliosPlus.UIForms
             _savedProfiles = (List<Profile>)Profile.LoadAllProfiles();
             
 
-            dv_profile.Profile = Profile.CurrentProfile;
-            _selectedProfile = Profile.CurrentProfile;
+            //dv_profile.Profile = Profile.CurrentProfile;
+            //_selectedProfile = Profile.CurrentProfile;
+            
 
             // Temporarily stop updating the saved_profiles listview
             ilv_saved_profiles.SuspendLayout();
@@ -403,33 +404,10 @@ namespace HeliosPlus.UIForms
                     {
                         // We have already saved the current profile!
                         // so we need to show the current profile 
-                        // and make sure the current profile name has
-                        // been updated with the name saved last time
-                        // So as the current profile was already saved, we need to change
-                        // the save button to a rename one
-                        _saveOrRenameMode = "rename";
-                        btn_save_or_rename.Text = "Rename to";
                         // And finally we need to select the currentProfile, as it's the one we're using now
                         newItem.Selected = true;
-
                     }
-                    else
-                    {
-                        // We haven't saved the current profile yet, but we've saved others!
-                        // This is a new one
-                        _saveOrRenameMode = "save";
-                        btn_save_or_rename.Text = "Save As";
-                        if (!loadedProfile.IsPossible)
-                        {
-                            // TODO mark the imagelist view netItem in some way
-                            // to identify that it's not avalid profile, but
-                            // still allow users to select it to rename it and
-                            // see what the profile looks like.
-                        }
-                    }
-
                 }
-
                 ChangeSelectedProfile(Profile.CurrentProfile);
             }
             else
@@ -437,8 +415,6 @@ namespace HeliosPlus.UIForms
                 // If there are no profiles at all then we are starting from scratch!
                 // Show the profile in the DV window
                 // Use the current profile name in the label and the save name
-                _saveOrRenameMode = "save";
-                btn_save_or_rename.Text = "Save As";
                 ChangeSelectedProfile(Profile.CurrentProfile);
             }
 
@@ -460,20 +436,49 @@ namespace HeliosPlus.UIForms
         private void ChangeSelectedProfile(Profile profile)
         {
 
-            // We also need to load the saved profile name to show the user
-            ChangeSelectedProfileDetails(profile.Name);
             // And we need to update the actual selected profile too!
             _selectedProfile = profile;
+
+            // We also need to load the saved profile name to show the user
+            lbl_profile_shown.Text = _selectedProfile.Name;
+
+            // And update the save/rename textbox
+            txt_profile_save_name.Text = _selectedProfile.Name;
+
+
+            if (_selectedProfile.Name == Profile.CurrentProfile.Name)
+            {
+                lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
+                if (_savedProfiles.Contains(_selectedProfile))
+                {
+                    _saveOrRenameMode = "rename";
+                    btn_save_or_rename.Text = "Rename To";
+                }
+                else
+                {
+                    _saveOrRenameMode = "save";
+                    btn_save_or_rename.Text = "Save As";
+                }
+                btn_apply.Visible = false;
+            }
+            else
+            {
+                _saveOrRenameMode = "rename";
+                btn_save_or_rename.Text = "Rename To";
+                if (!_selectedProfile.IsPossible)
+                {
+                    lbl_profile_shown_subtitle.Text = "(Display Profile is not valid so cannot be used)";
+                    btn_apply.Visible = false;
+                }
+                else
+                {
+                    lbl_profile_shown_subtitle.Text = "";
+                    btn_apply.Visible = true;
+                }
+            }
             // And finally show the profile in the display view
             dv_profile.Profile = profile;
             dv_profile.Refresh();
-        }
-
-        private void ChangeSelectedProfileDetails(string profileName)
-        {
-            // We also need to load the saved profile name to show the user
-            lbl_profile_shown.Text = profileName;
-            txt_profile_save_name.Text = profileName;
         }
 
 
@@ -522,6 +527,12 @@ namespace HeliosPlus.UIForms
         private void btn_save_as_Click(object sender, EventArgs e)
         {
 
+            // Check the name is the same, and if so do nothing
+            if (_selectedProfile.Name.Equals(txt_profile_save_name.Text))
+            {
+                return;
+            }
+
             // Check the name is valid
             if (!IsValidFilename(txt_profile_save_name.Text))
             {
@@ -529,52 +540,46 @@ namespace HeliosPlus.UIForms
 
                 return;
             }
-            
+
+            // Check we're not already using the name
+            foreach (Profile savedProfile in Profile.AllSavedProfiles)
+            {
+                //if (String.Equals(txt_profile_save_name.Text, savedProfile.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (savedProfile.Name.Equals(txt_profile_save_name.Text))
+                {
+                    MessageBox.Show("Sorry, each saved display profile needs a unique name.", "Profile name already exists", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    return;
+                }
+            }
+
 
             // If we're saving the current profile as a new item
             // then we'll be in "save" mode
             if (_saveOrRenameMode == "save")
             {
 
-                // Check we're not already using the name
-                foreach (Profile savedProfile in Profile.AllSavedProfiles)
-                {
-                    //if (String.Equals(txt_profile_save_name.Text, savedProfile.Name, StringComparison.InvariantCultureIgnoreCase))
-                    if (_selectedProfile.Equals(Profile.CurrentProfile))
-                    {
-                        MessageBox.Show("Sorry, you can only have one saved display profile for each display configuration.", "Display profile already exists", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                        return;
-                    }
-                }
-
-
                 // We're in 'save' mode!
-                // Add the current profile to the list of profiles
+                // So we've already passed the check that says this profile is unique
+                
+                // Add the current profile to the list of profiles so it gets saved later
                 _savedProfiles.Add(_selectedProfile);
-                // Then save the profiles so we always have it updated
-                Profile.SaveAllProfiles(_savedProfiles);
+
+                /*// Also update the imagelistview so that 
                 // Load the currentProfile image into the imagelistview
                 ImageListViewItem newItem = new ImageListViewItem(_selectedProfile.SavedProfileCacheFilename, _selectedProfile.Name);
                 newItem.Selected = true;
-                ilv_saved_profiles.Items.Add(newItem);
+                ilv_saved_profiles.Items.Add(newItem);*/
 
-                //ilv_saved_profiles.Refresh();
-                /*foreach (ImageListViewItem myItem in ilv_saved_profiles.Items)
-                {
-                    if (_selectedProfile.Name == myItem.Text) 
-                    {
-                        myItem.Selected = true;
-                        myItem.Focused = true;
-                    }
-                    
-                }*/
             }
             else
             {
                 // We're in 'rename' mode!
-                // THen rename the imagelistview item
+                // Lets save the old names for usage next
                 string oldProfileName = _selectedProfile.Name;
+                string oldProfileCacheFilename = _selectedProfile.SavedProfileCacheFilename;
+
+                // Lets rename the entry in the imagelistview to the new name
                 foreach (ImageListViewItem myItem in ilv_saved_profiles.Items)
                 {
                     if (myItem.Text == oldProfileName)
@@ -582,22 +587,28 @@ namespace HeliosPlus.UIForms
                         myItem.Text = txt_profile_save_name.Text;
                     }
                 }
-                // So lets rename the profile itself in the saved profiles
-                // and the selectprofile name too
-                foreach (Profile savedProfile in _savedProfiles)
-                {
-                    if (savedProfile.Equals(_selectedProfile))
-                    {
-                        _selectedProfile.Name = txt_profile_save_name.Text;
-                        savedProfile.Name = txt_profile_save_name.Text;
-                        ChangeSelectedProfileDetails(_selectedProfile.Name);
-                    }
-                }
+                // Lets rename the selectedProfile to the new name
+                _selectedProfile.Name = txt_profile_save_name.Text;
 
-                // TODO - delete the old PNG that we renamed from so we don't get a buildup of them!
-                // Then save all the profiles to lock it in
-                Profile.SaveAllProfiles(_savedProfiles);
+                // Lets update the rest of the profile screen too
+                lbl_profile_shown.Text = txt_profile_save_name.Text;
+
+                // Then we'll delete the old PNG that we renamed from so we don't get a buildup of them!
+                // as a new one will be created when we save later
+                try
+                {
+                    File.Delete(oldProfileCacheFilename);
+                }
+                catch(Exception ex)
+                {
+                    // TODO write error to console
+                    // TODO specify the correct the exceptions 
+                }
             }
+
+            // Then save the profiles so we always have it updated
+            // Generating the imagelistview images automatically as we save.
+            Profile.SaveAllProfiles(_savedProfiles);
 
             // now update the profiles image listview
             //ilv_saved_profiles.Refresh();
@@ -620,6 +631,16 @@ namespace HeliosPlus.UIForms
         {
             ChangeSelectedProfile(Profile.CurrentProfile);
         }
+
+        private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode.Equals(Keys.Enter))
+            {
+                MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+            }
+        }
+
 
         /*protected void txt_profile_save_name_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {
