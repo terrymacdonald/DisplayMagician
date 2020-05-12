@@ -97,28 +97,28 @@ namespace HeliosPlus.UIForms
         {
             if (cb_clone.SelectedItem != null && SelectedDisplay != null)
             {
-                ProfilePath newSource;
+                ProfileViewport newSource;
 
                 if (cb_clone.SelectedItem is string)
                 {
-                    newSource = new ProfilePath();
-                    Profile.Paths = Profile.Paths.Concat(new[] {newSource}).ToArray();
+                    newSource = new ProfileViewport();
+                    Profile.Viewports = Profile.Viewports.Concat(new[] {newSource}).ToArray();
                 }
                 else
                 {
-                    newSource = cb_clone.SelectedItem as ProfilePath;
+                    newSource = cb_clone.SelectedItem as ProfileViewport;
                 }
 
                 if (newSource != null)
                 {
                     var target = SelectedDisplay.GetPathTarget(Profile);
                     var source = SelectedDisplay.GetPathSource(Profile);
-                    source.Targets = source.Targets.Where(pathTarget => pathTarget != target).ToArray();
-                    newSource.Targets = newSource.Targets.Concat(new[] {target}).ToArray();
+                    source.TargetDisplays = source.TargetDisplays.Where(pathTarget => pathTarget != target).ToArray();
+                    newSource.TargetDisplays = newSource.TargetDisplays.Concat(new[] {target}).ToArray();
 
-                    if (source.Targets.Length == 0)
+                    if (source.TargetDisplays.Length == 0)
                     {
-                        Profile.Paths = Profile.Paths.Where(path => path != source).ToArray();
+                        Profile.Viewports = Profile.Viewports.Where(path => path != source).ToArray();
                     }
                 }
 
@@ -351,14 +351,14 @@ namespace HeliosPlus.UIForms
 
                     foreach (
                         var potentialClone in
-                        Profile.Paths.Where(
+                        Profile.Viewports.Where(
                             path =>
                                 path.Resolution == pathSource.Resolution &&
-                                path.Targets.First().DevicePath != SelectedDisplay.Path))
+                                path.TargetDisplays.First().DevicePath != SelectedDisplay.Path))
                     {
                         cb_clone.Items.Add(potentialClone);
 
-                        if (potentialClone.Targets.Contains(pathTarget))
+                        if (potentialClone.TargetDisplays.Contains(pathTarget))
                         {
                             cb_clone.SelectedIndex = cb_clone.Items.Count - 1;
                         }

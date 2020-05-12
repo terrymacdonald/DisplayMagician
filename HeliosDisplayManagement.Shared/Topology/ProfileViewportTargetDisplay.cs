@@ -7,9 +7,9 @@ using Newtonsoft.Json.Converters;
 
 namespace HeliosPlus.Shared.Topology
 {
-    public class ProfilePathTarget : IEquatable<ProfilePathTarget>
+    public class ProfileViewportTargetDisplay : IEquatable<ProfileViewportTargetDisplay>
     {
-        public ProfilePathTarget(PathTargetInfo targetInfo, SurroundTopology surround = null)
+        public ProfileViewportTargetDisplay(PathTargetInfo targetInfo, SurroundTopology surround = null)
         {
             DevicePath = targetInfo.DisplayTarget.DevicePath;
             var index = DevicePath.IndexOf("{", StringComparison.InvariantCultureIgnoreCase);
@@ -37,7 +37,7 @@ namespace HeliosPlus.Shared.Topology
         }
 
 
-        public ProfilePathTarget()
+        public ProfileViewportTargetDisplay()
         {
         }
 
@@ -59,7 +59,7 @@ namespace HeliosPlus.Shared.Topology
         public SurroundTopology SurroundTopology { get; set; }
 
         /// <inheritdoc />
-        public bool Equals(ProfilePathTarget other)
+        public bool Equals(ProfileViewportTargetDisplay other)
         {
             if (ReferenceEquals(null, other))
             {
@@ -71,20 +71,45 @@ namespace HeliosPlus.Shared.Topology
                 return true;
             }
 
-            return FrequencyInMillihertz == other.FrequencyInMillihertz &&
-                   Rotation == other.Rotation &&
-                   Scaling == other.Scaling &&
-                   ScanLineOrdering == other.ScanLineOrdering &&
-                   DevicePath == other.DevicePath &&
-                   SurroundTopology == other.SurroundTopology;
+            if (FrequencyInMillihertz.Equals(other.FrequencyInMillihertz) &&
+                Rotation.Equals(other.Rotation) &&
+                Scaling.Equals(other.Scaling) &&
+                ScanLineOrdering.Equals(other.ScanLineOrdering) &&
+                DevicePath.Equals(other.DevicePath))
+            {
+                if (SurroundTopology == null)
+                {
+                    if (other.SurroundTopology == null)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (other.SurroundTopology == null)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return SurroundTopology.Equals(other.SurroundTopology);
+                    }                   
+                }
+            }
+
+            return false;
         }
 
-        public static bool operator ==(ProfilePathTarget left, ProfilePathTarget right)
+        public static bool operator ==(ProfileViewportTargetDisplay left, ProfileViewportTargetDisplay right)
         {
             return Equals(left, right) || left?.Equals(right) == true;
         }
 
-        public static bool operator !=(ProfilePathTarget left, ProfilePathTarget right)
+        public static bool operator !=(ProfileViewportTargetDisplay left, ProfileViewportTargetDisplay right)
         {
             return !(left == right);
         }
@@ -107,7 +132,7 @@ namespace HeliosPlus.Shared.Topology
                 return false;
             }
 
-            return Equals((ProfilePathTarget) obj);
+            return Equals((ProfileViewportTargetDisplay) obj);
         }
 
         /// <inheritdoc />

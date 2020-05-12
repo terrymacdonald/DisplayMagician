@@ -2,7 +2,7 @@
 
 namespace HeliosPlus.Shared.Topology
 {
-    internal static class ProfilePathHelper
+    internal static class ProfileViewportHelper
     {
         public static DisplayConfigRotation ToDisplayConfigRotation(this Rotation rotation)
         {

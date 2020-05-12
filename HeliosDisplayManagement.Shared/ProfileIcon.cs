@@ -27,7 +27,7 @@ namespace HeliosPlus.Shared
 
         // ReSharper disable once TooManyArguments
         public static RectangleF CalculateViewSize(
-            ProfilePath[] paths,
+            ProfileViewport[] paths,
             bool withPadding = false,
             int paddingX = 0,
             int paddingY = 0)
@@ -70,11 +70,11 @@ namespace HeliosPlus.Shared
             return resolution;
         }
 
-        public static Size NormalizeResolution(ProfilePath path)
+        public static Size NormalizeResolution(ProfileViewport path)
         {
             var bigest = Size.Empty;
 
-            foreach (var target in path.Targets)
+            foreach (var target in path.TargetDisplays)
             {
                 var res = NormalizeResolution(path.Resolution, target.Rotation);
 
@@ -143,7 +143,7 @@ namespace HeliosPlus.Shared
 
         public Bitmap ToBitmapOverly(Bitmap bitmap)
         {
-            var viewSize = CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
             var width = bitmap.Width * 0.7f;
             var height = width / viewSize.Width * viewSize.Height;
 
@@ -246,16 +246,16 @@ namespace HeliosPlus.Shared
             return multiIcon;
         }
 
-        private void DrawPath(Graphics g, ProfilePath path)
+        private void DrawPath(Graphics g, ProfileViewport path)
         {
             var res = NormalizeResolution(path);
             var rect = new Rectangle(path.Position, res);
-            var rows = rect.Width < rect.Height ? path.Targets.Length : 1;
-            var cols = rect.Width >= rect.Height ? path.Targets.Length : 1;
+            var rows = rect.Width < rect.Height ? path.TargetDisplays.Length : 1;
+            var cols = rect.Width >= rect.Height ? path.TargetDisplays.Length : 1;
 
-            for (var i = 0; i < path.Targets.Length; i++)
+            for (var i = 0; i < path.TargetDisplays.Length; i++)
             {
-                DrawTarget(g, path, path.Targets[i],
+                DrawTarget(g, path, path.TargetDisplays[i],
                     new Rectangle(
                         rect.X + PaddingX,
                         rect.Y + PaddingY,
@@ -268,8 +268,8 @@ namespace HeliosPlus.Shared
         // ReSharper disable once TooManyArguments
         private void DrawTarget(
             Graphics g,
-            ProfilePath path,
-            ProfilePathTarget target,
+            ProfileViewport path,
+            ProfileViewportTargetDisplay target,
             Rectangle rect,
             int row,
             int col,
@@ -286,7 +286,7 @@ namespace HeliosPlus.Shared
             }
             //else if (target.EyefinityTopology != null)
             //    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 99, 0, 0)), targetRect);
-            else if (path.Targets.Length > 1)
+            else if (path.TargetDisplays.Length > 1)
             {
                 g.FillRectangle(new SolidBrush(Color.FromArgb(255, 255, 97, 27)), targetRect);
             }
@@ -304,7 +304,7 @@ namespace HeliosPlus.Shared
 
         private void DrawView(Graphics g, float width, float height)
         {
-            var viewSize = CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
             var standPadding = height * 0.005f;
             height -= standPadding * 8;
             var factor = Math.Min((width - 2 * standPadding - 1) / viewSize.Width,
@@ -341,7 +341,7 @@ namespace HeliosPlus.Shared
                     viewSize.Width, viewSize.Height);
             }
 
-            foreach (var path in _profile.Paths)
+            foreach (var path in _profile.Viewports)
             {
                 DrawPath(g, path);
             }

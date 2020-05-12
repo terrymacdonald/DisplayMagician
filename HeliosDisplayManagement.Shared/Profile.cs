@@ -15,6 +15,8 @@ using NvAPIWrapper.Native.Mosaic;
 using HeliosPlus.Shared.Topology;
 using System.Drawing;
 using System.Drawing.Imaging;
+using WindowsDisplayAPI;
+using System.Text.RegularExpressions;
 
 namespace HeliosPlus.Shared
 {
@@ -24,6 +26,7 @@ namespace HeliosPlus.Shared
         private static List<Profile> _allSavedProfiles = new List<Profile>();
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap;
+        private static List<Display> _availableDisplays;
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
 
@@ -87,7 +90,6 @@ namespace HeliosPlus.Shared
         }
 
         #endregion
-
         static Profile()
         {
             try
@@ -119,8 +121,65 @@ namespace HeliosPlus.Shared
         {
             get
             {
-                var surroundTopologies =
-                    Paths.SelectMany(path => path.Targets)
+
+                // Firstly check which displays are attached to this computer
+                _availableDisplays = Display.GetDisplays().ToList();
+                //  DevicePath	"\\\\?\\DISPLAY#DELD065#5&38860457&0&UID4609#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"	
+                List<string> availableDevicePath = new List<string>();
+                foreach (Display aDisplay in _availableDisplays)
+                {
+                    // Grab the shorter device path from the display Api
+                    Regex devicePathRegex = new Regex(@"^(.+?)#\{", RegexOptions.IgnoreCase);
+                    Match devicePathMatches = devicePathRegex.Match(aDisplay.DevicePath);
+                    if (devicePathMatches.Success)
+                    {
+                        availableDevicePath.Add(devicePathMatches.Groups[1].Value.ToString());
+                    }
+                }
+
+                if (availableDevicePath.Count > 0)
+                {
+
+                    int profileDisplaysCount = 0;
+                    int profileDisplaysFoundCount = 0;
+                    // Then go through the displays in the profile and check they're live
+                    foreach (ProfileViewport profileViewport in Viewports)
+                    {
+                        foreach (ProfileViewportTargetDisplay profileViewportTargetDisplay in profileViewport.TargetDisplays)
+                        {
+                            profileDisplaysCount++;
+                            if (profileViewportTargetDisplay.DevicePath.Equals(availableDevicePath));
+                                profileDisplaysFoundCount++;
+                        }
+                    }
+
+                    if (profileDisplaysCount == profileDisplaysFoundCount)
+                    {
+                        // If we found all our profile displays in the available displays!
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+
+
+                // This should include the ones not currently enabled.
+                var displayAdapters = DisplayAdapter.GetDisplayAdapters().ToArray();
+                var displays = Display.GetDisplays().ToArray();
+
+
+                var physicalGPUs = PhysicalGPU.GetPhysicalGPUs();
+                var displayDevices = physicalGPUs[0].GetDisplayDevices().ToArray();
+                return true;
+
+                /*var surroundTopologies =
+                    Viewports.SelectMany(path => path.TargetDisplays)
                         .Select(target => target.SurroundTopology)
                         .Where(topology => topology != null).ToArray();
 
@@ -150,7 +209,7 @@ namespace HeliosPlus.Shared
                         }
 
                         // And to see if one path have two surround targets
-                        if (Paths.Any(path => path.Targets.Count(target => target.SurroundTopology != null) > 1))
+                        if (Viewports.Any(path => path.TargetDisplays.Count(target => target.SurroundTopology != null) > 1))
                         {
                             return false;
                         }
@@ -165,14 +224,14 @@ namespace HeliosPlus.Shared
                     return false;
                 }
 
-                return true;
+                return true;*/
                 //return PathInfo.ValidatePathInfos(Paths.Select(path => path.ToPathInfo()));
             }
         }
 
         public string Name { get; set; }
 
-        public ProfilePath[] Paths { get; set; } = new ProfilePath[0];
+        public ProfileViewport[] Viewports { get; set; } = new ProfileViewport[0];
 
         public static string SavedProfilesFilePath
         {
@@ -197,7 +256,16 @@ namespace HeliosPlus.Shared
 
         public ProfileIcon ProfileIcon
         {
-            get => _profileIcon;
+            get
+            {
+                if (_profileIcon != null)
+                    return _profileIcon;
+                else
+                {
+                    _profileIcon = new ProfileIcon(this);
+                    return _profileIcon;
+                }
+            }
             set
             {
                 _profileIcon = value;
@@ -211,7 +279,16 @@ namespace HeliosPlus.Shared
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap ProfileBitmap
         {
-            get => _profileBitmap;
+            get
+            {
+                if (_profileBitmap != null)
+                    return _profileBitmap;
+                else
+                {
+                    _profileBitmap = this.ProfileIcon.ToBitmap(128, 128);
+                    return _profileBitmap;
+                }
+            }
             set
             {
                 _profileBitmap = value;
@@ -235,39 +312,39 @@ namespace HeliosPlus.Shared
             }
 
             //return Paths.All(path => other.Paths.Contains(path));
-            if (Paths.Length != other.Paths.Length)
+            if (Viewports.Length != other.Viewports.Length)
             {
                 return false;
             }
 
-            int thisToOtherPathCount = 0;
-            int otherToThisPathCount = 0;
+            int thisToOtherViewportCount = 0;
+            int otherToThisViewportCount = 0;
 
-            foreach (ProfilePath myProfilePath in Paths)
+            foreach (ProfileViewport myProfileViewport in Viewports)
             {
-                foreach (ProfilePath otherProfilePath in other.Paths)
+                foreach (ProfileViewport otherProfileViewport in other.Viewports)
                 {
-                    if (myProfilePath.Equals(otherProfilePath))
+                    if (myProfileViewport.Equals(otherProfileViewport))
                     {
-                        thisToOtherPathCount++;
+                        thisToOtherViewportCount++;
                     }
                 }
                 
             }
 
-            foreach (ProfilePath otherProfilePath in other.Paths)
+            foreach (ProfileViewport otherProfileViewport in other.Viewports)
             {
-                foreach (ProfilePath myProfilePath in Paths)
+                foreach (ProfileViewport myProfileViewport in Viewports)
                 {
-                    if (myProfilePath.Equals(otherProfilePath))
+                    if (myProfileViewport.Equals(otherProfileViewport))
                     {
-                        otherToThisPathCount++;
+                        otherToThisViewportCount++;
                     }
                 }
 
             }
 
-            if (thisToOtherPathCount == otherToThisPathCount)
+            if (thisToOtherViewportCount == otherToThisViewportCount)
             {
                 return true;
             }
@@ -314,7 +391,7 @@ namespace HeliosPlus.Shared
                     Profile myCurrentProfile = new Profile
                     {
                         Name = "Current Display Profile",
-                        Paths = PathInfo.GetActivePaths().Select(info => new ProfilePath(info)).ToArray()
+                        Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
                     };
 
                     _currentProfile = myCurrentProfile;
@@ -343,7 +420,7 @@ namespace HeliosPlus.Shared
             _currentProfile = new Profile
             {
                 Name = "Current Display Profile",
-                Paths = PathInfo.GetActivePaths().Select(info => new ProfilePath(info)).ToArray()
+                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
             };
 
             // Save a profile Icon to the profile
@@ -426,17 +503,7 @@ namespace HeliosPlus.Shared
             // Now we loop over the profiles and save their images for later
             foreach (Profile profileToSave in profilesToSave)
             {
-                profileToSave.SavedProfileCacheFilename = Path.Combine(SavedProfilesPath, GetValidFilename(String.Concat(profileToSave.Name + @".png")));
-                try
-                {
-
-                    profileToSave.ProfileBitmap.Save(profileToSave.SavedProfileCacheFilename, ImageFormat.Png);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Unable to create profile image in cache using " + profileToSave.SavedProfileCacheFilename + ": " + ex.Message);
-                }
-
+                profileToSave.SaveProfileImageToCache();
             }
 
             try
@@ -500,7 +567,7 @@ namespace HeliosPlus.Shared
         {
             unchecked
             {
-                return (Paths?.GetHashCode() ?? 0) * 397;
+                return (Viewports?.GetHashCode() ?? 0) * 397;
             }
         }
 
@@ -520,6 +587,21 @@ namespace HeliosPlus.Shared
             return uncheckedFilename;
         }
 
+        public bool SaveProfileImageToCache()
+        {
+            this.SavedProfileCacheFilename = Path.Combine(SavedProfilesPath, GetValidFilename(String.Concat(this.Name + @".png")));
+            try
+            {
+                this.ProfileBitmap.Save(this.SavedProfileCacheFilename, ImageFormat.Png);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Unable to create profile image in cache using " + this.SavedProfileCacheFilename + ": " + ex.Message);
+                return false;
+            }
+        }
+
         public bool Apply()
         {
             try
@@ -529,7 +611,7 @@ namespace HeliosPlus.Shared
                 try
                 {
                     var surroundTopologies =
-                        Paths.SelectMany(path => path.Targets)
+                        Viewports.SelectMany(path => path.TargetDisplays)
                             .Select(target => target.SurroundTopology)
                             .Where(topology => topology != null)
                             .Select(topology => topology.ToGridTopology())
@@ -560,7 +642,7 @@ namespace HeliosPlus.Shared
                 }
 
                 Thread.Sleep(18000);
-                var pathInfos = Paths.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+                var pathInfos = Viewports.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
 
                 if (!pathInfos.Any())
                 {

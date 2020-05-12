@@ -59,18 +59,49 @@ namespace HeliosPlus.Shared.NVIDIA
                 return true;
             }
 
-            return AcceleratePrimaryDisplay == other.AcceleratePrimaryDisplay &&
-                   ApplyWithBezelCorrectedResolution == other.ApplyWithBezelCorrectedResolution &&
-                   BaseMosaicPanoramic == other.BaseMosaicPanoramic &&
-                   ColorDepth == other.ColorDepth &&
-                   Columns == other.Columns &&
-                   Displays.Length == other.Displays.Length &&
+            if (AcceleratePrimaryDisplay.Equals(other.AcceleratePrimaryDisplay))
+                Console.WriteLine("accprimdisp is true");
+            if (ApplyWithBezelCorrectedResolution.Equals(other.ApplyWithBezelCorrectedResolution))
+                Console.WriteLine("appwithbezelcorrectres is true");
+            if (BaseMosaicPanoramic.Equals(other.BaseMosaicPanoramic))
+                Console.WriteLine("basemosiacis true");
+            if (ColorDepth.Equals(other.ColorDepth))
+                Console.WriteLine("colordepth is true");
+            if (Columns.Equals(other.Columns) )
+                Console.WriteLine("colums is true");
+            if (Displays.Length.Equals(other.Displays.Length))
+                Console.WriteLine("disp length is true");
+            if (Displays.All(display => other.Displays.Contains(display)))
+                Console.WriteLine("disp all is true");
+            if (DriverReloadAllowed.Equals(other.DriverReloadAllowed) )
+                Console.WriteLine("driver reload is true");
+            if (Frequency.Equals(other.Frequency) )
+                Console.WriteLine("freq is true");
+            if (ImmersiveGaming.Equals(other.ImmersiveGaming) )
+                Console.WriteLine("immers is true");
+            if (Resolution.Equals(other.Resolution))
+                Console.WriteLine("res is true");
+            if (Rows.Equals(other.Rows))
+                Console.WriteLine("rows is true");
+
+
+            if (AcceleratePrimaryDisplay.Equals(other.AcceleratePrimaryDisplay) &&
+                   ApplyWithBezelCorrectedResolution.Equals(other.ApplyWithBezelCorrectedResolution) &&
+                   BaseMosaicPanoramic.Equals(other.BaseMosaicPanoramic) &&
+                   ColorDepth.Equals(other.ColorDepth) &&
+                   Columns.Equals(other.Columns) &&
+                   Displays.Length.Equals(other.Displays.Length) &&
                    Displays.All(display => other.Displays.Contains(display)) &&
-                   DriverReloadAllowed == other.DriverReloadAllowed &&
-                   Frequency == other.Frequency &&
-                   ImmersiveGaming == other.ImmersiveGaming &&
+                   DriverReloadAllowed.Equals(other.DriverReloadAllowed) &&
+                   Frequency.Equals(other.Frequency) &&
+                   ImmersiveGaming.Equals(other.ImmersiveGaming) &&
                    Resolution.Equals(other.Resolution) &&
-                   Rows == other.Rows;
+                   Rows.Equals(other.Rows))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         // ReSharper disable once ExcessiveIndentation

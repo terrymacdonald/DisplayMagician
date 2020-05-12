@@ -38,7 +38,7 @@ namespace HeliosPlus.Shared.UserControls
             }
         }
 
-        private void DrawPath(Graphics g, ProfilePath path)
+        private void DrawPath(Graphics g, ProfileViewport path)
         {
             var res = ProfileIcon.NormalizeResolution(path);
             var rect = new Rectangle(path.Position, res);
@@ -52,12 +52,12 @@ namespace HeliosPlus.Shared.UserControls
             var strSize = DrawString(g, str, rect.Size, new PointF(rect.X - PaddingX / 2, rect.Y + PaddingY / 2),
                 StringAlignment.Near, StringAlignment.Far);
 
-            var rows = rect.Width < rect.Height ? path.Targets.Length : 1;
-            var cols = rect.Width >= rect.Height ? path.Targets.Length : 1;
+            var rows = rect.Width < rect.Height ? path.TargetDisplays.Length : 1;
+            var cols = rect.Width >= rect.Height ? path.TargetDisplays.Length : 1;
 
-            for (var i = 0; i < path.Targets.Length; i++)
+            for (var i = 0; i < path.TargetDisplays.Length; i++)
             {
-                DrawTarget(g, path, path.Targets[i],
+                DrawTarget(g, path, path.TargetDisplays[i],
                     new Rectangle(rect.X + PaddingX, rect.Y + strSize.Height + PaddingY, rect.Width - 2 * PaddingX,
                         rect.Height - strSize.Height - 2 * PaddingY),
                     rows > 1 ? i : 0, cols > 1 ? i : 0, rows, cols);
@@ -89,7 +89,7 @@ namespace HeliosPlus.Shared.UserControls
             return new Size((int) stringSize.Width, (int) stringSize.Height);
         }
 
-        private void DrawSurroundTopology(Graphics g, ProfilePathTarget target, Rectangle rect)
+        private void DrawSurroundTopology(Graphics g, ProfileViewportTargetDisplay target, Rectangle rect)
         {
             g.DrawRectangle(Pens.Black, rect);
 
@@ -144,8 +144,8 @@ namespace HeliosPlus.Shared.UserControls
 
         private void DrawTarget(
             Graphics g,
-            ProfilePath path,
-            ProfilePathTarget target,
+            ProfileViewport path,
+            ProfileViewportTargetDisplay target,
             Rectangle rect,
             int row,
             int col,
@@ -162,7 +162,7 @@ namespace HeliosPlus.Shared.UserControls
             }
             //else if (target.EyefinityTopology != null)
             //    g.FillRectangle(new SolidBrush(Color.FromArgb(150, 99, 0, 0)), targetRect);
-            else if (path.Targets.Length > 1)
+            else if (path.TargetDisplays.Length > 1)
             {
                 g.FillRectangle(new SolidBrush(Color.FromArgb(150, 255, 97, 27)), targetRect);
             }
@@ -220,7 +220,7 @@ namespace HeliosPlus.Shared.UserControls
 
         private void DrawView(Graphics g)
         {
-            var viewSize = ProfileIcon.CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = ProfileIcon.CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
             var factor = Math.Min(Width / viewSize.Width, Height / viewSize.Height);
             g.ScaleTransform(factor, factor);
 
@@ -228,7 +228,7 @@ namespace HeliosPlus.Shared.UserControls
             var yOffset = (Height / factor - viewSize.Height) / 2f;
             g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
 
-            foreach (var path in _profile.Paths)
+            foreach (var path in _profile.Viewports)
             {
                 DrawPath(g, path);
             }
