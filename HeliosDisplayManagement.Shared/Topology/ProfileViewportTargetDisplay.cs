@@ -4,6 +4,7 @@ using WindowsDisplayAPI.DisplayConfig;
 using HeliosPlus.Shared.NVIDIA;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
 
 namespace HeliosPlus.Shared.Topology
 {
@@ -59,99 +60,6 @@ namespace HeliosPlus.Shared.Topology
         public SurroundTopology SurroundTopology { get; set; }
 
         /// <inheritdoc />
-        public bool Equals(ProfileViewportTargetDisplay other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            if (FrequencyInMillihertz.Equals(other.FrequencyInMillihertz) &&
-                Rotation.Equals(other.Rotation) &&
-                Scaling.Equals(other.Scaling) &&
-                ScanLineOrdering.Equals(other.ScanLineOrdering) &&
-                DevicePath.Equals(other.DevicePath))
-            {
-                if (SurroundTopology == null)
-                {
-                    if (other.SurroundTopology == null)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (other.SurroundTopology == null)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        return SurroundTopology.Equals(other.SurroundTopology);
-                    }                   
-                }
-            }
-
-            return false;
-        }
-
-        public static bool operator ==(ProfileViewportTargetDisplay left, ProfileViewportTargetDisplay right)
-        {
-            return Equals(left, right) || left?.Equals(right) == true;
-        }
-
-        public static bool operator !=(ProfileViewportTargetDisplay left, ProfileViewportTargetDisplay right)
-        {
-            return !(left == right);
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-
-            return Equals((ProfileViewportTargetDisplay) obj);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = FrequencyInMillihertz.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int) Rotation;
-                hashCode = (hashCode * 397) ^ (int) Scaling;
-                hashCode = (hashCode * 397) ^ (int) ScanLineOrdering;
-                hashCode = (hashCode * 397) ^ DevicePath.GetHashCode();
-                hashCode = (hashCode * 397) ^ SurroundTopology?.GetHashCode() ?? 0;
-
-                return hashCode;
-            }
-        }
-
-        /// <inheritdoc />
         public override string ToString()
         {
             return DisplayName ?? $"PathTarget {DevicePath}";
@@ -175,5 +83,157 @@ namespace HeliosPlus.Shared.Topology
                 FrequencyInMillihertz, ScanLineOrdering.ToDisplayConfigScanLineOrdering(),
                 Rotation.ToDisplayConfigRotation(), Scaling.ToDisplayConfigScaling());
         }
+
+        // The public override for the Object.Equals
+        public override bool Equals(object obj)
+        {
+            return this.Equals(obj as ProfileViewportTargetDisplay);
+        }
+
+        // Profiles are equal if their contents (except name) are equal
+        public bool Equals(ProfileViewportTargetDisplay other)
+        {
+
+            // If parameter is null, return false.
+            if (Object.ReferenceEquals(other, null))
+                return false;
+
+            // Optimization for a common success case.
+            if (Object.ReferenceEquals(this, other))
+                return true;
+
+            // If run-time types are not exactly the same, return false.
+            if (this.GetType() != other.GetType())
+                return false;
+
+            // Check whether the Profile Viewport properties are equal
+            // Two profiles are equal only when they have the same viewport data exactly
+            if (FrequencyInMillihertz == other.FrequencyInMillihertz &&
+                Rotation.Equals(other.Rotation) &&
+                Scaling.Equals(other.Scaling) &&
+                ScanLineOrdering.Equals(other.ScanLineOrdering) &&
+                DisplayName.Equals(other.DisplayName) &&
+                DevicePath.Equals(other.DevicePath))
+            {
+                // If the above all match, then we need to check the SurroundTopology matches
+                if (SurroundTopology == null && other.SurroundTopology == null)
+                    return true;
+                else if (SurroundTopology != null && other.SurroundTopology == null)
+                    return false;
+                else if (SurroundTopology == null && other.SurroundTopology != null)
+                    return false;
+                else if (SurroundTopology.Equals(other.SurroundTopology))
+                    return true;
+
+                return false;
+            }
+            else
+                return false;
+        }
+
+        // If Equals() returns true for this object compared to  another
+        // then GetHashCode() must return the same value for these objects.
+        public override int GetHashCode()
+        {
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashFrequencyInMillihertz = FrequencyInMillihertz.GetHashCode();
+
+            // Get hash code for the Position field if it is not null.
+            int hashRotation = Rotation.GetHashCode();
+
+            // Get hash code for the Scaling field if it is not null.
+            int hashScaling = Scaling.GetHashCode();
+
+            // Get hash code for the ScanLineOrdering field if it is not null.
+            int hashScanLineOrdering = ScanLineOrdering.GetHashCode();
+
+            // Get hash code for the hashDisplayName field if it is not null.
+            int hashDisplayName = DisplayName == null ? 0 : DisplayName.GetHashCode();
+
+            // Get hash code for the DevicePath field if it is not null.
+            int hashDevicePath = DevicePath == null ? 0 : DevicePath.GetHashCode();
+
+            // Get hash code for the SurroundTopology field if it is not null.
+            int hashSurroundTopology = SurroundTopology == null ? 0 : SurroundTopology.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashFrequencyInMillihertz ^ hashRotation ^ hashScaling ^ hashScanLineOrdering ^
+                hashDisplayName ^ hashDevicePath ^ hashSurroundTopology;
+        }
+
+    }
+
+    // Custom comparer for the ProfileViewportTargetDisplay class
+    class ProfileViewportTargetDisplayComparer : IEqualityComparer<ProfileViewportTargetDisplay>
+    {
+        // Products are equal if their names and product numbers are equal.
+        public bool Equals(ProfileViewportTargetDisplay x, ProfileViewportTargetDisplay y)
+        {
+
+            //Check whether the compared objects reference the same data.
+            if (Object.ReferenceEquals(x, y)) return true;
+
+            //Check whether any of the compared objects is null.
+            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+                return false;
+
+            // Check whether the Profile Viewport properties are equal
+            // Two profiles are equal only when they have the same viewport data exactly
+            if (x.FrequencyInMillihertz == y.FrequencyInMillihertz &&
+                x.Rotation.Equals(y.Rotation) &&
+                x.Scaling.Equals(y.Scaling) &&
+                x.ScanLineOrdering.Equals(y.ScanLineOrdering) &&
+                x.DisplayName.Equals(y.DisplayName) &&
+                x.DevicePath.Equals(y.DevicePath))
+            {
+                // If the above all match, then we need to check the SurroundTopology matches
+                if (x.SurroundTopology == null && y.SurroundTopology == null)
+                    return true;
+                else if (x.SurroundTopology != null && y.SurroundTopology == null)
+                    return false;
+                else if (x.SurroundTopology == null && y.SurroundTopology != null)
+                    return false;
+                else if (x.SurroundTopology.Equals(y.SurroundTopology))
+                    return true;
+
+                return false;
+            }
+            else
+                return false;
+        }
+
+        // If Equals() returns true for a pair of objects
+        // then GetHashCode() must return the same value for these objects.
+        public int GetHashCode(ProfileViewportTargetDisplay profileViewport)
+        {
+            // Check whether the object is null
+            if (Object.ReferenceEquals(profileViewport, null)) return 0;
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashFrequencyInMillihertz = profileViewport.FrequencyInMillihertz.GetHashCode();
+
+            // Get hash code for the Position field if it is not null.
+            int hashRotation = profileViewport.Rotation.GetHashCode();
+
+            // Get hash code for the Scaling field if it is not null.
+            int hashScaling = profileViewport.Scaling.GetHashCode();
+
+            // Get hash code for the ScanLineOrdering field if it is not null.
+            int hashScanLineOrdering = profileViewport.ScanLineOrdering.GetHashCode();
+
+            // Get hash code for the hashDisplayName field if it is not null.
+            int hashDisplayName = profileViewport.DisplayName == null ? 0 : profileViewport.DisplayName.GetHashCode();
+
+            // Get hash code for the DevicePath field if it is not null.
+            int hashDevicePath = profileViewport.DevicePath == null ? 0 : profileViewport.DevicePath.GetHashCode();
+
+            // Get hash code for the SurroundTopology field if it is not null.
+            int hashSurroundTopology = profileViewport.SurroundTopology == null ? 0 : profileViewport.SurroundTopology.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashFrequencyInMillihertz ^ hashRotation ^ hashScaling ^ hashScanLineOrdering ^
+                hashDisplayName ^ hashDevicePath ^ hashSurroundTopology;
+        }
+
     }
 }

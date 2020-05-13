@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using WindowsDisplayAPI.DisplayConfig;
 using HeliosPlus.Shared.Resources;
 using Newtonsoft.Json;
+//using NvAPIWrapper.Display;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
@@ -16,17 +17,20 @@ using HeliosPlus.Shared.Topology;
 using System.Drawing;
 using System.Drawing.Imaging;
 using WindowsDisplayAPI;
+using WindowsDisplayAPI.DisplayConfig;
+using WindowsDisplayAPI.Native.DisplayConfig;
 using System.Text.RegularExpressions;
 
 namespace HeliosPlus.Shared
 {
-    public class Profile : IEquatable<Profile>
+    public class Profile
     {
         private static Profile _currentProfile;
         private static List<Profile> _allSavedProfiles = new List<Profile>();
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap;
         private static List<Display> _availableDisplays;
+        private static List<UnAttachedDisplay> _unavailableDisplays;
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
 
@@ -122,8 +126,10 @@ namespace HeliosPlus.Shared
             get
             {
 
-                // Firstly check which displays are attached to this computer
-                _availableDisplays = Display.GetDisplays().ToList();
+                
+                // Firstly check which displays are attached to this computer and are on
+/*              _availableDisplays = Display.GetDisplays().ToList();
+                _unavailableDisplays = UnAttachedDisplay.GetUnAttachedDisplays().ToList();
                 //  DevicePath	"\\\\?\\DISPLAY#DELD065#5&38860457&0&UID4609#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"	
                 List<string> availableDevicePath = new List<string>();
                 foreach (Display aDisplay in _availableDisplays)
@@ -136,40 +142,41 @@ namespace HeliosPlus.Shared
                         availableDevicePath.Add(devicePathMatches.Groups[1].Value.ToString());
                     }
                 }
-
-                if (availableDevicePath.Count > 0)
+*/
+  /*              if (availableDevicePath.Count > 0)
                 {
-
-                    int profileDisplaysCount = 0;
-                    int profileDisplaysFoundCount = 0;
-                    // Then go through the displays in the profile and check they're live
-                    foreach (ProfileViewport profileViewport in Viewports)
+*/
+                List<string> unavailableDeviceNames = new List<string>();
+                // Then go through the displays in the profile and check they're live
+                foreach (ProfileViewport profileViewport in Viewports)
+                {
+                    foreach (ProfileViewportTargetDisplay profileViewportTargetDisplay in profileViewport.TargetDisplays)
                     {
-                        foreach (ProfileViewportTargetDisplay profileViewportTargetDisplay in profileViewport.TargetDisplays)
-                        {
-                            profileDisplaysCount++;
-                            if (profileViewportTargetDisplay.DevicePath.Equals(availableDevicePath));
-                                profileDisplaysFoundCount++;
-                        }
-                    }
-
-                    if (profileDisplaysCount == profileDisplaysFoundCount)
-                    {
-                        // If we found all our profile displays in the available displays!
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
+                        PathTargetInfo viewportTargetInfo = profileViewportTargetDisplay.ToPathTargetInfo();
+                        bool isAvailable = viewportTargetInfo.DisplayTarget != null ? viewportTargetInfo.DisplayTarget.IsAvailable : false;
+                        if (!viewportTargetInfo.DisplayTarget.IsAvailable)
+                            unavailableDeviceNames.Add(profileViewportTargetDisplay.DisplayName);
                     }
                 }
+
+                if (unavailableDeviceNames.Count > 0)
+                {
+                    // Darn - there was at least one unavilable displaytarget
+                    return false;
+                }
+                else
+                {
+                    // There were no unavailable DisplayTargets!
+                    return true;
+                }
+/*              }
                 else
                 {
                     return false;
                 }
+*/
 
-
-                // This should include the ones not currently enabled.
+/*                // This should include the ones not currently enabled.
                 var displayAdapters = DisplayAdapter.GetDisplayAdapters().ToArray();
                 var displays = Display.GetDisplays().ToArray();
 
@@ -178,7 +185,13 @@ namespace HeliosPlus.Shared
                 var displayDevices = physicalGPUs[0].GetDisplayDevices().ToArray();
                 return true;
 
-                /*var surroundTopologies =
+
+                GridTopology.ValidateGridTopologies(
+                                SurroundTopologies.Select(topology => topology.ToGridTopology()).ToArray(),
+                                SetDisplayTopologyFlag.MaximizePerformance);
+
+                // Check if we are using NVIDIA surround in this profile
+                var surroundTopologies =
                     Viewports.SelectMany(path => path.TargetDisplays)
                         .Select(target => target.SurroundTopology)
                         .Where(topology => topology != null).ToArray();
@@ -296,66 +309,6 @@ namespace HeliosPlus.Shared
 
         }
 
-        /// <inheritdoc />
-        public bool Equals(Profile other)
-        {
-            //if the other profile points to null, it's not equal
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            //if the other profile is the same object, it's equal
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            //return Paths.All(path => other.Paths.Contains(path));
-            if (Viewports.Length != other.Viewports.Length)
-            {
-                return false;
-            }
-
-            int thisToOtherViewportCount = 0;
-            int otherToThisViewportCount = 0;
-
-            foreach (ProfileViewport myProfileViewport in Viewports)
-            {
-                foreach (ProfileViewport otherProfileViewport in other.Viewports)
-                {
-                    if (myProfileViewport.Equals(otherProfileViewport))
-                    {
-                        thisToOtherViewportCount++;
-                    }
-                }
-                
-            }
-
-            foreach (ProfileViewport otherProfileViewport in other.Viewports)
-            {
-                foreach (ProfileViewport myProfileViewport in Viewports)
-                {
-                    if (myProfileViewport.Equals(otherProfileViewport))
-                    {
-                        otherToThisViewportCount++;
-                    }
-                }
-
-            }
-
-            if (thisToOtherViewportCount == otherToThisViewportCount)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-
-            return false;
-        }
-
         public static IEnumerable<Profile> LoadAllProfiles()
         {
             
@@ -402,7 +355,7 @@ namespace HeliosPlus.Shared
                         loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
                         loadedProfile.ProfileBitmap = loadedProfile.ProfileIcon.ToBitmap(128,128);
 
-                        if (loadedProfile.Equals(myCurrentProfile)) {
+                        if (loadedProfile.IsActive) {
                             _currentProfile = loadedProfile;
                         }
 
@@ -431,18 +384,6 @@ namespace HeliosPlus.Shared
             _allSavedProfiles = new List<Profile>();
 
             return _allSavedProfiles;
-        }
-
-        
-
-        public static bool operator ==(Profile left, Profile right)
-        {
-            return Equals(left, right) || left?.Equals(right) == true;
-        }
-
-        public static bool operator !=(Profile left, Profile right)
-        {
-            return !(left == right);
         }
 
         public static bool IsValidName(string testName)
@@ -474,7 +415,11 @@ namespace HeliosPlus.Shared
 
         public static void RefreshActiveStatus()
         {
-            //_currentProfile = null;
+            _currentProfile = new Profile
+            {
+                Name = "Current Display Profile",
+                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
+            };
         }
 
         public static bool SaveAllProfiles()
@@ -541,37 +486,53 @@ namespace HeliosPlus.Shared
             return false;
         }
 
-        /// <inheritdoc />
+
+        // The public override for the Object.Equals
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-
-            return Equals((Profile) obj);
+            return this.Equals(obj as Profile);
         }
 
-        /// <inheritdoc />
+        // Profiles are equal if their contents (except name) are equal
+        public bool Equals(Profile other)
+        {
+
+            // If parameter is null, return false.
+            if (Object.ReferenceEquals(other, null))
+                return false;
+
+            // Optimization for a common success case.
+            if (Object.ReferenceEquals(this, other))
+                return true;
+
+            // If run-time types are not exactly the same, return false.
+            if (this.GetType() != other.GetType())
+                return false;
+            
+            // Check whether the profiles' properties are equal
+            // We need to exclude the name as the name is solely for saving to disk
+            // and displaying to the user. 
+            // Two profiles are equal only when they have the same viewport data
+            if (Viewports.Equals(other.Viewports))
+                return true;
+            else
+                return false;
+        }
+
+        // If Equals() returns true for this object compared to  another
+        // then GetHashCode() must return the same value for these objects.
         public override int GetHashCode()
         {
-            unchecked
-            {
-                return (Viewports?.GetHashCode() ?? 0) * 397;
-            }
+
+            // Get hash code for the Viewports field if it is not null.
+            int hashViewports = Viewports == null ? 0 : Viewports.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashViewports;
+
         }
 
-        /// <inheritdoc />
+
         public override string ToString()
         {
             return (Name ?? Language.UN_TITLED_PROFILE) + (IsActive ? " " + Language._Active_ : "");
@@ -606,10 +567,12 @@ namespace HeliosPlus.Shared
         {
             try
             {
+                // Wait 20 seconds
                 Thread.Sleep(2000);
 
                 try
                 {
+                    // Get an array of the valid NVIDAI surround topologies
                     var surroundTopologies =
                         Viewports.SelectMany(path => path.TargetDisplays)
                             .Select(target => target.SurroundTopology)
@@ -617,8 +580,11 @@ namespace HeliosPlus.Shared
                             .Select(topology => topology.ToGridTopology())
                             .ToArray();
 
+                    // See if we have any surroundTopologies specified!
                     if (surroundTopologies.Length == 0)
                     {
+                        // if we do not have surroundTopopligies specified then
+                        // Figure out how to lay out the standard windows displays
                         var currentTopologies = GridTopology.GetGridTopologies();
 
                         if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
@@ -629,10 +595,11 @@ namespace HeliosPlus.Shared
                                     .Select(displays => new GridTopology(1, 1, new[] {displays}))
                                     .ToArray();
                         }
-                    }
-
-                    if (surroundTopologies.Length > 0)
+                    } 
+                    else 
                     {
+                        // if we DO have surroundTopopligies specified then
+                        // Figure out how to turn them on
                         GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
                     }
                 }
@@ -641,17 +608,25 @@ namespace HeliosPlus.Shared
                     // ignored
                 }
 
+                // Wait 18 seconds
                 Thread.Sleep(18000);
-                var pathInfos = Viewports.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
 
-                if (!pathInfos.Any())
+                // Check to see what Viewports we have enabled
+                var ViewportsPathInfo = Viewports.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+
+                // If we don't have any 
+                if (!ViewportsPathInfo.Any())
                 {
                     throw new InvalidOperationException(
                         @"Display configuration changed since this profile is created. Please re-create this profile.");
                 }
 
-                PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+                // Apply the new screen configuration
+                PathInfo.ApplyPathInfos(ViewportsPathInfo, true, true, true);
+                // Wait 10 seconds
                 Thread.Sleep(10000);
+
+                // Check o see what our current screen profile is now!
                 RefreshActiveStatus();
 
                 return true;
@@ -665,21 +640,48 @@ namespace HeliosPlus.Shared
             }
         }
 
-        public Profile Clone()
+    }
+
+    // Custom comparer for the Profile class
+    // Allows us to use 'Contains'
+    class ProfileComparer : IEqualityComparer<Profile>
+    {
+        // Products are equal if their names and product numbers are equal.
+        public bool Equals(Profile x, Profile y)
         {
-            try
-            {
-                var serialized = JsonConvert.SerializeObject(this);
 
-                var cloned = JsonConvert.DeserializeObject<Profile>(serialized);
-                cloned.Id = Guid.NewGuid().ToString("B");
+            //Check whether the compared objects reference the same data.
+            if (Object.ReferenceEquals(x, y)) return true;
 
-                return cloned;
-            }
-            catch
-            {
-                return null;
-            }
+            //Check whether any of the compared objects is null.
+            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+                return false;
+
+            // Check whether the profiles' properties are equal
+            // We need to exclude the name as the name is solely for saving to disk
+            // and displaying to the user. 
+            // Two profiles are equal only when they have the same viewport data
+            if (x.Viewports.Equals(y.Viewports))
+                return true;
+            else
+                return false;
         }
+
+        // If Equals() returns true for a pair of objects
+        // then GetHashCode() must return the same value for these objects.
+        public int GetHashCode(Profile profile)
+        {
+
+            // Check whether the object is null
+            if (Object.ReferenceEquals(profile, null)) return 0;
+
+            // Get hash code for the Viewports field if it is not null.
+            int hashViewports = profile.Viewports == null ? 0 : profile.Viewports.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashViewports;
+
+        }
+
     }
 }

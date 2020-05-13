@@ -5,10 +5,11 @@ using WindowsDisplayAPI.DisplayConfig;
 using WindowsDisplayAPI.Native.DisplayConfig;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
 
 namespace HeliosPlus.Shared.Topology
 {
-    public class ProfileViewport : IEquatable<ProfileViewport>
+    public class ProfileViewport
     {
         public ProfileViewport(PathInfo pathInfo)
         {
@@ -34,116 +35,6 @@ namespace HeliosPlus.Shared.Topology
 
         public ProfileViewportTargetDisplay[] TargetDisplays { get; set; }
 
-        /// <inheritdoc />
-        public bool Equals(ProfileViewport other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            if (PixelFormat == other.PixelFormat &&
-                Position.Equals(other.Position) &&
-                Resolution.Equals(other.Resolution) &&
-                TargetDisplays.Length == other.TargetDisplays.Length) 
-            {
-                // TODO fix this so it checks for exact match
-
-                //TargetDisplays.All(target => other.TargetDisplays.Contains(target));
-                int thisToOtherTargetDisplayCount = 0;
-                int otherToThisTargetDisplayCount = 0;
-
-                foreach (ProfileViewportTargetDisplay myProfileViewportTargetDisplay in TargetDisplays)
-                {
-                    foreach (ProfileViewportTargetDisplay otherProfileViewportTargetDisplay in other.TargetDisplays)
-                    {
-                        if (myProfileViewportTargetDisplay.Equals(otherProfileViewportTargetDisplay))
-                        {
-                            thisToOtherTargetDisplayCount++;
-                        }
-                    }
-
-                }
-
-                foreach (ProfileViewportTargetDisplay otherProfileViewportTargetDisplay in other.TargetDisplays)
-                {
-                    foreach (ProfileViewportTargetDisplay myProfileViewportTargetDisplay in TargetDisplays)
-                    {
-                        if (otherProfileViewportTargetDisplay.Equals(myProfileViewportTargetDisplay))
-                        {
-                            otherToThisTargetDisplayCount++;
-                        }
-                    }
-
-                }
-
-                if (thisToOtherTargetDisplayCount == otherToThisTargetDisplayCount)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-             
-        }
-
-        public static bool operator ==(ProfileViewport left, ProfileViewport right)
-        {
-            return Equals(left, right) || left?.Equals(right) == true;
-        }
-
-        public static bool operator !=(ProfileViewport left, ProfileViewport right)
-        {
-            return !(left == right);
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-
-            return Equals((ProfileViewport) obj);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = (int) PixelFormat;
-                hashCode = (hashCode * 397) ^ Position.GetHashCode();
-                hashCode = (hashCode * 397) ^ Resolution.GetHashCode();
-                hashCode = (hashCode * 397) ^ (TargetDisplays?.GetHashCode() ?? 0);
-
-                return hashCode;
-            }
-        }
-
-        /// <inheritdoc />
         public override string ToString()
         {
             return $"\\\\.\\DISPLAY{SourceId}";
@@ -161,5 +52,130 @@ namespace HeliosPlus.Shared.Topology
 
             return null;
         }
+
+        // The public override for the Object.Equals
+        public override bool Equals(object obj)
+        {
+            return this.Equals(obj as ProfileViewport);
+        }
+
+        // Profiles are equal if their contents (except name) are equal
+        public bool Equals(ProfileViewport other)
+        {
+
+            // If parameter is null, return false.
+            if (Object.ReferenceEquals(other, null))
+                return false;
+
+            // Optimization for a common success case.
+            if (Object.ReferenceEquals(this, other))
+                return true;
+
+            // If run-time types are not exactly the same, return false.
+            if (this.GetType() != other.GetType())
+                return false;
+
+            // Check whether the Profile Viewport properties are equal
+            // Two profiles are equal only when they have the same viewport data exactly
+            if (PixelFormat == other.PixelFormat &&
+                Position.Equals(other.Position) &&
+                Resolution.Equals(other.Resolution) &&
+                SourceId == other.SourceId)
+            {
+                // If the above all match, then we need to check the DisplayTargets
+                foreach (ProfileViewportTargetDisplay targetDisplay in TargetDisplays)
+                {
+                    if (!other.TargetDisplays.Contains(targetDisplay))
+                        return false;
+                }
+                return true;
+            }
+            else
+                return false;
+        }
+
+        // If Equals() returns true for this object compared to  another
+        // then GetHashCode() must return the same value for these objects.
+        public override int GetHashCode()
+        {
+            // Get hash code for the PixelFormat field if it is not null.
+            int hashPixelFormat = PixelFormat.GetHashCode();
+
+            // Get hash code for the Position field if it is not null.
+            int hashPosition = Position == null ? 0 : Position.GetHashCode();
+
+            // Get hash code for the Resolution field if it is not null.
+            int hashResolution = Resolution == null ? 0 : Resolution.GetHashCode();
+
+            // Get hash code for the SourceId field if it is not null.
+            int hashSourceId = SourceId.GetHashCode();
+
+            // Get hash code for the TargetDisplays field if it is not null.
+            int hashTargetDisplays = TargetDisplays == null ? 0 : TargetDisplays.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashPixelFormat ^ hashPosition ^ hashResolution ^ hashSourceId ^ hashTargetDisplays;
+        }
+    }
+
+    // Custom comparer for the ProfileViewport class
+    class ProfileViewportComparer : IEqualityComparer<ProfileViewport>
+    {
+        // Products are equal if their names and product numbers are equal.
+        public bool Equals(ProfileViewport x, ProfileViewport y)
+        {
+
+            //Check whether the compared objects reference the same data.
+            if (Object.ReferenceEquals(x, y)) return true;
+
+            //Check whether any of the compared objects is null.
+            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+                return false;
+
+            // Check whether the Profile Viewport properties are equal
+            // Two profiles are equal only when they have the same viewport data exactly
+            if (x.PixelFormat == y.PixelFormat &&
+                x.Position.Equals(y.Position) &&
+                x.Resolution.Equals(y.Resolution) &&
+                x.SourceId == y.SourceId)
+            {
+                // If the above all match, then we need to check the DisplayTargets
+                foreach (ProfileViewportTargetDisplay xTargetDisplay in x.TargetDisplays)
+                {
+                    if (!y.TargetDisplays.Contains(xTargetDisplay))
+                        return false;
+                }
+                return true;
+            }
+            else 
+                return false;
+        }
+
+        // If Equals() returns true for a pair of objects
+        // then GetHashCode() must return the same value for these objects.
+        public int GetHashCode(ProfileViewport profileViewport)
+        {
+            // Check whether the object is null
+            if (Object.ReferenceEquals(profileViewport, null)) return 0;
+
+            // Get hash code for the PixelFormat field if it is not null.
+            int hashPixelFormat = profileViewport.PixelFormat.GetHashCode();
+
+            // Get hash code for the Position field if it is not null.
+            int hashPosition = profileViewport.Position == null ? 0 : profileViewport.Position.GetHashCode();
+
+            // Get hash code for the Resolution field if it is not null.
+            int hashResolution = profileViewport.Resolution == null ? 0 : profileViewport.Resolution.GetHashCode();
+
+            // Get hash code for the SourceId field if it is not null.
+            int hashSourceId = profileViewport.SourceId.GetHashCode();
+
+            // Get hash code for the TargetDisplays field if it is not null.
+            int hashTargetDisplays = profileViewport.TargetDisplays == null ? 0 : profileViewport.TargetDisplays.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashPixelFormat ^ hashPosition ^ hashResolution ^ hashSourceId ^ hashTargetDisplays;
+        }
+
     }
 }

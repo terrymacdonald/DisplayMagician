@@ -32,37 +32,28 @@ namespace HeliosPlus.UIForms
 
         private void Apply_Click(object sender, EventArgs e)
         {
-           /* if (dv_profile.Profile != null &&
-                lv_profiles_old.SelectedIndices.Count > 0 &&
-                lv_profiles_old.SelectedItems[0].Tag != null)
+            if (!_selectedProfile.IsPossible)
             {
-                if (!dv_profile.Profile.IsPossible)
-                {
-                    MessageBox.Show(this, Language.This_profile_is_currently_impossible_to_apply,
-                        Language.Apply_Profile,
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, Language.This_profile_is_currently_impossible_to_apply,
+                    Language.Apply_Profile,
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
-                    return;
-                }
+                return;
+            }
 
-                Enabled = false;
-                Visible = false;
+            if (
+                new SplashForm(
+                    () =>
+                    {
+                        Task.Factory.StartNew(() => _selectedProfile.Apply(), TaskCreationOptions.LongRunning);
+                    }, 3, 30).ShowDialog(this) !=
+                DialogResult.Cancel)
+            {
+                // nothing to do
+                Console.WriteLine("Applying profile " + _selectedProfile.Name);
+            }
 
-                if (
-                    new SplashForm(
-                        () =>
-                        {
-                            Task.Factory.StartNew(() => dv_profile.Profile.Apply(), TaskCreationOptions.LongRunning);
-                        }, 3, 30).ShowDialog(this) !=
-                    DialogResult.Cancel)
-                {
-                    ReloadProfiles();
-                }
-
-                Visible = true;
-                Enabled = true;
-                Activate();
-            }*/
+            Activate();
         }
 
         private void Exit_Click(object sender, EventArgs e)
@@ -186,9 +177,10 @@ namespace HeliosPlus.UIForms
                         // so we need to show the current profile 
                         // And finally we need to select the currentProfile, as it's the one we're using now
                         newItem.Selected = true;
+                        ChangeSelectedProfile(Profile.CurrentProfile);
                     }
                 }
-                ChangeSelectedProfile(Profile.CurrentProfile);
+                
             }
             else
             {
