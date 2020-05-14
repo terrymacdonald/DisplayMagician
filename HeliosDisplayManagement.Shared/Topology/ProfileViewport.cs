@@ -140,12 +140,17 @@ namespace HeliosPlus.Shared.Topology
                 x.SourceId == y.SourceId)
             {
                 // If the above all match, then we need to check the DisplayTargets
-                foreach (ProfileViewportTargetDisplay xTargetDisplay in x.TargetDisplays)
-                {
-                    if (!y.TargetDisplays.Contains(xTargetDisplay))
-                        return false;
-                }
-                return true;
+                // If they aren't equal then we need to return false;
+                if (!x.TargetDisplays.SequenceEqual(y.TargetDisplays))
+                    return false;
+                else
+                    return true;
+                /*                foreach (ProfileViewportTargetDisplay xTargetDisplay in x.TargetDisplays)
+                                {
+                                    if (!y.TargetDisplays.Contains(xTargetDisplay))
+                                        return false;
+                                }*/
+                //return true;
             }
             else 
                 return false;

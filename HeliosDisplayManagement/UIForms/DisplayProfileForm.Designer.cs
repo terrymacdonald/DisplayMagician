@@ -54,6 +54,7 @@ namespace HeliosPlus.UIForms
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -67,7 +68,7 @@ namespace HeliosPlus.UIForms
             this.btn_apply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_apply.ForeColor = System.Drawing.Color.White;
-            this.btn_apply.Location = new System.Drawing.Point(359, 734);
+            this.btn_apply.Location = new System.Drawing.Point(359, 750);
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(120, 40);
             this.btn_apply.TabIndex = 2;
@@ -82,7 +83,7 @@ namespace HeliosPlus.UIForms
             this.btn_edit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_edit.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_edit.ForeColor = System.Drawing.Color.White;
-            this.btn_edit.Location = new System.Drawing.Point(12, 734);
+            this.btn_edit.Location = new System.Drawing.Point(12, 750);
             this.btn_edit.Name = "btn_edit";
             this.btn_edit.Size = new System.Drawing.Size(120, 40);
             this.btn_edit.TabIndex = 8;
@@ -115,7 +116,7 @@ namespace HeliosPlus.UIForms
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(498, 734);
+            this.btn_delete.Location = new System.Drawing.Point(498, 750);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 4;
@@ -268,7 +269,7 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.AllowColumnResize = false;
             this.ilv_saved_profiles.AllowItemReorder = false;
             this.ilv_saved_profiles.AllowPaneResize = false;
-            this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 578);
+            this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 601);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
@@ -291,6 +292,17 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown_subtitle.TabIndex = 22;
             this.lbl_profile_shown_subtitle.Text = "My Display Profile";
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.White;
+            this.label1.Location = new System.Drawing.Point(263, 581);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(450, 20);
+            this.label1.TabIndex = 23;
+            this.label1.Text = "Saved Profiles (These can be used to create shortcuts)";
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -299,6 +311,7 @@ namespace HeliosPlus.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 812);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.lbl_profile_shown_subtitle);
             this.Controls.Add(this.ilv_saved_profiles);
             this.Controls.Add(this.txt_profile_save_name);
@@ -351,6 +364,7 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.ImageList imageList1;
         private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
+        private System.Windows.Forms.Label label1;
     }
 }
 

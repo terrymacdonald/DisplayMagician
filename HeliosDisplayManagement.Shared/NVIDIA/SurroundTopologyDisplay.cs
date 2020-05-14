@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using EDIDParser;
@@ -10,7 +11,7 @@ using NvAPIWrapper.Mosaic;
 
 namespace HeliosPlus.Shared.NVIDIA
 {
-    public class SurroundTopologyDisplay : IEquatable<SurroundTopologyDisplay>
+    public class SurroundTopologyDisplay
     {
         public SurroundTopologyDisplay(GridTopologyDisplay display)
         {
@@ -49,70 +50,7 @@ namespace HeliosPlus.Shared.NVIDIA
         [JsonConverter(typeof(StringEnumConverter))]
         public Rotation Rotation { get; set; }
 
-        /// <inheritdoc />
-        public bool Equals(SurroundTopologyDisplay other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return DisplayId == other.DisplayId &&
-                   Overlap.Equals(other.Overlap) &&
-                   PixelShift == other.PixelShift &&
-                   Rotation == other.Rotation;
-        }
-
-        public static bool operator ==(SurroundTopologyDisplay left, SurroundTopologyDisplay right)
-        {
-            return Equals(left, right) || left?.Equals(right) == true;
-        }
-
-        public static bool operator !=(SurroundTopologyDisplay left, SurroundTopologyDisplay right)
-        {
-            return !(left == right);
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-
-            return Equals((SurroundTopologyDisplay) obj);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = (int) DisplayId;
-                hashCode = (hashCode * 397) ^ Overlap.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int) PixelShift;
-                hashCode = (hashCode * 397) ^ (int) Rotation;
-
-                return hashCode;
-            }
-        }
-
+        
         /// <inheritdoc />
         public override string ToString()
         {
@@ -124,5 +62,109 @@ namespace HeliosPlus.Shared.NVIDIA
             return new GridTopologyDisplay(DisplayId, new Overlap(Overlap.X, Overlap.Y), Rotation.ToRotate(), 0,
                 PixelShift.ToPixelShiftType());
         }
+
+        // The public override for the Object.Equals
+        public override bool Equals(object obj)
+        {
+            return this.Equals(obj as SurroundTopologyDisplay);
+        }
+
+        // SurroundTopologyDisplay are equal if their contents are equal
+        public bool Equals(SurroundTopologyDisplay other)
+        {
+
+            // If parameter is null, return false.
+            if (Object.ReferenceEquals(other, null))
+                return false;
+
+            // Optimization for a common success case.
+            if (Object.ReferenceEquals(this, other))
+                return true;
+
+            // If run-time types are not exactly the same, return false.
+            if (this.GetType() != other.GetType())
+                return false;
+
+            // Check whether the SurroundTopologyDisplay properties are equal
+            // Two SurroundTopologyDisplay are equal only when they have the same data exactly
+            if (DisplayId == other.DisplayId &&
+                Overlap.Equals(other.Overlap) &&
+                PixelShift == other.PixelShift &&
+                Rotation == other.Rotation)
+                return true;
+            else
+                return false;
+        }
+
+        // If Equals() returns true for this object compared to  another
+        // then GetHashCode() must return the same value for these objects.
+        public override int GetHashCode()
+        {
+            // Get hash code for the DisplayId field if it is not null.
+            int hashDisplayId = DisplayId.GetHashCode();
+
+            // Get hash code for the Overlap field if it is not null.
+            int hashOverlap = Overlap.GetHashCode();
+
+            // Get hash code for the PixelShift field if it is not null.
+            int hashPixelShift = PixelShift.GetHashCode();
+
+            // Get hash code for the Rotation field if it is not null.
+            int hashRotation = Rotation.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashDisplayId ^ hashOverlap ^ hashPixelShift ^ hashRotation;
+        }
+
+    }
+
+    // Custom comparer for the ProfileViewportTargetDisplay class
+    class SurroundTopologyDisplayComparer : IEqualityComparer<SurroundTopologyDisplay>
+    {
+        // Products are equal if their names and product numbers are equal.
+        public bool Equals(SurroundTopologyDisplay x, SurroundTopologyDisplay y)
+        {
+
+            //Check whether the compared objects reference the same data.
+            if (Object.ReferenceEquals(x, y)) return true;
+
+            //Check whether any of the compared objects is null.
+            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+                return false;
+
+            // Check whether the SurroundTopologyDisplay properties are equal
+            // Two SurroundTopologyDisplay are equal only when they have the same data exactly
+            if (x.DisplayId == y.DisplayId &&
+                x.Overlap.Equals(y.Overlap) &&
+                x.PixelShift == y.PixelShift &&
+                x.Rotation == y.Rotation)
+                return true;
+            else
+                return false;
+        }
+
+        // If Equals() returns true for a pair of objects
+        // then GetHashCode() must return the same value for these objects.
+        public int GetHashCode(SurroundTopologyDisplay surroundTopologyDisplay)
+        {
+            // Check whether the object is null
+            if (Object.ReferenceEquals(surroundTopologyDisplay, null)) return 0;
+
+            // Get hash code for the DisplayId field if it is not null.
+            int hashDisplayId = surroundTopologyDisplay.DisplayId.GetHashCode();
+
+            // Get hash code for the Overlap field if it is not null.
+            int hashOverlap = surroundTopologyDisplay.Overlap.GetHashCode();
+
+            // Get hash code for the PixelShift field if it is not null.
+            int hashPixelShift = surroundTopologyDisplay.PixelShift.GetHashCode();
+
+            // Get hash code for the Rotation field if it is not null.
+            int hashRotation = surroundTopologyDisplay.Rotation.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashDisplayId ^ hashOverlap ^ hashPixelShift ^ hashRotation;
+        }
+
     }
 }

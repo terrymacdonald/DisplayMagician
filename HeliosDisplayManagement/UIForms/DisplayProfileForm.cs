@@ -160,13 +160,10 @@ namespace HeliosPlus.UIForms
 
             if (_savedProfiles.Count > 0)
             {
+
+                bool foundCurrentProfileInLoadedProfiles = false;
                 foreach (Profile loadedProfile in _savedProfiles)
                 {
-                    /*loadedProfile.ProfileIcon.ToBitmap(
-                        il_profiles.ImageSize.Width,
-                        il_profiles.ImageSize.Height
-                    );
-                    */
                     loadedProfile.SaveProfileImageToCache();
                     newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
                     ilv_saved_profiles.Items.Add(newItem);
@@ -178,9 +175,15 @@ namespace HeliosPlus.UIForms
                         // And finally we need to select the currentProfile, as it's the one we're using now
                         newItem.Selected = true;
                         ChangeSelectedProfile(Profile.CurrentProfile);
+                        foundCurrentProfileInLoadedProfiles = true;
                     }
                 }
-                
+
+                // If we get to the end of the loaded profiles and haven't
+                // found a matching profile, then we need to show the current
+                // Profile
+                ChangeSelectedProfile(Profile.CurrentProfile);
+
             }
             else
             {
@@ -208,19 +211,19 @@ namespace HeliosPlus.UIForms
             // And update the save/rename textbox
             txt_profile_save_name.Text = _selectedProfile.Name;
 
-
             if (_selectedProfile.Name == Profile.CurrentProfile.Name)
             {
-                lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
                 if (_savedProfiles.Contains(_selectedProfile))
                 {
                     _saveOrRenameMode = "rename";
                     btn_save_or_rename.Text = "Rename To";
+                    lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
                 }
                 else
                 {
                     _saveOrRenameMode = "save";
                     btn_save_or_rename.Text = "Save As";
+                    lbl_profile_shown_subtitle.Text = "(Current Display Profile in use - UNSAVED)";
                 }
                 btn_apply.Visible = false;
             }

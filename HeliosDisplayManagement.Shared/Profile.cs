@@ -125,27 +125,6 @@ namespace HeliosPlus.Shared
         {
             get
             {
-
-                
-                // Firstly check which displays are attached to this computer and are on
-/*              _availableDisplays = Display.GetDisplays().ToList();
-                _unavailableDisplays = UnAttachedDisplay.GetUnAttachedDisplays().ToList();
-                //  DevicePath	"\\\\?\\DISPLAY#DELD065#5&38860457&0&UID4609#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"	
-                List<string> availableDevicePath = new List<string>();
-                foreach (Display aDisplay in _availableDisplays)
-                {
-                    // Grab the shorter device path from the display Api
-                    Regex devicePathRegex = new Regex(@"^(.+?)#\{", RegexOptions.IgnoreCase);
-                    Match devicePathMatches = devicePathRegex.Match(aDisplay.DevicePath);
-                    if (devicePathMatches.Success)
-                    {
-                        availableDevicePath.Add(devicePathMatches.Groups[1].Value.ToString());
-                    }
-                }
-*/
-  /*              if (availableDevicePath.Count > 0)
-                {
-*/
                 List<string> unavailableDeviceNames = new List<string>();
                 // Then go through the displays in the profile and check they're live
                 foreach (ProfileViewport profileViewport in Viewports)
@@ -153,8 +132,9 @@ namespace HeliosPlus.Shared
                     foreach (ProfileViewportTargetDisplay profileViewportTargetDisplay in profileViewport.TargetDisplays)
                     {
                         PathTargetInfo viewportTargetInfo = profileViewportTargetDisplay.ToPathTargetInfo();
-                        bool isAvailable = viewportTargetInfo.DisplayTarget != null ? viewportTargetInfo.DisplayTarget.IsAvailable : false;
-                        if (!viewportTargetInfo.DisplayTarget.IsAvailable)
+                        // If viewportTargetInfo is null, then this viewportTargetDisplay isn't currently available
+                        // so this makes the profile invalid
+                        if (viewportTargetInfo == null)
                             unavailableDeviceNames.Add(profileViewportTargetDisplay.DisplayName);
                     }
                 }
@@ -169,76 +149,7 @@ namespace HeliosPlus.Shared
                     // There were no unavailable DisplayTargets!
                     return true;
                 }
-/*              }
-                else
-                {
-                    return false;
-                }
-*/
 
-/*                // This should include the ones not currently enabled.
-                var displayAdapters = DisplayAdapter.GetDisplayAdapters().ToArray();
-                var displays = Display.GetDisplays().ToArray();
-
-
-                var physicalGPUs = PhysicalGPU.GetPhysicalGPUs();
-                var displayDevices = physicalGPUs[0].GetDisplayDevices().ToArray();
-                return true;
-
-
-                GridTopology.ValidateGridTopologies(
-                                SurroundTopologies.Select(topology => topology.ToGridTopology()).ToArray(),
-                                SetDisplayTopologyFlag.MaximizePerformance);
-
-                // Check if we are using NVIDIA surround in this profile
-                var surroundTopologies =
-                    Viewports.SelectMany(path => path.TargetDisplays)
-                        .Select(target => target.SurroundTopology)
-                        .Where(topology => topology != null).ToArray();
-
-                if (surroundTopologies.Length > 0)
-                {
-                    try
-                    {
-                        // Not working quite well yet
-                        //var status =
-                        //    GridTopology.ValidateGridTopologies(
-                        //        SurroundTopologies.Select(topology => topology.ToGridTopology()).ToArray(),
-                        //        SetDisplayTopologyFlag.MaximizePerformance);
-                        //return status.All(topologyStatus => topologyStatus.Errors == DisplayCapacityProblem.NoProblem);
-
-                        // Least we can do is to check for the availability of all display devices
-                        var displayDevices =
-                            PhysicalGPU.GetPhysicalGPUs()
-                                .SelectMany(gpu => gpu.GetDisplayDevices())
-                                .Select(device => device.DisplayId);
-
-                        if (!
-                            surroundTopologies.All(
-                                topology =>
-                                    topology.Displays.All(display => displayDevices.Contains(display.DisplayId))))
-                        {
-                            return false;
-                        }
-
-                        // And to see if one path have two surround targets
-                        if (Viewports.Any(path => path.TargetDisplays.Count(target => target.SurroundTopology != null) > 1))
-                        {
-                            return false;
-                        }
-
-                        return true;
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
-
-                    return false;
-                }
-
-                return true;*/
-                //return PathInfo.ValidatePathInfos(Paths.Select(path => path.ToPathInfo()));
             }
         }
 
@@ -513,7 +424,7 @@ namespace HeliosPlus.Shared
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (Viewports.Equals(other.Viewports))
+            if (Viewports.SequenceEqual(other.Viewports))
                 return true;
             else
                 return false;

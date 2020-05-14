@@ -4,10 +4,11 @@ using System.Linq;
 using WindowsDisplayAPI.DisplayConfig;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Interfaces.Mosaic;
+using System.Collections.Generic;
 
 namespace HeliosPlus.Shared.NVIDIA
 {
-    public class SurroundTopology : IEquatable<SurroundTopology>
+    public class SurroundTopology
     {
         public SurroundTopology(GridTopology topology)
         {
@@ -46,64 +47,7 @@ namespace HeliosPlus.Shared.NVIDIA
         public Size Resolution { get; set; }
         public int Rows { get; set; }
 
-        /// <inheritdoc />
-        public bool Equals(SurroundTopology other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            if (AcceleratePrimaryDisplay.Equals(other.AcceleratePrimaryDisplay))
-                Console.WriteLine("accprimdisp is true");
-            if (ApplyWithBezelCorrectedResolution.Equals(other.ApplyWithBezelCorrectedResolution))
-                Console.WriteLine("appwithbezelcorrectres is true");
-            if (BaseMosaicPanoramic.Equals(other.BaseMosaicPanoramic))
-                Console.WriteLine("basemosiacis true");
-            if (ColorDepth.Equals(other.ColorDepth))
-                Console.WriteLine("colordepth is true");
-            if (Columns.Equals(other.Columns) )
-                Console.WriteLine("colums is true");
-            if (Displays.Length.Equals(other.Displays.Length))
-                Console.WriteLine("disp length is true");
-            if (Displays.All(display => other.Displays.Contains(display)))
-                Console.WriteLine("disp all is true");
-            if (DriverReloadAllowed.Equals(other.DriverReloadAllowed) )
-                Console.WriteLine("driver reload is true");
-            if (Frequency.Equals(other.Frequency) )
-                Console.WriteLine("freq is true");
-            if (ImmersiveGaming.Equals(other.ImmersiveGaming) )
-                Console.WriteLine("immers is true");
-            if (Resolution.Equals(other.Resolution))
-                Console.WriteLine("res is true");
-            if (Rows.Equals(other.Rows))
-                Console.WriteLine("rows is true");
-
-
-            if (AcceleratePrimaryDisplay.Equals(other.AcceleratePrimaryDisplay) &&
-                   ApplyWithBezelCorrectedResolution.Equals(other.ApplyWithBezelCorrectedResolution) &&
-                   BaseMosaicPanoramic.Equals(other.BaseMosaicPanoramic) &&
-                   ColorDepth.Equals(other.ColorDepth) &&
-                   Columns.Equals(other.Columns) &&
-                   Displays.Length.Equals(other.Displays.Length) &&
-                   Displays.All(display => other.Displays.Contains(display)) &&
-                   DriverReloadAllowed.Equals(other.DriverReloadAllowed) &&
-                   Frequency.Equals(other.Frequency) &&
-                   ImmersiveGaming.Equals(other.ImmersiveGaming) &&
-                   Resolution.Equals(other.Resolution) &&
-                   Rows.Equals(other.Rows))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
+  
         // ReSharper disable once ExcessiveIndentation
         public static SurroundTopology FromPathTargetInfo(PathTargetInfo pathTargetInfo)
         {
@@ -180,60 +124,9 @@ namespace HeliosPlus.Shared.NVIDIA
             return null;
         }
 
-        public static bool operator ==(SurroundTopology left, SurroundTopology right)
-        {
-            return Equals(left, right) || left?.Equals(right) == true;
-        }
-
-        public static bool operator !=(SurroundTopology left, SurroundTopology right)
-        {
-            return !(left == right);
-        }
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-
-            return Equals((SurroundTopology) obj);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = AcceleratePrimaryDisplay.GetHashCode();
-                hashCode = (hashCode * 397) ^ ApplyWithBezelCorrectedResolution.GetHashCode();
-                hashCode = (hashCode * 397) ^ BaseMosaicPanoramic.GetHashCode();
-                hashCode = (hashCode * 397) ^ ColorDepth;
-                hashCode = (hashCode * 397) ^ Columns;
-                hashCode = (hashCode * 397) ^ (Displays?.GetHashCode() ?? 0);
-                hashCode = (hashCode * 397) ^ DriverReloadAllowed.GetHashCode();
-                hashCode = (hashCode * 397) ^ Frequency;
-                hashCode = (hashCode * 397) ^ ImmersiveGaming.GetHashCode();
-                hashCode = (hashCode * 397) ^ Resolution.GetHashCode();
-                hashCode = (hashCode * 397) ^ Rows;
-
-                return hashCode;
-            }
-        }
-
-        /// <inheritdoc />
-        public override string ToString()
+        public string ToString()
         {
             return $"SurroundTopology[{Rows}, {Columns}] ({Resolution.Width}, {Resolution.Height}) @ {Frequency}";
         }
@@ -292,5 +185,193 @@ namespace HeliosPlus.Shared.NVIDIA
 
             return gridTopology;
         }
+
+        // The public override for the Object.Equals
+        public override bool Equals(object obj)
+        {
+            return this.Equals(obj as SurroundTopology);
+        }
+
+        // SurroundTopoligies are equal if their contents (except name) are equal
+        public bool Equals(SurroundTopology other)
+        {
+
+            // If parameter is null, return false.
+            if (Object.ReferenceEquals(other, null))
+                return false;
+
+            // Optimization for a common success case.
+            if (Object.ReferenceEquals(this, other))
+                return true;
+
+            // If run-time types are not exactly the same, return false.
+            if (this.GetType() != other.GetType())
+                return false;
+
+            // Check whether the Profile Viewport properties are equal
+            // Two profiles are equal only when they have the same viewport data exactly
+            if (AcceleratePrimaryDisplay.Equals(other.AcceleratePrimaryDisplay) &&
+                ApplyWithBezelCorrectedResolution.Equals(other.ApplyWithBezelCorrectedResolution) &&
+                BaseMosaicPanoramic.Equals(other.BaseMosaicPanoramic) &&
+                ColorDepth.Equals(other.ColorDepth) &&
+                Columns.Equals(other.Columns) &&
+                Displays.Length.Equals(other.Displays.Length) &&
+                DriverReloadAllowed.Equals(other.DriverReloadAllowed) &&
+                Frequency.Equals(other.Frequency) &&
+                ImmersiveGaming.Equals(other.ImmersiveGaming) &&
+                Resolution.Equals(other.Resolution) &&
+                Rows.Equals(other.Rows))
+            {
+                // If the above all match, then we need to check the Displays matche
+                if (Displays == null && other.Displays == null)
+                    return true;
+                else if (Displays != null && other.Displays == null)
+                    return false;
+                else if (Displays == null && other.Displays != null)
+                    return false;
+                else if (Displays.SequenceEqual(other.Displays))
+                    return true;
+
+                return false;
+            }
+            else
+                return false;
+        }
+
+        // If Equals() returns true for this object compared to  another
+        // then GetHashCode() must return the same value for these objects.
+        public override int GetHashCode()
+        {
+            // Get hash code for the AcceleratePrimaryDisplay field if it is not null.
+            int hashAcceleratePrimaryDisplay = AcceleratePrimaryDisplay.GetHashCode();
+
+            // Get hash code for the ApplyWithBezelCorrectedResolution field if it is not null.
+            int hashApplyWithBezelCorrectedResolution = ApplyWithBezelCorrectedResolution.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashBaseMosaicPanoramic = BaseMosaicPanoramic.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashColorDepth = ColorDepth.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashColumns = Columns.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashDriverReloadAllowed = DriverReloadAllowed.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashFrequency = Frequency.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashImmersiveGaming = ImmersiveGaming.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashResolution = Resolution.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashRows = Rows.GetHashCode();
+
+            // Get hash code for the Displays field if it is not null.
+            int hashDisplays = Displays.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashAcceleratePrimaryDisplay ^ hashApplyWithBezelCorrectedResolution ^ hashBaseMosaicPanoramic ^
+                hashColorDepth ^ hashColumns ^ hashDriverReloadAllowed ^ hashFrequency ^ hashImmersiveGaming ^
+                hashResolution ^ hashRows ^ hashDisplays;
+        }
+    }
+
+    // Custom comparer for the ProfileViewportTargetDisplay class
+    class SurroundTopologyComparer : IEqualityComparer<SurroundTopology>
+    {
+        // Products are equal if their names and product numbers are equal.
+        public bool Equals(SurroundTopology x, SurroundTopology y)
+        {
+
+            //Check whether the compared objects reference the same data.
+            if (Object.ReferenceEquals(x, y)) return true;
+
+            //Check whether any of the compared objects is null.
+            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+                return false;
+
+            // Check whether the Profile Viewport properties are equal
+            // Two profiles are equal only when they have the same viewport data exactly
+
+            if (x.AcceleratePrimaryDisplay.Equals(y.AcceleratePrimaryDisplay) &&
+                x.ApplyWithBezelCorrectedResolution.Equals(y.ApplyWithBezelCorrectedResolution) &&
+                x.BaseMosaicPanoramic.Equals(y.BaseMosaicPanoramic) &&
+                x.ColorDepth.Equals(y.ColorDepth) &&
+                x.Columns.Equals(y.Columns) &&
+                x.Displays.Length.Equals(y.Displays.Length) &&
+                x.DriverReloadAllowed.Equals(y.DriverReloadAllowed) &&
+                x.Frequency.Equals(y.Frequency) &&
+                x.ImmersiveGaming.Equals(y.ImmersiveGaming) &&
+                x.Resolution.Equals(y.Resolution) &&
+                x.Rows.Equals(y.Rows))
+            {
+                // If the above all match, then we need to check the Displays matche
+                if (x.Displays == null && y.Displays == null)
+                    return true;
+                else if (x.Displays != null && y.Displays == null)
+                    return false;
+                else if (x.Displays == null && y.Displays != null)
+                    return false;
+                else if (x.Displays.Equals(y.Displays))
+                    return true;
+
+                return false;
+            }
+            else
+                return false;
+        }
+
+        // If Equals() returns true for a pair of objects
+        // then GetHashCode() must return the same value for these objects.
+        public int GetHashCode(SurroundTopology surroundTopology)
+        {
+            // Check whether the object is null
+            if (Object.ReferenceEquals(surroundTopology, null)) return 0;
+
+            // Get hash code for the AcceleratePrimaryDisplay field if it is not null.
+            int hashAcceleratePrimaryDisplay = surroundTopology.AcceleratePrimaryDisplay.GetHashCode();
+
+            // Get hash code for the ApplyWithBezelCorrectedResolution field if it is not null.
+            int hashApplyWithBezelCorrectedResolution = surroundTopology.ApplyWithBezelCorrectedResolution.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashBaseMosaicPanoramic = surroundTopology.BaseMosaicPanoramic.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashColorDepth = surroundTopology.ColorDepth.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashColumns = surroundTopology.Columns.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashDriverReloadAllowed = surroundTopology.DriverReloadAllowed.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashFrequency = surroundTopology.Frequency.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashImmersiveGaming = surroundTopology.ImmersiveGaming.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashResolution = surroundTopology.Resolution.GetHashCode();
+
+            // Get hash code for the FrequencyInMillihertz field if it is not null.
+            int hashRows = surroundTopology.Rows.GetHashCode();
+
+            // Get hash code for the Displays field if it is not null.
+            int hashDisplays = surroundTopology.Displays.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashAcceleratePrimaryDisplay ^ hashApplyWithBezelCorrectedResolution ^ hashBaseMosaicPanoramic ^
+                hashColorDepth ^ hashColumns ^ hashDriverReloadAllowed ^ hashFrequency ^ hashImmersiveGaming ^
+                hashResolution ^ hashRows ^ hashDisplays;
+        }
+
     }
 }
