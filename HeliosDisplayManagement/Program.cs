@@ -133,21 +133,14 @@ namespace HeliosPlus {
 
         private static void EditProfile(Profile profile)
         {
-
-            // Get the status of the 
+            // Get the status of the thing
             IPCService.GetInstance().Status = InstanceStatus.User;
-            var editForm = new EditForm(profile);
-
-            if (editForm.ShowDialog() == DialogResult.OK)
-            {
-                profile = editForm.Profile;
-            }
-
-            var profiles = Profile.LoadAllProfiles().ToArray();
-            if (!Profile.SaveAllProfiles())
-            {
-                throw new Exception(Language.Failed_to_save_profile);
-            }
+            // Load all the profiles from JSON
+            Profile.LoadAllProfiles().ToArray();
+            // Start up the DisplayProfileForm directly
+            new DisplayProfileForm(profile).ShowDialog();
+            // Then we close down as we're only here to edit one profile
+            Application.Exit();
         }
 
 

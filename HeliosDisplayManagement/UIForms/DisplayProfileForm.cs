@@ -17,11 +17,19 @@ namespace HeliosPlus.UIForms
         private List<Profile> _savedProfiles = new List<Profile>();
         private string _saveOrRenameMode = "save";
         private static bool _inDialog = false;
-                
+        private static Profile _profileToLoad = null;
+
         public DisplayProfileForm()
         {
             InitializeComponent();
             this.AcceptButton = this.btn_save_or_rename;
+        }
+
+        public DisplayProfileForm(Profile profileToLoad)
+        {
+            InitializeComponent();
+            this.AcceptButton = this.btn_save_or_rename;
+            _profileToLoad = profileToLoad;
         }
 
         private void Apply_Click(object sender, EventArgs e)
@@ -168,6 +176,12 @@ namespace HeliosPlus.UIForms
                     // Profile
                     if (!foundCurrentProfileInLoadedProfiles)
                         ChangeSelectedProfile(Profile.CurrentProfile);
+
+                    // Check if we were loading a profile to edit
+                    // If so, select that instead of all that other stuff above!
+                    if (_profileToLoad != null)
+                        ChangeSelectedProfile(_profileToLoad);
+
                 }
                 else
                 {
