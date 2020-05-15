@@ -34,7 +34,6 @@ namespace HeliosPlus.UIForms
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DisplayProfileForm));
             this.btn_apply = new System.Windows.Forms.Button();
-            this.btn_edit = new System.Windows.Forms.Button();
             this.btn_back = new System.Windows.Forms.Button();
             this.btn_delete = new System.Windows.Forms.Button();
             this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
@@ -75,22 +74,6 @@ namespace HeliosPlus.UIForms
             this.btn_apply.Text = "&Apply";
             this.btn_apply.UseVisualStyleBackColor = false;
             this.btn_apply.Click += new System.EventHandler(this.Apply_Click);
-            // 
-            // btn_edit
-            // 
-            this.btn_edit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_edit.BackColor = System.Drawing.Color.Black;
-            this.btn_edit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_edit.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_edit.ForeColor = System.Drawing.Color.White;
-            this.btn_edit.Location = new System.Drawing.Point(12, 750);
-            this.btn_edit.Name = "btn_edit";
-            this.btn_edit.Size = new System.Drawing.Size(120, 40);
-            this.btn_edit.TabIndex = 8;
-            this.btn_edit.Text = "&Edit";
-            this.btn_edit.UseVisualStyleBackColor = false;
-            this.btn_edit.Visible = false;
-            this.btn_edit.Click += new System.EventHandler(this.Edit_Click);
             // 
             // btn_back
             // 
@@ -177,7 +160,6 @@ namespace HeliosPlus.UIForms
             // 
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
-            this.editToolStripMenuItem.Click += new System.EventHandler(this.Edit_Click);
             // 
             // deleteToolStripMenuItem
             // 
@@ -320,7 +302,6 @@ namespace HeliosPlus.UIForms
             this.Controls.Add(this.btn_view_current);
             this.Controls.Add(this.btn_delete);
             this.Controls.Add(this.btn_back);
-            this.Controls.Add(this.btn_edit);
             this.Controls.Add(this.btn_apply);
             this.Controls.Add(this.pb_down_arrow);
             this.Controls.Add(this.dv_profile);
@@ -333,8 +314,8 @@ namespace HeliosPlus.UIForms
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "HeliosPlus - Setup Display Profiles";
             this.TopMost = true;
-            this.Activated += new System.EventHandler(this.MainForm_Activated);
-            this.Load += new System.EventHandler(this.MainForm_Load);
+            this.Activated += new System.EventHandler(this.DisplayProfileForm_Activated);
+            this.Load += new System.EventHandler(this.DisplayProfileForm_Load);
             this.menu_profiles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
             this.ResumeLayout(false);
@@ -345,7 +326,6 @@ namespace HeliosPlus.UIForms
         #endregion
         private DisplayView dv_profile;
         private System.Windows.Forms.Button btn_apply;
-        private System.Windows.Forms.Button btn_edit;
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.Button btn_delete;
         private System.Windows.Forms.ContextMenuStrip menu_profiles;

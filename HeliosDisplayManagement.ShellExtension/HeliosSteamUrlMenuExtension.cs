@@ -31,7 +31,7 @@ namespace HeliosPlus.ShellExtension
 
             if (Profile.LoadAllProfiles().Any())
             {
-                Profile.RefreshActiveStatus();
+                Profile.UpdateCurrentProfile();
 
                 foreach (var profile in Profile.LoadAllProfiles())
                 {

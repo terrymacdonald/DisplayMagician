@@ -324,7 +324,7 @@ namespace HeliosPlus.Shared
         }
 
 
-        public static void RefreshActiveStatus()
+        public static void UpdateCurrentProfile()
         {
             _currentProfile = new Profile
             {
@@ -538,13 +538,13 @@ namespace HeliosPlus.Shared
                 Thread.Sleep(10000);
 
                 // Check o see what our current screen profile is now!
-                RefreshActiveStatus();
+                UpdateCurrentProfile();
 
                 return true;
             }
             catch (Exception ex)
             {
-                RefreshActiveStatus();
+                UpdateCurrentProfile();
                 MessageBox.Show(ex.Message, @"Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 return false;

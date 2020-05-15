@@ -41,7 +41,7 @@ namespace HeliosPlus.ShellExtension
 
             if (Profile.LoadAllProfiles().Any())
             {
-                Profile.RefreshActiveStatus();
+                Profile.UpdateCurrentProfile();
                 var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
                     Properties.Resources.Icon_x16);
 

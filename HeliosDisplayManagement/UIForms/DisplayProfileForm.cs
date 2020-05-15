@@ -23,6 +23,7 @@ namespace HeliosPlus.UIForms
         private Profile _selectedProfile;
         private List<Profile> _savedProfiles = new List<Profile>();
         private string _saveOrRenameMode = "save";
+        private static bool _inDialog = false;
                 
         public DisplayProfileForm()
         {
@@ -64,6 +65,10 @@ namespace HeliosPlus.UIForms
 
         private void Delete_Click(object sender, EventArgs e)
         {
+            _inDialog = true;
+            if (MessageBox.Show($"Are you sure you want to delete the '{_selectedProfile.Name}' Display Profile?", $"Delete '{_selectedProfile.Name}' Display Profile?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+                return;
+
             Profile profileToDelete = _selectedProfile;
             string profileToDeleteFilename = _selectedProfile.SavedProfileCacheFilename;
 
@@ -120,82 +125,82 @@ namespace HeliosPlus.UIForms
             Profile.SaveAllProfiles(_savedProfiles);
         }
 
-        private void Edit_Click(object sender, EventArgs e)
+        private void RefreshDisplayProfileUI()
         {
-           /* if (dv_profile.Profile != null &&
-                lv_profiles_old.SelectedIndices.Count > 0 &&
-                lv_profiles_old.SelectedItems[0].Tag != null)
-            {
-                var selectedIndex = lv_profiles_old.SelectedIndices[0];
-                var editForm = new EditForm(dv_profile.Profile);
 
-                if (editForm.ShowDialog(this) == DialogResult.OK)
+            if (!_inDialog)
+            {
+                // Temporarily stop updating the saved_profiles listview
+                ilv_saved_profiles.SuspendLayout();
+
+                if (_savedProfiles.Count > 0)
                 {
-                    lv_profiles_old.Items[selectedIndex].Tag = editForm.Profile;
-                    SaveProfiles();
-                }
-            }*/
-
-        }
-               
-
-        private void MainForm_Activated(object sender, EventArgs e)
-        {
-            // Reload the profiles in case we swapped to another program to change it
-            //ReloadProfiles();
-            // If nothing is selected then select the currently used profile
-            /*if (lv_profiles_old.SelectedItems.Count == 0)
-            {
-                lv_profiles_old.Items[0].Selected = true;
-            }*/
-        }
-
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-            ImageListViewItem newItem;
-            _savedProfiles = (List<Profile>)Profile.LoadAllProfiles();
-            
-            // Temporarily stop updating the saved_profiles listview
-            ilv_saved_profiles.SuspendLayout();
-
-            if (_savedProfiles.Count > 0)
-            {
-
-                bool foundCurrentProfileInLoadedProfiles = false;
-                foreach (Profile loadedProfile in _savedProfiles)
-                {
-                    loadedProfile.SaveProfileImageToCache();
-                    newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
-                    ilv_saved_profiles.Items.Add(newItem);
-
-                    if (Profile.CurrentProfile.Equals(loadedProfile))
+                    ImageListViewItem newItem = null; 
+                    bool foundCurrentProfileInLoadedProfiles = false;
+                    foreach (Profile loadedProfile in _savedProfiles)
                     {
-                        // We have already saved the current profile!
-                        // so we need to show the current profile 
-                        // And finally we need to select the currentProfile, as it's the one we're using now
-                        newItem.Selected = true;
-                        ChangeSelectedProfile(Profile.CurrentProfile);
-                        foundCurrentProfileInLoadedProfiles = true;
+                        bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
+                        if (!thisLoadedProfileIsAlreadyHere)
+                        {
+                            loadedProfile.SaveProfileImageToCache();
+                            newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
+                            ilv_saved_profiles.Items.Add(newItem);
+                        }
+
+                        if (Profile.CurrentProfile.Equals(loadedProfile))
+                        {
+                            // We have already saved the selected profile!
+                            // so we need to show the selected profile 
+                            ChangeSelectedProfile(loadedProfile);
+                            foundCurrentProfileInLoadedProfiles = true;
+                        }
                     }
+
+                    // If we get to the end of the loaded profiles and haven't
+                    // found a matching profile, then we need to show the current
+                    // Profile
+                    if (!foundCurrentProfileInLoadedProfiles)
+                        ChangeSelectedProfile(Profile.CurrentProfile);
+                }
+                else
+                {
+                    // If there are no profiles at all then we are starting from scratch!
+                    // Show the profile in the DV window
+                    // Use the current profile name in the label and the save name
+                    ChangeSelectedProfile(Profile.CurrentProfile);
                 }
 
-                // If we get to the end of the loaded profiles and haven't
-                // found a matching profile, then we need to show the current
-                // Profile
-                ChangeSelectedProfile(Profile.CurrentProfile);
-
+                // Restart updating the saved_profiles listview
+                ilv_saved_profiles.ResumeLayout();
             }
             else
-            {
-                // If there are no profiles at all then we are starting from scratch!
-                // Show the profile in the DV window
-                // Use the current profile name in the label and the save name
-                ChangeSelectedProfile(Profile.CurrentProfile);
-            }
+                // Otherwise turn off the dialog mode we were just in
+                _inDialog = false;
+        }
 
-            // Restart updating the saved_profiles listview
-            ilv_saved_profiles.ResumeLayout();
 
+        private void DisplayProfileForm_Activated(object sender, EventArgs e)
+        {
+            // We handle the UI updating in DisplayProfileForm_Activated so that
+            // the app will check for changes to the current profile when the
+            // user clicks back to this app. This is designed to allow people to
+            // alter their Windows Display settings then come back to our app
+            // and the app will automatically recognise that things have changed.
+
+            // Reload the profiles in case we swapped to another program to change it
+            Profile.UpdateCurrentProfile();
+            // Refresh the Profile UI
+            RefreshDisplayProfileUI();
+        }
+
+        private void DisplayProfileForm_Load(object sender, EventArgs e)
+        {
+            // Load all the profiles to prepare things
+            _savedProfiles = (List<Profile>)Profile.LoadAllProfiles();
+            // Update the Current Profile
+            Profile.UpdateCurrentProfile();
+            // Refresh the Profile UI
+            RefreshDisplayProfileUI();
         }
 
 
@@ -211,7 +216,7 @@ namespace HeliosPlus.UIForms
             // And update the save/rename textbox
             txt_profile_save_name.Text = _selectedProfile.Name;
 
-            if (_selectedProfile.Name == Profile.CurrentProfile.Name)
+            if (_selectedProfile.Equals(Profile.CurrentProfile))
             {
                 if (_savedProfiles.Contains(_selectedProfile))
                 {
@@ -242,11 +247,26 @@ namespace HeliosPlus.UIForms
                     btn_apply.Visible = true;
                 }
             }
+            // Refresh the image list view
+            RefreshImageListView(profile);
+
             // And finally show the profile in the display view
             dv_profile.Profile = profile;
             dv_profile.Refresh();
+
         }
 
+        private void RefreshImageListView(Profile profile)
+        {
+            ilv_saved_profiles.ClearSelection();
+            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
+            if (matchingImageListViewItems.Any())
+            {
+                matchingImageListViewItems.First().Selected = true;
+                matchingImageListViewItems.First().Focused = true;
+            }
+
+        }
 
         private bool IsValidFilename(string testName)
         {
@@ -378,7 +398,10 @@ namespace HeliosPlus.UIForms
 
         private void btn_view_current_Click(object sender, EventArgs e)
         {
-            ChangeSelectedProfile(Profile.CurrentProfile);
+            // Reload the profiles in case we swapped to another program to change it
+            Profile.UpdateCurrentProfile();
+            // Refresh the Profile UI
+            RefreshDisplayProfileUI();
         }
 
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
