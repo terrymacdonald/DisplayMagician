@@ -2,14 +2,10 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using HeliosPlus.Resources;
 using HeliosPlus.Shared;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Globalization;
 using Manina.Windows.Forms;
 using System.Text.RegularExpressions;
 
@@ -42,14 +38,28 @@ namespace HeliosPlus.UIForms
                 return;
             }
 
-            if (
-                new SplashForm(
+            IDictionary<string, Action> actions = dv_profile.Profile.applyProfileActions();
+            IDictionary<string, string> messages = dv_profile.Profile.applyProfileMsgs();
+            List<string> sequence = dv_profile.Profile.applyProfileSequence();
+
+            if (new ApplyingChangesForm(
+                () =>   {
+                            Task.Factory.StartNew(() =>
+                                {
+                                    System.Threading.Thread.Sleep(2000);
+                                    actions[sequence[0]]();
+                                }, TaskCreationOptions.LongRunning);
+                        }, 3, 30, 5, messages[sequence[0]]
+                ).ShowDialog(this) != DialogResult.Cancel)
+            {
+                for (int i = 1; i < sequence.Count; i++)
+                {
+                    new ApplyingChangesForm(
                     () =>
                     {
-                        Task.Factory.StartNew(() => _selectedProfile.Apply(), TaskCreationOptions.LongRunning);
-                    }, 3, 30).ShowDialog(this) !=
-                DialogResult.Cancel)
-            {
+                        Task.Factory.StartNew(() => actions[sequence[i]](), TaskCreationOptions.LongRunning);
+                    }, 0, 30, 5, messages[sequence[i]]).ShowDialog(this);
+                }
                 // nothing to do
                 Console.WriteLine("Applying profile " + _selectedProfile.Name);
             }

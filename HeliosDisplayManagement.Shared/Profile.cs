@@ -6,12 +6,14 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Diagnostics;
 using WindowsDisplayAPI.DisplayConfig;
 using HeliosPlus.Shared.Resources;
 using Newtonsoft.Json;
 //using NvAPIWrapper.Display;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
+//using Appccelerate.StateMachine;
 using NvAPIWrapper.Native.Mosaic;
 using HeliosPlus.Shared.Topology;
 using System.Drawing;
@@ -474,70 +476,103 @@ namespace HeliosPlus.Shared
             }
         }
 
+        private void _applyTopos()
+        {
+            Debug.Print("_applyTopos()");
+            try
+            {
+                var surroundTopologies =
+                    Viewports.SelectMany(viewport => viewport.TargetDisplays)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .ToArray();
+
+                if (surroundTopologies.Length == 0)
+                {
+                    var currentTopologies = GridTopology.GetGridTopologies();
+
+                    if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
+                    {
+                        surroundTopologies =
+                            GridTopology.GetGridTopologies()
+                                .SelectMany(topology => topology.Displays)
+                                .Select(displays => new GridTopology(1, 1, new[] { displays }))
+                                .ToArray();
+                    }
+                }
+
+                if (surroundTopologies.Length > 0)
+                {
+                    GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        private void _applyPathInfos()
+        {
+            Debug.Print("_applyPathInfos()");
+            if (!IsPossible)
+            {
+                throw new InvalidOperationException(
+                    $"Problem applying the '{Name}' Display Profile! The display configuration changed since this profile is created. Please re-create this profile.");
+            }
+
+            var pathInfos = Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+            PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+        }
+
+        public IDictionary<string, Action> applyProfileActions()
+        {
+            var dict = new Dictionary<string, Action>()
+            {
+                { "Applying_Topos", _applyTopos },
+                { "Applying_Paths", _applyPathInfos }
+            };
+            return dict;
+        }
+
+        public IDictionary<string, string> applyProfileMsgs()
+        {
+            var dict = new Dictionary<string, string>()
+            {
+                { "Applying_Topos", Language.Applying_Topologies },
+                { "Applying_Paths", Language.Applying_Paths }
+            };
+            return dict;
+        }
+
+        public List<string> applyProfileSequence()
+        {
+            var list = new List<string>() { "Applying_Topos", "Applying_Paths" };
+            return list;
+        }
+
         public bool Apply()
         {
             try
             {
-                // Wait 20 seconds
+
+                Debug.Print("Begin profile change");
                 Thread.Sleep(2000);
+                _applyTopos();
 
-                try
-                {
-                    // Get an array of the valid NVIDAI surround topologies
-                    var surroundTopologies =
-                        Viewports.SelectMany(path => path.TargetDisplays)
-                            .Select(target => target.SurroundTopology)
-                            .Where(topology => topology != null)
-                            .Select(topology => topology.ToGridTopology())
-                            .ToArray();
-
-                    // See if we have any surroundTopologies specified!
-                    if (surroundTopologies.Length == 0)
-                    {
-                        // if we do not have surroundTopopligies specified then
-                        // Figure out how to lay out the standard windows displays
-                        var currentTopologies = GridTopology.GetGridTopologies();
-
-                        if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
-                        {
-                            surroundTopologies =
-                                GridTopology.GetGridTopologies()
-                                    .SelectMany(topology => topology.Displays)
-                                    .Select(displays => new GridTopology(1, 1, new[] {displays}))
-                                    .ToArray();
-                        }
-                    } 
-                    else 
-                    {
-                        // if we DO have surroundTopopligies specified then
-                        // Figure out how to turn them on
-                        GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
-                    }
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                // Wait 18 seconds
+                Debug.Print("Finished setting topologies");
+                Debug.Print("Sleep");
                 Thread.Sleep(18000);
+                Debug.Print("Awake");
 
-                // Check to see what Viewports we have enabled
-                var ViewportsPathInfo = Viewports.Select(path => path.ToPathInfo()).Where(info => info != null).ToArray();
+                _applyPathInfos();
 
-                // If we don't have any 
-                if (!ViewportsPathInfo.Any())
-                {
-                    throw new InvalidOperationException(
-                        @"Display configuration changed since this profile is created. Please re-create this profile.");
-                }
-
-                // Apply the new screen configuration
-                PathInfo.ApplyPathInfos(ViewportsPathInfo, true, true, true);
-                // Wait 10 seconds
+                Debug.Print("Applying pathInfos");
+                Debug.Print("Sleep");
                 Thread.Sleep(10000);
+                Debug.Print("Awake");
 
-                // Check o see what our current screen profile is now!
                 UpdateCurrentProfile();
 
                 return true;
@@ -545,7 +580,8 @@ namespace HeliosPlus.Shared
             catch (Exception ex)
             {
                 UpdateCurrentProfile();
-                MessageBox.Show(ex.Message, @"Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Console.WriteLine($"Profile: Problem applying the '{Name}' Display Profile: {ex.Message}");
+                MessageBox.Show($"Problem applying the '{Name}' Display Profile! \n(ex.Message)", $"Problem applying '{Name}' Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 return false;
             }

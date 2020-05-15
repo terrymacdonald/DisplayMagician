@@ -3,7 +3,7 @@ using HeliosPlus.Resources;
 
 namespace HeliosPlus.UIForms
 {
-    sealed partial class SplashForm
+    sealed partial class ApplyingChangesForm
     {
         /// <summary>
         /// Required designer variable.
@@ -32,7 +32,7 @@ namespace HeliosPlus.UIForms
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SplashForm));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ApplyingChangesForm));
             this.progressPanel = new System.Windows.Forms.Panel();
             this.lbl_message = new System.Windows.Forms.Label();
             this.progressBar = new CircularProgressBar.CircularProgressBar();

@@ -63,7 +63,7 @@ namespace HeliosPlus {
                 IPCService.GetInstance().Status = InstanceStatus.Busy;
                 var failed = false;
 
-                if (new SplashForm(() =>
+                if (new ApplyingChangesForm(() =>
                     {
                         Task.Factory.StartNew(() =>
                         {

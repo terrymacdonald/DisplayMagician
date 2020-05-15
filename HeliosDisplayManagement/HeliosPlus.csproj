@@ -106,11 +106,11 @@
     <Compile Include="UIForms\ShortcutForm.Designer.cs">
       <DependentUpon>ShortcutForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="UIForms\SplashForm.cs">
+    <Compile Include="UIForms\ApplyingChangesForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="UIForms\SplashForm.Designer.cs">
-      <DependentUpon>SplashForm.cs</DependentUpon>
+    <Compile Include="UIForms\ApplyingChangesForm.Designer.cs">
+      <DependentUpon>ApplyingChangesForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UIForms\DisplayProfileForm.cs">
       <SubType>Form</SubType>
@@ -148,8 +148,8 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="UIForms\SplashForm.resx">
-      <DependentUpon>SplashForm.cs</DependentUpon>
+    <EmbeddedResource Include="UIForms\ApplyingChangesForm.resx">
+      <DependentUpon>ApplyingChangesForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

@@ -70,6 +70,24 @@ namespace HeliosPlus.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Applying Paths.
+        /// </summary>
+        internal static string Applying_Paths {
+            get {
+                return ResourceManager.GetString("Applying_Paths", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Applying Toplogies.
+        /// </summary>
+        internal static string Applying_Topologies {
+            get {
+                return ResourceManager.GetString("Applying_Topologies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to UN-TITLED-PROFILE.
         /// </summary>
         internal static string UN_TITLED_PROFILE {

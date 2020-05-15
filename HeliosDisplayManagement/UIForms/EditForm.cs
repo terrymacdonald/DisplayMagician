@@ -53,7 +53,7 @@ namespace HeliosPlus.UIForms
                 Enabled = false;
                 var failed = false;
 
-                if (new SplashForm(() =>
+                if (new ApplyingChangesForm(() =>
                     {
                         Task.Factory.StartNew(() =>
                         {
@@ -72,7 +72,7 @@ namespace HeliosPlus.UIForms
                     }
                     else
                     {
-                        new SplashForm(
+                        new ApplyingChangesForm(
                             () =>
                             {
                                 Task.Factory.StartNew(() => currentProfile.Apply(), TaskCreationOptions.LongRunning);
