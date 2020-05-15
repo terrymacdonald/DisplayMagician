@@ -78,7 +78,7 @@
     <None Include="Resources\HeliosPlus.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HeliosDisplayManagement.Shared\HeliosPlus.Shared.csproj">
+    <ProjectReference Include="..\HeliosPlus.Shared\HeliosPlus.Shared.csproj">
       <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
       <Name>HeliosPlus.Shared</Name>
     </ProjectReference>
