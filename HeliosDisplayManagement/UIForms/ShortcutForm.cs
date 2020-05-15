@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing.IconLib;
-using System.Drawing.IconLib.Exceptions;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -11,9 +10,6 @@ using System.Windows.Forms;
 using HeliosPlus.Resources;
 using HeliosPlus.Shared;
 using HeliosPlus.GameLibraries;
-using NvAPIWrapper.Native.GPU;
-using TsudaKageyu;
-using System.Text.RegularExpressions;
 using System.Globalization;
 
 namespace HeliosPlus.UIForms
@@ -24,33 +20,10 @@ namespace HeliosPlus.UIForms
         List<SteamGame> _allSteamGames;
         internal Profile[] _allProfiles; 
 
-        /* private ListViewItem AddProfile(Profile profile = null)
-        {
-            il_profiles.Images.Add(
-                new ProfileIcon(profile ?? Profile.GetCurrent()).ToBitmap(
-                    il_profiles.ImageSize.Width,
-                    il_profiles.ImageSize.Height));
-
-            return lv_profiles.Items.Add(new ListViewItem
-            {
-                Text = profile?.Name ?? Language.Current,
-                ImageIndex = il_profiles.Images.Count - 1,
-                Tag = profile,
-                Group =
-                    lv_profiles.Groups[profile == null ? GroupCurrent : (profile.IsActive ? GroupActive : GroupSaved)]
-            });
-
-        }*/
-
-
         public ShortcutForm()
         {
             InitializeComponent();
             
-            /*lv_profiles.Groups.Add(GroupCurrent, Language.Current);
-            lv_profiles.Groups.Add(GroupActive, Language.Active_Profiles);
-            lv_profiles.Groups.Add(GroupSaved, Language.Saved_Profiles);
-            lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);*/
         }
 
         public ShortcutForm(Profile profile) : this()

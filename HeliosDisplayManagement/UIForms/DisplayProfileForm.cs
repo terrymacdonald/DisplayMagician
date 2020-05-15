@@ -13,9 +13,6 @@ namespace HeliosPlus.UIForms
 {
     internal partial class DisplayProfileForm : Form
     {
-        private const string GroupActive = "active";
-        private const string GroupCurrent = "current";
-        private const string GroupSaved = "saved";
         private Profile _selectedProfile;
         private List<Profile> _savedProfiles = new List<Profile>();
         private string _saveOrRenameMode = "save";

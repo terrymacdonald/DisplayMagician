@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -10,18 +9,12 @@ using System.Diagnostics;
 using WindowsDisplayAPI.DisplayConfig;
 using HeliosPlus.Shared.Resources;
 using Newtonsoft.Json;
-//using NvAPIWrapper.Display;
-using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
-//using Appccelerate.StateMachine;
 using NvAPIWrapper.Native.Mosaic;
 using HeliosPlus.Shared.Topology;
 using System.Drawing;
 using System.Drawing.Imaging;
 using WindowsDisplayAPI;
-using WindowsDisplayAPI.DisplayConfig;
-using WindowsDisplayAPI.Native.DisplayConfig;
-using System.Text.RegularExpressions;
 
 namespace HeliosPlus.Shared
 {
