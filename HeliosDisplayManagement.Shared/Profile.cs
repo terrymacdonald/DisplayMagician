@@ -533,8 +533,8 @@ namespace HeliosPlus.Shared
         {
             var dict = new Dictionary<string, string>()
             {
-                { "Applying_Topos", Language.Applying_Topologies },
-                { "Applying_Paths", Language.Applying_Paths }
+                { "Applying_Topos", Language.Applying_First_Message },
+                { "Applying_Paths", Language.Applying_Second_Message }
             };
             return dict;
         }

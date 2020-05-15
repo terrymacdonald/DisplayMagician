@@ -107,29 +107,11 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Apply Profile.
+        ///   Looks up a localized string similar to Apply_Profile.
         /// </summary>
         internal static string Apply_Profile {
             get {
                 return ResourceManager.GetString("Apply_Profile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Applying Paths.
-        /// </summary>
-        internal static string Applying_Paths {
-            get {
-                return ResourceManager.GetString("Applying_Paths", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Applying Topologies.
-        /// </summary>
-        internal static string Applying_Topologies {
-            get {
-                return ResourceManager.GetString("Applying_Topologies", resourceCulture);
             }
         }
         
@@ -431,6 +413,15 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to It won&apos;t be long now.
+        /// </summary>
+        internal static string It_wont_be_long_now {
+            get {
+                return ResourceManager.GetString("It_wont_be_long_now", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to [None].
         /// </summary>
         internal static string None {
@@ -499,6 +490,15 @@ namespace HeliosPlus.Resources {
         internal static string Please_wait {
             get {
                 return ResourceManager.GetString("Please_wait", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Press ESC to cancel.
+        /// </summary>
+        internal static string Press_ESC_to_cancel {
+            get {
+                return ResourceManager.GetString("Press_ESC_to_cancel", resourceCulture);
             }
         }
         

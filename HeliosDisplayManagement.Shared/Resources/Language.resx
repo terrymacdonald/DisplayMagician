@@ -123,10 +123,10 @@
   <data name="UN_TITLED_PROFILE" xml:space="preserve">
     <value>UN-TITLED-PROFILE</value>
   </data>
-  <data name="Applying_Paths" xml:space="preserve">
-    <value>Applying Paths</value>
+  <data name="Applying_First_Message" xml:space="preserve">
+    <value>Pulling everything apart</value>
   </data>
-  <data name="Applying_Topologies" xml:space="preserve">
-    <value>Applying Toplogies</value>
+  <data name="Applying_Second_Message" xml:space="preserve">
+    <value>Putting it back together</value>
   </data>
 </root>

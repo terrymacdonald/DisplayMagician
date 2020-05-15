@@ -126,9 +126,6 @@
   <data name="This_profile_is_currently_impossible_to_apply" xml:space="preserve">
     <value>This profile is currently impossible to apply.</value>
   </data>
-  <data name="Apply_Profile" xml:space="preserve">
-    <value>Apply Profile</value>
-  </data>
   <data name="Profile_is_invalid_or_not_possible_to_apply" xml:space="preserve">
     <value>Profile is invalid or not possible to apply.</value>
   </data>
@@ -363,10 +360,13 @@
   <data name="Waiting_for_the_0_to_terminate" xml:space="preserve">
     <value>Waiting for the '{0}' to terminate</value>
   </data>
-  <data name="Applying_Paths" xml:space="preserve">
-    <value>Applying Paths</value>
+  <data name="Apply_Profile" xml:space="preserve">
+    <value>Apply_Profile</value>
   </data>
-  <data name="Applying_Topologies" xml:space="preserve">
-    <value>Applying Topologies</value>
+  <data name="It_wont_be_long_now" xml:space="preserve">
+    <value>It won't be long now</value>
+  </data>
+  <data name="Press_ESC_to_cancel" xml:space="preserve">
+    <value>Press ESC to cancel</value>
   </data>
 </root>

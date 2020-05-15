@@ -94,12 +94,6 @@
     </Compile>
     <Compile Include="GameLibraries\UplayGame.cs" />
     <Compile Include="GameLibraries\SteamGame.cs" />
-    <Compile Include="UIForms\EditForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UIForms\EditForm.Designer.cs">
-      <DependentUpon>EditForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="UIForms\ShortcutForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -136,9 +130,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\ShortcutForm.resx">
       <DependentUpon>ShortcutForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UIForms\EditForm.resx">
-      <DependentUpon>EditForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\DisplayProfileForm.resx">
       <DependentUpon>DisplayProfileForm.cs</DependentUpon>

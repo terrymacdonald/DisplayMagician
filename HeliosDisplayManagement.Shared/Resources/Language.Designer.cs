@@ -70,20 +70,20 @@ namespace HeliosPlus.Shared.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Applying Paths.
+        ///   Looks up a localized string similar to Pulling everything apart.
         /// </summary>
-        internal static string Applying_Paths {
+        internal static string Applying_First_Message {
             get {
-                return ResourceManager.GetString("Applying_Paths", resourceCulture);
+                return ResourceManager.GetString("Applying_First_Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Applying Toplogies.
+        ///   Looks up a localized string similar to Putting it back together.
         /// </summary>
-        internal static string Applying_Topologies {
+        internal static string Applying_Second_Message {
             get {
-                return ResourceManager.GetString("Applying_Topologies", resourceCulture);
+                return ResourceManager.GetString("Applying_Second_Message", resourceCulture);
             }
         }
         

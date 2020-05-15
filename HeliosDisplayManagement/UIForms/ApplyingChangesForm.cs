@@ -29,6 +29,7 @@ namespace HeliosPlus.UIForms
             progressPanel.BackColor = BackColor;
             progressBar.Invalidated += (sender, args) => Invalidate();
             progressPanel.Invalidated += (sender, args) => Invalidate();
+            Reposition();
         }
 
         public ApplyingChangesForm(Action job, int cancellationTimeout = 0, int countdown = 0) : this()
@@ -45,7 +46,11 @@ namespace HeliosPlus.UIForms
         }
 
         public string CancellationMessage { get; set; } = Language.Starting_in;
+        public string CancellationSubMessage { get; set; } = Language.Press_ESC_to_cancel;
+
         public string CountdownMessage { get; set; } = Language.Please_wait;
+        public string CountdownSubMessage { get; set; } = Language.It_wont_be_long_now;
+
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
@@ -102,6 +107,7 @@ namespace HeliosPlus.UIForms
         private void DoJob()
         {
             lbl_message.Text = CountdownMessage;
+            lbl_sub_message.Text = CountdownSubMessage;
             progressBar.ProgressColor = Color.OrangeRed;
 
             if (_countdownCounter > 0)
@@ -128,6 +134,7 @@ namespace HeliosPlus.UIForms
         private void DoTimeout()
         {
             lbl_message.Text = CancellationMessage;
+            lbl_sub_message.Text = CancellationSubMessage;
             progressBar.ProgressColor = Color.DodgerBlue;
 
             if (_startCounter > 0)
@@ -146,31 +153,21 @@ namespace HeliosPlus.UIForms
         {
             lock (_progressPositions)
             {
-                var screens = Screen.AllScreens;
-                var minX = screens.Select(screen => screen.Bounds.X).Concat(new[] {0}).Min();
-                var maxX = screens.Select(screen => screen.Bounds.Width + screen.Bounds.X).Concat(new[] {0}).Max();
-                var minY = screens.Select(screen => screen.Bounds.Y).Concat(new[] {0}).Min();
-                var maxY = screens.Select(screen => screen.Bounds.Height + screen.Bounds.Y).Concat(new[] {0}).Max();
 
-#if !DEBUG
-                Size = new Size(maxX + Math.Abs(minX), maxY + Math.Abs(minY));
-                Location = new Point(minX, minY);
-#else
-                Size = new Size((int)((maxX + Math.Abs(minX)) * 0.8d), (int)((maxY + Math.Abs(minY)) * 0.8d));
-                Location = new Point(minX + (int)(Size.Width / 8d), minY + (int)(Size.Height / 8d));
-#endif
-
+                Screen[] screens = Screen.AllScreens;
+                Size = screens.Select(screen => screen.Bounds)
+                                            .Aggregate(Rectangle.Union)
+                                            .Size;
+                
                 _progressPositions.Clear();
                 _progressPositions.AddRange(
                     screens.Select(
                         screen =>
-                            new Point(screen.Bounds.X - minX + (screen.Bounds.Width - progressPanel.Width) / 2,
-                                screen.Bounds.Y - minY + (screen.Bounds.Height - progressPanel.Height) / 2)));
+                            new Point(screen.Bounds.X + ((screen.Bounds.Width - progressPanel.Width) / 2),
+                                screen.Bounds.Y + ((screen.Bounds.Height - progressPanel.Height) / 2))
+                    )
+                );
             }
-#if !DEBUG
-            TopMost = true;
-            Activate();
-#endif
             Invalidate();
         }
 
@@ -301,5 +298,6 @@ namespace HeliosPlus.UIForms
 
             base.WndProc(ref m);
         }
+
     }
 }
