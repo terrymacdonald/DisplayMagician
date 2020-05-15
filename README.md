@@ -1,7 +1,7 @@
 # HeliosPlus
-[![](https://img.shields.io/github/license/temacdonald/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/blob/master/LICENSE)
-[![](https://img.shields.io/github/commit-activity/y/temacdonald/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/commits/master)
-[![](https://img.shields.io/github/issues/temacdonald/HeliosDisplayManagement.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/issues)
+[![](https://img.shields.io/github/license/temacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/blob/master/LICENSE)
+[![](https://img.shields.io/github/commit-activity/y/temacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/commits/master)
+[![](https://img.shields.io/github/issues/temacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/issues)
 
 An open source tool for automatically changing your display settings from a Windows Shortcut. Allows you to temporarily change your display settings while you play a game.
 
@@ -10,10 +10,10 @@ An open source tool for automatically changing your display settings from a Wind
 <div style="text-align:center"><img src="READMEAssets/Preview.png"/></div>
 
 ## Download
-[![](https://img.shields.io/github/downloads/temacdonald/HeliosDisplayManagement/total.svg?style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/releases)
-[![](https://img.shields.io/github/tag-date/temacdonald/HeliosDisplayManagement.svg?label=version&style=flat-square)](https://github.com/temacdonald/HeliosDisplayManagement/releases)
+[![](https://img.shields.io/github/downloads/temacdonald/HeliosPlus/total.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/releases)
+[![](https://img.shields.io/github/tag-date/temacdonald/HeliosPlus.svg?label=version&style=flat-square)](https://github.com/temacdonald/HeliosPlus/releases)
 
-The latest version of this application is available for download via the [release](https://github.com/temacdonald/HeliosDisplayManagement/releases) page.
+The latest version of this application is available for download via the [release](https://github.com/temacdonald/HeliosPlus/releases) page.
 
 ## Donation
 No need to donate! I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. Thanks to Soroush for making HeliosDisplayMangement and licensing it under GPL2 so I could make the improvements I was longing for!
@@ -24,7 +24,7 @@ Provides an overview of saved profiles for easy editing and switching, as well a
 
 Please read through the README for features (current and planned) and issues you may encounter while using the program. 
 
-Feel free to report missing features or bugs using the project [issue tracker](https://github.com/temacdonald/HeliosDisplayManagement/issues).
+Feel free to report missing features or bugs using the project [issue tracker](https://github.com/temacdonald/HeliosPlus/issues).
 
 ## Current features
 
@@ -137,16 +137,17 @@ Feel free to report missing features or bugs using the project [issue tracker](h
 
 ## Related Projects
 
-- [**WindowsDisplayAPI**](https://github.com/temacdonald/WindowsDisplayAPI/): WindowsDisplayAPI is a .Net wrapper for Windows Display and Windows CCD APIs
+- [**WindowsDisplayAPI**](https://github.com/falahati/WindowsDisplayAPI/): WindowsDisplayAPI is a .Net wrapper for Windows Display and Windows CCD APIs
 
-- [**EDIDParser**](https://github.com/temacdonald/EDIDParser/): EDIDParser is a library allowing all .Net developers to parse and to extract information from raw EDID binary data. (Extended Display Identification Data)
+- [**EDIDParser**](https://github.com/falahati/EDIDParser/): EDIDParser is a library allowing all .Net developers to parse and to extract information from raw EDID binary data. (Extended Display Identification Data)
 
-- [**NvAPIWrapper**](https://github.com/temacdonald/NvAPIWrapper/): NvAPIWrapper is a .Net wrapper for NVIDIA public API, capable of managing all aspects of a display setup using NVIDIA GPUs
+- [**NvAPIWrapper**](https://github.com/falahati/NvAPIWrapper/): NvAPIWrapper is a .Net wrapper for NVIDIA public API, capable of managing all aspects of a display setup using NVIDIA GPUs.
 
 ## License
 
 Copyright © Terry MacDonald 2020-2021
-Original HelioDisplayManagement copyright © Soroush Falahati 2017-2020
+
+Original HelioDisplayManagement  - copyright © Soroush Falahati 2017-2020
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
