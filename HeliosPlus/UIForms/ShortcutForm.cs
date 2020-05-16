@@ -12,6 +12,7 @@ using HeliosPlus.Shared;
 using HeliosPlus.GameLibraries;
 using System.Globalization;
 using Manina.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace HeliosPlus.UIForms
 {
@@ -222,39 +223,6 @@ namespace HeliosPlus.UIForms
             return iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format1bppIndexed ||
                     iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format4bppIndexed ||
                     iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed;
-        }
-
-        private static Bitmap ExtractVistaIcon(Icon icoIcon)
-        {
-            Bitmap bmpPngExtracted = null;
-            try
-            {
-                byte[] srcBuf = null;
-                using (System.IO.MemoryStream stream = new System.IO.MemoryStream())
-                { icoIcon.Save(stream); srcBuf = stream.ToArray(); }
-                const int SizeICONDIR = 6;
-                const int SizeICONDIRENTRY = 16;
-                int iCount = BitConverter.ToInt16(srcBuf, 4);
-                for (int iIndex = 0; iIndex < iCount; iIndex++)
-                {
-                    int iWidth = srcBuf[SizeICONDIR + SizeICONDIRENTRY * iIndex];
-                    int iHeight = srcBuf[SizeICONDIR + SizeICONDIRENTRY * iIndex + 1];
-                    int iBitCount = BitConverter.ToInt16(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 6);
-                    if (iWidth == 0 && iHeight == 0 && iBitCount == 32)
-                    {
-                        int iImageSize = BitConverter.ToInt32(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 8);
-                        int iImageOffset = BitConverter.ToInt32(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 12);
-                        System.IO.MemoryStream destStream = new System.IO.MemoryStream();
-                        System.IO.BinaryWriter writer = new System.IO.BinaryWriter(destStream);
-                        writer.Write(srcBuf, iImageOffset, iImageSize);
-                        destStream.Seek(0, System.IO.SeekOrigin.Begin);
-                        bmpPngExtracted = new Bitmap(destStream); // This is PNG! :)
-                        break;
-                    }
-                }
-            }
-            catch { return null; }
-            return bmpPngExtracted;
         }
 
         private static string GetValidFilename(string uncheckedFilename)
@@ -792,7 +760,7 @@ namespace HeliosPlus.UIForms
 
                             Icon icoAppIcon = Icon.ExtractAssociatedIcon(game.GameIconPath);
                             // We first try high quality icons
-                            Bitmap extractedBitmap = ExtractVistaIcon(icoAppIcon);
+                            Bitmap extractedBitmap = Shortcut.ExtractVistaIcon(icoAppIcon);
                             if (extractedBitmap == null)
                                 extractedBitmap = icoAppIcon.ToBitmap();
                             il_games.Images.Add(extractedBitmap);
@@ -1007,6 +975,84 @@ namespace HeliosPlus.UIForms
         private void btn_back_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void radiobutton_Paint(object sender, PaintEventArgs e)
+        {
+            
+            base.OnPaint(e);
+
+            RadioButton radiobutton = sender as RadioButton;
+
+            if (!radiobutton.Enabled)
+            {
+                int x = ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
+                    e.Graphics, CheckBoxState.UncheckedNormal).Width + 1;
+                int y = ClientRectangle.Y + 2;
+
+                TextRenderer.DrawText(e.Graphics, radiobutton.Text,
+                    radiobutton.Font, new Point(x, y), Color.Gray,
+                    TextFormatFlags.LeftAndRightPadding);
+            }
+            
+        }
+
+        private void checkbox_Paint(object sender, PaintEventArgs e)
+        {
+
+            base.OnPaint(e);
+
+            CheckBox checkbox = sender as CheckBox;
+
+            if (!checkbox.Enabled)
+            {
+                int x = ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
+                    e.Graphics, CheckBoxState.UncheckedNormal).Width + 1;
+                int y = ClientRectangle.Y + 1;
+
+                TextRenderer.DrawText(e.Graphics, checkbox.Text,
+                    checkbox.Font, new Point(x, y), Color.Gray,
+                    TextFormatFlags.LeftAndRightPadding);
+            }
+
+        }
+
+        private void label_Paint(object sender, PaintEventArgs e)
+        {
+
+            base.OnPaint(e);
+
+            Label label = sender as Label;
+
+            if (!label.Enabled)
+            {
+                int x = ClientRectangle.X - 2;
+                int y = ClientRectangle.Y;
+
+                TextRenderer.DrawText(e.Graphics, label.Text,
+                    label.Font, new Point(x, y), Color.Gray,
+                    TextFormatFlags.LeftAndRightPadding);
+            }
+
+        }
+
+        private void black_button_Paint(object sender, PaintEventArgs e)
+        {
+
+            base.OnPaint(e);
+
+            Button button = sender as Button;
+
+            if (!button.Enabled)
+            {
+                int x = ClientRectangle.X + 3 ;
+                int y = ClientRectangle.Y + 8 ;
+
+                TextRenderer.DrawText(e.Graphics, button.Text,
+                    button.Font, new Point(x, y), Color.Gray,
+                    TextFormatFlags.LeftAndRightPadding);
+            }
+
         }
     }
 }

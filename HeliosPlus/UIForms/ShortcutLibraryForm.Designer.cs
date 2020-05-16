@@ -176,6 +176,7 @@
             this.Name = "ShortcutLibraryForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "HeliosPlus - Setup Game Shortcuts";
+            this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);
             this.ResumeLayout(false);
 
         }

@@ -87,6 +87,8 @@ namespace HeliosPlus.UIForms
             // btn_save
             // 
             this.btn_save.Enabled = false;
+            this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.ForeColor = System.Drawing.Color.White;
             this.btn_save.Location = new System.Drawing.Point(602, 985);
@@ -100,9 +102,11 @@ namespace HeliosPlus.UIForms
             // btn_cancel
             // 
             this.btn_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btn_cancel.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_cancel.ForeColor = System.Drawing.Color.White;
-            this.btn_cancel.Location = new System.Drawing.Point(704, 985);
+            this.btn_cancel.Location = new System.Drawing.Point(869, 984);
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(94, 25);
             this.btn_cancel.TabIndex = 5;
@@ -176,6 +180,7 @@ namespace HeliosPlus.UIForms
             this.label6.Size = new System.Drawing.Size(86, 13);
             this.label6.TabIndex = 18;
             this.label6.Text = "Game Launcher:";
+            this.label6.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // label4
             // 
@@ -187,9 +192,12 @@ namespace HeliosPlus.UIForms
             this.label4.TabIndex = 17;
             this.label4.Text = "Game Name:";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label4.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // btn_choose_game
             // 
+            this.btn_choose_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_choose_game.ForeColor = System.Drawing.Color.White;
             this.btn_choose_game.Location = new System.Drawing.Point(218, 117);
             this.btn_choose_game.Name = "btn_choose_game";
             this.btn_choose_game.Size = new System.Drawing.Size(29, 31);
@@ -209,6 +217,7 @@ namespace HeliosPlus.UIForms
             this.label1.TabIndex = 15;
             this.label1.Text = "Games detected:";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label1.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // txt_args_game
             // 
@@ -230,6 +239,7 @@ namespace HeliosPlus.UIForms
             this.cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_args_game.UseVisualStyleBackColor = true;
             this.cb_args_game.CheckedChanged += new System.EventHandler(this.cb_args_game_CheckedChanged);
+            this.cb_args_game.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
             // 
             // label5
             // 
@@ -240,6 +250,7 @@ namespace HeliosPlus.UIForms
             this.label5.Size = new System.Drawing.Size(48, 13);
             this.label5.TabIndex = 4;
             this.label5.Text = "Timeout:";
+            this.label5.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // nud_timeout_game
             // 
@@ -273,6 +284,7 @@ namespace HeliosPlus.UIForms
             this.label3.TabIndex = 0;
             this.label3.Text = "Game ID:";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label3.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // lv_games
             // 
@@ -323,6 +335,7 @@ namespace HeliosPlus.UIForms
             this.lbl_process_name.Size = new System.Drawing.Size(97, 13);
             this.lbl_process_name.TabIndex = 12;
             this.lbl_process_name.Text = "Process to monitor:";
+            this.lbl_process_name.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // txt_args_executable
             // 
@@ -344,9 +357,12 @@ namespace HeliosPlus.UIForms
             this.cb_args_executable.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_args_executable.UseVisualStyleBackColor = true;
             this.cb_args_executable.CheckedChanged += new System.EventHandler(this.cb_args_executable_CheckedChanged);
+            this.cb_args_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
             // 
             // btn_app_process
             // 
+            this.btn_app_process.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_app_process.ForeColor = System.Drawing.Color.White;
             this.btn_app_process.Location = new System.Drawing.Point(654, 53);
             this.btn_app_process.Name = "btn_app_process";
             this.btn_app_process.Size = new System.Drawing.Size(56, 21);
@@ -374,6 +390,7 @@ namespace HeliosPlus.UIForms
             this.rb_wait_process.Text = "Change Display Profile back when a different process is closed: ";
             this.rb_wait_process.UseVisualStyleBackColor = true;
             this.rb_wait_process.CheckedChanged += new System.EventHandler(this.rb_wait_process_CheckedChanged);
+            this.rb_wait_process.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // rb_wait_executable
             // 
@@ -388,9 +405,12 @@ namespace HeliosPlus.UIForms
             this.rb_wait_executable.Text = "Change Display Profile back when the executable above is closed";
             this.rb_wait_executable.UseVisualStyleBackColor = true;
             this.rb_wait_executable.CheckedChanged += new System.EventHandler(this.rb_wait_executable_CheckedChanged);
+            this.rb_wait_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // btn_app_executable
             // 
+            this.btn_app_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_app_executable.ForeColor = System.Drawing.Color.White;
             this.btn_app_executable.Location = new System.Drawing.Point(527, 6);
             this.btn_app_executable.Name = "btn_app_executable";
             this.btn_app_executable.Size = new System.Drawing.Size(56, 20);
@@ -417,15 +437,18 @@ namespace HeliosPlus.UIForms
             this.lbl_app_executable.TabIndex = 0;
             this.lbl_app_executable.Text = "Executable to start:";
             this.lbl_app_executable.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.lbl_app_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
+            this.label2.ForeColor = System.Drawing.Color.Transparent;
             this.label2.Location = new System.Drawing.Point(589, 9);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(45, 13);
             this.label2.TabIndex = 5;
             this.label2.Text = "Timeout";
+            this.label2.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // nud_timeout_executable
             // 
@@ -462,6 +485,7 @@ namespace HeliosPlus.UIForms
             this.rb_launcher.Text = "Launch Game already installed by Steam or Uplay";
             this.rb_launcher.UseVisualStyleBackColor = true;
             this.rb_launcher.CheckedChanged += new System.EventHandler(this.rb_launcher_CheckedChanged);
+            this.rb_launcher.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // rb_standalone
             // 
@@ -474,6 +498,7 @@ namespace HeliosPlus.UIForms
             this.rb_standalone.Text = "Standalone Application or Game";
             this.rb_standalone.UseVisualStyleBackColor = true;
             this.rb_standalone.CheckedChanged += new System.EventHandler(this.rb_standalone_CheckedChanged);
+            this.rb_standalone.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // dv_profile
             // 
@@ -518,6 +543,7 @@ namespace HeliosPlus.UIForms
             this.rb_switch_perm.Text = "Switch to the Display Profile permanently";
             this.rb_switch_perm.UseVisualStyleBackColor = true;
             this.rb_switch_perm.CheckedChanged += new System.EventHandler(this.rb_switch_perm_CheckedChanged);
+            this.rb_switch_perm.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // rb_switch_temp
             // 
@@ -532,6 +558,7 @@ namespace HeliosPlus.UIForms
             this.rb_switch_temp.Text = "Switch to the Display Profile temporarily while we run an application or game";
             this.rb_switch_temp.UseVisualStyleBackColor = true;
             this.rb_switch_temp.CheckedChanged += new System.EventHandler(this.rb_switch_temp_CheckedChanged);
+            this.rb_switch_temp.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // openFileDialog1
             // 

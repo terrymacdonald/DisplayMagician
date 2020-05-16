@@ -215,7 +215,7 @@ namespace HeliosPlus.Shared
 
         }
 
-        public static IEnumerable<Profile> LoadAllProfiles()
+        public static List<Profile> LoadAllProfiles()
         {
             
             if (File.Exists(SavedProfilesFilePath))
@@ -370,7 +370,7 @@ namespace HeliosPlus.Shared
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    var dir = System.IO.Path.GetDirectoryName(SavedProfilesFilePath);
+                    var dir = System.IO.Path.GetDirectoryName(SavedProfilesPath);
 
                     if (dir != null)
                     {

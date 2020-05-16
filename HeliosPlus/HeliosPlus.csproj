@@ -75,6 +75,8 @@
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\PackageInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\App.cs" />
+    <Compile Include="Shortcut.cs" />
+    <Compile Include="UIForms\ProfileAdaptor - Copy.cs" />
     <Compile Include="UIForms\ProfileAdaptor.cs" />
     <Compile Include="UIForms\MainForm.cs">
       <SubType>Form</SubType>
