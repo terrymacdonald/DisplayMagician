@@ -11,6 +11,7 @@ using HeliosPlus.Resources;
 using HeliosPlus.Shared;
 using HeliosPlus.GameLibraries;
 using System.Globalization;
+using Manina.Windows.Forms;
 
 namespace HeliosPlus.UIForms
 {
@@ -18,17 +19,22 @@ namespace HeliosPlus.UIForms
     {
 
         List<SteamGame> _allSteamGames;
-        internal Profile[] _allProfiles; 
+        internal Profile[] _allProfiles;
+        private Profile _selectedProfile;
+        private ProfileAdaptor _profileAdaptor;
+        private static bool _inDialog = false;
+        private List<Profile> _loadedProfiles = new List<Profile>();
+        private static Profile _profileToLoad = null;
 
         public ShortcutForm()
         {
             InitializeComponent();
-            
+            _profileAdaptor = new ProfileAdaptor();
         }
 
         public ShortcutForm(Profile profile) : this()
         {
-            SelectedProfile = profile;
+            _profileToLoad = profile;
         }
 
         public string ProcessNameToMonitor
@@ -724,20 +730,46 @@ namespace HeliosPlus.UIForms
 
         }
 
+        private void RefreshImageListView(Profile profile)
+        {
+            ilv_saved_profiles.ClearSelection();
+            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
+            if (matchingImageListViewItems.Any())
+            {
+                matchingImageListViewItems.First().Selected = true;
+                matchingImageListViewItems.First().Focused = true;
+            }
+
+        }
+
         private async void ShortcutForm_Load(object sender, EventArgs e)
         {
 
-            // Set the Profile name
-            lbl_profile.Text = $"Selected Profile: {dv_profile.Profile?.Name ?? Language.None}";
+            // Load all the profiles to prepare things
+            _loadedProfiles = (List<Profile>)Profile.LoadAllProfiles();
 
-            /*// Reload the profiles in case we swapped to another program to change it
-            ReloadProfiles();
-            // If nothing is selected then select the currently used profile
-            if (lv_profiles.SelectedItems.Count == 0)
+            bool foundCurrentProfileInLoadedProfiles = false;
+            foreach (Profile loadedProfile in _loadedProfiles)
             {
-                lv_profiles.Items[0].Selected = true;
+                if (Profile.CurrentProfile.Equals(loadedProfile))
+                {
+                    // We have already saved the selected profile!
+                    // so we need to show the selected profile 
+                    ChangeSelectedProfile(loadedProfile);
+                    foundCurrentProfileInLoadedProfiles = true;
+                }
+
             }
-*/
+
+            // If we get to the end of the loaded profiles and haven't
+            // found a matching profile, then we need to show the current
+            // Profile
+            if (!foundCurrentProfileInLoadedProfiles)
+                ChangeSelectedProfile(Profile.CurrentProfile);
+
+            // Refresh the Profile UI
+            RefreshDisplayProfileUI();
+
             // Start finding the games and loading the Games ListView
             List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
             _allSteamGames = allSteamGames;
@@ -867,43 +899,114 @@ namespace HeliosPlus.UIForms
             
         }
 
-        /*private void RefreshProfilesStatus()
+        private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
-            Profile.RefreshActiveStatus();
-            lv_profiles.Invalidate();
-        }
-
-        private void ReloadProfiles()
-        {
-            Profile.RefreshActiveStatus();
-            var profiles = Profile.GetAllProfiles().ToArray();
-            lv_profiles.Items.Clear();
-            il_profiles.Images.Clear();
-
-            if (!profiles.Any(profile => profile.IsActive))
+            foreach (Profile loadedProfile in _loadedProfiles)
             {
-                AddProfile().Selected = true;
-            }
-
-            foreach (var profile in profiles)
-            {
-                AddProfile(profile);
-            }
-
-            lv_profiles.SelectedIndices.Clear();
-            lv_profiles.Invalidate();
-        }
-*/
-        private void cb_selected_profile_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            foreach (Profile profile in _allProfiles)
-            {
-                if (SelectedProfile.Name == cb_selected_profile.SelectedItem.ToString())
+                if (loadedProfile.Name == e.Item.Text)
                 {
-                    SelectedProfile = profile;
+                    ChangeSelectedProfile(loadedProfile);
                 }
             }
-            
+
+        }
+
+        private void ChangeSelectedProfile(Profile profile)
+        {
+
+            // And we need to update the actual selected profile too!
+            _selectedProfile = profile;
+
+            // We also need to load the saved profile name to show the user
+            lbl_profile_shown.Text = _selectedProfile.Name;
+
+            if (_selectedProfile.Equals(Profile.CurrentProfile))
+            {
+                lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
+                btn_save.Visible = false;
+            }
+            else
+            {
+                if (!_selectedProfile.IsPossible)
+                {
+                    lbl_profile_shown_subtitle.Text = "(Display Profile is not valid so cannot be used)";
+                    btn_save.Visible = false;
+                }
+                else
+                {
+                    lbl_profile_shown_subtitle.Text = "";
+                    btn_save.Visible = true;
+                }
+            }
+            // Refresh the image list view
+            RefreshImageListView(profile);
+
+            // And finally show the profile in the display view
+            dv_profile.Profile = profile;
+            dv_profile.Refresh();
+
+        }
+
+        private void RefreshDisplayProfileUI()
+        {
+
+            if (!_inDialog)
+            {
+                
+                if (_loadedProfiles.Count > 0)
+                {
+
+                    // Temporarily stop updating the saved_profiles listview
+                    ilv_saved_profiles.SuspendLayout();
+
+                    ImageListViewItem newItem = null;
+                    bool foundCurrentProfileInLoadedProfiles = false;
+                    foreach (Profile loadedProfile in _loadedProfiles)
+                    {
+                        bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
+                        if (!thisLoadedProfileIsAlreadyHere)
+                        {
+                            //loadedProfile.SaveProfileImageToCache();
+                            //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
+                            //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                            newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                            //ilv_saved_profiles.Items.Add(newItem);
+                            ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
+                        }
+
+                        if (Profile.CurrentProfile.Equals(loadedProfile))
+                        {
+                            // We have already saved the selected profile!
+                            // so we need to show the selected profile 
+                            ChangeSelectedProfile(loadedProfile);
+                            foundCurrentProfileInLoadedProfiles = true;
+                        }
+                    }
+
+                    // If we get to the end of the loaded profiles and haven't
+                    // found a matching profile, then we need to show the current
+                    // Profile
+                    if (!foundCurrentProfileInLoadedProfiles)
+                        ChangeSelectedProfile(Profile.CurrentProfile);
+
+                    // Check if we were loading a profile to edit
+                    // If so, select that instead of all that other stuff above!
+                    if (_profileToLoad != null)
+                        ChangeSelectedProfile(_profileToLoad);
+
+                    // Restart updating the saved_profiles listview
+                    ilv_saved_profiles.ResumeLayout();
+                }
+                
+            }
+            else
+                // Otherwise turn off the dialog mode we were just in
+                _inDialog = false;
+        }
+
+        private void btn_back_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }

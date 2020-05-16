@@ -27,10 +27,8 @@ namespace HeliosPlus.UIForms
             _profileAdaptor = new ProfileAdaptor();
         }
 
-        public DisplayProfileForm(Profile profileToLoad)
+        public DisplayProfileForm(Profile profileToLoad) : this()
         {
-            InitializeComponent();
-            this.AcceptButton = this.btn_save_or_rename;
             _profileToLoad = profileToLoad;
         }
 
