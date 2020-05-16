@@ -18,11 +18,13 @@ namespace HeliosPlus.UIForms
         private string _saveOrRenameMode = "save";
         private static bool _inDialog = false;
         private static Profile _profileToLoad = null;
+        private ProfileAdaptor _profileAdaptor;
 
         public DisplayProfileForm()
         {
             InitializeComponent();
             this.AcceptButton = this.btn_save_or_rename;
+            _profileAdaptor = new ProfileAdaptor();
         }
 
         public DisplayProfileForm(Profile profileToLoad)
@@ -157,9 +159,12 @@ namespace HeliosPlus.UIForms
                         bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
                         if (!thisLoadedProfileIsAlreadyHere)
                         {
-                            loadedProfile.SaveProfileImageToCache();
-                            newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
-                            ilv_saved_profiles.Items.Add(newItem);
+                            //loadedProfile.SaveProfileImageToCache();
+                            //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
+                            //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                            newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                            //ilv_saved_profiles.Items.Add(newItem);
+                            ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
                         }
 
                         if (Profile.CurrentProfile.Equals(loadedProfile))
@@ -347,12 +352,14 @@ namespace HeliosPlus.UIForms
                 _savedProfiles.Add(_selectedProfile);
 
                 // Also update the imagelistview so that we can see the new profile we just saved
-                _selectedProfile.SaveProfileImageToCache();
+                //_selectedProfile.SaveProfileImageToCache();
 
                 // Load the currentProfile image into the imagelistview
-                ImageListViewItem newItem = new ImageListViewItem(_selectedProfile.SavedProfileCacheFilename, _selectedProfile.Name);
+                //ImageListViewItem newItem = new ImageListViewItem(_selectedProfile.SavedProfileCacheFilename, _selectedProfile.Name);
+                ImageListViewItem newItem = new ImageListViewItem(_selectedProfile, _selectedProfile.Name);
                 newItem.Selected = true;
-                ilv_saved_profiles.Items.Add(newItem);
+                //ilv_saved_profiles.Items.Add(newItem);
+                ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
             }
             else
             {

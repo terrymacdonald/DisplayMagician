@@ -441,7 +441,7 @@ namespace HeliosPlus.Shared
 
         public override string ToString()
         {
-            return (Name ?? Language.UN_TITLED_PROFILE) + (IsActive ? " " + Language._Active_ : "");
+            return (Name ?? Language.UN_TITLED_PROFILE);
         }
 
         private static string GetValidFilename(string uncheckedFilename)
