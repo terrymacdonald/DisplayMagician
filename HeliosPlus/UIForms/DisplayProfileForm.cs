@@ -74,6 +74,7 @@ namespace HeliosPlus.UIForms
 
         private void Exit_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             this.Close();
         }
 
@@ -292,21 +293,11 @@ namespace HeliosPlus.UIForms
 
         }
 
-        private bool IsValidFilename(string testName)
-        {
-            string strTheseAreInvalidFileNameChars = new string(Path.GetInvalidFileNameChars());
-            Regex regInvalidFileName = new Regex("[" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
-
-            if (regInvalidFileName.IsMatch(testName)) { return false; };
-
-            return true;
-        }
-
         private void btn_save_as_Click(object sender, EventArgs e)
         {
 
             // Check the name is valid
-            if (!IsValidFilename(txt_profile_save_name.Text))
+            if (!Program.IsValidFilename(txt_profile_save_name.Text))
             {
                 MessageBox.Show("The profile name cannot contain the following characters:" + Path.GetInvalidFileNameChars(), "Invalid characters in profile name", MessageBoxButtons.OK, MessageBoxIcon.Error);
 

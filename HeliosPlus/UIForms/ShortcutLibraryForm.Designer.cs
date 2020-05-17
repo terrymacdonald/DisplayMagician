@@ -29,34 +29,34 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutLibraryForm));
-            this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
+            this.ilv_saved_shortcuts = new Manina.Windows.Forms.ImageListView();
             this.btn_delete = new System.Windows.Forms.Button();
             this.btn_back = new System.Windows.Forms.Button();
             this.btn_run = new System.Windows.Forms.Button();
             this.btn_edit = new System.Windows.Forms.Button();
             this.btn_new = new System.Windows.Forms.Button();
             this.btn_save = new System.Windows.Forms.Button();
+            this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.SuspendLayout();
             // 
-            // ilv_saved_profiles
+            // ilv_saved_shortcuts
             // 
-            this.ilv_saved_profiles.AllowCheckBoxClick = false;
-            this.ilv_saved_profiles.AllowColumnClick = false;
-            this.ilv_saved_profiles.AllowColumnResize = false;
-            this.ilv_saved_profiles.AllowItemReorder = false;
-            this.ilv_saved_profiles.AllowPaneResize = false;
-            this.ilv_saved_profiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.ilv_saved_shortcuts.AllowCheckBoxClick = false;
+            this.ilv_saved_shortcuts.AllowColumnClick = false;
+            this.ilv_saved_shortcuts.AllowColumnResize = false;
+            this.ilv_saved_shortcuts.AllowItemReorder = false;
+            this.ilv_saved_shortcuts.AllowPaneResize = false;
+            this.ilv_saved_shortcuts.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 0);
-            this.ilv_saved_profiles.MultiSelect = false;
-            this.ilv_saved_profiles.Name = "ilv_saved_profiles";
-            this.ilv_saved_profiles.PersistentCacheDirectory = "";
-            this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(1122, 743);
-            this.ilv_saved_profiles.TabIndex = 22;
-            this.ilv_saved_profiles.UseWIC = true;
-            this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
+            this.ilv_saved_shortcuts.Location = new System.Drawing.Point(0, 0);
+            this.ilv_saved_shortcuts.MultiSelect = false;
+            this.ilv_saved_shortcuts.Name = "ilv_saved_shortcuts";
+            this.ilv_saved_shortcuts.PersistentCacheDirectory = "";
+            this.ilv_saved_shortcuts.PersistentCacheSize = ((long)(100));
+            this.ilv_saved_shortcuts.Size = new System.Drawing.Size(1122, 743);
+            this.ilv_saved_shortcuts.TabIndex = 22;
+            this.ilv_saved_shortcuts.UseWIC = true;
             // 
             // btn_delete
             // 
@@ -158,6 +158,13 @@
             this.btn_save.UseVisualStyleBackColor = false;
             this.btn_save.Visible = false;
             // 
+            // dialog_save
+            // 
+            this.dialog_save.DefaultExt = "lnk";
+            this.dialog_save.DereferenceLinks = false;
+            this.dialog_save.Filter = global::HeliosPlus.Resources.Language.Shortcuts_Filter;
+            this.dialog_save.RestoreDirectory = true;
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -170,7 +177,7 @@
             this.Controls.Add(this.btn_delete);
             this.Controls.Add(this.btn_back);
             this.Controls.Add(this.btn_run);
-            this.Controls.Add(this.ilv_saved_profiles);
+            this.Controls.Add(this.ilv_saved_shortcuts);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "ShortcutLibraryForm";
@@ -183,12 +190,13 @@
 
         #endregion
 
-        private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
+        private Manina.Windows.Forms.ImageListView ilv_saved_shortcuts;
         private System.Windows.Forms.Button btn_delete;
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.Button btn_run;
         private System.Windows.Forms.Button btn_edit;
         private System.Windows.Forms.Button btn_new;
         private System.Windows.Forms.Button btn_save;
+        private System.Windows.Forms.SaveFileDialog dialog_save;
     }
 }

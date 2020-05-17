@@ -1,4 +1,5 @@
 ﻿using HeliosPlus.GameLibraries;
+using HeliosPlus.Resources;
 using HeliosPlus.Shared;
 using Newtonsoft.Json;
 using System;
@@ -9,19 +10,38 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.ServiceModel.Dispatcher;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace HeliosPlus
 {
-    class Shortcut
+    public enum ShortcutPermanence
+    {
+        Permanent,
+        Temporary,
+    }
+
+    public enum ShortcutCategory
+    {
+        Application,
+        Game,
+    }
+
+    public class Shortcut
     {
 
         private static List<Shortcut> _allSavedShortcuts = new List<Shortcut>();
         private MultiIcon _shortcutIcon, _originalIcon = null;
         private Bitmap _shortcutBitmap, _originalBitmap = null;
 
-        public Shortcut( Profile profile)
+        public Shortcut()
+        {
+        }
+
+        public Shortcut(Profile profile) : this()
         {
             ProfileToUse = profile;
         }
@@ -30,7 +50,22 @@ namespace HeliosPlus
 
         public string Name { get; set; } = "Current Display Profile";
 
+        [JsonIgnore]
         public Profile ProfileToUse { get; set; } = null;
+
+        public string ProfileName { 
+            get 
+            {
+                if (ProfileToUse is Profile)
+                    return ProfileToUse.Name;
+                else
+                    return null;
+            } 
+        }
+
+        public ShortcutPermanence Permanence { get; set; } = ShortcutPermanence.Temporary;
+
+        public ShortcutCategory Category { get; set; } = ShortcutCategory.Game;
 
         public string ProcessNameToMonitor { get; set; } = "";
 
@@ -39,6 +74,10 @@ namespace HeliosPlus
         public uint ExecutableTimeout { get; set; } = 0;
 
         public string ExecutableArguments { get; set; } = "";
+
+        public bool ExecutableArgumentsRequired { get; set; } = false;
+
+        public bool ProcessNameToMonitorUsesExecutable { get; set; } = true;
 
         public uint GameAppId { get; set; } = 0;
 
@@ -49,6 +88,8 @@ namespace HeliosPlus
         public uint GameTimeout { get; set; } = 0;
 
         public string GameArguments { get; set; } = "";
+
+        public bool GameArgumentsRequired { get; set; } = false;
 
         public string OriginalIconPath { get; set; } = "";
 
@@ -101,11 +142,13 @@ namespace HeliosPlus
             }
         }
 
+        [JsonIgnore]
         public static string SavedShortcutsFilePath
         {
             get => Path.Combine(Program.AppDataPath, $"Shortcuts\\Shortcuts_{Version.ToString(2)}.json");
         }
 
+        [JsonIgnore]
         public static string SavedShortcutsPath
         {
             get => Path.Combine(Program.AppDataPath, $"Shortcuts");
@@ -113,6 +156,7 @@ namespace HeliosPlus
 
         public string SavedShortcutIconCacheFilename { get; set; }
 
+       
         [JsonIgnore]
         public static List<Shortcut> AllSavedShortcuts
         {
@@ -122,13 +166,8 @@ namespace HeliosPlus
         [JsonIgnore]
         public bool IsPossible
         {
-            get
-            {
-                if (ProfileToUse != null)
-                    return ProfileToUse.IsPossible;
-                else
-                    return false;
-            }
+            get;
+            set;
         }
 
         public static Bitmap ExtractVistaIcon(Icon icoIcon)
@@ -168,8 +207,43 @@ namespace HeliosPlus
         {
             if (_shortcutIcon == null)
             {
-                // Work out the name of the shortcut we'll save.
-                SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
+                // Only add the rest of the options if the permanence is temporary
+                if (Permanence == ShortcutPermanence.Temporary)
+                {
+                    // Only add this set of options if the shortcut is to an standalone application
+                    if (Category == ShortcutCategory.Application)
+                    {
+                        // Work out the name of the shortcut we'll save.
+                        SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"executable-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
+
+                    }
+                    // Only add the rest of the options if the temporary switch radio button is set
+                    // and if the game launching radio button is set
+                    else if (Permanence == ShortcutPermanence.Temporary)
+                    {
+                        // TODO need to make this work so at least one game library is installed
+                        // i.e. if (!SteamGame.SteamInstalled && !UplayGame.UplayInstalled )
+                        if (GameLibrary == SupportedGameLibrary.Steam)
+                        {
+                            // Work out the name of the shortcut we'll save.
+                            SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"steam-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
+
+                        }
+                        else if (GameLibrary == SupportedGameLibrary.Uplay)
+                        {
+                            // Work out the name of the shortcut we'll save.
+                            SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"uplay-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
+                        }
+
+                    }
+
+                }
+                // Only add the rest of the options if the shortcut is permanent 
+                else
+                {
+                    // Work out the name of the shortcut we'll save.
+                    SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"permanent-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
+                }
 
                 try
                 {
@@ -210,6 +284,20 @@ namespace HeliosPlus
                     {
                         // ignored
                         Console.WriteLine("Unable to deserialize shortcut: " + ex.Message);
+                    }
+
+                    // Lookup all the Profile Names in the Saved Profiles
+                    List<Profile> allProfiles = Profile.AllSavedProfiles;
+                    foreach (Shortcut updatedShortcut in shortcuts)
+                    {
+                        IEnumerable<Profile> matchingProfile = (from profile in allProfiles where profile.Name == updatedShortcut.ProfileName select profile);
+                        if (matchingProfile.Count() > 0)
+                        {
+                            updatedShortcut.ProfileToUse = matchingProfile.First();
+                            updatedShortcut.IsPossible = true;
+                        }
+                        else
+                            updatedShortcut.IsPossible = false;
                     }
 
                     _allSavedShortcuts = shortcuts;
@@ -288,16 +376,106 @@ namespace HeliosPlus
             return false;
         }
 
-
-        private static string GetValidFilename(string uncheckedFilename)
+        // ReSharper disable once FunctionComplexityOverflow
+        // ReSharper disable once CyclomaticComplexity
+        public bool CreateShortcut(string shortcutFileName)
         {
-            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-            foreach (char c in invalid)
+            string programName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
+            string shortcutDescription = string.Empty;
+            string shortcutIconFileName = string.Empty;
+
+            var shortcutArgs = new List<string>
             {
-                uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
+                // Add the SwitchProfile command as the first argument to start to switch to another profile
+                $"{HeliosStartupAction.SwitchProfile}",
+                $"\"{Name}\""
+            };
+
+            // Only add the rest of the options if the permanence is temporary
+            if (Permanence == ShortcutPermanence.Temporary)
+            {
+                // Only add this set of options if the shortcut is to an standalone application
+                if (Category == ShortcutCategory.Application)
+                {
+                    // Prepare text for the shortcut description field
+                    shortcutDescription = string.Format(Language.Executing_application_with_profile, programName, Name);
+
+                }
+                // Only add the rest of the options if the temporary switch radio button is set
+                // and if the game launching radio button is set
+                else if (Permanence == ShortcutPermanence.Temporary)
+                {
+                    // Prepare text for the shortcut description field
+                    shortcutDescription = string.Format(Language.Executing_application_with_profile, GameName, Name);
+                }
+
             }
-            return uncheckedFilename;
+            // Only add the rest of the options if the permanent switch radio button is set
+            else
+            {
+                // Prepare text for the shortcut description field
+                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, Name);
+            }
+
+            // Now we are ready to create a shortcut based on the filename the user gave us
+            shortcutFileName = Path.ChangeExtension(shortcutFileName, @"lnk");
+
+            // If the user supplied a file
+            if (shortcutFileName != null)
+            {
+                try
+                {
+                    // Remove the old file to replace it
+                    if (File.Exists(shortcutFileName))
+                    {
+                        File.Delete(shortcutFileName);
+                    }
+
+                    // Actually create the shortcut!
+                    var wshShellType = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
+                    dynamic wshShell = Activator.CreateInstance(wshShellType);
+
+                    try
+                    {
+                        var shortcut = wshShell.CreateShortcut(shortcutFileName);
+
+                        try
+                        {
+                            shortcut.TargetPath = Application.ExecutablePath;
+                            shortcut.Arguments = string.Join(" ", shortcutArgs);
+                            shortcut.Description = shortcutDescription;
+                            shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
+                                                        string.Empty;
+
+                            shortcut.IconLocation = shortcutIconFileName;
+
+                            shortcut.Save();
+                        }
+                        finally
+                        {
+                            Marshal.FinalReleaseComObject(shortcut);
+                        }
+                    }
+                    finally
+                    {
+                        Marshal.FinalReleaseComObject(wshShell);
+                    }
+                }
+                catch
+                {
+                    // Clean up a failed attempt
+                    if (File.Exists(shortcutFileName))
+                    {
+                        File.Delete(shortcutFileName);
+                    }
+                }
+            }
+
+            // Return a status on how it went
+            // true if it was a success or false if it was not
+            return shortcutFileName != null && File.Exists(shortcutFileName);
         }
+
     }
 
     #region JsonConverterBitmap

@@ -32,10 +32,10 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btn_setup_display_profiles = new System.Windows.Forms.Button();
             this.pb_display_profile = new System.Windows.Forms.PictureBox();
+            this.lbl_version = new System.Windows.Forms.Label();
             this.btn_setup_game_shortcuts = new System.Windows.Forms.Button();
             this.btn_exit = new System.Windows.Forms.Button();
             this.pb_game_shortcut = new System.Windows.Forms.PictureBox();
-            this.lbl_version = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -80,6 +80,14 @@
             this.pb_display_profile.TabStop = false;
             this.pb_display_profile.Click += new System.EventHandler(this.pb_display_profile_Click);
             // 
+            // lbl_version
+            // 
+            resources.ApplyResources(this.lbl_version, "lbl_version");
+            this.lbl_version.BackColor = System.Drawing.Color.Transparent;
+            this.lbl_version.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.lbl_version.ForeColor = System.Drawing.Color.White;
+            this.lbl_version.Name = "lbl_version";
+            // 
             // btn_setup_game_shortcuts
             // 
             resources.ApplyResources(this.btn_setup_game_shortcuts, "btn_setup_game_shortcuts");
@@ -107,14 +115,6 @@
             this.pb_game_shortcut.TabStop = false;
             this.pb_game_shortcut.Click += new System.EventHandler(this.pb_game_shortcut_Click);
             // 
-            // lbl_version
-            // 
-            resources.ApplyResources(this.lbl_version, "lbl_version");
-            this.lbl_version.BackColor = System.Drawing.Color.Transparent;
-            this.lbl_version.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.lbl_version.ForeColor = System.Drawing.Color.White;
-            this.lbl_version.Name = "lbl_version";
-            // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
@@ -122,7 +122,6 @@
             this.Controls.Add(this.splitContainer1);
             this.MaximizeBox = false;
             this.Name = "MainForm";
-            this.ShowIcon = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);

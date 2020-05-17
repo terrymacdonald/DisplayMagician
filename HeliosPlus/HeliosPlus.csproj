@@ -57,6 +57,8 @@
   <PropertyGroup>
     <StartupObject>HeliosPlus.Program</StartupObject>
   </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup />
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
@@ -76,7 +78,7 @@
     <Compile Include="GameLibraries\SteamAppInfoParser\PackageInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\App.cs" />
     <Compile Include="Shortcut.cs" />
-    <Compile Include="UIForms\ProfileAdaptor - Copy.cs" />
+    <Compile Include="UIForms\ShortcutAdaptor.cs" />
     <Compile Include="UIForms\ProfileAdaptor.cs" />
     <Compile Include="UIForms\MainForm.cs">
       <SubType>Form</SubType>
@@ -226,6 +228,7 @@
     <None Include="Resources\HeliosPlus.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HeliosPlus.ico" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

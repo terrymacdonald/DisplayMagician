@@ -20,22 +20,27 @@ namespace HeliosPlus.UIForms
     {
 
         List<SteamGame> _allSteamGames;
-        internal Profile[] _allProfiles;
-        private Profile _selectedProfile;
         private ProfileAdaptor _profileAdaptor;
         private static bool _inDialog = false;
         private List<Profile> _loadedProfiles = new List<Profile>();
-        private static Profile _profileToLoad = null;
+        private Profile _profileToUse= null;
+        private Shortcut _shortcutToEdit = null;
+        private string _saveOrRenameMode = "save";
+        private bool _isNewShortcut = true;
 
         public ShortcutForm()
         {
             InitializeComponent();
+
+            // Set the profileAdaptor we need to load images from Profiles
+            // into the Profiles ImageListView
             _profileAdaptor = new ProfileAdaptor();
+
         }
 
-        public ShortcutForm(Profile profile) : this()
+        public ShortcutForm(Shortcut shortcutToEdit) : this()
         {
-            _profileToLoad = profile;
+            _shortcutToEdit = shortcutToEdit;
         }
 
         public string ProcessNameToMonitor
@@ -55,36 +60,6 @@ namespace HeliosPlus.UIForms
                 // We we're setting this entry, then we want to set it to a particular entry
                 txt_process_name.Text = value;
                 rb_wait_executable.Checked = true;
-            }
-        }
-
-        public Profile SelectedProfile
-        {
-            get => dv_profile.Profile;
-            set
-            {
-                // Check the profile is valid
-                // Create an array of display profiles we have
-                var profiles = Profile.LoadAllProfiles().ToArray();
-                _allProfiles = profiles;
-                // Check if the user supplied a --profile option using the profiles' ID
-                var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(value.Id, StringComparison.InvariantCultureIgnoreCase)) : -1;
-                // If the profileID wasn't there, maybe they used the profile name?
-                if (profileIndex == -1)
-                {
-                    // Try and lookup the profile in the profiles' Name fields
-                    profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Name.StartsWith(value.Name, StringComparison.InvariantCultureIgnoreCase)) : -1;
-                }
-                // If the profileID still isn't there, then raise the alarm
-                if (profileIndex == -1)
-                {
-                    MessageBox.Show(
-                        $"ShortcutForm: Setting SelectProfile: Couldn't find either Profile Name '{SelectedProfile.Name}'or ID '{SelectedProfile.Id}' supplied to Profile property.",
-                        Language.Executable,
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
-                dv_profile.Profile = value;
             }
         }
 
@@ -152,6 +127,12 @@ namespace HeliosPlus.UIForms
                 txt_game_name.Text = value;
             }
         }
+
+        public Shortcut Shortcut
+        {
+            get => _shortcutToEdit;
+        }
+
 
         public SupportedGameLibrary GameLibrary
         {
@@ -225,18 +206,6 @@ namespace HeliosPlus.UIForms
                     iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed;
         }
 
-        private static string GetValidFilename(string uncheckedFilename)
-        {
-            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-            foreach (char c in invalid)
-            {
-                uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
-            }
-            return uncheckedFilename;
-        }
-
-
-
         private void btn_app_executable_Click(object sender, EventArgs e)
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
@@ -259,318 +228,193 @@ namespace HeliosPlus.UIForms
 
         private void btn_save_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.None;
+            // Store all of the information in the Shortcut object based on what's been selected in this form
 
-            try
+            // Validate the fields are filled as they should be!
+            // Check the name is valid
+            if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text) && Program.IsValidFilename(txt_shortcut_save_name.Text))
             {
-                // Set the Shortcut save folder to the Desktop as that's where people will want it most likely
-                dialog_save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                // Try to set up some sensible suggestions for the Shortcut name
-                if (rb_switch_perm.Checked)
-                {
-                    
-                    dialog_save.FileName = SelectedProfile.Name;
-                } 
-                else
-                {
-                    if (rb_standalone.Checked)
-                    {
-                        dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(ExecutableNameAndPath),@" (", SelectedProfile.Name.ToLower(), @")");
-                    }
-                    else
-                    {
-                        dialog_save.FileName = String.Concat(GameName, @" (", SelectedProfile.Name, @")");
-                    }
-                }
-
-                // Show the Save Shortcut window
-                if (dialog_save.ShowDialog(this) == DialogResult.OK)
-                {
-                    if (CreateShortcut(dialog_save.FileName))
-                    {
-                        MessageBox.Show(
-                            Language.Shortcut_placed_successfully,
-                            Language.Shortcut,
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            Language.Failed_to_create_the_shortcut_Unexpected_exception_occurred,
-                            Language.Shortcut,
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                    }
-
-                    dialog_save.FileName = string.Empty;
-                    DialogResult = DialogResult.OK;
-                }
+                MessageBox.Show(
+                    @"You need to specify a name for this Shortcut before it can be saved.",
+                    @"Please name this Shortcut.",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Exclamation);
+                return;
             }
-            catch (Exception ex)
+
+
+            // Check the profile is set and that it's still valid
+            if (!(_profileToUse is Profile))
             {
-                MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    @"You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.",
+                    @"Please choose a Display Profile.",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Exclamation);
+                return;
             }
-        }
 
-        // ReSharper disable once FunctionComplexityOverflow
-        // ReSharper disable once CyclomaticComplexity
-        private bool CreateShortcut(string fileName)
-        {
-            string programName = Path.GetFileNameWithoutExtension(txt_executable.Text);
-            string shortcutDescription = string.Empty;
-            MultiIcon shortcutIcon;
-            string shortcutIconFileName = string.Empty;
-
-            var args = new List<string>
-            {
-                // Add the SwitchProfile command as the first argument to start to switch to another profile
-                $"{HeliosStartupAction.SwitchProfile}"
-            };
-
-            // Only add the rest of the options if the temporary switch radio button is set
-            if (rb_switch_temp.Checked)
-            {
-                // Only add this set of options if the standalone programme radio button is set
+            // Check the permanence requirements
+            if (rb_switch_perm.Checked)
+            { 
+                // Check the Shortcut Category to see if it's application
                 if (rb_standalone.Checked)
                 {
-                    // Doublecheck the Executable text field is filled in
-                    if (string.IsNullOrWhiteSpace(ExecutableNameAndPath))
+                    if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
                     {
-                        throw new Exception(Language.Executable_address_can_not_be_empty);
+                        MessageBox.Show(
+                            @"If you have chosen to pass extra arguments to the executable when it is run, then you need to enter them in the 'Pass arguments to Executable' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Executable' checkbox.",
+                            @"Please add Executable arguments.",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        return;
+
                     }
 
-                    // Doublecheck the Executable text field is a path to a real file
-                    if (!File.Exists(ExecutableNameAndPath))
+                    if (!File.Exists(txt_executable.Text))
                     {
-                        throw new Exception(Language.Executable_file_not_found);
+                        MessageBox.Show(
+                            @"The executable you have chosen does not exist! Please reselect the executable, or check you have persmissions to view it.",
+                            @"Executable doesn't exist",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        return;
                     }
 
-                    // Add the executable command and the executable name to the shortcut arguments
-                    args.Add($"execute \"{ExecutableNameAndPath}\"");
-
-                    // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
-                    args.Add($"--profile \"{SelectedProfile.Name}\"");
-
-                    // Check that the wait for executable radiobutton is on
-                    if (rb_wait_executable.Checked)
+                    if (String.IsNullOrWhiteSpace(txt_process_name.Text))
                     {
-                        // Doublecheck the process name has text in it
-                        if (!string.IsNullOrWhiteSpace(ProcessNameToMonitor))
-                        {
-                            // Add the waitfor argument and the process name to the shortcut arguments
-                            args.Add($"--waitfor \"{ProcessNameToMonitor}\"");
-                        }
-                    }
+                        string message = "";
 
-                    // Add the timeout argument and the timeout duration in seconds to the shortcut arguments
-                    args.Add($"--timeout {ExecutableTimeout}");
+                        // figure out the message we want to give the user
+                        if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
+                            message = @"Cannot work out the process to monitor from the executable. Please reselect the executable (and we'll try again), and if that doesn't work then manually enter the process name into the 'Process to monitor' field.";
+                        else
+                            message = @"Please manually enter the process name into the 'Process to monitor' field.";
 
-                    if (cb_args_executable.Checked)
-                    {
-                        args.Add($"--arguments \"{ExecutableArguments}\"");
-                    }
-
-                    // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Executing_application_with_profile, programName, SelectedProfile.Name);
-
-                    // Work out the name of the shortcut we'll save.
-                    shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"executable-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), "-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
-
-                    // Grab an icon for the selected executable
-                    try
-                    {
-                        // We'll first try to extract the Icon from the executable the user provided
-                        //shortcutIcon.Load(ExecutableNameAndPath);
-                    }
-                    catch (Exception)
-                    {
-                        // but if that doesn't work, then we use our own one.
-                        //shortcutIcon.Load(Assembly.GetExecutingAssembly().Location);
+                        // show the error message
+                        MessageBox.Show(
+                            message,
+                            @"Empty process monitor",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        return;
                     }
                 }
-                // Only add the rest of the options if the temporary switch radio button is set
-                // and if the game launching radio button is set
-                else if (rb_launcher.Checked)
+                else if (rb_switch_temp.Checked)
                 {
-                    // TODO need to make this work so at least one game library is installed
-                    // i.e. if (!SteamGame.SteamInstalled && !UplayGame.UplayInstalled )
-                    if (GameLibrary == SupportedGameLibrary.Steam)
+
+                    if (cb_args_game.Checked && String.IsNullOrWhiteSpace(txt_args_game.Text))
                     {
-                        if (!SteamGame.SteamInstalled)
-                        {
-                            throw new Exception(Language.Steam_is_not_installed);
-                        }
-
-                        List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
-
-                        SteamGame steamGameToRun = null;
-                        foreach (SteamGame steamGameToCheck in allSteamGames)
-                        {
-                            if (steamGameToCheck.GameId == GameAppId)
-                            {
-                                steamGameToRun = steamGameToCheck;
-                                break;
-                            }
-
-                        }
-
-
-                        // Work out the name of the shortcut we'll save.
-                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"steam-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
-
-                        shortcutIcon = new ProfileIcon(SelectedProfile).ToIconOverly(steamGameToRun.GameIconPath);
-                        shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
-
-                        args.Add($"steam {GameAppId}");
-
-                    }
-                    else if (GameLibrary == SupportedGameLibrary.Uplay)
-                    {
-
-                        if (!UplayGame.UplayInstalled)
-                        {
-                            throw new Exception(Language.Steam_is_not_installed);
-                        }
-
-                        List<UplayGame> allUplayGames = UplayGame.GetAllInstalledGames();
-
-                        UplayGame uplayGameToRun = null;
-                        foreach (UplayGame uplayGameToCheck in allUplayGames)
-                        {
-                            if (uplayGameToCheck.GameId == GameAppId)
-                            {
-                                uplayGameToRun = uplayGameToCheck;
-                                break;
-                            }
-
-                        }
-
-                        //shortcutIcon = uplayGameToRun.GameIcon;
-
-                        // Work out the name of the shortcut we'll save.
-                        shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"uplay-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), "-" , GameAppId.ToString(), @".ico"));
-
-                        shortcutIcon = new ProfileIcon(SelectedProfile).ToIconOverly(uplayGameToRun.GameIconPath);
-                        shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
-
-                        args.Add($"uplay {GameAppId}");
-
+                        MessageBox.Show(
+                            @"If you have chosen to pass extra arguments to the Game when it is run, then you need to enter them in the 'Pass arguments to Game' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Game' checkbox.",
+                            @"Please add Game arguments.",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        return;
                     }
 
-                    // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
-                    args.Add($"--profile \"{SelectedProfile.Name}\"");
-
-                    // Add the game timeout argument and the timeout duration in seconds to the shortcut arguments
-                    args.Add($"--timeout {GameTimeout}");
-
-                    if (cb_args_game.Checked)
+                    if (Convert.ToUInt32(txt_game_id.Text) == 0)
                     {
-                        args.Add($"--arguments \"{GameArguments}\"");
+                        MessageBox.Show(
+                            @"Please choose a Game by scrolling through the list, selecting the Game that you want, and then clicking the '>>' button to fill the Game fields.",
+                            @"Please choose a Game.",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        return;
                     }
-
-                    // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Executing_application_with_profile, GameName, SelectedProfile.Name);
-
                 }
-
             }
-            // Only add the rest of the options if the permanent switch radio button is set
+
+            // Fill the Shortcut object with the bits we care about saving
+
+            // Update the Executable args
+            _shortcutToEdit.ExecutableArguments = txt_args_executable.Text;
+
+            // Update if the executable args are needed
+            _shortcutToEdit.ExecutableArgumentsRequired = cb_args_executable.Checked;
+
+            // Update the Executable name and path
+            _shortcutToEdit.ExecutableNameAndPath = txt_executable.Text;
+
+            // Update the executable timeout
+            _shortcutToEdit.ExecutableTimeout = Convert.ToUInt32(nud_timeout_executable.Value);
+
+            // Update the game app id
+            _shortcutToEdit.GameAppId = Convert.ToUInt32(txt_game_id.Text);
+
+            // Update the game args
+            _shortcutToEdit.GameArguments = txt_args_game.Text;
+
+            // Update if the game args are needed
+            _shortcutToEdit.GameArgumentsRequired = cb_args_game.Checked;
+
+            // Update what game library it's from
+            //_shortcutToEdit.GameLibrary = SupportedGameLibrary.Steam;
+
+            // Update the Game Name
+            _shortcutToEdit.GameName = txt_game_name.Text;
+
+            // Update the Game Timeout
+            _shortcutToEdit.GameTimeout = Convert.ToUInt32(nud_timeout_game.Value);
+
+            // Update the Shortcut name
+            _shortcutToEdit.Name = txt_shortcut_save_name.Text;
+
+            // Check the permanence requirements
+            if (rb_switch_temp.Checked)
+                _shortcutToEdit.Permanence = ShortcutPermanence.Temporary;
+
+            if (rb_switch_perm.Checked)
+                _shortcutToEdit.Permanence = ShortcutPermanence.Permanent;
+
+            // Update the process name to monitor
+            if (!String.IsNullOrWhiteSpace(txt_process_name.Text)) {
+                _shortcutToEdit.ProcessNameToMonitor = txt_process_name.Text;
+            }
+
+            if (rb_wait_process.Checked && !String.IsNullOrWhiteSpace(txt_process_name.Text))
+            {
+                _shortcutToEdit.ProcessNameToMonitorUsesExecutable = true;
+                _shortcutToEdit.ProcessNameToMonitor = txt_process_name.Text;
+            }
             else
             {
-                // Add the action switch to make the permanent switch to a different profile
-                args.Add($"permanent");
-                
-                // Add the Profile Name as the first option (use that rather than ID - though ID still will work!)
-                args.Add($"--profile \"{SelectedProfile.Name}\"");
-
-                // Prepare text for the shortcut description field
-                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, SelectedProfile.Name);
-
-                // Work out the name of the shortcut we'll save.
-                shortcutIconFileName = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"permanent-", GetValidFilename(SelectedProfile.Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
-
-                // Grab an icon for the selected profile
-                try
-                {
-                    shortcutIcon = new ProfileIcon(SelectedProfile).ToIcon();
-                    shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
-                    
-                }
-                catch
-                {
-                    // but if that doesn't work, then we use our own one.
-                    shortcutIcon = new ProfileIcon(SelectedProfile).ToIconOverly(Assembly.GetExecutingAssembly().Location);
-                    shortcutIcon.Save(shortcutIconFileName, MultiIconFormat.ICO);
-                }
+                _shortcutToEdit.ProcessNameToMonitorUsesExecutable = false;
             }
 
-            // Now we are ready to create a shortcut based on the filename the user gave us
-            fileName = Path.ChangeExtension(fileName, @"lnk");
+            // Update the profile to use
+            _shortcutToEdit.ProfileToUse = _profileToUse;
 
-            // If the user supplied a file
-            if (fileName != null)
-            {
-                try
-                {
-                    // Remove the old file to replace it
-                    if (File.Exists(fileName))
-                    {
-                        File.Delete(fileName);
-                    }
+            // Update the Category as well as the OriginalIconPath
+            // (as we need the OriginalIconPath to run the SaveShortcutIconToCache method)
+            if (rb_launcher.Checked)
+                _shortcutToEdit.Category = ShortcutCategory.Game;
+            if (txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
+                _shortcutToEdit.OriginalIconPath = (from steamGame in SteamGame.AllGames where steamGame.GameId == _shortcutToEdit.GameAppId select steamGame.GameIconPath).First();
+            else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
+                _shortcutToEdit.OriginalIconPath = (from uplayGame in UplayGame.AllGames where uplayGame.GameId == _shortcutToEdit.GameAppId select uplayGame.GameIconPath).First();
+            else if (rb_standalone.Checked)
+                _shortcutToEdit.Category = ShortcutCategory.Application;
 
-                    // Actually create the shortcut!
-                    var wshShellType = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
-                    dynamic wshShell = Activator.CreateInstance(wshShellType);
+            // Save the shortcut icon
+            _shortcutToEdit.SaveShortcutIconToCache();
 
-                    try
-                    {
-                        var shortcut = wshShell.CreateShortcut(fileName);
+            // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
+            // but only if it's new... if it is an edit then it will already be in the list.
+            if (_isNewShortcut)
+                Shortcut.AllSavedShortcuts.Add(_shortcutToEdit);
 
-                        try
-                        {
-                            shortcut.TargetPath = Application.ExecutablePath;
-                            shortcut.Arguments = string.Join(" ", args);
-                            shortcut.Description = shortcutDescription;
-                            shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
-                                                        string.Empty;
-
-                            shortcut.IconLocation = shortcutIconFileName;
-
-                            shortcut.Save();
-                        }
-                        finally
-                        {
-                            Marshal.FinalReleaseComObject(shortcut);
-                        }
-                    }
-                    finally
-                    {
-                        Marshal.FinalReleaseComObject(wshShell);
-                    }
-                }
-                catch
-                {
-                    // Clean up a failed attempt
-                    if (File.Exists(fileName))
-                    {
-                        File.Delete(fileName);
-                    }
-                }
-            }
-
-            // Return a status on how it went
-            // true if it was a success or false if it was not
-            return fileName != null && File.Exists(fileName);
+            // Save everything is golden and close the form.
+            DialogResult = DialogResult.OK;
+            this.Close();
         }
+
+        
 
         private void txt_executable_TextChanged(object sender, EventArgs e)
         {
             if (File.Exists(txt_executable.Text))
             {
-
-                // Turn on the CreateShortcut Button
-                btn_save.Enabled = true;
 
                 // Try and discern the process name for this
                 // if the user hasn't entered anything already
@@ -587,10 +431,24 @@ namespace HeliosPlus.UIForms
                     }
                 }
 
-            } else
+                if (txt_shortcut_save_name.Text.Length > 0)
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = true;
+                    btn_save.Visible = true;
+                }
+                else
+                {
+                    btn_save.Enabled = false;
+                    btn_save.Visible = false;
+                }
+
+            }
+            else
             {
                 // Turn off the CreateShortcut Button
                 btn_save.Enabled = false;
+                btn_save.Visible = false;
             }
         }
 
@@ -601,8 +459,17 @@ namespace HeliosPlus.UIForms
                 // Disable the Temporary Group
                 g_temporary.Enabled = false;
             }
-            // Turn on the CreateShortcut Button
-            btn_save.Enabled = true;
+            if (txt_shortcut_save_name.Text.Length > 0)
+            {
+                // Turn on the CreateShortcut Button
+                btn_save.Enabled = true;
+                btn_save.Visible = true;
+            }
+            else
+            {
+                btn_save.Enabled = false;
+                btn_save.Visible = false;
+            }
 
         }
         private void rb_switch_temp_CheckedChanged(object sender, EventArgs e)
@@ -617,17 +484,20 @@ namespace HeliosPlus.UIForms
                 {
                     // Turn on the CreateShortcut Button
                     btn_save.Enabled = true;
+                    btn_save.Visible = true;
                 }
                 // else if it's a valid executable
-                else if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text))
+                else if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text) && txt_shortcut_save_name.Text.Length > 0)
                 {
                     // Turn on the CreateShortcut Button
                     btn_save.Enabled = true;
+                    btn_save.Visible = true;
                 }
                 else
                 {
                     // Turn on the CreateShortcut Button
                     btn_save.Enabled = false;
+                    btn_save.Visible = false;
                 }
 
             }
@@ -643,15 +513,17 @@ namespace HeliosPlus.UIForms
                 // Disable the Game Panel
                 p_game.Enabled = false;
 
-                if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text))
+                if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text) && txt_shortcut_save_name.Text.Length > 0)
                 {
                     // Turn on the CreateShortcut Button
                     btn_save.Enabled = true;
+                    btn_save.Visible = true;
                 }
                 else
                 {
                     // Turn on the CreateShortcut Button
                     btn_save.Enabled = false;
+                    btn_save.Visible = false;
                 }
             }
            
@@ -667,15 +539,17 @@ namespace HeliosPlus.UIForms
                 p_standalone.Enabled = false;
 
                 // If it's been set already to a valid gamelauncher, then enable the button
-                if (txt_game_launcher.Text.Length > 0 && txt_game_id.Text.Length > 0 && txt_game_name.Text.Length > 0)
+                if (txt_game_launcher.Text.Length > 0 && txt_game_id.Text.Length > 0 && txt_game_name.Text.Length > 0 && txt_shortcut_save_name.Text.Length > 0)
                 {
                     // Turn on the CreateShortcut Button
                     btn_save.Enabled = true;
+                    btn_save.Visible = true;
                 }
                 else
                 {
                     // Turn on the CreateShortcut Button
                     btn_save.Enabled = false;
+                    btn_save.Visible = false;
                 }
 
             }
@@ -713,6 +587,22 @@ namespace HeliosPlus.UIForms
         private async void ShortcutForm_Load(object sender, EventArgs e)
         {
 
+            // Create a new SHortcut if we are creating a new one
+            // And set up the page.
+            if (_shortcutToEdit == null)
+            {
+                _shortcutToEdit = new Shortcut();
+                _isNewShortcut = true;
+                _saveOrRenameMode = "save";
+                btn_save_or_rename.Text = "Save As";
+            }
+            else
+            {
+                _isNewShortcut = false;
+                _saveOrRenameMode = "rename";
+                btn_save_or_rename.Text = "Rename To";
+            }
+
             // Load all the profiles to prepare things
             _loadedProfiles = (List<Profile>)Profile.LoadAllProfiles();
 
@@ -735,8 +625,8 @@ namespace HeliosPlus.UIForms
             if (!foundCurrentProfileInLoadedProfiles)
                 ChangeSelectedProfile(Profile.CurrentProfile);
 
-            // Refresh the Profile UI
-            RefreshDisplayProfileUI();
+            // Refresh the Shortcut UI
+            RefreshShortcutUI();
 
             // Start finding the games and loading the Games ListView
             List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
@@ -861,8 +751,12 @@ namespace HeliosPlus.UIForms
                     }
                 }
 
-                // Turn on the CreateShortcut Button
-                btn_save.Enabled = true;
+                if (txt_shortcut_save_name.Text.Length > 0)
+                {
+                    // Turn on the CreateShortcut Button
+                    btn_save.Enabled = true;
+                    btn_save.Visible = true;
+                }
             }
             
         }
@@ -881,21 +775,25 @@ namespace HeliosPlus.UIForms
 
         private void ChangeSelectedProfile(Profile profile)
         {
+            // If the profile is null then return
+            // (this happens when a new blank shortcut is created
+            if (profile == null)
+                return;
 
             // And we need to update the actual selected profile too!
-            _selectedProfile = profile;
+            _profileToUse = profile;
 
             // We also need to load the saved profile name to show the user
-            lbl_profile_shown.Text = _selectedProfile.Name;
+            lbl_profile_shown.Text = _profileToUse.Name;
 
-            if (_selectedProfile.Equals(Profile.CurrentProfile))
+            if (_profileToUse.Equals(Profile.CurrentProfile))
             {
                 lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
                 btn_save.Visible = false;
             }
             else
             {
-                if (!_selectedProfile.IsPossible)
+                if (!_profileToUse.IsPossible)
                 {
                     lbl_profile_shown_subtitle.Text = "(Display Profile is not valid so cannot be used)";
                     btn_save.Visible = false;
@@ -915,7 +813,7 @@ namespace HeliosPlus.UIForms
 
         }
 
-        private void RefreshDisplayProfileUI()
+        private void RefreshShortcutUI()
         {
 
             if (!_inDialog)
@@ -942,13 +840,6 @@ namespace HeliosPlus.UIForms
                             ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
                         }
 
-                        if (Profile.CurrentProfile.Equals(loadedProfile))
-                        {
-                            // We have already saved the selected profile!
-                            // so we need to show the selected profile 
-                            ChangeSelectedProfile(loadedProfile);
-                            foundCurrentProfileInLoadedProfiles = true;
-                        }
                     }
 
                     // If we get to the end of the loaded profiles and haven't
@@ -959,8 +850,8 @@ namespace HeliosPlus.UIForms
 
                     // Check if we were loading a profile to edit
                     // If so, select that instead of all that other stuff above!
-                    if (_profileToLoad != null)
-                        ChangeSelectedProfile(_profileToLoad);
+                    if (_shortcutToEdit != null)
+                        ChangeSelectedProfile(_shortcutToEdit.ProfileToUse);
 
                     // Restart updating the saved_profiles listview
                     ilv_saved_profiles.ResumeLayout();
@@ -974,6 +865,7 @@ namespace HeliosPlus.UIForms
 
         private void btn_back_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             this.Close();
         }
 
@@ -1036,23 +928,5 @@ namespace HeliosPlus.UIForms
 
         }
 
-        private void black_button_Paint(object sender, PaintEventArgs e)
-        {
-
-            base.OnPaint(e);
-
-            Button button = sender as Button;
-
-            if (!button.Enabled)
-            {
-                int x = ClientRectangle.X + 3 ;
-                int y = ClientRectangle.Y + 8 ;
-
-                TextRenderer.DrawText(e.Graphics, button.Text,
-                    button.Font, new Point(x, y), Color.Gray,
-                    TextFormatFlags.LeftAndRightPadding);
-            }
-
-        }
     }
 }

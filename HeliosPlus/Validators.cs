@@ -9,6 +9,8 @@ using McMaster.Extensions.CommandLineUtils.Validation;
 using System.ComponentModel.DataAnnotations;
 using HeliosPlus.Shared;
 using HeliosPlus.GameLibraries;
+using System.Text.RegularExpressions;
+using System.ServiceModel.Dispatcher;
 
 namespace HeliosPlus
 {
@@ -40,6 +42,45 @@ namespace HeliosPlus
             return ValidationResult.Success;
         }
     }
+
+    class ShortcutMustExistValidator : IArgumentValidator
+    {
+        public ValidationResult GetValidationResult(CommandArgument argumentShortcutName, ValidationContext context)
+        {
+            // This validator only runs if there is a string provided
+            if (argumentShortcutName.Value == "") return ValidationResult.Success;
+            string shortcutNameProvided = (string) argumentShortcutName.Value;
+            string shortcutName = "";
+
+            // check if the shortcut name is surrounded by speech marks
+            int shortcutNameIndexLeft = shortcutNameProvided.IndexOf('"');
+            int shortcutNameIndexRight = shortcutNameProvided.LastIndexOf('"');
+            if (shortcutNameIndexLeft != -1 && shortcutNameIndexRight != -1 && shortcutNameIndexLeft != shortcutNameIndexRight)
+            {
+                MatchCollection matches = Regex.Matches(shortcutNameProvided, @"'(.*?)'");
+                shortcutName = matches[0].Groups[1].Value; // (Index 1 is the first group)
+            }
+            else
+            {
+                shortcutName = shortcutNameProvided;
+            }
+
+            // Create an array of shortcuts we have
+            var shortcuts = Shortcut.LoadAllShortcuts().ToArray();
+            // Check if the user supplied a valid shortcut name
+            int profileIndex = shortcuts.Length > 0 ? Array.FindIndex(shortcuts, p => p.Name.Contains(shortcutName)) : -1;
+            
+            // If the profileID still isn't there, then raise the alarm
+            if (profileIndex == -1)
+            {
+                return new ValidationResult($"Couldn't find Shortcut Name supplied via command line: '{shortcutName}'. Please check the Shortcut Name you supplied on the command line is correct.");
+            }
+
+            Console.WriteLine($"Using Shortcut: '{shortcuts[profileIndex].Name}'");
+            return ValidationResult.Success;
+        }
+    }
+
 
     class FileOptionMustExistValidator : IOptionValidator
     {
@@ -76,43 +117,5 @@ namespace HeliosPlus
             return ValidationResult.Success;
         }
     }
-
-    class SteamArgumentMustExistValidator : IArgumentValidator
-    {
-        public ValidationResult GetValidationResult(CommandArgument argumentSteamGameId, ValidationContext context)
-        {
-            // This validator only runs if there is a string provided
-            if (argumentSteamGameId.Value == "") return ValidationResult.Success;
-            var steamGameId = argumentSteamGameId.Value;
-
-            // Check that the Steam Game exists
-            /*if (!Steam.IsInstalled(steamGameId))
-            {
-                return new ValidationResult($"Couldn't find a Steam Game with ID '{argumentSteamGameId.Value}'  within Steam. Please check you specified the correct Steam Game ID you supplied in the --steam '{argumentSteamGameId.Name}' command line argument.");
-            }*/
-
-            return ValidationResult.Success;
-        }
-    }
-
-    class UplayArgumentMustExistValidator : IArgumentValidator
-    {
-        public ValidationResult GetValidationResult(CommandArgument argumentUplayGameId, ValidationContext context)
-        {
-            // This validator only runs if there is a string provided
-            if (argumentUplayGameId.Value == "") return ValidationResult.Success;
-            var steamGameId = argumentUplayGameId.Value;
-
-            // Check that the Uplay Game exists
-            /*if (!Steam.IsInstalled(uplayGameId))
-            {
-                return new ValidationResult($"Couldn't find a Uplay Game with ID '{argumentUplayGameId.Value}'  within Uplay. Please check you specified the correct Uplay Game ID you supplied in the --steam '{argumentUplayGameId.Name}' command line argument.");
-            }*/
-
-            return ValidationResult.Success;
-        }
-    }
-
-
 
 }

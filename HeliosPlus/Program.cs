@@ -17,6 +17,7 @@ using HeliosPlus.GameLibraries;
 using HeliosPlus.Shared;
 using HeliosPlus.UIForms;
 using System.Net.NetworkInformation;
+using System.Text.RegularExpressions;
 
 namespace HeliosPlus {
     public enum SupportedGameLibrary
@@ -90,46 +91,6 @@ namespace HeliosPlus {
                 IPCService.GetInstance().Status = instanceStatus;
             }
         }
-
-        private static void CreateShortcutToExecutable(Profile profile, string executableToRun, string processToMonitor, uint timeout, string executableArguments)
-        {
-
-            IPCService.GetInstance().Status = InstanceStatus.User;
-            new ShortcutForm(profile)
-            {
-                ExecutableNameAndPath = executableToRun,
-                ExecutableArguments = executableArguments,
-                ProcessNameToMonitor = processToMonitor,
-                ExecutableTimeout = timeout
-            }.ShowDialog();
-        }
-
-        private static void CreateShortcutToSteamGame(Profile profile, string steamGameIdToRun, uint timeout, string executableArguments)
-        {
-
-            IPCService.GetInstance().Status = InstanceStatus.User;
-            new ShortcutForm(profile)
-            {
-                GameLibrary = SupportedGameLibrary.Steam,
-                GameAppId = Convert.ToUInt32(steamGameIdToRun),
-                GameTimeout = timeout,
-                GameArguments = executableArguments,
-            }.ShowDialog();
-        }
-
-        private static void CreateShortcutToUplayGame(Profile profile, string uplayGameIdToRun, uint timeout, string executableArguments)
-        {
-
-            IPCService.GetInstance().Status = InstanceStatus.User;
-            new ShortcutForm(profile)
-            {
-                GameLibrary = SupportedGameLibrary.Uplay,
-                GameAppId = Convert.ToUInt32(uplayGameIdToRun),
-                GameTimeout = timeout,
-                GameArguments = executableArguments,
-            }.ShowDialog();
-        }
-
 
         private static void EditProfile(Profile profile)
         {
@@ -205,199 +166,24 @@ namespace HeliosPlus {
             });
 
             // This is the SwitchProfile command
-            app.Command("SwitchProfile", (switchProfileCmd) =>
+            app.Command("RunShortcut", (switchProfileCmd) =>
             {
+                var argumentShortcut = switchProfileCmd.Argument("\"SHORTCUT_NAME\"", "(required) The name of the shortcut to run from those stored in the shortcut library.").IsRequired();
+                argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
+
                 //description and help text of the command.
                 switchProfileCmd.Description = "Use this command to temporarily change profiles, and load your favourite game or application.";
 
                 switchProfileCmd.OnExecute(() =>
                 {
-                    switchProfileCmd.ShowHelp();
-                    return 1;
+                    Console.WriteLine($"Editing profile {argumentShortcut.Value}");
+
+                    SwitchToProfile(GetProfile(argumentShortcut.Value));
+
+                    return 0;
                 });
-
-                switchProfileCmd.Command("permanent", (switchProfilePermanentSubCmd) =>
-                {
-                    switchProfilePermanentSubCmd.Description = "Change to a different display profile permanently (until you manually switch back).";
-                    var optionProfile = switchProfilePermanentSubCmd.Option("-p|--profile <PROFILENAME>", "(required) The Profile Name or Profile ID of the display profile to you want to use.", CommandOptionType.SingleValue).IsRequired();
-                    optionProfile.Validators.Add(new ProfileMustExistValidator());
-                    switchProfilePermanentSubCmd.OnExecute(() =>
-                    {
-                        Console.WriteLine($"Changing to display profile {optionProfile.Value()}.");
-
-                        SwitchToProfile(GetProfile(optionProfile.Value()));
-                        return 0;
-                    });
-                });
-
-
-                switchProfileCmd.Command("exe", (switchProfileExecuteSubCmd) =>
-                {
-                    switchProfileExecuteSubCmd.Description = "Temporarily change to a different display profile, run an application or game executable, then change back.";
-                    var argumentExecutable = switchProfileExecuteSubCmd.Argument("PATH_TO_EXE", "(required) The game exectuable file to run.").IsRequired();
-                    argumentExecutable.Validators.Add(new FileArgumentMustExistValidator());
-                    var optionProfile = switchProfileExecuteSubCmd.Option("-p|--profile <PROFILENAME>", "(required) The Profile Name or Profile ID of the display profile to you want to use.", CommandOptionType.SingleValue).IsRequired();
-                    optionProfile.Validators.Add(new ProfileMustExistValidator());
-                    var optionWaitFor = switchProfileExecuteSubCmd.Option("-w|--waitfor <PROCESSNAME>", "(optional) The application/game to start when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut. Cannot be used with --steam or --uplay options.", CommandOptionType.SingleValue);
-                    optionWaitFor.Validators.Add(new FileOptionMustExistValidator());
-                    var optionTimeout = switchProfileExecuteSubCmd.Option<uint>("-t|--timeout", "(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game.", CommandOptionType.SingleValue);
-                    var optionArguments = switchProfileExecuteSubCmd.Option("-a|--arguments", "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game.", CommandOptionType.SingleValue);
-                    switchProfileExecuteSubCmd.OnExecute(() =>
-                    {
-                        Console.WriteLine($"Changing to display profile {optionProfile.Value()}, running executable {argumentExecutable.Value} then reverting back to this display profile when finished.");
-
-                        SwitchToExecutable(
-                            GetProfile(optionProfile.Value()),
-                            //GetProfile(argProfile.Value),
-                            argumentExecutable.Value,
-                            optionWaitFor.Value(),
-                            Convert.ToUInt32(optionTimeout.Value()),
-                            optionArguments.Value()
-                            );
-
-                        return 0;
-                    });
-                });
-
-                switchProfileCmd.Command("steam", (switchProfileSteamSubCmd) =>
-                {
-                    switchProfileSteamSubCmd.Description = "Change to a display profile and run a Steam game, then swap back.";
-                    var argumentSteam = switchProfileSteamSubCmd.Argument("STEAM_GAME_ID", "(required) The Steam Game ID.").IsRequired();
-                    argumentSteam.Validators.Add(new SteamArgumentMustExistValidator());
-                    var optionProfile = switchProfileSteamSubCmd.Option("-p|--profile <PROFILENAME>", "(required) The Profile Name or Profile ID of the display profile to you want to use.", CommandOptionType.SingleValue).IsRequired();
-                    optionProfile.Validators.Add(new ProfileMustExistValidator());
-                    var optionTimeout = switchProfileSteamSubCmd.Option<uint>("-t|--timeout", "(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game. ", CommandOptionType.SingleValue);
-                    var optionArguments = switchProfileSteamSubCmd.Option("-a|--arguments", "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game.", CommandOptionType.SingleValue);
-                    switchProfileSteamSubCmd.OnExecute(() =>
-                    {
-                        Console.WriteLine($"Changing to display profile {optionProfile.Value()}, running Steam Game ID:{argumentSteam.Value} then reverting back to this display profile when finished.");
-
-                        SwitchToSteamGame(
-                            GetProfile(optionProfile.Value()),
-                            //GetProfile(argProfile.Value),
-                            argumentSteam.Value,
-                            Convert.ToUInt32(optionTimeout.Value()),
-                            optionArguments.Value()
-                            );
-
-                        return 0;
-                    });
-                });
-
-                switchProfileCmd.Command("uplay", (switchProfileUplaySubCmd) =>
-                {
-                    switchProfileUplaySubCmd.Description = "Change to a display profile and run a Uplay game.";
-                    var argumentUplay = switchProfileUplaySubCmd.Argument("UPLAY_GAME_ID", "(required) The Uplay Game ID to run for when we're temporarily switching profile and running the Uplay application/game.").IsRequired();
-                    argumentUplay.Validators.Add(new UplayArgumentMustExistValidator());
-                    var optionProfile = switchProfileUplaySubCmd.Option("-p|--profile <PROFILENAME>", "(required) The Profile Name or Profile ID of the display profile to you want to use.", CommandOptionType.SingleValue).IsRequired();
-                    optionProfile.Validators.Add(new ProfileMustExistValidator());
-                    var optionTimeout = switchProfileUplaySubCmd.Option<uint>("-t|--timeout", "(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game.", CommandOptionType.SingleValue);
-                    var optionArguments = switchProfileUplaySubCmd.Option("-a|--arguments", "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game.", CommandOptionType.SingleValue);
-                    switchProfileUplaySubCmd.OnExecute(() =>
-                    {
-                        Console.WriteLine($"Changing to display profile {optionProfile.Value()}, running Uplay Game ID:{argumentUplay.Value} then reverting back to this display profile when finished.");
-
-                        SwitchToUplayGame(
-                            GetProfile(optionProfile.Value()),
-                            //GetProfile(argProfile.Value),
-                            argumentUplay.Value,
-                            Convert.ToUInt32(optionTimeout.Value()),
-                            optionArguments.Value()
-                            );
-
-                        return 0;
-                    });
-                });
-
             });
 
-
-            /*// This is the CreateShortcut command
-            app.Command("CreateShortcut", (createShortcutCmd) =>
-            {
-                //description and help text of the command.
-                createShortcutCmd.Description = "Use this command to create a new shortcut to your favourite game.";
-                //createShortcutCmd.ExtendedHelpText = "Use this command to create a new shortcut to your favourite game.";
-
-                var optionProfile = createShortcutCmd.Option("-p|--profile", "The Profile Name or Profile ID of the profile to you want to use.", CommandOptionType.SingleValue).IsRequired();
-                optionProfile.Validators.Add(new ProfileMustExistValidator());
-
-                createShortcutCmd.OnExecute(() =>
-                {
-                    createShortcutCmd.ShowHelp();
-                    return 1;
-                });
-
-                createShortcutCmd.Command("exe", (createShortcutExecutableSubCmd) =>
-                {
-                    createShortcutExecutableSubCmd.Description = "Create a shortcut to run a Game executable.";
-                    var argumentExecutable = createShortcutExecutableSubCmd.Argument("executabletorun", "The game exectuable file to run.").IsRequired();
-                    argumentExecutable.Validators.Add(new FileArgumentMustExistValidator());
-                    var optionWaitFor = createShortcutExecutableSubCmd.Option("-w|--waitfor <PROCESSNAME>", "(optional) The application/game to start when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut. Cannot be used with --steam or --uplay options.", CommandOptionType.SingleValue);
-                    optionWaitFor.Validators.Add(new FileOptionMustExistValidator());
-                    var optionTimeout = createShortcutExecutableSubCmd.Option<uint>("-t|--timeout", "(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.", CommandOptionType.SingleValue);
-                    var optionArguments = createShortcutExecutableSubCmd.Option("-a|--arguments", "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.", CommandOptionType.SingleValue);
-                    createShortcutExecutableSubCmd.OnExecute(() =>
-                    {
-                        Console.WriteLine($"Creating a Desktop Shortcut to the application or game {argumentExecutable.Value}");
-
-                        CreateShortcutToExecutable(
-                            GetProfile(optionProfile.Value()),
-                            argumentExecutable.Value,
-                            optionWaitFor.Value(),
-                            Convert.ToUInt32(optionTimeout.Value()),
-                            optionArguments.Value()
-                            );
-
-                        return 0;
-                    });
-                });
-
-                createShortcutCmd.Command("steam", (createShortcutSteamSubCmd) =>
-                {
-                    createShortcutSteamSubCmd.Description = "Create a Steam Game shortcut.";
-                    var argumentSteam = createShortcutSteamSubCmd.Argument("steamgameid", "The Steam Game ID.").IsRequired();
-                    argumentSteam.Validators.Add(new SteamArgumentMustExistValidator());
-                    var optionTimeout = createShortcutSteamSubCmd.Option<uint>("-t|--timeout", "(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.", CommandOptionType.SingleValue);
-                    var optionArguments = createShortcutSteamSubCmd.Option("-a|--arguments", "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.", CommandOptionType.SingleValue);
-                    createShortcutSteamSubCmd.OnExecute(() =>
-                    {
-                        Console.WriteLine($"Creating a Desktop Shortcut to the Steam Game {argumentSteam.Value}");
-
-                        CreateShortcutToSteamGame(
-                            GetProfile(optionProfile.Value()),
-                            argumentSteam.Value,
-                            Convert.ToUInt32(optionTimeout.Value()),
-                            optionArguments.Value()
-                            );
-
-                        return 0;
-                    });
-                });
-
-                createShortcutCmd.Command("uplay", (createShortcutUplaySubCmd) =>
-                {
-                    createShortcutUplaySubCmd.Description = "Create a Uplay Game shortcut.";
-                    var argumentUplay = createShortcutUplaySubCmd.Argument("uplaygameid", "The Uplay Game ID to run for when we're temporarily switching profile and running the Uplay application/game.").IsRequired();
-                    argumentUplay.Validators.Add(new UplayArgumentMustExistValidator());
-                    var optionTimeout = createShortcutUplaySubCmd.Option<uint>("-t|--timeout", "(optional) The time in seconds we should delay starting the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.", CommandOptionType.SingleValue);
-                    var optionArguments = createShortcutUplaySubCmd.Option("-a|--arguments", "(optional) Extra arguments to pass to the application/game when we're temporarily switching profile and running the application/game. Also can be used when creating a shortcut.", CommandOptionType.SingleValue);
-                    createShortcutUplaySubCmd.OnExecute(() =>
-                    {
-                        Console.WriteLine($"Creating a Desktop Shortcut to the Uplay Game {argumentUplay.Value}");
-
-                        CreateShortcutToUplayGame(
-                            GetProfile(optionProfile.Value()),
-                            argumentUplay.Value,
-                            Convert.ToUInt32(optionTimeout.Value()),
-                            optionArguments.Value()
-                            );
-
-                        return 0;
-                    });
-                });
-
-            });*/
 
             // This is the EditProfile command
             app.Command("EditProfile", (editProfileCmd) =>
@@ -875,6 +661,26 @@ namespace HeliosPlus {
             {
                 throw new Exception(Language.Can_not_change_active_profile);
             }
+        }
+
+        public static bool IsValidFilename(string testName)
+        {
+            string strTheseAreInvalidFileNameChars = new string(Path.GetInvalidFileNameChars());
+            Regex regInvalidFileName = new Regex("[" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
+
+            if (regInvalidFileName.IsMatch(testName)) { return false; };
+
+            return true;
+        }
+
+        public static string GetValidFilename(string uncheckedFilename)
+        {
+            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            foreach (char c in invalid)
+            {
+                uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
+            }
+            return uncheckedFilename;
         }
     }
 }

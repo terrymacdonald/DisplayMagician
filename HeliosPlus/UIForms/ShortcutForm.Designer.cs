@@ -68,7 +68,6 @@ namespace HeliosPlus.UIForms
             this.nud_timeout_executable = new System.Windows.Forms.NumericUpDown();
             this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.rb_standalone = new System.Windows.Forms.RadioButton();
-            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.dialog_open = new System.Windows.Forms.OpenFileDialog();
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.rb_switch_perm = new System.Windows.Forms.RadioButton();
@@ -77,6 +76,9 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
+            this.txt_shortcut_save_name = new System.Windows.Forms.TextBox();
+            this.btn_save_or_rename = new System.Windows.Forms.Button();
+            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.g_temporary.SuspendLayout();
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
@@ -90,13 +92,15 @@ namespace HeliosPlus.UIForms
             this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(602, 985);
+            this.btn_save.Location = new System.Drawing.Point(743, 689);
             this.btn_save.Name = "btn_save";
-            this.btn_save.Size = new System.Drawing.Size(94, 25);
+            this.btn_save.Size = new System.Drawing.Size(120, 40);
             this.btn_save.TabIndex = 6;
             this.btn_save.Text = "&Create Shortcut";
             this.btn_save.UseVisualStyleBackColor = true;
+            this.btn_save.Visible = false;
             this.btn_save.Click += new System.EventHandler(this.btn_save_Click);
             // 
             // btn_cancel
@@ -106,7 +110,7 @@ namespace HeliosPlus.UIForms
             this.btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_cancel.ForeColor = System.Drawing.Color.White;
-            this.btn_cancel.Location = new System.Drawing.Point(869, 984);
+            this.btn_cancel.Location = new System.Drawing.Point(1498, 725);
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(94, 25);
             this.btn_cancel.TabIndex = 5;
@@ -120,9 +124,9 @@ namespace HeliosPlus.UIForms
             this.g_temporary.Controls.Add(this.p_standalone);
             this.g_temporary.Controls.Add(this.rb_launcher);
             this.g_temporary.Controls.Add(this.rb_standalone);
-            this.g_temporary.Location = new System.Drawing.Point(12, 514);
+            this.g_temporary.Location = new System.Drawing.Point(812, 137);
             this.g_temporary.Name = "g_temporary";
-            this.g_temporary.Size = new System.Drawing.Size(1161, 467);
+            this.g_temporary.Size = new System.Drawing.Size(780, 467);
             this.g_temporary.TabIndex = 4;
             this.g_temporary.TabStop = false;
             this.g_temporary.Text = "Application or Game Information";
@@ -500,23 +504,6 @@ namespace HeliosPlus.UIForms
             this.rb_standalone.CheckedChanged += new System.EventHandler(this.rb_standalone_CheckedChanged);
             this.rb_standalone.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
-            // dv_profile
-            // 
-            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, -1);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(975, 311);
-            this.dv_profile.TabIndex = 2;
-            // 
             // dialog_open
             // 
             this.dialog_open.DefaultExt = "exe";
@@ -536,7 +523,7 @@ namespace HeliosPlus.UIForms
             // 
             this.rb_switch_perm.AutoSize = true;
             this.rb_switch_perm.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_perm.Location = new System.Drawing.Point(16, 456);
+            this.rb_switch_perm.Location = new System.Drawing.Point(815, 75);
             this.rb_switch_perm.Name = "rb_switch_perm";
             this.rb_switch_perm.Size = new System.Drawing.Size(216, 17);
             this.rb_switch_perm.TabIndex = 7;
@@ -550,7 +537,7 @@ namespace HeliosPlus.UIForms
             this.rb_switch_temp.AutoSize = true;
             this.rb_switch_temp.Checked = true;
             this.rb_switch_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_temp.Location = new System.Drawing.Point(16, 479);
+            this.rb_switch_temp.Location = new System.Drawing.Point(815, 98);
             this.rb_switch_temp.Name = "rb_switch_temp";
             this.rb_switch_temp.Size = new System.Drawing.Size(381, 17);
             this.rb_switch_temp.TabIndex = 8;
@@ -572,12 +559,12 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.AllowColumnResize = false;
             this.ilv_saved_profiles.AllowItemReorder = false;
             this.ilv_saved_profiles.AllowPaneResize = false;
-            this.ilv_saved_profiles.Location = new System.Drawing.Point(1, 322);
+            this.ilv_saved_profiles.Location = new System.Drawing.Point(1, 476);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(974, 128);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(799, 128);
             this.ilv_saved_profiles.TabIndex = 22;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -589,7 +576,7 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
             this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(12, 42);
+            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(12, 104);
             this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
             this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(132, 20);
             this.lbl_profile_shown_subtitle.TabIndex = 24;
@@ -601,11 +588,50 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown.BackColor = System.Drawing.Color.DimGray;
             this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown.Location = new System.Drawing.Point(12, 13);
+            this.lbl_profile_shown.Location = new System.Drawing.Point(12, 75);
             this.lbl_profile_shown.Name = "lbl_profile_shown";
             this.lbl_profile_shown.Size = new System.Drawing.Size(205, 29);
             this.lbl_profile_shown.TabIndex = 23;
             this.lbl_profile_shown.Text = "My Display Profile";
+            // 
+            // txt_shortcut_save_name
+            // 
+            this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_shortcut_save_name.Location = new System.Drawing.Point(687, 630);
+            this.txt_shortcut_save_name.MaxLength = 200;
+            this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
+            this.txt_shortcut_save_name.Size = new System.Drawing.Size(384, 35);
+            this.txt_shortcut_save_name.TabIndex = 27;
+            // 
+            // btn_save_or_rename
+            // 
+            this.btn_save_or_rename.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_save_or_rename.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_save_or_rename.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_save_or_rename.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_save_or_rename.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_save_or_rename.ForeColor = System.Drawing.Color.White;
+            this.btn_save_or_rename.Location = new System.Drawing.Point(537, 630);
+            this.btn_save_or_rename.Name = "btn_save_or_rename";
+            this.btn_save_or_rename.Size = new System.Drawing.Size(151, 33);
+            this.btn_save_or_rename.TabIndex = 25;
+            this.btn_save_or_rename.Text = "&Save As";
+            this.btn_save_or_rename.UseVisualStyleBackColor = true;
+            // 
+            // dv_profile
+            // 
+            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
+            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.dv_profile.Location = new System.Drawing.Point(0, 61);
+            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
+            this.dv_profile.Name = "dv_profile";
+            this.dv_profile.PaddingX = 100;
+            this.dv_profile.PaddingY = 100;
+            this.dv_profile.Profile = null;
+            this.dv_profile.Size = new System.Drawing.Size(800, 410);
+            this.dv_profile.TabIndex = 2;
             // 
             // ShortcutForm
             // 
@@ -614,7 +640,9 @@ namespace HeliosPlus.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
-            this.ClientSize = new System.Drawing.Size(975, 1021);
+            this.ClientSize = new System.Drawing.Size(1607, 762);
+            this.Controls.Add(this.txt_shortcut_save_name);
+            this.Controls.Add(this.btn_save_or_rename);
             this.Controls.Add(this.lbl_profile_shown_subtitle);
             this.Controls.Add(this.lbl_profile_shown);
             this.Controls.Add(this.ilv_saved_profiles);
@@ -692,5 +720,7 @@ namespace HeliosPlus.UIForms
         private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.Label lbl_profile_shown;
+        private System.Windows.Forms.TextBox txt_shortcut_save_name;
+        private System.Windows.Forms.Button btn_save_or_rename;
     }
 }
