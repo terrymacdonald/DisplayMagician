@@ -163,8 +163,15 @@ namespace HeliosPlus.Shared
         }
 
         public static List<Profile> AllSavedProfiles 
-        { 
-            get => _allSavedProfiles;
+        {
+            get
+            {
+                if (_allSavedProfiles.Count == 0)
+                {
+                    Profile.LoadAllProfiles();
+                }
+                return _allSavedProfiles;
+            }
         }
 
         public static Profile CurrentProfile

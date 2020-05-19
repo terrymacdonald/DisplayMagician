@@ -31,7 +31,7 @@ namespace HeliosPlus {
     {
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
-        internal static string ShortcutIconCachePath;
+        //internal static string ShortcutIconCachePath;
 
 
         internal static Profile GetProfile(string profileName)
@@ -122,7 +122,7 @@ namespace HeliosPlus {
             Console.WriteLine(@"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
             Console.WriteLine(@"Based on Helios Display Management - Copyright © Soroush Falahati 2017-2020");
 
-            // Figure out where the shortcut's will go
+            /*// Figure out where the shortcut's will go
             ShortcutIconCachePath = Path.Combine(AppDataPath, @"ShortcutIconCache");
 
             // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
@@ -147,7 +147,7 @@ namespace HeliosPlus {
                 catch
                 {
                 }
-            }
+            }*/
 
             var app = new CommandLineApplication();
 
@@ -257,10 +257,10 @@ namespace HeliosPlus {
                 Application.Run(new UIForms.MainForm());
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 MessageBox.Show(
-                    string.Format(Language.Operation_Failed, e.Message),
+                    ex.Message,
                     Language.Fatal_Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);

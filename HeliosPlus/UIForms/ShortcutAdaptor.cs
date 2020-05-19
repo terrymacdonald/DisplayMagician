@@ -46,22 +46,22 @@ namespace HeliosPlus.UIForms
 
                 Shortcut shortcutToUse = null;
 
-                foreach (Shortcut shortcutToTest in Shortcut.AllSavedShortcuts)
+                foreach (Shortcut profileToTest in Shortcut.AllSavedShortcuts)
                 {
-                    if (shortcutToTest.Name == shortcutName)
+                    if (profileToTest.Name == shortcutName)
                     {
-                        shortcutToUse = shortcutToTest;
+                        shortcutToUse = profileToTest;
                     }
 
                 }
 
                 if (shortcutToUse == null)
                 {
-                    Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
-                    return shortcutToUse.ShortcutBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
-                }
-                else 
                     return null;
+                }
+
+                Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
+                return shortcutToUse.ShortcutBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
             }
             catch {
                 // If we have a problem with converting the submitted key to a profile
@@ -112,7 +112,14 @@ namespace HeliosPlus.UIForms
 
             try
             {
+                //Shortcut shortcut = (Shortcut)key;
+                //return shortcut.SavedShortcutIconCacheFilename;
                 string shortcutName = (string)key;
+               /* Shortcut shortcut = (from item in Shortcut.AllSavedShortcuts where item.Name == shortcutName select item).First();
+                if (shortcut is Shortcut)
+                    return shortcut.SavedShortcutIconCacheFilename;
+                else
+                    return null;*/
                 return shortcutName;
             }
             catch
@@ -137,12 +144,13 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                string shortcutName = (string)key;
+
+                Shortcut shortcut = (Shortcut)key;
                 Shortcut shortcutToUse = null;
 
                 foreach (Shortcut shortcutToTest in Shortcut.AllSavedShortcuts)
                 {
-                    if (shortcutToTest.Name == shortcutName)
+                    if (shortcutToTest.Name == shortcut.Name)
                     {
                         shortcutToUse = shortcutToTest;
                     }
@@ -152,18 +160,18 @@ namespace HeliosPlus.UIForms
                 // Get file info
                 if (shortcutToUse.ShortcutBitmap is Bitmap)
                 {
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FileName, string.Empty, shortcutToUse.Name));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateModified, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FileSize, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, ""));
+                    DateTime now = DateTime.Now;
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, now));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, now));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateModified, string.Empty, now));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FileSize, string.Empty, (long)0));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, shortcutToUse.SavedShortcutIconCacheFilename));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, new Size(shortcutToUse.ShortcutBitmap.Width, shortcutToUse.ShortcutBitmap.Height)));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, new SizeF((float)shortcutToUse.ShortcutBitmap.Width, (float)shortcutToUse.ShortcutBitmap.Height)));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, shortcutToUse.Name));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.EquipmentModel, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateTaken, string.Empty, ""));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateTaken, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Artist, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Copyright, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ExposureTime, string.Empty, (float)0));

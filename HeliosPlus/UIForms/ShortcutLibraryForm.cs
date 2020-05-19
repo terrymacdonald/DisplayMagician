@@ -37,6 +37,7 @@ namespace HeliosPlus.UIForms
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
                 _selectedShortcut = shortcutForm.Shortcut;
+                RefreshShortcutLibraryUI();
             }
         }
 
@@ -71,13 +72,38 @@ namespace HeliosPlus.UIForms
                         //ilv_saved_profiles.Items.Add(newItem);
                         ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
                     }
+
+                    if (_selectedShortcut != null && _selectedShortcut is Shortcut)
+                        RefreshImageListView(_selectedShortcut);
                 }
 
                 // Restart updating the saved_profiles listview
                 ilv_saved_shortcuts.ResumeLayout();
 
             }
+            // Refresh the image list view
+            //RefreshImageListView(profile);
+        }
 
+
+
+    
+        private void RefreshImageListView(Shortcut shortcut)
+        {
+            ilv_saved_shortcuts.ClearSelection();
+            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_shortcuts.Items where item.Text == shortcut.Name select item);
+            if (matchingImageListViewItems.Any())
+            {
+                matchingImageListViewItems.First().Selected = true;
+                matchingImageListViewItems.First().Focused = true;
+            }
+
+        }
+
+
+        private Shortcut GetShortcutFromName(string shortcutName)
+        {
+            return (from item in Shortcut.AllSavedShortcuts where item.Name == shortcutName select item).First();
         }
 
         private void btn_save_Click(object sender, EventArgs e)
@@ -141,6 +167,41 @@ namespace HeliosPlus.UIForms
             }
         }
 
-        
+        private void ilv_saved_shortcuts_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            _selectedShortcut = GetShortcutFromName(e.Item.Text);
+        }
+
+        private void ilv_saved_shortcuts_ItemDoubleClick(object sender, ItemClickEventArgs e)
+        {
+            _selectedShortcut = GetShortcutFromName(e.Item.Text);
+
+            if (_selectedShortcut == null)
+                return;
+
+            var shortcutForm = new ShortcutForm(_selectedShortcut);
+            shortcutForm.ShowDialog(this);
+            if (shortcutForm.DialogResult == DialogResult.OK)
+            {
+                _selectedShortcut = shortcutForm.Shortcut;
+                RefreshShortcutLibraryUI();
+            }
+
+        }
+
+        private void btn_edit_Click(object sender, EventArgs e)
+        {
+            if (_selectedShortcut == null)
+                return;
+
+            var shortcutForm = new ShortcutForm(_selectedShortcut);
+            shortcutForm.ShowDialog(this);
+            if (shortcutForm.DialogResult == DialogResult.OK)
+            {
+                _selectedShortcut = shortcutForm.Shortcut;
+                RefreshShortcutLibraryUI();
+            }
+
+        }
     }
 }

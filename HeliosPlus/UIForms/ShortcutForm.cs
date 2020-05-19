@@ -41,6 +41,8 @@ namespace HeliosPlus.UIForms
         public ShortcutForm(Shortcut shortcutToEdit) : this()
         {
             _shortcutToEdit = shortcutToEdit;
+
+            txt_shortcut_save_name.Text = _shortcutToEdit.Name;
         }
 
         public string ProcessNameToMonitor
@@ -231,8 +233,10 @@ namespace HeliosPlus.UIForms
             // Store all of the information in the Shortcut object based on what's been selected in this form
 
             // Validate the fields are filled as they should be!
-            // Check the name is valid
-            if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text) && Program.IsValidFilename(txt_shortcut_save_name.Text))
+
+
+            // Check the name is valid to save
+            if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text))
             {
                 MessageBox.Show(
                     @"You need to specify a name for this Shortcut before it can be saved.",
@@ -242,6 +246,16 @@ namespace HeliosPlus.UIForms
                 return;
             }
 
+            // Please use a plain name that can be
+            if (Shortcut.NameAlreadyExists(txt_shortcut_save_name.Text))
+            {
+                MessageBox.Show(
+                    @"A shortcut has already been created with this name. Please close this window and select that shortcut from the shortcut library window instead of creating a new one.",
+                    @"Please rename this Shortcut.",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Exclamation);
+                return;
+            }
 
             // Check the profile is set and that it's still valid
             if (!(_profileToUse is Profile))
@@ -389,10 +403,17 @@ namespace HeliosPlus.UIForms
             // (as we need the OriginalIconPath to run the SaveShortcutIconToCache method)
             if (rb_launcher.Checked)
                 _shortcutToEdit.Category = ShortcutCategory.Game;
+
             if (txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
+            {
                 _shortcutToEdit.OriginalIconPath = (from steamGame in SteamGame.AllGames where steamGame.GameId == _shortcutToEdit.GameAppId select steamGame.GameIconPath).First();
+                _shortcutToEdit.GameLibrary = SupportedGameLibrary.Steam;
+            }
             else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
+            {
                 _shortcutToEdit.OriginalIconPath = (from uplayGame in UplayGame.AllGames where uplayGame.GameId == _shortcutToEdit.GameAppId select uplayGame.GameIconPath).First();
+                _shortcutToEdit.GameLibrary = SupportedGameLibrary.Uplay;
+            }
             else if (rb_standalone.Checked)
                 _shortcutToEdit.Category = ShortcutCategory.Application;
 
@@ -403,6 +424,9 @@ namespace HeliosPlus.UIForms
             // but only if it's new... if it is an edit then it will already be in the list.
             if (_isNewShortcut)
                 Shortcut.AllSavedShortcuts.Add(_shortcutToEdit);
+
+            // Save all shortcuts just to be sure
+            Shortcut.SaveAllShortcuts();
 
             // Save everything is golden and close the form.
             DialogResult = DialogResult.OK;

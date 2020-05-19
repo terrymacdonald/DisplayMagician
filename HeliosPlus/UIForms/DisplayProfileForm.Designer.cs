@@ -114,13 +114,13 @@ namespace HeliosPlus.UIForms
             this.dv_profile.BackColor = System.Drawing.Color.DimGray;
             this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 1);
+            this.dv_profile.Location = new System.Drawing.Point(0, 63);
             this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
             this.dv_profile.Name = "dv_profile";
             this.dv_profile.PaddingX = 100;
             this.dv_profile.PaddingY = 100;
             this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(974, 579);
+            this.dv_profile.Size = new System.Drawing.Size(976, 517);
             this.dv_profile.TabIndex = 4;
             // 
             // menu_profiles
@@ -222,7 +222,7 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown.BackColor = System.Drawing.Color.DimGray;
             this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown.Location = new System.Drawing.Point(21, 16);
+            this.lbl_profile_shown.Location = new System.Drawing.Point(18, 73);
             this.lbl_profile_shown.Name = "lbl_profile_shown";
             this.lbl_profile_shown.Size = new System.Drawing.Size(205, 29);
             this.lbl_profile_shown.TabIndex = 19;
@@ -256,7 +256,7 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(974, 128);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(976, 128);
             this.ilv_saved_profiles.TabIndex = 21;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -268,7 +268,7 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
             this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(21, 45);
+            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(18, 102);
             this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
             this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(132, 20);
             this.lbl_profile_shown_subtitle.TabIndex = 22;
@@ -291,6 +291,7 @@ namespace HeliosPlus.UIForms
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
+            this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 812);
             this.Controls.Add(this.label1);

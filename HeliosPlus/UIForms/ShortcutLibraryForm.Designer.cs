@@ -37,6 +37,7 @@
             this.btn_new = new System.Windows.Forms.Button();
             this.btn_save = new System.Windows.Forms.Button();
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // ilv_saved_shortcuts
@@ -49,14 +50,16 @@
             this.ilv_saved_shortcuts.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.ilv_saved_shortcuts.Location = new System.Drawing.Point(0, 0);
+            this.ilv_saved_shortcuts.Location = new System.Drawing.Point(0, 98);
             this.ilv_saved_shortcuts.MultiSelect = false;
             this.ilv_saved_shortcuts.Name = "ilv_saved_shortcuts";
             this.ilv_saved_shortcuts.PersistentCacheDirectory = "";
             this.ilv_saved_shortcuts.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_shortcuts.Size = new System.Drawing.Size(1122, 743);
+            this.ilv_saved_shortcuts.Size = new System.Drawing.Size(1123, 645);
             this.ilv_saved_shortcuts.TabIndex = 22;
             this.ilv_saved_shortcuts.UseWIC = true;
+            this.ilv_saved_shortcuts.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_shortcuts_ItemClick);
+            this.ilv_saved_shortcuts.ItemDoubleClick += new Manina.Windows.Forms.ItemDoubleClickEventHandler(this.ilv_saved_shortcuts_ItemDoubleClick);
             // 
             // btn_delete
             // 
@@ -72,7 +75,6 @@
             this.btn_delete.TabIndex = 26;
             this.btn_delete.Text = "&Delete";
             this.btn_delete.UseVisualStyleBackColor = true;
-            this.btn_delete.Visible = false;
             // 
             // btn_back
             // 
@@ -105,7 +107,6 @@
             this.btn_run.TabIndex = 25;
             this.btn_run.Text = "&Run";
             this.btn_run.UseVisualStyleBackColor = false;
-            this.btn_run.Visible = false;
             // 
             // btn_edit
             // 
@@ -122,7 +123,7 @@
             this.btn_edit.TabIndex = 28;
             this.btn_edit.Text = "&Edit";
             this.btn_edit.UseVisualStyleBackColor = false;
-            this.btn_edit.Visible = false;
+            this.btn_edit.Click += new System.EventHandler(this.btn_edit_Click);
             // 
             // btn_new
             // 
@@ -156,7 +157,6 @@
             this.btn_save.TabIndex = 30;
             this.btn_save.Text = "&Save to Desktop";
             this.btn_save.UseVisualStyleBackColor = false;
-            this.btn_save.Visible = false;
             // 
             // dialog_save
             // 
@@ -165,12 +165,25 @@
             this.dialog_save.Filter = global::HeliosPlus.Resources.Language.Shortcuts_Filter;
             this.dialog_save.RestoreDirectory = true;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.White;
+            this.label1.Location = new System.Drawing.Point(405, 25);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(251, 29);
+            this.label1.TabIndex = 31;
+            this.label1.Text = "Game Shortcut Library";
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
+            this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(1123, 839);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.btn_save);
             this.Controls.Add(this.btn_new);
             this.Controls.Add(this.btn_edit);
@@ -185,6 +198,7 @@
             this.Text = "HeliosPlus - Setup Game Shortcuts";
             this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -198,5 +212,6 @@
         private System.Windows.Forms.Button btn_new;
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.SaveFileDialog dialog_save;
+        private System.Windows.Forms.Label label1;
     }
 }

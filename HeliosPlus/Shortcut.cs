@@ -36,6 +36,9 @@ namespace HeliosPlus
         private static List<Shortcut> _allSavedShortcuts = new List<Shortcut>();
         private MultiIcon _shortcutIcon, _originalIcon = null;
         private Bitmap _shortcutBitmap, _originalBitmap = null;
+        private Profile _profileToUse = null;
+        private string _profileName = "";
+        private bool _isPossible = false;
 
         public Shortcut()
         {
@@ -57,10 +60,13 @@ namespace HeliosPlus
             get 
             {
                 if (ProfileToUse is Profile)
-                    return ProfileToUse.Name;
-                else
-                    return null;
-            } 
+                    _profileName = ProfileToUse.Name;
+                return _profileName;
+            }
+            set
+            {
+                _profileName = value;
+            }
         }
 
         public ShortcutPermanence Permanence { get; set; } = ShortcutPermanence.Temporary;
@@ -93,7 +99,8 @@ namespace HeliosPlus
 
         public string OriginalIconPath { get; set; } = "";
 
-        [JsonConverter(typeof(CustomBitmapConverter))]
+        //[JsonConverter(typeof(CustomBitmapConverter))]
+        [JsonIgnore]
         public Bitmap OriginalBitmap
         {
             get
@@ -119,7 +126,8 @@ namespace HeliosPlus
             }
         }
 
-        [JsonConverter(typeof(CustomBitmapConverter))]
+        //[JsonConverter(typeof(CustomBitmapConverter))]
+        [JsonIgnore]
         public Bitmap ShortcutBitmap
         {
             get
@@ -128,6 +136,10 @@ namespace HeliosPlus
                     return _shortcutBitmap;
                 else
                 {
+
+                    if (ProfileToUse == null)
+                        return null;
+
                     if (OriginalBitmap == null)
                         return null;
 
@@ -160,14 +172,27 @@ namespace HeliosPlus
         [JsonIgnore]
         public static List<Shortcut> AllSavedShortcuts
         {
-            get => _allSavedShortcuts;
+            get
+            {
+                if (_allSavedShortcuts.Count == 0)
+                {
+                    Shortcut.LoadAllShortcuts();
+                }
+                return _allSavedShortcuts;
+            }
         }
 
         [JsonIgnore]
         public bool IsPossible
         {
-            get;
-            set;
+            get
+            {
+                return _isPossible;
+            }
+            set
+            {
+                _isPossible = value;
+    }
         }
 
         public static Bitmap ExtractVistaIcon(Icon icoIcon)
@@ -207,6 +232,19 @@ namespace HeliosPlus
         {
             if (_shortcutIcon == null)
             {
+
+                if (!Directory.Exists(SavedShortcutsPath))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(SavedShortcutsPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Unable to create Shortcut folder " + SavedShortcutsPath + ": " + ex.Message);
+                    }
+                }
+
                 // Only add the rest of the options if the permanence is temporary
                 if (Permanence == ShortcutPermanence.Temporary)
                 {
@@ -214,7 +252,7 @@ namespace HeliosPlus
                     if (Category == ShortcutCategory.Application)
                     {
                         // Work out the name of the shortcut we'll save.
-                        SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"executable-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
+                        SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"executable-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
 
                     }
                     // Only add the rest of the options if the temporary switch radio button is set
@@ -226,13 +264,13 @@ namespace HeliosPlus
                         if (GameLibrary == SupportedGameLibrary.Steam)
                         {
                             // Work out the name of the shortcut we'll save.
-                            SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"steam-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
+                            SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"steam-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
 
                         }
                         else if (GameLibrary == SupportedGameLibrary.Uplay)
                         {
                             // Work out the name of the shortcut we'll save.
-                            SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"uplay-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
+                            SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"uplay-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
                         }
 
                     }
@@ -242,7 +280,7 @@ namespace HeliosPlus
                 else
                 {
                     // Work out the name of the shortcut we'll save.
-                    SavedShortcutIconCacheFilename = Path.Combine(Program.ShortcutIconCachePath, String.Concat(@"permanent-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
+                    SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"permanent-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
                 }
 
                 try
@@ -287,17 +325,19 @@ namespace HeliosPlus
                     }
 
                     // Lookup all the Profile Names in the Saved Profiles
-                    List<Profile> allProfiles = Profile.AllSavedProfiles;
                     foreach (Shortcut updatedShortcut in shortcuts)
                     {
-                        IEnumerable<Profile> matchingProfile = (from profile in allProfiles where profile.Name == updatedShortcut.ProfileName select profile);
-                        if (matchingProfile.Count() > 0)
+                        foreach (Profile profile in Profile.AllSavedProfiles)
                         {
-                            updatedShortcut.ProfileToUse = matchingProfile.First();
-                            updatedShortcut.IsPossible = true;
+
+                            if (profile.Name.Equals(updatedShortcut.ProfileName))
+                            {
+                                // And assign the matching Profile if we find it.
+                                updatedShortcut.ProfileToUse = profile;
+                                updatedShortcut.IsPossible = true;
+                                break;
+                            }
                         }
-                        else
-                            updatedShortcut.IsPossible = false;
                     }
 
                     _allSavedShortcuts = shortcuts;
@@ -474,6 +514,14 @@ namespace HeliosPlus
             // Return a status on how it went
             // true if it was a success or false if it was not
             return shortcutFileName != null && File.Exists(shortcutFileName);
+        }
+
+        public static bool NameAlreadyExists(string shortcutName)
+        {
+            if (AllSavedShortcuts.Exists(item => item.Name.Equals(shortcutName)))
+                return true;
+            else
+                return false;
         }
 
     }
