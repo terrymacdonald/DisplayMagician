@@ -35,55 +35,60 @@ namespace HeliosPlus.UIForms
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutForm));
             this.btn_save = new System.Windows.Forms.Button();
             this.btn_cancel = new System.Windows.Forms.Button();
-            this.g_temporary = new System.Windows.Forms.GroupBox();
-            this.p_game = new System.Windows.Forms.Panel();
-            this.txt_game_id = new System.Windows.Forms.TextBox();
-            this.txt_game_launcher = new System.Windows.Forms.TextBox();
-            this.txt_game_name = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.btn_choose_game = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.txt_args_game = new System.Windows.Forms.TextBox();
-            this.cb_args_game = new System.Windows.Forms.CheckBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
-            this.label3 = new System.Windows.Forms.Label();
-            this.lv_games = new System.Windows.Forms.ListView();
-            this.clm_images = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.il_games = new System.Windows.Forms.ImageList(this.components);
+            this.dialog_open = new System.Windows.Forms.OpenFileDialog();
+            this.dialog_save = new System.Windows.Forms.SaveFileDialog();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.tabc_shortcut = new System.Windows.Forms.TabControl();
+            this.tabp_display = new System.Windows.Forms.TabPage();
+            this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
+            this.lbl_profile_shown = new System.Windows.Forms.Label();
+            this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
+            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
+            this.tabp_before = new System.Windows.Forms.TabPage();
+            this.tabp_game = new System.Windows.Forms.TabPage();
             this.p_standalone = new System.Windows.Forms.Panel();
-            this.lbl_process_name = new System.Windows.Forms.Label();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
             this.cb_args_executable = new System.Windows.Forms.CheckBox();
             this.btn_app_process = new System.Windows.Forms.Button();
             this.txt_process_name = new System.Windows.Forms.TextBox();
             this.rb_wait_process = new System.Windows.Forms.RadioButton();
             this.rb_wait_executable = new System.Windows.Forms.RadioButton();
-            this.btn_app_executable = new System.Windows.Forms.Button();
             this.txt_executable = new System.Windows.Forms.TextBox();
             this.lbl_app_executable = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.nud_timeout_executable = new System.Windows.Forms.NumericUpDown();
-            this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.rb_standalone = new System.Windows.Forms.RadioButton();
-            this.dialog_open = new System.Windows.Forms.OpenFileDialog();
-            this.dialog_save = new System.Windows.Forms.SaveFileDialog();
-            this.rb_switch_perm = new System.Windows.Forms.RadioButton();
+            this.rb_no_game = new System.Windows.Forms.RadioButton();
+            this.p_game = new System.Windows.Forms.Panel();
+            this.txt_game_launcher = new System.Windows.Forms.TextBox();
+            this.txt_game_name = new System.Windows.Forms.TextBox();
+            this.lbl_game_library = new System.Windows.Forms.Label();
+            this.lbl_game_name = new System.Windows.Forms.Label();
+            this.btn_choose_game = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.txt_args_game = new System.Windows.Forms.TextBox();
+            this.cb_args_game = new System.Windows.Forms.CheckBox();
+            this.lbl_game_timeout = new System.Windows.Forms.Label();
+            this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
+            this.lv_games = new System.Windows.Forms.ListView();
+            this.clm_images = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.rb_launcher = new System.Windows.Forms.RadioButton();
+            this.tabp_after = new System.Windows.Forms.TabPage();
+            this.rb_switch_permanent = new System.Windows.Forms.RadioButton();
             this.rb_switch_temp = new System.Windows.Forms.RadioButton();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
-            this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
-            this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.txt_shortcut_save_name = new System.Windows.Forms.TextBox();
-            this.btn_save_or_rename = new System.Windows.Forms.Button();
-            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
-            this.g_temporary.SuspendLayout();
-            this.p_game.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
+            this.lbl_title = new System.Windows.Forms.Label();
+            this.lbl_shortcut_name = new System.Windows.Forms.Label();
+            this.tabc_shortcut.SuspendLayout();
+            this.tabp_display.SuspendLayout();
+            this.tabp_game.SuspendLayout();
             this.p_standalone.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_executable)).BeginInit();
+            this.p_game.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
+            this.tabp_after.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -94,13 +99,12 @@ namespace HeliosPlus.UIForms
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(743, 689);
+            this.btn_save.Location = new System.Drawing.Point(517, 754);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(120, 40);
             this.btn_save.TabIndex = 6;
-            this.btn_save.Text = "&Create Shortcut";
+            this.btn_save.Text = "&Save";
             this.btn_save.UseVisualStyleBackColor = true;
-            this.btn_save.Visible = false;
             this.btn_save.Click += new System.EventHandler(this.btn_save_Click);
             // 
             // btn_cancel
@@ -110,7 +114,7 @@ namespace HeliosPlus.UIForms
             this.btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_cancel.ForeColor = System.Drawing.Color.White;
-            this.btn_cancel.Location = new System.Drawing.Point(1498, 725);
+            this.btn_cancel.Location = new System.Drawing.Point(1008, 769);
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(94, 25);
             this.btn_cancel.TabIndex = 5;
@@ -118,391 +122,11 @@ namespace HeliosPlus.UIForms
             this.btn_cancel.UseVisualStyleBackColor = true;
             this.btn_cancel.Click += new System.EventHandler(this.btn_back_Click);
             // 
-            // g_temporary
-            // 
-            this.g_temporary.Controls.Add(this.p_game);
-            this.g_temporary.Controls.Add(this.p_standalone);
-            this.g_temporary.Controls.Add(this.rb_launcher);
-            this.g_temporary.Controls.Add(this.rb_standalone);
-            this.g_temporary.Location = new System.Drawing.Point(812, 137);
-            this.g_temporary.Name = "g_temporary";
-            this.g_temporary.Size = new System.Drawing.Size(780, 467);
-            this.g_temporary.TabIndex = 4;
-            this.g_temporary.TabStop = false;
-            this.g_temporary.Text = "Application or Game Information";
-            // 
-            // p_game
-            // 
-            this.p_game.Controls.Add(this.txt_game_id);
-            this.p_game.Controls.Add(this.txt_game_launcher);
-            this.p_game.Controls.Add(this.txt_game_name);
-            this.p_game.Controls.Add(this.label6);
-            this.p_game.Controls.Add(this.label4);
-            this.p_game.Controls.Add(this.btn_choose_game);
-            this.p_game.Controls.Add(this.label1);
-            this.p_game.Controls.Add(this.txt_args_game);
-            this.p_game.Controls.Add(this.cb_args_game);
-            this.p_game.Controls.Add(this.label5);
-            this.p_game.Controls.Add(this.nud_timeout_game);
-            this.p_game.Controls.Add(this.label3);
-            this.p_game.Controls.Add(this.lv_games);
-            this.p_game.Location = new System.Drawing.Point(26, 198);
-            this.p_game.Name = "p_game";
-            this.p_game.Size = new System.Drawing.Size(730, 253);
-            this.p_game.TabIndex = 3;
-            // 
-            // txt_game_id
-            // 
-            this.txt_game_id.Location = new System.Drawing.Point(408, 104);
-            this.txt_game_id.Name = "txt_game_id";
-            this.txt_game_id.ReadOnly = true;
-            this.txt_game_id.Size = new System.Drawing.Size(75, 20);
-            this.txt_game_id.TabIndex = 24;
-            // 
-            // txt_game_launcher
-            // 
-            this.txt_game_launcher.Location = new System.Drawing.Point(408, 78);
-            this.txt_game_launcher.Name = "txt_game_launcher";
-            this.txt_game_launcher.ReadOnly = true;
-            this.txt_game_launcher.Size = new System.Drawing.Size(175, 20);
-            this.txt_game_launcher.TabIndex = 23;
-            // 
-            // txt_game_name
-            // 
-            this.txt_game_name.Location = new System.Drawing.Point(408, 133);
-            this.txt_game_name.Name = "txt_game_name";
-            this.txt_game_name.ReadOnly = true;
-            this.txt_game_name.Size = new System.Drawing.Size(302, 20);
-            this.txt_game_name.TabIndex = 21;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.ForeColor = System.Drawing.Color.White;
-            this.label6.Location = new System.Drawing.Point(323, 81);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(86, 13);
-            this.label6.TabIndex = 18;
-            this.label6.Text = "Game Launcher:";
-            this.label6.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.ForeColor = System.Drawing.Color.White;
-            this.label4.Location = new System.Drawing.Point(340, 136);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(69, 13);
-            this.label4.TabIndex = 17;
-            this.label4.Text = "Game Name:";
-            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.label4.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // btn_choose_game
-            // 
-            this.btn_choose_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_choose_game.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_game.Location = new System.Drawing.Point(218, 117);
-            this.btn_choose_game.Name = "btn_choose_game";
-            this.btn_choose_game.Size = new System.Drawing.Size(29, 31);
-            this.btn_choose_game.TabIndex = 16;
-            this.btn_choose_game.Text = ">>";
-            this.btn_choose_game.UseVisualStyleBackColor = true;
-            this.btn_choose_game.Click += new System.EventHandler(this.btn_choose_game_Click);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.BackColor = System.Drawing.Color.Transparent;
-            this.label1.ForeColor = System.Drawing.Color.White;
-            this.label1.Location = new System.Drawing.Point(70, 7);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(88, 13);
-            this.label1.TabIndex = 15;
-            this.label1.Text = "Games detected:";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.label1.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // txt_args_game
-            // 
-            this.txt_args_game.Enabled = false;
-            this.txt_args_game.Location = new System.Drawing.Point(408, 160);
-            this.txt_args_game.Name = "txt_args_game";
-            this.txt_args_game.Size = new System.Drawing.Size(302, 20);
-            this.txt_args_game.TabIndex = 13;
-            // 
-            // cb_args_game
-            // 
-            this.cb_args_game.AutoSize = true;
-            this.cb_args_game.ForeColor = System.Drawing.Color.White;
-            this.cb_args_game.Location = new System.Drawing.Point(265, 162);
-            this.cb_args_game.Name = "cb_args_game";
-            this.cb_args_game.Size = new System.Drawing.Size(147, 17);
-            this.cb_args_game.TabIndex = 12;
-            this.cb_args_game.Text = "Pass arguments to Game:";
-            this.cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_args_game.UseVisualStyleBackColor = true;
-            this.cb_args_game.CheckedChanged += new System.EventHandler(this.cb_args_game_CheckedChanged);
-            this.cb_args_game.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.ForeColor = System.Drawing.Color.White;
-            this.label5.Location = new System.Drawing.Point(589, 80);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(48, 13);
-            this.label5.TabIndex = 4;
-            this.label5.Text = "Timeout:";
-            this.label5.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // nud_timeout_game
-            // 
-            this.nud_timeout_game.Location = new System.Drawing.Point(640, 77);
-            this.nud_timeout_game.Maximum = new decimal(new int[] {
-            240,
-            0,
-            0,
-            0});
-            this.nud_timeout_game.Minimum = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
-            this.nud_timeout_game.Name = "nud_timeout_game";
-            this.nud_timeout_game.Size = new System.Drawing.Size(70, 20);
-            this.nud_timeout_game.TabIndex = 5;
-            this.nud_timeout_game.Value = new decimal(new int[] {
-            120,
-            0,
-            0,
-            0});
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.ForeColor = System.Drawing.Color.White;
-            this.label3.Location = new System.Drawing.Point(357, 107);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(52, 13);
-            this.label3.TabIndex = 0;
-            this.label3.Text = "Game ID:";
-            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.label3.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // lv_games
-            // 
-            this.lv_games.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.clm_images,
-            this.clm_name});
-            this.lv_games.HideSelection = false;
-            this.lv_games.LargeImageList = this.il_games;
-            this.lv_games.Location = new System.Drawing.Point(23, 18);
-            this.lv_games.Name = "lv_games";
-            this.lv_games.Size = new System.Drawing.Size(182, 229);
-            this.lv_games.SmallImageList = this.il_games;
-            this.lv_games.TabIndex = 22;
-            this.lv_games.UseCompatibleStateImageBehavior = false;
-            // 
             // il_games
             // 
             this.il_games.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
             this.il_games.ImageSize = new System.Drawing.Size(32, 32);
             this.il_games.TransparentColor = System.Drawing.Color.Transparent;
-            // 
-            // p_standalone
-            // 
-            this.p_standalone.Controls.Add(this.lbl_process_name);
-            this.p_standalone.Controls.Add(this.txt_args_executable);
-            this.p_standalone.Controls.Add(this.cb_args_executable);
-            this.p_standalone.Controls.Add(this.btn_app_process);
-            this.p_standalone.Controls.Add(this.txt_process_name);
-            this.p_standalone.Controls.Add(this.rb_wait_process);
-            this.p_standalone.Controls.Add(this.rb_wait_executable);
-            this.p_standalone.Controls.Add(this.btn_app_executable);
-            this.p_standalone.Controls.Add(this.txt_executable);
-            this.p_standalone.Controls.Add(this.lbl_app_executable);
-            this.p_standalone.Controls.Add(this.label2);
-            this.p_standalone.Controls.Add(this.nud_timeout_executable);
-            this.p_standalone.Enabled = false;
-            this.p_standalone.Location = new System.Drawing.Point(26, 42);
-            this.p_standalone.Name = "p_standalone";
-            this.p_standalone.Size = new System.Drawing.Size(730, 118);
-            this.p_standalone.TabIndex = 1;
-            // 
-            // lbl_process_name
-            // 
-            this.lbl_process_name.AutoSize = true;
-            this.lbl_process_name.ForeColor = System.Drawing.Color.White;
-            this.lbl_process_name.Location = new System.Drawing.Point(357, 57);
-            this.lbl_process_name.Name = "lbl_process_name";
-            this.lbl_process_name.Size = new System.Drawing.Size(97, 13);
-            this.lbl_process_name.TabIndex = 12;
-            this.lbl_process_name.Text = "Process to monitor:";
-            this.lbl_process_name.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // txt_args_executable
-            // 
-            this.txt_args_executable.Enabled = false;
-            this.txt_args_executable.Location = new System.Drawing.Point(190, 83);
-            this.txt_args_executable.Name = "txt_args_executable";
-            this.txt_args_executable.Size = new System.Drawing.Size(520, 20);
-            this.txt_args_executable.TabIndex = 11;
-            // 
-            // cb_args_executable
-            // 
-            this.cb_args_executable.AutoSize = true;
-            this.cb_args_executable.ForeColor = System.Drawing.Color.White;
-            this.cb_args_executable.Location = new System.Drawing.Point(23, 85);
-            this.cb_args_executable.Name = "cb_args_executable";
-            this.cb_args_executable.Size = new System.Drawing.Size(172, 17);
-            this.cb_args_executable.TabIndex = 10;
-            this.cb_args_executable.Text = "Pass arguments to Executable:";
-            this.cb_args_executable.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_args_executable.UseVisualStyleBackColor = true;
-            this.cb_args_executable.CheckedChanged += new System.EventHandler(this.cb_args_executable_CheckedChanged);
-            this.cb_args_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
-            // 
-            // btn_app_process
-            // 
-            this.btn_app_process.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_app_process.ForeColor = System.Drawing.Color.White;
-            this.btn_app_process.Location = new System.Drawing.Point(654, 53);
-            this.btn_app_process.Name = "btn_app_process";
-            this.btn_app_process.Size = new System.Drawing.Size(56, 21);
-            this.btn_app_process.TabIndex = 9;
-            this.btn_app_process.Text = "Choose";
-            this.btn_app_process.UseVisualStyleBackColor = true;
-            this.btn_app_process.Click += new System.EventHandler(this.btn_app_process_Click);
-            // 
-            // txt_process_name
-            // 
-            this.txt_process_name.Enabled = false;
-            this.txt_process_name.Location = new System.Drawing.Point(454, 54);
-            this.txt_process_name.Name = "txt_process_name";
-            this.txt_process_name.Size = new System.Drawing.Size(194, 20);
-            this.txt_process_name.TabIndex = 4;
-            // 
-            // rb_wait_process
-            // 
-            this.rb_wait_process.AutoSize = true;
-            this.rb_wait_process.ForeColor = System.Drawing.Color.White;
-            this.rb_wait_process.Location = new System.Drawing.Point(6, 55);
-            this.rb_wait_process.Name = "rb_wait_process";
-            this.rb_wait_process.Size = new System.Drawing.Size(327, 17);
-            this.rb_wait_process.TabIndex = 8;
-            this.rb_wait_process.Text = "Change Display Profile back when a different process is closed: ";
-            this.rb_wait_process.UseVisualStyleBackColor = true;
-            this.rb_wait_process.CheckedChanged += new System.EventHandler(this.rb_wait_process_CheckedChanged);
-            this.rb_wait_process.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
-            // 
-            // rb_wait_executable
-            // 
-            this.rb_wait_executable.AutoSize = true;
-            this.rb_wait_executable.Checked = true;
-            this.rb_wait_executable.ForeColor = System.Drawing.Color.White;
-            this.rb_wait_executable.Location = new System.Drawing.Point(6, 32);
-            this.rb_wait_executable.Name = "rb_wait_executable";
-            this.rb_wait_executable.Size = new System.Drawing.Size(337, 17);
-            this.rb_wait_executable.TabIndex = 7;
-            this.rb_wait_executable.TabStop = true;
-            this.rb_wait_executable.Text = "Change Display Profile back when the executable above is closed";
-            this.rb_wait_executable.UseVisualStyleBackColor = true;
-            this.rb_wait_executable.CheckedChanged += new System.EventHandler(this.rb_wait_executable_CheckedChanged);
-            this.rb_wait_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
-            // 
-            // btn_app_executable
-            // 
-            this.btn_app_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_app_executable.ForeColor = System.Drawing.Color.White;
-            this.btn_app_executable.Location = new System.Drawing.Point(527, 6);
-            this.btn_app_executable.Name = "btn_app_executable";
-            this.btn_app_executable.Size = new System.Drawing.Size(56, 20);
-            this.btn_app_executable.TabIndex = 2;
-            this.btn_app_executable.Text = "Choose";
-            this.btn_app_executable.UseVisualStyleBackColor = true;
-            this.btn_app_executable.Click += new System.EventHandler(this.btn_app_executable_Click);
-            // 
-            // txt_executable
-            // 
-            this.txt_executable.Location = new System.Drawing.Point(105, 6);
-            this.txt_executable.Name = "txt_executable";
-            this.txt_executable.Size = new System.Drawing.Size(416, 20);
-            this.txt_executable.TabIndex = 1;
-            this.txt_executable.TextChanged += new System.EventHandler(this.txt_executable_TextChanged);
-            // 
-            // lbl_app_executable
-            // 
-            this.lbl_app_executable.AutoSize = true;
-            this.lbl_app_executable.ForeColor = System.Drawing.Color.White;
-            this.lbl_app_executable.Location = new System.Drawing.Point(3, 10);
-            this.lbl_app_executable.Name = "lbl_app_executable";
-            this.lbl_app_executable.Size = new System.Drawing.Size(98, 13);
-            this.lbl_app_executable.TabIndex = 0;
-            this.lbl_app_executable.Text = "Executable to start:";
-            this.lbl_app_executable.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            this.lbl_app_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.ForeColor = System.Drawing.Color.Transparent;
-            this.label2.Location = new System.Drawing.Point(589, 9);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(45, 13);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "Timeout";
-            this.label2.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // nud_timeout_executable
-            // 
-            this.nud_timeout_executable.Location = new System.Drawing.Point(640, 6);
-            this.nud_timeout_executable.Maximum = new decimal(new int[] {
-            240,
-            0,
-            0,
-            0});
-            this.nud_timeout_executable.Minimum = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
-            this.nud_timeout_executable.Name = "nud_timeout_executable";
-            this.nud_timeout_executable.Size = new System.Drawing.Size(70, 20);
-            this.nud_timeout_executable.TabIndex = 6;
-            this.nud_timeout_executable.Value = new decimal(new int[] {
-            30,
-            0,
-            0,
-            0});
-            // 
-            // rb_launcher
-            // 
-            this.rb_launcher.AutoSize = true;
-            this.rb_launcher.Checked = true;
-            this.rb_launcher.ForeColor = System.Drawing.Color.White;
-            this.rb_launcher.Location = new System.Drawing.Point(9, 178);
-            this.rb_launcher.Name = "rb_launcher";
-            this.rb_launcher.Size = new System.Drawing.Size(259, 17);
-            this.rb_launcher.TabIndex = 2;
-            this.rb_launcher.TabStop = true;
-            this.rb_launcher.Text = "Launch Game already installed by Steam or Uplay";
-            this.rb_launcher.UseVisualStyleBackColor = true;
-            this.rb_launcher.CheckedChanged += new System.EventHandler(this.rb_launcher_CheckedChanged);
-            this.rb_launcher.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
-            // 
-            // rb_standalone
-            // 
-            this.rb_standalone.AutoSize = true;
-            this.rb_standalone.ForeColor = System.Drawing.Color.White;
-            this.rb_standalone.Location = new System.Drawing.Point(9, 19);
-            this.rb_standalone.Name = "rb_standalone";
-            this.rb_standalone.Size = new System.Drawing.Size(177, 17);
-            this.rb_standalone.TabIndex = 0;
-            this.rb_standalone.Text = "Standalone Application or Game";
-            this.rb_standalone.UseVisualStyleBackColor = true;
-            this.rb_standalone.CheckedChanged += new System.EventHandler(this.rb_standalone_CheckedChanged);
-            this.rb_standalone.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // dialog_open
             // 
@@ -519,38 +143,71 @@ namespace HeliosPlus.UIForms
             this.dialog_save.Filter = global::HeliosPlus.Resources.Language.Shortcuts_Filter;
             this.dialog_save.RestoreDirectory = true;
             // 
-            // rb_switch_perm
-            // 
-            this.rb_switch_perm.AutoSize = true;
-            this.rb_switch_perm.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_perm.Location = new System.Drawing.Point(815, 75);
-            this.rb_switch_perm.Name = "rb_switch_perm";
-            this.rb_switch_perm.Size = new System.Drawing.Size(216, 17);
-            this.rb_switch_perm.TabIndex = 7;
-            this.rb_switch_perm.Text = "Switch to the Display Profile permanently";
-            this.rb_switch_perm.UseVisualStyleBackColor = true;
-            this.rb_switch_perm.CheckedChanged += new System.EventHandler(this.rb_switch_perm_CheckedChanged);
-            this.rb_switch_perm.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
-            // 
-            // rb_switch_temp
-            // 
-            this.rb_switch_temp.AutoSize = true;
-            this.rb_switch_temp.Checked = true;
-            this.rb_switch_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_temp.Location = new System.Drawing.Point(815, 98);
-            this.rb_switch_temp.Name = "rb_switch_temp";
-            this.rb_switch_temp.Size = new System.Drawing.Size(381, 17);
-            this.rb_switch_temp.TabIndex = 8;
-            this.rb_switch_temp.TabStop = true;
-            this.rb_switch_temp.Text = "Switch to the Display Profile temporarily while we run an application or game";
-            this.rb_switch_temp.UseVisualStyleBackColor = true;
-            this.rb_switch_temp.CheckedChanged += new System.EventHandler(this.rb_switch_temp_CheckedChanged);
-            this.rb_switch_temp.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
-            // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             this.openFileDialog1.Title = "Title";
+            // 
+            // tabc_shortcut
+            // 
+            this.tabc_shortcut.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tabc_shortcut.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
+            this.tabc_shortcut.Controls.Add(this.tabp_display);
+            this.tabc_shortcut.Controls.Add(this.tabp_before);
+            this.tabc_shortcut.Controls.Add(this.tabp_game);
+            this.tabc_shortcut.Controls.Add(this.tabp_after);
+            this.tabc_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabc_shortcut.HotTrack = true;
+            this.tabc_shortcut.Location = new System.Drawing.Point(12, 62);
+            this.tabc_shortcut.Name = "tabc_shortcut";
+            this.tabc_shortcut.SelectedIndex = 0;
+            this.tabc_shortcut.ShowToolTips = true;
+            this.tabc_shortcut.Size = new System.Drawing.Size(1090, 630);
+            this.tabc_shortcut.TabIndex = 28;
+            // 
+            // tabp_display
+            // 
+            this.tabp_display.BackColor = System.Drawing.Color.Black;
+            this.tabp_display.Controls.Add(this.lbl_profile_shown_subtitle);
+            this.tabp_display.Controls.Add(this.lbl_profile_shown);
+            this.tabp_display.Controls.Add(this.ilv_saved_profiles);
+            this.tabp_display.Controls.Add(this.dv_profile);
+            this.tabp_display.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabp_display.ForeColor = System.Drawing.Color.White;
+            this.tabp_display.Location = new System.Drawing.Point(4, 32);
+            this.tabp_display.Name = "tabp_display";
+            this.tabp_display.Padding = new System.Windows.Forms.Padding(3);
+            this.tabp_display.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_display.TabIndex = 0;
+            this.tabp_display.Text = "1. Choose a Display Profile";
+            this.tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
+            // 
+            // lbl_profile_shown_subtitle
+            // 
+            this.lbl_profile_shown_subtitle.AutoSize = true;
+            this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
+            this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
+            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(18, 49);
+            this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
+            this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(943, 20);
+            this.lbl_profile_shown_subtitle.TabIndex = 26;
+            this.lbl_profile_shown_subtitle.Text = "Please go back to the startup window, click on the \'Setup Display Profile\' button" +
+    ", save a new Display Profile and then come back here.";
+            // 
+            // lbl_profile_shown
+            // 
+            this.lbl_profile_shown.AutoSize = true;
+            this.lbl_profile_shown.BackColor = System.Drawing.Color.DimGray;
+            this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
+            this.lbl_profile_shown.Location = new System.Drawing.Point(18, 20);
+            this.lbl_profile_shown.Name = "lbl_profile_shown";
+            this.lbl_profile_shown.Size = new System.Drawing.Size(396, 29);
+            this.lbl_profile_shown.TabIndex = 25;
+            this.lbl_profile_shown.Text = "No Saved Display Profiles Available";
             // 
             // ilv_saved_profiles
             // 
@@ -559,64 +216,15 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.AllowColumnResize = false;
             this.ilv_saved_profiles.AllowItemReorder = false;
             this.ilv_saved_profiles.AllowPaneResize = false;
-            this.ilv_saved_profiles.Location = new System.Drawing.Point(1, 476);
+            this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 466);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(799, 128);
-            this.ilv_saved_profiles.TabIndex = 22;
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(1086, 128);
+            this.ilv_saved_profiles.TabIndex = 24;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
-            this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
-            // 
-            // lbl_profile_shown_subtitle
-            // 
-            this.lbl_profile_shown_subtitle.AutoSize = true;
-            this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
-            this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(12, 104);
-            this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
-            this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(132, 20);
-            this.lbl_profile_shown_subtitle.TabIndex = 24;
-            this.lbl_profile_shown_subtitle.Text = "My Display Profile";
-            // 
-            // lbl_profile_shown
-            // 
-            this.lbl_profile_shown.AutoSize = true;
-            this.lbl_profile_shown.BackColor = System.Drawing.Color.DimGray;
-            this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown.Location = new System.Drawing.Point(12, 75);
-            this.lbl_profile_shown.Name = "lbl_profile_shown";
-            this.lbl_profile_shown.Size = new System.Drawing.Size(205, 29);
-            this.lbl_profile_shown.TabIndex = 23;
-            this.lbl_profile_shown.Text = "My Display Profile";
-            // 
-            // txt_shortcut_save_name
-            // 
-            this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_shortcut_save_name.Location = new System.Drawing.Point(687, 630);
-            this.txt_shortcut_save_name.MaxLength = 200;
-            this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
-            this.txt_shortcut_save_name.Size = new System.Drawing.Size(384, 35);
-            this.txt_shortcut_save_name.TabIndex = 27;
-            // 
-            // btn_save_or_rename
-            // 
-            this.btn_save_or_rename.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_save_or_rename.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_save_or_rename.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_save_or_rename.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_save_or_rename.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_save_or_rename.ForeColor = System.Drawing.Color.White;
-            this.btn_save_or_rename.Location = new System.Drawing.Point(537, 630);
-            this.btn_save_or_rename.Name = "btn_save_or_rename";
-            this.btn_save_or_rename.Size = new System.Drawing.Size(151, 33);
-            this.btn_save_or_rename.TabIndex = 25;
-            this.btn_save_or_rename.Text = "&Save As";
-            this.btn_save_or_rename.UseVisualStyleBackColor = true;
             // 
             // dv_profile
             // 
@@ -624,14 +232,442 @@ namespace HeliosPlus.UIForms
             this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 61);
+            this.dv_profile.Location = new System.Drawing.Point(0, 0);
             this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
             this.dv_profile.Name = "dv_profile";
             this.dv_profile.PaddingX = 100;
             this.dv_profile.PaddingY = 100;
             this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(800, 410);
-            this.dv_profile.TabIndex = 2;
+            this.dv_profile.Size = new System.Drawing.Size(1082, 467);
+            this.dv_profile.TabIndex = 23;
+            // 
+            // tabp_before
+            // 
+            this.tabp_before.BackColor = System.Drawing.Color.Black;
+            this.tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabp_before.ForeColor = System.Drawing.Color.White;
+            this.tabp_before.Location = new System.Drawing.Point(4, 32);
+            this.tabp_before.Name = "tabp_before";
+            this.tabp_before.Padding = new System.Windows.Forms.Padding(3);
+            this.tabp_before.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_before.TabIndex = 1;
+            this.tabp_before.Text = "2. Choose what happens before";
+            // 
+            // tabp_game
+            // 
+            this.tabp_game.BackColor = System.Drawing.Color.Black;
+            this.tabp_game.Controls.Add(this.p_standalone);
+            this.tabp_game.Controls.Add(this.rb_standalone);
+            this.tabp_game.Controls.Add(this.rb_no_game);
+            this.tabp_game.Controls.Add(this.p_game);
+            this.tabp_game.Controls.Add(this.rb_launcher);
+            this.tabp_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabp_game.ForeColor = System.Drawing.Color.White;
+            this.tabp_game.Location = new System.Drawing.Point(4, 32);
+            this.tabp_game.Name = "tabp_game";
+            this.tabp_game.Padding = new System.Windows.Forms.Padding(3);
+            this.tabp_game.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_game.TabIndex = 2;
+            this.tabp_game.Text = "3. Choose what Game you start";
+            // 
+            // p_standalone
+            // 
+            this.p_standalone.Controls.Add(this.txt_args_executable);
+            this.p_standalone.Controls.Add(this.cb_args_executable);
+            this.p_standalone.Controls.Add(this.btn_app_process);
+            this.p_standalone.Controls.Add(this.txt_process_name);
+            this.p_standalone.Controls.Add(this.rb_wait_process);
+            this.p_standalone.Controls.Add(this.rb_wait_executable);
+            this.p_standalone.Controls.Add(this.txt_executable);
+            this.p_standalone.Controls.Add(this.lbl_app_executable);
+            this.p_standalone.Controls.Add(this.label2);
+            this.p_standalone.Controls.Add(this.nud_timeout_executable);
+            this.p_standalone.Enabled = false;
+            this.p_standalone.Location = new System.Drawing.Point(35, 415);
+            this.p_standalone.Name = "p_standalone";
+            this.p_standalone.Size = new System.Drawing.Size(1006, 160);
+            this.p_standalone.TabIndex = 10;
+            // 
+            // txt_args_executable
+            // 
+            this.txt_args_executable.Enabled = false;
+            this.txt_args_executable.Location = new System.Drawing.Point(425, 46);
+            this.txt_args_executable.Name = "txt_args_executable";
+            this.txt_args_executable.Size = new System.Drawing.Size(540, 26);
+            this.txt_args_executable.TabIndex = 11;
+            // 
+            // cb_args_executable
+            // 
+            this.cb_args_executable.AutoSize = true;
+            this.cb_args_executable.ForeColor = System.Drawing.Color.White;
+            this.cb_args_executable.Location = new System.Drawing.Point(171, 48);
+            this.cb_args_executable.Name = "cb_args_executable";
+            this.cb_args_executable.Size = new System.Drawing.Size(248, 24);
+            this.cb_args_executable.TabIndex = 10;
+            this.cb_args_executable.Text = "Pass arguments to Executable:";
+            this.cb_args_executable.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_args_executable.UseVisualStyleBackColor = true;
+            this.cb_args_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            // 
+            // btn_app_process
+            // 
+            this.btn_app_process.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_app_process.ForeColor = System.Drawing.Color.White;
+            this.btn_app_process.Location = new System.Drawing.Point(739, 115);
+            this.btn_app_process.Name = "btn_app_process";
+            this.btn_app_process.Size = new System.Drawing.Size(85, 27);
+            this.btn_app_process.TabIndex = 9;
+            this.btn_app_process.Text = "Choose";
+            this.btn_app_process.UseVisualStyleBackColor = true;
+            this.btn_app_process.Click += new System.EventHandler(this.btn_app_process_Click);
+            // 
+            // txt_process_name
+            // 
+            this.txt_process_name.Enabled = false;
+            this.txt_process_name.Location = new System.Drawing.Point(446, 116);
+            this.txt_process_name.Name = "txt_process_name";
+            this.txt_process_name.Size = new System.Drawing.Size(287, 26);
+            this.txt_process_name.TabIndex = 4;
+            // 
+            // rb_wait_process
+            // 
+            this.rb_wait_process.AutoSize = true;
+            this.rb_wait_process.ForeColor = System.Drawing.Color.White;
+            this.rb_wait_process.Location = new System.Drawing.Point(23, 117);
+            this.rb_wait_process.Name = "rb_wait_process";
+            this.rb_wait_process.Size = new System.Drawing.Size(428, 24);
+            this.rb_wait_process.TabIndex = 8;
+            this.rb_wait_process.Text = "Change Display Profile back when this process is closed: ";
+            this.rb_wait_process.UseVisualStyleBackColor = true;
+            this.rb_wait_process.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            // 
+            // rb_wait_executable
+            // 
+            this.rb_wait_executable.AutoSize = true;
+            this.rb_wait_executable.Checked = true;
+            this.rb_wait_executable.ForeColor = System.Drawing.Color.White;
+            this.rb_wait_executable.Location = new System.Drawing.Point(23, 87);
+            this.rb_wait_executable.Name = "rb_wait_executable";
+            this.rb_wait_executable.Size = new System.Drawing.Size(486, 24);
+            this.rb_wait_executable.TabIndex = 7;
+            this.rb_wait_executable.TabStop = true;
+            this.rb_wait_executable.Text = "Change Display Profile back when the executable above is closed";
+            this.rb_wait_executable.UseVisualStyleBackColor = true;
+            this.rb_wait_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            // 
+            // txt_executable
+            // 
+            this.txt_executable.Location = new System.Drawing.Point(171, 10);
+            this.txt_executable.Name = "txt_executable";
+            this.txt_executable.Size = new System.Drawing.Size(416, 26);
+            this.txt_executable.TabIndex = 1;
+            // 
+            // lbl_app_executable
+            // 
+            this.lbl_app_executable.AutoSize = true;
+            this.lbl_app_executable.ForeColor = System.Drawing.Color.White;
+            this.lbl_app_executable.Location = new System.Drawing.Point(19, 13);
+            this.lbl_app_executable.Name = "lbl_app_executable";
+            this.lbl_app_executable.Size = new System.Drawing.Size(146, 20);
+            this.lbl_app_executable.TabIndex = 0;
+            this.lbl_app_executable.Text = "Executable to start:";
+            this.lbl_app_executable.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.lbl_app_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.ForeColor = System.Drawing.Color.Transparent;
+            this.label2.Location = new System.Drawing.Point(819, 12);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(70, 20);
+            this.label2.TabIndex = 5;
+            this.label2.Text = "Timeout:";
+            this.label2.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            // 
+            // nud_timeout_executable
+            // 
+            this.nud_timeout_executable.Location = new System.Drawing.Point(895, 10);
+            this.nud_timeout_executable.Maximum = new decimal(new int[] {
+            240,
+            0,
+            0,
+            0});
+            this.nud_timeout_executable.Minimum = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.nud_timeout_executable.Name = "nud_timeout_executable";
+            this.nud_timeout_executable.Size = new System.Drawing.Size(70, 26);
+            this.nud_timeout_executable.TabIndex = 6;
+            this.nud_timeout_executable.Value = new decimal(new int[] {
+            30,
+            0,
+            0,
+            0});
+            // 
+            // rb_standalone
+            // 
+            this.rb_standalone.AutoSize = true;
+            this.rb_standalone.ForeColor = System.Drawing.Color.White;
+            this.rb_standalone.Location = new System.Drawing.Point(16, 389);
+            this.rb_standalone.Name = "rb_standalone";
+            this.rb_standalone.Size = new System.Drawing.Size(222, 24);
+            this.rb_standalone.TabIndex = 9;
+            this.rb_standalone.Text = "Launch a Game executable";
+            this.rb_standalone.UseVisualStyleBackColor = true;
+            this.rb_standalone.CheckedChanged += new System.EventHandler(this.rb_standalone_CheckedChanged);
+            // 
+            // rb_no_game
+            // 
+            this.rb_no_game.AutoSize = true;
+            this.rb_no_game.ForeColor = System.Drawing.Color.White;
+            this.rb_no_game.Location = new System.Drawing.Point(15, 18);
+            this.rb_no_game.Name = "rb_no_game";
+            this.rb_no_game.Size = new System.Drawing.Size(162, 24);
+            this.rb_no_game.TabIndex = 8;
+            this.rb_no_game.Text = "Don\'t start a Game";
+            this.rb_no_game.UseVisualStyleBackColor = true;
+            this.rb_no_game.CheckedChanged += new System.EventHandler(this.rb_no_game_CheckedChanged);
+            // 
+            // p_game
+            // 
+            this.p_game.Controls.Add(this.txt_game_launcher);
+            this.p_game.Controls.Add(this.txt_game_name);
+            this.p_game.Controls.Add(this.lbl_game_library);
+            this.p_game.Controls.Add(this.lbl_game_name);
+            this.p_game.Controls.Add(this.btn_choose_game);
+            this.p_game.Controls.Add(this.label1);
+            this.p_game.Controls.Add(this.txt_args_game);
+            this.p_game.Controls.Add(this.cb_args_game);
+            this.p_game.Controls.Add(this.lbl_game_timeout);
+            this.p_game.Controls.Add(this.nud_timeout_game);
+            this.p_game.Controls.Add(this.lv_games);
+            this.p_game.Location = new System.Drawing.Point(34, 98);
+            this.p_game.Name = "p_game";
+            this.p_game.Size = new System.Drawing.Size(1006, 253);
+            this.p_game.TabIndex = 7;
+            // 
+            // txt_game_launcher
+            // 
+            this.txt_game_launcher.Location = new System.Drawing.Point(605, 76);
+            this.txt_game_launcher.Name = "txt_game_launcher";
+            this.txt_game_launcher.ReadOnly = true;
+            this.txt_game_launcher.Size = new System.Drawing.Size(175, 26);
+            this.txt_game_launcher.TabIndex = 23;
+            // 
+            // txt_game_name
+            // 
+            this.txt_game_name.Location = new System.Drawing.Point(605, 117);
+            this.txt_game_name.Name = "txt_game_name";
+            this.txt_game_name.ReadOnly = true;
+            this.txt_game_name.Size = new System.Drawing.Size(360, 26);
+            this.txt_game_name.TabIndex = 21;
+            // 
+            // lbl_game_library
+            // 
+            this.lbl_game_library.AutoSize = true;
+            this.lbl_game_library.ForeColor = System.Drawing.Color.White;
+            this.lbl_game_library.Location = new System.Drawing.Point(490, 79);
+            this.lbl_game_library.Name = "lbl_game_library";
+            this.lbl_game_library.Size = new System.Drawing.Size(108, 20);
+            this.lbl_game_library.TabIndex = 18;
+            this.lbl_game_library.Text = "Game Library:";
+            this.lbl_game_library.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            // 
+            // lbl_game_name
+            // 
+            this.lbl_game_name.AutoSize = true;
+            this.lbl_game_name.ForeColor = System.Drawing.Color.White;
+            this.lbl_game_name.Location = new System.Drawing.Point(496, 120);
+            this.lbl_game_name.Name = "lbl_game_name";
+            this.lbl_game_name.Size = new System.Drawing.Size(103, 20);
+            this.lbl_game_name.TabIndex = 17;
+            this.lbl_game_name.Text = "Game Name:";
+            this.lbl_game_name.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lbl_game_name.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            // 
+            // btn_choose_game
+            // 
+            this.btn_choose_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_choose_game.ForeColor = System.Drawing.Color.White;
+            this.btn_choose_game.Location = new System.Drawing.Point(411, 115);
+            this.btn_choose_game.Name = "btn_choose_game";
+            this.btn_choose_game.Size = new System.Drawing.Size(29, 31);
+            this.btn_choose_game.TabIndex = 16;
+            this.btn_choose_game.Text = ">>";
+            this.btn_choose_game.UseVisualStyleBackColor = true;
+            this.btn_choose_game.Click += new System.EventHandler(this.btn_choose_game_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.BackColor = System.Drawing.Color.Transparent;
+            this.label1.ForeColor = System.Drawing.Color.White;
+            this.label1.Location = new System.Drawing.Point(19, 7);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(132, 20);
+            this.label1.TabIndex = 15;
+            this.label1.Text = "Games detected:";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label1.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            // 
+            // txt_args_game
+            // 
+            this.txt_args_game.Enabled = false;
+            this.txt_args_game.Location = new System.Drawing.Point(605, 179);
+            this.txt_args_game.Name = "txt_args_game";
+            this.txt_args_game.Size = new System.Drawing.Size(360, 26);
+            this.txt_args_game.TabIndex = 13;
+            // 
+            // cb_args_game
+            // 
+            this.cb_args_game.AutoSize = true;
+            this.cb_args_game.ForeColor = System.Drawing.Color.White;
+            this.cb_args_game.Location = new System.Drawing.Point(605, 149);
+            this.cb_args_game.Name = "cb_args_game";
+            this.cb_args_game.Size = new System.Drawing.Size(213, 24);
+            this.cb_args_game.TabIndex = 12;
+            this.cb_args_game.Text = "Pass arguments to Game:";
+            this.cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_args_game.UseVisualStyleBackColor = true;
+            this.cb_args_game.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            // 
+            // lbl_game_timeout
+            // 
+            this.lbl_game_timeout.AutoSize = true;
+            this.lbl_game_timeout.ForeColor = System.Drawing.Color.White;
+            this.lbl_game_timeout.Location = new System.Drawing.Point(819, 79);
+            this.lbl_game_timeout.Name = "lbl_game_timeout";
+            this.lbl_game_timeout.Size = new System.Drawing.Size(70, 20);
+            this.lbl_game_timeout.TabIndex = 4;
+            this.lbl_game_timeout.Text = "Timeout:";
+            this.lbl_game_timeout.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            // 
+            // nud_timeout_game
+            // 
+            this.nud_timeout_game.Location = new System.Drawing.Point(895, 77);
+            this.nud_timeout_game.Maximum = new decimal(new int[] {
+            240,
+            0,
+            0,
+            0});
+            this.nud_timeout_game.Minimum = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.nud_timeout_game.Name = "nud_timeout_game";
+            this.nud_timeout_game.Size = new System.Drawing.Size(70, 26);
+            this.nud_timeout_game.TabIndex = 5;
+            this.nud_timeout_game.Value = new decimal(new int[] {
+            120,
+            0,
+            0,
+            0});
+            // 
+            // lv_games
+            // 
+            this.lv_games.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.clm_images,
+            this.clm_name});
+            this.lv_games.HideSelection = false;
+            this.lv_games.LargeImageList = this.il_games;
+            this.lv_games.Location = new System.Drawing.Point(23, 30);
+            this.lv_games.Name = "lv_games";
+            this.lv_games.Size = new System.Drawing.Size(338, 217);
+            this.lv_games.SmallImageList = this.il_games;
+            this.lv_games.TabIndex = 22;
+            this.lv_games.UseCompatibleStateImageBehavior = false;
+            this.lv_games.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.lv_games_ItemSelectionChanged);
+            this.lv_games.DoubleClick += new System.EventHandler(this.btn_choose_game_Click);
+            // 
+            // rb_launcher
+            // 
+            this.rb_launcher.AutoSize = true;
+            this.rb_launcher.Checked = true;
+            this.rb_launcher.ForeColor = System.Drawing.Color.White;
+            this.rb_launcher.Location = new System.Drawing.Point(15, 68);
+            this.rb_launcher.Name = "rb_launcher";
+            this.rb_launcher.Size = new System.Drawing.Size(332, 24);
+            this.rb_launcher.TabIndex = 6;
+            this.rb_launcher.TabStop = true;
+            this.rb_launcher.Text = "Launch a Game installed in Steam or Uplay";
+            this.rb_launcher.UseVisualStyleBackColor = true;
+            this.rb_launcher.CheckedChanged += new System.EventHandler(this.rb_launcher_CheckedChanged);
+            // 
+            // tabp_after
+            // 
+            this.tabp_after.BackColor = System.Drawing.Color.Black;
+            this.tabp_after.Controls.Add(this.rb_switch_permanent);
+            this.tabp_after.Controls.Add(this.rb_switch_temp);
+            this.tabp_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabp_after.ForeColor = System.Drawing.Color.White;
+            this.tabp_after.Location = new System.Drawing.Point(4, 32);
+            this.tabp_after.Name = "tabp_after";
+            this.tabp_after.Padding = new System.Windows.Forms.Padding(3);
+            this.tabp_after.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_after.TabIndex = 3;
+            this.tabp_after.Text = "4. Choose what happens afterwards";
+            // 
+            // rb_switch_permanent
+            // 
+            this.rb_switch_permanent.AutoSize = true;
+            this.rb_switch_permanent.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_permanent.Location = new System.Drawing.Point(308, 131);
+            this.rb_switch_permanent.Name = "rb_switch_permanent";
+            this.rb_switch_permanent.Size = new System.Drawing.Size(388, 24);
+            this.rb_switch_permanent.TabIndex = 10;
+            this.rb_switch_permanent.Text = "Keep using the Display Profile  (permanent change)";
+            this.rb_switch_permanent.UseVisualStyleBackColor = true;
+            this.rb_switch_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_permanent_CheckedChanged);
+            // 
+            // rb_switch_temp
+            // 
+            this.rb_switch_temp.AutoSize = true;
+            this.rb_switch_temp.Checked = true;
+            this.rb_switch_temp.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_temp.Location = new System.Drawing.Point(308, 83);
+            this.rb_switch_temp.Name = "rb_switch_temp";
+            this.rb_switch_temp.Size = new System.Drawing.Size(569, 24);
+            this.rb_switch_temp.TabIndex = 9;
+            this.rb_switch_temp.TabStop = true;
+            this.rb_switch_temp.Text = "Revert back to original Display Profile (temporary change while running game)";
+            this.rb_switch_temp.UseVisualStyleBackColor = true;
+            this.rb_switch_temp.CheckedChanged += new System.EventHandler(this.rb_switch_temp_CheckedChanged);
+            // 
+            // txt_shortcut_save_name
+            // 
+            this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_shortcut_save_name.Location = new System.Drawing.Point(441, 707);
+            this.txt_shortcut_save_name.MaxLength = 200;
+            this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
+            this.txt_shortcut_save_name.Size = new System.Drawing.Size(409, 35);
+            this.txt_shortcut_save_name.TabIndex = 29;
+            this.txt_shortcut_save_name.TextChanged += new System.EventHandler(this.txt_shortcut_save_name_TextChanged);
+            // 
+            // lbl_title
+            // 
+            this.lbl_title.AutoSize = true;
+            this.lbl_title.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_title.ForeColor = System.Drawing.Color.White;
+            this.lbl_title.Location = new System.Drawing.Point(385, 14);
+            this.lbl_title.Name = "lbl_title";
+            this.lbl_title.Size = new System.Drawing.Size(345, 33);
+            this.lbl_title.TabIndex = 30;
+            this.lbl_title.Text = "Configure Game Shortcut";
+            // 
+            // lbl_shortcut_name
+            // 
+            this.lbl_shortcut_name.AutoSize = true;
+            this.lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
+            this.lbl_shortcut_name.Location = new System.Drawing.Point(264, 710);
+            this.lbl_shortcut_name.Name = "lbl_shortcut_name";
+            this.lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
+            this.lbl_shortcut_name.TabIndex = 31;
+            this.lbl_shortcut_name.Text = "Shortcut Name:";
             // 
             // ShortcutForm
             // 
@@ -640,18 +676,13 @@ namespace HeliosPlus.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
-            this.ClientSize = new System.Drawing.Size(1607, 762);
+            this.ClientSize = new System.Drawing.Size(1114, 806);
             this.Controls.Add(this.txt_shortcut_save_name);
-            this.Controls.Add(this.btn_save_or_rename);
-            this.Controls.Add(this.lbl_profile_shown_subtitle);
-            this.Controls.Add(this.lbl_profile_shown);
-            this.Controls.Add(this.ilv_saved_profiles);
-            this.Controls.Add(this.rb_switch_temp);
-            this.Controls.Add(this.rb_switch_perm);
-            this.Controls.Add(this.g_temporary);
+            this.Controls.Add(this.lbl_shortcut_name);
+            this.Controls.Add(this.lbl_title);
+            this.Controls.Add(this.tabc_shortcut);
             this.Controls.Add(this.btn_cancel);
             this.Controls.Add(this.btn_save);
-            this.Controls.Add(this.dv_profile);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -659,68 +690,74 @@ namespace HeliosPlus.UIForms
             this.Name = "ShortcutForm";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "HeliosPlus - Setup Game Shortcuts";
+            this.Text = "HeliosPlus - Configure a Game Shortcut";
             this.Load += new System.EventHandler(this.ShortcutForm_Load);
-            this.g_temporary.ResumeLayout(false);
-            this.g_temporary.PerformLayout();
-            this.p_game.ResumeLayout(false);
-            this.p_game.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
+            this.tabc_shortcut.ResumeLayout(false);
+            this.tabp_display.ResumeLayout(false);
+            this.tabp_display.PerformLayout();
+            this.tabp_game.ResumeLayout(false);
+            this.tabp_game.PerformLayout();
             this.p_standalone.ResumeLayout(false);
             this.p_standalone.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_executable)).EndInit();
+            this.p_game.ResumeLayout(false);
+            this.p_game.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
+            this.tabp_after.ResumeLayout(false);
+            this.tabp_after.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private DisplayView dv_profile;
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.Button btn_cancel;
-        private System.Windows.Forms.GroupBox g_temporary;
-        private System.Windows.Forms.RadioButton rb_standalone;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.NumericUpDown nud_timeout_executable;
-        private System.Windows.Forms.Panel p_standalone;
-        private System.Windows.Forms.Button btn_app_executable;
-        private System.Windows.Forms.TextBox txt_executable;
-        private System.Windows.Forms.Label lbl_app_executable;
-        private System.Windows.Forms.TextBox txt_process_name;
-        private System.Windows.Forms.RadioButton rb_launcher;
-        private System.Windows.Forms.Panel p_game;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.NumericUpDown nud_timeout_game;
         private System.Windows.Forms.OpenFileDialog dialog_open;
         private System.Windows.Forms.SaveFileDialog dialog_save;
-        private System.Windows.Forms.RadioButton rb_switch_perm;
-        private System.Windows.Forms.RadioButton rb_switch_temp;
-        private System.Windows.Forms.RadioButton rb_wait_process;
-        private System.Windows.Forms.RadioButton rb_wait_executable;
-        private System.Windows.Forms.Button btn_app_process;
-        private System.Windows.Forms.TextBox txt_args_game;
-        private System.Windows.Forms.CheckBox cb_args_game;
-        private System.Windows.Forms.TextBox txt_args_executable;
-        private System.Windows.Forms.CheckBox cb_args_executable;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Button btn_choose_game;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox txt_game_name;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.ListView lv_games;
-        private System.Windows.Forms.Label lbl_process_name;
         private System.Windows.Forms.ImageList il_games;
-        private System.Windows.Forms.ColumnHeader clm_images;
-        private System.Windows.Forms.ColumnHeader clm_name;
-        private System.Windows.Forms.TextBox txt_game_id;
-        private System.Windows.Forms.TextBox txt_game_launcher;
-        private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
+        private System.Windows.Forms.TabControl tabc_shortcut;
+        private System.Windows.Forms.TabPage tabp_display;
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.Label lbl_profile_shown;
+        private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
+        private DisplayView dv_profile;
+        private System.Windows.Forms.TabPage tabp_before;
+        private System.Windows.Forms.TabPage tabp_game;
+        private System.Windows.Forms.TabPage tabp_after;
         private System.Windows.Forms.TextBox txt_shortcut_save_name;
-        private System.Windows.Forms.Button btn_save_or_rename;
+        private System.Windows.Forms.Panel p_game;
+        private System.Windows.Forms.TextBox txt_game_launcher;
+        private System.Windows.Forms.TextBox txt_game_name;
+        private System.Windows.Forms.Label lbl_game_library;
+        private System.Windows.Forms.Label lbl_game_name;
+        private System.Windows.Forms.Button btn_choose_game;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox txt_args_game;
+        private System.Windows.Forms.CheckBox cb_args_game;
+        private System.Windows.Forms.Label lbl_game_timeout;
+        private System.Windows.Forms.NumericUpDown nud_timeout_game;
+        private System.Windows.Forms.ListView lv_games;
+        private System.Windows.Forms.ColumnHeader clm_images;
+        private System.Windows.Forms.ColumnHeader clm_name;
+        private System.Windows.Forms.RadioButton rb_launcher;
+        private System.Windows.Forms.RadioButton rb_no_game;
+        private System.Windows.Forms.Panel p_standalone;
+        private System.Windows.Forms.TextBox txt_args_executable;
+        private System.Windows.Forms.CheckBox cb_args_executable;
+        private System.Windows.Forms.Button btn_app_process;
+        private System.Windows.Forms.TextBox txt_process_name;
+        private System.Windows.Forms.RadioButton rb_wait_process;
+        private System.Windows.Forms.RadioButton rb_wait_executable;
+        private System.Windows.Forms.TextBox txt_executable;
+        private System.Windows.Forms.Label lbl_app_executable;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.NumericUpDown nud_timeout_executable;
+        private System.Windows.Forms.RadioButton rb_standalone;
+        private System.Windows.Forms.RadioButton rb_switch_permanent;
+        private System.Windows.Forms.RadioButton rb_switch_temp;
+        private System.Windows.Forms.Label lbl_title;
+        private System.Windows.Forms.Label lbl_shortcut_name;
     }
 }

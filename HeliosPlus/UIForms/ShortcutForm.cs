@@ -27,6 +27,8 @@ namespace HeliosPlus.UIForms
         private Shortcut _shortcutToEdit = null;
         private string _saveOrRenameMode = "save";
         private bool _isNewShortcut = true;
+        private bool _isUnsaved = false;
+        private uint _gameId = 0;
 
         public ShortcutForm()
         {
@@ -110,12 +112,12 @@ namespace HeliosPlus.UIForms
 
         public uint GameAppId
         {
-            get => rb_switch_temp.Checked && rb_launcher.Checked ? (uint) Convert.ToInt32(txt_game_id.Text) : 0;
+            get => rb_switch_temp.Checked && rb_launcher.Checked ? _gameId : 0;
             set
             {
                 rb_switch_temp.Checked = true;
                 rb_launcher.Checked = true;
-                txt_game_id.Text = value.ToString();
+                _gameId = value;
             }
         }
 
@@ -250,7 +252,7 @@ namespace HeliosPlus.UIForms
             if (Shortcut.NameAlreadyExists(txt_shortcut_save_name.Text))
             {
                 MessageBox.Show(
-                    @"A shortcut has already been created with this name. Please close this window and select that shortcut from the shortcut library window instead of creating a new one.",
+                    @"A shortcut has already been created with this name. Please enter a different name for this shortcut.",
                     @"Please rename this Shortcut.",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
@@ -269,7 +271,7 @@ namespace HeliosPlus.UIForms
             }
 
             // Check the permanence requirements
-            if (rb_switch_perm.Checked)
+            if (rb_switch_permanent.Checked)
             { 
                 // Check the Shortcut Category to see if it's application
                 if (rb_standalone.Checked)
@@ -327,7 +329,7 @@ namespace HeliosPlus.UIForms
                         return;
                     }
 
-                    if (Convert.ToUInt32(txt_game_id.Text) == 0)
+                    if (_gameId == 0)
                     {
                         MessageBox.Show(
                             @"Please choose a Game by scrolling through the list, selecting the Game that you want, and then clicking the '>>' button to fill the Game fields.",
@@ -354,7 +356,7 @@ namespace HeliosPlus.UIForms
             _shortcutToEdit.ExecutableTimeout = Convert.ToUInt32(nud_timeout_executable.Value);
 
             // Update the game app id
-            _shortcutToEdit.GameAppId = Convert.ToUInt32(txt_game_id.Text);
+            _shortcutToEdit.GameAppId = _gameId;
 
             // Update the game args
             _shortcutToEdit.GameArguments = txt_args_game.Text;
@@ -378,7 +380,7 @@ namespace HeliosPlus.UIForms
             if (rb_switch_temp.Checked)
                 _shortcutToEdit.Permanence = ShortcutPermanence.Temporary;
 
-            if (rb_switch_perm.Checked)
+            if (rb_switch_permanent.Checked)
                 _shortcutToEdit.Permanence = ShortcutPermanence.Permanent;
 
             // Update the process name to monitor
@@ -428,6 +430,9 @@ namespace HeliosPlus.UIForms
             // Save all shortcuts just to be sure
             Shortcut.SaveAllShortcuts();
 
+            // We've saved, so mark it as so
+            _isUnsaved = false;
+
             // Save everything is golden and close the form.
             DialogResult = DialogResult.OK;
             this.Close();
@@ -437,6 +442,7 @@ namespace HeliosPlus.UIForms
 
         private void txt_executable_TextChanged(object sender, EventArgs e)
         {
+            _isUnsaved = true;
             if (File.Exists(txt_executable.Text))
             {
 
@@ -455,100 +461,45 @@ namespace HeliosPlus.UIForms
                     }
                 }
 
-                if (txt_shortcut_save_name.Text.Length > 0)
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = true;
-                    btn_save.Visible = true;
-                }
-                else
-                {
-                    btn_save.Enabled = false;
-                    btn_save.Visible = false;
-                }
+            }
 
-            }
-            else
-            {
-                // Turn off the CreateShortcut Button
-                btn_save.Enabled = false;
-                btn_save.Visible = false;
-            }
+            enableSaveButtonIfValid();
         }
 
-        private void rb_switch_perm_CheckedChanged(object sender, EventArgs e)
+        private bool canEnableSaveButton()
         {
-            if (rb_switch_perm.Checked)
-            {
-                // Disable the Temporary Group
-                g_temporary.Enabled = false;
-            }
-            if (txt_shortcut_save_name.Text.Length > 0)
-            {
-                // Turn on the CreateShortcut Button
+            if ((txt_shortcut_save_name.Text.Length > 0) &&
+                _profileToUse is Profile &&
+                (rb_no_game.Checked ||
+                rb_launcher.Checked && _gameId > 0 ||
+                rb_standalone.Checked && txt_args_executable.Text.Length > 0))
+                return true;
+            else
+                return false;
+        }
+
+        private void enableSaveButtonIfValid()
+        {
+            if (canEnableSaveButton())
                 btn_save.Enabled = true;
-                btn_save.Visible = true;
-            }
             else
-            {
                 btn_save.Enabled = false;
-                btn_save.Visible = false;
-            }
-
-        }
-        private void rb_switch_temp_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_switch_temp.Checked)
-            {
-                // Enable the Temporary Group
-                g_temporary.Enabled = true;
-
-                // If it's been set already to a valid gamelauncher, then enable the button
-                if (txt_game_launcher.Text.Length > 0 && txt_game_id.Text.Length > 0 && txt_game_name.Text.Length > 0)
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = true;
-                    btn_save.Visible = true;
-                }
-                // else if it's a valid executable
-                else if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text) && txt_shortcut_save_name.Text.Length > 0)
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = true;
-                    btn_save.Visible = true;
-                }
-                else
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = false;
-                    btn_save.Visible = false;
-                }
-
-            }
-            
         }
 
         private void rb_standalone_CheckedChanged(object sender, EventArgs e)
         {
             if (rb_standalone.Checked)
             {
+                _isUnsaved = true;
+                rb_no_game.Checked = false;
+                rb_launcher.Checked = false;
+
                 // Enable the Standalone Panel
                 p_standalone.Enabled = true;
                 // Disable the Game Panel
                 p_game.Enabled = false;
 
-                if (txt_executable.Text.Length > 0 && File.Exists(txt_executable.Text) && txt_shortcut_save_name.Text.Length > 0)
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = true;
-                    btn_save.Visible = true;
-                }
-                else
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = false;
-                    btn_save.Visible = false;
-                }
+                enableSaveButtonIfValid();
             }
            
         }
@@ -557,31 +508,43 @@ namespace HeliosPlus.UIForms
         {
             if (rb_launcher.Checked)
             {
+                _isUnsaved = true;
+                rb_no_game.Checked = false;
+                rb_standalone.Checked = false;
+
                 // Enable the Game Panel
                 p_game.Enabled = true;
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
 
-                // If it's been set already to a valid gamelauncher, then enable the button
-                if (txt_game_launcher.Text.Length > 0 && txt_game_id.Text.Length > 0 && txt_game_name.Text.Length > 0 && txt_shortcut_save_name.Text.Length > 0)
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = true;
-                    btn_save.Visible = true;
-                }
-                else
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = false;
-                    btn_save.Visible = false;
-                }
+                enableSaveButtonIfValid();
+
+            }
+        }
+
+        private void rb_no_game_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_no_game.Checked)
+            {
+                _isUnsaved = true;
+                rb_launcher.Checked = false;
+                rb_standalone.Checked = false;
+
+                // Disable the Standalone Panel
+                p_standalone.Enabled = false;
+                // Disable the Game Panel
+                p_game.Enabled = false;
+
+                enableSaveButtonIfValid();
 
             }
         }
 
 
+
         private void cb_args_executable_CheckedChanged(object sender, EventArgs e)
         {
+            _isUnsaved = true;
             // Disable the Process Name Text field
             if (cb_args_executable.Checked)
             {
@@ -618,13 +581,11 @@ namespace HeliosPlus.UIForms
                 _shortcutToEdit = new Shortcut();
                 _isNewShortcut = true;
                 _saveOrRenameMode = "save";
-                btn_save_or_rename.Text = "Save As";
             }
             else
             {
                 _isNewShortcut = false;
                 _saveOrRenameMode = "rename";
-                btn_save_or_rename.Text = "Rename To";
             }
 
             // Load all the profiles to prepare things
@@ -644,10 +605,10 @@ namespace HeliosPlus.UIForms
             }
 
             // If we get to the end of the loaded profiles and haven't
-            // found a matching profile, then we need to show the current
+            // found a matching profile, then we need to show the first
             // Profile
-            if (!foundCurrentProfileInLoadedProfiles)
-                ChangeSelectedProfile(Profile.CurrentProfile);
+            if (!foundCurrentProfileInLoadedProfiles && _loadedProfiles.Count > 0)
+                ChangeSelectedProfile(_loadedProfiles[0]);
 
             // Refresh the Shortcut UI
             RefreshShortcutUI();
@@ -708,11 +669,9 @@ namespace HeliosPlus.UIForms
         {
             if (rb_wait_process.Checked)
             {
-                // Enable the Process Name Text field
+                _isUnsaved = true;
+                rb_wait_executable.Checked = false;
                 txt_process_name.Enabled = true;
-            } else
-            {
-                txt_process_name.Enabled = false;
             }
         }
 
@@ -720,13 +679,10 @@ namespace HeliosPlus.UIForms
         {
             if (rb_wait_executable.Checked)
             {
-                // Disable the Process Name Text field
+                _isUnsaved = true;
+                rb_wait_process.Checked = false;
                 txt_process_name.Enabled = false;
-            } else
-            {
-                txt_process_name.Enabled = true;
             }
-
         }
 
 
@@ -734,6 +690,7 @@ namespace HeliosPlus.UIForms
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
+                _isUnsaved = true;
                 if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
                 {
                     txt_process_name.Text = dialog_open.FileName;
@@ -752,6 +709,7 @@ namespace HeliosPlus.UIForms
 
         private void cb_args_game_CheckedChanged(object sender, EventArgs e)
         {
+            _isUnsaved = true;
             if (cb_args_game.Checked)
             {
                 txt_args_game.Enabled = true;
@@ -770,19 +728,15 @@ namespace HeliosPlus.UIForms
                 {
                     if (game.GameName == txt_game_name.Text)
                     {
+                        _isUnsaved = true;
                         txt_game_launcher.Text = SteamGame.GameLibrary.ToString();
-                        txt_game_id.Text = game.GameId.ToString();
+                        _gameId = game.GameId;
                     }
                 }
-
-                if (txt_shortcut_save_name.Text.Length > 0)
-                {
-                    // Turn on the CreateShortcut Button
-                    btn_save.Enabled = true;
-                    btn_save.Visible = true;
-                }
             }
-            
+
+            enableSaveButtonIfValid();
+
         }
 
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
@@ -813,20 +767,18 @@ namespace HeliosPlus.UIForms
             if (_profileToUse.Equals(Profile.CurrentProfile))
             {
                 lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
-                btn_save.Visible = false;
             }
             else
             {
                 if (!_profileToUse.IsPossible)
                 {
                     lbl_profile_shown_subtitle.Text = "(Display Profile is not valid so cannot be used)";
-                    btn_save.Visible = false;
                 }
                 else
                 {
                     lbl_profile_shown_subtitle.Text = "";
-                    btn_save.Visible = true;
                 }
+
             }
             // Refresh the image list view
             RefreshImageListView(profile);
@@ -885,12 +837,34 @@ namespace HeliosPlus.UIForms
             else
                 // Otherwise turn off the dialog mode we were just in
                 _inDialog = false;
+
+            enableSaveButtonIfValid();
         }
 
         private void btn_back_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
-            this.Close();
+            if (_isUnsaved)
+            {
+                // If the user doesn't want to close this window without saving, then don't close the window.
+                DialogResult result = MessageBox.Show(
+                    @"You have unsaved changes! Do you want to close this window without saving your changes?",
+                    @"You have unsaved changes.",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Exclamation);
+                if (result == DialogResult.Yes)
+                {
+                    this.Close();
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                DialogResult = DialogResult.Cancel;
+                this.Close();
+            }
         }
 
         private void radiobutton_Paint(object sender, PaintEventArgs e)
@@ -952,5 +926,33 @@ namespace HeliosPlus.UIForms
 
         }
 
+        private void rb_switch_temp_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_switch_temp.Checked)
+            {
+                _isUnsaved = true;
+                rb_switch_permanent.Checked = false;
+            }
+        }
+
+        private void rb_switch_permanent_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_switch_permanent.Checked)
+            {
+                _isUnsaved = true;
+                rb_switch_temp.Checked = false;
+            }
+        }
+
+        private void txt_shortcut_save_name_TextChanged(object sender, EventArgs e)
+        {
+            _isUnsaved = true;
+            enableSaveButtonIfValid();
+        }
+
+        private void lv_games_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            _isUnsaved = true;
+        }
     }
 }

@@ -191,6 +191,9 @@
     <PackageReference Include="ImageListView">
       <Version>13.8.2</Version>
     </PackageReference>
+    <PackageReference Include="KryptonToolkitSuite5480">
+      <Version>5.480.2098</Version>
+    </PackageReference>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils">
       <Version>3.0.0</Version>
     </PackageReference>
