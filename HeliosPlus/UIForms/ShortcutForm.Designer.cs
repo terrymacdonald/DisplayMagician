@@ -37,8 +37,6 @@ namespace HeliosPlus.UIForms
             this.btn_cancel = new System.Windows.Forms.Button();
             this.il_games = new System.Windows.Forms.ImageList(this.components);
             this.dialog_open = new System.Windows.Forms.OpenFileDialog();
-            this.dialog_save = new System.Windows.Forms.SaveFileDialog();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.tabc_shortcut = new System.Windows.Forms.TabControl();
             this.tabp_display = new System.Windows.Forms.TabPage();
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
@@ -48,11 +46,12 @@ namespace HeliosPlus.UIForms
             this.tabp_before = new System.Windows.Forms.TabPage();
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.p_standalone = new System.Windows.Forms.Panel();
+            this.btn_exe_to_start = new System.Windows.Forms.Button();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
             this.cb_args_executable = new System.Windows.Forms.CheckBox();
-            this.btn_app_process = new System.Windows.Forms.Button();
-            this.txt_process_name = new System.Windows.Forms.TextBox();
-            this.rb_wait_process = new System.Windows.Forms.RadioButton();
+            this.btn_app_different_executable = new System.Windows.Forms.Button();
+            this.txt_alternative_executable = new System.Windows.Forms.TextBox();
+            this.rb_wait_alternative_executable = new System.Windows.Forms.RadioButton();
             this.rb_wait_executable = new System.Windows.Forms.RadioButton();
             this.txt_executable = new System.Windows.Forms.TextBox();
             this.lbl_app_executable = new System.Windows.Forms.Label();
@@ -81,6 +80,7 @@ namespace HeliosPlus.UIForms
             this.txt_shortcut_save_name = new System.Windows.Forms.TextBox();
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
+            this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_game.SuspendLayout();
@@ -135,18 +135,6 @@ namespace HeliosPlus.UIForms
             this.dialog_open.Filter = global::HeliosPlus.Resources.Language.Executable_Files_Filter;
             this.dialog_open.RestoreDirectory = true;
             this.dialog_open.SupportMultiDottedExtensions = true;
-            // 
-            // dialog_save
-            // 
-            this.dialog_save.DefaultExt = "lnk";
-            this.dialog_save.DereferenceLinks = false;
-            this.dialog_save.Filter = global::HeliosPlus.Resources.Language.Shortcuts_Filter;
-            this.dialog_save.RestoreDirectory = true;
-            // 
-            // openFileDialog1
-            // 
-            this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.Title = "Title";
             // 
             // tabc_shortcut
             // 
@@ -272,11 +260,12 @@ namespace HeliosPlus.UIForms
             // 
             // p_standalone
             // 
+            this.p_standalone.Controls.Add(this.btn_exe_to_start);
             this.p_standalone.Controls.Add(this.txt_args_executable);
             this.p_standalone.Controls.Add(this.cb_args_executable);
-            this.p_standalone.Controls.Add(this.btn_app_process);
-            this.p_standalone.Controls.Add(this.txt_process_name);
-            this.p_standalone.Controls.Add(this.rb_wait_process);
+            this.p_standalone.Controls.Add(this.btn_app_different_executable);
+            this.p_standalone.Controls.Add(this.txt_alternative_executable);
+            this.p_standalone.Controls.Add(this.rb_wait_alternative_executable);
             this.p_standalone.Controls.Add(this.rb_wait_executable);
             this.p_standalone.Controls.Add(this.txt_executable);
             this.p_standalone.Controls.Add(this.lbl_app_executable);
@@ -287,6 +276,18 @@ namespace HeliosPlus.UIForms
             this.p_standalone.Name = "p_standalone";
             this.p_standalone.Size = new System.Drawing.Size(1006, 160);
             this.p_standalone.TabIndex = 10;
+            // 
+            // btn_exe_to_start
+            // 
+            this.btn_exe_to_start.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_exe_to_start.ForeColor = System.Drawing.Color.White;
+            this.btn_exe_to_start.Location = new System.Drawing.Point(593, 10);
+            this.btn_exe_to_start.Name = "btn_exe_to_start";
+            this.btn_exe_to_start.Size = new System.Drawing.Size(85, 27);
+            this.btn_exe_to_start.TabIndex = 12;
+            this.btn_exe_to_start.Text = "Choose";
+            this.btn_exe_to_start.UseVisualStyleBackColor = true;
+            this.btn_exe_to_start.Click += new System.EventHandler(this.btn_exe_to_start_Click);
             // 
             // txt_args_executable
             // 
@@ -307,39 +308,42 @@ namespace HeliosPlus.UIForms
             this.cb_args_executable.Text = "Pass arguments to Executable:";
             this.cb_args_executable.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_args_executable.UseVisualStyleBackColor = true;
+            this.cb_args_executable.CheckedChanged += new System.EventHandler(this.cb_args_executable_CheckedChanged);
             this.cb_args_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
             // 
-            // btn_app_process
+            // btn_app_different_executable
             // 
-            this.btn_app_process.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_app_process.ForeColor = System.Drawing.Color.White;
-            this.btn_app_process.Location = new System.Drawing.Point(739, 115);
-            this.btn_app_process.Name = "btn_app_process";
-            this.btn_app_process.Size = new System.Drawing.Size(85, 27);
-            this.btn_app_process.TabIndex = 9;
-            this.btn_app_process.Text = "Choose";
-            this.btn_app_process.UseVisualStyleBackColor = true;
-            this.btn_app_process.Click += new System.EventHandler(this.btn_app_process_Click);
+            this.btn_app_different_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_app_different_executable.ForeColor = System.Drawing.Color.White;
+            this.btn_app_different_executable.Location = new System.Drawing.Point(877, 115);
+            this.btn_app_different_executable.Name = "btn_app_different_executable";
+            this.btn_app_different_executable.Size = new System.Drawing.Size(85, 27);
+            this.btn_app_different_executable.TabIndex = 9;
+            this.btn_app_different_executable.Text = "Choose";
+            this.btn_app_different_executable.UseVisualStyleBackColor = true;
+            this.btn_app_different_executable.Click += new System.EventHandler(this.btn_app_different_executable_Click);
             // 
-            // txt_process_name
+            // txt_alternative_executable
             // 
-            this.txt_process_name.Enabled = false;
-            this.txt_process_name.Location = new System.Drawing.Point(446, 116);
-            this.txt_process_name.Name = "txt_process_name";
-            this.txt_process_name.Size = new System.Drawing.Size(287, 26);
-            this.txt_process_name.TabIndex = 4;
+            this.txt_alternative_executable.Enabled = false;
+            this.txt_alternative_executable.Location = new System.Drawing.Point(493, 116);
+            this.txt_alternative_executable.Name = "txt_alternative_executable";
+            this.txt_alternative_executable.Size = new System.Drawing.Size(378, 26);
+            this.txt_alternative_executable.TabIndex = 4;
+            this.txt_alternative_executable.TextChanged += new System.EventHandler(this.txt_different_executable_TextChanged);
             // 
-            // rb_wait_process
+            // rb_wait_alternative_executable
             // 
-            this.rb_wait_process.AutoSize = true;
-            this.rb_wait_process.ForeColor = System.Drawing.Color.White;
-            this.rb_wait_process.Location = new System.Drawing.Point(23, 117);
-            this.rb_wait_process.Name = "rb_wait_process";
-            this.rb_wait_process.Size = new System.Drawing.Size(428, 24);
-            this.rb_wait_process.TabIndex = 8;
-            this.rb_wait_process.Text = "Change Display Profile back when this process is closed: ";
-            this.rb_wait_process.UseVisualStyleBackColor = true;
-            this.rb_wait_process.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
+            this.rb_wait_alternative_executable.AutoSize = true;
+            this.rb_wait_alternative_executable.ForeColor = System.Drawing.Color.White;
+            this.rb_wait_alternative_executable.Location = new System.Drawing.Point(23, 118);
+            this.rb_wait_alternative_executable.Name = "rb_wait_alternative_executable";
+            this.rb_wait_alternative_executable.Size = new System.Drawing.Size(468, 24);
+            this.rb_wait_alternative_executable.TabIndex = 8;
+            this.rb_wait_alternative_executable.Text = "Wait until an alternative executable is closed before continuing:";
+            this.rb_wait_alternative_executable.UseVisualStyleBackColor = true;
+            this.rb_wait_alternative_executable.CheckedChanged += new System.EventHandler(this.rb_wait_process_CheckedChanged);
+            this.rb_wait_alternative_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // rb_wait_executable
             // 
@@ -348,11 +352,12 @@ namespace HeliosPlus.UIForms
             this.rb_wait_executable.ForeColor = System.Drawing.Color.White;
             this.rb_wait_executable.Location = new System.Drawing.Point(23, 87);
             this.rb_wait_executable.Name = "rb_wait_executable";
-            this.rb_wait_executable.Size = new System.Drawing.Size(486, 24);
+            this.rb_wait_executable.Size = new System.Drawing.Size(439, 24);
             this.rb_wait_executable.TabIndex = 7;
             this.rb_wait_executable.TabStop = true;
-            this.rb_wait_executable.Text = "Change Display Profile back when the executable above is closed";
+            this.rb_wait_executable.Text = "Wait until the executable above is closed before continuing";
             this.rb_wait_executable.UseVisualStyleBackColor = true;
+            this.rb_wait_executable.CheckedChanged += new System.EventHandler(this.rb_wait_executable_CheckedChanged);
             this.rb_wait_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // txt_executable
@@ -361,6 +366,7 @@ namespace HeliosPlus.UIForms
             this.txt_executable.Name = "txt_executable";
             this.txt_executable.Size = new System.Drawing.Size(416, 26);
             this.txt_executable.TabIndex = 1;
+            this.txt_executable.TextChanged += new System.EventHandler(this.txt_executable_TextChanged);
             // 
             // lbl_app_executable
             // 
@@ -532,6 +538,7 @@ namespace HeliosPlus.UIForms
             this.cb_args_game.Text = "Pass arguments to Game:";
             this.cb_args_game.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_args_game.UseVisualStyleBackColor = true;
+            this.cb_args_game.CheckedChanged += new System.EventHandler(this.cb_args_game_CheckedChanged);
             this.cb_args_game.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
             // 
             // lbl_game_timeout
@@ -640,11 +647,12 @@ namespace HeliosPlus.UIForms
             // txt_shortcut_save_name
             // 
             this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_shortcut_save_name.Location = new System.Drawing.Point(441, 707);
+            this.txt_shortcut_save_name.Location = new System.Drawing.Point(326, 707);
             this.txt_shortcut_save_name.MaxLength = 200;
             this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
-            this.txt_shortcut_save_name.Size = new System.Drawing.Size(409, 35);
+            this.txt_shortcut_save_name.Size = new System.Drawing.Size(511, 35);
             this.txt_shortcut_save_name.TabIndex = 29;
+            this.txt_shortcut_save_name.Click += new System.EventHandler(this.txt_shortcut_save_name_Click);
             this.txt_shortcut_save_name.TextChanged += new System.EventHandler(this.txt_shortcut_save_name_TextChanged);
             // 
             // lbl_title
@@ -663,11 +671,25 @@ namespace HeliosPlus.UIForms
             this.lbl_shortcut_name.AutoSize = true;
             this.lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
-            this.lbl_shortcut_name.Location = new System.Drawing.Point(264, 710);
+            this.lbl_shortcut_name.Location = new System.Drawing.Point(142, 710);
             this.lbl_shortcut_name.Name = "lbl_shortcut_name";
             this.lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
             this.lbl_shortcut_name.TabIndex = 31;
             this.lbl_shortcut_name.Text = "Shortcut Name:";
+            // 
+            // cb_autosuggest
+            // 
+            this.cb_autosuggest.AutoSize = true;
+            this.cb_autosuggest.Checked = true;
+            this.cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cb_autosuggest.ForeColor = System.Drawing.Color.White;
+            this.cb_autosuggest.Location = new System.Drawing.Point(856, 716);
+            this.cb_autosuggest.Name = "cb_autosuggest";
+            this.cb_autosuggest.Size = new System.Drawing.Size(117, 17);
+            this.cb_autosuggest.TabIndex = 32;
+            this.cb_autosuggest.Text = "Auto-suggest name";
+            this.cb_autosuggest.UseVisualStyleBackColor = true;
+            this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
             // ShortcutForm
             // 
@@ -677,6 +699,7 @@ namespace HeliosPlus.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
             this.ClientSize = new System.Drawing.Size(1114, 806);
+            this.Controls.Add(this.cb_autosuggest);
             this.Controls.Add(this.txt_shortcut_save_name);
             this.Controls.Add(this.lbl_shortcut_name);
             this.Controls.Add(this.lbl_title);
@@ -691,6 +714,7 @@ namespace HeliosPlus.UIForms
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "HeliosPlus - Configure a Game Shortcut";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ShortcutForm_FormClosing);
             this.Load += new System.EventHandler(this.ShortcutForm_Load);
             this.tabc_shortcut.ResumeLayout(false);
             this.tabp_display.ResumeLayout(false);
@@ -714,8 +738,6 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.Button btn_cancel;
         private System.Windows.Forms.OpenFileDialog dialog_open;
-        private System.Windows.Forms.SaveFileDialog dialog_save;
-        private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.ImageList il_games;
         private System.Windows.Forms.TabControl tabc_shortcut;
         private System.Windows.Forms.TabPage tabp_display;
@@ -746,9 +768,9 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.Panel p_standalone;
         private System.Windows.Forms.TextBox txt_args_executable;
         private System.Windows.Forms.CheckBox cb_args_executable;
-        private System.Windows.Forms.Button btn_app_process;
-        private System.Windows.Forms.TextBox txt_process_name;
-        private System.Windows.Forms.RadioButton rb_wait_process;
+        private System.Windows.Forms.Button btn_app_different_executable;
+        private System.Windows.Forms.TextBox txt_alternative_executable;
+        private System.Windows.Forms.RadioButton rb_wait_alternative_executable;
         private System.Windows.Forms.RadioButton rb_wait_executable;
         private System.Windows.Forms.TextBox txt_executable;
         private System.Windows.Forms.Label lbl_app_executable;
@@ -759,5 +781,7 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.RadioButton rb_switch_temp;
         private System.Windows.Forms.Label lbl_title;
         private System.Windows.Forms.Label lbl_shortcut_name;
+        private System.Windows.Forms.Button btn_exe_to_start;
+        private System.Windows.Forms.CheckBox cb_autosuggest;
     }
 }

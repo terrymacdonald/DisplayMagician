@@ -21,14 +21,14 @@ namespace HeliosPlus.UIForms
 
         List<SteamGame> _allSteamGames;
         private ProfileAdaptor _profileAdaptor;
-        private static bool _inDialog = false;
         private List<Profile> _loadedProfiles = new List<Profile>();
         private Profile _profileToUse= null;
         private Shortcut _shortcutToEdit = null;
-        private string _saveOrRenameMode = "save";
-        private bool _isNewShortcut = true;
+        private bool _isNewShortcut = false;
         private bool _isUnsaved = false;
+        private bool _saveNameAutomatic = true;
         private uint _gameId = 0;
+        private uint _id = 0;
 
         public ShortcutForm()
         {
@@ -38,13 +38,22 @@ namespace HeliosPlus.UIForms
             // into the Profiles ImageListView
             _profileAdaptor = new ProfileAdaptor();
 
+            // Create a new SHortcut if we are creating a new one
+            // And set up the page (otherwise this is all set when we load an
+            // existing Shortcut)
+            if (_shortcutToEdit == null)
+            {
+                _shortcutToEdit = new Shortcut();
+                _isNewShortcut = true;
+            }
+
+
         }
 
         public ShortcutForm(Shortcut shortcutToEdit) : this()
         {
             _shortcutToEdit = shortcutToEdit;
-
-            txt_shortcut_save_name.Text = _shortcutToEdit.Name;
+            _isNewShortcut = false;
         }
 
         public string ProcessNameToMonitor
@@ -54,7 +63,7 @@ namespace HeliosPlus.UIForms
                 if (rb_switch_temp.Checked && rb_standalone.Checked) {
                     if (rb_wait_executable.Checked)
                     {
-                        return txt_process_name.Text;
+                        return txt_alternative_executable.Text;
                     } 
                 }
                 return string.Empty;
@@ -62,7 +71,7 @@ namespace HeliosPlus.UIForms
             set
             {
                 // We we're setting this entry, then we want to set it to a particular entry
-                txt_process_name.Text = value;
+                txt_alternative_executable.Text = value;
                 rb_wait_executable.Checked = true;
             }
         }
@@ -249,7 +258,7 @@ namespace HeliosPlus.UIForms
             }
 
             // Please use a plain name that can be
-            if (Shortcut.NameAlreadyExists(txt_shortcut_save_name.Text))
+            if (_isNewShortcut && Shortcut.NameAlreadyExists(txt_shortcut_save_name.Text))
             {
                 MessageBox.Show(
                     @"A shortcut has already been created with this name. Please enter a different name for this shortcut.",
@@ -270,75 +279,91 @@ namespace HeliosPlus.UIForms
                 return;
             }
 
-            // Check the permanence requirements
-            if (rb_switch_permanent.Checked)
-            { 
-                // Check the Shortcut Category to see if it's application
-                if (rb_standalone.Checked)
+            // Check the Shortcut Category to see if it's application
+            if (rb_standalone.Checked)
+            {
+                if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
                 {
-                    if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
-                    {
-                        MessageBox.Show(
-                            @"If you have chosen to pass extra arguments to the executable when it is run, then you need to enter them in the 'Pass arguments to Executable' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Executable' checkbox.",
-                            @"Please add Executable arguments.",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                        return;
+                    MessageBox.Show(
+                        @"If you have chosen to pass extra arguments to the executable when it is run, then you need to enter them in the 'Pass arguments to Executable' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Executable' checkbox.",
+                        @"Please add Executable arguments.",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
 
-                    }
-
-                    if (!File.Exists(txt_executable.Text))
-                    {
-                        MessageBox.Show(
-                            @"The executable you have chosen does not exist! Please reselect the executable, or check you have persmissions to view it.",
-                            @"Executable doesn't exist",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                        return;
-                    }
-
-                    if (String.IsNullOrWhiteSpace(txt_process_name.Text))
-                    {
-                        string message = "";
-
-                        // figure out the message we want to give the user
-                        if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
-                            message = @"Cannot work out the process to monitor from the executable. Please reselect the executable (and we'll try again), and if that doesn't work then manually enter the process name into the 'Process to monitor' field.";
-                        else
-                            message = @"Please manually enter the process name into the 'Process to monitor' field.";
-
-                        // show the error message
-                        MessageBox.Show(
-                            message,
-                            @"Empty process monitor",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                        return;
-                    }
                 }
-                else if (rb_switch_temp.Checked)
+
+                if (!File.Exists(txt_executable.Text))
                 {
-
-                    if (cb_args_game.Checked && String.IsNullOrWhiteSpace(txt_args_game.Text))
-                    {
-                        MessageBox.Show(
-                            @"If you have chosen to pass extra arguments to the Game when it is run, then you need to enter them in the 'Pass arguments to Game' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Game' checkbox.",
-                            @"Please add Game arguments.",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                        return;
-                    }
-
-                    if (_gameId == 0)
-                    {
-                        MessageBox.Show(
-                            @"Please choose a Game by scrolling through the list, selecting the Game that you want, and then clicking the '>>' button to fill the Game fields.",
-                            @"Please choose a Game.",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                        return;
-                    }
+                    MessageBox.Show(
+                        @"The executable you have chosen does not exist! Please reselect the executable, or check you have permissions to view it.",
+                        @"Executable doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
                 }
+
+                if (rb_wait_alternative_executable.Checked && String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
+                {
+                    MessageBox.Show(
+                        $"If you want to wait for an alternative executable then you need to choose it! Click the 'Choose' button next to the different executable field.",
+                        @"Need to choose the different executable",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                if (rb_wait_alternative_executable.Checked && !File.Exists(txt_alternative_executable.Text))
+                {
+                    MessageBox.Show(
+                        @"The alternative executable you have chosen does not exist! Please reselect the alternative executable, or check you have permissions to view it.",
+                        @"Alternative executable doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+            }
+            else if (rb_launcher.Checked)
+            {
+
+                if (cb_args_game.Checked && String.IsNullOrWhiteSpace(txt_args_game.Text))
+                {
+                    MessageBox.Show(
+                        @"If you have chosen to pass extra arguments to the Game when it is run, then you need to enter them in the 'Pass arguments to Game' field. If you didn't want to pass extra arguments then please uncheck the 'Pass arguments to Game' checkbox.",
+                        @"Please add Game arguments.",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                if (_gameId == 0)
+                {
+                    MessageBox.Show(
+                        @"Please choose a Game by scrolling through the list, selecting the Game that you want, and then clicking the '>>' button to fill the Game fields.",
+                        @"Please choose a Game.",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                bool gameStillInstalled = false;
+                foreach (ListViewItem gameItem in lv_games.Items)
+                {
+                    if (gameItem.Text.Equals(txt_game_name.Text))
+                        gameStillInstalled = true;
+                }
+                if (!gameStillInstalled)
+                {
+                    DialogResult result = MessageBox.Show(
+                        $"This shortcut refers to the '{txt_game_name.Text}' game that was installed in your {txt_game_launcher.Text} library. This game is no longer installed, so the shortcut won't work. Do you still want to save the shortcut?",
+                        @"Game no longer exists",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Exclamation);
+                    if (result == DialogResult.No)
+                        return;
+                }
+
             }
 
             // Fill the Shortcut object with the bits we care about saving
@@ -384,14 +409,14 @@ namespace HeliosPlus.UIForms
                 _shortcutToEdit.Permanence = ShortcutPermanence.Permanent;
 
             // Update the process name to monitor
-            if (!String.IsNullOrWhiteSpace(txt_process_name.Text)) {
-                _shortcutToEdit.ProcessNameToMonitor = txt_process_name.Text;
+            if (!String.IsNullOrWhiteSpace(txt_alternative_executable.Text)) {
+                _shortcutToEdit.DifferentExecutableToMonitor = txt_alternative_executable.Text;
             }
 
-            if (rb_wait_process.Checked && !String.IsNullOrWhiteSpace(txt_process_name.Text))
+            if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
             {
                 _shortcutToEdit.ProcessNameToMonitorUsesExecutable = true;
-                _shortcutToEdit.ProcessNameToMonitor = txt_process_name.Text;
+                _shortcutToEdit.DifferentExecutableToMonitor = txt_alternative_executable.Text;
             }
             else
             {
@@ -438,31 +463,15 @@ namespace HeliosPlus.UIForms
             this.Close();
         }
 
-        
+        private void txt_different_executable_TextChanged(object sender, EventArgs e)
+        {
+            _isUnsaved = true;
+        }
 
         private void txt_executable_TextChanged(object sender, EventArgs e)
         {
             _isUnsaved = true;
-            if (File.Exists(txt_executable.Text))
-            {
-
-                // Try and discern the process name for this
-                // if the user hasn't entered anything already
-                if (txt_process_name.Text == String.Empty)
-                {
-                    try
-                    {
-                        txt_process_name.Text = Path.GetFileNameWithoutExtension(txt_executable.Text)?.ToLower() ?? txt_process_name.Text;
-
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-
-            }
-
+            suggestShortcutName();
             enableSaveButtonIfValid();
         }
 
@@ -472,7 +481,7 @@ namespace HeliosPlus.UIForms
                 _profileToUse is Profile &&
                 (rb_no_game.Checked ||
                 rb_launcher.Checked && _gameId > 0 ||
-                rb_standalone.Checked && txt_args_executable.Text.Length > 0))
+                rb_standalone.Checked && txt_executable.Text.Length > 0))
                 return true;
             else
                 return false;
@@ -484,6 +493,30 @@ namespace HeliosPlus.UIForms
                 btn_save.Enabled = true;
             else
                 btn_save.Enabled = false;
+
+        }
+
+        private void suggestShortcutName()
+        {
+            if (_saveNameAutomatic && _profileToUse is Profile)
+            {
+                if (rb_no_game.Checked)
+                {
+                    if (rb_switch_permanent.Checked)
+                        txt_shortcut_save_name.Text = $"{_profileToUse.Name}";
+                    else if (rb_switch_temp.Checked)
+                        txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
+                }
+                else if (rb_launcher.Checked && txt_game_name.Text.Length > 0)
+                {
+                    txt_shortcut_save_name.Text = $"{txt_game_name.Text} ({_profileToUse.Name})";
+                }
+                else if (rb_standalone.Checked && txt_executable.Text.Length > 0)
+                {
+                    string baseName = Path.GetFileNameWithoutExtension(txt_executable.Text);
+                    txt_shortcut_save_name.Text = $"{baseName} ({_profileToUse.Name})";
+                }
+            }
         }
 
         private void rb_standalone_CheckedChanged(object sender, EventArgs e)
@@ -499,6 +532,7 @@ namespace HeliosPlus.UIForms
                 // Disable the Game Panel
                 p_game.Enabled = false;
 
+                suggestShortcutName();
                 enableSaveButtonIfValid();
             }
            
@@ -517,6 +551,7 @@ namespace HeliosPlus.UIForms
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
 
+                suggestShortcutName();
                 enableSaveButtonIfValid();
 
             }
@@ -535,6 +570,7 @@ namespace HeliosPlus.UIForms
                 // Disable the Game Panel
                 p_game.Enabled = false;
 
+                suggestShortcutName();
                 enableSaveButtonIfValid();
 
             }
@@ -574,20 +610,6 @@ namespace HeliosPlus.UIForms
         private async void ShortcutForm_Load(object sender, EventArgs e)
         {
 
-            // Create a new SHortcut if we are creating a new one
-            // And set up the page.
-            if (_shortcutToEdit == null)
-            {
-                _shortcutToEdit = new Shortcut();
-                _isNewShortcut = true;
-                _saveOrRenameMode = "save";
-            }
-            else
-            {
-                _isNewShortcut = false;
-                _saveOrRenameMode = "rename";
-            }
-
             // Load all the profiles to prepare things
             _loadedProfiles = (List<Profile>)Profile.LoadAllProfiles();
 
@@ -610,8 +632,6 @@ namespace HeliosPlus.UIForms
             if (!foundCurrentProfileInLoadedProfiles && _loadedProfiles.Count > 0)
                 ChangeSelectedProfile(_loadedProfiles[0]);
 
-            // Refresh the Shortcut UI
-            RefreshShortcutUI();
 
             // Start finding the games and loading the Games ListView
             List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
@@ -663,15 +683,96 @@ namespace HeliosPlus.UIForms
                     ImageIndex = il_games.Images.Count - 1
                 });
             }
+
+            // Now start populating the other fields
+
+            if (_shortcutToEdit.Id == 0)
+            {
+                // This is a new Shortcut so we need to figure out what the next
+                // ID will need to be set to.
+                try
+                {
+                    _id = (from shortcut in Shortcut.AllSavedShortcuts select shortcut.Id).Max<uint>() + 1;
+                }
+                catch
+                {
+                    _id = 1;
+                }
+            }
+            else
+                _id = _shortcutToEdit.Id;
+            // Set if we launch App/Game/NoGame
+            switch (_shortcutToEdit.Category)
+            {
+                case ShortcutCategory.NoGame:
+                    rb_no_game.Checked = true;
+                    break;
+                case ShortcutCategory.Game:
+                    rb_launcher.Checked = true;
+                    break;
+                case ShortcutCategory.Application:
+                    rb_standalone.Checked = true;
+                    break;
+            }
+
+            // Set the launcher items if we have them
+            txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
+            txt_game_name.Text = _shortcutToEdit.GameName;
+            _gameId = _shortcutToEdit.GameAppId;
+            nud_timeout_game.Value = _shortcutToEdit.GameTimeout;
+            txt_args_game.Text = _shortcutToEdit.GameArguments;
+            if (_shortcutToEdit.GameArgumentsRequired)
+            {
+                cb_args_game.Checked = true;
+            }
+
+            //select the loaded Game item if it is there
+            foreach (ListViewItem gameItem in lv_games.Items)
+            {
+                if (gameItem.Text.Equals(_shortcutToEdit.GameName))
+                {
+                    gameItem.Selected = true;
+                }
+            }
+
+
+            // Set the executable items if we have them
+            txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
+            nud_timeout_executable.Value = _shortcutToEdit.ExecutableTimeout;
+            txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
+            if (_shortcutToEdit.ExecutableArgumentsRequired)
+            {
+                cb_args_executable.Checked = true;
+            }
+            if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
+            {
+                rb_wait_executable.Checked = true;
+                rb_wait_alternative_executable.Checked = false;
+            }
+            else
+            {
+                rb_wait_executable.Checked = false;
+                rb_wait_alternative_executable.Checked = true;
+            }
+            txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+
+
+            // Set the shortcut name
+            txt_shortcut_save_name.Text = _shortcutToEdit.Name;
+
+            // Refresh the Shortcut UI
+            RefreshShortcutUI();
+
+
         }
 
         private void rb_wait_process_CheckedChanged(object sender, EventArgs e)
         {
-            if (rb_wait_process.Checked)
+            if (rb_wait_alternative_executable.Checked)
             {
                 _isUnsaved = true;
                 rb_wait_executable.Checked = false;
-                txt_process_name.Enabled = true;
+                txt_alternative_executable.Enabled = true;
             }
         }
 
@@ -680,20 +781,20 @@ namespace HeliosPlus.UIForms
             if (rb_wait_executable.Checked)
             {
                 _isUnsaved = true;
-                rb_wait_process.Checked = false;
-                txt_process_name.Enabled = false;
+                rb_wait_alternative_executable.Checked = false;
+                txt_alternative_executable.Enabled = false;
             }
         }
 
 
-        private void btn_app_process_Click(object sender, EventArgs e)
+        private void btn_app_different_executable_Click(object sender, EventArgs e)
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 _isUnsaved = true;
                 if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
                 {
-                    txt_process_name.Text = dialog_open.FileName;
+                    txt_alternative_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
                 }
                 else
@@ -735,6 +836,7 @@ namespace HeliosPlus.UIForms
                 }
             }
 
+            suggestShortcutName();
             enableSaveButtonIfValid();
 
         }
@@ -792,79 +894,51 @@ namespace HeliosPlus.UIForms
         private void RefreshShortcutUI()
         {
 
-            if (!_inDialog)
+               
+            if (_loadedProfiles.Count > 0)
             {
-                
-                if (_loadedProfiles.Count > 0)
+
+                // Temporarily stop updating the saved_profiles listview
+                ilv_saved_profiles.SuspendLayout();
+
+                ImageListViewItem newItem = null;
+                bool foundCurrentProfileInLoadedProfiles = false;
+                foreach (Profile loadedProfile in _loadedProfiles)
                 {
-
-                    // Temporarily stop updating the saved_profiles listview
-                    ilv_saved_profiles.SuspendLayout();
-
-                    ImageListViewItem newItem = null;
-                    bool foundCurrentProfileInLoadedProfiles = false;
-                    foreach (Profile loadedProfile in _loadedProfiles)
+                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
+                    if (!thisLoadedProfileIsAlreadyHere)
                     {
-                        bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
-                        if (!thisLoadedProfileIsAlreadyHere)
-                        {
-                            //loadedProfile.SaveProfileImageToCache();
-                            //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
-                            //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                            newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                            //ilv_saved_profiles.Items.Add(newItem);
-                            ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
-                        }
-
+                        //loadedProfile.SaveProfileImageToCache();
+                        //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
+                        //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                        newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                        //ilv_saved_profiles.Items.Add(newItem);
+                        ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
                     }
 
-                    // If we get to the end of the loaded profiles and haven't
-                    // found a matching profile, then we need to show the current
-                    // Profile
-                    if (!foundCurrentProfileInLoadedProfiles)
-                        ChangeSelectedProfile(Profile.CurrentProfile);
-
-                    // Check if we were loading a profile to edit
-                    // If so, select that instead of all that other stuff above!
-                    if (_shortcutToEdit != null)
-                        ChangeSelectedProfile(_shortcutToEdit.ProfileToUse);
-
-                    // Restart updating the saved_profiles listview
-                    ilv_saved_profiles.ResumeLayout();
                 }
-                
-            }
-            else
-                // Otherwise turn off the dialog mode we were just in
-                _inDialog = false;
 
+                // If we get to the end of the loaded profiles and haven't
+                // found a matching profile, then we need to show the current
+                // Profile
+                if (!foundCurrentProfileInLoadedProfiles)
+                    ChangeSelectedProfile(Profile.CurrentProfile);
+
+                // Check if we were loading a profile to edit
+                // If so, select that instead of all that other stuff above!
+                if (_shortcutToEdit != null)
+                    ChangeSelectedProfile(_shortcutToEdit.ProfileToUse);
+
+                // Restart updating the saved_profiles listview
+                ilv_saved_profiles.ResumeLayout();
+            }
+                
             enableSaveButtonIfValid();
         }
 
         private void btn_back_Click(object sender, EventArgs e)
         {
-            if (_isUnsaved)
-            {
-                // If the user doesn't want to close this window without saving, then don't close the window.
-                DialogResult result = MessageBox.Show(
-                    @"You have unsaved changes! Do you want to close this window without saving your changes?",
-                    @"You have unsaved changes.",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Exclamation);
-                if (result == DialogResult.Yes)
-                {
-                    this.Close();
-                }
-                else
-                {
-                    return;
-                }
-            }
-            else
-            {
-                DialogResult = DialogResult.Cancel;
-                this.Close();
-            }
+            this.Close();
         }
 
         private void radiobutton_Paint(object sender, PaintEventArgs e)
@@ -932,6 +1006,8 @@ namespace HeliosPlus.UIForms
             {
                 _isUnsaved = true;
                 rb_switch_permanent.Checked = false;
+
+                suggestShortcutName();
             }
         }
 
@@ -941,6 +1017,7 @@ namespace HeliosPlus.UIForms
             {
                 _isUnsaved = true;
                 rb_switch_temp.Checked = false;
+                suggestShortcutName();
             }
         }
 
@@ -953,6 +1030,57 @@ namespace HeliosPlus.UIForms
         private void lv_games_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             _isUnsaved = true;
+        }
+
+        private void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+
+            if (_isUnsaved)
+            {
+                // If the user doesn't want to close this window without saving, then don't close the window.
+                DialogResult result = MessageBox.Show(
+                    @"You have unsaved changes! Do you want to close this window without saving your changes?",
+                    @"You have unsaved changes.",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Exclamation);
+                e.Cancel = (result == DialogResult.No); 
+            }
+           
+        }
+
+        private void btn_exe_to_start_Click(object sender, EventArgs e)
+        {
+            if (dialog_open.ShowDialog(this) == DialogResult.OK)
+            {
+                _isUnsaved = true;
+                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
+                {
+                    txt_executable.Text = dialog_open.FileName;
+                    dialog_open.FileName = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        Language.Selected_file_is_not_a_valid_executable_file,
+                        Language.Executable,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+            }
+        }
+
+        private void txt_shortcut_save_name_Click(object sender, EventArgs e)
+        {
+            _saveNameAutomatic = false;
+            cb_autosuggest.Checked = false;
+        }
+
+        private void cb_autosuggest_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cb_autosuggest.Checked)
+                _saveNameAutomatic = true;
+            else
+                _saveNameAutomatic = false;
         }
     }
 }

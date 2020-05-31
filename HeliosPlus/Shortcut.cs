@@ -28,6 +28,7 @@ namespace HeliosPlus
     {
         Application,
         Game,
+        NoGame,
     }
 
     public class Shortcut
@@ -51,7 +52,9 @@ namespace HeliosPlus
 
         public static Version Version = new Version(1, 0);
 
-        public string Name { get; set; } = "Current Display Profile";
+        public uint Id { get; set; } = 0;
+        
+        public string Name { get; set; } = "";
 
         [JsonIgnore]
         public Profile ProfileToUse { get; set; } = null;
@@ -73,11 +76,11 @@ namespace HeliosPlus
 
         public ShortcutCategory Category { get; set; } = ShortcutCategory.Game;
 
-        public string ProcessNameToMonitor { get; set; } = "";
+        public string DifferentExecutableToMonitor { get; set; } = "";
 
         public string ExecutableNameAndPath { get; set; } = "";
 
-        public uint ExecutableTimeout { get; set; } = 0;
+        public uint ExecutableTimeout { get; set; } = 30;
 
         public string ExecutableArguments { get; set; } = "";
 
@@ -91,7 +94,7 @@ namespace HeliosPlus
 
         public SupportedGameLibrary GameLibrary { get; set; } = SupportedGameLibrary.Unknown;
 
-        public uint GameTimeout { get; set; } = 0;
+        public uint GameTimeout { get; set; } = 30;
 
         public string GameArguments { get; set; } = "";
 
