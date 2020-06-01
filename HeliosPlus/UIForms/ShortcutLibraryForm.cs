@@ -23,6 +23,7 @@ namespace HeliosPlus.UIForms
         private ShortcutAdaptor _shortcutAdaptor;
         private ImageListViewItem _selectedShortcutILVItem = null;
         private Shortcut _selectedShortcut = null;
+        private ShortcutRepository _shortcutRepository = new ShortcutRepository();
 
         public ShortcutLibraryForm()
         {
@@ -49,7 +50,7 @@ namespace HeliosPlus.UIForms
         private void ShortcutLibraryForm_Load(object sender, EventArgs e)
         {
             // Load all the shortcuts we have saved earlier
-            List<Shortcut> _savedShortcuts = Shortcut.LoadAllShortcuts();
+            List<Shortcut> _savedShortcuts = ShortcutRepository.AllShortcuts;
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
         }
@@ -57,21 +58,17 @@ namespace HeliosPlus.UIForms
         private void RefreshShortcutLibraryUI()
         {
 
-            if (Shortcut.AllSavedShortcuts.Count > 0)
+            if (ShortcutRepository.ShortcutCount > 0)
             {
                 // Temporarily stop updating the saved_profiles listview
                 ilv_saved_shortcuts.SuspendLayout();
 
                 ImageListViewItem newItem = null;
-                foreach (Shortcut loadedShortcut in Shortcut.AllSavedShortcuts)
+                ilv_saved_shortcuts.Items.Clear();
+                foreach (Shortcut loadedShortcut in ShortcutRepository.AllShortcuts)
                 {
-                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_shortcuts.Items where item.Text == loadedShortcut.Name select item.Text).Any();
-                    if (!thisLoadedProfileIsAlreadyHere)
-                    {
-                        newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
-                        //ilv_saved_profiles.Items.Add(newItem);
-                        ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
-                    }
+                    newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
+                    ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
 
                     if (_selectedShortcut != null && _selectedShortcut is Shortcut)
                         RefreshImageListView(_selectedShortcut);
@@ -103,7 +100,7 @@ namespace HeliosPlus.UIForms
 
         private Shortcut GetShortcutFromName(string shortcutName)
         {
-            return (from item in Shortcut.AllSavedShortcuts where item.Name == shortcutName select item).First();
+            return (from item in ShortcutRepository.AllShortcuts where item.Name == shortcutName select item).First();
         }
 
         private void btn_save_Click(object sender, EventArgs e)
@@ -202,6 +199,20 @@ namespace HeliosPlus.UIForms
                 RefreshShortcutLibraryUI();
             }
 
+        }
+
+        private void btn_delete_Click(object sender, EventArgs e)
+        {
+            if (_selectedShortcut == null)
+                return;
+
+            if (MessageBox.Show($"Are you sure you want to delete the '{_selectedShortcut.Name}' Shortcut?", $"Delete '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+                return;
+
+            ShortcutRepository.RemoveShortcut(_selectedShortcut);
+            _selectedShortcut = null;
+
+            RefreshShortcutLibraryUI(); 
         }
     }
 }

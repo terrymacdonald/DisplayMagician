@@ -127,7 +127,7 @@ namespace HeliosPlus.Shared
             return path;
         }
 
-        public Bitmap ToBitmap(int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
+        public Bitmap ToBitmap(int width = 128, int height = 128, PixelFormat format = PixelFormat.Format32bppArgb)
         {
             var bitmap = new Bitmap(width, height, format);
             bitmap.MakeTransparent();
@@ -141,17 +141,40 @@ namespace HeliosPlus.Shared
             return bitmap;
         }
 
-        public Bitmap ToBitmapOverly(Bitmap bitmap)
+        public Bitmap ToBitmapOverlay(Bitmap bitmap, int width = 0, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
         {
-            var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
-            var width = bitmap.Width * 0.7f;
-            var height = width / viewSize.Width * viewSize.Height;
 
-            using (var g = Graphics.FromImage(bitmap))
+            if (width == 0)
+                width = bitmap.Width;
+
+            if (height == 0)
+                height = bitmap.Height;
+
+            var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
+            int viewSizeRatio = (int) Math.Round(viewSize.Width * viewSize.Height);
+            int overlayWidth = (int) Math.Round(width * 0.7f,0);
+            int overlayHeight = overlayWidth / viewSizeRatio;
+            int overlayX = width - overlayWidth;
+            int overlayY = height - overlayHeight;
+            Point overlayPosition = new Point(overlayX, overlayY);
+            Size overlaySize = new Size(overlayWidth, overlayHeight);
+            Rectangle overlayRect = new Rectangle(overlayPosition, overlaySize);
+            //var width = bitmap.Width * 0.7f;
+            //var height = width / viewSize.Width * viewSize.Height;
+
+            var combinedBitmap = new Bitmap(width, height, format);
+            combinedBitmap.MakeTransparent();
+
+            using (var g = Graphics.FromImage(combinedBitmap))
             {
                 g.SmoothingMode = SmoothingMode.HighQuality;
-                g.TranslateTransform(bitmap.Width - width, bitmap.Height - height * 1.1f);
-                DrawView(g, width, height);
+                //g.DrawImage(bitmap, 0, 0, width, height);
+                g.TranslateTransform(overlayX, overlayY);
+                //Rectangle compressionRectangle = new Rectangle(300, 10,
+                //myBitmap.Width / 2, myBitmap.Height / 2);
+                g.DrawRectangle(new Pen(Color.FromArgb(125, 50, 50, 50), 2f), overlayRect);
+
+                DrawView(g, overlayWidth, overlayHeight);
             }
 
             return bitmap;
@@ -186,7 +209,7 @@ namespace HeliosPlus.Shared
             return multiIcon;
         }
 
-        public MultiIcon ToIconOverly(string iconAddress)
+        public MultiIcon ToIconOverlay(string iconAddress)
         {
             var multiIcon = new MultiIcon();
             var icon = multiIcon.Add("Icon1");
@@ -226,7 +249,7 @@ namespace HeliosPlus.Shared
                     bitmap = clone;
                 }
 
-                icon.Add(singleIcon.Size.Height * singleIcon.Size.Width < 24 * 24 ? bitmap : ToBitmapOverly(bitmap));
+                icon.Add(singleIcon.Size.Height * singleIcon.Size.Width < 24 * 24 ? bitmap : ToBitmapOverlay(bitmap));
 
                 if (singleIcon.Size.Width >= 256 && singleIcon.Size.Height >= 256)
                 {

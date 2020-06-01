@@ -258,7 +258,7 @@ namespace HeliosPlus.UIForms
             }
 
             // Please use a plain name that can be
-            if (_isNewShortcut && Shortcut.NameAlreadyExists(txt_shortcut_save_name.Text))
+            if (_isNewShortcut && ShortcutRepository.ContainsShortcut(txt_shortcut_save_name.Text))
             {
                 MessageBox.Show(
                     @"A shortcut has already been created with this name. Please enter a different name for this shortcut.",
@@ -444,16 +444,9 @@ namespace HeliosPlus.UIForms
             else if (rb_standalone.Checked)
                 _shortcutToEdit.Category = ShortcutCategory.Application;
 
-            // Save the shortcut icon
-            _shortcutToEdit.SaveShortcutIconToCache();
-
             // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
             // but only if it's new... if it is an edit then it will already be in the list.
-            if (_isNewShortcut)
-                Shortcut.AllSavedShortcuts.Add(_shortcutToEdit);
-
-            // Save all shortcuts just to be sure
-            Shortcut.SaveAllShortcuts();
+            ShortcutRepository.AddShortcut(_shortcutToEdit);
 
             // We've saved, so mark it as so
             _isUnsaved = false;
@@ -604,7 +597,6 @@ namespace HeliosPlus.UIForms
                 matchingImageListViewItems.First().Selected = true;
                 matchingImageListViewItems.First().Focused = true;
             }
-
         }
 
         private async void ShortcutForm_Load(object sender, EventArgs e)
@@ -686,21 +678,7 @@ namespace HeliosPlus.UIForms
 
             // Now start populating the other fields
 
-            if (_shortcutToEdit.Id == 0)
-            {
-                // This is a new Shortcut so we need to figure out what the next
-                // ID will need to be set to.
-                try
-                {
-                    _id = (from shortcut in Shortcut.AllSavedShortcuts select shortcut.Id).Max<uint>() + 1;
-                }
-                catch
-                {
-                    _id = 1;
-                }
-            }
-            else
-                _id = _shortcutToEdit.Id;
+            _id = _shortcutToEdit.Id;
             // Set if we launch App/Game/NoGame
             switch (_shortcutToEdit.Category)
             {

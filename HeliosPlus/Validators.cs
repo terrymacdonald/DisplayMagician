@@ -66,7 +66,7 @@ namespace HeliosPlus
             }
 
             // Create an array of shortcuts we have
-            var shortcuts = Shortcut.LoadAllShortcuts().ToArray();
+            var shortcuts = ShortcutRepository.AllShortcuts.ToArray();
             // Check if the user supplied a valid shortcut name
             int profileIndex = shortcuts.Length > 0 ? Array.FindIndex(shortcuts, p => p.Name.Contains(shortcutName)) : -1;
             

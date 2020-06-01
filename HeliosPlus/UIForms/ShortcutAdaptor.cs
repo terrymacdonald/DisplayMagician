@@ -42,26 +42,16 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                string shortcutName = key.ToString();
+                Shortcut shortcut = (Shortcut) key;
 
-                Shortcut shortcutToUse = null;
-
-                foreach (Shortcut profileToTest in Shortcut.AllSavedShortcuts)
-                {
-                    if (profileToTest.Name == shortcutName)
-                    {
-                        shortcutToUse = profileToTest;
-                    }
-
-                }
-
-                if (shortcutToUse == null)
+                if (shortcut == null)
                 {
                     return null;
                 }
 
-                Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
-                return shortcutToUse.ShortcutBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+                //Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
+                //return shortcut.ShortcutBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+                return shortcut.ShortcutBitmap;
             }
             catch {
                 // If we have a problem with converting the submitted key to a profile
@@ -89,12 +79,12 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                string shortcutName = (string)key;
-                return shortcutName;
+                Shortcut shortcutName = (Shortcut) key;
+                return shortcutName.Name;
             }
             catch
             {
-                // If we have a problem with converting the submitted key to a profile
+                // If we have a problem with converting the submitted key to a Shortcut
                 // Then we return null
                 return null;
             }
@@ -145,31 +135,21 @@ namespace HeliosPlus.UIForms
             try
             {
 
-                Shortcut shortcut = (Shortcut)key;
-                Shortcut shortcutToUse = null;
-
-                foreach (Shortcut shortcutToTest in Shortcut.AllSavedShortcuts)
-                {
-                    if (shortcutToTest.Name == shortcut.Name)
-                    {
-                        shortcutToUse = shortcutToTest;
-                    }
-
-                }
+                Shortcut shortcut = (Shortcut) key;
 
                 // Get file info
-                if (shortcutToUse.ShortcutBitmap is Bitmap)
+                if (shortcut.ShortcutBitmap is Bitmap)
                 {
                     DateTime now = DateTime.Now;
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateModified, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FileSize, string.Empty, (long)0));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, shortcutToUse.SavedShortcutIconCacheFilename));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, shortcut.SavedShortcutIconCacheFilename));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, new Size(shortcutToUse.ShortcutBitmap.Width, shortcutToUse.ShortcutBitmap.Height)));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, new SizeF((float)shortcutToUse.ShortcutBitmap.Width, (float)shortcutToUse.ShortcutBitmap.Height)));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, shortcutToUse.Name));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, new Size(shortcut.ShortcutBitmap.Width, shortcut.ShortcutBitmap.Height)));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, new SizeF((float)shortcut.ShortcutBitmap.Width, (float)shortcut.ShortcutBitmap.Height)));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, shortcut.Name));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.EquipmentModel, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateTaken, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Artist, string.Empty, ""));

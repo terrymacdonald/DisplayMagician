@@ -33,11 +33,12 @@ namespace HeliosPlus
 
     public class Shortcut
     {
-
+        
         private static List<Shortcut> _allSavedShortcuts = new List<Shortcut>();
         private MultiIcon _shortcutIcon, _originalIcon = null;
         private Bitmap _shortcutBitmap, _originalBitmap = null;
         private Profile _profileToUse = null;
+        private uint _id = 0;
         private string _profileName = "";
         private bool _isPossible = false;
 
@@ -52,7 +53,19 @@ namespace HeliosPlus
 
         public static Version Version = new Version(1, 0);
 
-        public uint Id { get; set; } = 0;
+        public uint Id
+        {
+            get
+            {
+                if (_id == 0)
+                    _id = ShortcutRepository.GetNextAvailableShortcutId();
+                return _id;
+            }
+            set
+            {
+                _id = value;
+            }
+        }
         
         public string Name { get; set; } = "";
 
@@ -146,7 +159,7 @@ namespace HeliosPlus
                     if (OriginalBitmap == null)
                         return null;
 
-                    _shortcutBitmap = new ProfileIcon(ProfileToUse).ToBitmapOverly(OriginalBitmap);
+                    _shortcutBitmap = new ProfileIcon(ProfileToUse).ToBitmapOverlay(OriginalBitmap,128 ,128);
                     return _shortcutBitmap;
                 }
             }
@@ -157,33 +170,8 @@ namespace HeliosPlus
             }
         }
 
-        [JsonIgnore]
-        public static string SavedShortcutsFilePath
-        {
-            get => Path.Combine(Program.AppDataPath, $"Shortcuts\\Shortcuts_{Version.ToString(2)}.json");
-        }
-
-        [JsonIgnore]
-        public static string SavedShortcutsPath
-        {
-            get => Path.Combine(Program.AppDataPath, $"Shortcuts");
-        }
-
         public string SavedShortcutIconCacheFilename { get; set; }
 
-       
-        [JsonIgnore]
-        public static List<Shortcut> AllSavedShortcuts
-        {
-            get
-            {
-                if (_allSavedShortcuts.Count == 0)
-                {
-                    Shortcut.LoadAllShortcuts();
-                }
-                return _allSavedShortcuts;
-            }
-        }
 
         [JsonIgnore]
         public bool IsPossible
@@ -195,8 +183,45 @@ namespace HeliosPlus
             set
             {
                 _isPossible = value;
-    }
+            }
         }
+
+
+        public  bool CopyTo (Shortcut shortcut, bool overwriteId = false)
+        {
+            if (!(shortcut is Shortcut))
+                return false;
+
+            if (overwriteId)
+                shortcut.Id = Id;
+
+            // Copy all the shortcut data over to the other Shortcut
+            shortcut.Name = Name;
+            shortcut.ProfileToUse = ProfileToUse;
+            shortcut.ProfileName = ProfileName;
+            shortcut.Permanence = Permanence;
+            shortcut.Category = Category;
+            shortcut.DifferentExecutableToMonitor = DifferentExecutableToMonitor;
+            shortcut.ExecutableNameAndPath = ExecutableNameAndPath;
+            shortcut.ExecutableTimeout = ExecutableTimeout;
+            shortcut.ExecutableArguments = ExecutableArguments;
+            shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
+            shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
+            shortcut.GameAppId = GameAppId;
+            shortcut.GameName = GameName;
+            shortcut.GameLibrary = GameLibrary;
+            shortcut.GameTimeout = GameTimeout;
+            shortcut.GameArguments = GameArguments;
+            shortcut.GameArgumentsRequired = GameArgumentsRequired;
+            shortcut.OriginalIconPath = OriginalIconPath;
+            shortcut.OriginalBitmap = OriginalBitmap;
+            shortcut.ShortcutBitmap = ShortcutBitmap;
+            shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
+            shortcut.IsPossible = IsPossible;
+
+            return true;
+        }
+
 
         public static Bitmap ExtractVistaIcon(Icon icoIcon)
         {
@@ -231,193 +256,6 @@ namespace HeliosPlus
             return bmpPngExtracted;
         }
 
-        public void SaveShortcutIconToCache()
-        {
-            if (_shortcutIcon == null)
-            {
-
-                if (!Directory.Exists(SavedShortcutsPath))
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(SavedShortcutsPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Unable to create Shortcut folder " + SavedShortcutsPath + ": " + ex.Message);
-                    }
-                }
-
-                // Only add the rest of the options if the permanence is temporary
-                if (Permanence == ShortcutPermanence.Temporary)
-                {
-                    // Only add this set of options if the shortcut is to an standalone application
-                    if (Category == ShortcutCategory.Application)
-                    {
-                        // Work out the name of the shortcut we'll save.
-                        SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"executable-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", Path.GetFileNameWithoutExtension(ExecutableNameAndPath), @".ico"));
-
-                    }
-                    // Only add the rest of the options if the temporary switch radio button is set
-                    // and if the game launching radio button is set
-                    else if (Permanence == ShortcutPermanence.Temporary)
-                    {
-                        // TODO need to make this work so at least one game library is installed
-                        // i.e. if (!SteamGame.SteamInstalled && !UplayGame.UplayInstalled )
-                        if (GameLibrary == SupportedGameLibrary.Steam)
-                        {
-                            // Work out the name of the shortcut we'll save.
-                            SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"steam-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
-
-                        }
-                        else if (GameLibrary == SupportedGameLibrary.Uplay)
-                        {
-                            // Work out the name of the shortcut we'll save.
-                            SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"uplay-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), "-", GameAppId.ToString(), @".ico"));
-                        }
-
-                    }
-
-                }
-                // Only add the rest of the options if the shortcut is permanent 
-                else
-                {
-                    // Work out the name of the shortcut we'll save.
-                    SavedShortcutIconCacheFilename = Path.Combine(SavedShortcutsPath, String.Concat(@"permanent-", Program.GetValidFilename(Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
-                }
-
-                try
-                {
-                    _shortcutIcon = new ProfileIcon(ProfileToUse).ToIconOverly(OriginalIconPath);
-                    _shortcutIcon.Save(SavedShortcutIconCacheFilename, MultiIconFormat.ICO);
-                }
-                catch (Exception ex)
-                {
-                    // If we fail to create an icon based on the original executable or game
-                    // Then we use the standard HeliosPlus profile one.
-                    _shortcutIcon = new ProfileIcon(ProfileToUse).ToIcon();
-                    _shortcutIcon.Save(SavedShortcutIconCacheFilename, MultiIconFormat.ICO);
-                }
-            }
-        }
-
-        public static List<Shortcut> LoadAllShortcuts()
-        {
-
-            if (File.Exists(SavedShortcutsFilePath))
-            {
-                var json = File.ReadAllText(SavedShortcutsFilePath, Encoding.Unicode);
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    List<Shortcut> shortcuts = new List<Shortcut>();
-                    try
-                    {
-                        shortcuts = JsonConvert.DeserializeObject<List<Shortcut>>(json, new JsonSerializerSettings
-                        {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Ignore,
-                            DefaultValueHandling = DefaultValueHandling.Include,
-                            TypeNameHandling = TypeNameHandling.Auto
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        // ignored
-                        Console.WriteLine("Unable to deserialize shortcut: " + ex.Message);
-                    }
-
-                    // Lookup all the Profile Names in the Saved Profiles
-                    foreach (Shortcut updatedShortcut in shortcuts)
-                    {
-                        foreach (Profile profile in Profile.AllSavedProfiles)
-                        {
-
-                            if (profile.Name.Equals(updatedShortcut.ProfileName))
-                            {
-                                // And assign the matching Profile if we find it.
-                                updatedShortcut.ProfileToUse = profile;
-                                updatedShortcut.IsPossible = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    _allSavedShortcuts = shortcuts;
-
-                    return _allSavedShortcuts;
-                }
-            }
-
-            // If we get here, then we don't have any shortcuts saved!
-            // So we gotta start from scratch
-            // Create a new empty list of all our display profiles as we don't have any saved!
-            _allSavedShortcuts = new List<Shortcut>();
-
-            return _allSavedShortcuts;
-        }
-
-        public static bool SaveAllShortcuts()
-        {
-            if (SaveAllShortcuts(_allSavedShortcuts))
-                return true;
-            return false;
-        }
-
-        public static bool SaveAllShortcuts(List<Shortcut> shortcutsToSave)
-        {
-
-            if (!Directory.Exists(SavedShortcutsPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(SavedShortcutsPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Unable to create Shortcut folder " + SavedShortcutsPath + ": " + ex.Message);
-                }
-            }
-
-
-            // Now we loop over the profiles and save their images for later
-            foreach (Shortcut shortcutToSave in shortcutsToSave)
-                shortcutToSave.SaveShortcutIconToCache();
-
-            try
-            {
-                var json = JsonConvert.SerializeObject(shortcutsToSave, Formatting.Indented, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
-                    TypeNameHandling = TypeNameHandling.Auto
-
-                });
-
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    var dir = Path.GetDirectoryName(SavedShortcutsPath);
-
-                    if (dir != null)
-                    {
-                        Directory.CreateDirectory(dir);
-                        File.WriteAllText(SavedShortcutsFilePath, json, Encoding.Unicode);
-
-                        return true;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Unable to serialize profile: " + ex.Message);
-            }
-
-            // Overwrite the list of saved profiles as the new lot we received.
-            _allSavedShortcuts = shortcutsToSave;
-
-            return false;
-        }
 
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
@@ -517,14 +355,6 @@ namespace HeliosPlus
             // Return a status on how it went
             // true if it was a success or false if it was not
             return shortcutFileName != null && File.Exists(shortcutFileName);
-        }
-
-        public static bool NameAlreadyExists(string shortcutName)
-        {
-            if (AllSavedShortcuts.Exists(item => item.Name.Equals(shortcutName)))
-                return true;
-            else
-                return false;
         }
 
     }
