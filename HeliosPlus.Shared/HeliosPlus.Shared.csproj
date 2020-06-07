@@ -46,7 +46,7 @@
     <Compile Include="NVIDIA\SurroundHelper.cs" />
     <Compile Include="NVIDIA\SurroundTopologyDisplay.cs" />
     <Compile Include="PixelShift.cs" />
-    <Compile Include="Profile.cs" />
+    <Compile Include="ProfileItem.cs" />
     <Compile Include="NVIDIA\SurroundTopology.cs" />
     <Compile Include="HeliosStartupAction.cs" />
     <Compile Include="ProfileIcon.cs" />

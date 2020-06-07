@@ -42,7 +42,7 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                Shortcut shortcut = (Shortcut) key;
+                ShortcutItem shortcut = (ShortcutItem) key;
 
                 if (shortcut == null)
                 {
@@ -79,7 +79,7 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                Shortcut shortcutName = (Shortcut) key;
+                ShortcutItem shortcutName = (ShortcutItem) key;
                 return shortcutName.Name;
             }
             catch
@@ -135,7 +135,7 @@ namespace HeliosPlus.UIForms
             try
             {
 
-                Shortcut shortcut = (Shortcut) key;
+                ShortcutItem shortcut = (ShortcutItem) key;
 
                 // Get file info
                 if (shortcut.ShortcutBitmap is Bitmap)

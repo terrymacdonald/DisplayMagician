@@ -12,7 +12,7 @@ namespace HeliosPlus.ShellExtension
 
         public static void Open(
             HeliosStartupAction action = HeliosStartupAction.None,
-            Profile profile = null,
+            ProfileItem profile = null,
             string programAddress = null,
             bool asAdmin = false)
         {
@@ -29,7 +29,7 @@ namespace HeliosPlus.ShellExtension
 
         public static void OpenSteamGame(
             HeliosStartupAction action = HeliosStartupAction.None,
-            Profile profile = null,
+            ProfileItem profile = null,
             uint steamAppId = 0)
         {
             try

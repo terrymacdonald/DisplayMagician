@@ -34,10 +34,10 @@ namespace HeliosPlus {
         //internal static string ShortcutIconCachePath;
 
 
-        internal static Profile GetProfile(string profileName)
+        internal static ProfileItem GetProfile(string profileName)
         {
             // Create an array of display profiles we have
-            var profiles = Profile.LoadAllProfiles().ToArray();
+            var profiles = ProfileItem.LoadAllProfiles().ToArray();
             // Check if the user supplied a --profile option using the profiles' ID
             var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(profileName, StringComparison.InvariantCultureIgnoreCase)) : -1;
             // If the profileID wasn't there, maybe they used the profile name?
@@ -50,7 +50,7 @@ namespace HeliosPlus {
             return profiles[profileIndex];
         }
 
-        internal static bool GoProfile(Profile profile)
+        internal static bool GoProfile(ProfileItem profile)
         {
             if (profile.IsActive)
             {
@@ -92,12 +92,12 @@ namespace HeliosPlus {
             }
         }
 
-        private static void EditProfile(Profile profile)
+        private static void EditProfile(ProfileItem profile)
         {
             // Get the status of the thing
             IPCService.GetInstance().Status = InstanceStatus.User;
             // Load all the profiles from JSON
-            Profile.LoadAllProfiles().ToArray();
+            ProfileItem.LoadAllProfiles().ToArray();
             // Start up the DisplayProfileForm directly
             new DisplayProfileForm(profile).ShowDialog();
             // Then we close down as we're only here to edit one profile
@@ -268,9 +268,9 @@ namespace HeliosPlus {
             
         }
 
-        private static void SwitchToExecutable(Profile profile, string executableToRun, string processToMonitor, uint timeout, string executableArguments)
+        private static void SwitchToExecutable(ProfileItem profile, string executableToRun, string processToMonitor, uint timeout, string executableArguments)
         {
-            var rollbackProfile = Profile.CurrentProfile;
+            var rollbackProfile = ProfileItem.CurrentProfile;
 
             if (!profile.IsPossible)
             {
@@ -372,7 +372,7 @@ namespace HeliosPlus {
 
 
 
-        private static void SwitchToSteamGame(Profile profile, string steamGameIdToRun, uint timeout, string steamGameArguments)
+        private static void SwitchToSteamGame(ProfileItem profile, string steamGameIdToRun, uint timeout, string steamGameArguments)
         {
 
             // Convert the steamGameIdToRun string to a uint for Steam Games
@@ -383,7 +383,7 @@ namespace HeliosPlus {
             }
 
             // Save the profile we're on now
-            var rollbackProfile = Profile.CurrentProfile;
+            var rollbackProfile = ProfileItem.CurrentProfile;
 
             // Check that the profile we've been asked to change to will actually work
             if (!profile.IsPossible)
@@ -512,10 +512,10 @@ namespace HeliosPlus {
 
         }
 
-        private static void SwitchToUplayGame(Profile profile, string uplayGameIdToRun, uint timeout, string uplayGameArguments)
+        private static void SwitchToUplayGame(ProfileItem profile, string uplayGameIdToRun, uint timeout, string uplayGameArguments)
         {
 
-            var rollbackProfile = Profile.CurrentProfile;
+            var rollbackProfile = ProfileItem.CurrentProfile;
 
             if (!profile.IsPossible)
             {
@@ -641,9 +641,9 @@ namespace HeliosPlus {
 
 
         // ReSharper disable once CyclomaticComplexity
-        private static void SwitchToProfile(Profile profile)
+        private static void SwitchToProfile(ProfileItem profile)
         {
-            var rollbackProfile = Profile.CurrentProfile;
+            var rollbackProfile = ProfileItem.CurrentProfile;
 
             if (
                 IPCClient.QueryAll()

@@ -18,12 +18,12 @@ using WindowsDisplayAPI;
 
 namespace HeliosPlus.Shared
 {
-    public class Profile
+    public class ProfileItem
     {
-        private static Profile _currentProfile;
-        private static List<Profile> _allSavedProfiles = new List<Profile>();
+        private static ProfileItem _currentProfile;
+        private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
-        private Bitmap _profileBitmap;
+        private Bitmap _profileBitmap, _profileShortcutBitmap;
         private static List<Display> _availableDisplays;
         private static List<UnAttachedDisplay> _unavailableDisplays;
 
@@ -89,7 +89,7 @@ namespace HeliosPlus.Shared
         }
 
         #endregion
-        static Profile()
+        static ProfileItem()
         {
             try
             {
@@ -162,19 +162,19 @@ namespace HeliosPlus.Shared
             get => System.IO.Path.Combine(AppDataPath, $"Profiles");
         }
 
-        public static List<Profile> AllSavedProfiles 
+        public static List<ProfileItem> AllSavedProfiles 
         {
             get
             {
                 if (_allSavedProfiles.Count == 0)
                 {
-                    Profile.LoadAllProfiles();
+                    ProfileItem.LoadAllProfiles();
                 }
                 return _allSavedProfiles;
             }
         }
 
-        public static Profile CurrentProfile
+        public static ProfileItem CurrentProfile
         {
             get => _currentProfile;
         }
@@ -211,7 +211,7 @@ namespace HeliosPlus.Shared
                     return _profileBitmap;
                 else
                 {
-                    _profileBitmap = this.ProfileIcon.ToBitmap(128, 128);
+                    _profileBitmap = this.ProfileIcon.ToBitmap(256, 256);
                     return _profileBitmap;
                 }
             }
@@ -222,7 +222,27 @@ namespace HeliosPlus.Shared
 
         }
 
-        public static List<Profile> LoadAllProfiles()
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public Bitmap ProfileTightestBitmap
+        {
+            get
+            {
+                if (_profileShortcutBitmap != null)
+                    return _profileShortcutBitmap;
+                else
+                {
+                    _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
+                    return _profileShortcutBitmap;
+                }
+            }
+            set
+            {
+                _profileShortcutBitmap = value;
+            }
+
+        }
+
+        public static List<ProfileItem> LoadAllProfiles()
         {
             
             if (File.Exists(SavedProfilesFilePath))
@@ -231,11 +251,11 @@ namespace HeliosPlus.Shared
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    List<Profile> profiles = new List<Profile>();
+                    List<ProfileItem> profiles = new List<ProfileItem>();
                     try
                     {
                         //var profiles = JsonConvert.DeserializeObject<Profile[]>(json, new JsonSerializerSettings
-                        profiles = JsonConvert.DeserializeObject<List<Profile>>(json, new JsonSerializerSettings
+                        profiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
@@ -254,7 +274,7 @@ namespace HeliosPlus.Shared
                     //List<Profile> profilesList = profiles.ToList<Profile>();
 
                     // Find which entry is being used now, and save that info in a class variable
-                    Profile myCurrentProfile = new Profile
+                    ProfileItem myCurrentProfile = new ProfileItem
                     {
                         Name = "Current Display Profile",
                         Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
@@ -262,7 +282,7 @@ namespace HeliosPlus.Shared
 
                     _currentProfile = myCurrentProfile;
 
-                    foreach (Profile loadedProfile in profiles)
+                    foreach (ProfileItem loadedProfile in profiles)
                     {
                         // Save a profile Icon to the profile
                         loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
@@ -283,7 +303,7 @@ namespace HeliosPlus.Shared
             // If we get here, then we don't have any profiles saved!
             // So we gotta start from scratch
             // Create a new profile based on our current display settings
-            _currentProfile = new Profile
+            _currentProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
                 Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
@@ -294,14 +314,14 @@ namespace HeliosPlus.Shared
             _currentProfile.ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(128, 128);
 
             // Create a new empty list of all our display profiles as we don't have any saved!
-            _allSavedProfiles = new List<Profile>();
+            _allSavedProfiles = new List<ProfileItem>();
 
             return _allSavedProfiles;
         }
 
         public static bool IsValidName(string testName)
         {
-            foreach (Profile loadedProfile in _allSavedProfiles)
+            foreach (ProfileItem loadedProfile in _allSavedProfiles)
             {
                 if (loadedProfile.Name == testName)
                 {
@@ -314,7 +334,7 @@ namespace HeliosPlus.Shared
 
         public static bool IsValidId(string testId)
         {
-            foreach (Profile loadedProfile in _allSavedProfiles)
+            foreach (ProfileItem loadedProfile in _allSavedProfiles)
             {
                 if (loadedProfile.Id == testId)
                 {
@@ -328,7 +348,7 @@ namespace HeliosPlus.Shared
 
         public static void UpdateCurrentProfile()
         {
-            _currentProfile = new Profile
+            _currentProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
                 Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
@@ -342,7 +362,7 @@ namespace HeliosPlus.Shared
             return false;
         }
 
-        public static bool SaveAllProfiles(List<Profile> profilesToSave)
+        public static bool SaveAllProfiles(List<ProfileItem> profilesToSave)
         {
 
             if (!Directory.Exists(SavedProfilesPath))
@@ -359,7 +379,7 @@ namespace HeliosPlus.Shared
 
 
             // Now we loop over the profiles and save their images for later
-            foreach (Profile profileToSave in profilesToSave)
+            foreach (ProfileItem profileToSave in profilesToSave)
             {
                 profileToSave.SaveProfileImageToCache();
             }
@@ -403,11 +423,11 @@ namespace HeliosPlus.Shared
         // The public override for the Object.Equals
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as Profile);
+            return this.Equals(obj as ProfileItem);
         }
 
         // Profiles are equal if their contents (except name) are equal
-        public bool Equals(Profile other)
+        public bool Equals(ProfileItem other)
         {
 
             // If parameter is null, return false.
@@ -591,10 +611,10 @@ namespace HeliosPlus.Shared
 
     // Custom comparer for the Profile class
     // Allows us to use 'Contains'
-    class ProfileComparer : IEqualityComparer<Profile>
+    class ProfileComparer : IEqualityComparer<ProfileItem>
     {
         // Products are equal if their names and product numbers are equal.
-        public bool Equals(Profile x, Profile y)
+        public bool Equals(ProfileItem x, ProfileItem y)
         {
 
             //Check whether the compared objects reference the same data.
@@ -616,7 +636,7 @@ namespace HeliosPlus.Shared
 
         // If Equals() returns true for a pair of objects
         // then GetHashCode() must return the same value for these objects.
-        public int GetHashCode(Profile profile)
+        public int GetHashCode(ProfileItem profile)
         {
 
             // Check whether the object is null

@@ -18,7 +18,7 @@ namespace HeliosPlus.ShellExtension
         {
             return Helios.IsInstalled &&
                    SelectedItemPaths.Count() == 1 &&
-                   Profile.LoadAllProfiles().Any() &&
+                   ProfileItem.LoadAllProfiles().Any() &&
                    Path.GetExtension(SelectedItemPaths.First())?.ToLower() == @".exe";
         }
 
@@ -28,11 +28,11 @@ namespace HeliosPlus.ShellExtension
             var extensionMenu = new ToolStripMenuItem(Language.Open_under_Display_Profile,
                 Properties.Resources.Icon_x16);
 
-            if (Profile.LoadAllProfiles().Any())
+            if (ProfileItem.LoadAllProfiles().Any())
             {
-                Profile.UpdateCurrentProfile();
+                ProfileItem.UpdateCurrentProfile();
 
-                foreach (var profile in Profile.LoadAllProfiles())
+                foreach (var profile in ProfileItem.LoadAllProfiles())
                 {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
                 }
@@ -52,7 +52,7 @@ namespace HeliosPlus.ShellExtension
             return explorerMenu;
         }
 
-        private ToolStripMenuItem CreateProfileMenu(Profile profile)
+        private ToolStripMenuItem CreateProfileMenu(ProfileItem profile)
         {
             var profileMenu = new ToolStripMenuItem(profile.Name, new ProfileIcon(profile).ToBitmap(16, 16));
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Run, null,

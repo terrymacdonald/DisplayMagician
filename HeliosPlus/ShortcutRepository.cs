@@ -18,7 +18,7 @@ namespace HeliosPlus
     {
         #region Class Variables
         // Common items to the class
-        private static List<Shortcut> _allShortcuts = new List<Shortcut>();
+        private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
         public static Version Version = new Version(1, 0, 0);
         // Other constants that are useful
         private static string _shortcutStorageJsonPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
@@ -38,21 +38,21 @@ namespace HeliosPlus
             if (LoadShortcuts() && ShortcutCount > 0)
             {
                 // Work out the starting NextShortcutId value
-                long max = _allShortcuts.Max<Shortcut>(item => item.Id);
+                long max = _allShortcuts.Max<ShortcutItem>(item => item.Id);
                 _lastShortcutId = Convert.ToUInt32(max);
             } else
                 _lastShortcutId = 0;
         }
 
-        public ShortcutRepository(Shortcut shortcut) : this()
+        public ShortcutRepository(ShortcutItem shortcut) : this()
         {
-            if (shortcut is Shortcut)
+            if (shortcut is ShortcutItem)
                 AddShortcut(shortcut);
         }
         #endregion
 
         #region Class Properties
-        public static List<Shortcut> AllShortcuts
+        public static List<ShortcutItem> AllShortcuts
         {
             get
             {
@@ -61,7 +61,7 @@ namespace HeliosPlus
                     if (LoadShortcuts() && ShortcutCount > 0)
                     {
                         // Work out the starting NextShortcutId value
-                        long max = _allShortcuts.Max<Shortcut>(item => item.Id);
+                        long max = _allShortcuts.Max<ShortcutItem>(item => item.Id);
                         _lastShortcutId = Convert.ToUInt32(max);
                     }
                     else
@@ -83,9 +83,9 @@ namespace HeliosPlus
         #endregion
 
         #region Class Methods
-        public static bool AddShortcut(Shortcut shortcut)
+        public static bool AddShortcut(ShortcutItem shortcut)
         {
-            if (!(shortcut is Shortcut))
+            if (!(shortcut is ShortcutItem))
                 return false;
 
             // Doublecheck if it already exists
@@ -93,7 +93,7 @@ namespace HeliosPlus
             if (ContainsShortcut(shortcut))
             {
                 // We update the existing Shortcut with the data over
-                Shortcut shortcutToUpdate = GetShortcut(shortcut.Id);
+                ShortcutItem shortcutToUpdate = GetShortcut(shortcut.Id);
                 shortcut.CopyTo(shortcutToUpdate);
             }
             else
@@ -118,14 +118,14 @@ namespace HeliosPlus
 
         }
 
-        public static bool RemoveShortcut(Shortcut shortcut)
+        public static bool RemoveShortcut(ShortcutItem shortcut)
         {
-            if (!(shortcut is Shortcut))
+            if (!(shortcut is ShortcutItem))
                 return false;
 
             // Remove the Shortcut Icons from the Cache
-            List<Shortcut> shortcutsToRemove = _allShortcuts.FindAll(item => item.Id.Equals(shortcut.Id));
-            foreach (Shortcut shortcutToRemove in shortcutsToRemove)
+            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.Id.Equals(shortcut.Id));
+            foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
             {
                 try
                 {
@@ -158,8 +158,8 @@ namespace HeliosPlus
                 return false;
 
             // Remove the Shortcut Icons from the Cache
-            List<Shortcut> shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutName));
-            foreach (Shortcut shortcutToRemove in shortcutsToRemove)
+            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutName));
+            foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
             {
                 try
                 {
@@ -192,8 +192,8 @@ namespace HeliosPlus
                 return false;
 
             // Remove the Shortcut Icons from the Cache
-            List<Shortcut> shortcutsToRemove = _allShortcuts.FindAll(item => item.Id.Equals(shortcutId));
-            foreach (Shortcut shortcutToRemove in shortcutsToRemove)
+            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.Id.Equals(shortcutId));
+            foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
             {
                 try
                 {
@@ -220,12 +220,12 @@ namespace HeliosPlus
         }
 
 
-        public static bool ContainsShortcut(Shortcut shortcut)
+        public static bool ContainsShortcut(ShortcutItem shortcut)
         {
-            if (!(shortcut is Shortcut))
+            if (!(shortcut is ShortcutItem))
                 return false;
 
-            foreach (Shortcut testShortcut in _allShortcuts)
+            foreach (ShortcutItem testShortcut in _allShortcuts)
             {
                 if (testShortcut.Id.Equals(shortcut.Id))
                     return true;
@@ -239,7 +239,7 @@ namespace HeliosPlus
             if (String.IsNullOrWhiteSpace(shortcutName))
                 return false;
 
-            foreach (Shortcut testShortcut in _allShortcuts)
+            foreach (ShortcutItem testShortcut in _allShortcuts)
             {
                 if (testShortcut.Name.Equals(shortcutName))
                     return true;
@@ -254,7 +254,7 @@ namespace HeliosPlus
             if (shortcutId == 0)
                 return true;
 
-            foreach (Shortcut testShortcut in _allShortcuts)
+            foreach (ShortcutItem testShortcut in _allShortcuts)
             {
                 if (testShortcut.Id.Equals(shortcutId))
                     return true;
@@ -265,12 +265,12 @@ namespace HeliosPlus
         }
 
 
-        public static Shortcut GetShortcut(string shortcutName)
+        public static ShortcutItem GetShortcut(string shortcutName)
         {
             if (String.IsNullOrWhiteSpace(shortcutName))
                 return null;
 
-            foreach (Shortcut testShortcut in _allShortcuts)
+            foreach (ShortcutItem testShortcut in _allShortcuts)
             {
                 if (testShortcut.Name.Equals(shortcutName))
                     return testShortcut;
@@ -279,12 +279,12 @@ namespace HeliosPlus
             return null;
         }
 
-        public static Shortcut GetShortcut(uint shortcutId)
+        public static ShortcutItem GetShortcut(uint shortcutId)
         {
             if (shortcutId == 0)
                 return null;
 
-            foreach (Shortcut testShortcut in _allShortcuts)
+            foreach (ShortcutItem testShortcut in _allShortcuts)
             {
                 if (testShortcut.Id.Equals(shortcutId))
                     return testShortcut;
@@ -309,10 +309,10 @@ namespace HeliosPlus
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    List<Shortcut> shortcuts = new List<Shortcut>();
+                    List<ShortcutItem> shortcuts = new List<ShortcutItem>();
                     try
                     {
-                        _allShortcuts = JsonConvert.DeserializeObject<List<Shortcut>>(json, new JsonSerializerSettings
+                        _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
@@ -327,9 +327,9 @@ namespace HeliosPlus
                     }
 
                     // Lookup all the Profile Names in the Saved Profiles
-                    foreach (Shortcut updatedShortcut in _allShortcuts)
+                    foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
-                        foreach (Profile profile in Profile.AllSavedProfiles)
+                        foreach (ProfileItem profile in ProfileItem.AllSavedProfiles)
                         {
 
                             if (profile.Name.Equals(updatedShortcut.ProfileName))
@@ -387,7 +387,7 @@ namespace HeliosPlus
             return false;
         }
 
-        private static void SaveShortcutIconToCache(Shortcut shortcut)
+        private static void SaveShortcutIconToCache(ShortcutItem shortcut)
         {
 
             // Only add the rest of the options if the permanence is temporary
@@ -431,14 +431,15 @@ namespace HeliosPlus
             MultiIcon shortcutIcon;
             try
             {
-                shortcutIcon = new ProfileIcon(shortcut.ProfileToUse).ToIconOverlay(shortcut.OriginalIconPath);
+                //shortcutIcon = new ProfileIcon(shortcut.ProfileToUse).ToIconOverlay(shortcut.OriginalIconPath);
+                shortcutIcon = shortcut.ToIconOverlay();
                 shortcutIcon.Save(shortcut.SavedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
             catch (Exception ex)
             {
                 // If we fail to create an icon based on the original executable or game
                 // Then we use the standard HeliosPlus profile one.
-                shortcutIcon = new ProfileIcon(shortcut.ProfileToUse).ToIcon();
+                shortcutIcon = shortcut.ProfileToUse.ProfileIcon.ToIcon();
                 shortcutIcon.Save(shortcut.SavedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
         }

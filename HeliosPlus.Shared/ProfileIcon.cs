@@ -4,6 +4,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Windows.Forms;
 using HeliosPlus.Shared.Topology;
 
 namespace HeliosPlus.Shared
@@ -11,9 +12,9 @@ namespace HeliosPlus.Shared
     public class ProfileIcon
     {
 
-        private Profile _profile;
+        private ProfileItem _profile;
 
-        public ProfileIcon(Profile profile, int paddingX = 100, int paddingY = 100)
+        public ProfileIcon(ProfileItem profile, int paddingX = 100, int paddingY = 100)
         {
             _profile = profile;
             PaddingX = paddingX;
@@ -72,19 +73,19 @@ namespace HeliosPlus.Shared
 
         public static Size NormalizeResolution(ProfileViewport path)
         {
-            var bigest = Size.Empty;
+            var biggest = Size.Empty;
 
             foreach (var target in path.TargetDisplays)
             {
                 var res = NormalizeResolution(path.Resolution, target.Rotation);
 
-                if ((ulong) res.Width * (ulong) res.Height > (ulong) bigest.Width * (ulong) bigest.Height)
+                if ((ulong) res.Width * (ulong) res.Height > (ulong) biggest.Width * (ulong) biggest.Height)
                 {
-                    bigest = res;
+                    biggest = res;
                 }
             }
 
-            return bigest.IsEmpty ? path.Resolution : bigest;
+            return biggest.IsEmpty ? path.Resolution : biggest;
         }
 
 
@@ -127,7 +128,7 @@ namespace HeliosPlus.Shared
             return path;
         }
 
-        public Bitmap ToBitmap(int width = 128, int height = 128, PixelFormat format = PixelFormat.Format32bppArgb)
+        public Bitmap ToBitmap(int width = 256, int height = 256, PixelFormat format = PixelFormat.Format32bppArgb)
         {
             var bitmap = new Bitmap(width, height, format);
             bitmap.MakeTransparent();
@@ -141,40 +142,73 @@ namespace HeliosPlus.Shared
             return bitmap;
         }
 
-        public Bitmap ToBitmapOverlay(Bitmap bitmap, int width = 0, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
+        public Bitmap ToTightestBitmap(int width = 256, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
         {
-
-            if (width == 0)
-                width = bitmap.Width;
+            var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
+            int viewSizeRatio = Convert.ToInt32(viewSize.Width / viewSize.Height);
 
             if (height == 0)
-                height = bitmap.Height;
+                height = width * viewSizeRatio;
 
-            var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
-            int viewSizeRatio = (int) Math.Round(viewSize.Width * viewSize.Height);
-            int overlayWidth = (int) Math.Round(width * 0.7f,0);
-            int overlayHeight = overlayWidth / viewSizeRatio;
-            int overlayX = width - overlayWidth;
-            int overlayY = height - overlayHeight;
-            Point overlayPosition = new Point(overlayX, overlayY);
-            Size overlaySize = new Size(overlayWidth, overlayHeight);
-            Rectangle overlayRect = new Rectangle(overlayPosition, overlaySize);
-            //var width = bitmap.Width * 0.7f;
-            //var height = width / viewSize.Width * viewSize.Height;
+            var bitmap = new Bitmap(width, height, format);
+            bitmap.MakeTransparent();
 
-            var combinedBitmap = new Bitmap(width, height, format);
-            combinedBitmap.MakeTransparent();
-
-            using (var g = Graphics.FromImage(combinedBitmap))
+            using (var g = Graphics.FromImage(bitmap))
             {
                 g.SmoothingMode = SmoothingMode.HighQuality;
-                //g.DrawImage(bitmap, 0, 0, width, height);
-                g.TranslateTransform(overlayX, overlayY);
-                //Rectangle compressionRectangle = new Rectangle(300, 10,
-                //myBitmap.Width / 2, myBitmap.Height / 2);
-                g.DrawRectangle(new Pen(Color.FromArgb(125, 50, 50, 50), 2f), overlayRect);
+                DrawView(g, width, height);
+            }
 
-                DrawView(g, overlayWidth, overlayHeight);
+            return bitmap;
+        }
+
+        public Bitmap ToBitmapOverlay(Bitmap bitmap)
+        {
+
+            /*            if (width == 0)
+                            width = bitmap.Width;
+
+                        if (height == 0)
+                            height = bitmap.Height;
+
+                        var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
+                        int viewSizeRatio = (int) Math.Round(viewSize.Width / viewSize.Height);
+                        int overlayWidth = (int) Math.Round(width * 0.7f,0);
+                        int overlayHeight = overlayWidth / viewSizeRatio;
+                        int overlayX = width - overlayWidth;
+                        int overlayY = height - overlayHeight;
+                        Point overlayPosition = new Point(overlayX, overlayY);
+                        Size overlaySize = new Size(overlayWidth, overlayHeight);
+                        Rectangle overlayRect = new Rectangle(overlayPosition, overlaySize);
+                        //var width = bitmap.Width * 0.7f;
+                        //var height = width / viewSize.Width * viewSize.Height;
+
+                        var combinedBitmap = new Bitmap(width, height, format);
+                        combinedBitmap.MakeTransparent();
+
+                        using (var g = Graphics.FromImage(combinedBitmap))
+                        {
+                            g.SmoothingMode = SmoothingMode.HighQuality;
+                            //g.DrawImage(bitmap, 0, 0, width, height);
+                            g.TranslateTransform(overlayX, overlayY);
+                            //Rectangle compressionRectangle = new Rectangle(300, 10,
+                            //myBitmap.Width / 2, myBitmap.Height / 2);
+                            g.DrawRectangle(new Pen(Color.FromArgb(125, 50, 50, 50), 2f), overlayRect);
+
+                            DrawView(g, overlayWidth, overlayHeight);
+                        }
+                        return bitmap;*/
+
+
+            var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
+            var width = bitmap.Width * 0.7f;
+            var height = width / viewSize.Width * viewSize.Height;
+
+            using (var g = Graphics.FromImage(bitmap))
+            {
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                g.TranslateTransform(bitmap.Width - width, bitmap.Height - height * 1.1f);
+                DrawView(g, width, height);
             }
 
             return bitmap;

@@ -77,7 +77,8 @@
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\PackageInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\App.cs" />
-    <Compile Include="Shortcut.cs" />
+    <Compile Include="IconUtils.cs" />
+    <Compile Include="ShortcutItem.cs" />
     <Compile Include="ShortcutRepository.cs" />
     <Compile Include="UIForms\ShortcutAdaptor.cs" />
     <Compile Include="UIForms\ProfileAdaptor.cs" />
@@ -145,6 +146,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\DisplayProfileForm.resx">
       <DependentUpon>DisplayProfileForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -156,6 +158,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\ShortcutLibraryForm.resx">
       <DependentUpon>ShortcutLibraryForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

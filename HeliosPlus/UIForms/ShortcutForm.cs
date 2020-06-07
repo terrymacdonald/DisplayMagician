@@ -21,9 +21,9 @@ namespace HeliosPlus.UIForms
 
         List<SteamGame> _allSteamGames;
         private ProfileAdaptor _profileAdaptor;
-        private List<Profile> _loadedProfiles = new List<Profile>();
-        private Profile _profileToUse= null;
-        private Shortcut _shortcutToEdit = null;
+        private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
+        private ProfileItem _profileToUse= null;
+        private ShortcutItem _shortcutToEdit = null;
         private bool _isNewShortcut = false;
         private bool _isUnsaved = false;
         private bool _saveNameAutomatic = true;
@@ -43,14 +43,14 @@ namespace HeliosPlus.UIForms
             // existing Shortcut)
             if (_shortcutToEdit == null)
             {
-                _shortcutToEdit = new Shortcut();
+                _shortcutToEdit = new ShortcutItem();
                 _isNewShortcut = true;
             }
 
 
         }
 
-        public ShortcutForm(Shortcut shortcutToEdit) : this()
+        public ShortcutForm(ShortcutItem shortcutToEdit) : this()
         {
             _shortcutToEdit = shortcutToEdit;
             _isNewShortcut = false;
@@ -141,7 +141,7 @@ namespace HeliosPlus.UIForms
             }
         }
 
-        public Shortcut Shortcut
+        public ShortcutItem Shortcut
         {
             get => _shortcutToEdit;
         }
@@ -269,7 +269,7 @@ namespace HeliosPlus.UIForms
             }
 
             // Check the profile is set and that it's still valid
-            if (!(_profileToUse is Profile))
+            if (!(_profileToUse is ProfileItem))
             {
                 MessageBox.Show(
                     @"You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.",
@@ -471,7 +471,7 @@ namespace HeliosPlus.UIForms
         private bool canEnableSaveButton()
         {
             if ((txt_shortcut_save_name.Text.Length > 0) &&
-                _profileToUse is Profile &&
+                _profileToUse is ProfileItem &&
                 (rb_no_game.Checked ||
                 rb_launcher.Checked && _gameId > 0 ||
                 rb_standalone.Checked && txt_executable.Text.Length > 0))
@@ -491,7 +491,7 @@ namespace HeliosPlus.UIForms
 
         private void suggestShortcutName()
         {
-            if (_saveNameAutomatic && _profileToUse is Profile)
+            if (_saveNameAutomatic && _profileToUse is ProfileItem)
             {
                 if (rb_no_game.Checked)
                 {
@@ -588,7 +588,7 @@ namespace HeliosPlus.UIForms
 
         }
 
-        private void RefreshImageListView(Profile profile)
+        private void RefreshImageListView(ProfileItem profile)
         {
             ilv_saved_profiles.ClearSelection();
             IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
@@ -603,12 +603,12 @@ namespace HeliosPlus.UIForms
         {
 
             // Load all the profiles to prepare things
-            _loadedProfiles = (List<Profile>)Profile.LoadAllProfiles();
+            _loadedProfiles = (List<ProfileItem>)ProfileItem.LoadAllProfiles();
 
             bool foundCurrentProfileInLoadedProfiles = false;
-            foreach (Profile loadedProfile in _loadedProfiles)
+            foreach (ProfileItem loadedProfile in _loadedProfiles)
             {
-                if (Profile.CurrentProfile.Equals(loadedProfile))
+                if (ProfileItem.CurrentProfile.Equals(loadedProfile))
                 {
                     // We have already saved the selected profile!
                     // so we need to show the selected profile 
@@ -647,7 +647,7 @@ namespace HeliosPlus.UIForms
 
                             Icon icoAppIcon = Icon.ExtractAssociatedIcon(game.GameIconPath);
                             // We first try high quality icons
-                            Bitmap extractedBitmap = Shortcut.ExtractVistaIcon(icoAppIcon);
+                            Bitmap extractedBitmap = ShortcutItem.ExtractVistaIcon(icoAppIcon);
                             if (extractedBitmap == null)
                                 extractedBitmap = icoAppIcon.ToBitmap();
                             il_games.Images.Add(extractedBitmap);
@@ -821,7 +821,7 @@ namespace HeliosPlus.UIForms
 
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
-            foreach (Profile loadedProfile in _loadedProfiles)
+            foreach (ProfileItem loadedProfile in _loadedProfiles)
             {
                 if (loadedProfile.Name == e.Item.Text)
                 {
@@ -831,7 +831,7 @@ namespace HeliosPlus.UIForms
 
         }
 
-        private void ChangeSelectedProfile(Profile profile)
+        private void ChangeSelectedProfile(ProfileItem profile)
         {
             // If the profile is null then return
             // (this happens when a new blank shortcut is created
@@ -844,7 +844,7 @@ namespace HeliosPlus.UIForms
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _profileToUse.Name;
 
-            if (_profileToUse.Equals(Profile.CurrentProfile))
+            if (_profileToUse.Equals(ProfileItem.CurrentProfile))
             {
                 lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
             }
@@ -881,7 +881,7 @@ namespace HeliosPlus.UIForms
 
                 ImageListViewItem newItem = null;
                 bool foundCurrentProfileInLoadedProfiles = false;
-                foreach (Profile loadedProfile in _loadedProfiles)
+                foreach (ProfileItem loadedProfile in _loadedProfiles)
                 {
                     bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
                     if (!thisLoadedProfileIsAlreadyHere)
@@ -900,7 +900,7 @@ namespace HeliosPlus.UIForms
                 // found a matching profile, then we need to show the current
                 // Profile
                 if (!foundCurrentProfileInLoadedProfiles)
-                    ChangeSelectedProfile(Profile.CurrentProfile);
+                    ChangeSelectedProfile(ProfileItem.CurrentProfile);
 
                 // Check if we were loading a profile to edit
                 // If so, select that instead of all that other stuff above!

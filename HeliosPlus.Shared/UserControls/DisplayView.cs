@@ -7,7 +7,7 @@ namespace HeliosPlus.Shared.UserControls
 {
     public partial class DisplayView : UserControl
     {
-        private Profile _profile;
+        private ProfileItem _profile;
 
         public DisplayView()
         {
@@ -18,7 +18,7 @@ namespace HeliosPlus.Shared.UserControls
         public int PaddingX { get; set; } = 100;
         public int PaddingY { get; set; } = 100;
 
-        public Profile Profile
+        public ProfileItem Profile
         {
             get => _profile;
             set

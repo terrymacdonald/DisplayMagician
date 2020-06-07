@@ -48,7 +48,7 @@ namespace HeliosPlus
 
         public DisplayPossibleSetting[] PossibleSettings { get; }
 
-        public static IEnumerable<DisplayRepresentation> GetDisplays(Profile profile = null)
+        public static IEnumerable<DisplayRepresentation> GetDisplays(ProfileItem profile = null)
         {
             //var displays =
             //    Display.GetDisplays()
@@ -77,12 +77,12 @@ namespace HeliosPlus
             return Display.GetDisplays().FirstOrDefault(display => display.DevicePath.StartsWith(Path));
         }
 
-        public ProfileViewport GetPathSource(Profile profile)
+        public ProfileViewport GetPathSource(ProfileItem profile)
         {
             return profile.Viewports.FirstOrDefault(path => path.TargetDisplays.Any(target => target.DevicePath == Path));
         }
 
-        public ProfileViewportTargetDisplay GetPathTarget(Profile profile)
+        public ProfileViewportTargetDisplay GetPathTarget(ProfileItem profile)
         {
             return profile.Viewports.SelectMany(path => path.TargetDisplays).FirstOrDefault(target => target.DevicePath == Path);
         }
@@ -96,7 +96,7 @@ namespace HeliosPlus
                     .FirstOrDefault();
         }
 
-        public Bitmap ToBitmap(Size size, Profile profile = null)
+        public Bitmap ToBitmap(Size size, ProfileItem profile = null)
         {
             var targetInfo = GetTargetInfo();
             var resolution = Size.Empty;
@@ -115,7 +115,7 @@ namespace HeliosPlus
                 }
             }
 
-            var p = new Profile {Viewports = new ProfileViewport[1]};
+            var p = new ProfileItem {Viewports = new ProfileViewport[1]};
             p.Viewports[0] = new ProfileViewport
             {
                 Resolution = resolution,

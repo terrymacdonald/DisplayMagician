@@ -13,7 +13,7 @@ namespace HeliosPlus.ShellExtension
     [Guid("2EC0C798-715B-458E-8C86-5D846F67FBA1")]
     internal class HeliosDesktopMenuExtension : SharpContextMenu
     {
-        private static ToolStripMenuItem CreateProfileMenu(Profile profile)
+        private static ToolStripMenuItem CreateProfileMenu(ProfileItem profile)
         {
             var profileMenu = new ToolStripMenuItem(profile.Name, new ProfileIcon(profile).ToBitmap(16, 16));
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Apply, null,
@@ -39,13 +39,13 @@ namespace HeliosPlus.ShellExtension
         {
             var explorerMenu = new ContextMenuStrip();
 
-            if (Profile.LoadAllProfiles().Any())
+            if (ProfileItem.LoadAllProfiles().Any())
             {
-                Profile.UpdateCurrentProfile();
+                ProfileItem.UpdateCurrentProfile();
                 var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
                     Properties.Resources.Icon_x16);
 
-                foreach (var profile in Profile.LoadAllProfiles())
+                foreach (var profile in ProfileItem.LoadAllProfiles())
                 {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
                 }
