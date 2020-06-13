@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ResizeDrawing.cs" />
     <Compile Include="RestartManagerSession.cs" />
     <Compile Include="ScanLineOrdering.cs" />
     <Compile Include="Helios.cs" />

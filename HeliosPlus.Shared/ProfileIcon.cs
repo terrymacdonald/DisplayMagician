@@ -148,7 +148,7 @@ namespace HeliosPlus.Shared
             int viewSizeRatio = Convert.ToInt32(viewSize.Width / viewSize.Height);
 
             if (height == 0)
-                height = width * viewSizeRatio;
+                height = width / viewSizeRatio;
 
             var bitmap = new Bitmap(width, height, format);
             bitmap.MakeTransparent();

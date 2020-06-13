@@ -17,6 +17,7 @@ using System.ServiceModel.Dispatcher;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using NvAPIWrapper.Native.Display.Structures;
 
 namespace HeliosPlus
 {
@@ -200,9 +201,7 @@ namespace HeliosPlus
                     if (OriginalBitmap == null)
                         return null;
 
-                    //_shortcutBitmap = new ProfileIcon(ProfileToUse).ToBitmapOverlay(OriginalBitmap,128 ,128);
                     _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap, 256, 256);
-                    _shortcutBitmap.Save(Path.Combine(Program.AppDataPath, @"ShortcutOverlay.png"), ImageFormat.Png);
                     return _shortcutBitmap;
                 }
             }
@@ -322,7 +321,8 @@ namespace HeliosPlus
                             bitmapToReturn = biggestIcon.ToBitmap();
                         return bitmapToReturn;
             */
-
+            if (String.IsNullOrWhiteSpace(fileNameAndPath))
+                return null;
             Icon exeIcon = IconUtils.ExtractIcon.ExtractIconFromExecutable(fileNameAndPath);
             Bitmap bitmapToReturn = exeIcon.ToBitmap();
             exeIcon.Dispose();
@@ -331,6 +331,8 @@ namespace HeliosPlus
 
         private Bitmap ToBitmapFromIcon(string fileNameAndPath)
         {
+            if (String.IsNullOrWhiteSpace(fileNameAndPath))
+                return null;
             Icon icoIcon = new Icon(fileNameAndPath, 256, 256);
             //_originalBitmap = ExtractVistaIcon(biggestIcon);
             Bitmap bitmapToReturn = icoIcon.ToBitmap();
@@ -338,8 +340,23 @@ namespace HeliosPlus
             return bitmapToReturn;
         }
 
+        private Bitmap ToBitmap(string fileNameAndPath)
+        {
+            if (String.IsNullOrWhiteSpace(fileNameAndPath))
+                return null;
 
-        private Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
+            string fileExtension = Path.GetExtension(fileNameAndPath);
+            if (fileExtension.Equals("ico",StringComparison.OrdinalIgnoreCase))
+            {
+                return ToBitmapFromIcon(fileNameAndPath);
+            } 
+            else
+            {
+                return ToBitmapFromExe(fileNameAndPath);
+            }
+        }
+
+        public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
 
             if (!(width is int) || width <= 0)
@@ -348,8 +365,13 @@ namespace HeliosPlus
             if (!(height is int) || height <= 0)
                 return null;
 
-            // Make a new empoty bitmap of the wanted size
-            var combinedBitmap = new Bitmap(width, height, format);
+            // Figure out sizes and positions
+            Size targetSize = new Size(width,height);
+            Size originalBitmapCurrentSize = new Size(originalBitmap.Width, originalBitmap.Height);
+            Size overlaylBitmapCurrentSize = new Size(overlayBitmap.Width, overlayBitmap.Height);
+
+            // Make a new empty bitmap of the wanted size
+            var combinedBitmap = new Bitmap(targetSize.Width, targetSize.Height, format);
             combinedBitmap.MakeTransparent();
 
             using (var g = Graphics.FromImage(combinedBitmap))
@@ -360,89 +382,17 @@ namespace HeliosPlus
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                 g.CompositingQuality = CompositingQuality.AssumeLinear;
 
-                // Resize the originalBitmap if needed
-                if (originalBitmap.Width > width || originalBitmap.Height > height)
-                {
+                // Resize the originalBitmap if needed then draw it
+                Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
+                Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
+                g.DrawImage(originalBitmap, originalBitmapNewLocation.X, originalBitmapNewLocation.Y, originalBitmapNewSize.Width, originalBitmapNewSize.Height);
 
+                // Resize the overlayBitmap if needed then draw it in the bottom-right corner
+                Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
+                Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize,70);
+                Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
 
-                    float originalBitmapRatio = (float) originalBitmap.Width / (float) originalBitmap.Height;
-                    float newWidth, newHeight, newX, newY;
-                    if (originalBitmap.Width > width)
-                    {
-                        // We need to shrink down until Height fits
-                        newWidth = width;
-                        newHeight = originalBitmap.Height * originalBitmapRatio;
-                        newX = 0;
-                        newY = (height - newHeight) / 2; 
-                    } else
-                    {
-                        // We need to shrink down until Width fits
-                        newWidth = originalBitmap.Width * originalBitmapRatio;
-                        newHeight = height;
-                        newX = (width - newWidth) / 2;
-                        newY = 0;
-                    }
-                    g.DrawImage(originalBitmap, newX, newY, newWidth, newHeight);
-                }
-                else
-                    g.DrawImage(originalBitmap, 0, 0, width, height);
-
-                float overlayBitmapRatio = (float) overlayBitmap.Width / (float) overlayBitmap.Height;
-                float overlayWidth, overlayHeight, overlayX, overlayY;
-                string mode = 
-                if (overlayBitmap.Width > width && overlayBitmap.Height < height)
-                {
-                    // We need to shrink down until Height fits
-                    
-                    overlayHeight = overlayWidth * overlayBitmapRatio;
-                    overlayX = width - overlayWidth;
-                    overlayY = height - overlayHeight;
-                }
-                else if (overlayBitmap.Width < width && overlayBitmap.Height > height)
-                {
-                    // We need to shrink down until Width fits
-                    overlayHeight = (height * 0.7F);
-                    overlayWidth = overlayHeight * (1 / overlayBitmapRatio);
-                    overlayX = width - overlayWidth;
-                    overlayY = height - overlayHeight;
-                }
-                else if (overlayBitmap.Width > width && overlayBitmap.Height > height)
-                {
-                    // We need to shrink down until Width and Height fits
-
-                    overlayHeight = (height * 0.7F);
-                    overlayWidth = overlayHeight * (1 / overlayBitmapRatio);
-                    overlayX = width - overlayWidth;
-                    overlayY = height - overlayHeight;
-                }
-
-
-                if (overlayBitmap.Width > width && overlayBitmap.Height < height)
-                {
-                    // We need to shrink down until Height fits
-                    overlayWidth = (width * 0.7F);
-                    overlayHeight = overlayWidth * overlayBitmapRatio;
-                    overlayX = width - overlayWidth;
-                    overlayY = height - overlayHeight;
-                }
-                else if (overlayBitmap.Width < width && overlayBitmap.Height > height)
-                {
-                    // We need to shrink down until Width fits
-                    overlayHeight = (height * 0.7F);
-                    overlayWidth = overlayHeight * (1/overlayBitmapRatio);
-                    overlayX = width - overlayWidth;
-                    overlayY = height - overlayHeight;
-                }
-                else if (overlayBitmap.Width > width && overlayBitmap.Height > height)
-                {
-                    // We need to shrink down until Width and Height fits
-
-                    overlayHeight = (height * 0.7F);
-                    overlayWidth = overlayHeight * (1 / overlayBitmapRatio);
-                    overlayX = width - overlayWidth;
-                    overlayY = height - overlayHeight;
-                }
-                g.DrawImage(overlayBitmap, overlayX, overlayY, overlayWidth, overlayHeight);
+                g.DrawImage(overlayBitmap, overlayBitmapNewLocation.X, overlayBitmapNewLocation.Y, overlayBitmapNewSize.Width, overlayBitmapNewSize.Height);
 
             }
             return combinedBitmap;
