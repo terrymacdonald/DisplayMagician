@@ -603,12 +603,12 @@ namespace HeliosPlus.UIForms
         {
 
             // Load all the profiles to prepare things
-            _loadedProfiles = (List<ProfileItem>)ProfileItem.LoadAllProfiles();
+            _loadedProfiles = ProfileRepository.AllProfiles;
 
             bool foundCurrentProfileInLoadedProfiles = false;
             foreach (ProfileItem loadedProfile in _loadedProfiles)
             {
-                if (ProfileItem.CurrentProfile.Equals(loadedProfile))
+                if (ProfileRepository.CurrentProfile.Equals(loadedProfile))
                 {
                     // We have already saved the selected profile!
                     // so we need to show the selected profile 
@@ -844,7 +844,7 @@ namespace HeliosPlus.UIForms
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _profileToUse.Name;
 
-            if (_profileToUse.Equals(ProfileItem.CurrentProfile))
+            if (_profileToUse.Equals(ProfileRepository.CurrentProfile))
             {
                 lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
             }
@@ -900,7 +900,7 @@ namespace HeliosPlus.UIForms
                 // found a matching profile, then we need to show the current
                 // Profile
                 if (!foundCurrentProfileInLoadedProfiles)
-                    ChangeSelectedProfile(ProfileItem.CurrentProfile);
+                    ChangeSelectedProfile(ProfileRepository.CurrentProfile);
 
                 // Check if we were loading a profile to edit
                 // If so, select that instead of all that other stuff above!

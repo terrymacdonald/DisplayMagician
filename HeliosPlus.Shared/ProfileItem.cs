@@ -15,12 +15,12 @@ using HeliosPlus.Shared.Topology;
 using System.Drawing;
 using System.Drawing.Imaging;
 using WindowsDisplayAPI;
+using System.Text.RegularExpressions;
 
 namespace HeliosPlus.Shared
 {
     public class ProfileItem
     {
-        private static ProfileItem _currentProfile;
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
@@ -28,6 +28,11 @@ namespace HeliosPlus.Shared
         private static List<UnAttachedDisplay> _unavailableDisplays;
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
+
+        private string _uuid;
+        private Version _version;
+        private bool _isActive = false;
+        private bool _isPossible = false;
 
 
         #region JsonConverterBitmap
@@ -104,14 +109,22 @@ namespace HeliosPlus.Shared
 
         public static Version Version = new Version(2, 1);
 
-        public string Id { get; set; } = Guid.NewGuid().ToString("B");
+        #region Instance Properties
 
-        [JsonIgnore]
-        public bool IsActive
+        public string UUID
         {
             get
             {
-                return _currentProfile.Equals(this);
+                if (String.IsNullOrWhiteSpace(_uuid))
+                    _uuid = Guid.NewGuid().ToString("B"); 
+                return _uuid;
+            }
+            set
+            {
+                string uuidV4Regex = @"/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
+                Match match = Regex.Match(value, uuidV4Regex, RegexOptions.IgnoreCase);
+                if (match.Success)
+                    _uuid = value;
             }
         }
 
@@ -152,34 +165,6 @@ namespace HeliosPlus.Shared
 
         public ProfileViewport[] Viewports { get; set; } = new ProfileViewport[0];
 
-        public static string SavedProfilesFilePath
-        {
-            get => System.IO.Path.Combine(AppDataPath, $"Profiles\\DisplayProfiles_{Version.ToString(2)}.json");
-        }
-
-        public static string SavedProfilesPath
-        {
-            get => System.IO.Path.Combine(AppDataPath, $"Profiles");
-        }
-
-        public static List<ProfileItem> AllSavedProfiles 
-        {
-            get
-            {
-                if (_allSavedProfiles.Count == 0)
-                {
-                    ProfileItem.LoadAllProfiles();
-                }
-                return _allSavedProfiles;
-            }
-        }
-
-        public static ProfileItem CurrentProfile
-        {
-            get => _currentProfile;
-        }
-
-
         public ProfileIcon ProfileIcon
         {
             get
@@ -199,8 +184,7 @@ namespace HeliosPlus.Shared
 
         }
 
-        public string SavedProfileCacheFilename { get; set; }
-
+        public string SavedProfileIconCacheFilename { get; set; }
 
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap ProfileBitmap
@@ -242,82 +226,7 @@ namespace HeliosPlus.Shared
 
         }
 
-        public static List<ProfileItem> LoadAllProfiles()
-        {
-            
-            if (File.Exists(SavedProfilesFilePath))
-            {
-                var json = File.ReadAllText(SavedProfilesFilePath, Encoding.Unicode);
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    List<ProfileItem> profiles = new List<ProfileItem>();
-                    try
-                    {
-                        //var profiles = JsonConvert.DeserializeObject<Profile[]>(json, new JsonSerializerSettings
-                        profiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, new JsonSerializerSettings
-                        {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Ignore,
-                            DefaultValueHandling = DefaultValueHandling.Include,
-                            TypeNameHandling = TypeNameHandling.Auto
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        // ignored
-                        Console.WriteLine("Unable to deserialize profile: " + ex.Message);
-                    }
-
-
-                    //Convert array to list
-                    //List<Profile> profilesList = profiles.ToList<Profile>();
-
-                    // Find which entry is being used now, and save that info in a class variable
-                    ProfileItem myCurrentProfile = new ProfileItem
-                    {
-                        Name = "Current Display Profile",
-                        Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
-                    };
-
-                    _currentProfile = myCurrentProfile;
-
-                    foreach (ProfileItem loadedProfile in profiles)
-                    {
-                        // Save a profile Icon to the profile
-                        loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
-                        loadedProfile.ProfileBitmap = loadedProfile.ProfileIcon.ToBitmap(128,128);
-
-                        if (loadedProfile.IsActive) {
-                            _currentProfile = loadedProfile;
-                        }
-
-                    }
-
-                    _allSavedProfiles = profiles;
-
-                    return _allSavedProfiles;
-                }
-            }
-
-            // If we get here, then we don't have any profiles saved!
-            // So we gotta start from scratch
-            // Create a new profile based on our current display settings
-            _currentProfile = new ProfileItem
-            {
-                Name = "Current Display Profile",
-                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
-            };
-
-            // Save a profile Icon to the profile
-            _currentProfile.ProfileIcon = new ProfileIcon(_currentProfile);
-            _currentProfile.ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(128, 128);
-
-            // Create a new empty list of all our display profiles as we don't have any saved!
-            _allSavedProfiles = new List<ProfileItem>();
-
-            return _allSavedProfiles;
-        }
+        #endregion
 
         public static bool IsValidName(string testName)
         {
@@ -334,89 +243,33 @@ namespace HeliosPlus.Shared
 
         public static bool IsValidId(string testId)
         {
-            foreach (ProfileItem loadedProfile in _allSavedProfiles)
-            {
-                if (loadedProfile.Id == testId)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-
-        public static void UpdateCurrentProfile()
-        {
-            _currentProfile = new ProfileItem
-            {
-                Name = "Current Display Profile",
-                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
-            };
-        }
-
-        public static bool SaveAllProfiles()
-        {
-            if (SaveAllProfiles(_allSavedProfiles))
+            string uuidV4Regex = @"/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
+            Match match = Regex.Match(testId, uuidV4Regex, RegexOptions.IgnoreCase);
+            if (match.Success)
                 return true;
-            return false;
+            else
+                return false;
         }
 
-        public static bool SaveAllProfiles(List<ProfileItem> profilesToSave)
+
+        public bool CopyTo(ProfileItem profile, bool overwriteId = false)
         {
+            if (!(profile is ProfileItem))
+                return false;
 
-            if (!Directory.Exists(SavedProfilesPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(SavedProfilesPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Unable to create Profile folder " + SavedProfilesPath + ": " + ex.Message);
-                }
-            }
+            if (overwriteId)
+                profile.UUID = UUID;
 
-
-            // Now we loop over the profiles and save their images for later
-            foreach (ProfileItem profileToSave in profilesToSave)
-            {
-                profileToSave.SaveProfileImageToCache();
-            }
-
-            try
-            {
-                var json = JsonConvert.SerializeObject(profilesToSave, Formatting.Indented, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
-                    TypeNameHandling = TypeNameHandling.Auto
-
-                });
-
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    var dir = System.IO.Path.GetDirectoryName(SavedProfilesPath);
-
-                    if (dir != null)
-                    {
-                        Directory.CreateDirectory(dir);
-                        File.WriteAllText(SavedProfilesFilePath, json, Encoding.Unicode);
-
-                        return true;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Unable to serialize profile: " + ex.Message);
-            }
-
-            // Overwrite the list of saved profiles as the new lot we received.
-            _allSavedProfiles = profilesToSave;
-
-            return false;
+            // Copy all our profile data over to the other profile
+            profile.Name = Name;
+            profile.UUID = UUID;
+            profile.Name = Name;
+            profile.Viewports = Viewports;
+            profile.ProfileIcon = ProfileIcon;
+            profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
+            profile.ProfileBitmap = ProfileBitmap;
+            profile.ProfileTightestBitmap = ProfileTightestBitmap;
+            return true;
         }
 
 
@@ -481,22 +334,7 @@ namespace HeliosPlus.Shared
             return uncheckedFilename;
         }
 
-        public bool SaveProfileImageToCache()
-        {
-            this.SavedProfileCacheFilename = Path.Combine(SavedProfilesPath, GetValidFilename(String.Concat(this.Name + @".png")));
-            try
-            {
-                this.ProfileBitmap.Save(this.SavedProfileCacheFilename, ImageFormat.Png);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Unable to create profile image in cache using " + this.SavedProfileCacheFilename + ": " + ex.Message);
-                return false;
-            }
-        }
-
-        private void _applyTopos()
+        public void ApplyTopos()
         {
             Debug.Print("_applyTopos()");
             try
@@ -533,7 +371,7 @@ namespace HeliosPlus.Shared
             }
         }
 
-        private void _applyPathInfos()
+        public void ApplyPathInfos()
         {
             Debug.Print("_applyPathInfos()");
             if (!IsPossible)
@@ -550,8 +388,8 @@ namespace HeliosPlus.Shared
         {
             var dict = new Dictionary<string, Action>()
             {
-                { "Applying_Topos", _applyTopos },
-                { "Applying_Paths", _applyPathInfos }
+                { "Applying_Topos", ApplyTopos },
+                { "Applying_Paths", ApplyPathInfos }
             };
             return dict;
         }
@@ -570,41 +408,6 @@ namespace HeliosPlus.Shared
         {
             var list = new List<string>() { "Applying_Topos", "Applying_Paths" };
             return list;
-        }
-
-        public bool Apply()
-        {
-            try
-            {
-
-                Debug.Print("Begin profile change");
-                Thread.Sleep(2000);
-                _applyTopos();
-
-                Debug.Print("Finished setting topologies");
-                Debug.Print("Sleep");
-                Thread.Sleep(18000);
-                Debug.Print("Awake");
-
-                _applyPathInfos();
-
-                Debug.Print("Applying pathInfos");
-                Debug.Print("Sleep");
-                Thread.Sleep(10000);
-                Debug.Print("Awake");
-
-                UpdateCurrentProfile();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                UpdateCurrentProfile();
-                Console.WriteLine($"Profile: Problem applying the '{Name}' Display Profile: {ex.Message}");
-                MessageBox.Show($"Problem applying the '{Name}' Display Profile! \n(ex.Message)", $"Problem applying '{Name}' Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                return false;
-            }
         }
 
     }

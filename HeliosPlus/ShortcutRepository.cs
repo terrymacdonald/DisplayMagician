@@ -329,7 +329,7 @@ namespace HeliosPlus
                     // Lookup all the Profile Names in the Saved Profiles
                     foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
-                        foreach (ProfileItem profile in ProfileItem.AllSavedProfiles)
+                        foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                         {
 
                             if (profile.Name.Equals(updatedShortcut.ProfileName))

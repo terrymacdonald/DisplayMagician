@@ -40,6 +40,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="ResizeDrawing.cs" />
     <Compile Include="RestartManagerSession.cs" />
     <Compile Include="ScanLineOrdering.cs" />
@@ -54,6 +59,7 @@
     <Compile Include="Rotation.cs" />
     <Compile Include="Scaling.cs" />
     <Compile Include="ShellHelper.cs" />
+    <Compile Include="ProfileRepository.cs" />
     <Compile Include="TaskBarSettings.cs" />
     <Compile Include="TaskBarStuckRectangle.cs" />
     <Compile Include="Topology\ProfileViewport.cs" />
@@ -73,6 +79,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\Language.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Language.Designer.cs</LastGenOutput>

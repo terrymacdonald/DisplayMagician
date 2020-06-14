@@ -18,6 +18,7 @@ using HeliosPlus.Shared;
 using HeliosPlus.UIForms;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
+using System.Drawing;
 
 namespace HeliosPlus {
     public enum SupportedGameLibrary
@@ -31,15 +32,21 @@ namespace HeliosPlus {
     {
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
+        public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
+        public static string AppHeliosPlusIconFilename = Path.Combine(AppIconPath, @"HeliosPlus.ico");
+        public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
+        public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
+        public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
+        public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
         //internal static string ShortcutIconCachePath;
 
 
         internal static ProfileItem GetProfile(string profileName)
         {
             // Create an array of display profiles we have
-            var profiles = ProfileItem.LoadAllProfiles().ToArray();
+            var profiles = ProfileRepository.AllProfiles.ToArray();
             // Check if the user supplied a --profile option using the profiles' ID
-            var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(profileName, StringComparison.InvariantCultureIgnoreCase)) : -1;
+            var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.UUID.Equals(profileName, StringComparison.InvariantCultureIgnoreCase)) : -1;
             // If the profileID wasn't there, maybe they used the profile name?
             if (profileIndex == -1)
             {
@@ -52,10 +59,9 @@ namespace HeliosPlus {
 
         internal static bool GoProfile(ProfileItem profile)
         {
-            if (profile.IsActive)
-            {
+            // If we're already on the wanted profile then no need to change!
+            if (ProfileRepository.IsActiveProfile(profile))
                 return true;
-            }
 
             var instanceStatus = IPCService.GetInstance().Status;
 
@@ -68,7 +74,7 @@ namespace HeliosPlus {
                     {
                         Task.Factory.StartNew(() =>
                         {
-                            if (!profile.Apply())
+                            if (!(ProfileRepository.ApplyProfile(profile)))
                             {
                                 failed = true;
                             }
@@ -97,7 +103,7 @@ namespace HeliosPlus {
             // Get the status of the thing
             IPCService.GetInstance().Status = InstanceStatus.User;
             // Load all the profiles from JSON
-            ProfileItem.LoadAllProfiles().ToArray();
+            //ProfileRepository.AllProfiles
             // Start up the DisplayProfileForm directly
             new DisplayProfileForm(profile).ShowDialog();
             // Then we close down as we're only here to edit one profile
@@ -121,33 +127,6 @@ namespace HeliosPlus {
             Console.WriteLine("=");
             Console.WriteLine(@"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
             Console.WriteLine(@"Based on Helios Display Management - Copyright © Soroush Falahati 2017-2020");
-
-            /*// Figure out where the shortcut's will go
-            ShortcutIconCachePath = Path.Combine(AppDataPath, @"ShortcutIconCache");
-
-            // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
-            if (!Directory.Exists(AppDataPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(ShortcutIconCachePath);
-                }
-                catch
-                {
-                }
-            }
-
-            // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
-            if (!Directory.Exists(ShortcutIconCachePath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(ShortcutIconCachePath);
-                }
-                catch
-                {
-                }
-            }*/
 
             var app = new CommandLineApplication();
 
@@ -253,6 +232,66 @@ namespace HeliosPlus {
                 }
 
 
+                // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
+                if (!Directory.Exists(AppIconPath))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(AppIconPath);
+                    }
+                    catch
+                    {
+                        // TODO
+                    }
+                }
+
+                try
+                {
+                    // Save a copy of the HeliosPlus Icon, and all the game library ones in preparation for future use
+                    if (!File.Exists(AppHeliosPlusIconFilename))
+                    {
+                        Icon heliosIcon = (Icon)Properties.Resources.HeliosPlus;
+                        using (FileStream fs = new FileStream(AppHeliosPlusIconFilename, FileMode.Create))
+                            heliosIcon.Save(fs);
+                    }
+
+                    // Save a copy of the Steam Icon, and all the game library ones in preparation for future use
+                    if (!File.Exists(AppSteamIconFilename))
+                    {
+                        Icon heliosIcon = (Icon)Properties.Resources.Steam;
+                        using (FileStream fs = new FileStream(AppSteamIconFilename, FileMode.Create))
+                            heliosIcon.Save(fs);
+                    }
+
+                    // Save a copy of the Uplay Icon, and all the game library ones in preparation for future use
+                    if (!File.Exists(AppUplayIconFilename))
+                    {
+                        Icon heliosIcon = (Icon)Properties.Resources.Uplay;
+                        using (FileStream fs = new FileStream(AppUplayIconFilename, FileMode.Create))
+                            heliosIcon.Save(fs);
+                    }
+
+                    // Save a copy of the Epic Icon, and all the game library ones in preparation for future use
+                    if (!File.Exists(AppEpicIconFilename))
+                    {
+                        Icon heliosIcon = (Icon)Properties.Resources.Epic;
+                        using (FileStream fs = new FileStream(AppEpicIconFilename, FileMode.Create))
+                            heliosIcon.Save(fs);
+                    }
+
+                    // Save a copy of the Origin Icon, and all the game library ones in preparation for future use
+                    if (!File.Exists(AppOriginIconFilename))
+                    {
+                        Icon heliosIcon = (Icon)Properties.Resources.Origin;
+                        using (FileStream fs = new FileStream(AppOriginIconFilename, FileMode.Create))
+                            heliosIcon.Save(fs);
+                    }
+                }
+                catch
+                {
+                    // TODO
+                }
+
                 IPCService.GetInstance().Status = InstanceStatus.User;
                 Application.Run(new UIForms.MainForm());
 
@@ -270,7 +309,7 @@ namespace HeliosPlus {
 
         private static void SwitchToExecutable(ProfileItem profile, string executableToRun, string processToMonitor, uint timeout, string executableArguments)
         {
-            var rollbackProfile = ProfileItem.CurrentProfile;
+            var rollbackProfile = ProfileRepository.CurrentProfile;
 
             if (!profile.IsPossible)
             {
@@ -361,7 +400,8 @@ namespace HeliosPlus {
 
             IPCService.GetInstance().Status = InstanceStatus.Busy;
 
-            if (!rollbackProfile.IsActive)
+            // Change back to the original profile if it is different
+            if (!ProfileRepository.IsActiveProfile(rollbackProfile))
             {
                 if (!GoProfile(rollbackProfile))
                 {
@@ -383,7 +423,7 @@ namespace HeliosPlus {
             }
 
             // Save the profile we're on now
-            var rollbackProfile = ProfileItem.CurrentProfile;
+            var rollbackProfile = ProfileRepository.CurrentProfile;
 
             // Check that the profile we've been asked to change to will actually work
             if (!profile.IsPossible)
@@ -502,7 +542,8 @@ namespace HeliosPlus {
 
             IPCService.GetInstance().Status = InstanceStatus.Busy;
 
-            if (!rollbackProfile.IsActive)
+            // Change back to the original profile if it is different
+            if (!ProfileRepository.IsActiveProfile(rollbackProfile))
             {
                 if (!GoProfile(rollbackProfile))
                 {
@@ -515,7 +556,7 @@ namespace HeliosPlus {
         private static void SwitchToUplayGame(ProfileItem profile, string uplayGameIdToRun, uint timeout, string uplayGameArguments)
         {
 
-            var rollbackProfile = ProfileItem.CurrentProfile;
+            var rollbackProfile = ProfileRepository.CurrentProfile;
 
             if (!profile.IsPossible)
             {
@@ -629,7 +670,8 @@ namespace HeliosPlus {
 
             IPCService.GetInstance().Status = InstanceStatus.Busy;
 
-            if (!rollbackProfile.IsActive)
+            // Change back to the original profile if it is different
+            if (!ProfileRepository.IsActiveProfile(rollbackProfile))
             {
                 if (!GoProfile(rollbackProfile))
                 {
@@ -643,7 +685,7 @@ namespace HeliosPlus {
         // ReSharper disable once CyclomaticComplexity
         private static void SwitchToProfile(ProfileItem profile)
         {
-            var rollbackProfile = ProfileItem.CurrentProfile;
+            var rollbackProfile = ProfileRepository.CurrentProfile;
 
             if (
                 IPCClient.QueryAll()

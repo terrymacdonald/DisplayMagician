@@ -23,9 +23,9 @@ namespace HeliosPlus
             var profile = optionProfile.Value();
 
             // Create an array of display profiles we have
-            var profiles = ProfileItem.LoadAllProfiles().ToArray();
+            var profiles = ProfileRepository.AllProfiles.ToArray();
             // Check if the user supplied a --profile option using the profiles' ID
-            var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Id.Equals(profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
+            var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.UUID.Equals(profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
             // If the profileID wasn't there, maybe they used the profile name?
             if (profileIndex == -1)
             {
@@ -38,7 +38,7 @@ namespace HeliosPlus
                 return new ValidationResult($"Couldn't find Profile Name or ID supplied via command line: '{optionProfile.LongName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
             }
 
-            Console.WriteLine($"Using Profile: '{profiles[profileIndex].Name}' (ID:{profiles[profileIndex].Id})");
+            Console.WriteLine($"Using Profile: '{profiles[profileIndex].Name}' (ID:{profiles[profileIndex].UUID})");
             return ValidationResult.Success;
         }
     }

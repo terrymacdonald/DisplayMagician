@@ -102,7 +102,7 @@ namespace HeliosPlus
                 _profileName = value;
 
                 // We try to find and set the ProfileTouse
-                foreach (ProfileItem profileToTest in ProfileItem.AllSavedProfiles)
+                foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
                     if (profileToTest.Name.Equals(_profileName))
                         _profileToUse = profileToTest;

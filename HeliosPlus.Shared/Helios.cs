@@ -60,7 +60,7 @@ namespace HeliosPlus.Shared
 
                 if (profile != null)
                 {
-                    args.Add($"-p \"{profile.Id}\"");
+                    args.Add($"-p \"{profile.UUID}\"");
                 }
 
                 if (!string.IsNullOrWhiteSpace(programAddress))
@@ -108,7 +108,7 @@ namespace HeliosPlus.Shared
 
                 if (profile != null)
                 {
-                    args.Add($"-p \"{profile.Id}\"");
+                    args.Add($"-p \"{profile.UUID}\"");
                 }
 
                 if (steamAppId > 0)

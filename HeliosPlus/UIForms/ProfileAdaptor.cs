@@ -47,7 +47,7 @@ namespace HeliosPlus.UIForms
 
                 ProfileItem profileToUse = null;
 
-                foreach (ProfileItem profileToTest in ProfileItem.AllSavedProfiles)
+                foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
                     if (profileToTest.Name == profileName)
                     {
@@ -58,7 +58,7 @@ namespace HeliosPlus.UIForms
 
                 if (profileToUse == null)
                 {
-                    profileToUse = ProfileItem.CurrentProfile;
+                    profileToUse = ProfileRepository.CurrentProfile;
                 }
 
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
@@ -141,7 +141,7 @@ namespace HeliosPlus.UIForms
                 string profileName = (string)key;
                 ProfileItem profileToUse = null;
 
-                foreach (ProfileItem profileToTest in ProfileItem.AllSavedProfiles)
+                foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
                     if (profileToTest.Name == profileName)
                     {
@@ -152,7 +152,7 @@ namespace HeliosPlus.UIForms
 
                 if (profileToUse == null)
                 {
-                    profileToUse = ProfileItem.CurrentProfile;
+                    profileToUse = ProfileRepository.CurrentProfile;
                 }
 
                 // Get file info
