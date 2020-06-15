@@ -23,13 +23,16 @@ namespace HeliosPlus.UIForms
         private ShortcutAdaptor _shortcutAdaptor;
         private ImageListViewItem _selectedShortcutILVItem = null;
         private ShortcutItem _selectedShortcut = null;
-        private ShortcutRepository _shortcutRepository = new ShortcutRepository();
+        private ShortcutRepository _shortcutRepository;
+        private ProfileRepository _profileRepository;
 
         public ShortcutLibraryForm()
         {
             InitializeComponent();
             _shortcutAdaptor = new ShortcutAdaptor();
-        }
+            _shortcutRepository = new ShortcutRepository();
+            _profileRepository = new ProfileRepository();
+    }
 
         private void btn_new_Click(object sender, EventArgs e)
         {
@@ -49,8 +52,6 @@ namespace HeliosPlus.UIForms
 
         private void ShortcutLibraryForm_Load(object sender, EventArgs e)
         {
-            // Load all the shortcuts we have saved earlier
-            List<ShortcutItem> _savedShortcuts = ShortcutRepository.AllShortcuts;
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
         }

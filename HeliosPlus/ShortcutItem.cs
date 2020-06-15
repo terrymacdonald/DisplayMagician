@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using NvAPIWrapper.Native.Display.Structures;
+using System.Text.RegularExpressions;
 
 namespace HeliosPlus
 {
@@ -41,9 +42,10 @@ namespace HeliosPlus
         private MultiIcon _shortcutIcon, _originalIcon = null;
         private Bitmap _shortcutBitmap, _originalBitmap = null;
         private ProfileItem _profileToUse = null;
-        private string _originalIconPath = "";
-        private uint _id = 0;
-        private string _profileName = "";
+        private string _originalIconPath = "", _savedShortcutIconCacheFilename = "", _uuid = "";
+        private string _name = "";
+        //private uint _id = 0;
+        private string _profileUuid = "";
         private bool _isPossible = false;
 
         public ShortcutItem()
@@ -57,26 +59,57 @@ namespace HeliosPlus
 
         public static Version Version = new Version(1, 0);
 
-        public uint Id
+        public string UUID
         {
             get
             {
-                if (_id == 0)
-                    _id = ShortcutRepository.GetNextAvailableShortcutId();
-                return _id;
+                if (String.IsNullOrWhiteSpace(_uuid))
+                    _uuid = Guid.NewGuid().ToString("B");
+                return _uuid;
             }
             set
             {
-                _id = value;
+                string uuidV4Regex = @"\{[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}\}";
+                Match match = Regex.Match(value, uuidV4Regex, RegexOptions.IgnoreCase);
+                if (match.Success)
+                    _uuid = value;
             }
         }
-        
-        public string Name { get; set; } = "";
+
+        public string Name
+        {
+            get
+            {
+                if (AutoName && _profileToUse is ProfileItem)
+                {
+                    // If Autoname is on, and then lets autoname it!
+                    AutoSuggestShortcutName();
+                }
+                return _name;
+            }
+            set
+            {
+                _name = value;
+            }
+        }
+
+        public bool AutoName { get; set; } = true;
+
 
         [JsonIgnore]
         public ProfileItem ProfileToUse {
             get
             {
+                if (_profileToUse == null && !String.IsNullOrWhiteSpace(_profileUuid))
+                    foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+                    {
+                        if (profileToTest.UUID.Equals(_profileUuid))
+                        {
+                            _profileToUse = profileToTest;
+                            break;
+                        }
+
+                    }
                 return _profileToUse;
             }
             set
@@ -84,27 +117,32 @@ namespace HeliosPlus
                 if (value is ProfileItem)
                 {
                     _profileToUse = value;
-                    _profileName = _profileToUse.Name;
+                    _profileUuid = _profileToUse.UUID;
                     // And if we have the _originalBitmap we can also save the Bitmap overlay, but only if the ProfileToUse is set
                     if (_originalBitmap is Bitmap)
                         _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap,256,256);
+                    // And we rename the shortcut if the AutoName is on
+                    if (AutoName)
+                        AutoSuggestShortcutName();
                 }
             }
         }
 
-        public string ProfileName { 
+        public string ProfileUUID { 
             get 
             {
-                return _profileName;
+                if (_profileUuid == null && _profileToUse is ProfileItem)
+                    _profileUuid = _profileToUse.UUID;
+                return _profileUuid;
             }
             set
             {
-                _profileName = value;
+                _profileUuid = value;
 
                 // We try to find and set the ProfileTouse
                 foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
-                    if (profileToTest.Name.Equals(_profileName))
+                    if (profileToTest.UUID.Equals(_profileUuid))
                         _profileToUse = profileToTest;
                 }
             }
@@ -161,8 +199,7 @@ namespace HeliosPlus
             }
         }
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
+        [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap OriginalBitmap
         {
             get
@@ -184,8 +221,7 @@ namespace HeliosPlus
             }
         }
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
+        [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap ShortcutBitmap
         {
             get
@@ -214,7 +250,6 @@ namespace HeliosPlus
 
         public string SavedShortcutIconCacheFilename { get; set; }
 
-
         [JsonIgnore]
         public bool IsPossible
         {
@@ -228,18 +263,18 @@ namespace HeliosPlus
             }
         }
 
-        public  bool CopyTo (ShortcutItem shortcut, bool overwriteId = false)
+        public  bool CopyTo (ShortcutItem shortcut, bool overwriteUUID = false)
         {
             if (!(shortcut is ShortcutItem))
                 return false;
 
-            if (overwriteId)
-                shortcut.Id = Id;
+            if (overwriteUUID)
+                shortcut.UUID = UUID;
 
             // Copy all the shortcut data over to the other Shortcut
             shortcut.Name = Name;
             shortcut.ProfileToUse = ProfileToUse;
-            shortcut.ProfileName = ProfileName;
+            shortcut.ProfileUUID = ProfileUUID;
             shortcut.Permanence = Permanence;
             shortcut.Category = Category;
             shortcut.DifferentExecutableToMonitor = DifferentExecutableToMonitor;
@@ -568,6 +603,29 @@ namespace HeliosPlus
             // Return a status on how it went
             // true if it was a success or false if it was not
             return shortcutFileName != null && File.Exists(shortcutFileName);
+        }
+
+        public void AutoSuggestShortcutName()
+        {
+            if (AutoName && _profileToUse is ProfileItem)
+            {
+                if (Category.Equals(ShortcutCategory.NoGame))
+                {
+                    if (Permanence.Equals(ShortcutPermanence.Permanent))
+                        _name = $"{_profileToUse.Name}";
+                    else if (Permanence.Equals(ShortcutPermanence.Temporary))
+                        _name = $"{_profileToUse.Name} (Temporary)";
+                }
+                else if (Category.Equals(ShortcutCategory.Game) && GameName.Length > 0)
+                {
+                    _name = $"{GameName} ({_profileToUse.Name})";
+                }
+                else if (Category.Equals(ShortcutCategory.Application) && ExecutableNameAndPath.Length > 0)
+                {
+                    string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
+                    _name = $"{baseName} ({_profileToUse.Name})";
+                }
+            }
         }
 
     }

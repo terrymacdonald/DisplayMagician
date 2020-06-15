@@ -29,7 +29,7 @@ namespace HeliosPlus.Shared
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
 
-        private string _uuid;
+        private string _uuid = "";
         private Version _version;
         private bool _isActive = false;
         private bool _isPossible = false;
@@ -94,7 +94,7 @@ namespace HeliosPlus.Shared
         }
 
         #endregion
-        static ProfileItem()
+        public ProfileItem()
         {
             try
             {
@@ -116,12 +116,12 @@ namespace HeliosPlus.Shared
             get
             {
                 if (String.IsNullOrWhiteSpace(_uuid))
-                    _uuid = Guid.NewGuid().ToString("B"); 
+                    _uuid = Guid.NewGuid().ToString("B");
                 return _uuid;
             }
             set
             {
-                string uuidV4Regex = @"/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
+                string uuidV4Regex = @"\{[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}\}";
                 Match match = Regex.Match(value, uuidV4Regex, RegexOptions.IgnoreCase);
                 if (match.Success)
                     _uuid = value;
@@ -165,6 +165,7 @@ namespace HeliosPlus.Shared
 
         public ProfileViewport[] Viewports { get; set; } = new ProfileViewport[0];
 
+        [JsonIgnore]
         public ProfileIcon ProfileIcon
         {
             get
@@ -241,7 +242,7 @@ namespace HeliosPlus.Shared
             return true;
         }
 
-        public static bool IsValidId(string testId)
+        public static bool IsValidUUID(string testId)
         {
             string uuidV4Regex = @"/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
             Match match = Regex.Match(testId, uuidV4Regex, RegexOptions.IgnoreCase);
@@ -252,17 +253,15 @@ namespace HeliosPlus.Shared
         }
 
 
-        public bool CopyTo(ProfileItem profile, bool overwriteId = false)
+        public bool CopyTo(ProfileItem profile, bool overwriteId = true)
         {
             if (!(profile is ProfileItem))
                 return false;
 
-            if (overwriteId)
+            if (overwriteId == true)
                 profile.UUID = UUID;
 
             // Copy all our profile data over to the other profile
-            profile.Name = Name;
-            profile.UUID = UUID;
             profile.Name = Name;
             profile.Viewports = Viewports;
             profile.ProfileIcon = ProfileIcon;
@@ -279,7 +278,7 @@ namespace HeliosPlus.Shared
             return this.Equals(obj as ProfileItem);
         }
 
-        // Profiles are equal if their contents (except name) are equal
+        // Profiles are equal if their Viewports are equal
         public bool Equals(ProfileItem other)
         {
 

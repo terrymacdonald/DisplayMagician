@@ -29,7 +29,7 @@ namespace HeliosPlus.Shared
     {
         #region Class Variables
         // Common items to the class
-        private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
+        private static List<ProfileItem> _allProfiles = null;
         public static Version Version = new Version(1, 0, 0);
         // Other constants that are useful
         public static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
@@ -98,6 +98,9 @@ namespace HeliosPlus.Shared
         {
             get
             {
+                if (_allProfiles == null)
+                    // Load the Profiles from storage if they need to be
+                    LoadProfiles();
                 return _allProfiles.Count;
             }
         }
@@ -112,18 +115,27 @@ namespace HeliosPlus.Shared
 
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
-            if (ContainsProfile(Profile))
-            {
-                // We update the existing Profile with the data over
-                ProfileItem ProfileToUpdate = GetProfile(Profile.UUID);
-                Profile.CopyTo(ProfileToUpdate);
-            }
-            else
+            if (!ContainsProfile(Profile))
             {
                 // Add the Profile to the list of Profiles
                 _allProfiles.Add(Profile);
             }
 
+
+            /*            // Doublecheck if it already exists
+                        // Because then we just update the one that already exists
+                        if (ContainsProfile(Profile))
+                        {
+                            // We update the existing Profile with the data over
+                            ProfileItem ProfileToUpdate = GetProfile(Profile.UUID);
+                            Profile.CopyTo(ProfileToUpdate);
+                        }
+                        else
+                        {
+                            // Add the Profile to the list of Profiles
+                            _allProfiles.Add(Profile);
+                        }
+            */
             //Doublecheck it's been added
             if (ContainsProfile(Profile))
             {
@@ -261,7 +273,7 @@ namespace HeliosPlus.Shared
             if (String.IsNullOrWhiteSpace(ProfileNameOrId))
                 return false;
 
-            if (ProfileItem.IsValidId(ProfileNameOrId))
+            if (ProfileItem.IsValidUUID(ProfileNameOrId))
                 foreach (ProfileItem testProfile in _allProfiles)
                 {
                     if (testProfile.UUID.Equals(ProfileNameOrId))
@@ -283,7 +295,7 @@ namespace HeliosPlus.Shared
             if (String.IsNullOrWhiteSpace(ProfileNameOrId))
                 return null;
 
-            if (ProfileItem.IsValidId(ProfileNameOrId))
+            if (ProfileItem.IsValidUUID(ProfileNameOrId))
                 foreach (ProfileItem testProfile in _allProfiles)
                 {
                     if (testProfile.UUID.Equals(ProfileNameOrId))
@@ -316,11 +328,11 @@ namespace HeliosPlus.Shared
 
 
                 // rename the old Profile Icon to the new name
-                string newSavedProfileIconCacheFilename = Path.Combine(_profileStorageJsonPath, String.Concat(@"profile-", GetValidFilename(profile.Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
-                File.Move(profile.SavedProfileIconCacheFilename, newSavedProfileIconCacheFilename);
+                //string newSavedProfileIconCacheFilename = Path.Combine(_profileStorageJsonPath, String.Concat(@"profile-", profile.UUID, @".ico"));
+                //File.Move(profile.SavedProfileIconCacheFilename, newSavedProfileIconCacheFilename);
 
                 // Then update the profile too
-                profile.SavedProfileIconCacheFilename = newSavedProfileIconCacheFilename;
+                //profile.SavedProfileIconCacheFilename = newSavedProfileIconCacheFilename;
 
                 // Save the Profiles JSON as it's different now
                 SaveProfiles();
@@ -335,13 +347,25 @@ namespace HeliosPlus.Shared
 
         public static void UpdateActiveProfile()
         {
-            _currentProfile = new ProfileItem
+
+            ProfileItem activeProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
                 Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray(),
                 ProfileIcon = new ProfileIcon(_currentProfile),
                 ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256)
             };
+
+            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            {
+                if (activeProfile.Equals(loadedProfile))
+                {
+                    _currentProfile = loadedProfile;
+                    return;
+                }
+            }
+
+            _currentProfile = activeProfile;
 
         }
 
@@ -380,7 +404,7 @@ namespace HeliosPlus.Shared
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    List<ProfileItem> profiles = new List<ProfileItem>();
+                    //List<ProfileItem> profiles = new List<ProfileItem>();
                     try
                     {
                         _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, new JsonSerializerSettings
@@ -388,7 +412,8 @@ namespace HeliosPlus.Shared
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Include,
-                            TypeNameHandling = TypeNameHandling.Auto
+                            TypeNameHandling = TypeNameHandling.Auto,
+                            ObjectCreationHandling = ObjectCreationHandling.Replace
                         });
                     }
                     catch (Exception ex)
@@ -406,12 +431,12 @@ namespace HeliosPlus.Shared
                     _currentProfile = myCurrentProfile;
 
                     // Lookup all the Profile Names in the Saved Profiles
-                    foreach (ProfileItem loadedProfile in profiles)
+                    foreach (ProfileItem loadedProfile in _allProfiles)
                     {
                         // Save a profile Icon to the profile
-                        loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
-                        loadedProfile.ProfileBitmap = loadedProfile.ProfileIcon.ToBitmap(128, 128);
-
+/*                        loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
+                        loadedProfile.ProfileBitmap = loadedProfile.ProfileIcon.ToBitmap(256, 256);
+*/
                         if (ProfileRepository.IsActiveProfile(loadedProfile))
                             _currentProfile = loadedProfile;
 
@@ -482,7 +507,7 @@ namespace HeliosPlus.Shared
         {
 
             // Work out the name of the Profile we'll save.
-            profile.SavedProfileIconCacheFilename = Path.Combine(_profileStorageJsonPath, String.Concat(@"profile-", GetValidFilename(profile.Name).ToLower(CultureInfo.InvariantCulture), @".ico"));
+            profile.SavedProfileIconCacheFilename = Path.Combine(_profileStorageJsonPath, String.Concat(@"profile-", profile.UUID, @".ico"));
 
             MultiIcon ProfileIcon;
             try

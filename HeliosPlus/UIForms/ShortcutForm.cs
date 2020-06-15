@@ -21,14 +21,15 @@ namespace HeliosPlus.UIForms
 
         List<SteamGame> _allSteamGames;
         private ProfileAdaptor _profileAdaptor;
-        private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
+        //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
+        private ProfileRepository _profileRepository;
         private ProfileItem _profileToUse= null;
         private ShortcutItem _shortcutToEdit = null;
         private bool _isNewShortcut = false;
         private bool _isUnsaved = false;
         private bool _saveNameAutomatic = true;
         private uint _gameId = 0;
-        private uint _id = 0;
+        private string  _uuid = "";
 
         public ShortcutForm()
         {
@@ -37,6 +38,8 @@ namespace HeliosPlus.UIForms
             // Set the profileAdaptor we need to load images from Profiles
             // into the Profiles ImageListView
             _profileAdaptor = new ProfileAdaptor();
+            // Then load the ProfilesRepository
+            _profileRepository = new ProfileRepository();
 
             // Create a new SHortcut if we are creating a new one
             // And set up the page (otherwise this is all set when we load an
@@ -367,6 +370,8 @@ namespace HeliosPlus.UIForms
             }
 
             // Fill the Shortcut object with the bits we care about saving
+            // Save the autonaming setting
+            _shortcutToEdit.AutoName = cb_autosuggest.Checked;
 
             // Update the Executable args
             _shortcutToEdit.ExecutableArguments = txt_args_executable.Text;
@@ -603,17 +608,28 @@ namespace HeliosPlus.UIForms
         {
 
             // Load all the profiles to prepare things
-            _loadedProfiles = ProfileRepository.AllProfiles;
-
             bool foundCurrentProfileInLoadedProfiles = false;
-            foreach (ProfileItem loadedProfile in _loadedProfiles)
+            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
             {
-                if (ProfileRepository.CurrentProfile.Equals(loadedProfile))
+                if (ProfileRepository.IsActiveProfile(loadedProfile))
                 {
                     // We have already saved the selected profile!
                     // so we need to show the selected profile 
                     ChangeSelectedProfile(loadedProfile);
                     foundCurrentProfileInLoadedProfiles = true;
+
+                    // If the profile is the same, but the user has renamed the profile
+                    // since the shortcut was last created, then we need to tell the user
+                    if (!loadedProfile.Name.Equals(ProfileRepository.CurrentProfile.Name))
+                    {
+
+                        MessageBox.Show(
+                        @"The Display Profile used by this Shortcut still exists, but it's changed it's name. We've updated the shortcut's name to reflect this change.",
+                        @"Display Profile name changed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    }
+
                 }
 
             }
@@ -621,8 +637,8 @@ namespace HeliosPlus.UIForms
             // If we get to the end of the loaded profiles and haven't
             // found a matching profile, then we need to show the first
             // Profile
-            if (!foundCurrentProfileInLoadedProfiles && _loadedProfiles.Count > 0)
-                ChangeSelectedProfile(_loadedProfiles[0]);
+            if (!foundCurrentProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
+                ChangeSelectedProfile(ProfileRepository.AllProfiles[0]);
 
 
             // Start finding the games and loading the Games ListView
@@ -678,7 +694,7 @@ namespace HeliosPlus.UIForms
 
             // Now start populating the other fields
 
-            _id = _shortcutToEdit.Id;
+            _uuid = _shortcutToEdit.UUID;
             // Set if we launch App/Game/NoGame
             switch (_shortcutToEdit.Category)
             {
@@ -703,6 +719,8 @@ namespace HeliosPlus.UIForms
             {
                 cb_args_game.Checked = true;
             }
+
+            cb_autosuggest.Checked = _shortcutToEdit.AutoName;
 
             //select the loaded Game item if it is there
             foreach (ListViewItem gameItem in lv_games.Items)
@@ -821,7 +839,7 @@ namespace HeliosPlus.UIForms
 
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
-            foreach (ProfileItem loadedProfile in _loadedProfiles)
+            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
             {
                 if (loadedProfile.Name == e.Item.Text)
                 {
@@ -873,7 +891,7 @@ namespace HeliosPlus.UIForms
         {
 
                
-            if (_loadedProfiles.Count > 0)
+            if (ProfileRepository.ProfileCount > 0)
             {
 
                 // Temporarily stop updating the saved_profiles listview
@@ -881,7 +899,7 @@ namespace HeliosPlus.UIForms
 
                 ImageListViewItem newItem = null;
                 bool foundCurrentProfileInLoadedProfiles = false;
-                foreach (ProfileItem loadedProfile in _loadedProfiles)
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
                     bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
                     if (!thisLoadedProfileIsAlreadyHere)
@@ -904,8 +922,8 @@ namespace HeliosPlus.UIForms
 
                 // Check if we were loading a profile to edit
                 // If so, select that instead of all that other stuff above!
-                if (_shortcutToEdit != null)
-                    ChangeSelectedProfile(_shortcutToEdit.ProfileToUse);
+                //if (_shortcutToEdit != null)
+                //    ChangeSelectedProfile(_shortcutToEdit.ProfileToUse);*/
 
                 // Restart updating the saved_profiles listview
                 ilv_saved_profiles.ResumeLayout();
