@@ -27,6 +27,7 @@ namespace HeliosPlus.UIForms
         private ShortcutItem _shortcutToEdit = null;
         private bool _isNewShortcut = false;
         private bool _isUnsaved = false;
+        private bool _loadedShortcut = false;
         private bool _saveNameAutomatic = true;
         private uint _gameId = 0;
         private string  _uuid = "";
@@ -463,12 +464,14 @@ namespace HeliosPlus.UIForms
 
         private void txt_different_executable_TextChanged(object sender, EventArgs e)
         {
-            _isUnsaved = true;
+            if (_loadedShortcut)
+                _isUnsaved = true;
         }
 
         private void txt_executable_TextChanged(object sender, EventArgs e)
         {
-            _isUnsaved = true;
+            if (_loadedShortcut)
+                _isUnsaved = true;
             suggestShortcutName();
             enableSaveButtonIfValid();
         }
@@ -521,7 +524,8 @@ namespace HeliosPlus.UIForms
         {
             if (rb_standalone.Checked)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 rb_no_game.Checked = false;
                 rb_launcher.Checked = false;
 
@@ -540,7 +544,8 @@ namespace HeliosPlus.UIForms
         {
             if (rb_launcher.Checked)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 rb_no_game.Checked = false;
                 rb_standalone.Checked = false;
 
@@ -559,7 +564,8 @@ namespace HeliosPlus.UIForms
         {
             if (rb_no_game.Checked)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 rb_launcher.Checked = false;
                 rb_standalone.Checked = false;
 
@@ -578,7 +584,8 @@ namespace HeliosPlus.UIForms
 
         private void cb_args_executable_CheckedChanged(object sender, EventArgs e)
         {
-            _isUnsaved = true;
+            if (_loadedShortcut)
+                _isUnsaved = true;
             // Disable the Process Name Text field
             if (cb_args_executable.Checked)
             {
@@ -759,6 +766,7 @@ namespace HeliosPlus.UIForms
             // Refresh the Shortcut UI
             RefreshShortcutUI();
 
+            _loadedShortcut = true;
 
         }
 
@@ -766,7 +774,8 @@ namespace HeliosPlus.UIForms
         {
             if (rb_wait_alternative_executable.Checked)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 rb_wait_executable.Checked = false;
                 txt_alternative_executable.Enabled = true;
             }
@@ -776,7 +785,8 @@ namespace HeliosPlus.UIForms
         {
             if (rb_wait_executable.Checked)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 rb_wait_alternative_executable.Checked = false;
                 txt_alternative_executable.Enabled = false;
             }
@@ -787,7 +797,8 @@ namespace HeliosPlus.UIForms
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
                 {
                     txt_alternative_executable.Text = dialog_open.FileName;
@@ -806,7 +817,8 @@ namespace HeliosPlus.UIForms
 
         private void cb_args_game_CheckedChanged(object sender, EventArgs e)
         {
-            _isUnsaved = true;
+            if (_loadedShortcut)
+                _isUnsaved = true;
             if (cb_args_game.Checked)
             {
                 txt_args_game.Enabled = true;
@@ -825,7 +837,8 @@ namespace HeliosPlus.UIForms
                 {
                     if (game.GameName == txt_game_name.Text)
                     {
-                        _isUnsaved = true;
+                        if (_loadedShortcut)
+                            _isUnsaved = true;
                         txt_game_launcher.Text = SteamGame.GameLibrary.ToString();
                         _gameId = game.GameId;
                     }
@@ -1000,7 +1013,8 @@ namespace HeliosPlus.UIForms
         {
             if (rb_switch_temp.Checked)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 rb_switch_permanent.Checked = false;
 
                 suggestShortcutName();
@@ -1011,7 +1025,8 @@ namespace HeliosPlus.UIForms
         {
             if (rb_switch_permanent.Checked)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 rb_switch_temp.Checked = false;
                 suggestShortcutName();
             }
@@ -1019,13 +1034,15 @@ namespace HeliosPlus.UIForms
 
         private void txt_shortcut_save_name_TextChanged(object sender, EventArgs e)
         {
-            _isUnsaved = true;
+            if (_loadedShortcut)
+                _isUnsaved = true;
             enableSaveButtonIfValid();
         }
 
         private void lv_games_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
-            _isUnsaved = true;
+            if (_loadedShortcut)
+                _isUnsaved = true;
         }
 
         private void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -1048,7 +1065,8 @@ namespace HeliosPlus.UIForms
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
-                _isUnsaved = true;
+                if (_loadedShortcut)
+                    _isUnsaved = true;
                 if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
                 {
                     txt_executable.Text = dialog_open.FileName;

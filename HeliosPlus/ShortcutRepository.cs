@@ -296,14 +296,6 @@ namespace HeliosPlus
             return true;
         }
 
-        /*        public static uint GetNextAvailableShortcutId()
-                {
-                    return ++_lastShortcutId;
-                }*/
-
-
-
-
 
         private static bool LoadShortcuts()
         {
