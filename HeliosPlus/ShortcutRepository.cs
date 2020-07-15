@@ -134,8 +134,10 @@ namespace HeliosPlus
                 {
                     File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception: {ex.Message}: {ex.InnerException}");
+
                     // TODO check and report
                 }
             }
@@ -182,8 +184,10 @@ namespace HeliosPlus
                 {
                     File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception 2: {ex.Message}: {ex.InnerException}");
+
                     // TODO check and report
                 }
             }
@@ -354,6 +358,8 @@ namespace HeliosPlus
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"ShortcutRepository/SaveShortcuts exception: {ex.Message}: {ex.InnerException}");
+
                     Console.WriteLine($"Unable to create Shortcut folder {_shortcutStorageJsonPath}: " + ex.Message);
 
                 }
@@ -378,6 +384,8 @@ namespace HeliosPlus
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ShortcutRepository/SaveShortcuts exception 2: {ex.Message}: {ex.InnerException}");
+
                 Console.WriteLine($"Unable to save Shortcut JSON file {_shortcutStorageJsonFileName}: " + ex.Message);
             }
 
@@ -434,6 +442,8 @@ namespace HeliosPlus
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ShortcutRepository/SaveShortcutIconToCache exception: {ex.Message}: {ex.InnerException}");
+
                 // If we fail to create an icon based on the original executable or game
                 // Then we use the standard HeliosPlus profile one.
                 shortcutIcon = shortcut.ProfileToUse.ProfileIcon.ToIcon();

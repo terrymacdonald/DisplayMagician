@@ -202,6 +202,7 @@ namespace HeliosPlus {
             }
             catch (CommandParsingException ex)
             {
+                Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.InnerException}");
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
                 // "Unrecognized command or argument '<invalid-command>'"
@@ -209,6 +210,7 @@ namespace HeliosPlus {
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Program/Main exception: {ex.Message}: {ex.InnerException}");
                 Console.WriteLine("Unable to execute application: {0}", ex.Message);
             }
             return 0;
@@ -239,8 +241,9 @@ namespace HeliosPlus {
                     {
                         Directory.CreateDirectory(AppIconPath);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.InnerException}");
                         // TODO
                     }
                 }
@@ -287,8 +290,9 @@ namespace HeliosPlus {
                             heliosIcon.Save(fs);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.InnerException}");
                     // TODO
                 }
 
@@ -298,6 +302,7 @@ namespace HeliosPlus {
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.InnerException}");
                 MessageBox.Show(
                     ex.Message,
                     Language.Fatal_Error,
@@ -374,8 +379,9 @@ namespace HeliosPlus {
                 };
                 Application.DoEvents();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Program/SwitchToExecutable exception: {ex.Message}: {ex.InnerException}");
                 // ignored
             }
 
@@ -385,8 +391,9 @@ namespace HeliosPlus {
                 {
                     p.WaitForExit();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"Program/SwitchToExecutable exception 2: {ex.Message}: {ex.InnerException}");
                     // ignored
                 }
             }
@@ -514,8 +521,9 @@ namespace HeliosPlus {
                 };
                 Application.DoEvents();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.InnerException}");
                 // ignored
             }
 

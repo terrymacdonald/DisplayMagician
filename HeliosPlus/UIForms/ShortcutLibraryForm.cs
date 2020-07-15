@@ -20,18 +20,18 @@ namespace HeliosPlus.UIForms
     public partial class ShortcutLibraryForm : Form
     {
 
-        private ShortcutAdaptor _shortcutAdaptor;
+        private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ImageListViewItem _selectedShortcutILVItem = null;
         private ShortcutItem _selectedShortcut = null;
-        private ShortcutRepository _shortcutRepository;
-        private ProfileRepository _profileRepository;
+        private ShortcutRepository _shortcutRepository = new ShortcutRepository();
+        private ProfileRepository _profileRepository = new ProfileRepository();
 
         public ShortcutLibraryForm()
         {
             InitializeComponent();
-            _shortcutAdaptor = new ShortcutAdaptor();
-            _shortcutRepository = new ShortcutRepository();
-            _profileRepository = new ProfileRepository();
+            //_shortcutAdaptor = new ShortcutAdaptor();
+            //_shortcutRepository = new ShortcutRepository();
+            //_profileRepository = new ProfileRepository();
     }
 
         private void btn_new_Click(object sender, EventArgs e)

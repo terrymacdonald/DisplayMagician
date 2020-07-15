@@ -53,7 +53,10 @@ namespace HeliosPlus.UIForms
                 //return shortcut.ShortcutBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
                 return shortcut.ShortcutBitmap;
             }
-            catch {
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutAdapter/GetThumbnail exception: {ex.Message}: {ex.InnerException}");
+
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -79,11 +82,12 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                ShortcutItem shortcutName = (ShortcutItem) key;
-                return shortcutName.Name;
+                ShortcutItem shortcut = (ShortcutItem) key;
+                return shortcut.Name;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ShortcutAdapter/GetUniqueIdentifier exception: {ex.Message}: {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a Shortcut
                 // Then we return null
                 return null;
@@ -102,18 +106,13 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                //Shortcut shortcut = (Shortcut)key;
-                //return shortcut.SavedShortcutIconCacheFilename;
                 string shortcutName = (string)key;
-               /* Shortcut shortcut = (from item in Shortcut.AllSavedShortcuts where item.Name == shortcutName select item).First();
-                if (shortcut is Shortcut)
-                    return shortcut.SavedShortcutIconCacheFilename;
-                else
-                    return null;*/
                 return shortcutName;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ShortcutAdaptor/GetSourceImage exception: {ex.Message}: {ex.InnerException}");
+
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -134,7 +133,6 @@ namespace HeliosPlus.UIForms
 
             try
             {
-
                 ShortcutItem shortcut = (ShortcutItem) key;
 
                 // Get file info
@@ -165,8 +163,9 @@ namespace HeliosPlus.UIForms
             
                 return details.ToArray();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ShortcutAdapter/Utility.Tuple exception: {ex.Message}: {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;

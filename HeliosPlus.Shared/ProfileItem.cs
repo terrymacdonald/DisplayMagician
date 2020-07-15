@@ -100,8 +100,9 @@ namespace HeliosPlus.Shared
             {
                 NvAPIWrapper.NVIDIA.Initialize();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.InnerException}");
                 // ignored
             }
 
@@ -364,8 +365,9 @@ namespace HeliosPlus.Shared
                     GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ProfileItem/ApplyTopos exception: {ex.Message}: {ex.InnerException}");
                 // ignored
             }
         }

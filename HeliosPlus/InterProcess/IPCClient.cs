@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.ServiceModel;
 using System.ServiceModel.Description;
@@ -49,8 +50,9 @@ namespace HeliosPlus.InterProcess
                 {
                     processChannel = new IPCClient(process);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"IPCClient/QueryAll exception: {ex.Message}: {ex.InnerException}");
                     // ignored
                 }
 
@@ -78,8 +80,9 @@ namespace HeliosPlus.InterProcess
                             return processChannel;
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine($"IPCClient/QueryByStatus exception: {ex.Message}: {ex.InnerException}");
                         // ignored
                     }
                 }

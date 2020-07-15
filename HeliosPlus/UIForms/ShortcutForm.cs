@@ -676,8 +676,9 @@ namespace HeliosPlus.UIForms
                             il_games.Images.Add(extractedBitmap);
                         }
                     } 
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.InnerException}");
                         il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
                     }
                 } else
@@ -685,6 +686,7 @@ namespace HeliosPlus.UIForms
                     //(Icon)global::Calculate.Properties.Resources.ResourceManager.GetObject("Steam.ico");
                     il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
                 }
+
 
                 if (!Visible)
                 {
@@ -700,7 +702,6 @@ namespace HeliosPlus.UIForms
             }
 
             // Now start populating the other fields
-
             _uuid = _shortcutToEdit.UUID;
             // Set if we launch App/Game/NoGame
             switch (_shortcutToEdit.Category)
@@ -738,7 +739,6 @@ namespace HeliosPlus.UIForms
                 }
             }
 
-
             // Set the executable items if we have them
             txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
             nud_timeout_executable.Value = _shortcutToEdit.ExecutableTimeout;
@@ -758,7 +758,6 @@ namespace HeliosPlus.UIForms
                 rb_wait_alternative_executable.Checked = true;
             }
             txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
-
 
             // Set the shortcut name
             txt_shortcut_save_name.Text = _shortcutToEdit.Name;
@@ -857,6 +856,8 @@ namespace HeliosPlus.UIForms
                 if (loadedProfile.Name == e.Item.Text)
                 {
                     ChangeSelectedProfile(loadedProfile);
+                    if (_loadedShortcut)
+                        _isUnsaved = true;
                 }
             }
 
@@ -1039,16 +1040,10 @@ namespace HeliosPlus.UIForms
             enableSaveButtonIfValid();
         }
 
-        private void lv_games_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-        }
-
         private void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
         {
 
-            if (_isUnsaved)
+            if (_isUnsaved && _loadedShortcut)
             {
                 // If the user doesn't want to close this window without saving, then don't close the window.
                 DialogResult result = MessageBox.Show(
@@ -1085,12 +1080,16 @@ namespace HeliosPlus.UIForms
 
         private void txt_shortcut_save_name_Click(object sender, EventArgs e)
         {
+            if (_loadedShortcut)
+                _isUnsaved = true;
             _saveNameAutomatic = false;
             cb_autosuggest.Checked = false;
         }
 
         private void cb_autosuggest_CheckedChanged(object sender, EventArgs e)
         {
+            if (_loadedShortcut)
+                _isUnsaved = true;
             if (cb_autosuggest.Checked)
                 _saveNameAutomatic = true;
             else

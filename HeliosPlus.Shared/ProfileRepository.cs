@@ -165,8 +165,9 @@ namespace HeliosPlus.Shared
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"ProfileRepository/RemoveProfile exception: {ex.Message}: {ex.InnerException}");
                     // TODO check and report
                 }
             }
@@ -199,8 +200,9 @@ namespace HeliosPlus.Shared
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"ProfileRepository/RemoveProfile exception 2: {ex.Message}: {ex.InnerException}");
                     // TODO check and report
                 }
             }
@@ -233,8 +235,9 @@ namespace HeliosPlus.Shared
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"ProfileRepository/RemoveProfile exception 3: {ex.Message}: {ex.InnerException}");
                     // TODO check and report
                 }
             }
@@ -419,6 +422,7 @@ namespace HeliosPlus.Shared
                     catch (Exception ex)
                     {
                         // ignored
+                        Console.WriteLine($"ProfileRepository/LoadProfiles exception: {ex.Message}: {ex.InnerException}");
                         Console.WriteLine($"Unable to load Profiles from JSON file {_profileStorageJsonFileName}: " + ex.Message);
                     }
 
@@ -473,6 +477,7 @@ namespace HeliosPlus.Shared
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"ProfileRepository/SaveProfiles exception: {ex.Message}: {ex.InnerException}");
                     Console.WriteLine($"Unable to create Profile folder {_profileStorageJsonPath}: " + ex.Message);
 
                 }
@@ -497,6 +502,7 @@ namespace HeliosPlus.Shared
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ProfileRepository/SaveProfiles exception 2: {ex.Message}: {ex.InnerException}");
                 Console.WriteLine($"Unable to save Profile JSON file {_profileStorageJsonFileName}: " + ex.Message);
             }
 
@@ -517,6 +523,7 @@ namespace HeliosPlus.Shared
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ProfileRepository/SaveProfileIconToCache exception: {ex.Message}: {ex.InnerException}");
                 // If we fail to create an icon based on the Profile, then we use the standard HeliosPlus profile one.
                 // Which is created on program startup.
                 File.Copy(AppHeliosPlusIconFilename, profile.SavedProfileIconCacheFilename);
@@ -560,6 +567,7 @@ namespace HeliosPlus.Shared
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ProfileRepository/ApplyProfile exception: {ex.Message}: {ex.InnerException}");
                 UpdateCurrentProfile();
                 Console.WriteLine($"Profile: Problem applying the '{profile.Name}' Display Profile: {ex.Message}");
                 MessageBox.Show($"Problem applying the '{profile.Name}' Display Profile! \n(ex.Message)", $"Problem applying '{profile.Name}' Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);

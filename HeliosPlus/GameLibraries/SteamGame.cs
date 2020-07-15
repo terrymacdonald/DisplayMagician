@@ -102,18 +102,20 @@ namespace HeliosPlus.GameLibraries
                         return false;
                     }
                 }
-                catch (SecurityException e)
+                catch (SecurityException ex)
                 {
-                    if (e.Source != null)
-                        Console.WriteLine("SecurityException source: {0} - Message: {1}", e.Source, e.Message);
+                    Console.WriteLine($"SteamGame/IsRunning securityexception: {ex.Message}: {ex.InnerException}");
+                    if (ex.Source != null)
+                        Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
                 }
-                catch (IOException e)
+                catch (IOException ex)
                 {
                     // Extract some information from this exception, and then
                     // throw it to the parent method.
-                    if (e.Source != null)
-                        Console.WriteLine("IOException source: {0} - Message: {1}", e.Source, e.Message);
+                    Console.WriteLine($"SteamGame/IsRunning ioexception: {ex.Message}: {ex.InnerException}");
+                    if (ex.Source != null)
+                        Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
                 }
             }
@@ -135,18 +137,20 @@ namespace HeliosPlus.GameLibraries
                         return false;
                     }
                 }
-                catch (SecurityException e)
+                catch (SecurityException ex)
                 {
-                    if (e.Source != null)
-                        Console.WriteLine("SecurityException source: {0} - Message: {1}", e.Source, e.Message);
+                    Console.WriteLine($"SteamGame/IsUpdating securityexception: {ex.Message}: {ex.InnerException}");
+                    if (ex.Source != null)
+                        Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
                 }
-                catch (IOException e)
+                catch (IOException ex)
                 {
                     // Extract some information from this exception, and then
                     // throw it to the parent method.
-                    if (e.Source != null)
-                        Console.WriteLine("IOException source: {0} - Message: {1}", e.Source, e.Message);
+                    Console.WriteLine($"SteamGame/IsUpdating ioexception: {ex.Message}: {ex.InnerException}");
+                    if (ex.Source != null)
+                        Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
                 }
             }
@@ -318,8 +322,9 @@ namespace HeliosPlus.GameLibraries
                             }
                             steamAppInfo.Add(app.AppID, steamGameAppInfo);
                         }
-                        catch (ArgumentException e)
+                        catch (ArgumentException ex)
                         {
+                            Console.WriteLine($"SteamGame/GetAllInstalledGames exception: {ex.Message}: {ex.InnerException}");
                             //we just want to ignore it if we try to add it twice....
                         }
 
@@ -439,30 +444,34 @@ namespace HeliosPlus.GameLibraries
                     }
                 }
             }
-            catch (SecurityException e)
+            catch (SecurityException ex)
             {
-                if (e.Source != null)
-                    Console.WriteLine("SecurityException source: {0} - Message: {1}", e.Source, e.Message);
+                Console.WriteLine($"SteamGame/GetAllInstalledGames securityexception: {ex.Message}: {ex.InnerException}");
+                if (ex.Source != null)
+                    Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
                 throw;
             }
-            catch (UnauthorizedAccessException e)
+            catch (UnauthorizedAccessException ex)
             {
-                if (e.Source != null)
-                    Console.WriteLine("UnauthorizedAccessException  source: {0} - Message: {1}", e.Source, e.Message);
+                Console.WriteLine($"SteamGame/GetAllInstalledGames unauthorizedaccessexception: {ex.Message}: {ex.InnerException}");
+                if (ex.Source != null)
+                    Console.WriteLine("UnauthorizedAccessException  source: {0} - Message: {1}", ex.Source, ex.Message);
                 throw;
             }
-            catch (ObjectDisposedException e)
+            catch (ObjectDisposedException ex)
             {
-                if (e.Source != null)
-                    Console.WriteLine("ObjectDisposedException  source: {0} - Message: {1}", e.Source, e.Message);
+                Console.WriteLine($"SteamGame/GetAllInstalledGames objectdisposedexceptions: {ex.Message}: {ex.InnerException}");
+                if (ex.Source != null)
+                    Console.WriteLine("ObjectDisposedException  source: {0} - Message: {1}", ex.Source, ex.Message);
                 throw;
             }
-            catch (IOException e)
+            catch (IOException ex)
             {
+                Console.WriteLine($"SteamGame/GetAllInstalledGames ioexception: {ex.Message}: {ex.InnerException}");
                 // Extract some information from this exception, and then
                 // throw it to the parent method.
-                if (e.Source != null)
-                    Console.WriteLine("IOException source: {0} - Message: {1}", e.Source, e.Message);
+                if (ex.Source != null)
+                    Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
                 throw;
             }
 

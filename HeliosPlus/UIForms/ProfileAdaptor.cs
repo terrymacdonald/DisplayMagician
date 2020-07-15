@@ -64,7 +64,9 @@ namespace HeliosPlus.UIForms
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
                 return profileToUse.ProfileBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
             }
-            catch {
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ProfileAdaptor/GetThumbnail exception: {ex.Message}: {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -90,11 +92,18 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                string profileName = (string)key;
-                return profileName;
+                ProfileItem profileToUse = (ProfileItem)key;
+
+                if (profileToUse == null)
+                {
+                    profileToUse = ProfileRepository.CurrentProfile;
+                }
+
+                return profileToUse.Name;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ProfileAdaptor/GertUniqueIdentifier exception: {ex.Message}: {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -116,8 +125,9 @@ namespace HeliosPlus.UIForms
                 string profileName = (string)key;
                 return profileName;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ProfileAdaptor/GetSourceImage exception: {ex.Message}: {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -138,17 +148,7 @@ namespace HeliosPlus.UIForms
 
             try
             {
-                string profileName = (string)key;
-                ProfileItem profileToUse = null;
-
-                foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-                {
-                    if (profileToTest.Name == profileName)
-                    {
-                        profileToUse = profileToTest;
-                    }
-
-                }
+                ProfileItem profileToUse = (ProfileItem)key;
 
                 if (profileToUse == null)
                 {
@@ -183,8 +183,9 @@ namespace HeliosPlus.UIForms
             
                 return details.ToArray();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ProfileAdaptor/Utility.Tuple exception: {ex.Message}: {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;

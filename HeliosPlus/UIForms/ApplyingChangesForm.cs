@@ -188,8 +188,9 @@ namespace HeliosPlus.UIForms
                     {
                         Opacity = f;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine($"ApplyingChangesForm/SplashForm_FormClosing exception: {ex.Message}: {ex.InnerException}");
                         // ignored
                     }
                 }, this), new SafeInvoker(() =>
@@ -213,8 +214,9 @@ namespace HeliosPlus.UIForms
                     {
                         Opacity = f;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine($"ApplyingChangesForm/SplashForm_Shown exception: {ex.Message}: {ex.InnerException}");
                         // ignored
                     }
                 }, this), new SafeInvoker(DoTimeout, this));

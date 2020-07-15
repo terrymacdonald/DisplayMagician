@@ -587,7 +587,6 @@ namespace HeliosPlus.UIForms
             this.lv_games.SmallImageList = this.il_games;
             this.lv_games.TabIndex = 22;
             this.lv_games.UseCompatibleStateImageBehavior = false;
-            this.lv_games.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.lv_games_ItemSelectionChanged);
             this.lv_games.DoubleClick += new System.EventHandler(this.btn_choose_game_Click);
             // 
             // rb_launcher

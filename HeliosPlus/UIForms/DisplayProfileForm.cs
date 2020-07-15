@@ -18,15 +18,14 @@ namespace HeliosPlus.UIForms
         private string _saveOrRenameMode = "save";
         //private static bool _inDialog = false;
         private static ProfileItem _profileToLoad = null;
-        private ProfileAdaptor _profileAdaptor;
-        private ProfileRepository _profileRepository;
+        private ProfileAdaptor _profileAdaptor = new ProfileAdaptor();
+        private ProfileRepository _profileRepository = new ProfileRepository();
 
         public DisplayProfileForm()
         {
             InitializeComponent();
             this.AcceptButton = this.btn_save_or_rename;
-            _profileAdaptor = new ProfileAdaptor();
-            _profileRepository = new ProfileRepository();
+            //_profileRepository = new ProfileRepository();
         }
 
         public DisplayProfileForm(ProfileItem profileToLoad) : this()

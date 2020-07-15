@@ -327,7 +327,11 @@ namespace HeliosPlus
                     }
                 }
             }
-            catch { return null; }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutItem/ExtractVisataIcon exception: {ex.Message}: {ex.InnerException}");
+                return null; 
+            }
             return bmpPngExtracted;
         }
 
@@ -582,16 +586,20 @@ namespace HeliosPlus
                         }
                         finally
                         {
+                            Console.WriteLine($"ShortcutItem/CreateShortcut exception (saving)");
                             Marshal.FinalReleaseComObject(shortcut);
                         }
                     }
                     finally
                     {
+                        Console.WriteLine($"ShortcutItem/CreateShortcut exception (Creating shortcut)");
                         Marshal.FinalReleaseComObject(wshShell);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"ShortcutItem/CreateShortcut exception (deleting old shortcut)");
+                   
                     // Clean up a failed attempt
                     if (File.Exists(shortcutFileName))
                     {

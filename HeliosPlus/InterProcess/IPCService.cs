@@ -51,14 +51,16 @@ namespace HeliosPlus.InterProcess
 
                     return true;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"IPCService/StartService exception: {ex.Message}: {ex.InnerException}");
                     try
                     {
                         _serviceHost?.Close();
                     }
-                    catch
+                    catch (Exception ex2)
                     {
+                        Console.WriteLine($"IPCService/StartService exception 2: {ex2.Message}: {ex2.InnerException}");
                         // ignored
                     }
 
