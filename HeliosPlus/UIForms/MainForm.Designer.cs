@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btn_setup_display_profiles = new System.Windows.Forms.Button();
@@ -36,6 +37,7 @@
             this.btn_setup_game_shortcuts = new System.Windows.Forms.Button();
             this.btn_exit = new System.Windows.Forms.Button();
             this.pb_game_shortcut = new System.Windows.Forms.PictureBox();
+            this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -115,6 +117,10 @@
             this.pb_game_shortcut.TabStop = false;
             this.pb_game_shortcut.Click += new System.EventHandler(this.pb_game_shortcut_Click);
             // 
+            // notifyIcon1
+            // 
+            resources.ApplyResources(this.notifyIcon1, "notifyIcon1");
+            // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
@@ -144,5 +150,6 @@
         private System.Windows.Forms.Button btn_setup_display_profiles;
         private System.Windows.Forms.Button btn_setup_game_shortcuts;
         private System.Windows.Forms.Label lbl_version;
+        private System.Windows.Forms.NotifyIcon notifyIcon1;
     }
 }

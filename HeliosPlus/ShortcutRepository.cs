@@ -15,7 +15,7 @@ using System.Windows.Forms;
 namespace HeliosPlus
 {
 
-    class ShortcutRepository
+    public static class ShortcutRepository
     {
         #region Class Variables
         // Common items to the class
@@ -24,33 +24,15 @@ namespace HeliosPlus
         // Other constants that are useful
         private static string _shortcutStorageJsonPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutStorageJsonFileName = Path.Combine(_shortcutStorageJsonPath, $"Shortcuts_{Version.ToString(2)}.json");
-        private static uint _lastShortcutId;
         #endregion
-
-        #region Instance Variables
-        // Individual items per class instance
-        #endregion
-
 
         #region Class Constructors
-        public ShortcutRepository()
+        static ShortcutRepository()
         {
             // Load the Shortcuts from storage
             LoadShortcuts();
-/*            if (LoadShortcuts() && ShortcutCount > 0)
-            {
-                // Work out the starting NextShortcutId value
-                long max = _allShortcuts.Max<ShortcutItem>(item => item.Id);
-                _lastShortcutId = Convert.ToUInt32(max);
-            } else
-                _lastShortcutId = 0;
-*/        }
-
-        public ShortcutRepository(ShortcutItem shortcut) : this()
-        {
-            if (shortcut is ShortcutItem)
-                AddShortcut(shortcut);
         }
+
         #endregion
 
         #region Class Properties

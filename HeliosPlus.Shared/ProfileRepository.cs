@@ -25,7 +25,7 @@ using System.Resources;
 namespace HeliosPlus.Shared
 {
 
-    public class ProfileRepository
+    public static class ProfileRepository
     {
         #region Class Variables
         // Common items to the class
@@ -44,22 +44,11 @@ namespace HeliosPlus.Shared
 
         #endregion
 
-        #region Instance Variables
-        // Individual items per class instance
-        #endregion
-
-
         #region Class Constructors
-        public ProfileRepository()
+        static ProfileRepository()
         {
             // Load the Profiles from storage
             LoadProfiles();
-        }
-
-        public ProfileRepository(ProfileItem Profile) : this()
-        {
-            if (Profile is ProfileItem)
-                AddProfile(Profile);
         }
         #endregion
 

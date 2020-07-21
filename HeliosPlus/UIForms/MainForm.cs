@@ -58,5 +58,6 @@ namespace HeliosPlus.UIForms
             // Start loading the Steam Games just after the Main form opens
             SteamGame.GetAllInstalledGames();
         }
+
     }
 }

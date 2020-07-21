@@ -22,7 +22,6 @@ namespace HeliosPlus.UIForms
         List<SteamGame> _allSteamGames;
         private ProfileAdaptor _profileAdaptor;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
-        private ProfileRepository _profileRepository;
         private ProfileItem _profileToUse= null;
         private ShortcutItem _shortcutToEdit = null;
         private bool _isNewShortcut = false;
@@ -39,8 +38,6 @@ namespace HeliosPlus.UIForms
             // Set the profileAdaptor we need to load images from Profiles
             // into the Profiles ImageListView
             _profileAdaptor = new ProfileAdaptor();
-            // Then load the ProfilesRepository
-            _profileRepository = new ProfileRepository();
 
             // Create a new SHortcut if we are creating a new one
             // And set up the page (otherwise this is all set when we load an

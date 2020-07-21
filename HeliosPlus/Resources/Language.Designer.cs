@@ -314,11 +314,11 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Executing &apos;{0}&apos; with &apos;{1}&apos; profile..
+        ///   Looks up a localized string similar to Running &apos;{0}&apos; with &apos;{1}&apos; profile..
         /// </summary>
-        internal static string Executing_application_with_profile {
+        internal static string Execute_application_with_profile {
             get {
-                return ResourceManager.GetString("Executing_application_with_profile", resourceCulture);
+                return ResourceManager.GetString("Execute_application_with_profile", resourceCulture);
             }
         }
         
@@ -629,7 +629,7 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Shortcut placed successfully..
+        ///   Looks up a localized string similar to Shortcut successfully saved to &apos;{0}&apos;..
         /// </summary>
         internal static string Shortcut_placed_successfully {
             get {

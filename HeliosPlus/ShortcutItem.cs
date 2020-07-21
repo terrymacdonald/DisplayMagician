@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using NvAPIWrapper.Native.Display.Structures;
 using System.Text.RegularExpressions;
+using IWshRuntimeLibrary;
 
 namespace HeliosPlus
 {
@@ -531,7 +532,7 @@ namespace HeliosPlus
                 if (Category == ShortcutCategory.Application)
                 {
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Executing_application_with_profile, programName, Name);
+                    shortcutDescription = string.Format(Language.Execute_application_with_profile, programName, ProfileToUse.Name);
 
                 }
                 // Only add the rest of the options if the temporary switch radio button is set
@@ -539,7 +540,7 @@ namespace HeliosPlus
                 else if (Permanence == ShortcutPermanence.Temporary)
                 {
                     // Prepare text for the shortcut description field
-                    shortcutDescription = string.Format(Language.Executing_application_with_profile, GameName, Name);
+                    shortcutDescription = string.Format(Language.Execute_application_with_profile, GameName, ProfileToUse.Name);
                 }
 
             }
@@ -547,70 +548,58 @@ namespace HeliosPlus
             else
             {
                 // Prepare text for the shortcut description field
-                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, Name);
+                shortcutDescription = string.Format(Language.Switching_display_profile_to_profile, ProfileToUse.Name);
             }
 
             // Now we are ready to create a shortcut based on the filename the user gave us
             shortcutFileName = Path.ChangeExtension(shortcutFileName, @"lnk");
+
+            // And we use the Icon from the shortcutIconCache
+            shortcutIconFileName = SavedShortcutIconCacheFilename;
 
             // If the user supplied a file
             if (shortcutFileName != null)
             {
                 try
                 {
-                    // Remove the old file to replace it
-                    if (File.Exists(shortcutFileName))
+                    // Remove the old file if it exists to replace it
+                    if (System.IO.File.Exists(shortcutFileName))
                     {
-                        File.Delete(shortcutFileName);
+                        System.IO.File.Delete(shortcutFileName);
                     }
 
                     // Actually create the shortcut!
-                    var wshShellType = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
-                    dynamic wshShell = Activator.CreateInstance(wshShellType);
+                    //var wshShellType = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
+                    //dynamic wshShell = Activator.CreateInstance(wshShellType);
+                    
 
-                    try
-                    {
-                        var shortcut = wshShell.CreateShortcut(shortcutFileName);
+                    WshShell shell = new WshShell();
+                    IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
 
-                        try
-                        {
-                            shortcut.TargetPath = Application.ExecutablePath;
-                            shortcut.Arguments = string.Join(" ", shortcutArgs);
-                            shortcut.Description = shortcutDescription;
-                            shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
-                                                        string.Empty;
+                    shortcut.TargetPath = Application.ExecutablePath;
+                    shortcut.Arguments = string.Join(" ", shortcutArgs);
+                    shortcut.Description = shortcutDescription;
+                    shortcut.WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath) ??
+                                                string.Empty;
 
-                            shortcut.IconLocation = shortcutIconFileName;
-
-                            shortcut.Save();
-                        }
-                        finally
-                        {
-                            Console.WriteLine($"ShortcutItem/CreateShortcut exception (saving)");
-                            Marshal.FinalReleaseComObject(shortcut);
-                        }
-                    }
-                    finally
-                    {
-                        Console.WriteLine($"ShortcutItem/CreateShortcut exception (Creating shortcut)");
-                        Marshal.FinalReleaseComObject(wshShell);
-                    }
+                    shortcut.IconLocation = shortcutIconFileName;
+                    shortcut.Save();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"ShortcutItem/CreateShortcut exception (deleting old shortcut)");
                    
                     // Clean up a failed attempt
-                    if (File.Exists(shortcutFileName))
+                    if (System.IO.File.Exists(shortcutFileName))
                     {
-                        File.Delete(shortcutFileName);
+                        System.IO.File.Delete(shortcutFileName);
                     }
                 }
             }
 
             // Return a status on how it went
             // true if it was a success or false if it was not
-            return shortcutFileName != null && File.Exists(shortcutFileName);
+            return shortcutFileName != null && System.IO.File.Exists(shortcutFileName);
         }
 
         public void AutoSuggestShortcutName()

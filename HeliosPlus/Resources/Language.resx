@@ -207,8 +207,8 @@
   <data name="Executable_file_not_found" xml:space="preserve">
     <value>Executable file not found.</value>
   </data>
-  <data name="Executing_application_with_profile" xml:space="preserve">
-    <value>Executing '{0}' with '{1}' profile.</value>
+  <data name="Execute_application_with_profile" xml:space="preserve">
+    <value>Running '{0}' with '{1}' profile.</value>
   </data>
   <data name="Steam_is_not_installed" xml:space="preserve">
     <value>Steam is not installed.</value>
@@ -217,7 +217,7 @@
     <value>Switching display profile to '{0}'.</value>
   </data>
   <data name="Shortcut_placed_successfully" xml:space="preserve">
-    <value>Shortcut placed successfully.</value>
+    <value>Shortcut successfully saved to '{0}'.</value>
   </data>
   <data name="Shortcut" xml:space="preserve">
     <value>Shortcut</value>

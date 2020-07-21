@@ -23,8 +23,6 @@ namespace HeliosPlus.UIForms
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ImageListViewItem _selectedShortcutILVItem = null;
         private ShortcutItem _selectedShortcut = null;
-        private ShortcutRepository _shortcutRepository = new ShortcutRepository();
-        private ProfileRepository _profileRepository = new ProfileRepository();
 
         public ShortcutLibraryForm()
         {
@@ -32,7 +30,7 @@ namespace HeliosPlus.UIForms
             //_shortcutAdaptor = new ShortcutAdaptor();
             //_shortcutRepository = new ShortcutRepository();
             //_profileRepository = new ProfileRepository();
-    }
+        }
 
         private void btn_new_Click(object sender, EventArgs e)
         {
@@ -40,7 +38,7 @@ namespace HeliosPlus.UIForms
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                _selectedShortcut = shortcutForm.Shortcut;
+                ShortcutRepository.AddShortcut(shortcutForm.Shortcut);
                 RefreshShortcutLibraryUI();
             }
         }
@@ -65,18 +63,15 @@ namespace HeliosPlus.UIForms
                 ilv_saved_shortcuts.SuspendLayout();
 
                 ImageListViewItem newItem = null;
+                ilv_saved_shortcuts.Items.Clear();
                 foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts)
                 {
-                    bool thisLoadedShortcutIsAlreadyHere = (from item in ilv_saved_shortcuts.Items where item.Text == loadedShortcut.Name select item.Text).Any();
-                    if (!thisLoadedShortcutIsAlreadyHere)
-                    {
-                        //loadedProfile.SaveProfileImageToCache();
-                        //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
-                        //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                        newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
-                        //ilv_saved_profiles.Items.Add(newItem);
-                        ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
-                    }
+                    //loadedProfile.SaveProfileImageToCache();
+                    //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
+                    //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                    newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
+                    //ilv_saved_profiles.Items.Add(newItem);
+                    ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
                 }
 
                 if (_selectedShortcut != null && _selectedShortcut is ShortcutItem)
@@ -135,7 +130,7 @@ namespace HeliosPlus.UIForms
                         }
                         else
                         {
-                            dialog_save.FileName = String.Concat(_selectedShortcut, @" (", _selectedShortcut.Name, @")");
+                            dialog_save.FileName = _selectedShortcut.Name;
                         }
                     }
 
@@ -145,7 +140,7 @@ namespace HeliosPlus.UIForms
                         if (_selectedShortcut.CreateShortcut(dialog_save.FileName))
                         {
                             MessageBox.Show(
-                                Language.Shortcut_placed_successfully,
+                                String.Format(Language.Shortcut_placed_successfully, dialog_save.FileName),
                                 Language.Shortcut,
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
@@ -186,7 +181,6 @@ namespace HeliosPlus.UIForms
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                _selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
             }
 
@@ -201,7 +195,6 @@ namespace HeliosPlus.UIForms
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                _selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
             }
 
