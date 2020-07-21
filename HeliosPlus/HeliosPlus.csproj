@@ -77,6 +77,7 @@
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\PackageInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\App.cs" />
+    <Compile Include="GameLibraries\SteamLibrary.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ShortcutItem.cs" />
     <Compile Include="ShortcutRepository.cs" />

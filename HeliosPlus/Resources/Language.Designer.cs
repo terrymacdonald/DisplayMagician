@@ -134,15 +134,6 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Can not change active profile..
-        /// </summary>
-        internal static string Can_not_change_active_profile {
-            get {
-                return ResourceManager.GetString("Can_not_change_active_profile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Can not open a named pipe for Inter-process communication..
         /// </summary>
         internal static string Can_not_open_a_named_pipe_for_Inter_process_communication {
@@ -157,6 +148,24 @@ namespace HeliosPlus.Resources {
         internal static string Cancel {
             get {
                 return ResourceManager.GetString("Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot change active profile..
+        /// </summary>
+        internal static string Cannot_change_active_profile {
+            get {
+                return ResourceManager.GetString("Cannot_change_active_profile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot find the shortcut &apos;{0}&apos; in the Shortcut library..
+        /// </summary>
+        internal static string Cannot_find_shortcut_in_library {
+            get {
+                return ResourceManager.GetString("Cannot_find_shortcut_in_library", resourceCulture);
             }
         }
         
@@ -791,7 +800,7 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Waiting for the &apos;{0}&apos; to terminate.
+        ///   Looks up a localized string similar to Waiting for the &apos;{0}&apos; process to terminate.
         /// </summary>
         internal static string Waiting_for_the_0_to_terminate {
             get {

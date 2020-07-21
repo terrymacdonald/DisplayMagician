@@ -510,6 +510,66 @@ namespace HeliosPlus
             return multiIcon;
         }
 
+
+        public (bool,string) IsValid()
+        {
+            // Do some validation checks to make sure the shortcut is sensible
+            // And that we have enough to try and action within the shortcut
+            // (in other words check everything in the shortcut is still valid)
+
+            // Does the profile we want to Use still exist?
+            // Is the profile still valid right now? i.e. are all the screens available?
+            if (!ProfileToUse.IsPossible)
+            {
+                return (false,string.Format("The profile '{0}' is not valid right now and cannot be used.",ProfileToUse.Name));
+            }
+            // Is the main application still installed?
+            if (Category.Equals(ShortcutCategory.Application))
+            {
+                // We need to check if the Application still exists
+                if (!System.IO.File.Exists(ExecutableNameAndPath))
+                {
+                    return (false, string.Format("The application executable '{0}' does not exist, or cannot be accessed by HeliosPlus.", ExecutableNameAndPath));
+                }
+
+            } else if (Category.Equals(ShortcutCategory.Game))
+            {
+                // If the game is a Steam Game we check for that
+                if (GameLibrary.Equals(SupportedGameLibrary.Steam))
+                {
+
+                    // First check if Steam is installed
+                    // Check if Steam is installed and error if it isn't
+                    if (!SteamLibrary.IsSteamInstalled)
+                    {
+                        return (false, Language.Steam_executable_file_not_found);
+                    }
+
+                    // We need to look up details about the game
+                    if (!SteamLibrary.ContainsSteamGame(GameAppId))
+                    {
+                        return (false, string.Format("The Steam Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                    }
+                }
+                // If the game is a Uplay Game we check for that
+                /*else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
+                {
+                    // We need to look up details about the game
+                    if (!UplayGame.IsInstalled(GameAppId))
+                    {
+                        return (false, string.Format("The Uplay Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                    }
+
+                }*/
+
+
+            }
+            // Do all the specified pre-start apps still exist?
+
+            return (true, "Shortcut is valid");
+
+        }
+
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
         public bool CreateShortcut(string shortcutFileName)
@@ -522,7 +582,7 @@ namespace HeliosPlus
             {
                 // Add the SwitchProfile command as the first argument to start to switch to another profile
                 $"{HeliosStartupAction.SwitchProfile}",
-                $"\"{Name}\""
+                $"\"{UUID}\""
             };
 
             // Only add the rest of the options if the permanence is temporary

@@ -306,8 +306,8 @@
   <data name="Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile" xml:space="preserve">
     <value>Another instance of this program is in working state. Please close other instances before trying to switch profile.</value>
   </data>
-  <data name="Can_not_change_active_profile" xml:space="preserve">
-    <value>Can not change active profile.</value>
+  <data name="Cannot_change_active_profile" xml:space="preserve">
+    <value>Cannot change active profile.</value>
   </data>
   <data name="Steam_executable_file_not_found" xml:space="preserve">
     <value>Steam executable file not found.</value>
@@ -358,7 +358,7 @@
     <value>Saved Profiles</value>
   </data>
   <data name="Waiting_for_the_0_to_terminate" xml:space="preserve">
-    <value>Waiting for the '{0}' to terminate</value>
+    <value>Waiting for the '{0}' process to terminate</value>
   </data>
   <data name="Apply_Profile" xml:space="preserve">
     <value>Apply_Profile</value>
@@ -368,5 +368,8 @@
   </data>
   <data name="Press_ESC_to_cancel" xml:space="preserve">
     <value>Press ESC to cancel</value>
+  </data>
+  <data name="Cannot_find_shortcut_in_library" xml:space="preserve">
+    <value>Cannot find the shortcut '{0}' in the Shortcut library.</value>
   </data>
 </root>

@@ -21,6 +21,13 @@ using System.Text.RegularExpressions;
 using System.Drawing;
 
 namespace HeliosPlus {
+    public enum SupportedProgramMode
+    {
+        RunShortcut,
+        EditProfile,
+        StartUpNormally
+    }
+
     public enum SupportedGameLibrary
     {
         Unknown,
@@ -41,76 +48,7 @@ namespace HeliosPlus {
         //internal static string ShortcutIconCachePath;
 
 
-        internal static ProfileItem GetProfile(string profileName)
-        {
-            // Create an array of display profiles we have
-            var profiles = ProfileRepository.AllProfiles.ToArray();
-            // Check if the user supplied a --profile option using the profiles' ID
-            var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.UUID.Equals(profileName, StringComparison.InvariantCultureIgnoreCase)) : -1;
-            // If the profileID wasn't there, maybe they used the profile name?
-            if (profileIndex == -1)
-            {
-                // Try and lookup the profile in the profiles' Name fields
-                profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Name.StartsWith(profileName, StringComparison.InvariantCultureIgnoreCase)) : -1;
-            }
-
-            return profiles[profileIndex];
-        }
-
-        internal static bool GoProfile(ProfileItem profile)
-        {
-            // If we're already on the wanted profile then no need to change!
-            if (ProfileRepository.IsActiveProfile(profile))
-                return true;
-
-            var instanceStatus = IPCService.GetInstance().Status;
-
-            try
-            {
-                IPCService.GetInstance().Status = InstanceStatus.Busy;
-                var failed = false;
-
-                if (new ApplyingChangesForm(() =>
-                    {
-                        Task.Factory.StartNew(() =>
-                        {
-                            if (!(ProfileRepository.ApplyProfile(profile)))
-                            {
-                                failed = true;
-                            }
-                        }, TaskCreationOptions.LongRunning);
-                    }, 3, 30).ShowDialog() !=
-                    DialogResult.Cancel)
-                {
-                    if (failed)
-                    {
-                        throw new Exception(Language.Profile_is_invalid_or_not_possible_to_apply);
-                    }
-
-                    return true;
-                }
-
-                return false;
-            }
-            finally
-            {
-                IPCService.GetInstance().Status = instanceStatus;
-            }
-        }
-
-        private static void EditProfile(ProfileItem profile)
-        {
-            // Get the status of the thing
-            IPCService.GetInstance().Status = InstanceStatus.User;
-            // Load all the profiles from JSON
-            //ProfileRepository.AllProfiles
-            // Start up the DisplayProfileForm directly
-            new DisplayProfileForm(profile).ShowDialog();
-            // Then we close down as we're only here to edit one profile
-            Application.Exit();
-        }
-
-
+        
         /// <summary>
         ///     The main entry point for the application.
         /// </summary>
@@ -125,7 +63,7 @@ namespace HeliosPlus {
                 Console.Write("=");
             }
             Console.WriteLine("=");
-            Console.WriteLine(@"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
+            Console.WriteLine($"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
             Console.WriteLine(@"Based on Helios Display Management - Copyright © Soroush Falahati 2017-2020");
 
             var app = new CommandLineApplication();
@@ -144,28 +82,26 @@ namespace HeliosPlus {
                 return string.Format("Version {0}", Assembly.GetExecutingAssembly().GetName().Version);
             });
 
-            // This is the SwitchProfile command
-            app.Command("RunShortcut", (switchProfileCmd) =>
+            // This is the RunShortcut command
+            app.Command(SupportedProgramMode.RunShortcut.ToString(), (switchProfileCmd) =>
             {
-                var argumentShortcut = switchProfileCmd.Argument("\"SHORTCUT_NAME\"", "(required) The name of the shortcut to run from those stored in the shortcut library.").IsRequired();
+                var argumentShortcut = switchProfileCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
 
                 //description and help text of the command.
-                switchProfileCmd.Description = "Use this command to temporarily change profiles, and load your favourite game or application.";
+                switchProfileCmd.Description = "Use this command to run favourite game or application with a display profile of your choosing.";
 
                 switchProfileCmd.OnExecute(() =>
                 {
-                    Console.WriteLine($"Editing profile {argumentShortcut.Value}");
-
-                    SwitchToProfile(GetProfile(argumentShortcut.Value));
-
+                    // 
+                    RunShortcut(argumentShortcut.Value);
                     return 0;
                 });
             });
 
 
-            // This is the EditProfile command
-            app.Command("EditProfile", (editProfileCmd) =>
+            /*// This is the EditProfile command
+            app.Command(SupportedProgramMode.EditProfile.ToString(), (editProfileCmd) =>
             {
                 //description and help text of the command.
                 editProfileCmd.Description = "Use this command to edit a HeliosDMPlus profile.";
@@ -184,7 +120,7 @@ namespace HeliosPlus {
                     return 0;
                 });
 
-            });
+            });*/
 
             app.OnExecute(() =>
             {
@@ -312,15 +248,15 @@ namespace HeliosPlus {
             
         }
 
-        private static void SwitchToExecutable(ProfileItem profile, string executableToRun, string processToMonitor, uint timeout, string executableArguments)
+
+        // ReSharper disable once CyclomaticComplexity
+        private static void RunShortcut(string shortcutUUID)
         {
-            var rollbackProfile = ProfileRepository.CurrentProfile;
+            ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
+            ShortcutItem shortcutToRun = null;
 
-            if (!profile.IsPossible)
-            {
-                throw new Exception(Language.Selected_profile_is_not_possible);
-            }
-
+            // Check there is only one version of this application so we won't
+            // mess with another monitoring session
             if (
                 IPCClient.QueryAll()
                     .Any(
@@ -333,384 +269,298 @@ namespace HeliosPlus {
                         .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
             }
 
-            if (!GoProfile(profile))
+            // Match the ShortcutName to the actual shortcut listed in the shortcut library
+            // And error if we can't find it.
+            if (ShortcutRepository.ContainsShortcut(shortcutUUID))
             {
-                throw new Exception(Language.Can_not_change_active_profile);
+                // make sure we trim the "" if there are any
+                shortcutUUID = shortcutUUID.Trim('"');
+                shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
+            }
+            else
+            {
+                throw new Exception(Language.Cannot_find_shortcut_in_library);
             }
 
-            var process = System.Diagnostics.Process.Start(executableToRun, executableArguments);
-            var processes = new System.Diagnostics.Process[0];
-
-            var ticks = 0;
-
-            while (ticks < timeout * 1000)
+            // Do some validation to make sure the shortcut is sensible
+            // And that we have enough to try and action within the shortcut
+            // (in other words check everything in the shortcut is still valid)
+            (bool valid, string reason) = shortcutToRun.IsValid();
+            if (!valid)
             {
+                throw new Exception(string.Format("Unable to run the shortcut '{0}': {1}",shortcutToRun.Name,reason));
+            }
 
-                processes = System.Diagnostics.Process.GetProcessesByName(processToMonitor);
+            // Try to change to the wanted profile
+            if (!SwitchProfile(shortcutToRun.ProfileToUse))
+            {
+                throw new Exception(Language.Cannot_change_active_profile);
+            }
 
-                if (processes.Length > 0)
+            // Now run the pre-start applications
+            // TODO: Add the prestart applications
+
+            // Now start the main game, and wait if we have to
+            if (shortcutToRun.Category.Equals(ShortcutCategory.Application))
+            {
+                // Start the executable
+                Process process = null;
+                if (shortcutToRun.ExecutableArgumentsRequired)
+                    process = System.Diagnostics.Process.Start(shortcutToRun.ExecutableNameAndPath, shortcutToRun.ExecutableArguments);
+                else
+                    process = System.Diagnostics.Process.Start(shortcutToRun.ExecutableNameAndPath);
+
+                // Create a list of processes to monitor
+                Process[] processesToMonitor = Array.Empty<Process>();
+
+                // Work out if we are monitoring another process other than the main executable
+                if (shortcutToRun.ProcessNameToMonitorUsesExecutable)
                 {
-                    break;
+                    // If we are monitoring the same executable we started, then lets do that
+                    processesToMonitor = new[] { process };
                 }
-
-                Thread.Sleep(300);
-                ticks += 300;
-            }
-
-
-            if (processes.Length == 0)
-            {
-                processes = new[] { process };
-            }
-
-            IPCService.GetInstance().HoldProcessId = processes.FirstOrDefault()?.Id ?? 0;
-            IPCService.GetInstance().Status = InstanceStatus.OnHold;
-            NotifyIcon notify = null;
-
-            try
-            {
-                notify = new NotifyIcon
+                else
                 {
-                    Icon = Properties.Resources.HeliosPlus,
-                    Text = string.Format(
-                        Language.Waiting_for_the_0_to_terminate,
-                        processes[0].ProcessName),
-                    Visible = true
-                };
-                Application.DoEvents();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Program/SwitchToExecutable exception: {ex.Message}: {ex.InnerException}");
-                // ignored
-            }
+                    // Now wait a little while for all the processes we want to monitor to start up
+                    var ticks = 0;
+                    while (ticks < shortcutToRun.ExecutableTimeout * 1000)
+                    {
+                        // Look for the processes with the ProcessName we want (which in Windows is the filename without the extension)
+                        processesToMonitor = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(shortcutToRun.DifferentExecutableToMonitor));
 
-            foreach (var p in processes)
-            {
+                        //  TODO: Fix this logic error that will only ever wait for the first process....
+                        if (processesToMonitor.Length > 0)
+                        {
+                            break;
+                        }
+
+                        Thread.Sleep(300);
+                        ticks += 300;
+                    }
+
+                    // If none started up before the timeout, then ignore the 
+                    if (processesToMonitor.Length == 0)
+                    {
+                        processesToMonitor = new[] { process };
+                    }
+                } 
+
+                // Store the process to monitor for later
+                IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
+                IPCService.GetInstance().Status = InstanceStatus.OnHold;
+
+                // Add a status notification icon in the status area
+                NotifyIcon notify = null;
                 try
                 {
-                    p.WaitForExit();
+                    notify = new NotifyIcon
+                    {
+                        Icon = Properties.Resources.HeliosPlus,
+                        Text = string.Format(
+                            Language.Waiting_for_the_0_to_terminate,
+                            processesToMonitor[0].ProcessName),
+                        Visible = true
+                    };
+                    Application.DoEvents();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Program/SwitchToExecutable exception 2: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"Program/SwitchToExecutable exception: {ex.Message}: {ex.InnerException}");
                     // ignored
                 }
+
+                // Wait for the monitored process to exit
+                foreach (var p in processesToMonitor)
+                {
+                    try
+                    {
+                        p.WaitForExit();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Program/SwitchToExecutable exception 2: {ex.Message}: {ex.InnerException}");
+                        // ignored
+                    }
+                }
+
+                // Remove the status notification icon from the status area
+                // once we've existed the game
+                if (notify != null)
+                {
+                    notify.Visible = false;
+                    notify.Dispose();
+                    Application.DoEvents();
+                }
+
+            }
+            else if (shortcutToRun.Category.Equals(ShortcutCategory.Game))
+            {
+                // If the game is a Steam Game we check for that
+                if (shortcutToRun.GameLibrary.Equals(SupportedGameLibrary.Steam))
+                {
+                    // We now need to get the SteamGame info
+                    SteamGame steamGameToRun = SteamLibrary.GetSteamGame(shortcutToRun.GameAppId);
+
+                    // If the GameAppID matches a Steam game, then lets run it
+                    if (steamGameToRun is SteamGame)
+                    {
+                        // Prepare to start the steam game using the URI interface 
+                        // as used by Steam for it's own desktop shortcuts.
+                        var address = $"steam://rungameid/{steamGameToRun.GameId}";
+                        if (shortcutToRun.GameArgumentsRequired)
+                        {
+                            address += "/" + shortcutToRun.GameArguments;
+                        }
+
+                        // Start the URI Handler to run Steam
+                        var steamProcess = System.Diagnostics.Process.Start(address);
+
+                        // Wait for Steam game to update if needed
+                        var ticks = 0;
+                        while (ticks < shortcutToRun.GameTimeout * 1000)
+                        {
+                            if (steamGameToRun.IsRunning)
+                            {
+                                break;
+                            }
+
+                            Thread.Sleep(300);
+
+                            if (!steamGameToRun.IsUpdating)
+                            {
+                                ticks += 300;
+                            }
+                        }
+
+                        // Store the Steam Process ID for later
+                        IPCService.GetInstance().HoldProcessId = steamProcess?.Id ?? 0;
+                        IPCService.GetInstance().Status = InstanceStatus.OnHold;
+
+                        // Add a status notification icon in the status area
+                        NotifyIcon notify = null;
+                        try
+                        {
+                            notify = new NotifyIcon
+                            {
+                                Icon = Properties.Resources.HeliosPlus,
+                                Text = string.Format(
+                                    Language.Waiting_for_the_0_to_terminate,
+                                    steamGameToRun.GameName),
+                                Visible = true
+                            };
+                            Application.DoEvents();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.InnerException}");
+                            // ignored
+                        }
+
+                        // Wait for the game to exit
+                        if (steamGameToRun.IsRunning)
+                        {
+                            while (true)
+                            {
+                                if (!steamGameToRun.IsRunning)
+                                {
+                                    break;
+                                }
+
+                                Thread.Sleep(300);
+                            }
+                        }
+
+                        // Remove the status notification icon from the status area
+                        // once we've existed the game
+                        if (notify != null)
+                        {
+                            notify.Visible = false;
+                            notify.Dispose();
+                            Application.DoEvents();
+                        }
+
+                    }
+
+                }
+                // If the game is a Uplay Game we check for that
+                /*else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
+                {
+                    // We need to look up details about the game
+                    if (!UplayGame.IsInstalled(GameAppId))
+                    {
+                        return (false, string.Format("The Uplay Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                    }
+
+                }*/
+
+
             }
 
-            if (notify != null)
-            {
-                notify.Visible = false;
-                notify.Dispose();
-                Application.DoEvents();
-            }
 
             IPCService.GetInstance().Status = InstanceStatus.Busy;
 
             // Change back to the original profile if it is different
             if (!ProfileRepository.IsActiveProfile(rollbackProfile))
             {
-                if (!GoProfile(rollbackProfile))
+                if (!SwitchProfile(rollbackProfile))
                 {
-                    throw new Exception(Language.Can_not_change_active_profile);
+                    throw new Exception(Language.Cannot_change_active_profile);
                 }
             }
+
         }
 
-
-
-        private static void SwitchToSteamGame(ProfileItem profile, string steamGameIdToRun, uint timeout, string steamGameArguments)
+        internal static bool SwitchProfile(ProfileItem profile)
         {
+            // If we're already on the wanted profile then no need to change!
+            if (ProfileRepository.IsActiveProfile(profile))
+                return true;
 
-            // Convert the steamGameIdToRun string to a uint for Steam Games
-            uint steamGameIdUint = 0;
-            if (!uint.TryParse(steamGameIdToRun, out steamGameIdUint))
-            {
-                throw new Exception("ERROR - Couldn't convert the string steamGameIdToRun parameter to steamGameIdUint in SwitchToSteamGame!");
-            }
-
-            // Save the profile we're on now
-            var rollbackProfile = ProfileRepository.CurrentProfile;
-
-            // Check that the profile we've been asked to change to will actually work
-            if (!profile.IsPossible)
-            {
-                throw new Exception(Language.Selected_profile_is_not_possible);
-            }
-
-            // 
-            if ( IPCClient.QueryAll().Any(
-                        client =>
-                            client.Status == InstanceStatus.Busy ||
-                            client.Status == InstanceStatus.OnHold))
-            {
-                throw new Exception(
-                    Language
-                        .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
-            }
-
-            // Create the SteamGame objects so we can use them shortly
-            // Get the game information relevant to the game we're switching to
-            List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
-
-            // Check if Steam is installed and error if it isn't
-            if (!SteamGame.SteamInstalled)
-            {
-                throw new Exception(Language.Steam_is_not_installed);
-            }
-
-            // Otherwise try to find the game we've been asked to run
-            SteamGame steamGameToRun = null;
-            foreach (SteamGame steamGameToCheck in allSteamGames)
-            {
-                if (steamGameToCheck.GameId == steamGameIdUint)
-                {
-                    steamGameToRun = steamGameToCheck;
-                    break;
-                }
-                    
-            }
-
-            // Attempt to change to a different profile if it's needed
-            if (!GoProfile(profile))
-            {
-                throw new Exception(Language.Can_not_change_active_profile);
-            }
-
-            // Prepare to start the steam game using the URI interface 
-            // as used by Steam for it's own desktop shortcuts.
-            var address = $"steam://rungameid/{steamGameToRun.GameId}";
-            if (!string.IsNullOrWhiteSpace(steamGameArguments))
-            {
-                address += "/" + steamGameArguments;
-            }
-
-
-            var steamProcess = System.Diagnostics.Process.Start(address);
-            // Wait for steam game to update and then run
-            var ticks = 0;
-
-            while (ticks < timeout * 1000)
-            {
-                if (steamGameToRun.IsRunning)
-                {
-                    break;
-                }
-
-                Thread.Sleep(300);
-
-                if (!steamGameToRun.IsUpdating)
-                {
-                    ticks += 300;
-                }
-            }
-
-            IPCService.GetInstance().HoldProcessId = steamProcess?.Id ?? 0;
-            IPCService.GetInstance().Status = InstanceStatus.OnHold;
-            NotifyIcon notify = null;
+            var instanceStatus = IPCService.GetInstance().Status;
 
             try
             {
-                notify = new NotifyIcon
-                {
-                    Icon = Properties.Resources.HeliosPlus,
-                    Text = string.Format(
-                        Language.Waiting_for_the_0_to_terminate,
-                        steamGameToRun.GameName),
-                    Visible = true
-                };
-                Application.DoEvents();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.InnerException}");
-                // ignored
-            }
+                IPCService.GetInstance().Status = InstanceStatus.Busy;
+                var failed = false;
 
-            // Wait for the game to exit
-            if (steamGameToRun.IsRunning)
-            {
-                while (true)
+                if (new ApplyingChangesForm(() =>
                 {
-                    if (!steamGameToRun.IsRunning)
+                    Task.Factory.StartNew(() =>
                     {
-                        break;
+                        if (!(ProfileRepository.ApplyProfile(profile)))
+                        {
+                            failed = true;
+                        }
+                    }, TaskCreationOptions.LongRunning);
+                }, 3, 30).ShowDialog() !=
+                    DialogResult.Cancel)
+                {
+                    if (failed)
+                    {
+                        throw new Exception(Language.Profile_is_invalid_or_not_possible_to_apply);
                     }
 
-                    Thread.Sleep(300);
+                    return true;
                 }
-            }
 
-            if (notify != null)
+                return false;
+            }
+            finally
             {
-                notify.Visible = false;
-                notify.Dispose();
-                Application.DoEvents();
+                IPCService.GetInstance().Status = instanceStatus;
             }
-
-            IPCService.GetInstance().Status = InstanceStatus.Busy;
-
-            // Change back to the original profile if it is different
-            if (!ProfileRepository.IsActiveProfile(rollbackProfile))
-            {
-                if (!GoProfile(rollbackProfile))
-                {
-                    throw new Exception(Language.Can_not_change_active_profile);
-                }
-            }
-
         }
 
-        private static void SwitchToUplayGame(ProfileItem profile, string uplayGameIdToRun, uint timeout, string uplayGameArguments)
+        private static void EditProfile(ProfileItem profile)
         {
-
-            var rollbackProfile = ProfileRepository.CurrentProfile;
-
-            if (!profile.IsPossible)
-            {
-                throw new Exception(Language.Selected_profile_is_not_possible);
-            }
-
-            if (
-                IPCClient.QueryAll()
-                    .Any(
-                        client =>
-                            client.Status == InstanceStatus.Busy ||
-                            client.Status == InstanceStatus.OnHold))
-            {
-                throw new Exception(
-                    Language
-                        .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
-            }
-
-
-
-
-            /*var steamGame = new SteamGame(Convert.ToUInt32(uplayGameIdToRun));
-
-            if (!SteamGame.SteamInstalled)
-            {
-                throw new Exception(Language.Steam_is_not_installed);
-            }
-
-            if (!File.Exists(SteamGame.SteamExe))
-            {
-                throw new Exception(Language.Steam_executable_file_not_found);
-            }
-
-            if (!steamGame.IsInstalled)
-            {
-                throw new Exception(Language.Steam_game_is_not_installed);
-            }
-
-            if (!GoProfile(profile))
-            {
-                throw new Exception(Language.Can_not_change_active_profile);
-            }
-
-            var address = $"uplay://rungameid/{steamGame.AppId}";
-
-            if (!string.IsNullOrWhiteSpace(uplayGameArguments))
-            {
-                address += "/" + uplayGameArguments;
-            }
-
-            var steamProcess = System.Diagnostics.Process.Start(address);
-            // Wait for steam game to update and then run
-            var ticks = 0;
-
-            while (ticks < timeout * 1000)
-            {
-                if (steamGame.IsRunning)
-                {
-                    break;
-                }
-
-                Thread.Sleep(300);
-
-                if (!steamGame.IsUpdating)
-                {
-                    ticks += 300;
-                }
-            }
-
-            IPCService.GetInstance().HoldProcessId = steamProcess?.Id ?? 0;
-            IPCService.GetInstance().Status = InstanceStatus.OnHold;
-            NotifyIcon notify = null;
-
-            try
-            {
-                notify = new NotifyIcon
-                {
-                    Icon = Properties.Resources.Icon,
-                    Text = string.Format(
-                        Language.Waiting_for_the_0_to_terminate,
-                        steamGame.Name),
-                    Visible = true
-                };
-                Application.DoEvents();
-            }
-            catch
-            {
-                // ignored
-            }
-
-            // Wait for the game to exit
-            if (steamGame.IsRunning)
-            {
-                while (true)
-                {
-                    if (!steamGame.IsRunning)
-                    {
-                        break;
-                    }
-
-                    Thread.Sleep(300);
-                }
-            }
-
-            if (notify != null)
-            {
-                notify.Visible = false;
-                notify.Dispose();
-                Application.DoEvents();
-            }
-
-            IPCService.GetInstance().Status = InstanceStatus.Busy;
-
-            // Change back to the original profile if it is different
-            if (!ProfileRepository.IsActiveProfile(rollbackProfile))
-            {
-                if (!GoProfile(rollbackProfile))
-                {
-                    throw new Exception(Language.Can_not_change_active_profile);
-                }
-            }*/
-
-        }
-
-
-        // ReSharper disable once CyclomaticComplexity
-        private static void SwitchToProfile(ProfileItem profile)
-        {
-            var rollbackProfile = ProfileRepository.CurrentProfile;
-
-            if (
-                IPCClient.QueryAll()
-                    .Any(
-                        client =>
-                            client.Status == InstanceStatus.Busy ||
-                            client.Status == InstanceStatus.OnHold))
-            {
-                throw new Exception(
-                    Language
-                        .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
-            }
-
-            if (!GoProfile(profile))
-            {
-                throw new Exception(Language.Can_not_change_active_profile);
-            }
+            // Get the status of the thing
+            IPCService.GetInstance().Status = InstanceStatus.User;
+            // Load all the profiles from JSON
+            //ProfileRepository.AllProfiles
+            // Start up the DisplayProfileForm directly
+            new DisplayProfileForm(profile).ShowDialog();
+            // Then we close down as we're only here to edit one profile
+            Application.Exit();
         }
 
         public static bool IsValidFilename(string testName)

@@ -20,25 +20,16 @@ namespace HeliosPlus
         {
             // This validator only runs if there is a value
             if (!optionProfile.HasValue()) return ValidationResult.Success;
-            var profile = optionProfile.Value();
+            var profileName = (string) optionProfile.Value();
 
-            // Create an array of display profiles we have
-            var profiles = ProfileRepository.AllProfiles.ToArray();
-            // Check if the user supplied a --profile option using the profiles' ID
-            var profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.UUID.Equals(profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
-            // If the profileID wasn't there, maybe they used the profile name?
-            if (profileIndex == -1)
+            // Try to find the Profile Name
+            if (!ProfileRepository.ContainsProfile(profileName))
             {
-                // Try and lookup the profile in the profiles' Name fields
-                profileIndex = profiles.Length > 0 ? Array.FindIndex(profiles, p => p.Name.StartsWith(profile, StringComparison.InvariantCultureIgnoreCase)) : -1;
-            }
-            // If the profileID still isn't there, then raise the alarm
-            if (profileIndex == -1)
-            {
-                return new ValidationResult($"Couldn't find Profile Name or ID supplied via command line: '{optionProfile.LongName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
+                return new ValidationResult($"Couldn't find Profile Name or ID supplied via command line: '{profileName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
             }
 
-            Console.WriteLine($"Using Profile: '{profiles[profileIndex].Name}' (ID:{profiles[profileIndex].UUID})");
+            ProfileItem profile = ProfileRepository.GetProfile(profileName);
+            Console.WriteLine($"Using Profile: '{profile.Name}' (ID:{profile.UUID})");
             return ValidationResult.Success;
         }
     }
@@ -49,34 +40,16 @@ namespace HeliosPlus
         {
             // This validator only runs if there is a string provided
             if (argumentShortcutName.Value == "") return ValidationResult.Success;
-            string shortcutNameProvided = (string) argumentShortcutName.Value;
-            string shortcutName = "";
+            string shortcutName = (string) argumentShortcutName.Value;
 
-            // check if the shortcut name is surrounded by speech marks
-            int shortcutNameIndexLeft = shortcutNameProvided.IndexOf('"');
-            int shortcutNameIndexRight = shortcutNameProvided.LastIndexOf('"');
-            if (shortcutNameIndexLeft != -1 && shortcutNameIndexRight != -1 && shortcutNameIndexLeft != shortcutNameIndexRight)
-            {
-                MatchCollection matches = Regex.Matches(shortcutNameProvided, @"'(.*?)'");
-                shortcutName = matches[0].Groups[1].Value; // (Index 1 is the first group)
-            }
-            else
-            {
-                shortcutName = shortcutNameProvided;
-            }
-
-            // Create an array of shortcuts we have
-            var shortcuts = ShortcutRepository.AllShortcuts.ToArray();
-            // Check if the user supplied a valid shortcut name
-            int profileIndex = shortcuts.Length > 0 ? Array.FindIndex(shortcuts, p => p.Name.Contains(shortcutName)) : -1;
-            
-            // If the profileID still isn't there, then raise the alarm
-            if (profileIndex == -1)
+            // Check if the UUID or ShortcutName are provided
+            if (!ShortcutRepository.ContainsShortcut(shortcutName))
             {
                 return new ValidationResult($"Couldn't find Shortcut Name supplied via command line: '{shortcutName}'. Please check the Shortcut Name you supplied on the command line is correct.");
             }
 
-            Console.WriteLine($"Using Shortcut: '{shortcuts[profileIndex].Name}'");
+            ShortcutItem shortcut = ShortcutRepository.GetShortcut(shortcutName);
+            Console.WriteLine($"Using Shortcut: '{shortcut.Name}' (ID: {shortcut.UUID})");
             return ValidationResult.Success;
         }
     }

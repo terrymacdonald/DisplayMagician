@@ -436,12 +436,12 @@ namespace HeliosPlus.UIForms
 
             if (txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
             {
-                _shortcutToEdit.OriginalIconPath = (from steamGame in SteamGame.AllGames where steamGame.GameId == _shortcutToEdit.GameAppId select steamGame.GameIconPath).First();
+                _shortcutToEdit.OriginalIconPath = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.GameId == _shortcutToEdit.GameAppId select steamGame.GameIconPath).First();
                 _shortcutToEdit.GameLibrary = SupportedGameLibrary.Steam;
             }
             else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
             {
-                _shortcutToEdit.OriginalIconPath = (from uplayGame in UplayGame.AllGames where uplayGame.GameId == _shortcutToEdit.GameAppId select uplayGame.GameIconPath).First();
+                _shortcutToEdit.OriginalIconPath = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.GameId == _shortcutToEdit.GameAppId select uplayGame.GameIconPath).First();
                 _shortcutToEdit.GameLibrary = SupportedGameLibrary.Uplay;
             }
             else if (rb_standalone.Checked)
@@ -646,9 +646,7 @@ namespace HeliosPlus.UIForms
 
 
             // Start finding the games and loading the Games ListView
-            List<SteamGame> allSteamGames = SteamGame.GetAllInstalledGames();
-            _allSteamGames = allSteamGames;
-            foreach (var game in allSteamGames.OrderBy(game => game.GameName))
+            foreach (var game in SteamLibrary.AllInstalledGames.OrderBy(game => game.GameName))
             {
                 if (File.Exists(game.GameIconPath))
                 {
@@ -835,7 +833,7 @@ namespace HeliosPlus.UIForms
                     {
                         if (_loadedShortcut)
                             _isUnsaved = true;
-                        txt_game_launcher.Text = SteamGame.GameLibrary.ToString();
+                        txt_game_launcher.Text = game.GameLibrary.ToString();
                         _gameId = game.GameId;
                     }
                 }

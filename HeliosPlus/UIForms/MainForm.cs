@@ -56,7 +56,7 @@ namespace HeliosPlus.UIForms
         private void MainForm_Load(object sender, EventArgs e)
         {
             // Start loading the Steam Games just after the Main form opens
-            SteamGame.GetAllInstalledGames();
+            //SteamGame.GetAllInstalledGames();
         }
 
     }
