@@ -60,7 +60,7 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusDisplayProfiles.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusShortcutLibrary.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut1.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut2.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut3.png"/></div>
 
 ### Initial Setup:
 
