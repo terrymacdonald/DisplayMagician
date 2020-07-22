@@ -1,139 +1,92 @@
 # HeliosPlus
-[![](https://img.shields.io/github/license/temacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/blob/master/LICENSE)
-[![](https://img.shields.io/github/commit-activity/y/temacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/commits/master)
-[![](https://img.shields.io/github/issues/temacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/issues)
+[![](https://img.shields.io/github/license/terrymacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/blob/master/LICENSE)
+[![](https://img.shields.io/github/commit-activity/y/terrymacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/commits/master)
+[![](https://img.shields.io/github/issues/terrymacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/issues)
 
-An open source tool for automatically changing your display settings from a Windows Shortcut. Allows you to temporarily change your display settings while you play a game.
+HeliosPlus is an open source tool for automatically configuring your displays for a game or application from a single Windows Shortcut. HeliosPlus is designed to change your display profile, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
 
-**This program is heavily based on the amazing HeliosDisplayManagement created by Soroush Falahati!**
+HeliosPlus was borne 
 
-<div style="text-align:center"><img src="READMEAssets/Preview.png"/></div>
+**This program is heavily based on the original HeliosDisplayManagement software created by Soroush Falahati!**
+
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusMainScreen.png"/></div>
 
 ## Download
-[![](https://img.shields.io/github/downloads/temacdonald/HeliosPlus/total.svg?style=flat-square)](https://github.com/temacdonald/HeliosPlus/releases)
-[![](https://img.shields.io/github/tag-date/temacdonald/HeliosPlus.svg?label=version&style=flat-square)](https://github.com/temacdonald/HeliosPlus/releases)
+[![](https://img.shields.io/github/downloads/terrymacdonald/HeliosPlus/total.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/releases)
+[![](https://img.shields.io/github/tag-date/terrymacdonald/HeliosPlus.svg?label=version&style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/releases)
 
-The latest version of this application is available for download via the [release](https://github.com/temacdonald/HeliosPlus/releases) page.
-
-## Donation
-No need to donate! I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. Thanks to Soroush for making HeliosDisplayMangement and licensing it under GPL2 so I could make the improvements I was longing for!
+The latest version of this application is available for download via the [release](https://github.com/terrymacdonald/HeliosPlus/releases) page.
 
 ## What it does
 
-Provides an overview of saved profiles for easy editing and switching, as well as functions to automatically switch to a selected profile then run a chosen program, including reverting to the previous profile after the executed application has closed. Useful to change resolution, or merge displays into a single desktop for gaming, then return to normal desktop configuration when finished.
+Different games require your displays configured in different ways. If you're a simracer like me, you also require a lot of additional 'helper' applications the give you the additional functionality to game the way you want. Making all those changes each time I wanted to play each game REALLY started annoying me, and I thought there must be a better way.
+
+There is now. HeliosPlus allows you to configure multiple different display profiles, and then use those different display profiles to create Game Shortcuts. These Game Shortcuts allow you to have your game or application start exactly the way you like it.
+
+Do you like running Dirt Rally 2.0 on a single NVidia Surround window across triple screens, and yet you run Project Cars 2 across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with HeliosPlus you can do all that with a single Desktop Shortcut!
 
 Please read through the README for features (current and planned) and issues you may encounter while using the program. 
 
-Feel free to report missing features or bugs using the project [issue tracker](https://github.com/temacdonald/HeliosPlus/issues).
+Feel free to report missing features or bugs using the project [issue tracker](https://github.com/terrymacdonald/HeliosPlus/issues).
 
 ## Current features
 
-* Supports saving of an unlimited number of display profiles
-* Ability to switch to a display profile via the desktop context menu
-* Ability to create a shortcut for a profile for fast and easy switch
-* Ability to switch before executing a program or game and reverting back after exiting the program
-* Support games with a launcher
-* Supports Steam games
+HeliosPlus lets you set up the following information for each game or application:
+* Create a Display Profile to be used within a Shortcut
+* Change to a different Display Profile when you click on a Shortcut on the Desktop
+* Add one or more programs to pre-start before your game or application when you lick on the Shortcut on the Desktop
+* Works with Steam and Uplay Game libraries!
+* Optionally rollback to your previous Display profile once the game or application has closed.
+* Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Supports NVIDIA Surround and NVIDIA Mosaic settings
 
 ## Planned features
 
-* Edit saved profile via the application's user interface (20% done)
-* Create new profile vis the application's user interface (Stalled by the previous task)
-* Notification icon while the program waits for a game to exit
-* Automatic update check and notifications
-* Possibility to install components separately (especially the Shell Extension)
+* Add Epic Game Launcher
+* Add Origin Game Launcher
+* Add Battlenet Game Launcher
+* Add Bethesda Game Launcher
+* Add Blizzard Games Launcher (maybe?)
+* Add Galaxy of Games Game Launcher (maybe?)
+* Add Unit Tests!
+* Change UI from Winforms to better looking WPF
 * Support of AMD Eyefinity (Needs a C# wrapper for AMD ADL)
-* Save and restore taskbar location (90% done)
 
-## Features to be considered
-
-* Save and restore monitor colour calibration settings (Needs expanding of underlying wrappers)
-
-## Known issues
-
-* Cannot restore custom colour profiles (colour tunings)
-* In some circumstances the `Windows Taskbar` may not return to its original location
-* Command line cannot parse hyphens in `-a` or `--arguments` options
+## Donation
+No need to donate! I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. Thanks to Soroush for making HeliosDisplayMangement and licensing it under GPL2 so I could make the improvements I was longing for!
 
 ## Usage
 
+### Screenshots
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusMainScreen.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusDisplayProfiles.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusShortcutLibrary.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut1.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut2.png"/></div>
+
 ### Initial Setup:
 
-1. Install 'Helios Display Management' and restart your computer
-2. Run 'Helios Display Management'
-3. Use 'Windows Display Settings' or 'NVIDIA Control Panel' to configure your display(s) as desired
-4. Save the current profile in 'Helios Display Management' by selecting the **Active Profile** and using **Clone** button
-5. Repeat from step 3 and clone each configuration you want to be able to switch to later
+1. Install 'HeliosPlus' and restart your computer
+2. Run 'HeliosPlus', and click on the 'Setup Display Profiles' button
+    * Use 'Windows Display Settings' or 'NVIDIA Control Panel' to configure your display(s) exactly as you would like them
+    * ALT-TAB back to HeliosPlus, and you should see the new display configuration shown in the Display Profile window.
+    * Click the 'Save As/Rename' button so that HeliosPlus will remember the current Display Profile so you can use it in your Shortcuts.
+    * You will need to do this for each different display configuration you want to use in any of your games or applications.
+    * Click 'Back' button to go back to the Main HelioPlus window.
+2. Now that you have some Display Profiles set up, you can create some shortcuts that will use them! Click on the 'Setup Game Shortcuts' button.
+3. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you every want to edit them.
+4. Click the 'New' button to create a new Shortcut
+    * Choose the Display Profile you want to use with the Shortcut. Make sure it matches what the game expects :).
+    * Click on the 'Choose what Game you start' tab, to choose the main game or application that the Shortcut will start.
+    * Choose the Game from the list shown (be sure to click the > button), or if it's not listed there then select the game or application executable. You can also choose to not start anything if you want to permanently change to a different display profile. 
+    * Click on the 'Chose what happens afterwards' tab, and choose if you want to rollback any display changes you make while starting the game, or if you want to keep them.
+    * If the 'auto-suggest name' option is enabled then you should have a Shortcut Name already entered in automatically. 
+    * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. THe Save button only shows if you have a valid SHortcut set up.
+5. Once you've saved the Short cut, you should see it in the Shortcut Library.
+6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusShortcutOnDesktop.png"/></div>
+7. You can now double-click on the Desktop shortcut you just saved, and HeliosPlus will do exactly what you asked it to!
 
-
-### Switch via Application Window
-
-- Select a from the left panel to save (**Clone**), switch to (**Apply**), **Edit** (currently unsupported), or **Create a Shortcut**
-
-- **Create Shortcut:** Creates a windows shortcut
-  - **Temporarily switch with process monitoring:** Give 'Helios Display Management' a program to execute after switching profile, and monitor to keep the profile active until the program is closed, then revert to the last used display profile.  
-     - **Monitoring an application**
-       - **Executable Address:** Path of executable to run, or browse to select the executable.
-
-       - **Waiting Process:** Keep selected profile active while 'Process' is running. When it is detected that the process has ended 'Helios Display Management' will revert to the previous display profile. This is useful for games that have a separate launcher.
-
-       - **Timeout:** Maximum time (in seconds) to wait for the main process to start after launcher exits. Will revert the display profile automatically if the process was not detected in this time.
-
-        - **Arguments:** Arguments to be passed to the executing application
-     - **--OR--**
-     - **Monitoring a Steam Game**
-        - **Steam Game:** - AppID of Steam Game to launch - enter manually, or select from the auto-detected list of installed Steam games (Can take some time to populate with recent installations as it tries to download the game title and icon from SteamDB).
-
-        - **Timeout:** Maximum time (in seconds) to wait for Steam Game/App to begin. Will revert the display profile automatically if the game fails to start in this time.
-
-        - **Arguments:** Arguments to be passed to the Steam Game
-
-  - Save shortcut in a chosen folder with a chosen name
-
-  
-### Switch via Shell Extension
-- **Switch to a profile**
-   - Right click on your desktop
-   - Navigate to 'Display Profiles' menu
-   - Select a profile and navigate to the sub-menu
-   - **Apply**, **Edit** or **Create Shortcut** for the selected profile
-
-<div style="text-align:center"><img src="READMEAssets/ShellExtension-Desktop.png"/></div>
-
-- **Temporarily switch to a profile with application monitoring**
-   - Right click on an executable file or shortcut (Game, Application, Steam Shortcut)
-   - Navigate to 'Open under Display Profile' menu
-   - Select a profile and navigate to the sub-menu
-   - **Run**, **Run as Administrator** or **Create Shortcut** for the selected profile
-   
-<div style="text-align:center"><img src="READMEAssets/ShellExtension-Executable.png"/></div>
-
-### Switch via Command Line
-**Command:**
-
-`HeliosPlus.exe {arguments}`
-
-**Arguments:**
-
-* `-a [SwitchProfile|CreateShortcut|EditProfile]`, `--action [SwitchProfile|CreateShortcut|EditProfile]`
-* `-p "{ProfileID}"`, `--profile "{ProfileID}"`
-* Temporary switch
-   * Application or Game
-      * `-e "{ApplicationPath}"`, `--execute "{ApplicationPath}"` -- (Default: None) -- The path to program executable to be run after switching display profile
-      * `--arguments "{ProgramArguments}"` -- (Default: None) -- Arguments to send to the program executable
-      * `-w "{ProcessName}"`, `--waitfor "{ProcessName}"` -- (Default: None) -- 'ProcessName' to wait for; will (If different than the executed program, ie if executing a game launcher that would close when the game is run)
-      * `-t {TimeoutInSeconds}`, `--timeout {TimeoutInSeconds}` -- (Default: 30) -- Maximum time in seconds to wait for the program to start. Will revert to previous display profile if the program fails to start in this time.
-    * Steam Game
-      * `-s {SteamAppID}`, `--steam {SteamAppID}` -- (Default: 0) -- AppID of the Steam game
-      * `--arguments "{SteamArguments}"` -- (Default: None) -- Arguments to send to Steam (launch options)
-      * `-t {TimeoutInSeconds}`, `--timeout {TimeoutInSeconds}` -- (Default: 30) -- Maximum time in seconds to wait for the game to start. Will revert to previous display profile if the game fails to start in this time.
-
-**Example:**
-
-```
-"C:\Program Files\Helios Display Management\HeliosDisplayManagement.exe" -a SwitchProfile -p "{00000000-0000-0000-0000-000000000000}" -e "C:\Games\Game Folder\GameExecutable.exe" -w "GameProcessName" --arguments "nosplash" -t 30
-```
 
 ## Related Projects
 
