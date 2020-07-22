@@ -439,11 +439,11 @@ namespace HeliosPlus.UIForms
                 _shortcutToEdit.OriginalIconPath = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.GameId == _shortcutToEdit.GameAppId select steamGame.GameIconPath).First();
                 _shortcutToEdit.GameLibrary = SupportedGameLibrary.Steam;
             }
-            else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
+            /*else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
             {
                 _shortcutToEdit.OriginalIconPath = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.GameId == _shortcutToEdit.GameAppId select uplayGame.GameIconPath).First();
                 _shortcutToEdit.GameLibrary = SupportedGameLibrary.Uplay;
-            }
+            }*/
             else if (rb_standalone.Checked)
                 _shortcutToEdit.Category = ShortcutCategory.Application;
 

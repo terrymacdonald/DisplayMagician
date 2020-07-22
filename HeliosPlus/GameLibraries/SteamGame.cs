@@ -71,11 +71,19 @@ namespace HeliosPlus.GameLibraries
 
         }
 
-        public uint GameId { get => _steamGameId; }
+        public uint GameId { 
+            get => _steamGameId;
+            set => _steamGameId = value;
+        }
 
-        public SupportedGameLibrary GameLibrary { get => SupportedGameLibrary.Steam; }
+        public SupportedGameLibrary GameLibrary { 
+            get => SupportedGameLibrary.Steam; 
+        }
 
-        public string GameIconPath { get => _steamGameIconPath; }
+        public string GameIconPath { 
+            get => _steamGameIconPath; 
+            set => _steamGameIconPath = value;
+        }
                   
         public bool IsRunning
         {
@@ -147,23 +155,26 @@ namespace HeliosPlus.GameLibraries
             }
         }
 
-        public string GameName { get => _steamGameName; }
+        public string GameName { 
+            get => _steamGameName; 
+            set => _steamGameName = value;
+        }
 
-        public string GamePath { get => _steamGamePath; }
+        public string GamePath { 
+            get => _steamGamePath;
+            set => _steamGamePath = value;
+        }
 
         public bool CopyTo(SteamGame steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
 
-            // Copy all the shortcut data over to the other Shortcut
+            // Copy all the game data over to the other game
             steamGame.GameIconPath = GameIconPath;
             steamGame.GameId = GameId;
             steamGame.GameName = GameName;
             steamGame.GamePath = GamePath;
-            steamGame.IsRunning = IsRunning;
-            steamGame.IsUpdating = IsUpdating;
-
             return true;
         }
 
