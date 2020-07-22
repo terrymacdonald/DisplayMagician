@@ -5,8 +5,6 @@
 
 HeliosPlus is an open source tool for automatically configuring your displays for a game or application from a single Windows Shortcut. HeliosPlus is designed to change your display profile, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
 
-HeliosPlus was borne 
-
 **This program is heavily based on the original HeliosDisplayManagement software created by Soroush Falahati!**
 
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusMainScreen.png"/></div>
