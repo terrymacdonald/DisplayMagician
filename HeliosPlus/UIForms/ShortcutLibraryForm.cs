@@ -21,7 +21,7 @@ namespace HeliosPlus.UIForms
     {
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
-        private ImageListViewItem _selectedShortcutILVItem = null;
+        //private ImageListViewItem _selectedShortcutILVItem = null;
         private ShortcutItem _selectedShortcut = null;
 
         public ShortcutLibraryForm()

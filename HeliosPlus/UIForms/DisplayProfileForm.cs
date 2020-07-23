@@ -42,6 +42,7 @@ namespace HeliosPlus.UIForms
                 return;
             }
 
+            // Need to move this logic to the Shortcut Repository or the Profile Repository.
             /*IDictionary<string, Action> actions = dv_profile.Profile.applyProfileActions();
             IDictionary<string, string> messages = dv_profile.Profile.applyProfileMsgs();
             List<string> sequence = dv_profile.Profile.applyProfileSequence();
@@ -70,9 +71,8 @@ namespace HeliosPlus.UIForms
 
             Activate();*/
 
-
-
         }
+
 
         private void Exit_Click(object sender, EventArgs e)
         {

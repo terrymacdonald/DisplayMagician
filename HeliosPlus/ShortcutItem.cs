@@ -43,11 +43,13 @@ namespace HeliosPlus
     public class ShortcutItem
     {
         
-        private static List<ShortcutItem> _allSavedShortcuts = new List<ShortcutItem>();
-        private MultiIcon _shortcutIcon, _originalIcon = null;
+        //private static List<ShortcutItem> _allSavedShortcuts = new List<ShortcutItem>();
+        //private MultiIcon _shortcutIcon, _originalIcon = null;
         private Bitmap _shortcutBitmap, _originalBitmap = null;
         private ProfileItem _profileToUse = null;
-        private string _originalIconPath = "", _savedShortcutIconCacheFilename = "", _uuid = "";
+        private string _originalIconPath = "";
+        //private string _savedShortcutIconCacheFilename = "";
+        private string _uuid = "";
         private string _name = "";
         //private uint _id = 0;
         private string _profileUuid = "";
@@ -62,7 +64,10 @@ namespace HeliosPlus
             ProfileToUse = profile;
         }
 
-        public static Version Version = new Version(1, 0);
+        public static Version Version
+        {
+            get => new Version(1, 0);
+        }
 
         public string UUID
         {
@@ -147,7 +152,7 @@ namespace HeliosPlus
                 // We try to find and set the ProfileTouse
                 foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
-                    if (profileToTest.UUID.Equals(_profileUuid))
+                    if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
                         _profileToUse = profileToTest;
                 }
             }

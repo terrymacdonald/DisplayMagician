@@ -2,16 +2,15 @@
 using HeliosPlus.InterProcess;
 using HeliosPlus.Resources;
 using HeliosPlus.Shared;
-using HeliosPlus.UIForms;
 using Newtonsoft.Json;
+using NvAPIWrapper.Mosaic;
+using NvAPIWrapper.Native.Mosaic;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing.IconLib;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -26,7 +25,6 @@ namespace HeliosPlus
         #region Class Variables
         // Common items to the class
         private static List<ShortcutItem> _allShortcuts = null;
-        public static Version Version = new Version(1, 0, 0);
         // Other constants that are useful
         private static string _shortcutStorageJsonPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutStorageJsonFileName = Path.Combine(_shortcutStorageJsonPath, $"Shortcuts_{Version.ToString(2)}.json");
@@ -70,6 +68,11 @@ namespace HeliosPlus
             {
                 return _allShortcuts.Count;
             }
+        }
+
+        public static Version Version
+        {
+            get => new Version(1, 0, 0);
         }
 
         #endregion
@@ -116,7 +119,7 @@ namespace HeliosPlus
                 return false;
 
             // Remove the Shortcut Icons from the Cache
-            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcut.UUID));
+            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
             foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
             {
                 try
@@ -132,7 +135,7 @@ namespace HeliosPlus
             }
 
             // Remove the shortcut from the list.
-            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID));
+            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
 
             if (numRemoved == 1)
             {
@@ -158,13 +161,13 @@ namespace HeliosPlus
             Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcutNameOrUuid));
-                numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcutNameOrUuid));
+                shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
+                numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
             }
             else
             {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutNameOrUuid));
-                numRemoved = _allShortcuts.RemoveAll(item => item.Name.Equals(shortcutNameOrUuid));
+                shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
+                numRemoved = _allShortcuts.RemoveAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
             }
             // Remove the Shortcut Icons from the Cache
             foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
@@ -201,7 +204,7 @@ namespace HeliosPlus
 
             foreach (ShortcutItem testShortcut in _allShortcuts)
             {
-                if (testShortcut.UUID.Equals(shortcut.UUID))
+                if (testShortcut.UUID.Equals(shortcut.UUID,StringComparison.InvariantCultureIgnoreCase))
                     return true;
             }
 
@@ -220,7 +223,7 @@ namespace HeliosPlus
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.UUID.Equals(shortcutNameOrUuid))
+                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
                         return true;
                 }
 
@@ -229,7 +232,7 @@ namespace HeliosPlus
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.Name.Equals(shortcutNameOrUuid))
+                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
                         return true;
                 }
 
@@ -251,7 +254,7 @@ namespace HeliosPlus
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.UUID.Equals(shortcutNameOrUuid))
+                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
                         return testShortcut;
                 }
 
@@ -260,7 +263,7 @@ namespace HeliosPlus
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.Name.Equals(shortcutNameOrUuid))
+                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
                         return testShortcut;
                 }
 
@@ -277,7 +280,7 @@ namespace HeliosPlus
 
             foreach (ShortcutItem testShortcut in ShortcutRepository.AllShortcuts)
             {
-                if (testShortcut.ProfileUUID.Equals(newProfile.UUID) && testShortcut.AutoName)
+                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.InvariantCultureIgnoreCase) && testShortcut.AutoName)
                 {
                     testShortcut.ProfileToUse = newProfile;
                     testShortcut.AutoSuggestShortcutName();
@@ -446,18 +449,22 @@ namespace HeliosPlus
         {
             // Do some validation to make sure the shortcut is sensible
             // And that we have enough to try and action within the shortcut
+            // including checking the Profile in the shortcut is possible
             // (in other words check everything in the shortcut is still valid)
+            if (!(shortcutToUse is ShortcutItem))
+                return;
+
             (bool valid, string reason) = shortcutToUse.IsValid();
             if (!valid)
             {
-                throw new Exception(string.Format("Unable to run the shortcut '{0}': {1}", shortcutToUse.Name, reason));
+                throw new Exception(string.Format("ShortcutRepository/SaveShortcutIconToCache exception: Unable to run the shortcut '{0}': {1}", shortcutToUse.Name, reason));
             }
 
             // Remember the profile we are on now
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
 
-            // Try to change to the wanted profile
-            if (!ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse))
+            // Apply the Profile!
+            if (!ApplyProfile(shortcutToUse.ProfileToUse))
             {
                 throw new Exception(Language.Cannot_change_active_profile);
             }
@@ -664,7 +671,7 @@ namespace HeliosPlus
             // Change back to the original profile if it is different
             if (!ProfileRepository.IsActiveProfile(rollbackProfile))
             {
-                if (!ProfileRepository.ApplyProfile(rollbackProfile))
+                if (!ApplyProfile(rollbackProfile))
                 {
                     throw new Exception(Language.Cannot_change_active_profile);
                 }
@@ -672,7 +679,7 @@ namespace HeliosPlus
 
         }
 
-        private static bool ChangeToProfile(ProfileItem profile)
+        private static bool ApplyProfile(ProfileItem profile)
         {
             // If we're already on the wanted profile then no need to change!
             if (ProfileRepository.IsActiveProfile(profile))
@@ -685,25 +692,21 @@ namespace HeliosPlus
                 IPCService.GetInstance().Status = InstanceStatus.Busy;
                 var failed = false;
 
-                if (new ApplyingChangesForm(() =>
+                // Now lets start by changing the display topology
+                Task applyProfileTopologyTask = Task.Run(() =>
                 {
-                    Task.Factory.StartNew(() =>
-                    {
-                        if (!(ProfileRepository.ApplyProfile(profile)))
-                        {
-                            failed = true;
-                        }
-                    }, TaskCreationOptions.LongRunning);
-                }, 3, 30).ShowDialog() !=
-                    DialogResult.Cancel)
-                {
-                    if (failed)
-                    {
-                        throw new Exception(Language.Profile_is_invalid_or_not_possible_to_apply);
-                    }
+                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
+                    ApplyTopology(profile);
+                });
+                applyProfileTopologyTask.Wait();
 
-                    return true;
-                }
+                // And then change the path information
+                Task applyProfilePathInfoTask = Task.Run(() =>
+                {
+                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
+                    ApplyPathInfo(profile);
+                });
+                applyProfilePathInfoTask.Wait();
 
                 return false;
             }
@@ -712,6 +715,64 @@ namespace HeliosPlus
                 IPCService.GetInstance().Status = instanceStatus;
             }
         }
+
+        public static void ApplyTopology(ProfileItem profile)
+        {
+            Debug.Print("ShortcutRepository.ApplyTopology()");
+            if (profile == null)
+                return;
+
+            try
+            {
+                var surroundTopologies =
+                    profile.Viewports.SelectMany(viewport => viewport.TargetDisplays)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .ToArray();
+
+                if (surroundTopologies.Length == 0)
+                {
+                    var currentTopologies = GridTopology.GetGridTopologies();
+
+                    if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
+                    {
+                        surroundTopologies =
+                            GridTopology.GetGridTopologies()
+                                .SelectMany(topology => topology.Displays)
+                                .Select(displays => new GridTopology(1, 1, new[] { displays }))
+                                .ToArray();
+                    }
+                }
+
+                if (surroundTopologies.Length > 0)
+                {
+                    GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.InnerException}");
+                // ignored
+            }
+        }
+
+        public static void ApplyPathInfo(ProfileItem profile)
+        {
+            Debug.Print("ShortcutRepository.ApplyPathInfo()");
+            if (profile == null)
+                return;
+
+            if (!profile.IsPossible)
+            {
+                throw new InvalidOperationException(
+                    $"ShortcutRepository/ApplyPathInfo exception: Problem applying the '{profile.Name}' Display Profile! The display configuration changed since this profile is created. Please re-create this profile.");
+            }
+
+            var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+            WindowsDisplayAPI.DisplayConfig.PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+        }
+
         #endregion
 
     }
