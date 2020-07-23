@@ -20,6 +20,10 @@ using System.Windows.Forms;
 using NvAPIWrapper.Native.Display.Structures;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
+using System.Diagnostics;
+using System.Threading;
+using HeliosPlus.InterProcess;
+using HeliosPlus.UIForms;
 
 namespace HeliosPlus
 {
@@ -661,6 +665,9 @@ namespace HeliosPlus
             // true if it was a success or false if it was not
             return shortcutFileName != null && System.IO.File.Exists(shortcutFileName);
         }
+
+
+        
 
         public void AutoSuggestShortcutName()
         {

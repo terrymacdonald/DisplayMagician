@@ -42,7 +42,7 @@ namespace HeliosPlus.UIForms
                 return;
             }
 
-            IDictionary<string, Action> actions = dv_profile.Profile.applyProfileActions();
+            /*IDictionary<string, Action> actions = dv_profile.Profile.applyProfileActions();
             IDictionary<string, string> messages = dv_profile.Profile.applyProfileMsgs();
             List<string> sequence = dv_profile.Profile.applyProfileSequence();
 
@@ -68,7 +68,10 @@ namespace HeliosPlus.UIForms
                 Console.WriteLine("Applying profile " + _selectedProfile.Name);
             }
 
-            Activate();
+            Activate();*/
+
+
+
         }
 
         private void Exit_Click(object sender, EventArgs e)

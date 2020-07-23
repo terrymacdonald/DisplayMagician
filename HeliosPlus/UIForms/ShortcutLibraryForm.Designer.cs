@@ -108,6 +108,7 @@
             this.btn_run.TabIndex = 25;
             this.btn_run.Text = "&Run";
             this.btn_run.UseVisualStyleBackColor = false;
+            this.btn_run.Click += new System.EventHandler(this.btn_run_Click);
             // 
             // btn_edit
             // 

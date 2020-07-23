@@ -21,6 +21,9 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Resources;
+using System.Net.NetworkInformation;
+using NvAPIWrapper.Mosaic;
+using NvAPIWrapper.Native.Mosaic;
 
 namespace HeliosPlus.Shared
 {
@@ -527,7 +530,8 @@ namespace HeliosPlus.Shared
                 Name = "Current Display Profile",
                 Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
             };
-        }       
+        }
+
 
         public static bool ApplyProfile(ProfileItem profile)
         {
@@ -536,14 +540,14 @@ namespace HeliosPlus.Shared
 
                 Debug.Print("Begin profile change");
                 Thread.Sleep(2000);
-                profile.ApplyTopos();
+                ApplyTopos(profile);
 
                 Debug.Print("Finished setting topologies");
                 Debug.Print("Sleep");
                 Thread.Sleep(18000);
                 Debug.Print("Awake");
 
-                profile.ApplyPathInfos();
+                ApplyPathInfos(profile);
 
                 Debug.Print("Applying pathInfos");
                 Debug.Print("Sleep");
@@ -564,6 +568,83 @@ namespace HeliosPlus.Shared
                 return false;
             }
         }
+
+        public static void ApplyTopos(ProfileItem profile)
+        {
+            Debug.Print("_applyTopos()");
+            try
+            {
+                var surroundTopologies =
+                    profile.Viewports.SelectMany(viewport => viewport.TargetDisplays)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .ToArray();
+
+                if (surroundTopologies.Length == 0)
+                {
+                    var currentTopologies = GridTopology.GetGridTopologies();
+
+                    if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
+                    {
+                        surroundTopologies =
+                            GridTopology.GetGridTopologies()
+                                .SelectMany(topology => topology.Displays)
+                                .Select(displays => new GridTopology(1, 1, new[] { displays }))
+                                .ToArray();
+                    }
+                }
+
+                if (surroundTopologies.Length > 0)
+                {
+                    GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ProfileItem/ApplyTopos exception: {ex.Message}: {ex.InnerException}");
+                // ignored
+            }
+        }
+
+        public static void ApplyPathInfos(ProfileItem profile)
+        {
+            Debug.Print("_applyPathInfos()");
+            if (!profile.IsPossible)
+            {
+                throw new InvalidOperationException(
+                    $"Problem applying the '{profile.Name}' Display Profile! The display configuration changed since this profile is created. Please re-create this profile.");
+            }
+
+            var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+            PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+        }
+
+       /* public static IDictionary<string, Action> applyProfileActions(ProfileItem profile)
+        {
+            var dict = new Dictionary<string, Action>()
+            {
+                { "Applying_Topos", ApplyTopos(profile) },
+                { "Applying_Paths", ApplyPathInfos(profile) }
+            };
+            return dict;
+        }
+
+        public static IDictionary<string, string> applyProfileMsgs()
+        {
+            var dict = new Dictionary<string, string>()
+            {
+                { "Applying_Topos", Language.Applying_First_Message },
+                { "Applying_Paths", Language.Applying_Second_Message }
+            };
+            return dict;
+        }
+
+        public static List<string> applyProfileSequence()
+        {
+            var list = new List<string>() { "Applying_Topos", "Applying_Paths" };
+            return list;
+        }*/
 
         public static bool IsValidFilename(string testName)
         {

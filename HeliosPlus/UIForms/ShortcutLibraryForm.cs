@@ -218,5 +218,14 @@ namespace HeliosPlus.UIForms
 
             RefreshShortcutLibraryUI(); 
         }
+
+        private void btn_run_Click(object sender, EventArgs e)
+        {
+            if (_selectedShortcut == null)
+                return;
+
+            // Run the shortcut
+            ShortcutRepository.RunShortcut(_selectedShortcut);
+        }
     }
 }
