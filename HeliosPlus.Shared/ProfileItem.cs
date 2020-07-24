@@ -134,30 +134,46 @@ namespace HeliosPlus.Shared
         {
             get
             {
-                List<string> unavailableDeviceNames = new List<string>();
-                // Then go through the displays in the profile and check they're live
-                foreach (ProfileViewport profileViewport in Viewports)
+                // Find the list of TargetDisplays we currently have from the currentprofile
+                List<string> availableDevicePaths = new List<string>();
+                ProfileViewport[] availableViewports = ProfileRepository.CurrentProfile.Viewports;
+                foreach (ProfileViewport availableViewport in availableViewports)
                 {
-                    foreach (ProfileViewportTargetDisplay profileViewportTargetDisplay in profileViewport.TargetDisplays)
+                    foreach (ProfileViewportTargetDisplay realTD in availableViewport.TargetDisplays)
                     {
-                        PathTargetInfo viewportTargetInfo = profileViewportTargetDisplay.ToPathTargetInfo();
-                        // If viewportTargetInfo is null, then this viewportTargetDisplay isn't currently available
-                        // so this makes the profile invalid
-                        if (viewportTargetInfo == null)
-                            unavailableDeviceNames.Add(profileViewportTargetDisplay.DisplayName);
+                        availableDevicePaths.Add(realTD.DevicePath);
                     }
                 }
 
-                if (unavailableDeviceNames.Count > 0)
-                {
-                    // Darn - there was at least one unavilable displaytarget
+                // If there are no viewports, then return false
+                if (Viewports.Length == 0)
                     return false;
-                }
-                else
+
+                // Then go through the displays in the profile and check they are made of displays
+                // that currently are available.
+                foreach (ProfileViewport profileViewport in Viewports)
                 {
-                    // There were no unavailable DisplayTargets!
-                    return true;
+                    // If there are no TargetDisplays in a viewport, then return false
+                    if (profileViewport.TargetDisplays.Length == 0)
+                        return false;
+
+                    // For each profile, we want to make sure all TargetDisplays.DevicePath are in the list of 
+                    // availableDevicePaths
+                    foreach (ProfileViewportTargetDisplay profileViewportTargetDisplay in profileViewport.TargetDisplays)
+                    {
+
+                        // Check this DevicePath is in the list of availableTargetDisplays
+                        if (!availableDevicePaths.Contains(profileViewportTargetDisplay.DevicePath))
+                        {
+                            // profileViewportTargetDisplay is a display that isn't available right now
+                            // This means that this profile is currently now possible
+                            // So we return that fact to the calling function.
+                            return false;
+                        }
+                    }
                 }
+
+                return true;
 
             }
         }
