@@ -679,7 +679,7 @@ namespace HeliosPlus
 
         }
 
-        private static bool ApplyProfile(ProfileItem profile)
+        public static bool ApplyProfile(ProfileItem profile)
         {
             // If we're already on the wanted profile then no need to change!
             if (ProfileRepository.IsActiveProfile(profile))
@@ -716,7 +716,7 @@ namespace HeliosPlus
             }
         }
 
-        public static void ApplyTopology(ProfileItem profile)
+        private static void ApplyTopology(ProfileItem profile)
         {
             Debug.Print("ShortcutRepository.ApplyTopology()");
             if (profile == null)
@@ -757,7 +757,7 @@ namespace HeliosPlus
             }
         }
 
-        public static void ApplyPathInfo(ProfileItem profile)
+        private static void ApplyPathInfo(ProfileItem profile)
         {
             Debug.Print("ShortcutRepository.ApplyPathInfo()");
             if (profile == null)

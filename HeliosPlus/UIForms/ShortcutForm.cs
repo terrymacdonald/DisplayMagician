@@ -19,7 +19,6 @@ namespace HeliosPlus.UIForms
     public partial class ShortcutForm : Form
     {
 
-        List<SteamGame> _allSteamGames;
         private ProfileAdaptor _profileAdaptor;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
         private ProfileItem _profileToUse= null;
@@ -827,7 +826,7 @@ namespace HeliosPlus.UIForms
             if (lv_games.SelectedItems.Count > 0)
             {
                 txt_game_name.Text = lv_games.SelectedItems[0].Text;
-                foreach (SteamGame game in _allSteamGames)
+                foreach (SteamGame game in SteamLibrary.AllInstalledGames)
                 {
                     if (game.GameName == txt_game_name.Text)
                     {

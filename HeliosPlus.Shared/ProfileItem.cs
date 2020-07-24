@@ -96,7 +96,7 @@ namespace HeliosPlus.Shared
         #endregion
         public ProfileItem()
         {
-            try
+            /*try
             {
                 NvAPIWrapper.NVIDIA.Initialize();
             }
@@ -104,7 +104,7 @@ namespace HeliosPlus.Shared
             {
                 Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.InnerException}");
                 // ignored
-            }
+            }*/
 
         }
 

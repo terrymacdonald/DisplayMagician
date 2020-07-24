@@ -50,6 +50,18 @@ namespace HeliosPlus.Shared
         #region Class Constructors
         static ProfileRepository()
         {
+
+            // Initialise the the NVIDIA NvAPIWrapper
+            try
+            {
+                NvAPIWrapper.NVIDIA.Initialize();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.InnerException}");
+                // ignored
+            }
+
             // Load the Profiles from storage
             LoadProfiles();
         }
