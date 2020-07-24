@@ -3,9 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
+using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HeliosPlus.UIForms
 {
@@ -20,7 +19,7 @@ namespace HeliosPlus.UIForms
         private bool disposed;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="FileSystemAdaptor"/> class.
+        /// Initializes a new instance of the <see cref="ShortcutAdaptor"/> class.
         /// </summary>
         public ShortcutAdaptor()
         {
@@ -49,13 +48,14 @@ namespace HeliosPlus.UIForms
                     return null;
                 }
 
-                //Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
+                Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
                 //return shortcut.ShortcutBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+                //return Manina.Windows.Forms.Instance.GetThumbnail(shortcut.ShortcutBitmap, size, useEmbeddedThumbnails, useExifOrientation);
                 return shortcut.ShortcutBitmap;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdapter/GetThumbnail exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutAdapter/GetThumbnail exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
@@ -83,11 +83,24 @@ namespace HeliosPlus.UIForms
             try
             {
                 ShortcutItem shortcut = (ShortcutItem) key;
-                return shortcut.Name;
+                //return shortcut.Name;
+
+
+                StringBuilder sb = new StringBuilder();
+                sb.Append(shortcut.ToString());// Filename
+                sb.Append(':');
+                sb.Append(size.Width); // Thumbnail size
+                sb.Append(',');
+                sb.Append(size.Height);
+                sb.Append(':');
+                sb.Append(useEmbeddedThumbnails);
+                sb.Append(':');
+                sb.Append(useExifOrientation);
+                return sb.ToString();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdapter/GetUniqueIdentifier exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutAdapter/GetUniqueIdentifier exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a Shortcut
                 // Then we return null
                 return null;
@@ -111,7 +124,7 @@ namespace HeliosPlus.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdaptor/GetSourceImage exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutAdaptor/GetSourceImage exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
@@ -138,16 +151,53 @@ namespace HeliosPlus.UIForms
                 // Get file info
                 if (shortcut.ShortcutBitmap is Bitmap)
                 {
+                    // Have to do some gymnastics to get rid of the 
+                    // System.Drawing.Image exception created while accessing the Size
+                    bool gotSize = false;
+                    Size mySize = new Size(256,256);
+                    while (!gotSize)
+                    {
+                        try
+                        {
+                            mySize = shortcut.ShortcutBitmap.Size;
+                            gotSize = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            // catch the System.Drawing.Image exception created while accessing the Size
+                        }
+                    }
+
+                    // Have to do some gymnastics to get rid of the 
+                    // System.Drawing.Image exception created while accessing the SizeF
+                    bool gotSizeF = false;
+                    SizeF mySizeF = new SizeF(256, 256);
+                    while (!gotSizeF)
+                    {
+                        try
+                        {
+                            mySizeF = shortcut.ShortcutBitmap.PhysicalDimension;
+                            gotSizeF = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            // catch the System.Drawing.Image exception created while accessing the Size
+                        }
+                    }
+
+                    string name = shortcut.Name;
+                    string filepath = Path.GetDirectoryName(shortcut.SavedShortcutIconCacheFilename);
+                    string filename = Path.GetFileName(shortcut.SavedShortcutIconCacheFilename);
                     DateTime now = DateTime.Now;
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateModified, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FileSize, string.Empty, (long)0));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, shortcut.SavedShortcutIconCacheFilename));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, new Size(shortcut.ShortcutBitmap.Width, shortcut.ShortcutBitmap.Height)));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, new SizeF((float)shortcut.ShortcutBitmap.Width, (float)shortcut.ShortcutBitmap.Height)));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, shortcut.Name));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, filepath ?? ""));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, filepath ?? ""));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, mySize));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, mySizeF));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, name ?? ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.EquipmentModel, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateTaken, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Artist, string.Empty, ""));
@@ -165,7 +215,7 @@ namespace HeliosPlus.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdapter/Utility.Tuple exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutAdapter/Utility.Tuple exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;

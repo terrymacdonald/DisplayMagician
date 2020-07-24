@@ -103,7 +103,7 @@ namespace HeliosPlus.GameLibraries
                 }
                 catch (SecurityException ex)
                 {
-                    Console.WriteLine($"SteamGame/IsRunning securityexception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"SteamGame/IsRunning securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     if (ex.Source != null)
                         Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
@@ -112,7 +112,7 @@ namespace HeliosPlus.GameLibraries
                 {
                     // Extract some information from this exception, and then
                     // throw it to the parent method.
-                    Console.WriteLine($"SteamGame/IsRunning ioexception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"SteamGame/IsRunning ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     if (ex.Source != null)
                         Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
@@ -138,7 +138,7 @@ namespace HeliosPlus.GameLibraries
                 }
                 catch (SecurityException ex)
                 {
-                    Console.WriteLine($"SteamGame/IsUpdating securityexception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"SteamGame/IsUpdating securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     if (ex.Source != null)
                         Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
@@ -147,7 +147,7 @@ namespace HeliosPlus.GameLibraries
                 {
                     // Extract some information from this exception, and then
                     // throw it to the parent method.
-                    Console.WriteLine($"SteamGame/IsUpdating ioexception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"SteamGame/IsUpdating ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     if (ex.Source != null)
                         Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;

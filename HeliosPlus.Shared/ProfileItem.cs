@@ -102,7 +102,7 @@ namespace HeliosPlus.Shared
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // ignored
             }*/
 

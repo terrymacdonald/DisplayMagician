@@ -138,7 +138,7 @@ namespace HeliosPlus {
             }
             catch (CommandParsingException ex)
             {
-                Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
                 // "Unrecognized command or argument '<invalid-command>'"
@@ -146,7 +146,7 @@ namespace HeliosPlus {
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Program/Main exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"Program/Main exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 Console.WriteLine("Unable to execute application: {0}", ex.Message);
             }
             return 0;
@@ -179,7 +179,7 @@ namespace HeliosPlus {
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.InnerException}");
+                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // TODO
                     }
                 }
@@ -228,7 +228,7 @@ namespace HeliosPlus {
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     // TODO
                 }
 
@@ -238,7 +238,7 @@ namespace HeliosPlus {
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 MessageBox.Show(
                     ex.Message,
                     Language.Fatal_Error,

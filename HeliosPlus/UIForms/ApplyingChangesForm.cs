@@ -190,7 +190,7 @@ namespace HeliosPlus.UIForms
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ApplyingChangesForm/SplashForm_FormClosing exception: {ex.Message}: {ex.InnerException}");
+                        Console.WriteLine($"ApplyingChangesForm/SplashForm_FormClosing exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }
                 }, this), new SafeInvoker(() =>
@@ -216,7 +216,7 @@ namespace HeliosPlus.UIForms
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ApplyingChangesForm/SplashForm_Shown exception: {ex.Message}: {ex.InnerException}");
+                        Console.WriteLine($"ApplyingChangesForm/SplashForm_Shown exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }
                 }, this), new SafeInvoker(DoTimeout, this));

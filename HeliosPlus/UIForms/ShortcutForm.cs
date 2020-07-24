@@ -672,7 +672,7 @@ namespace HeliosPlus.UIForms
                     } 
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.InnerException}");
+                        Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
                     }
                 } else

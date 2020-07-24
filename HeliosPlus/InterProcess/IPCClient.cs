@@ -52,7 +52,7 @@ namespace HeliosPlus.InterProcess
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"IPCClient/QueryAll exception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"IPCClient/QueryAll exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     // ignored
                 }
 
@@ -82,7 +82,7 @@ namespace HeliosPlus.InterProcess
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"IPCClient/QueryByStatus exception: {ex.Message}: {ex.InnerException}");
+                        Console.WriteLine($"IPCClient/QueryByStatus exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }
                 }

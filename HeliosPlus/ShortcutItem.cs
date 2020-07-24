@@ -339,7 +339,7 @@ namespace HeliosPlus
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutItem/ExtractVisataIcon exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutItem/ExtractVisataIcon exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return null; 
             }
             return bmpPngExtracted;

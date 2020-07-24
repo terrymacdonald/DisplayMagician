@@ -30,17 +30,10 @@ namespace HeliosPlus.UIForms
             //_shortcutAdaptor = new ShortcutAdaptor();
             //_shortcutRepository = new ShortcutRepository();
             //_profileRepository = new ProfileRepository();
-        }
-
-        private void btn_new_Click(object sender, EventArgs e)
-        {
-            var shortcutForm = new ShortcutForm();
-            shortcutForm.ShowDialog(this);
-            if (shortcutForm.DialogResult == DialogResult.OK)
-            {
-                ShortcutRepository.AddShortcut(shortcutForm.Shortcut);
-                RefreshShortcutLibraryUI();
-            }
+            ilv_saved_shortcuts.MultiSelect = false;
+            ilv_saved_shortcuts.ThumbnailSize = new Size(100,100);
+            ilv_saved_shortcuts.AllowDrag = false;
+            ilv_saved_shortcuts.AllowDrop = false;
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -57,48 +50,35 @@ namespace HeliosPlus.UIForms
         private void RefreshShortcutLibraryUI()
         {
 
-            if (ShortcutRepository.ShortcutCount > 0)
+            if (ShortcutRepository.ShortcutCount == 0)
+                return;
+
+            // Temporarily stop updating the saved_profiles listview
+            ilv_saved_shortcuts.SuspendLayout();
+
+            ImageListViewItem newItem = null;
+            ilv_saved_shortcuts.Items.Clear();
+            foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts)
             {
-                // Temporarily stop updating the saved_profiles listview
-                ilv_saved_shortcuts.SuspendLayout();
+                //loadedProfile.SaveProfileImageToCache();
+                //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
+                //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
 
-                ImageListViewItem newItem = null;
-                ilv_saved_shortcuts.Items.Clear();
-                foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts)
-                {
-                    //loadedProfile.SaveProfileImageToCache();
-                    //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
-                    //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                    newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
-                    //ilv_saved_profiles.Items.Add(newItem);
-                    ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
-                }
+                // Select it if its the selectedProfile
+                if (_selectedShortcut is ShortcutItem && _selectedShortcut.Equals(loadedShortcut))
+                    newItem.Selected = true;
 
-                if (_selectedShortcut != null && _selectedShortcut is ShortcutItem)
-                    RefreshImageListView(_selectedShortcut);
-
-                // Restart updating the saved_profiles listview
-                ilv_saved_shortcuts.ResumeLayout();
-
+                //ilv_saved_profiles.Items.Add(newItem);
+                ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
             }
 
-            // Refresh the image list view
-            //RefreshImageListView(_selectedShortcut);
+    
+            // Restart updating the saved_profiles listview
+            ilv_saved_shortcuts.ResumeLayout();
+
         }
     
-        private void RefreshImageListView(ShortcutItem shortcut)
-        {
-            ilv_saved_shortcuts.ClearSelection();
-            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_shortcuts.Items where item.Text == shortcut.Name select item);
-            if (matchingImageListViewItems.Any())
-            {
-                matchingImageListViewItems.First().Selected = true;
-                matchingImageListViewItems.First().Focused = true;
-            }
-
-        }
-
-
         private ShortcutItem GetShortcutFromName(string shortcutName)
         {
             return (from item in ShortcutRepository.AllShortcuts where item.Name == shortcutName select item).First();
@@ -184,6 +164,18 @@ namespace HeliosPlus.UIForms
                 RefreshShortcutLibraryUI();
             }
 
+        }
+
+        private void btn_new_Click(object sender, EventArgs e)
+        {
+            var shortcutForm = new ShortcutForm();
+            shortcutForm.ShowDialog(this);
+            if (shortcutForm.DialogResult == DialogResult.OK)
+            {
+                ShortcutRepository.AddShortcut(shortcutForm.Shortcut);
+                _selectedShortcut = shortcutForm.Shortcut;
+                RefreshShortcutLibraryUI();
+            }
         }
 
         private void btn_edit_Click(object sender, EventArgs e)

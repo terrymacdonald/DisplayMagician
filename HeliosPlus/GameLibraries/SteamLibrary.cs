@@ -435,7 +435,7 @@ namespace HeliosPlus.GameLibraries
                         }
                         catch (ArgumentException ex)
                         {
-                            Console.WriteLine($"SteamGame/GetAllInstalledGames exception: {ex.Message}: {ex.InnerException}");
+                            Console.WriteLine($"SteamGame/GetAllInstalledGames exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                             //we just want to ignore it if we try to add it twice....
                         }
 
@@ -558,28 +558,28 @@ namespace HeliosPlus.GameLibraries
             }
             catch (SecurityException ex)
             {
-                Console.WriteLine($"SteamGame/GetAllInstalledGames securityexception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"SteamGame/GetAllInstalledGames securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 if (ex.Source != null)
                     Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
                 throw;
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine($"SteamGame/GetAllInstalledGames unauthorizedaccessexception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"SteamGame/GetAllInstalledGames unauthorizedaccessexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 if (ex.Source != null)
                     Console.WriteLine("UnauthorizedAccessException  source: {0} - Message: {1}", ex.Source, ex.Message);
                 throw;
             }
             catch (ObjectDisposedException ex)
             {
-                Console.WriteLine($"SteamGame/GetAllInstalledGames objectdisposedexceptions: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"SteamGame/GetAllInstalledGames objectdisposedexceptions: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 if (ex.Source != null)
                     Console.WriteLine("ObjectDisposedException  source: {0} - Message: {1}", ex.Source, ex.Message);
                 throw;
             }
             catch (IOException ex)
             {
-                Console.WriteLine($"SteamGame/GetAllInstalledGames ioexception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"SteamGame/GetAllInstalledGames ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // Extract some information from this exception, and then
                 // throw it to the parent method.
                 if (ex.Source != null)

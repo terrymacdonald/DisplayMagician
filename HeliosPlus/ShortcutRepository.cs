@@ -128,7 +128,7 @@ namespace HeliosPlus
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                     // TODO check and report
                 }
@@ -178,7 +178,7 @@ namespace HeliosPlus
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception 2: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                     // TODO check and report
                 }
@@ -350,7 +350,7 @@ namespace HeliosPlus
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutRepository/SaveShortcuts exception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"ShortcutRepository/SaveShortcuts exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                     Console.WriteLine($"Unable to create Shortcut folder {_shortcutStorageJsonPath}: " + ex.Message);
 
@@ -376,7 +376,7 @@ namespace HeliosPlus
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/SaveShortcuts exception 2: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutRepository/SaveShortcuts exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                 Console.WriteLine($"Unable to save Shortcut JSON file {_shortcutStorageJsonFileName}: " + ex.Message);
             }
@@ -434,7 +434,7 @@ namespace HeliosPlus
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/SaveShortcutIconToCache exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutRepository/SaveShortcutIconToCache exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                 // If we fail to create an icon based on the original executable or game
                 // Then we use the standard HeliosPlus profile one.
@@ -537,7 +537,7 @@ namespace HeliosPlus
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutItem/Run exception: {ex.Message}: {ex.InnerException}");
+                    Console.WriteLine($"ShortcutItem/Run exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     // ignored
                 }
 
@@ -550,7 +550,7 @@ namespace HeliosPlus
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ShortcutItem/Run exception 2: {ex.Message}: {ex.InnerException}");
+                        Console.WriteLine($"ShortcutItem/Run exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }
                 }
@@ -624,7 +624,7 @@ namespace HeliosPlus
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.InnerException}");
+                            Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                             // ignored
                         }
 
@@ -752,7 +752,7 @@ namespace HeliosPlus
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // ignored
             }
         }

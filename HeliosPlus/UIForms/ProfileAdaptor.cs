@@ -66,7 +66,7 @@ namespace HeliosPlus.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileAdaptor/GetThumbnail exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ProfileAdaptor/GetThumbnail exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -103,7 +103,7 @@ namespace HeliosPlus.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileAdaptor/GertUniqueIdentifier exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ProfileAdaptor/GertUniqueIdentifier exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -127,7 +127,7 @@ namespace HeliosPlus.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileAdaptor/GetSourceImage exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ProfileAdaptor/GetSourceImage exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
@@ -158,16 +158,52 @@ namespace HeliosPlus.UIForms
                 // Get file info
                 if (profileToUse.ProfileBitmap is Bitmap)
                 {
+                    // Have to do some gymnastics to get rid of the 
+                    // System.Drawing.Image exception created while accessing the Size
+                    bool gotSize = false;
+                    Size mySize = new Size(256, 256);
+                    while (!gotSize)
+                    {
+                        try
+                        {
+                            mySize = profileToUse.ProfileBitmap.Size;
+                            gotSize = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            // catch the System.Drawing.Image exception created while accessing the Size
+                        }
+                    }
+
+                    // Have to do some gymnastics to get rid of the 
+                    // System.Drawing.Image exception created while accessing the SizeF
+                    bool gotSizeF = false;
+                    SizeF mySizeF = new SizeF(256, 256);
+                    while (!gotSizeF)
+                    {
+                        try
+                        {
+                            mySizeF = profileToUse.ProfileBitmap.PhysicalDimension;
+                            gotSizeF = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            // catch the System.Drawing.Image exception created while accessing the Size
+                        }
+                    }
+                    string name = profileToUse.Name;
+                    string filepath = Path.GetDirectoryName(profileToUse.SavedProfileIconCacheFilename);
+                    string filename = Path.GetFileName(profileToUse.SavedProfileIconCacheFilename);
                     DateTime now = DateTime.Now;
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateModified, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FileSize, string.Empty, (long)0));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, new Size(profileToUse.ProfileBitmap.Width, profileToUse.ProfileBitmap.Height)));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, new SizeF((float)profileToUse.ProfileBitmap.Width, (float)profileToUse.ProfileBitmap.Height)));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, profileToUse.Name));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, filepath ?? ""));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, filepath ?? ""));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, mySize));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, mySizeF));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, name ?? ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.EquipmentModel, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateTaken, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Artist, string.Empty, ""));
@@ -185,7 +221,7 @@ namespace HeliosPlus.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileAdaptor/Utility.Tuple exception: {ex.Message}: {ex.InnerException}");
+                Console.WriteLine($"ProfileAdaptor/Utility.Tuple exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
