@@ -110,7 +110,7 @@ namespace HeliosPlus.Shared
         }
 
         #endregion
-
+    
         #region Class Methods
         public static bool AddProfile(ProfileItem Profile)
         {
@@ -155,6 +155,7 @@ namespace HeliosPlus.Shared
                 return false;
 
         }
+
 
         public static bool RemoveProfile(ProfileItem Profile)
         {

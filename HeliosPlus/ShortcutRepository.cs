@@ -685,6 +685,10 @@ namespace HeliosPlus
             if (ProfileRepository.IsActiveProfile(profile))
                 return true;
 
+            // We need to check if the profile is valid
+            if (!profile.IsPossible)
+                return false;
+
             var instanceStatus = IPCService.GetInstance().Status;
 
             try

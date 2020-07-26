@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Shared", "Helios
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Reporting", "HeliosPlus.Reporting\HeliosPlus.Reporting.csproj", "{76DF2BCF-911B-4820-B63E-8F3468DB5E79}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Tests", "HeliosPlus.Tests\HeliosPlus.Tests.csproj", "{D7AFD3CC-53BF-4991-ABFE-638A3F355310}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -32,6 +34,10 @@ Global
 		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|AnyCPU.ActiveCfg = Release|Any CPU
 		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|AnyCPU.Build.0 = Release|Any CPU
+		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
+		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|AnyCPU.Build.0 = Debug|Any CPU
+		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|AnyCPU.ActiveCfg = Release|Any CPU
+		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|AnyCPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

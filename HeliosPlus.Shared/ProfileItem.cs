@@ -134,14 +134,25 @@ namespace HeliosPlus.Shared
         {
             get
             {
+                IEnumerable<Display> currentDisplays = WindowsDisplayAPI.Display.GetDisplays();
+                foreach (Display availableDisplay in currentDisplays)
+                {
+                    if (availableDisplay.IsAvailable)
+                        Console.WriteLine("");
+                }
+
                 // Find the list of TargetDisplays we currently have from the currentprofile
                 List<string> availableDevicePaths = new List<string>();
                 ProfileViewport[] availableViewports = ProfileRepository.CurrentProfile.Viewports;
+
                 foreach (ProfileViewport availableViewport in availableViewports)
                 {
+                    PathInfo pathInfo = availableViewport.ToPathInfo();
+                    //pathInfo.TargetsInfo;
                     foreach (ProfileViewportTargetDisplay realTD in availableViewport.TargetDisplays)
                     {
-                        availableDevicePaths.Add(realTD.DevicePath);
+                        string devicePath = realTD.DevicePath;
+                        availableDevicePaths.Add(devicePath);
                     }
                 }
 
