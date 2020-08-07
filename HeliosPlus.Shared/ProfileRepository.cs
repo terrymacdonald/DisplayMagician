@@ -32,7 +32,8 @@ namespace HeliosPlus.Shared
     {
         #region Class Variables
         // Common items to the class
-        private static List<ProfileItem> _allProfiles = null;
+        private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
+        private static bool _profilesLoaded = false;
         public static Version Version = new Version(1, 0, 0);
         // Other constants that are useful
         public static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
@@ -72,7 +73,7 @@ namespace HeliosPlus.Shared
         {
             get
             {
-                if (_allProfiles == null)
+                if (!_profilesLoaded)
                     // Load the Profiles from storage if they need to be
                     LoadProfiles();
                 return _allProfiles;
@@ -102,9 +103,11 @@ namespace HeliosPlus.Shared
         {
             get
             {
-                if (_allProfiles == null)
+                if (!_profilesLoaded)
                     // Load the Profiles from storage if they need to be
                     LoadProfiles();
+
+
                 return _allProfiles.Count;
             }
         }
@@ -364,15 +367,17 @@ namespace HeliosPlus.Shared
                 ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256)
             };
 
-            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            if (ProfileRepository.ProfileCount > 0)
             {
-                if (activeProfile.Equals(loadedProfile))
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
-                    _currentProfile = loadedProfile;
-                    return;
+                    if (activeProfile.Equals(loadedProfile))
+                    {
+                        _currentProfile = loadedProfile;
+                        return;
+                    }
                 }
             }
-
             _currentProfile = activeProfile;
 
         }
@@ -468,6 +473,7 @@ namespace HeliosPlus.Shared
                 _currentProfile.ProfileIcon = new ProfileIcon(_currentProfile);
                 _currentProfile.ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256);
             }
+            _profilesLoaded = true;
             return true;
         }
 

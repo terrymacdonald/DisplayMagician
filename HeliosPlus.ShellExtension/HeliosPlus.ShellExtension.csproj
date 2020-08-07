@@ -68,6 +68,9 @@
     <Compile Include="Shield.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="EDIDParser">
+      <Version>1.2.0.1</Version>
+    </PackageReference>
     <PackageReference Include="ServerRegistrationManager">
       <Version>2.7.2</Version>
     </PackageReference>

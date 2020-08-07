@@ -24,7 +24,8 @@ namespace HeliosPlus
     {
         #region Class Variables
         // Common items to the class
-        private static List<ShortcutItem> _allShortcuts = null;
+        private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
+        private static bool _shortcutsLoaded = false;
         // Other constants that are useful
         private static string _shortcutStorageJsonPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutStorageJsonFileName = Path.Combine(_shortcutStorageJsonPath, $"Shortcuts_{Version.ToString(2)}.json");
@@ -45,18 +46,10 @@ namespace HeliosPlus
         {
             get
             {
-                if (_allShortcuts == null)
+                if (!_shortcutsLoaded)
                     // Load the Shortcuts from storage
                     LoadShortcuts();
-/*                    if (LoadShortcuts() && ShortcutCount > 0)
-                    {
-                        // Work out the starting NextShortcutId value
-                        long max = _allShortcuts.Max<ShortcutItem>(item => item.Id);
-                        _lastShortcutId = Convert.ToUInt32(max);
-                    }
-                    else
-                        _lastShortcutId = 0;
-*/
+
                 return _allShortcuts;
             }
         }
@@ -66,6 +59,10 @@ namespace HeliosPlus
         {
             get
             {
+                if (!_shortcutsLoaded)
+                    // Load the Shortcuts from storage
+                    LoadShortcuts();
+
                 return _allShortcuts.Count;
             }
         }
@@ -336,6 +333,7 @@ namespace HeliosPlus
                     }
                 }
             }
+            _shortcutsLoaded = true;
             return true;
         }
 
