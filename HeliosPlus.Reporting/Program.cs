@@ -208,7 +208,7 @@ namespace HeliosPlus.Reporting
 
             try
             {
-                Dump(ProfileItem.LoadAllProfiles(), "HeliosPlus.Shared.Profile.GetAllProfiles()", null, 99);
+                Dump(ProfileRepository.AllProfiles, "HeliosPlus.Shared.ProfileRepository.AllProfiles", null, 99);
             }
             catch (Exception e)
             {

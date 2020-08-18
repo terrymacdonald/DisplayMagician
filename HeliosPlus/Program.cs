@@ -40,6 +40,8 @@ namespace HeliosPlus {
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
+        public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
+        public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         public static string AppHeliosPlusIconFilename = Path.Combine(AppIconPath, @"HeliosPlus.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
@@ -167,6 +169,21 @@ namespace HeliosPlus {
                 if (!IPCService.StartService())
                 {
                     throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
+                }
+
+                
+                // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
+                if (!Directory.Exists(AppIconPath))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(AppIconPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        // TODO
+                    }
                 }
 
 

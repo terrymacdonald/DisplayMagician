@@ -39,8 +39,8 @@ namespace HeliosPlus.Shared
         public static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
         public static string AppIconPath = Path.Combine(AppDataPath, $"Icons");
         public static string AppHeliosPlusIconFilename = Path.Combine(AppIconPath, @"HeliosPlus.ico");
-        private static string _profileStorageJsonPath = Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileStorageJsonFileName = Path.Combine(_profileStorageJsonPath, $"DisplayProfiles_{Version.ToString(2)}.json");
+        private static string AppProfileStoragePath = Path.Combine(AppDataPath, $"Profiles");
+        private static string _profileStorageJsonFileName = Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{Version.ToString(2)}.json");
         private static uint _lastProfileId;
         private static ProfileItem _currentProfile;
         private static List<Display> _availableDisplays;
@@ -56,6 +56,12 @@ namespace HeliosPlus.Shared
             try
             {
                 NvAPIWrapper.NVIDIA.Initialize();
+
+                // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
+                if (!Directory.Exists(AppProfileStoragePath))
+                {
+                    Directory.CreateDirectory(AppProfileStoragePath);
+                }
             }
             catch (Exception ex)
             {
@@ -480,16 +486,16 @@ namespace HeliosPlus.Shared
         public static bool SaveProfiles()
         {
 
-            if (!Directory.Exists(_profileStorageJsonPath))
+            if (!Directory.Exists(AppProfileStoragePath))
             {
                 try
                 {
-                    Directory.CreateDirectory(_profileStorageJsonPath);
+                    Directory.CreateDirectory(AppProfileStoragePath);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"ProfileRepository/SaveProfiles exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    Console.WriteLine($"Unable to create Profile folder {_profileStorageJsonPath}: " + ex.Message);
+                    Console.WriteLine($"Unable to create Profile folder {AppProfileStoragePath}: " + ex.Message);
 
                 }
             }
@@ -524,7 +530,7 @@ namespace HeliosPlus.Shared
         {
 
             // Work out the name of the Profile we'll save.
-            profile.SavedProfileIconCacheFilename = Path.Combine(_profileStorageJsonPath, String.Concat(@"profile-", profile.UUID, @".ico"));
+            profile.SavedProfileIconCacheFilename = Path.Combine(AppProfileStoragePath, String.Concat(@"profile-", profile.UUID, @".ico"));
 
             MultiIcon ProfileIcon;
             try

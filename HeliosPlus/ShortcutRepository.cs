@@ -27,14 +27,32 @@ namespace HeliosPlus
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
         private static bool _shortcutsLoaded = false;
         // Other constants that are useful
-        private static string _shortcutStorageJsonPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutStorageJsonFileName = Path.Combine(_shortcutStorageJsonPath, $"Shortcuts_{Version.ToString(2)}.json");
+        private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
+        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_{Version.ToString(2)}.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         #endregion
 
         #region Class Constructors
         static ShortcutRepository()
         {
+
+            try
+            {
+                NvAPIWrapper.NVIDIA.Initialize();
+
+                // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
+                if (!Directory.Exists(AppShortcutStoragePath))
+                {
+                    Directory.CreateDirectory(AppShortcutStoragePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                // ignored
+            }
+
+
             // Load the Shortcuts from storage
             LoadShortcuts();
         }
@@ -340,17 +358,17 @@ namespace HeliosPlus
         private static bool SaveShortcuts()
         {
 
-            if (!Directory.Exists(_shortcutStorageJsonPath))
+            if (!Directory.Exists(AppShortcutStoragePath))
             {
                 try
                 {
-                    Directory.CreateDirectory(_shortcutStorageJsonPath);
+                    Directory.CreateDirectory(AppShortcutStoragePath);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"ShortcutRepository/SaveShortcuts exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
-                    Console.WriteLine($"Unable to create Shortcut folder {_shortcutStorageJsonPath}: " + ex.Message);
+                    Console.WriteLine($"Unable to create Shortcut folder {AppShortcutStoragePath}: " + ex.Message);
 
                 }
             }
@@ -392,7 +410,7 @@ namespace HeliosPlus
                 if (shortcut.Category == ShortcutCategory.Application)
                 {
                     // Work out the name of the shortcut we'll save.
-                    shortcut.SavedShortcutIconCacheFilename = Path.Combine(_shortcutStorageJsonPath, String.Concat(@"executable-", shortcut.ProfileToUse.UUID, "-", Path.GetFileNameWithoutExtension(shortcut.ExecutableNameAndPath), @".ico"));
+                    shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"executable-", shortcut.ProfileToUse.UUID, "-", Path.GetFileNameWithoutExtension(shortcut.ExecutableNameAndPath), @".ico"));
 
                 }
                 // Only add the rest of the options if the temporary switch radio button is set
@@ -404,13 +422,13 @@ namespace HeliosPlus
                     if (shortcut.GameLibrary == SupportedGameLibrary.Steam)
                     {
                         // Work out the name of the shortcut we'll save.
-                        shortcut.SavedShortcutIconCacheFilename = Path.Combine(_shortcutStorageJsonPath, String.Concat(@"steam-", shortcut.ProfileToUse.UUID, "-", shortcut.GameAppId.ToString(), @".ico"));
+                        shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"steam-", shortcut.ProfileToUse.UUID, "-", shortcut.GameAppId.ToString(), @".ico"));
 
                     }
                     else if (shortcut.GameLibrary == SupportedGameLibrary.Uplay)
                     {
                         // Work out the name of the shortcut we'll save.
-                        shortcut.SavedShortcutIconCacheFilename = Path.Combine(_shortcutStorageJsonPath, String.Concat(@"uplay-", shortcut.ProfileToUse.UUID, "-", shortcut.GameAppId.ToString(), @".ico"));
+                        shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"uplay-", shortcut.ProfileToUse.UUID, "-", shortcut.GameAppId.ToString(), @".ico"));
                     }
 
                 }
@@ -420,7 +438,7 @@ namespace HeliosPlus
             else
             {
                 // Work out the name of the shortcut we'll save.
-                shortcut.SavedShortcutIconCacheFilename = Path.Combine(_shortcutStorageJsonPath, String.Concat(@"permanent-", shortcut.ProfileToUse.UUID, @".ico"));
+                shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"permanent-", shortcut.ProfileToUse.UUID, @".ico"));
             }
 
             MultiIcon shortcutIcon;

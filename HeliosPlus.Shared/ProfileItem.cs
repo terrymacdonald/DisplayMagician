@@ -117,12 +117,12 @@ namespace HeliosPlus.Shared
             get
             {
                 if (String.IsNullOrWhiteSpace(_uuid))
-                    _uuid = Guid.NewGuid().ToString("B");
+                    _uuid = Guid.NewGuid().ToString("D");
                 return _uuid;
             }
             set
             {
-                string uuidV4Regex = @"\{[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}\}";
+                string uuidV4Regex = @"[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}";
                 Match match = Regex.Match(value, uuidV4Regex, RegexOptions.IgnoreCase);
                 if (match.Success)
                     _uuid = value;
@@ -137,8 +137,9 @@ namespace HeliosPlus.Shared
                 IEnumerable<Display> currentDisplays = WindowsDisplayAPI.Display.GetDisplays();
                 foreach (Display availableDisplay in currentDisplays)
                 {
+                    Console.WriteLine($"DsiplayName: {availableDisplay.DisplayName}");
                     if (availableDisplay.IsAvailable)
-                        Console.WriteLine("");
+                        Console.WriteLine($"");
                 }
 
                 // Find the list of TargetDisplays we currently have from the currentprofile
