@@ -16,6 +16,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using WindowsDisplayAPI;
 using System.Text.RegularExpressions;
+using HeliosPlus.Shared.DisplayIdentification;
 
 namespace HeliosPlus.Shared
 {
@@ -24,6 +25,7 @@ namespace HeliosPlus.Shared
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
+        private List<string> _profileDisplayIdentifiers = new List<string>();
         private static List<Display> _availableDisplays;
         private static List<UnAttachedDisplay> _unavailableDisplays;
 
@@ -98,7 +100,8 @@ namespace HeliosPlus.Shared
         {
             /*try
             {
-                NvAPIWrapper.NVIDIA.Initialize();
+                // Generate the DeviceIdentifiers ready to be used
+                ProfileDisplayIdentifiers = DisplayIdentifier.GetDisplayIdentification();
             }
             catch (Exception ex)
             {
@@ -134,7 +137,9 @@ namespace HeliosPlus.Shared
         {
             get
             {
-                IEnumerable<Display> currentDisplays = WindowsDisplayAPI.Display.GetDisplays();
+                //List<string> DisplayInfo = DisplayIdentifier.GetDisplayIdentification();
+
+                IEnumerable<Display> currentDisplays = Display.GetDisplays();
                 foreach (Display availableDisplay in currentDisplays)
                 {
                     Console.WriteLine($"DsiplayName: {availableDisplay.DisplayName}");
@@ -216,6 +221,23 @@ namespace HeliosPlus.Shared
 
         public string SavedProfileIconCacheFilename { get; set; }
 
+        public List<string>  ProfileDisplayIdentifiers
+        {
+            get
+            {
+                if (_profileDisplayIdentifiers.Count == 0)
+                {
+                    _profileDisplayIdentifiers = DisplayIdentifier.GetDisplayIdentification();
+                }
+                return _profileDisplayIdentifiers;
+            }
+            set
+            {
+                if (value is List<string>)
+                    _profileDisplayIdentifiers = value;
+            }
+        }
+
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap ProfileBitmap
         {
@@ -281,6 +303,19 @@ namespace HeliosPlus.Shared
                 return false;
         }
 
+        public bool IsValid()
+        {
+
+            if (Viewports != null &&
+                ProfileIcon is Bitmap &&
+                File.Exists(SavedProfileIconCacheFilename) &&
+                ProfileBitmap is Bitmap &&
+                ProfileTightestBitmap is Bitmap &&
+                ProfileDisplayIdentifiers.Count > 0)
+                return true;
+            else 
+                return false;
+        }
 
         public bool CopyTo(ProfileItem profile, bool overwriteId = true)
         {
@@ -297,7 +332,20 @@ namespace HeliosPlus.Shared
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
+            profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
             return true;
+        }
+
+        public bool PreSave()
+        {
+            // Prepare our profile data for saving
+            if (_profileDisplayIdentifiers.Count == 0)
+            {
+                _profileDisplayIdentifiers = DisplayIdentifier.GetDisplayIdentification();
+            }
+
+            // Return if it is valid and we should continue
+            return IsValid();
         }
 
 

@@ -24,6 +24,7 @@ using System.Resources;
 using System.Net.NetworkInformation;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
+using HeliosPlus.Shared.DisplayIdentification;
 
 namespace HeliosPlus.Shared
 {
@@ -121,43 +122,30 @@ namespace HeliosPlus.Shared
         #endregion
     
         #region Class Methods
-        public static bool AddProfile(ProfileItem Profile)
+        public static bool AddProfile(ProfileItem profile)
         {
-            if (!(Profile is ProfileItem))
+            if (!(profile is ProfileItem))
                 return false;
 
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
-            if (!ContainsProfile(Profile))
+            if (!ContainsProfile(profile))
             {
                 // Add the Profile to the list of Profiles
-                _allProfiles.Add(Profile);
-            }
+                _allProfiles.Add(profile);
 
-
-            /*            // Doublecheck if it already exists
-                        // Because then we just update the one that already exists
-                        if (ContainsProfile(Profile))
-                        {
-                            // We update the existing Profile with the data over
-                            ProfileItem ProfileToUpdate = GetProfile(Profile.UUID);
-                            Profile.CopyTo(ProfileToUpdate);
-                        }
-                        else
-                        {
-                            // Add the Profile to the list of Profiles
-                            _allProfiles.Add(Profile);
-                        }
-            */
-            //Doublecheck it's been added
-            if (ContainsProfile(Profile))
-            {
                 // Generate the Profile Icon ready to be used
-                SaveProfileIconToCache(Profile);
+                SaveProfileIconToCache(profile);
+
+                profile.PreSave();
 
                 // Save the Profiles JSON as it's different
                 SaveProfiles();
+            }
 
+            //Doublecheck it's been added
+            if (ContainsProfile(profile))
+            {
                 return true;
             }
             else
@@ -370,10 +358,11 @@ namespace HeliosPlus.Shared
                 Name = "Current Display Profile",
                 Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray(),
                 ProfileIcon = new ProfileIcon(_currentProfile),
-                ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256)
+                ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256),
+                ProfileDisplayIdentifiers = DisplayIdentifier.GetDisplayIdentification()
             };
 
-            if (ProfileRepository.ProfileCount > 0)
+            if (_profilesLoaded && _allProfiles.Count > 0)
             {
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
@@ -548,14 +537,14 @@ namespace HeliosPlus.Shared
             }
         }
 
-        public static void UpdateCurrentProfile()
+        /*public static void UpdateCurrentProfile()
         {
             _currentProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
                 Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
             };
-        }
+        }*/
 
         public static bool IsValidFilename(string testName)
         {

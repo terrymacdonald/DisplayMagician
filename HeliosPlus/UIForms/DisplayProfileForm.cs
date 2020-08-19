@@ -156,7 +156,8 @@ namespace HeliosPlus.UIForms
             // Load all the profiles to prepare things
             //_savedProfiles = ProfileRepository.AllProfiles;
             // Update the Current Profile
-            ProfileRepository.UpdateCurrentProfile();
+            //ProfileRepository.UpdateCurrentProfile();
+            ProfileRepository.GetActiveProfile();
             // Change to the current selected Profile
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
@@ -322,7 +323,8 @@ namespace HeliosPlus.UIForms
         private void btn_view_current_Click(object sender, EventArgs e)
         {
             // Reload the profiles in case we swapped to another program to change it
-            ProfileRepository.UpdateCurrentProfile();
+            //ProfileRepository.UpdateCurrentProfile();
+            ProfileRepository.GetActiveProfile();
             // Change to the current selected Profile
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
