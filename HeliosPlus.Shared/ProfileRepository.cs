@@ -359,7 +359,7 @@ namespace HeliosPlus.Shared
                 Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray(),
                 ProfileIcon = new ProfileIcon(_currentProfile),
                 ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256),
-                ProfileDisplayIdentifiers = DisplayIdentifier.GetDisplayIdentification()
+                ProfileDisplayIdentifiers = DisplayIdentifier.GetCurrentDisplayIdentification()
             };
 
             if (_profilesLoaded && _allProfiles.Count > 0)
