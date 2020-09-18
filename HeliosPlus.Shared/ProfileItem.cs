@@ -17,6 +17,7 @@ using System.Drawing.Imaging;
 using WindowsDisplayAPI;
 using System.Text.RegularExpressions;
 using HeliosPlus.Shared.DisplayIdentification;
+using NvAPIWrapper.Display;
 
 namespace HeliosPlus.Shared
 {
@@ -26,8 +27,8 @@ namespace HeliosPlus.Shared
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
-        private static List<Display> _availableDisplays;
-        private static List<UnAttachedDisplay> _unavailableDisplays;
+        private static List<WindowsDisplayAPI.Display> _availableDisplays;
+        private static List<WindowsDisplayAPI.UnAttachedDisplay> _unavailableDisplays;
 
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
 
@@ -258,10 +259,10 @@ namespace HeliosPlus.Shared
 */
 
                 Console.WriteLine($"### All Unavailable Displays ###");
-                List<UnAttachedDisplay> allDisconnectedDisplays = UnAttachedDisplay.GetUnAttachedDisplays().ToList();
-                foreach (UnAttachedDisplay unavailableDisplay in allDisconnectedDisplays)
+                List<WindowsDisplayAPI.UnAttachedDisplay> allDisconnectedDisplays = WindowsDisplayAPI.UnAttachedDisplay.GetUnAttachedDisplays().ToList();
+                foreach (WindowsDisplayAPI.UnAttachedDisplay unavailableDisplay in allDisconnectedDisplays)
                 {
-                    Console.WriteLine($"DevicePath: {unavailableDisplay.DeviceKey}");
+                    Console.WriteLine($"DevicePath: {unavailableDisplay.DevicePath}");
                     Console.WriteLine($"DeviceKey: {unavailableDisplay.DeviceKey}");
                     Console.WriteLine($"DeviceName: {unavailableDisplay.Adapter.DeviceName}");
                     Console.WriteLine($"DisplayFullName: {unavailableDisplay.DisplayFullName}");
@@ -273,10 +274,10 @@ namespace HeliosPlus.Shared
                 }
 
                 Console.WriteLine($"### All Available Displays ###");
-                List<Display> allWindowsConnectedDisplays = Display.GetDisplays().ToList();
-                foreach (Display availableDisplay in allWindowsConnectedDisplays)
+                List<WindowsDisplayAPI.Display> allWindowsConnectedDisplays = WindowsDisplayAPI.Display.GetDisplays().ToList();
+                foreach (WindowsDisplayAPI.Display availableDisplay in allWindowsConnectedDisplays)
                 {
-                    Console.WriteLine($"DevicePath: {availableDisplay.DeviceKey}");
+                    Console.WriteLine($"DevicePath: {availableDisplay.DevicePath}");
                     Console.WriteLine($"DeviceKey: {availableDisplay.DeviceKey}");
                     Console.WriteLine($"DeviceName: {availableDisplay.Adapter.DeviceName}");
                     Console.WriteLine($"DisplayFullName: {availableDisplay.DisplayFullName}");
@@ -289,8 +290,8 @@ namespace HeliosPlus.Shared
 
 
 
-                IEnumerable<Display> currentDisplays = Display.GetDisplays();
-                foreach (Display availableDisplay in currentDisplays)
+                IEnumerable<WindowsDisplayAPI.Display> currentDisplays = WindowsDisplayAPI.Display.GetDisplays();
+                foreach (WindowsDisplayAPI.Display availableDisplay in currentDisplays)
                 {
                     Console.WriteLine($"DsiplayName: {availableDisplay.DisplayName}");
                     if (availableDisplay.IsAvailable)
@@ -303,7 +304,7 @@ namespace HeliosPlus.Shared
 
                 foreach (ProfileViewport availableViewport in availableViewports)
                 {
-                    PathInfo pathInfo = availableViewport.ToPathInfo();
+                    WindowsDisplayAPI.DisplayConfig.PathInfo pathInfo = availableViewport.ToPathInfo();
                     //pathInfo.TargetsInfo;
                     foreach (ProfileViewportTargetDisplay realTD in availableViewport.TargetDisplays)
                     {
@@ -447,13 +448,13 @@ namespace HeliosPlus.Shared
 
         public string SavedProfileIconCacheFilename { get; set; }
 
-        public List<string>  ProfileDisplayIdentifiers
+        public List<string> ProfileDisplayIdentifiers
         {
             get
             {
                 if (_profileDisplayIdentifiers.Count == 0)
                 {
-                    _profileDisplayIdentifiers = DisplayIdentifier.GetCurrentDisplayIdentification();
+                    _profileDisplayIdentifiers = this.GenerateDisplayIdentifiers();
                 }
                 return _profileDisplayIdentifiers;
             }
@@ -543,6 +544,99 @@ namespace HeliosPlus.Shared
                 return false;
         }
 
+        public List<string> GenerateDisplayIdentifiers()
+        {
+            List<string> displayIdentifiers = new List<string>();
+
+            // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
+            NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
+            if (myLogicalGPUs.Length > 0)
+            {
+
+                foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
+                {
+                    NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = myLogicalGPU.CorrespondingPhysicalGPUs;
+                    foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
+                    {
+                        // get a list of all physical outputs attached to the GPUs
+                        NvAPIWrapper.GPU.GPUOutput[] myGPUOutputs = myPhysicalGPU.ActiveOutputs;
+                        foreach (NvAPIWrapper.GPU.GPUOutput aGPUOutput in myGPUOutputs)
+                        {
+                            // Figure out the displaydevice attached to the output
+                            NvAPIWrapper.Display.DisplayDevice aConnectedDisplayDevice = myPhysicalGPU.GetDisplayDeviceByOutput(aGPUOutput);
+
+                            // Create an array of all the important display info we need to record
+                            string[] displayInfo = {
+                                "NVIDIA",
+                                myLogicalGPU.ToString(),
+                                myPhysicalGPU.ToString(),
+                                myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
+                                myPhysicalGPU.ArchitectInformation.Revision.ToString(),
+                                myPhysicalGPU.Board.ToString(),
+                                myPhysicalGPU.Foundry.ToString(),
+                                myPhysicalGPU.GPUId.ToString(),
+                                myPhysicalGPU.GPUType.ToString(),
+                                aGPUOutput.OutputId.ToString(),
+                                aConnectedDisplayDevice.ConnectionType.ToString(),
+                                aConnectedDisplayDevice.DisplayId.ToString(),
+                            };
+
+                            // Create a display identifier out of it
+                            string displayIdentifier = String.Join("|", displayInfo);
+                            // Add it to the list of display identifiers so we can return it
+                            displayIdentifiers.Add(displayIdentifier);
+                        }
+
+                    }
+                }
+            }
+            // else videocard is not NVIdia so we just use the WindowsAPI access method
+            // Note: This won't support any special AMD EyeFinity profiles unfortunately.....
+            // TODO: Add the detection and generation of the device ids using an AMD library
+            //       so that we can match valid AMD Eyefinity profiles with valid AMD standard profiles.
+            else
+            {
+
+                // Then go through the displays in the profile and check they are made of displays
+                // that currently are available.
+                foreach (ProfileViewport profileViewport in Viewports)
+                {
+                    // For each profile, we want to make sure all TargetDisplays.DevicePath are in the list of 
+                    // availableDevicePaths
+                    //foreach (WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo in profileViewport.ToPathInfo().TargetsInfo)
+                    foreach (ProfileViewportTargetDisplay profileTargetDisplay in profileViewport.TargetDisplays)
+                    {
+
+
+                        WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo = profileTargetDisplay.ToPathTargetInfo();
+
+                        // Create an array of all the important display info we need to record
+                        string[] displayInfo = {
+                                "WINAPI",
+                                profileViewport.SourceId.ToString(),
+                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.HighPart.ToString(),
+                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.LowPart.ToString(),
+                                profilePathTargetInfo.OutputTechnology.ToString(),
+                                profilePathTargetInfo.DisplayTarget.EDIDManufactureCode.ToString(),
+                                profilePathTargetInfo.DisplayTarget.FriendlyName,
+                                profilePathTargetInfo.DisplayTarget.EDIDManufactureId.ToString(),
+                                profilePathTargetInfo.DisplayTarget.EDIDProductCode.ToString(),
+                                profilePathTargetInfo.DisplayTarget.ConnectorInstance.ToString(),
+                                profileTargetDisplay.DevicePath,
+                            };
+
+                        // Create a display identifier out of it
+                        string displayIdentifier = String.Join("|", displayInfo);
+                        // Add it to the list of display identifiers so we can return it
+                        displayIdentifiers.Add(displayIdentifier);
+                    }
+                }
+
+            }
+
+            return displayIdentifiers;
+        }
+
         public bool CopyTo(ProfileItem profile, bool overwriteId = true)
         {
             if (!(profile is ProfileItem))
@@ -567,7 +661,7 @@ namespace HeliosPlus.Shared
             // Prepare our profile data for saving
             if (_profileDisplayIdentifiers.Count == 0)
             {
-                _profileDisplayIdentifiers = DisplayIdentifier.GetCurrentDisplayIdentification();
+                _profileDisplayIdentifiers = GenerateDisplayIdentifiers();
             }
 
             // Return if it is valid and we should continue

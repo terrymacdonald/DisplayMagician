@@ -227,7 +227,7 @@ namespace HeliosPlus.Shared.DisplayIdentification
                 Console.WriteLine($"EDID-ProductYear:{edid.ProductYear}");
                 Console.WriteLine($"EDID-SerialNumber:{edid.SerialNumber}");
                 Console.WriteLine($"EDID-Timings:{edid.Timings}");
-                Console.WriteLine($"EDID-AdapterDeviceKey:{ConnectedDisplay.Adapter.DeviceName}");
+                Console.WriteLine($"EDID-AdapterDeviceKey:{ConnectedDisplay.Adapter.DeviceKey}");
                 Console.WriteLine($"EDID-AdapterDeviceName:{ConnectedDisplay.Adapter.DeviceName}");
                 Console.WriteLine($"EDID-AdapterDevicePath:{ConnectedDisplay.Adapter.DevicePath}");
                 Console.WriteLine($"EDID-{ConnectedDisplay.Adapter.DevicePath}-{edid.ManufacturerId}-{edid.ProductCode}-{edid.SerialNumber}");

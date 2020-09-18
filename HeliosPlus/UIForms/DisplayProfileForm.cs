@@ -157,9 +157,10 @@ namespace HeliosPlus.UIForms
             //_savedProfiles = ProfileRepository.AllProfiles;
             // Update the Current Profile
             //ProfileRepository.UpdateCurrentProfile();
-            ProfileRepository.GetActiveProfile();
+            //    ProfileRepository.GetActiveProfile();
             // Change to the current selected Profile
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
+
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
         }

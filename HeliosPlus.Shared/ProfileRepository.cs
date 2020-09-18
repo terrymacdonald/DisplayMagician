@@ -356,11 +356,11 @@ namespace HeliosPlus.Shared
             ProfileItem activeProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
-                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray(),
-                ProfileIcon = new ProfileIcon(_currentProfile),
-                ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256),
-                ProfileDisplayIdentifiers = DisplayIdentifier.GetCurrentDisplayIdentification()
+                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
             };
+
+            activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
+            activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
