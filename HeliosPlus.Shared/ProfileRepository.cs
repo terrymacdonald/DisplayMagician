@@ -44,8 +44,8 @@ namespace HeliosPlus.Shared
         private static string _profileStorageJsonFileName = Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{Version.ToString(2)}.json");
         private static uint _lastProfileId;
         private static ProfileItem _currentProfile;
-        private static List<Display> _availableDisplays;
-        private static List<UnAttachedDisplay> _unavailableDisplays;
+        //private static List<Display> _availableDisplays;
+        //private static List<UnAttachedDisplay> _unavailableDisplays;
 
         #endregion
 
@@ -401,6 +401,25 @@ namespace HeliosPlus.Shared
                 return true;
 
             return false;
+        }
+
+        public static bool IsPossibleProfile(ProfileItem profile)
+        {
+            if (!(_currentProfile is ProfileItem))
+                return false;
+
+            if (!(profile is ProfileItem))
+                return false;
+
+            // Check each display in this profile and make sure it's currently available
+            foreach (string profileDisplayIdentifier in profile.ProfileDisplayIdentifiers)
+            {
+                // If this profile has a display that isn't currently available then we need to say it's a no!
+                if (!_currentProfile.ProfileDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                    return false;
+            }
+
+            return true;
         }
 
         private static bool LoadProfiles()
