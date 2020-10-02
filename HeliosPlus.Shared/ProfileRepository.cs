@@ -576,7 +576,7 @@ namespace HeliosPlus.Shared
                 // Now lets start by changing the display topology
                 Task applyProfileTopologyTask = Task.Run(() =>
                 {
-                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
+                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology " + profile.Name);
                     ApplyTopology(profile);
                 });
                 applyProfileTopologyTask.Wait();
@@ -584,7 +584,7 @@ namespace HeliosPlus.Shared
                 // And then change the path information
                 Task applyProfilePathInfoTask = Task.Run(() =>
                 {
-                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
+                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Path " + profile.Name);
                     ApplyPathInfo(profile);
                 });
                 applyProfilePathInfoTask.Wait();
