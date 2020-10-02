@@ -479,11 +479,18 @@ namespace HeliosPlus
             // Remember the profile we are on now
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
 
+            // Tell the IPC Service we are busy right now, and keep the previous status for later
+            InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;
+            IPCService.GetInstance().Status = InstanceStatus.Busy;
+
             // Apply the Profile!
-            if (!ApplyProfile(shortcutToUse.ProfileToUse))
+            if (!ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse))
             {
                 throw new Exception(Language.Cannot_change_active_profile);
             }
+
+            // Set the IP Service status back to what it was
+            IPCService.GetInstance().Status = rollbackInstanceStatus;
 
             // Now run the pre-start applications
             // TODO: Add the prestart applications
@@ -687,110 +694,12 @@ namespace HeliosPlus
             // Change back to the original profile if it is different
             if (!ProfileRepository.IsActiveProfile(rollbackProfile))
             {
-                if (!ApplyProfile(rollbackProfile))
+                if (!ProfileRepository.ApplyProfile(rollbackProfile))
                 {
                     throw new Exception(Language.Cannot_change_active_profile);
                 }
             }
 
-        }
-
-        public static bool ApplyProfile(ProfileItem profile)
-        {
-            // If we're already on the wanted profile then no need to change!
-            if (ProfileRepository.IsActiveProfile(profile))
-                return true;
-
-            // We need to check if the profile is valid
-            if (!profile.IsPossible)
-                return false;
-
-            var instanceStatus = IPCService.GetInstance().Status;
-
-            try
-            {
-                IPCService.GetInstance().Status = InstanceStatus.Busy;
-                var failed = false;
-
-                // Now lets start by changing the display topology
-                Task applyProfileTopologyTask = Task.Run(() =>
-                {
-                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
-                    ApplyTopology(profile);
-                });
-                applyProfileTopologyTask.Wait();
-
-                // And then change the path information
-                Task applyProfilePathInfoTask = Task.Run(() =>
-                {
-                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
-                    ApplyPathInfo(profile);
-                });
-                applyProfilePathInfoTask.Wait();
-
-                return false;
-            }
-            finally
-            {
-                IPCService.GetInstance().Status = instanceStatus;
-            }
-        }
-
-        private static void ApplyTopology(ProfileItem profile)
-        {
-            Debug.Print("ShortcutRepository.ApplyTopology()");
-            if (profile == null)
-                return;
-
-            try
-            {
-                var surroundTopologies =
-                    profile.Viewports.SelectMany(viewport => viewport.TargetDisplays)
-                        .Select(target => target.SurroundTopology)
-                        .Where(topology => topology != null)
-                        .Select(topology => topology.ToGridTopology())
-                        .ToArray();
-
-                if (surroundTopologies.Length == 0)
-                {
-                    var currentTopologies = GridTopology.GetGridTopologies();
-
-                    if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
-                    {
-                        surroundTopologies =
-                            GridTopology.GetGridTopologies()
-                                .SelectMany(topology => topology.Displays)
-                                .Select(displays => new GridTopology(1, 1, new[] { displays }))
-                                .ToArray();
-                    }
-                }
-
-                if (surroundTopologies.Length > 0)
-                {
-                    GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                // ignored
-            }
-        }
-
-        private static void ApplyPathInfo(ProfileItem profile)
-        {
-            Debug.Print("ShortcutRepository.ApplyPathInfo()");
-            if (profile == null)
-                return;
-
-            if (!profile.IsPossible)
-            {
-                throw new InvalidOperationException(
-                    $"ShortcutRepository/ApplyPathInfo exception: Problem applying the '{profile.Name}' Display Profile! The display configuration changed since this profile is created. Please re-create this profile.");
-            }
-
-            var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
-            WindowsDisplayAPI.DisplayConfig.PathInfo.ApplyPathInfos(pathInfos, true, true, true);
         }
 
         #endregion

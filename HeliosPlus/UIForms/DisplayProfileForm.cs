@@ -46,7 +46,7 @@ namespace HeliosPlus.UIForms
             }
 
             // Apply the Profile
-            ShortcutRepository.ApplyProfile(_selectedProfile);
+            ProfileRepository.ApplyProfile(_selectedProfile);
 
         }
 

@@ -18,6 +18,8 @@ using System.Drawing.Imaging;
 using WindowsDisplayAPI;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Resources;
@@ -412,14 +414,18 @@ namespace HeliosPlus.Shared
                 return false;
 
             // Check each display in this profile and make sure it's currently available
+            int validDisplayCount = 0;
             foreach (string profileDisplayIdentifier in profile.ProfileDisplayIdentifiers)
             {
                 // If this profile has a display that isn't currently available then we need to say it's a no!
-                if (!_currentProfile.ProfileDisplayIdentifiers.Contains(profileDisplayIdentifier))
-                    return false;
+                if (_currentProfile.ProfileDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                    validDisplayCount++;
             }
 
-            return true;
+            if (validDisplayCount == profile.ProfileDisplayIdentifiers.Count)
+                return true;
+            else
+                return false;
         }
 
         private static bool LoadProfiles()
@@ -556,14 +562,99 @@ namespace HeliosPlus.Shared
             }
         }
 
-        /*public static void UpdateCurrentProfile()
+        public static bool ApplyProfile(ProfileItem profile)
         {
-            _currentProfile = new ProfileItem
+            // If we're already on the wanted profile then no need to change!
+            if (ProfileRepository.IsActiveProfile(profile))
+                return true;
+
+            // We need to check if the profile is valid
+            if (!profile.IsPossible)
+                return false;
+
+            try
             {
-                Name = "Current Display Profile",
-                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
-            };
-        }*/
+                // Now lets start by changing the display topology
+                Task applyProfileTopologyTask = Task.Run(() =>
+                {
+                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
+                    ApplyTopology(profile);
+                });
+                applyProfileTopologyTask.Wait();
+
+                // And then change the path information
+                Task applyProfilePathInfoTask = Task.Run(() =>
+                {
+                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology" + profile.Name);
+                    ApplyPathInfo(profile);
+                });
+                applyProfilePathInfoTask.Wait();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return false;
+            }
+        }
+
+        private static void ApplyTopology(ProfileItem profile)
+        {
+            Debug.Print("ShortcutRepository.ApplyTopology()");
+            if (profile == null)
+                return;
+
+            try
+            {
+                var surroundTopologies =
+                    profile.Viewports.SelectMany(viewport => viewport.TargetDisplays)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .ToArray();
+
+                if (surroundTopologies.Length == 0)
+                {
+                    var currentTopologies = GridTopology.GetGridTopologies();
+
+                    if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
+                    {
+                        surroundTopologies =
+                            GridTopology.GetGridTopologies()
+                                .SelectMany(topology => topology.Displays)
+                                .Select(displays => new GridTopology(1, 1, new[] { displays }))
+                                .ToArray();
+                    }
+                }
+
+                if (surroundTopologies.Length > 0)
+                {
+                    GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                // ignored
+            }
+        }
+
+        private static void ApplyPathInfo(ProfileItem profile)
+        {
+            Debug.Print("ShortcutRepository.ApplyPathInfo()");
+            if (profile == null)
+                return;
+
+            if (!profile.IsPossible)
+            {
+                throw new InvalidOperationException(
+                    $"ShortcutRepository/ApplyPathInfo exception: Problem applying the '{profile.Name}' Display Profile! The display configuration changed since this profile is created. Please re-create this profile.");
+            }
+
+            var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+            WindowsDisplayAPI.DisplayConfig.PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+        }
 
         public static bool IsValidFilename(string testName)
         {

@@ -140,14 +140,18 @@ namespace HeliosPlus.Shared
             {
 
                 // Check each display in this profile and make sure it's currently available
+                int validDisplayCount = 0;
                 foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
                 {
                     // If this profile has a display that isn't currently available then we need to say it's a no!
-                    if (!ProfileRepository.CurrentProfile.ProfileDisplayIdentifiers.Contains(profileDisplayIdentifier))
-                        return false;
+                    if (ProfileRepository.CurrentProfile.ProfileDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                        validDisplayCount++;
                 }
 
-                return true;
+                if (validDisplayCount == ProfileDisplayIdentifiers.Count)
+                    return true;
+                else
+                    return false;
 
             }
         }
