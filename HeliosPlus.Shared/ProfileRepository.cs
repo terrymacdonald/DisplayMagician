@@ -26,7 +26,6 @@ using System.Resources;
 using System.Net.NetworkInformation;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using HeliosPlus.Shared.DisplayIdentification;
 
 namespace HeliosPlus.Shared
 {

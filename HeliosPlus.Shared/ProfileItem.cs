@@ -16,7 +16,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using WindowsDisplayAPI;
 using System.Text.RegularExpressions;
-using HeliosPlus.Shared.DisplayIdentification;
 using NvAPIWrapper.Display;
 
 namespace HeliosPlus.Shared
