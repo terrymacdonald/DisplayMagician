@@ -46,7 +46,8 @@ namespace HeliosPlus.UIForms
             }
 
             // Apply the Profile
-            ProfileRepository.ApplyProfile(_selectedProfile);
+            //ProfileRepository.ApplyProfile(_selectedProfile);
+            Program.ApplyProfile(_selectedProfile);
 
         }
 

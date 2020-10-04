@@ -19,6 +19,7 @@ using HeliosPlus.UIForms;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Drawing;
+using System.Diagnostics.Contracts;
 
 namespace HeliosPlus {
     public enum SupportedProgramMode
@@ -329,14 +330,74 @@ namespace HeliosPlus {
             return true;
         }
 
-/*        public static string GetValidFilename(string uncheckedFilename)
+        /*        public static string GetValidFilename(string uncheckedFilename)
+                {
+                    string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+                    foreach (char c in invalid)
+                    {
+                        uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
+                    }
+                    return uncheckedFilename;
+                }*/
+
+        // ApplyProfile lives here so that the UI works.
+        public static bool ApplyProfile(ProfileItem profile)
         {
-            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-            foreach (char c in invalid)
+            // If we're already on the wanted profile then no need to change!
+            if (ProfileRepository.IsActiveProfile(profile))
+                return true;
+
+            // We need to check if the profile is valid
+            if (!profile.IsPossible)
+                return false;
+
+            try
             {
-                uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
+                // Set up the UI forms to show
+                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(3, 0, $"Applying Profile '{profile.Name}'", $"Press ESC to timeout"); 
+                ApplyingProfileForm topologyForm = new ApplyingProfileForm(0, 30, $"Applying Profile '{profile.Name}' Topology");
+                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(0, 30, $"Applying Profile '{profile.Name}' Path");
+
+                topologyForm.ShowDialog();
+                // Now lets start by changing the display topology
+                Task applyTopologyTask = Task.Run(() =>
+                {
+                    Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Topology " + profile.Name);
+                    ProfileRepository.ApplyTopology(profile);
+                });
+                applyTopologyTask.Wait();
+                topologyForm.Close();
+
+                if (applyTopologyTask.IsCompleted)
+                {
+                    pathInfoForm.ShowDialog();
+                    Task applyPathInfoTask = Task.Run(() => {
+                        Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Path " + profile.Name);
+                        ProfileRepository.ApplyPathInfo(profile);
+                    });
+
+                    applyPathInfoTask.Wait();
+                    pathInfoForm.Close();
+                    // And then change the path information
+                    if (applyPathInfoTask.IsCompleted)
+                        return true;
+
+
+                    return false;
+                }
+                else
+                {
+                    return false;
+                }
+
+
             }
-            return uncheckedFilename;
-        }*/
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return false;
+            }
+        }
+
     }
 }

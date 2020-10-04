@@ -312,9 +312,8 @@ namespace HeliosPlus.UIForms
             this.MinimumSize = new System.Drawing.Size(800, 400);
             this.Name = "DisplayProfileForm";
             this.ShowInTaskbar = false;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "HeliosPlus - Setup Display Profiles";
-            this.TopMost = true;
             this.Activated += new System.EventHandler(this.DisplayProfileForm_Activated);
             this.Load += new System.EventHandler(this.DisplayProfileForm_Load);
             this.menu_profiles.ResumeLayout(false);

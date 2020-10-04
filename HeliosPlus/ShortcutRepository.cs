@@ -484,7 +484,8 @@ namespace HeliosPlus
             IPCService.GetInstance().Status = InstanceStatus.Busy;
 
             // Apply the Profile!
-            if (!ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse))
+            //if (!ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse))
+            if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
             {
                 throw new Exception(Language.Cannot_change_active_profile);
             }
@@ -694,7 +695,8 @@ namespace HeliosPlus
             // Change back to the original profile if it is different
             if (!ProfileRepository.IsActiveProfile(rollbackProfile))
             {
-                if (!ProfileRepository.ApplyProfile(rollbackProfile))
+                //if (!ProfileRepository.ApplyProfile(rollbackProfile))
+                if (!Program.ApplyProfile(rollbackProfile))
                 {
                     throw new Exception(Language.Cannot_change_active_profile);
                 }

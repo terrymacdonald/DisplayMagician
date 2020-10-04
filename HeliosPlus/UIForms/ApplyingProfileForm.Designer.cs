@@ -1,9 +1,6 @@
-﻿using System.Windows.Forms;
-using HeliosPlus.Resources;
-
-namespace HeliosPlus.UIForms
+﻿namespace HeliosPlus.UIForms
 {
-    sealed partial class ApplyingChangesForm
+    partial class ApplyingProfileForm
     {
         /// <summary>
         /// Required designer variable.
@@ -32,13 +29,12 @@ namespace HeliosPlus.UIForms
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ApplyingChangesForm));
             this.progressPanel = new System.Windows.Forms.Panel();
             this.lbl_sub_message = new System.Windows.Forms.Label();
-            this.lbl_message = new System.Windows.Forms.Label();
             this.progressBar = new CircularProgressBar.CircularProgressBar();
-            this.t_cancellation = new System.Windows.Forms.Timer(this.components);
+            this.lbl_message = new System.Windows.Forms.Label();
             this.t_countdown = new System.Windows.Forms.Timer(this.components);
+            this.t_cancellation = new System.Windows.Forms.Timer(this.components);
             this.progressPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -46,32 +42,22 @@ namespace HeliosPlus.UIForms
             // 
             this.progressPanel.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.progressPanel.Controls.Add(this.lbl_sub_message);
-            this.progressPanel.Controls.Add(this.lbl_message);
             this.progressPanel.Controls.Add(this.progressBar);
-            this.progressPanel.Location = new System.Drawing.Point(12, 54);
+            this.progressPanel.Controls.Add(this.lbl_message);
+            this.progressPanel.Location = new System.Drawing.Point(77, 154);
             this.progressPanel.Name = "progressPanel";
             this.progressPanel.Size = new System.Drawing.Size(621, 270);
-            this.progressPanel.TabIndex = 0;
+            this.progressPanel.TabIndex = 1;
             // 
             // lbl_sub_message
             // 
             this.lbl_sub_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_sub_message.ForeColor = System.Drawing.Color.White;
-            this.lbl_sub_message.Location = new System.Drawing.Point(160, 85);
+            this.lbl_sub_message.Location = new System.Drawing.Point(159, 87);
             this.lbl_sub_message.Name = "lbl_sub_message";
             this.lbl_sub_message.Size = new System.Drawing.Size(300, 16);
             this.lbl_sub_message.TabIndex = 2;
             this.lbl_sub_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // lbl_message
-            // 
-            this.lbl_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 27.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(178)));
-            this.lbl_message.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.lbl_message.Location = new System.Drawing.Point(3, 27);
-            this.lbl_message.Name = "lbl_message";
-            this.lbl_message.Size = new System.Drawing.Size(615, 61);
-            this.lbl_message.TabIndex = 1;
-            this.lbl_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // progressBar
             // 
@@ -104,42 +90,48 @@ namespace HeliosPlus.UIForms
             this.progressBar.TextMargin = new System.Windows.Forms.Padding(2, 5, 0, 0);
             this.progressBar.Value = 68;
             // 
-            // t_start
+            // lbl_message
             // 
-            this.t_cancellation.Interval = 1000;
-            this.t_cancellation.Tick += new System.EventHandler(this.t_cancellation_Tick);
+            this.lbl_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 27.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(178)));
+            this.lbl_message.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.lbl_message.Location = new System.Drawing.Point(3, 0);
+            this.lbl_message.Name = "lbl_message";
+            this.lbl_message.Size = new System.Drawing.Size(615, 61);
+            this.lbl_message.TabIndex = 1;
+            this.lbl_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // t_countdown
             // 
             this.t_countdown.Interval = 1000;
             this.t_countdown.Tick += new System.EventHandler(this.t_countdown_Tick);
             // 
-            // ApplyingChangesForm
+            // t_cancellation
+            // 
+            this.t_cancellation.Interval = 1000;
+            this.t_cancellation.Tick += new System.EventHandler(this.t_cancellation_Tick);
+            // 
+            // ApplyingProfileForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
-            this.ClientSize = new System.Drawing.Size(645, 418);
-            this.ControlBox = false;
+            this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.progressPanel);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "ApplyingChangesForm";
+            this.Name = "ApplyingProfileForm";
             this.Opacity = 0D;
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "HeliosPlus - Please Wait";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SplashForm_FormClosing);
-            this.Load += new System.EventHandler(this.SplashForm_Reposition);
-            this.Shown += new System.EventHandler(this.SplashForm_Shown);
-            this.LocationChanged += new System.EventHandler(this.SplashForm_Reposition);
-            this.Leave += new System.EventHandler(this.SplashForm_Reposition);
-            this.Move += new System.EventHandler(this.SplashForm_Reposition);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ApplyingProfileForm_FormClosing);
+            this.Load += new System.EventHandler(this.ApplyingProfileForm_Reposition);
+            this.Shown += new System.EventHandler(this.ApplyingProfileForm_Shown);
+            this.LocationChanged += new System.EventHandler(this.ApplyingProfileForm_Reposition);
+            this.Leave += new System.EventHandler(this.ApplyingProfileForm_Reposition);
+            this.Move += new System.EventHandler(this.ApplyingProfileForm_Reposition);
             this.progressPanel.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -147,11 +139,11 @@ namespace HeliosPlus.UIForms
 
         #endregion
 
-        private Panel progressPanel;
+        private System.Windows.Forms.Panel progressPanel;
         private CircularProgressBar.CircularProgressBar progressBar;
+        private System.Windows.Forms.Label lbl_sub_message;
         private System.Windows.Forms.Label lbl_message;
-        private System.Windows.Forms.Timer t_cancellation;
         private System.Windows.Forms.Timer t_countdown;
-        private Label lbl_sub_message;
+        private System.Windows.Forms.Timer t_cancellation;
     }
 }

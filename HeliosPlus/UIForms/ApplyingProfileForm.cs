@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Diagnostics;
-using HeliosPlus.Resources;
 using WinFormAnimation;
 
 namespace HeliosPlus.UIForms
 {
-    public sealed partial class ApplyingChangesForm : Form
+    public partial class ApplyingProfileForm : Form
     {
-        private readonly Action _job;
         private readonly Bitmap _progressImage;
         private readonly List<Point> _progressPositions = new List<Point>();
         private int _countdownCounter;
@@ -19,9 +21,9 @@ namespace HeliosPlus.UIForms
         private int _displayChangeDelta;
         private int _lastCount;
         private bool _isClosing;
-        private int _startCounter;
+        private int _cancellationCounter;
 
-        public ApplyingChangesForm()
+        public ApplyingProfileForm()
         {
             InitializeComponent();
             _progressImage = new Bitmap(progressPanel.Width, progressPanel.Height);
@@ -32,25 +34,21 @@ namespace HeliosPlus.UIForms
             Reposition();
         }
 
-        public ApplyingChangesForm(Action job, int cancellationTimeout = 0, int countdown = 0) : this()
+        public ApplyingProfileForm(int cancellationTimeout = 0, int countdown = 0, string title = null, string message = null, int displayChangeMaxDelta = 5) : this()
         {
-            _job = job;
-            _startCounter = cancellationTimeout;
-            _countdownCounter = countdown; _lastCount = _countdownCounter;
-        }
-
-        public ApplyingChangesForm(Action job, int cancellationTimeout = 0, int countdown = 0, int displayChangeMaxDelta = 5, string state = null) : this(job, cancellationTimeout, countdown)
-        {
+            _cancellationCounter = cancellationTimeout;
+            _countdownCounter = countdown; 
+            _lastCount = _countdownCounter;
             _displayChangeMaxDelta = displayChangeMaxDelta;
-            if (!string.IsNullOrEmpty(state)) CountdownMessage = state;
+            if (!string.IsNullOrEmpty(title)) CountdownTitle = title;
+            if (!string.IsNullOrEmpty(message)) CountdownMessage = message;
         }
 
-        public string CancellationMessage { get; set; } = Language.Starting_in;
-        public string CancellationSubMessage { get; set; } = Language.Press_ESC_to_cancel;
+        public string CancellationTitle { get; set; } = "Starting in ...";
+        public string CancellationMessage { get; set; } = "Please press ESC to cancel";
 
-        public string CountdownMessage { get; set; } = Language.Please_wait;
-        public string CountdownSubMessage { get; set; } = Language.It_wont_be_long_now;
-
+        public string CountdownTitle { get; set; } = "Please wait...";
+        public string CountdownMessage { get; set; } = "It won't be long now!";
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
@@ -104,17 +102,15 @@ namespace HeliosPlus.UIForms
             }
         }
 
-        private void DoJob()
+        private void DoCountdown()
         {
-            lbl_message.Text = CountdownMessage;
-            lbl_sub_message.Text = CountdownSubMessage;
-            progressBar.ProgressColor = Color.OrangeRed;
-
             if (_countdownCounter > 0)
             {
+                lbl_message.Text = CountdownTitle;
+                lbl_sub_message.Text = CountdownMessage;
+                progressBar.ProgressColor = Color.OrangeRed;
                 progressBar.Text = (progressBar.Value = progressBar.Maximum = _countdownCounter).ToString();
                 t_countdown.Start();
-                _job?.Invoke();
             }
             else
             {
@@ -123,7 +119,6 @@ namespace HeliosPlus.UIForms
                 progressBar.Maximum = 100;
                 progressBar.Value = 50;
                 progressBar.Style = ProgressBarStyle.Marquee;
-                _job?.Invoke();
                 DialogResult = DialogResult.OK;
                 Close();
             }
@@ -131,20 +126,19 @@ namespace HeliosPlus.UIForms
             HandleDisplayChangeDelta();
         }
 
-        private void DoTimeout()
+        private void DoCancellationTimeout()
         {
-
-            if (_startCounter > 0)
+            if (_cancellationCounter > 0)
             {
-                lbl_message.Text = CancellationMessage;
-                lbl_sub_message.Text = CancellationSubMessage;
+                lbl_message.Text = CancellationTitle;
+                lbl_sub_message.Text = CancellationMessage;
                 progressBar.ProgressColor = Color.DodgerBlue;
-                progressBar.Text = (progressBar.Value = progressBar.Maximum = _startCounter).ToString();
+                progressBar.Text = (progressBar.Value = progressBar.Maximum = _cancellationCounter).ToString();
                 t_cancellation.Start();
             }
             else
             {
-                DoJob();
+                DoCountdown();
             }
             HandleDisplayChangeDelta();
         }
@@ -158,7 +152,7 @@ namespace HeliosPlus.UIForms
                 Size = screens.Select(screen => screen.Bounds)
                                             .Aggregate(Rectangle.Union)
                                             .Size;
-                
+
                 _progressPositions.Clear();
                 _progressPositions.AddRange(
                     screens.Select(
@@ -171,7 +165,7 @@ namespace HeliosPlus.UIForms
             Invalidate();
         }
 
-        private void SplashForm_FormClosing(object sender, FormClosingEventArgs e)
+        private void ApplyingProfileForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (_isClosing)
             {
@@ -181,7 +175,7 @@ namespace HeliosPlus.UIForms
             _isClosing = true;
             e.Cancel = true;
             var dialogResult = DialogResult;
-            new Animator(new Path((float) Opacity, 0, 200))
+            new Animator(new Path((float)Opacity, 0, 200))
                 .Play(new SafeInvoker<float>(f =>
                 {
                     try
@@ -190,7 +184,7 @@ namespace HeliosPlus.UIForms
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ApplyingChangesForm/SplashForm_FormClosing exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        Console.WriteLine($"ApplyingProfileForm/ApplyingProfileForm_FormClosing exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }
                 }, this), new SafeInvoker(() =>
@@ -200,14 +194,14 @@ namespace HeliosPlus.UIForms
                 }, this));
         }
 
-        private void SplashForm_Reposition(object sender, EventArgs e)
+        private void ApplyingProfileForm_Reposition(object sender, EventArgs e)
         {
             Reposition();
         }
 
-        private void SplashForm_Shown(object sender, EventArgs e)
+        private void ApplyingProfileForm_Shown(object sender, EventArgs e)
         {
-            new Animator(new Path((float) Opacity, 0.97f, 200))
+            new Animator(new Path((float)Opacity, 0.97f, 200))
                 .Play(new SafeInvoker<float>(f =>
                 {
                     try
@@ -216,10 +210,10 @@ namespace HeliosPlus.UIForms
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ApplyingChangesForm/SplashForm_Shown exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        Console.WriteLine($"ApplyingProfileForm/ApplyingProfileForm_Shown exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }
-                }, this), new SafeInvoker(DoTimeout, this));
+                }, this), new SafeInvoker(DoCancellationTimeout, this));
         }
 
         private void t_countdown_Tick(object sender, EventArgs e)
@@ -243,17 +237,17 @@ namespace HeliosPlus.UIForms
 
         private void t_cancellation_Tick(object sender, EventArgs e)
         {
-            if (_startCounter < 0)
+            if (_cancellationCounter < 0)
             {
                 t_cancellation.Stop();
-                DoJob();
+                DoCountdown();
 
                 return;
             }
 
-            progressBar.Value = _startCounter;
+            progressBar.Value = _cancellationCounter;
             progressBar.Text = progressBar.Value.ToString();
-            _startCounter--;
+            _cancellationCounter--;
             Reposition();
         }
 
@@ -303,3 +297,4 @@ namespace HeliosPlus.UIForms
 
     }
 }
+

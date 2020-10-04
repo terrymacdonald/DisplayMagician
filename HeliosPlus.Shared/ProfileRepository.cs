@@ -576,7 +576,7 @@ namespace HeliosPlus.Shared
                 // Now lets start by changing the display topology
                 Task applyProfileTopologyTask = Task.Run(() =>
                 {
-                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Topology " + profile.Name);
+                    Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Topology " + profile.Name);
                     ApplyTopology(profile);
                 });
                 applyProfileTopologyTask.Wait();
@@ -584,7 +584,7 @@ namespace HeliosPlus.Shared
                 // And then change the path information
                 Task applyProfilePathInfoTask = Task.Run(() =>
                 {
-                    Console.WriteLine("ShortcutRepository/SaveShortcutIconToCache : Applying Profile Path " + profile.Name);
+                    Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Path " + profile.Name);
                     ApplyPathInfo(profile);
                 });
                 applyProfilePathInfoTask.Wait();
@@ -593,16 +593,17 @@ namespace HeliosPlus.Shared
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return false;
             }
         }
 
-        private static void ApplyTopology(ProfileItem profile)
+        public static bool ApplyTopology(ProfileItem profile)
         {
-            Debug.Print("ShortcutRepository.ApplyTopology()");
-            if (profile == null)
-                return;
+            Debug.Print("ProfileRepository.ApplyTopology()");
+
+            if (!(profile is ProfileItem))
+                return false;
 
             try
             {
@@ -615,6 +616,7 @@ namespace HeliosPlus.Shared
 
                 if (surroundTopologies.Length == 0)
                 {
+                    // This profile does not use NVIDIA Surround
                     var currentTopologies = GridTopology.GetGridTopologies();
 
                     if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
@@ -625,34 +627,39 @@ namespace HeliosPlus.Shared
                                 .Select(displays => new GridTopology(1, 1, new[] { displays }))
                                 .ToArray();
                     }
-                }
-
-                if (surroundTopologies.Length > 0)
+                } else if (surroundTopologies.Length > 0)
                 {
+                    // This profile is an NVIDIA Surround profile 
                     GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                // ignored
+                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return false;
             }
         }
 
-        private static void ApplyPathInfo(ProfileItem profile)
+        public static bool ApplyPathInfo(ProfileItem profile)
         {
-            Debug.Print("ShortcutRepository.ApplyPathInfo()");
-            if (profile == null)
-                return;
+            Debug.Print("ProfileRepository.ApplyPathInfo()");
+            if (!(profile is ProfileItem))
+                return false;
 
-            if (!profile.IsPossible)
+            try
             {
-                throw new InvalidOperationException(
-                    $"ShortcutRepository/ApplyPathInfo exception: Problem applying the '{profile.Name}' Display Profile! The display configuration changed since this profile is created. Please re-create this profile.");
+                var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+                WindowsDisplayAPI.DisplayConfig.PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ProfileRepository/ApplyPathInfo exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return false;
             }
 
-            var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
-            WindowsDisplayAPI.DisplayConfig.PathInfo.ApplyPathInfos(pathInfos, true, true, true);
         }
 
         public static bool IsValidFilename(string testName)
