@@ -34,7 +34,6 @@
             this.progressBar = new CircularProgressBar.CircularProgressBar();
             this.lbl_message = new System.Windows.Forms.Label();
             this.t_countdown = new System.Windows.Forms.Timer(this.components);
-            this.t_cancellation = new System.Windows.Forms.Timer(this.components);
             this.progressPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -105,11 +104,6 @@
             this.t_countdown.Interval = 1000;
             this.t_countdown.Tick += new System.EventHandler(this.t_countdown_Tick);
             // 
-            // t_cancellation
-            // 
-            this.t_cancellation.Interval = 1000;
-            this.t_cancellation.Tick += new System.EventHandler(this.t_cancellation_Tick);
-            // 
             // ApplyingProfileForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -144,6 +138,5 @@
         private System.Windows.Forms.Label lbl_sub_message;
         private System.Windows.Forms.Label lbl_message;
         private System.Windows.Forms.Timer t_countdown;
-        private System.Windows.Forms.Timer t_cancellation;
     }
 }

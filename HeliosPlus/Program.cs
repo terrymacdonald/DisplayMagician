@@ -353,22 +353,53 @@ namespace HeliosPlus {
 
             try
             {
-                // Set up the UI forms to show
-                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(3, 0, $"Applying Profile '{profile.Name}'", $"Press ESC to timeout"); 
-                ApplyingProfileForm topologyForm = new ApplyingProfileForm(0, 30, $"Applying Profile '{profile.Name}' Topology");
-                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(0, 30, $"Applying Profile '{profile.Name}' Path");
-
-                topologyForm.ShowDialog();
-                // Now lets start by changing the display topology
-                Task applyTopologyTask = Task.Run(() =>
+                // Now lets prepare changing the display topology task
+                Task applyTopologyTask = new Task(() =>
                 {
-                    Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Topology " + profile.Name);
-                    ProfileRepository.ApplyTopology(profile);
+                    Console.WriteLine("Program/ApplyProfile : Applying Profile Topology " + profile.Name);
+                    if (!ProfileRepository.ApplyTopology(profile))
+                    {
+                        // Somehow return that this profile topology didn't apply
+                    }
                 });
-                applyTopologyTask.Wait();
-                topologyForm.Close();
 
-                if (applyTopologyTask.IsCompleted)
+                Task applyPathInfoTask = new Task(() => {
+                    Console.WriteLine("Program/ApplyProfile  : Applying Profile Path " + profile.Name);
+                    if (!ProfileRepository.ApplyPathInfo(profile))
+                    {
+                        // Somehow return that this profile path info didn't apply
+                    }
+
+                });
+
+                // Set up the UI forms to show
+                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Applying Profile '{profile.Name}'", "Press ESC to cancel!", Color.Blue, true); 
+                ApplyingProfileForm topologyForm = new ApplyingProfileForm(applyTopologyTask, 30, $"Applying Profile '{profile.Name}' Topology", "Step one of two...", Color.Red);
+                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(applyPathInfoTask, 30, $"Applying Profile '{profile.Name}' Path", "Step two of two...", Color.Green);
+
+                if (timeoutForm.ShowDialog() == DialogResult.Cancel)
+                {
+                    return false;
+                }
+
+                topologyForm.ShowDialog(); 
+                applyTopologyTask.Wait();
+
+                if (applyTopologyTask.IsFaulted)
+                    Console.WriteLine("Program/ApplyProfile : Applying Profile Topology stage failed to complete");
+
+                pathInfoForm.ShowDialog();
+                applyPathInfoTask.Wait();
+
+                if (applyPathInfoTask.IsFaulted)
+                    Console.WriteLine("Program/ApplyProfile : Applying Profile PathInfo stage failed to complete");
+
+                if (applyTopologyTask.IsCompleted && applyPathInfoTask.IsCompleted)
+                    return true;
+                else
+                    return false;
+
+/*                if (applyTopologyTask.IsCompleted)
                 {
                     pathInfoForm.ShowDialog();
                     Task applyPathInfoTask = Task.Run(() => {
@@ -389,7 +420,7 @@ namespace HeliosPlus {
                 {
                     return false;
                 }
-
+            */
 
             }
             catch (Exception ex)
