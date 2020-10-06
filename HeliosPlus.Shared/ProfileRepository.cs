@@ -562,41 +562,272 @@ namespace HeliosPlus.Shared
             }
         }
 
-        public static bool ApplyProfile(ProfileItem profile)
+        public static List<string> GenerateProfileDisplayIdentifiers()
         {
-            // If we're already on the wanted profile then no need to change!
-            if (ProfileRepository.IsActiveProfile(profile))
-                return true;
+            List<string> displayIdentifiers = new List<string>();
 
-            // We need to check if the profile is valid
-            if (!profile.IsPossible)
-                return false;
-
-            try
+            // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
+            NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
+            if (myLogicalGPUs.Length > 0)
             {
-                // Now lets start by changing the display topology
-                Task applyProfileTopologyTask = Task.Run(() =>
-                {
-                    Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Topology " + profile.Name);
-                    ApplyTopology(profile);
-                });
-                applyProfileTopologyTask.Wait();
 
-                // And then change the path information
-                Task applyProfilePathInfoTask = Task.Run(() =>
+                foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
                 {
-                    Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Path " + profile.Name);
-                    ApplyPathInfo(profile);
-                });
-                applyProfilePathInfoTask.Wait();
+                    NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = myLogicalGPU.CorrespondingPhysicalGPUs;
+                    foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
+                    {
+                        // get a list of all physical outputs attached to the GPUs
+                        NvAPIWrapper.GPU.GPUOutput[] myGPUOutputs = myPhysicalGPU.ActiveOutputs;
+                        foreach (NvAPIWrapper.GPU.GPUOutput aGPUOutput in myGPUOutputs)
+                        {
+                            // Figure out the displaydevice attached to the output
+                            NvAPIWrapper.Display.DisplayDevice aConnectedDisplayDevice = myPhysicalGPU.GetDisplayDeviceByOutput(aGPUOutput);
 
-                return true;
+                            // Create an array of all the important display info we need to record
+                            string[] displayInfo = {
+                                "NVIDIA",
+                                myLogicalGPU.ToString(),
+                                myPhysicalGPU.ToString(),
+                                myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
+                                myPhysicalGPU.ArchitectInformation.Revision.ToString(),
+                                myPhysicalGPU.Board.ToString(),
+                                myPhysicalGPU.Foundry.ToString(),
+                                myPhysicalGPU.GPUId.ToString(),
+                                myPhysicalGPU.GPUType.ToString(),
+                                aGPUOutput.OutputId.ToString(),
+                                aConnectedDisplayDevice.ConnectionType.ToString(),
+                                aConnectedDisplayDevice.DisplayId.ToString()
+                            };
+
+                            // Create a display identifier out of it
+                            string displayIdentifier = String.Join("|", displayInfo);
+                            // Add it to the list of display identifiers so we can return it
+                            displayIdentifiers.Add(displayIdentifier);
+                        }
+
+                    }
+                }
             }
-            catch (Exception ex)
+            // else videocard is not NVIdia so we just use the WindowsAPI access method
+            // Note: This won't support any special AMD EyeFinity profiles unfortunately.....
+            // TODO: Add the detection and generation of the device ids using an AMD library
+            //       so that we can match valid AMD Eyefinity profiles with valid AMD standard profiles.
+            else
             {
-                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                return false;
+
+                // Then go through the adapters we have running using the WindowsDisplayAPI
+                List<DisplayAdapter> allDisplayAdapters = DisplayAdapter.GetDisplayAdapters().ToList();
+                foreach (DisplayAdapter displayAdapter in allDisplayAdapters)
+                {
+                    Console.WriteLine($"DP : {displayAdapter.DevicePath}");
+                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    Console.WriteLine($"DN : {displayAdapter.DeviceName}");
+                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
+                    Console.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
+                    Console.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
+                    Console.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
+                    List<DisplayDevice> displayDevices = displayAdapter.GetDisplayDevices().ToList();
+                    foreach (DisplayDevice displayDevice in displayDevices)
+                    {
+                        Console.WriteLine($"DDA : {displayDevice.Adapter}");
+                        Console.WriteLine($"DDDK : {displayDevice.DeviceKey}");
+                        Console.WriteLine($"DDDN : {displayDevice.DeviceName}");
+                        Console.WriteLine($"DDDP : {displayDevice.DevicePath}");
+                        Console.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
+                        Console.WriteLine($"DDDiN : {displayDevice.DisplayName}");
+                        Console.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
+                        Console.WriteLine($"DDDiIV : {displayDevice.IsValid}");
+                        PathDisplaySource pathDisplaySource = displayDevice.ToPathDisplaySource();
+                        Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
+                        Console.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
+                        Console.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
+                        Console.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
+                        Console.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
+                        Console.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
+                        PathDisplayTarget pathDisplayTarget = displayDevice.ToPathDisplayTarget();
+                        Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
+                        //Console.WriteLine($"PDTBP : {pathDisplayTarget.BootPersistence}");
+                        Console.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
+                        Console.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
+                        Console.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
+                        Console.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
+                        Console.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
+                        Console.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
+                        Console.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
+                        Console.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
+                        Console.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
+                        Console.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
+                        Console.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
+                    }
+
+                    // For each profile, we want to make sure all TargetDisplays.DevicePath are in the list of 
+                    // availableDevicePaths
+                    //foreach (WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo in profileViewport.ToPathInfo().TargetsInfo)
+                   /* foreach (ProfileViewportTargetDisplay profileTargetDisplay in profileViewport.TargetDisplays)
+                    {
+
+
+                        WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo = profileTargetDisplay.ToPathTargetInfo();
+
+                        // Create an array of all the important display info we need to record
+                        string[] displayInfo = {
+                                "WINAPI",
+                                profileViewport.SourceId.ToString(),
+                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.HighPart.ToString(),
+                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.LowPart.ToString(),
+                                profilePathTargetInfo.OutputTechnology.ToString(),
+                                profilePathTargetInfo.DisplayTarget.EDIDManufactureCode.ToString(),
+                                profilePathTargetInfo.DisplayTarget.FriendlyName,
+                                profilePathTargetInfo.DisplayTarget.EDIDManufactureId.ToString(),
+                                profilePathTargetInfo.DisplayTarget.EDIDProductCode.ToString(),
+                                profilePathTargetInfo.DisplayTarget.ConnectorInstance.ToString(),
+                                profileTargetDisplay.DevicePath,
+                            };
+
+                        // Create a display identifier out of it
+                        string displayIdentifier = String.Join("|", displayInfo);
+                        // Add it to the list of display identifiers so we can return it
+                        displayIdentifiers.Add(displayIdentifier);
+                    }*/
+                }
+
             }
+
+            return displayIdentifiers;
+        }
+
+        public static List<string> GenerateAllDisplayIdentifiers()
+        {
+            List<string> displayIdentifiers = new List<string>();
+
+            // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
+            NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
+            if (myLogicalGPUs.Length > 0)
+            {
+
+                foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
+                {
+                    NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = myLogicalGPU.CorrespondingPhysicalGPUs;
+                    foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
+                    {
+                        // get a list of all physical outputs attached to the GPUs
+                        NvAPIWrapper.Display.DisplayDevice[] allDisplayDevices = myPhysicalGPU.GetDisplayDevices();
+                        foreach (NvAPIWrapper.Display.DisplayDevice aDisplayDevice in allDisplayDevices)
+                        {
+
+                            // Create an array of all the important display info we need to record
+                            string[] displayInfo = {
+                                "NVIDIA",
+                                myLogicalGPU.ToString(),
+                                myPhysicalGPU.ToString(),
+                                myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
+                                myPhysicalGPU.ArchitectInformation.Revision.ToString(),
+                                myPhysicalGPU.Board.ToString(),
+                                myPhysicalGPU.Foundry.ToString(),
+                                myPhysicalGPU.GPUId.ToString(),
+                                myPhysicalGPU.GPUType.ToString(),
+                                aDisplayDevice.Output.OutputId.ToString(),
+                                aDisplayDevice.ConnectionType.ToString(),
+                                aDisplayDevice.DisplayId.ToString(),
+                            };
+
+                            // Create a display identifier out of it
+                            string displayIdentifier = String.Join("|", displayInfo);
+                            // Add it to the list of display identifiers so we can return it
+                            displayIdentifiers.Add(displayIdentifier);
+                        }
+
+                    }
+                }
+            }
+            // else videocard is not NVIdia so we just use the WindowsAPI access method
+            // Note: This won't support any special AMD EyeFinity profiles unfortunately.....
+            // TODO: Add the detection and generation of the device ids using an AMD library
+            //       so that we can match valid AMD Eyefinity profiles with valid AMD standard profiles.
+            else
+            {
+
+                // Then go through the adapters we have running using the WindowsDisplayAPI
+                List<DisplayAdapter> allDisplayAdapters = DisplayAdapter.GetDisplayAdapters().ToList();
+                foreach (DisplayAdapter displayAdapter in allDisplayAdapters)
+                {
+                    Console.WriteLine($"DP : {displayAdapter.DevicePath}");
+                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    Console.WriteLine($"DN : {displayAdapter.DeviceName}");
+                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
+                    Console.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
+                    Console.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
+                    Console.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
+                    List<DisplayDevice> displayDevices = displayAdapter.GetDisplayDevices().ToList();
+                    foreach (DisplayDevice displayDevice in displayDevices)
+                    {
+                        Console.WriteLine($"DDA : {displayDevice.Adapter}");
+                        Console.WriteLine($"DDDK : {displayDevice.DeviceKey}");
+                        Console.WriteLine($"DDDN : {displayDevice.DeviceName}");
+                        Console.WriteLine($"DDDP : {displayDevice.DevicePath}");
+                        Console.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
+                        Console.WriteLine($"DDDiN : {displayDevice.DisplayName}");
+                        Console.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
+                        Console.WriteLine($"DDDiIV : {displayDevice.IsValid}");
+                        PathDisplaySource pathDisplaySource = displayDevice.ToPathDisplaySource();
+                        Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
+                        Console.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
+                        Console.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
+                        Console.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
+                        Console.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
+                        Console.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
+                        PathDisplayTarget pathDisplayTarget = displayDevice.ToPathDisplayTarget();
+                        Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
+                        //Console.WriteLine($"PDTBP : {pathDisplayTarget.BootPersistence}");
+                        Console.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
+                        Console.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
+                        Console.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
+                        Console.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
+                        Console.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
+                        Console.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
+                        Console.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
+                        Console.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
+                        Console.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
+                        Console.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
+                        Console.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
+                    }
+
+                    // For each profile, we want to make sure all TargetDisplays.DevicePath are in the list of 
+                    // availableDevicePaths
+                    //foreach (WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo in profileViewport.ToPathInfo().TargetsInfo)
+                    /* foreach (ProfileViewportTargetDisplay profileTargetDisplay in profileViewport.TargetDisplays)
+                     {
+
+
+                         WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo = profileTargetDisplay.ToPathTargetInfo();
+
+                         // Create an array of all the important display info we need to record
+                         string[] displayInfo = {
+                                 "WINAPI",
+                                 profileViewport.SourceId.ToString(),
+                                 profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.HighPart.ToString(),
+                                 profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.LowPart.ToString(),
+                                 profilePathTargetInfo.OutputTechnology.ToString(),
+                                 profilePathTargetInfo.DisplayTarget.EDIDManufactureCode.ToString(),
+                                 profilePathTargetInfo.DisplayTarget.FriendlyName,
+                                 profilePathTargetInfo.DisplayTarget.EDIDManufactureId.ToString(),
+                                 profilePathTargetInfo.DisplayTarget.EDIDProductCode.ToString(),
+                                 profilePathTargetInfo.DisplayTarget.ConnectorInstance.ToString(),
+                                 profileTargetDisplay.DevicePath,
+                             };
+
+                         // Create a display identifier out of it
+                         string displayIdentifier = String.Join("|", displayInfo);
+                         // Add it to the list of display identifiers so we can return it
+                         displayIdentifiers.Add(displayIdentifier);
+                     }*/
+                }
+
+            }
+
+            return displayIdentifiers;
         }
 
         public static bool ApplyTopology(ProfileItem profile)
@@ -701,3 +932,4 @@ namespace HeliosPlus.Shared
 
 
 }
+

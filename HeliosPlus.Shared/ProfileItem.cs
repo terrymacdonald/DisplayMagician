@@ -138,12 +138,15 @@ namespace HeliosPlus.Shared
             get
             {
 
+                // Get the list of connected devices
+                List<string> connectedDisplayIdentifiers = ProfileRepository.GenerateAllDisplayIdentifiers();
+
                 // Check each display in this profile and make sure it's currently available
                 int validDisplayCount = 0;
                 foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
                 {
                     // If this profile has a display that isn't currently available then we need to say it's a no!
-                    if (ProfileRepository.CurrentProfile.ProfileDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                    if (connectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
                         validDisplayCount++;
                 }
 
@@ -187,7 +190,7 @@ namespace HeliosPlus.Shared
             {
                 if (_profileDisplayIdentifiers.Count == 0)
                 {
-                    _profileDisplayIdentifiers = this.GenerateDisplayIdentifiers();
+                    _profileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers();
                 }
                 return _profileDisplayIdentifiers;
             }
@@ -277,98 +280,7 @@ namespace HeliosPlus.Shared
                 return false;
         }
 
-        public List<string> GenerateDisplayIdentifiers()
-        {
-            List<string> displayIdentifiers = new List<string>();
-
-            // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
-            NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
-            if (myLogicalGPUs.Length > 0)
-            {
-
-                foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
-                {
-                    NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = myLogicalGPU.CorrespondingPhysicalGPUs;
-                    foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
-                    {
-                        // get a list of all physical outputs attached to the GPUs
-                        NvAPIWrapper.GPU.GPUOutput[] myGPUOutputs = myPhysicalGPU.ActiveOutputs;
-                        foreach (NvAPIWrapper.GPU.GPUOutput aGPUOutput in myGPUOutputs)
-                        {
-                            // Figure out the displaydevice attached to the output
-                            NvAPIWrapper.Display.DisplayDevice aConnectedDisplayDevice = myPhysicalGPU.GetDisplayDeviceByOutput(aGPUOutput);
-
-                            // Create an array of all the important display info we need to record
-                            string[] displayInfo = {
-                                "NVIDIA",
-                                myLogicalGPU.ToString(),
-                                myPhysicalGPU.ToString(),
-                                myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
-                                myPhysicalGPU.ArchitectInformation.Revision.ToString(),
-                                myPhysicalGPU.Board.ToString(),
-                                myPhysicalGPU.Foundry.ToString(),
-                                myPhysicalGPU.GPUId.ToString(),
-                                myPhysicalGPU.GPUType.ToString(),
-                                aGPUOutput.OutputId.ToString(),
-                                aConnectedDisplayDevice.ConnectionType.ToString(),
-                                aConnectedDisplayDevice.DisplayId.ToString(),
-                            };
-
-                            // Create a display identifier out of it
-                            string displayIdentifier = String.Join("|", displayInfo);
-                            // Add it to the list of display identifiers so we can return it
-                            displayIdentifiers.Add(displayIdentifier);
-                        }
-
-                    }
-                }
-            }
-            // else videocard is not NVIdia so we just use the WindowsAPI access method
-            // Note: This won't support any special AMD EyeFinity profiles unfortunately.....
-            // TODO: Add the detection and generation of the device ids using an AMD library
-            //       so that we can match valid AMD Eyefinity profiles with valid AMD standard profiles.
-            else
-            {
-
-                // Then go through the displays in the profile and check they are made of displays
-                // that currently are available.
-                foreach (ProfileViewport profileViewport in Viewports)
-                {
-                    // For each profile, we want to make sure all TargetDisplays.DevicePath are in the list of 
-                    // availableDevicePaths
-                    //foreach (WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo in profileViewport.ToPathInfo().TargetsInfo)
-                    foreach (ProfileViewportTargetDisplay profileTargetDisplay in profileViewport.TargetDisplays)
-                    {
-
-
-                        WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo = profileTargetDisplay.ToPathTargetInfo();
-
-                        // Create an array of all the important display info we need to record
-                        string[] displayInfo = {
-                                "WINAPI",
-                                profileViewport.SourceId.ToString(),
-                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.HighPart.ToString(),
-                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.LowPart.ToString(),
-                                profilePathTargetInfo.OutputTechnology.ToString(),
-                                profilePathTargetInfo.DisplayTarget.EDIDManufactureCode.ToString(),
-                                profilePathTargetInfo.DisplayTarget.FriendlyName,
-                                profilePathTargetInfo.DisplayTarget.EDIDManufactureId.ToString(),
-                                profilePathTargetInfo.DisplayTarget.EDIDProductCode.ToString(),
-                                profilePathTargetInfo.DisplayTarget.ConnectorInstance.ToString(),
-                                profileTargetDisplay.DevicePath,
-                            };
-
-                        // Create a display identifier out of it
-                        string displayIdentifier = String.Join("|", displayInfo);
-                        // Add it to the list of display identifiers so we can return it
-                        displayIdentifiers.Add(displayIdentifier);
-                    }
-                }
-
-            }
-
-            return displayIdentifiers;
-        }
+        
 
         public bool CopyTo(ProfileItem profile, bool overwriteId = true)
         {
@@ -394,7 +306,7 @@ namespace HeliosPlus.Shared
             // Prepare our profile data for saving
             if (_profileDisplayIdentifiers.Count == 0)
             {
-                _profileDisplayIdentifiers = GenerateDisplayIdentifiers();
+                _profileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers();
             }
 
             // Return if it is valid and we should continue
