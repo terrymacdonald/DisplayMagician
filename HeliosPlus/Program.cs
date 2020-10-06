@@ -102,29 +102,6 @@ namespace HeliosPlus {
                 });
             });
 
-
-            /*// This is the EditProfile command
-            app.Command(SupportedProgramMode.EditProfile.ToString(), (editProfileCmd) =>
-            {
-                //description and help text of the command.
-                editProfileCmd.Description = "Use this command to edit a HeliosDMPlus profile.";
-
-                var optionProfile = editProfileCmd.Option("-p|--profile", "The Profile Name or Profile ID of the profile to you want to use.", CommandOptionType.SingleValue).IsRequired();
-                optionProfile.Validators.Add(new ProfileMustExistValidator());
-                
-                editProfileCmd.OnExecute(() =>
-                {
-                    Console.WriteLine($"Editing profile {optionProfile.Value()}");
-
-                    EditProfile(
-                        GetProfile(optionProfile.Value())
-                    );
-
-                    return 0;
-                });
-
-            });*/
-
             app.OnExecute(() =>
             {
 
@@ -308,18 +285,6 @@ namespace HeliosPlus {
 
         }
 
-       /* private static void EditProfile(ProfileItem profile)
-        {
-            // Get the status of the thing
-            IPCService.GetInstance().Status = InstanceStatus.User;
-            // Load all the profiles from JSON
-            //ProfileRepository.AllProfiles
-            // Start up the DisplayProfileForm directly
-            new DisplayProfileForm(profile).ShowDialog();
-            // Then we close down as we're only here to edit one profile
-            Application.Exit();
-        }
-*/
         public static bool IsValidFilename(string testName)
         {
             string strTheseAreInvalidFileNameChars = new string(Path.GetInvalidFileNameChars());
@@ -329,16 +294,6 @@ namespace HeliosPlus {
 
             return true;
         }
-
-        /*        public static string GetValidFilename(string uncheckedFilename)
-                {
-                    string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-                    foreach (char c in invalid)
-                    {
-                        uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
-                    }
-                    return uncheckedFilename;
-                }*/
 
         // ApplyProfile lives here so that the UI works.
         public static bool ApplyProfile(ProfileItem profile)
@@ -383,13 +338,53 @@ namespace HeliosPlus {
                 }
 
                 topologyForm.ShowDialog(); 
-                applyTopologyTask.Wait();
+                
+                try
+                {
+                    applyTopologyTask.Wait();
+                }
+                catch (AggregateException ae)
+                {
+                    foreach (var e in ae.InnerExceptions)
+                    {
+                        // Handle the custom exception.
+                        if (e is ApplyTopologyException)
+                        {
+                            Console.WriteLine(e.Message);
+                        }
+                        // Rethrow any other exception.
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
 
                 if (applyTopologyTask.IsFaulted)
                     Console.WriteLine("Program/ApplyProfile : Applying Profile Topology stage failed to complete");
 
                 pathInfoForm.ShowDialog();
                 applyPathInfoTask.Wait();
+                try
+                {
+                    applyPathInfoTask.Wait();
+                }
+                catch (AggregateException ae)
+                {
+                    foreach (var e in ae.InnerExceptions)
+                    {
+                        // Handle the custom exception.
+                        if (e is ApplyPathInfoException)
+                        {
+                            Console.WriteLine(e.Message);
+                        }
+                        // Rethrow any other exception.
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
 
                 if (applyPathInfoTask.IsFaulted)
                     Console.WriteLine("Program/ApplyProfile : Applying Profile PathInfo stage failed to complete");
@@ -399,29 +394,6 @@ namespace HeliosPlus {
                 else
                     return false;
 
-/*                if (applyTopologyTask.IsCompleted)
-                {
-                    pathInfoForm.ShowDialog();
-                    Task applyPathInfoTask = Task.Run(() => {
-                        Console.WriteLine("ProfileRepository/SaveShortcutIconToCache : Applying Profile Path " + profile.Name);
-                        ProfileRepository.ApplyPathInfo(profile);
-                    });
-
-                    applyPathInfoTask.Wait();
-                    pathInfoForm.Close();
-                    // And then change the path information
-                    if (applyPathInfoTask.IsCompleted)
-                        return true;
-
-
-                    return false;
-                }
-                else
-                {
-                    return false;
-                }
-            */
-
             }
             catch (Exception ex)
             {
@@ -430,5 +402,17 @@ namespace HeliosPlus {
             }
         }
 
+    }
+
+    public class ApplyTopologyException : Exception
+    {
+        public ApplyTopologyException(String message) : base(message)
+        { }
+    }
+
+    public class ApplyPathInfoException : Exception
+    {
+        public ApplyPathInfoException(String message) : base(message)
+        { }
     }
 }
