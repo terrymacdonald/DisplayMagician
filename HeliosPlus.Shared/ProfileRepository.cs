@@ -26,6 +26,7 @@ using System.Resources;
 using System.Net.NetworkInformation;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
+using PathInfos = HeliosPlus.Shared.Topology.PathInfo;
 
 
 namespace HeliosPlus.Shared
@@ -39,11 +40,11 @@ namespace HeliosPlus.Shared
         private static bool _profilesLoaded = false;
         public static Version Version = new Version(1, 0, 0);
         // Other constants that are useful
-        public static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
-        public static string AppIconPath = Path.Combine(AppDataPath, $"Icons");
-        public static string AppHeliosPlusIconFilename = Path.Combine(AppIconPath, @"HeliosPlus.ico");
-        private static string AppProfileStoragePath = Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileStorageJsonFileName = Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{Version.ToString(2)}.json");
+        public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
+        public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
+        public static string AppHeliosPlusIconFilename = System.IO.Path.Combine(AppIconPath, @"HeliosPlus.ico");
+        private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
+        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{Version.ToString(2)}.json");
         private static uint _lastProfileId;
         private static ProfileItem _currentProfile;
         //private static List<Display> _availableDisplays;
@@ -358,7 +359,7 @@ namespace HeliosPlus.Shared
             ProfileItem activeProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
-                Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
+                Viewports = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
             };
 
             activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
@@ -459,7 +460,7 @@ namespace HeliosPlus.Shared
                     ProfileItem myCurrentProfile = new ProfileItem
                     {
                         Name = "Current Display Profile",
-                        Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
+                        Viewports = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
                     };
 
                     _currentProfile = myCurrentProfile;
@@ -484,7 +485,7 @@ namespace HeliosPlus.Shared
                 ProfileItem myCurrentProfile = new ProfileItem
                 {
                     Name = "Current Display Profile",
-                    Viewports = PathInfo.GetActivePaths().Select(info => new ProfileViewport(info)).ToArray()
+                    Viewports = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
                 };
 
                 _currentProfile = myCurrentProfile;
@@ -544,7 +545,7 @@ namespace HeliosPlus.Shared
         {
 
             // Work out the name of the Profile we'll save.
-            profile.SavedProfileIconCacheFilename = Path.Combine(AppProfileStoragePath, String.Concat(@"profile-", profile.UUID, @".ico"));
+            profile.SavedProfileIconCacheFilename = System.IO.Path.Combine(AppProfileStoragePath, string.Concat(@"profile-", profile.UUID, @".ico"));
 
             MultiIcon ProfileIcon;
             try
@@ -562,13 +563,15 @@ namespace HeliosPlus.Shared
             }
         }
 
+
+
         public static List<string> GenerateProfileDisplayIdentifiers()
         {
             List<string> displayIdentifiers = new List<string>();
 
             // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
             NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
-            if (myLogicalGPUs.Length == 0)
+            if (myLogicalGPUs.Length > 0)
             {
 
                 foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
@@ -626,13 +629,13 @@ namespace HeliosPlus.Shared
                     if (displayDevices.Count == 0)
                         continue;
 
-                    /*Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
+                    Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
                     Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
                     Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     Debug.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
                     Debug.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
-                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");*/
+                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
 
                     foreach (DisplayDevice displayDevice in displayDevices)
                     {
@@ -644,24 +647,21 @@ namespace HeliosPlus.Shared
                         if (!displayDevice.IsAvailable)
                             continue;
 
-                        /*Console.WriteLine($"DDA : {displayDevice.Adapter}");
+                        Console.WriteLine($"DDA : {displayDevice.Adapter}");
                         Debug.WriteLine($"DDDK : {displayDevice.DeviceKey}");
                         Debug.WriteLine($"DDDN : {displayDevice.DeviceName}");
                         Debug.WriteLine($"DDDP : {displayDevice.DevicePath}");
                         Debug.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
                         Debug.WriteLine($"DDDiN : {displayDevice.DisplayName}");
                         Debug.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
-                        Debug.WriteLine($"DDDiIV : {displayDevice.IsValid}");*/
-
-                        /*Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
+                        Debug.WriteLine($"DDDiIV : {displayDevice.IsValid}");
+                        Debug.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
                         Debug.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
                         Debug.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
                         Debug.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
                         Debug.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                        Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");*/
-
-                        /*Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
-                        //Console.WriteLine($"PDTBP : {pathDisplayTarget.BootPersistence}");
+                        Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
+                        Debug.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
                         Debug.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
                         Debug.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
                         Debug.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
@@ -672,7 +672,7 @@ namespace HeliosPlus.Shared
                         Debug.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
                         Debug.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
                         Debug.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
-                        Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");*/
+                        Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
 
                         // Create an array of all the important display info we need to record
                         string[] displayInfo = {
@@ -706,7 +706,7 @@ namespace HeliosPlus.Shared
 
             // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
             NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
-            if (myLogicalGPUs.Length == 0)
+            if (myLogicalGPUs.Length > 0)
             {
 
                 foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
@@ -758,13 +758,13 @@ namespace HeliosPlus.Shared
                     PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
                     List<DisplayDevice> displayDevices = displayAdapter.GetDisplayDevices().ToList();
 
-                    /*Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
+                    Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
                     Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
                     Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     Debug.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
                     Debug.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
-                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");*/
+                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
                     
                     foreach (DisplayDevice displayDevice in displayDevices)
                     {
@@ -772,24 +772,21 @@ namespace HeliosPlus.Shared
                         PathDisplaySource pathDisplaySource = displayDevice.ToPathDisplaySource();
                         PathDisplayTarget pathDisplayTarget = displayDevice.ToPathDisplayTarget();
 
-                        /*Console.WriteLine($"DDA : {displayDevice.Adapter}");
+                        Debug.WriteLine($"DDA : {displayDevice.Adapter}");
                         Debug.WriteLine($"DDDK : {displayDevice.DeviceKey}");
                         Debug.WriteLine($"DDDN : {displayDevice.DeviceName}");
                         Debug.WriteLine($"DDDP : {displayDevice.DevicePath}");
                         Debug.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
                         Debug.WriteLine($"DDDiN : {displayDevice.DisplayName}");
                         Debug.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
-                        Debug.WriteLine($"DDDiIV : {displayDevice.IsValid}");*/
-
-                        /*Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
+                        Debug.WriteLine($"DDDiIV : {displayDevice.IsValid}");
+                        Debug.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
                         Debug.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
                         Debug.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
                         Debug.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
                         Debug.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                        Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");*/
-
-                        /*Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
-                        //Console.WriteLine($"PDTBP : {pathDisplayTarget.BootPersistence}");
+                        Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
+                        Debug.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
                         Debug.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
                         Debug.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
                         Debug.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
@@ -800,7 +797,7 @@ namespace HeliosPlus.Shared
                         Debug.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
                         Debug.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
                         Debug.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
-                        Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");*/
+                        Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
 
                         // Create an array of all the important display info we need to record
                         string[] displayInfo = {
@@ -829,7 +826,7 @@ namespace HeliosPlus.Shared
             return displayIdentifiers;
         }
 
-        public static bool ApplyTopology(ProfileItem profile)
+                        public static bool ApplyTopology(ProfileItem profile)
         {
             Debug.Print("ProfileRepository.ApplyTopology()");
 
@@ -881,7 +878,12 @@ namespace HeliosPlus.Shared
 
             try
             {
+                // If Nvidia then we need to handle NVidia style
+                
                 var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+                var test = new NvAPIWrapper.Display.PathInfo;
+                var v2obj = test.GetPathInfoV2();
+                
                 WindowsDisplayAPI.DisplayConfig.PathInfo.ApplyPathInfos(pathInfos, true, true, true);
                 return true;
             }
@@ -895,7 +897,7 @@ namespace HeliosPlus.Shared
 
         public static bool IsValidFilename(string testName)
         {
-            string strTheseAreInvalidFileNameChars = new string(Path.GetInvalidFileNameChars());
+            string strTheseAreInvalidFileNameChars = new string(System.IO.Path.GetInvalidFileNameChars());
             Regex regInvalidFileName = new Regex("[" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
 
             if (regInvalidFileName.IsMatch(testName)) { return false; };
@@ -905,7 +907,7 @@ namespace HeliosPlus.Shared
 
         public static string GetValidFilename(string uncheckedFilename)
         {
-            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            string invalid = new string(System.IO.Path.GetInvalidFileNameChars()) + new string(System.IO.Path.GetInvalidPathChars());
             foreach (char c in invalid)
             {
                 uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");

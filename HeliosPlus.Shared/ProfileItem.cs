@@ -29,7 +29,7 @@ namespace HeliosPlus.Shared
         private static List<WindowsDisplayAPI.Display> _availableDisplays;
         private static List<WindowsDisplayAPI.UnAttachedDisplay> _unavailableDisplays;
 
-        internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
+        internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
 
         private string _uuid = "";
         private Version _version;
@@ -160,7 +160,7 @@ namespace HeliosPlus.Shared
 
         public string Name { get; set; }
 
-        public ProfileViewport[] Viewports { get; set; } = new ProfileViewport[0];
+        public Topology.Path[] Viewports { get; set; } = new Topology.Path[0];
 
         [JsonIgnore]
         public ProfileIcon ProfileIcon
@@ -190,7 +190,7 @@ namespace HeliosPlus.Shared
             {
                 if (_profileDisplayIdentifiers.Count == 0)
                 {
-                    _profileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers();
+                    _profileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers(); 
                 }
                 return _profileDisplayIdentifiers;
             }
@@ -367,7 +367,7 @@ namespace HeliosPlus.Shared
 
         private static string GetValidFilename(string uncheckedFilename)
         {
-            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            string invalid = new string(System.IO.Path.GetInvalidFileNameChars()) + new string(System.IO.Path.GetInvalidPathChars());
             foreach (char c in invalid)
             {
                 uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");

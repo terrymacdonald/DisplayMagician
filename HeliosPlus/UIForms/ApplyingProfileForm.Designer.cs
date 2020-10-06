@@ -50,11 +50,11 @@
             // 
             // lbl_sub_message
             // 
-            this.lbl_sub_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_sub_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_sub_message.ForeColor = System.Drawing.Color.White;
-            this.lbl_sub_message.Location = new System.Drawing.Point(159, 87);
+            this.lbl_sub_message.Location = new System.Drawing.Point(148, 67);
             this.lbl_sub_message.Name = "lbl_sub_message";
-            this.lbl_sub_message.Size = new System.Drawing.Size(300, 16);
+            this.lbl_sub_message.Size = new System.Drawing.Size(330, 30);
             this.lbl_sub_message.TabIndex = 2;
             this.lbl_sub_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -72,10 +72,10 @@
             this.progressBar.MarqueeAnimationSpeed = 2000;
             this.progressBar.Name = "progressBar";
             this.progressBar.OuterColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.progressBar.OuterMargin = -8;
-            this.progressBar.OuterWidth = 6;
+            this.progressBar.OuterMargin = -15;
+            this.progressBar.OuterWidth = 15;
             this.progressBar.ProgressColor = System.Drawing.Color.DodgerBlue;
-            this.progressBar.ProgressWidth = 10;
+            this.progressBar.ProgressWidth = 15;
             this.progressBar.SecondaryFont = new System.Drawing.Font("Microsoft Sans Serif", 26.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.progressBar.Size = new System.Drawing.Size(135, 135);
             this.progressBar.StartAngle = 270;

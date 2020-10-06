@@ -328,9 +328,9 @@ namespace HeliosPlus {
                 });
 
                 // Set up the UI forms to show
-                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Applying Profile '{profile.Name}'", "Press ESC to cancel!", Color.Blue, true); 
-                ApplyingProfileForm topologyForm = new ApplyingProfileForm(applyTopologyTask, 30, $"Applying Profile '{profile.Name}' Topology", "Step one of two...", Color.Red);
-                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(applyPathInfoTask, 30, $"Applying Profile '{profile.Name}' Path", "Step two of two...", Color.Green);
+                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Changing to '{profile.Name}' Profile", "Press ESC to cancel", Color.Orange, true); 
+                ApplyingProfileForm topologyForm = new ApplyingProfileForm(applyTopologyTask, 15, $"Changing to '{profile.Name}' Profile", "Applying Topology (Step one of two)", Color.Aquamarine);
+                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(applyPathInfoTask, 15, $"Changing to '{profile.Name}' Profile", "Applying Path Info (Step two of two)", Color.LawnGreen);
 
                 if (timeoutForm.ShowDialog() == DialogResult.Cancel)
                 {

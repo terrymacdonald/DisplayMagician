@@ -35,7 +35,7 @@ namespace HeliosPlus.UIForms
 
         public ApplyingProfileForm(Task taskToRun = null, int countdown = 0, string title = null, string message = null, Color progressColor = default(Color), bool cancellable = false, int displayChangeMaxDelta = 5) : this()
         {
-            _countdownCounter = countdown; 
+            _countdownCounter = countdown;
             _lastCount = _countdownCounter;
             _displayChangeMaxDelta = displayChangeMaxDelta;
             Cancellable = cancellable;
@@ -111,10 +111,13 @@ namespace HeliosPlus.UIForms
                 lbl_message.Text = Title;
                 lbl_sub_message.Text = Message;
                 progressBar.ProgressColor = ProgressColor;
-                progressBar.Text = (progressBar.Value = progressBar.Maximum = _countdownCounter).ToString();
+                progressBar.Maximum = _countdownCounter;
+                progressBar.Value = _countdownCounter;
+                progressBar.Text = (_countdownCounter).ToString();
                 t_countdown.Start();
                 if (TaskToRun is Task)
                     TaskToRun.Start();
+
             }
             else
             {
@@ -207,7 +210,11 @@ namespace HeliosPlus.UIForms
 
         private void t_countdown_Tick(object sender, EventArgs e)
         {
-            if (_countdownCounter < 0)
+            HandleDisplayChangeDelta();
+            progressBar.Value = _countdownCounter;
+            progressBar.Text = progressBar.Value.ToString();
+
+            if (_countdownCounter <= 0)
             {
                 t_countdown.Stop();
                 DialogResult = DialogResult.OK;
@@ -215,13 +222,8 @@ namespace HeliosPlus.UIForms
 
                 return;
             }
-
-            HandleDisplayChangeDelta();
-
-            progressBar.Value = _countdownCounter;
-            progressBar.Text = progressBar.Value.ToString();
-            _countdownCounter--;
             Reposition();
+            _countdownCounter--;
         }
 
         protected override void WndProc(ref Message m)
