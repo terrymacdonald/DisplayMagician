@@ -122,12 +122,6 @@
     <Compile Include="UIForms\ShortcutForm.Designer.cs">
       <DependentUpon>ShortcutForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="UIForms\ApplyingChangesForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UIForms\ApplyingChangesForm.Designer.cs">
-      <DependentUpon>ApplyingChangesForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="UIForms\DisplayProfileForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -164,9 +158,6 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UIForms\ApplyingChangesForm.resx">
-      <DependentUpon>ApplyingChangesForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\ShortcutLibraryForm.resx">
       <DependentUpon>ShortcutLibraryForm.cs</DependentUpon>
