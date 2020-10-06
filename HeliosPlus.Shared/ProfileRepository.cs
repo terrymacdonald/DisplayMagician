@@ -568,7 +568,7 @@ namespace HeliosPlus.Shared
 
             // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
             NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
-            if (myLogicalGPUs.Length > 0)
+            if (myLogicalGPUs.Length == 0)
             {
 
                 foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
@@ -619,77 +619,80 @@ namespace HeliosPlus.Shared
                 List<DisplayAdapter> allDisplayAdapters = DisplayAdapter.GetDisplayAdapters().ToList();
                 foreach (DisplayAdapter displayAdapter in allDisplayAdapters)
                 {
-                    Console.WriteLine($"DP : {displayAdapter.DevicePath}");
-                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Console.WriteLine($"DN : {displayAdapter.DeviceName}");
-                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
-                    Console.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
-                    Console.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
-                    Console.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
-                    List<DisplayDevice> displayDevices = displayAdapter.GetDisplayDevices().ToList();
+                    List<DisplayDevice> displayDevices = displayAdapter.GetDisplayDevices().Where(da => da.IsAvailable).ToList();
+
+                    // skip this DisplayAdapter if the number of available DisplayDevices is 0
+                    if (displayDevices.Count == 0)
+                        continue;
+
+                    /*Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
+                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
+                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    Debug.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
+                    Debug.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
+                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");*/
+
                     foreach (DisplayDevice displayDevice in displayDevices)
                     {
-                        Console.WriteLine($"DDA : {displayDevice.Adapter}");
-                        Console.WriteLine($"DDDK : {displayDevice.DeviceKey}");
-                        Console.WriteLine($"DDDN : {displayDevice.DeviceName}");
-                        Console.WriteLine($"DDDP : {displayDevice.DevicePath}");
-                        Console.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
-                        Console.WriteLine($"DDDiN : {displayDevice.DisplayName}");
-                        Console.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
-                        Console.WriteLine($"DDDiIV : {displayDevice.IsValid}");
+
                         PathDisplaySource pathDisplaySource = displayDevice.ToPathDisplaySource();
-                        Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
-                        Console.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                        Console.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
-                        Console.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                        Console.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                        Console.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
                         PathDisplayTarget pathDisplayTarget = displayDevice.ToPathDisplayTarget();
-                        Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
+
+                        // skip this DisplayDevice if it isn't available
+                        if (!displayDevice.IsAvailable)
+                            continue;
+
+                        /*Console.WriteLine($"DDA : {displayDevice.Adapter}");
+                        Debug.WriteLine($"DDDK : {displayDevice.DeviceKey}");
+                        Debug.WriteLine($"DDDN : {displayDevice.DeviceName}");
+                        Debug.WriteLine($"DDDP : {displayDevice.DevicePath}");
+                        Debug.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
+                        Debug.WriteLine($"DDDiN : {displayDevice.DisplayName}");
+                        Debug.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
+                        Debug.WriteLine($"DDDiIV : {displayDevice.IsValid}");*/
+
+                        /*Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
+                        Debug.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
+                        Debug.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
+                        Debug.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
+                        Debug.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
+                        Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");*/
+
+                        /*Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
                         //Console.WriteLine($"PDTBP : {pathDisplayTarget.BootPersistence}");
-                        Console.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                        Console.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
-                        Console.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                        Console.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                        Console.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                        Console.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
-                        Console.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
-                        Console.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
-                        Console.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                        Console.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
-                        Console.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
-                    }
-
-                    // For each profile, we want to make sure all TargetDisplays.DevicePath are in the list of 
-                    // availableDevicePaths
-                    //foreach (WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo in profileViewport.ToPathInfo().TargetsInfo)
-                   /* foreach (ProfileViewportTargetDisplay profileTargetDisplay in profileViewport.TargetDisplays)
-                    {
-
-
-                        WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo = profileTargetDisplay.ToPathTargetInfo();
+                        Debug.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
+                        Debug.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
+                        Debug.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
+                        Debug.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
+                        Debug.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
+                        Debug.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
+                        Debug.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
+                        Debug.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
+                        Debug.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
+                        Debug.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
+                        Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");*/
 
                         // Create an array of all the important display info we need to record
                         string[] displayInfo = {
-                                "WINAPI",
-                                profileViewport.SourceId.ToString(),
-                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.HighPart.ToString(),
-                                profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.LowPart.ToString(),
-                                profilePathTargetInfo.OutputTechnology.ToString(),
-                                profilePathTargetInfo.DisplayTarget.EDIDManufactureCode.ToString(),
-                                profilePathTargetInfo.DisplayTarget.FriendlyName,
-                                profilePathTargetInfo.DisplayTarget.EDIDManufactureId.ToString(),
-                                profilePathTargetInfo.DisplayTarget.EDIDProductCode.ToString(),
-                                profilePathTargetInfo.DisplayTarget.ConnectorInstance.ToString(),
-                                profileTargetDisplay.DevicePath,
-                            };
+                                 "WINAPI",
+                                 displayAdapter.DeviceName.ToString(),
+                                 pathDisplayAdapter.AdapterId.ToString(),
+                                 pathDisplaySource.SourceId.ToString(),
+                                 pathDisplayTarget.ConnectorInstance.ToString(),
+                                 pathDisplayTarget.FriendlyName,
+                                 pathDisplayTarget.EDIDManufactureCode.ToString(),
+                                 pathDisplayTarget.EDIDManufactureId.ToString(),
+                                 pathDisplayTarget.EDIDProductCode.ToString(),
+                                 pathDisplayTarget.TargetId.ToString(),
+                             };
 
                         // Create a display identifier out of it
                         string displayIdentifier = String.Join("|", displayInfo);
                         // Add it to the list of display identifiers so we can return it
                         displayIdentifiers.Add(displayIdentifier);
-                    }*/
+                    }
                 }
 
             }
@@ -703,7 +706,7 @@ namespace HeliosPlus.Shared
 
             // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
             NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
-            if (myLogicalGPUs.Length > 0)
+            if (myLogicalGPUs.Length == 0)
             {
 
                 foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
@@ -752,77 +755,73 @@ namespace HeliosPlus.Shared
                 List<DisplayAdapter> allDisplayAdapters = DisplayAdapter.GetDisplayAdapters().ToList();
                 foreach (DisplayAdapter displayAdapter in allDisplayAdapters)
                 {
-                    Console.WriteLine($"DP : {displayAdapter.DevicePath}");
-                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Console.WriteLine($"DN : {displayAdapter.DeviceName}");
-                    Console.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
-                    Console.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
-                    Console.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
-                    Console.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
                     List<DisplayDevice> displayDevices = displayAdapter.GetDisplayDevices().ToList();
+
+                    /*Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
+                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
+                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
+                    Debug.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
+                    Debug.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
+                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");*/
+                    
                     foreach (DisplayDevice displayDevice in displayDevices)
                     {
-                        Console.WriteLine($"DDA : {displayDevice.Adapter}");
-                        Console.WriteLine($"DDDK : {displayDevice.DeviceKey}");
-                        Console.WriteLine($"DDDN : {displayDevice.DeviceName}");
-                        Console.WriteLine($"DDDP : {displayDevice.DevicePath}");
-                        Console.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
-                        Console.WriteLine($"DDDiN : {displayDevice.DisplayName}");
-                        Console.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
-                        Console.WriteLine($"DDDiIV : {displayDevice.IsValid}");
+
                         PathDisplaySource pathDisplaySource = displayDevice.ToPathDisplaySource();
-                        Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
-                        Console.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                        Console.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
-                        Console.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                        Console.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                        Console.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
                         PathDisplayTarget pathDisplayTarget = displayDevice.ToPathDisplayTarget();
-                        Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
+
+                        /*Console.WriteLine($"DDA : {displayDevice.Adapter}");
+                        Debug.WriteLine($"DDDK : {displayDevice.DeviceKey}");
+                        Debug.WriteLine($"DDDN : {displayDevice.DeviceName}");
+                        Debug.WriteLine($"DDDP : {displayDevice.DevicePath}");
+                        Debug.WriteLine($"DDDiFN : {displayDevice.DisplayFullName}");
+                        Debug.WriteLine($"DDDiN : {displayDevice.DisplayName}");
+                        Debug.WriteLine($"DDDiIA : {displayDevice.IsAvailable}");
+                        Debug.WriteLine($"DDDiIV : {displayDevice.IsValid}");*/
+
+                        /*Console.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
+                        Debug.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
+                        Debug.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
+                        Debug.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
+                        Debug.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
+                        Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");*/
+
+                        /*Console.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
                         //Console.WriteLine($"PDTBP : {pathDisplayTarget.BootPersistence}");
-                        Console.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                        Console.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
-                        Console.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                        Console.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                        Console.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                        Console.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
-                        Console.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
-                        Console.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
-                        Console.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                        Console.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
-                        Console.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
-                    }
+                        Debug.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
+                        Debug.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
+                        Debug.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
+                        Debug.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
+                        Debug.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
+                        Debug.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
+                        Debug.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
+                        Debug.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
+                        Debug.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
+                        Debug.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
+                        Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");*/
 
-                    // For each profile, we want to make sure all TargetDisplays.DevicePath are in the list of 
-                    // availableDevicePaths
-                    //foreach (WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo in profileViewport.ToPathInfo().TargetsInfo)
-                    /* foreach (ProfileViewportTargetDisplay profileTargetDisplay in profileViewport.TargetDisplays)
-                     {
-
-
-                         WindowsDisplayAPI.DisplayConfig.PathTargetInfo profilePathTargetInfo = profileTargetDisplay.ToPathTargetInfo();
-
-                         // Create an array of all the important display info we need to record
-                         string[] displayInfo = {
+                        // Create an array of all the important display info we need to record
+                        string[] displayInfo = {
                                  "WINAPI",
-                                 profileViewport.SourceId.ToString(),
-                                 profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.HighPart.ToString(),
-                                 profilePathTargetInfo.DisplayTarget.Adapter.AdapterId.LowPart.ToString(),
-                                 profilePathTargetInfo.OutputTechnology.ToString(),
-                                 profilePathTargetInfo.DisplayTarget.EDIDManufactureCode.ToString(),
-                                 profilePathTargetInfo.DisplayTarget.FriendlyName,
-                                 profilePathTargetInfo.DisplayTarget.EDIDManufactureId.ToString(),
-                                 profilePathTargetInfo.DisplayTarget.EDIDProductCode.ToString(),
-                                 profilePathTargetInfo.DisplayTarget.ConnectorInstance.ToString(),
-                                 profileTargetDisplay.DevicePath,
+                                 displayAdapter.DeviceName.ToString(),
+                                 pathDisplayAdapter.AdapterId.ToString(),
+                                 pathDisplaySource.SourceId.ToString(),
+                                 pathDisplayTarget.ConnectorInstance.ToString(),
+                                 pathDisplayTarget.FriendlyName,
+                                 pathDisplayTarget.EDIDManufactureCode.ToString(),
+                                 pathDisplayTarget.EDIDManufactureId.ToString(),
+                                 pathDisplayTarget.EDIDProductCode.ToString(),
+                                 pathDisplayTarget.TargetId.ToString(),
                              };
 
-                         // Create a display identifier out of it
-                         string displayIdentifier = String.Join("|", displayInfo);
-                         // Add it to the list of display identifiers so we can return it
-                         displayIdentifiers.Add(displayIdentifier);
-                     }*/
+                        // Create a display identifier out of it
+                        string displayIdentifier = String.Join("|", displayInfo);
+                        // Add it to the list of display identifiers so we can return it
+                        displayIdentifiers.Add(displayIdentifier);
+                    }
+
                 }
 
             }
