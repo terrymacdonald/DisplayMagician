@@ -826,7 +826,7 @@ namespace HeliosPlus.Shared
             return displayIdentifiers;
         }
 
-                        public static bool ApplyTopology(ProfileItem profile)
+        public static bool ApplyTopology(ProfileItem profile)
         {
             Debug.Print("ProfileRepository.ApplyTopology()");
 
@@ -836,7 +836,7 @@ namespace HeliosPlus.Shared
             try
             {
                 var surroundTopologies =
-                    profile.Paths.SelectMany(viewport => viewport.TargetDisplays)
+                    profile.Paths.SelectMany(paths => paths.TargetDisplays)
                         .Select(target => target.SurroundTopology)
                         .Where(topology => topology != null)
                         .Select(topology => topology.ToGridTopology())
@@ -854,6 +854,8 @@ namespace HeliosPlus.Shared
                                 .SelectMany(topology => topology.Displays)
                                 .Select(displays => new GridTopology(1, 1, new[] { displays }))
                                 .ToArray();
+
+                        GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
                     }
                 } else if (surroundTopologies.Length > 0)
                 {
@@ -886,7 +888,7 @@ namespace HeliosPlus.Shared
                     
 
 
-                var pathInfos = profile.Paths.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+                var pathInfos = profile.Paths.Select(paths => paths.ToPathInfo()).Where(info => info != null).ToArray();
                 //var PathInfos2 = NvAPIWrapper.Display.PathInfo.GetDisplaysConfig();
                 /*if (!pathInfos.Any())
                 {

@@ -8,6 +8,7 @@ using EDIDParser.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NvAPIWrapper.Mosaic;
+using NvAPIWrapper.Native.Exceptions;
 
 namespace HeliosPlus.Shared.NVIDIA
 {
@@ -22,15 +23,20 @@ namespace HeliosPlus.Shared.NVIDIA
 
             try
             {
+                NvAPIWrapper.Native.GeneralApi.Initialize();
+                //var phyGPU = display.DisplayDevice.PhysicalGPU;
                 var bytes = display.DisplayDevice.PhysicalGPU.ReadEDIDData(display.DisplayDevice.Output);
                 DisplayName = new EDID(bytes).Descriptors
                     .Where(descriptor => descriptor is StringDescriptor)
                     .Cast<StringDescriptor>()
                     .FirstOrDefault(descriptor => descriptor.Type == StringDescriptorType.MonitorName)?.Value;
             }
-            catch
+            catch (NVIDIAApiException ex)
             {
-                // ignored
+                //Debug.WriteLine($"SurroundTopologyDisplay/NVIDIAApiException exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                // If we hit here then we cannot find the DisplayName from the EDID Data from the GPU
+                // So we just make one up using the DisplayID
+                DisplayName = $"Display {display.DisplayDevice.Output.OutputId}:{DisplayId}";
             }
         }
 

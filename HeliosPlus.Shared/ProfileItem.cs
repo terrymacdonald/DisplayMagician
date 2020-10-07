@@ -352,10 +352,10 @@ namespace HeliosPlus.Shared
         {
 
             // Get hash code for the Viewports field if it is not null.
-            int hashViewports = Paths == null ? 0 : Paths.GetHashCode();
+            int hashPaths = Paths == null ? 0 : Paths.GetHashCode();
 
             //Calculate the hash code for the product.
-            return hashViewports;
+            return hashPaths;
 
         }
 
@@ -411,10 +411,10 @@ namespace HeliosPlus.Shared
             if (Object.ReferenceEquals(profile, null)) return 0;
 
             // Get hash code for the Viewports field if it is not null.
-            int hashViewports = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
+            int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
 
             //Calculate the hash code for the product.
-            return hashViewports;
+            return hashPaths;
 
         }
 

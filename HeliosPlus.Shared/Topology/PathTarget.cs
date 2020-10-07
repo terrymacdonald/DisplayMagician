@@ -74,10 +74,6 @@ namespace HeliosPlus.Shared.Topology
                         target => target.DevicePath.StartsWith(DevicePath,
                             StringComparison.InvariantCultureIgnoreCase));
 
-            // TODO fix - Trying to allow NVIDIA surround to non-NVIDIA surround move and doesnt work.
-            /* var targetDevice =
-                PathDisplayTarget.GetDisplayTargets().FirstOrDefault();*/
-
             if (targetDevice == null)
             {
                 return null;
