@@ -26,7 +26,7 @@ using System.Resources;
 using System.Net.NetworkInformation;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using PathInfos = HeliosPlus.Shared.Topology.PathInfo;
+using HeliosPlus.Shared.Topology;
 
 
 namespace HeliosPlus.Shared
@@ -359,7 +359,7 @@ namespace HeliosPlus.Shared
             ProfileItem activeProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
-                Viewports = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
+                Paths = PathInfo.GetActivePaths().Select(info => new HeliosPlus.Shared.Topology.Path(info)).ToArray()
             };
 
             activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
@@ -460,7 +460,7 @@ namespace HeliosPlus.Shared
                     ProfileItem myCurrentProfile = new ProfileItem
                     {
                         Name = "Current Display Profile",
-                        Viewports = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
+                        Paths = PathInfo.GetActivePaths().Select(info => new HeliosPlus.Shared.Topology.Path(info)).ToArray()
                     };
 
                     _currentProfile = myCurrentProfile;
@@ -485,7 +485,7 @@ namespace HeliosPlus.Shared
                 ProfileItem myCurrentProfile = new ProfileItem
                 {
                     Name = "Current Display Profile",
-                    Viewports = PathInfo.GetActivePaths().Select(info => new Path(info)).ToArray()
+                    Paths = PathInfo.GetActivePaths().Select(info => new HeliosPlus.Shared.Topology.Path(info)).ToArray()
                 };
 
                 _currentProfile = myCurrentProfile;
@@ -836,7 +836,7 @@ namespace HeliosPlus.Shared
             try
             {
                 var surroundTopologies =
-                    profile.Viewports.SelectMany(viewport => viewport.TargetDisplays)
+                    profile.Paths.SelectMany(viewport => viewport.TargetDisplays)
                         .Select(target => target.SurroundTopology)
                         .Where(topology => topology != null)
                         .Select(topology => topology.ToGridTopology())
@@ -878,13 +878,23 @@ namespace HeliosPlus.Shared
 
             try
             {
-                // If Nvidia then we need to handle NVidia style
-                
-                var pathInfos = profile.Viewports.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
-                var test = new NvAPIWrapper.Display.PathInfo;
-                var v2obj = test.GetPathInfoV2();
-                
-                WindowsDisplayAPI.DisplayConfig.PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+                /*var viewports = profile.Viewports;
+                foreach (var viewport in viewports)
+                {
+                    var vpPathInfo = viewport.ToPathInfo();
+                }*/
+                    
+
+
+                var pathInfos = profile.Paths.Select(viewport => viewport.ToPathInfo()).Where(info => info != null).ToArray();
+                //var PathInfos2 = NvAPIWrapper.Display.PathInfo.GetDisplaysConfig();
+                /*if (!pathInfos.Any())
+                {
+                    throw new InvalidOperationException(
+                        @"Display configuration changed since this profile is created. Please re-create this profile.");
+                }*/
+                //var PathInfo2 = WindowsDisplayAPI.DisplayConfig.PathInfo.GetActivePaths();
+                PathInfo.ApplyPathInfos(pathInfos, true, true, true);
                 return true;
             }
             catch (Exception ex)

@@ -160,8 +160,8 @@ namespace HeliosPlus.Shared
 
         public string Name { get; set; }
 
-        public Topology.Path[] Viewports { get; set; } = new Topology.Path[0];
-
+        public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
+        
         [JsonIgnore]
         public ProfileIcon ProfileIcon
         {
@@ -269,7 +269,7 @@ namespace HeliosPlus.Shared
         public bool IsValid()
         {
 
-            if (Viewports != null &&
+            if (Paths != null &&
                 ProfileIcon is Bitmap &&
                 File.Exists(SavedProfileIconCacheFilename) &&
                 ProfileBitmap is Bitmap &&
@@ -292,7 +292,7 @@ namespace HeliosPlus.Shared
 
             // Copy all our profile data over to the other profile
             profile.Name = Name;
-            profile.Viewports = Viewports;
+            profile.Paths = Paths;
             profile.ProfileIcon = ProfileIcon;
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
             profile.ProfileBitmap = ProfileBitmap;
@@ -340,7 +340,7 @@ namespace HeliosPlus.Shared
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (Viewports.SequenceEqual(other.Viewports))
+            if (Paths.SequenceEqual(other.Paths))
                 return true;
             else
                 return false;
@@ -352,7 +352,7 @@ namespace HeliosPlus.Shared
         {
 
             // Get hash code for the Viewports field if it is not null.
-            int hashViewports = Viewports == null ? 0 : Viewports.GetHashCode();
+            int hashViewports = Paths == null ? 0 : Paths.GetHashCode();
 
             //Calculate the hash code for the product.
             return hashViewports;
@@ -396,7 +396,7 @@ namespace HeliosPlus.Shared
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (x.Viewports.Equals(y.Viewports))
+            if (x.Paths.Equals(y.Paths))
                 return true;
             else
                 return false;
@@ -411,7 +411,7 @@ namespace HeliosPlus.Shared
             if (Object.ReferenceEquals(profile, null)) return 0;
 
             // Get hash code for the Viewports field if it is not null.
-            int hashViewports = profile.Viewports == null ? 0 : profile.Viewports.GetHashCode();
+            int hashViewports = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
 
             //Calculate the hash code for the product.
             return hashViewports;

@@ -38,7 +38,7 @@ namespace HeliosPlus.Shared.UserControls
             }
         }
 
-        private void DrawPath(Graphics g, ProfileViewport path)
+        private void DrawPath(Graphics g, Path path)
         {
             var res = ProfileIcon.NormalizeResolution(path);
             var rect = new Rectangle(path.Position, res);
@@ -89,7 +89,7 @@ namespace HeliosPlus.Shared.UserControls
             return new Size((int) stringSize.Width, (int) stringSize.Height);
         }
 
-        private void DrawSurroundTopology(Graphics g, ProfileViewportTargetDisplay target, Rectangle rect)
+        private void DrawSurroundTopology(Graphics g, PathTarget target, Rectangle rect)
         {
             g.DrawRectangle(Pens.Black, rect);
 
@@ -144,8 +144,8 @@ namespace HeliosPlus.Shared.UserControls
 
         private void DrawTarget(
             Graphics g,
-            ProfileViewport path,
-            ProfileViewportTargetDisplay target,
+            Path path,
+            PathTarget target,
             Rectangle rect,
             int row,
             int col,
@@ -220,7 +220,7 @@ namespace HeliosPlus.Shared.UserControls
 
         private void DrawView(Graphics g)
         {
-            var viewSize = ProfileIcon.CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
+            var viewSize = ProfileIcon.CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
             var factor = Math.Min(Width / viewSize.Width, Height / viewSize.Height);
             g.ScaleTransform(factor, factor);
 
@@ -228,7 +228,7 @@ namespace HeliosPlus.Shared.UserControls
             var yOffset = (Height / factor - viewSize.Height) / 2f;
             g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
 
-            foreach (var path in _profile.Viewports)
+            foreach (var path in _profile.Paths)
             {
                 DrawPath(g, path);
             }

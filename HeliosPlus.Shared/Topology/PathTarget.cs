@@ -8,9 +8,9 @@ using System.Collections.Generic;
 
 namespace HeliosPlus.Shared.Topology
 {
-    public class ProfileViewportTargetDisplay : IEquatable<ProfileViewportTargetDisplay>
+    public class PathTarget : IEquatable<PathTarget>
     {
-        public ProfileViewportTargetDisplay(PathTargetInfo targetInfo, SurroundTopology surround = null)
+        public PathTarget(PathTargetInfo targetInfo, SurroundTopology surround = null)
         {
             DevicePath = targetInfo.DisplayTarget.DevicePath;
             var index = DevicePath.IndexOf("{", StringComparison.InvariantCultureIgnoreCase);
@@ -38,7 +38,7 @@ namespace HeliosPlus.Shared.Topology
         }
 
 
-        public ProfileViewportTargetDisplay()
+        public PathTarget()
         {
         }
 
@@ -74,6 +74,10 @@ namespace HeliosPlus.Shared.Topology
                         target => target.DevicePath.StartsWith(DevicePath,
                             StringComparison.InvariantCultureIgnoreCase));
 
+            // TODO fix - Trying to allow NVIDIA surround to non-NVIDIA surround move and doesnt work.
+            /* var targetDevice =
+                PathDisplayTarget.GetDisplayTargets().FirstOrDefault();*/
+
             if (targetDevice == null)
             {
                 return null;
@@ -87,11 +91,11 @@ namespace HeliosPlus.Shared.Topology
         // The public override for the Object.Equals
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as ProfileViewportTargetDisplay);
+            return this.Equals(obj as PathTarget);
         }
 
         // Profiles are equal if their contents (except name) are equal
-        public bool Equals(ProfileViewportTargetDisplay other)
+        public bool Equals(PathTarget other)
         {
 
             // If parameter is null, return false.
@@ -164,10 +168,10 @@ namespace HeliosPlus.Shared.Topology
     }
 
     // Custom comparer for the ProfileViewportTargetDisplay class
-    class ProfileViewportTargetDisplayComparer : IEqualityComparer<ProfileViewportTargetDisplay>
+    class ProfileViewportTargetDisplayComparer : IEqualityComparer<PathTarget>
     {
         // Products are equal if their names and product numbers are equal.
-        public bool Equals(ProfileViewportTargetDisplay x, ProfileViewportTargetDisplay y)
+        public bool Equals(PathTarget x, PathTarget y)
         {
 
             //Check whether the compared objects reference the same data.
@@ -204,7 +208,7 @@ namespace HeliosPlus.Shared.Topology
 
         // If Equals() returns true for a pair of objects
         // then GetHashCode() must return the same value for these objects.
-        public int GetHashCode(ProfileViewportTargetDisplay profileViewport)
+        public int GetHashCode(PathTarget profileViewport)
         {
             // Check whether the object is null
             if (Object.ReferenceEquals(profileViewport, null)) return 0;

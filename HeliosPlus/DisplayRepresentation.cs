@@ -30,7 +30,7 @@ namespace HeliosPlus
             }
         }
 
-        public DisplayRepresentation(ProfileViewportTargetDisplay display)
+        public DisplayRepresentation(PathTarget display)
         {
             Name = display.DisplayName;
             Path = display.DevicePath;
@@ -60,7 +60,7 @@ namespace HeliosPlus
 
             if (profile != null)
             {
-                foreach (var target in profile.Viewports.SelectMany(path => path.TargetDisplays))
+                foreach (var target in profile.Paths.SelectMany(path => path.TargetDisplays))
                 {
                     if (displays.All(display => display.Path != target.DevicePath))
                     {
@@ -77,14 +77,14 @@ namespace HeliosPlus
             return Display.GetDisplays().FirstOrDefault(display => display.DevicePath.StartsWith(Path));
         }
 
-        public ProfileViewport GetPathSource(ProfileItem profile)
+        public Path GetPathSource(ProfileItem profile)
         {
-            return profile.Viewports.FirstOrDefault(path => path.TargetDisplays.Any(target => target.DevicePath == Path));
+            return profile.Paths.FirstOrDefault(path => path.TargetDisplays.Any(target => target.DevicePath == Path));
         }
 
-        public ProfileViewportTargetDisplay GetPathTarget(ProfileItem profile)
+        public PathTarget GetPathTarget(ProfileItem profile)
         {
-            return profile.Viewports.SelectMany(path => path.TargetDisplays).FirstOrDefault(target => target.DevicePath == Path);
+            return profile.Paths.SelectMany(path => path.TargetDisplays).FirstOrDefault(target => target.DevicePath == Path);
         }
 
         public PathDisplayTarget GetTargetInfo()
@@ -115,14 +115,14 @@ namespace HeliosPlus
                 }
             }
 
-            var p = new ProfileItem {Viewports = new ProfileViewport[1]};
-            p.Viewports[0] = new ProfileViewport
+            var p = new ProfileItem {Paths = new Path[1]};
+            p.Paths[0] = new Path
             {
                 Resolution = resolution,
                 Position = new Point(),
-                TargetDisplays = new ProfileViewportTargetDisplay[1]
+                TargetDisplays = new PathTarget[1]
             };
-            p.Viewports[0].TargetDisplays[0] = new ProfileViewportTargetDisplay {DevicePath = Path};
+            p.Paths[0].TargetDisplays[0] = new PathTarget {DevicePath = Path};
 
             if (profile != null)
             {
@@ -130,7 +130,7 @@ namespace HeliosPlus
 
                 if (targetPath != null)
                 {
-                    p.Viewports[0].TargetDisplays[0].SurroundTopology = targetPath.SurroundTopology;
+                    p.Paths[0].TargetDisplays[0].SurroundTopology = targetPath.SurroundTopology;
                 }
             }
 

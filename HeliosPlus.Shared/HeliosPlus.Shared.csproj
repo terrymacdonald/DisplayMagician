@@ -63,9 +63,9 @@
     <Compile Include="ProfileRepository.cs" />
     <Compile Include="TaskBarSettings.cs" />
     <Compile Include="TaskBarStuckRectangle.cs" />
-    <Compile Include="Topology\ProfileViewport.cs" />
-    <Compile Include="Topology\ProfileViewportHelper.cs" />
-    <Compile Include="Topology\ProfileViewportTargetDisplay.cs" />
+    <Compile Include="Topology\Path.cs" />
+    <Compile Include="Topology\PathHelper.cs" />
+    <Compile Include="Topology\PathTarget.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\Language.Designer.cs">
       <DependentUpon>Language.resx</DependentUpon>
