@@ -40,6 +40,7 @@
             // progressPanel
             // 
             this.progressPanel.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.progressPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.progressPanel.Controls.Add(this.lbl_sub_message);
             this.progressPanel.Controls.Add(this.progressBar);
             this.progressPanel.Controls.Add(this.lbl_message);
@@ -52,9 +53,9 @@
             // 
             this.lbl_sub_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_sub_message.ForeColor = System.Drawing.Color.White;
-            this.lbl_sub_message.Location = new System.Drawing.Point(148, 67);
+            this.lbl_sub_message.Location = new System.Drawing.Point(73, 67);
             this.lbl_sub_message.Name = "lbl_sub_message";
-            this.lbl_sub_message.Size = new System.Drawing.Size(330, 30);
+            this.lbl_sub_message.Size = new System.Drawing.Size(501, 30);
             this.lbl_sub_message.TabIndex = 2;
             this.lbl_sub_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -62,10 +63,10 @@
             // 
             this.progressBar.AnimationFunction = WinFormAnimation.KnownAnimationFunctions.Liner;
             this.progressBar.AnimationSpeed = 1000;
-            this.progressBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.progressBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.progressBar.Font = new System.Drawing.Font("Microsoft Sans Serif", 39.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.progressBar.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.progressBar.InnerColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.progressBar.InnerColor = System.Drawing.Color.Ivory;
             this.progressBar.InnerMargin = 0;
             this.progressBar.InnerWidth = 0;
             this.progressBar.Location = new System.Drawing.Point(243, 125);
@@ -108,7 +109,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.progressPanel);
             this.DoubleBuffered = true;

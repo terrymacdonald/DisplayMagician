@@ -312,7 +312,7 @@ namespace HeliosPlus {
                 Task applyTopologyTask = new Task(() =>
                 {
                     Console.WriteLine("Program/ApplyProfile : Applying Profile Topology " + profile.Name);
-                    if (!ProfileRepository.ApplyTopology(profile))
+                    if (!ProfileRepository.ApplyNVIDIAGridTopology(profile))
                     {
                         // Somehow return that this profile topology didn't apply
                     }
@@ -320,7 +320,7 @@ namespace HeliosPlus {
 
                 Task applyPathInfoTask = new Task(() => {
                     Console.WriteLine("Program/ApplyProfile  : Applying Profile Path " + profile.Name);
-                    if (!ProfileRepository.ApplyPathInfo(profile))
+                    if (!ProfileRepository.ApplyWindowsDisplayPathInfo(profile))
                     {
                         // Somehow return that this profile path info didn't apply
                     }
@@ -329,40 +329,59 @@ namespace HeliosPlus {
 
                 // Set up the UI forms to show
                 ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Changing to '{profile.Name}' Profile", "Press ESC to cancel", Color.Orange, true); 
-                ApplyingProfileForm topologyForm = new ApplyingProfileForm(applyTopologyTask, 15, $"Changing to '{profile.Name}' Profile", "Applying Topology (Step one of two)", Color.Aquamarine);
-                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(applyPathInfoTask, 15, $"Changing to '{profile.Name}' Profile", "Applying Path Info (Step two of two)", Color.LawnGreen);
+                ApplyingProfileForm topologyForm = new ApplyingProfileForm(applyTopologyTask, 15, $"Changing to '{profile.Name}' Profile", "Applying NVIDIA Grid Topology", Color.Aquamarine);
+                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(applyPathInfoTask, 15, $"Changing to '{profile.Name}' Profile", "Applying Windows Display Device settings", Color.LawnGreen);
 
                 if (timeoutForm.ShowDialog() == DialogResult.Cancel)
                 {
                     return false;
                 }
 
-                topologyForm.ShowDialog(); 
-                
-                try
+                // We only want to do the topology change if the profile we're on now
+                // or the profile we're going to are NVIDIA surround profiles
+                int toProfileSurroundTopologyCount =
+                    profile.Paths.SelectMany(paths => paths.TargetDisplays)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .Count();
+                int fromProfileSurroundTopologyCount =
+                    ProfileRepository.CurrentProfile.Paths.SelectMany(paths => paths.TargetDisplays)
+                        .Select(target => target.SurroundTopology)
+                        .Where(topology => topology != null)
+                        .Select(topology => topology.ToGridTopology())
+                        .Count();
+
+                if (toProfileSurroundTopologyCount > 0 || fromProfileSurroundTopologyCount > 0)
                 {
-                    applyTopologyTask.Wait();
-                }
-                catch (AggregateException ae)
-                {
-                    foreach (var e in ae.InnerExceptions)
+                    topologyForm.ShowDialog();
+
+                    try
                     {
-                        // Handle the custom exception.
-                        if (e is ApplyTopologyException)
+                        applyTopologyTask.Wait();
+                    }
+                    catch (AggregateException ae)
+                    {
+                        foreach (var e in ae.InnerExceptions)
                         {
-                            Console.WriteLine(e.Message);
-                        }
-                        // Rethrow any other exception.
-                        else
-                        {
-                            throw;
+                            // Handle the custom exception.
+                            if (e is ApplyTopologyException)
+                            {
+                                Console.WriteLine(e.Message);
+                            }
+                            // Rethrow any other exception.
+                            else
+                            {
+                                throw;
+                            }
                         }
                     }
+
+                    if (applyTopologyTask.IsFaulted)
+                        Console.WriteLine("Program/ApplyProfile : Applying Profile Topology stage failed to complete");
                 }
 
-                if (applyTopologyTask.IsFaulted)
-                    Console.WriteLine("Program/ApplyProfile : Applying Profile Topology stage failed to complete");
-
+                // We always want to do the WindowsDisplayAPI PathInfo part
                 pathInfoForm.ShowDialog();
                 applyPathInfoTask.Wait();
                 try

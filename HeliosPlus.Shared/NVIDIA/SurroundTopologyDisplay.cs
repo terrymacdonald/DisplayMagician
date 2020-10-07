@@ -36,7 +36,7 @@ namespace HeliosPlus.Shared.NVIDIA
                 //Debug.WriteLine($"SurroundTopologyDisplay/NVIDIAApiException exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we hit here then we cannot find the DisplayName from the EDID Data from the GPU
                 // So we just make one up using the DisplayID
-                DisplayName = $"Display {display.DisplayDevice.Output.OutputId}:{DisplayId}";
+                DisplayName = $"Display #{DisplayId}";
             }
         }
 

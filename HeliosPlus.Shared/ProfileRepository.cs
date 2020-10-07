@@ -826,7 +826,7 @@ namespace HeliosPlus.Shared
             return displayIdentifiers;
         }
 
-        public static bool ApplyTopology(ProfileItem profile)
+        public static bool ApplyNVIDIAGridTopology(ProfileItem profile)
         {
             Debug.Print("ProfileRepository.ApplyTopology()");
 
@@ -844,7 +844,9 @@ namespace HeliosPlus.Shared
 
                 if (surroundTopologies.Length == 0)
                 {
-                    // This profile does not use NVIDIA Surround
+                    // The profile we're changing to does not use NVIDIA Surround
+                    // So we need to set the Grid Topologies to individual screens
+                    // in preparation for the PathInfo step later
                     var currentTopologies = GridTopology.GetGridTopologies();
 
                     if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
@@ -872,7 +874,7 @@ namespace HeliosPlus.Shared
             }
         }
 
-        public static bool ApplyPathInfo(ProfileItem profile)
+        public static bool ApplyWindowsDisplayPathInfo(ProfileItem profile)
         {
             Debug.Print("ProfileRepository.ApplyPathInfo()");
             if (!(profile is ProfileItem))
@@ -880,22 +882,7 @@ namespace HeliosPlus.Shared
 
             try
             {
-                /*var viewports = profile.Viewports;
-                foreach (var viewport in viewports)
-                {
-                    var vpPathInfo = viewport.ToPathInfo();
-                }*/
-                    
-
-
                 var pathInfos = profile.Paths.Select(paths => paths.ToPathInfo()).Where(info => info != null).ToArray();
-                //var PathInfos2 = NvAPIWrapper.Display.PathInfo.GetDisplaysConfig();
-                /*if (!pathInfos.Any())
-                {
-                    throw new InvalidOperationException(
-                        @"Display configuration changed since this profile is created. Please re-create this profile.");
-                }*/
-                //var PathInfo2 = WindowsDisplayAPI.DisplayConfig.PathInfo.GetActivePaths();
                 PathInfo.ApplyPathInfos(pathInfos, true, true, true);
                 return true;
             }
