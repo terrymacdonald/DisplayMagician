@@ -41,7 +41,7 @@ namespace HeliosPlus.UIForms
             Cancellable = cancellable;
             TaskToRun = taskToRun;
             if (progressColor.Equals(default(Color)))
-                progressColor = Color.Red;
+                progressColor = Color.OrangeRed;
             ProgressColor = progressColor;
             if (!string.IsNullOrEmpty(title)) Title = title;
             if (!string.IsNullOrEmpty(message)) Message = message;
@@ -113,7 +113,7 @@ namespace HeliosPlus.UIForms
                 progressBar.ProgressColor = ProgressColor;
                 progressBar.Maximum = _countdownCounter;
                 progressBar.Value = _countdownCounter;
-                progressBar.Text = (_countdownCounter).ToString();
+                progressBar.Text = _countdownCounter.ToString();
                 t_countdown.Start();
                 if (TaskToRun is Task)
                     TaskToRun.Start();
@@ -193,6 +193,7 @@ namespace HeliosPlus.UIForms
 
         private void ApplyingProfileForm_Shown(object sender, EventArgs e)
         {
+            Reposition();
             new Animator(new Path((float)Opacity, 0.97f, 200))
                 .Play(new SafeInvoker<float>(f =>
                 {
@@ -216,6 +217,7 @@ namespace HeliosPlus.UIForms
 
             if (_countdownCounter <= 0)
             {
+                _countdownCounter = 0;
                 t_countdown.Stop();
                 DialogResult = DialogResult.OK;
                 Close();

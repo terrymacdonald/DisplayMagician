@@ -44,16 +44,16 @@
             this.progressPanel.Controls.Add(this.lbl_sub_message);
             this.progressPanel.Controls.Add(this.progressBar);
             this.progressPanel.Controls.Add(this.lbl_message);
-            this.progressPanel.Location = new System.Drawing.Point(77, 154);
+            this.progressPanel.Location = new System.Drawing.Point(40, 154);
             this.progressPanel.Name = "progressPanel";
-            this.progressPanel.Size = new System.Drawing.Size(621, 270);
+            this.progressPanel.Size = new System.Drawing.Size(720, 270);
             this.progressPanel.TabIndex = 1;
             // 
             // lbl_sub_message
             // 
             this.lbl_sub_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_sub_message.ForeColor = System.Drawing.Color.White;
-            this.lbl_sub_message.Location = new System.Drawing.Point(73, 67);
+            this.lbl_sub_message.Location = new System.Drawing.Point(110, 67);
             this.lbl_sub_message.Name = "lbl_sub_message";
             this.lbl_sub_message.Size = new System.Drawing.Size(501, 30);
             this.lbl_sub_message.TabIndex = 2;
@@ -63,20 +63,20 @@
             // 
             this.progressBar.AnimationFunction = WinFormAnimation.KnownAnimationFunctions.Liner;
             this.progressBar.AnimationSpeed = 1000;
-            this.progressBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.progressBar.BackColor = System.Drawing.Color.Transparent;
             this.progressBar.Font = new System.Drawing.Font("Microsoft Sans Serif", 39.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.progressBar.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.progressBar.InnerColor = System.Drawing.Color.Ivory;
+            this.progressBar.InnerColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.progressBar.InnerMargin = 0;
-            this.progressBar.InnerWidth = 0;
-            this.progressBar.Location = new System.Drawing.Point(243, 125);
+            this.progressBar.InnerWidth = 1;
+            this.progressBar.Location = new System.Drawing.Point(293, 115);
             this.progressBar.MarqueeAnimationSpeed = 2000;
             this.progressBar.Name = "progressBar";
             this.progressBar.OuterColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.progressBar.OuterMargin = -15;
-            this.progressBar.OuterWidth = 15;
+            this.progressBar.OuterMargin = 0;
+            this.progressBar.OuterWidth = 0;
             this.progressBar.ProgressColor = System.Drawing.Color.DodgerBlue;
-            this.progressBar.ProgressWidth = 15;
+            this.progressBar.ProgressWidth = 23;
             this.progressBar.SecondaryFont = new System.Drawing.Font("Microsoft Sans Serif", 26.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.progressBar.Size = new System.Drawing.Size(135, 135);
             this.progressBar.StartAngle = 270;
@@ -87,7 +87,7 @@
             this.progressBar.SuperscriptMargin = new System.Windows.Forms.Padding(0, 30, 0, 0);
             this.progressBar.SuperscriptText = "";
             this.progressBar.TabIndex = 0;
-            this.progressBar.TextMargin = new System.Windows.Forms.Padding(2, 5, 0, 0);
+            this.progressBar.TextMargin = new System.Windows.Forms.Padding(0, 4, 1, 0);
             this.progressBar.Value = 68;
             // 
             // lbl_message
@@ -96,7 +96,7 @@
             this.lbl_message.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.lbl_message.Location = new System.Drawing.Point(3, 0);
             this.lbl_message.Name = "lbl_message";
-            this.lbl_message.Size = new System.Drawing.Size(615, 61);
+            this.lbl_message.Size = new System.Drawing.Size(714, 61);
             this.lbl_message.TabIndex = 1;
             this.lbl_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
