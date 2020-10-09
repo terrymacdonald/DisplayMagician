@@ -83,12 +83,10 @@ namespace HeliosPlus.Shared.Topology
                 SourceId == other.SourceId)
             {
                 // If the above all match, then we need to check the DisplayTargets
-                foreach (PathTarget targetDisplay in TargetDisplays)
-                {
-                    if (!other.TargetDisplays.Contains(targetDisplay))
-                        return false;
-                }
-                return true;
+                if (other.TargetDisplays.SequenceEqual(TargetDisplays))
+                    return true;
+                else
+                    return false;
             }
             else
                 return false;

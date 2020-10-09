@@ -148,9 +148,9 @@ namespace HeliosPlus.UIForms
             // and the app will automatically recognise that things have changed.
 
             // Reload the profiles in case we swapped to another program to change it
-            //ChangeSelectedProfile(ProfileRepository.CurrentProfile);
+            ChangeSelectedProfile(ProfileRepository.CurrentProfile);
             // Refresh the Profile UI
-            //RefreshDisplayProfileUI();
+            RefreshDisplayProfileUI();
         }
 
         private void DisplayProfileForm_Load(object sender, EventArgs e)

@@ -396,7 +396,7 @@ namespace HeliosPlus.Shared
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (x.Paths.Equals(y.Paths))
+            if (x.Paths.SequenceEqual(y.Paths))
                 return true;
             else
                 return false;

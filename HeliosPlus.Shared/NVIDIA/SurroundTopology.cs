@@ -318,7 +318,7 @@ namespace HeliosPlus.Shared.NVIDIA
                     return false;
                 else if (x.Displays == null && y.Displays != null)
                     return false;
-                else if (x.Displays.Equals(y.Displays))
+                else if (x.Displays.SequenceEqual(y.Displays))
                     return true;
 
                 return false;
