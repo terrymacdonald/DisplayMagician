@@ -39,16 +39,15 @@ namespace HeliosPlus.Shared
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
         private static bool _profilesLoaded = false;
         public static Version Version = new Version(1, 0, 0);
+        private static ProfileItem _currentProfile;
+
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppHeliosPlusIconFilename = System.IO.Path.Combine(AppIconPath, @"HeliosPlus.ico");
         private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
         private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{Version.ToString(2)}.json");
-        private static uint _lastProfileId;
-        private static ProfileItem _currentProfile;
-        //private static List<Display> _availableDisplays;
-        //private static List<UnAttachedDisplay> _unavailableDisplays;
+
 
         #endregion
 
@@ -94,7 +93,8 @@ namespace HeliosPlus.Shared
         {
             get 
             {
-                UpdateActiveProfile();
+                if (_currentProfile == null)
+                    UpdateActiveProfile();
                 return _currentProfile;
             }
             set
@@ -298,6 +298,20 @@ namespace HeliosPlus.Shared
 
         }
 
+        public static bool ContainsCurrentProfile()
+        {
+            if (!(_currentProfile is ProfileItem))
+                return false;
+
+            foreach (ProfileItem testProfile in _allProfiles)
+            {
+                if (testProfile.Paths.SequenceEqual(_currentProfile.Paths))
+                    return true;
+            }
+
+            return false;
+        }
+
         public static ProfileItem GetProfile(string ProfileNameOrId)
         {
             if (String.IsNullOrWhiteSpace(ProfileNameOrId))
@@ -369,7 +383,7 @@ namespace HeliosPlus.Shared
             {
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
-                    if (activeProfile.Equals(loadedProfile))
+                    if (activeProfile.Paths.SequenceEqual(loadedProfile.Paths))
                     {
                         _currentProfile = loadedProfile;
                         return;
@@ -383,7 +397,7 @@ namespace HeliosPlus.Shared
 
         public static ProfileItem GetActiveProfile()
         {
-            UpdateActiveProfile();
+            //UpdateActiveProfile();
 
             if (!(_currentProfile is ProfileItem))
                 return null;
@@ -392,7 +406,7 @@ namespace HeliosPlus.Shared
 
         public static bool IsActiveProfile(ProfileItem profile)
         {
-            UpdateActiveProfile();
+            //UpdateActiveProfile();
 
             if (!(_currentProfile is ProfileItem))
                 return false;
@@ -400,7 +414,7 @@ namespace HeliosPlus.Shared
             if (!(profile is ProfileItem))
                 return false;
 
-            if (profile.Equals(_currentProfile))
+            if (profile.Paths.SequenceEqual(_currentProfile.Paths))
                 return true;
 
             return false;

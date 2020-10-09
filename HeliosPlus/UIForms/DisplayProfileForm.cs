@@ -8,6 +8,7 @@ using HeliosPlus.Resources;
 using HeliosPlus.Shared;
 using Manina.Windows.Forms;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace HeliosPlus.UIForms
 {
@@ -146,21 +147,19 @@ namespace HeliosPlus.UIForms
             // alter their Windows Display settings then come back to our app
             // and the app will automatically recognise that things have changed.
 
-            /*// Reload the profiles in case we swapped to another program to change it
-            ProfileRepository.UpdateCurrentProfile();
+            // Reload the profiles in case we swapped to another program to change it
+            //ChangeSelectedProfile(ProfileRepository.CurrentProfile);
             // Refresh the Profile UI
-            RefreshDisplayProfileUI();*/
+            //RefreshDisplayProfileUI();
         }
 
         private void DisplayProfileForm_Load(object sender, EventArgs e)
         {
-            // Load all the profiles to prepare things
-            //_savedProfiles = ProfileRepository.AllProfiles;
+            
             // Update the Current Profile
-            //ProfileRepository.UpdateCurrentProfile();
-            //    ProfileRepository.GetActiveProfile();
-            // Change to the current selected Profile
-            ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
+            ProfileRepository.UpdateActiveProfile();
+
+            ChangeSelectedProfile(ProfileRepository.CurrentProfile);
 
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
@@ -178,7 +177,7 @@ namespace HeliosPlus.UIForms
             // And update the save/rename textbox
             txt_profile_save_name.Text = _selectedProfile.Name;
 
-            if (ProfileRepository.ContainsProfile(_selectedProfile))
+            if (ProfileRepository.ContainsProfile(profile))
             {
                 // we already have the profile stored
                 _saveOrRenameMode = "rename";
@@ -341,5 +340,81 @@ namespace HeliosPlus.UIForms
                 
             }
         }
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_DISPLAYCHANGE = 0x007E;
+
+            const int x_bitshift = 0;
+            const int y_bitshift = 16;
+            const int xy_mask = 0xFFFF;
+
+            bool displayChange = false;
+
+            switch (m.Msg)
+            {
+                case WM_DISPLAYCHANGE:
+                    ProfileRepository.UpdateActiveProfile();
+                    break;
+            }
+
+            base.WndProc(ref m);
+        }
+
+        /*private static void MainWindow_Closed(object sender, EventArgs e)
+        {
+            DeviceNotification.UnRegisterUsbDeviceNotification();
+            DeviceNotification.UnRegisterMonitorDeviceNotification();
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            if (!(PresentationSource.FromVisual(this) is HwndSource source))
+                return;
+
+            source.AddHook(this.WndProc);
+
+            DeviceNotification.RegisterUsbDeviceNotification(source.Handle);
+            DeviceNotification.RegisterMonitorDeviceNotification(source.Handle);
+        }*/
+
+        // Notification registeration for display detection from here http://codetips.nl/detectmonitor.html
+
+        /*protected override void WndProc(ref Message m)
+        {
+            const int WM_SETTINGCHANGE = 0x001A;
+            const int SPI_SETWORKAREA = 0x02F;
+            const int WM_DISPLAYCHANGE = 0x007E;
+            const int WM_DEVICECHANGE = 0x0219; // WM Device change message ID
+            const int DBT_DEVICEARRIVAL = 0x8000; // WM Device Change Event: System detected a new device        
+            const int DBT_DEVICEREMOVECOMPLETE = 0x8004; // WM Device Change Event: Device is gone      
+
+
+            const int x_bitshift = 0;
+            const int y_bitshift = 16;
+            const int xy_mask = 0xFFFF;
+
+            bool displayChange = false;
+
+            switch (m.Msg)
+            {
+                case WM_DISPLAYCHANGE:
+                case DeviceNotification.DbtDeviceRemoveComplete:
+                case DeviceNotification.DbtDeviceArrival:
+                    {
+                        if (DeviceNotification.IsMonitor(lParam))
+                            Debug.WriteLine($"Monitor {((int)wParam == DeviceNotification.DbtDeviceArrival ? "arrived" : "removed")}");
+
+                        if (DeviceNotification.IsUsbDevice(lParam))
+                            Debug.WriteLine($"Usb device {((int)wParam == DeviceNotification.DbtDeviceArrival ? "arrived" : "removed")}");
+                    }
+                    break;
+            }
+
+            base.WndProc(ref m);
+        }*/
+
     }
 }

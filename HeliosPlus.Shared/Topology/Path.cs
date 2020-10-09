@@ -119,7 +119,7 @@ namespace HeliosPlus.Shared.Topology
     }
 
     // Custom comparer for the ProfileViewport class
-    class ProfileViewportComparer : IEqualityComparer<Path>
+    class PathComparer : IEqualityComparer<Path>
     {
         // Products are equal if their names and product numbers are equal.
         public bool Equals(Path x, Path y)
