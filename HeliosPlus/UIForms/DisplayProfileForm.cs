@@ -184,7 +184,7 @@ namespace HeliosPlus.UIForms
                 btn_save_or_rename.Text = "Rename To";
                 if (!_selectedProfile.IsPossible)
                 {
-                    lbl_profile_shown_subtitle.Text = "(Display Profile is not valid so cannot be used)";
+                    lbl_profile_shown_subtitle.Text = "This Display Profile can't be used as not all Displays are connected.";
                     btn_apply.Visible = false;
                 }
                 else
@@ -201,7 +201,7 @@ namespace HeliosPlus.UIForms
                 // we don't have the profile stored yet
                 _saveOrRenameMode = "save";
                 btn_save_or_rename.Text = "Save As";
-                lbl_profile_shown_subtitle.Text = "(Current Display Profile in use - UNSAVED)";
+                lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet";
                 btn_apply.Visible = false;
             }
 

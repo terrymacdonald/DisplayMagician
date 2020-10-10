@@ -268,7 +268,7 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
             this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(18, 102);
+            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(20, 102);
             this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
             this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(132, 20);
             this.lbl_profile_shown_subtitle.TabIndex = 22;
