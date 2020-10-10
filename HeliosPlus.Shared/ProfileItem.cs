@@ -139,7 +139,7 @@ namespace HeliosPlus.Shared
             {
 
                 // Get the list of connected devices
-                List<string> connectedDisplayIdentifiers = ProfileRepository.GenerateAllDisplayIdentifiers();
+                List<string> connectedDisplayIdentifiers = ProfileRepository.GenerateAllAvailableDisplayIdentifiers();
 
                 // Check each display in this profile and make sure it's currently available
                 int validDisplayCount = 0;

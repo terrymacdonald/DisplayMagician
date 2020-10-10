@@ -27,7 +27,7 @@ using System.Net.NetworkInformation;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
 using HeliosPlus.Shared.Topology;
-
+using NvAPIWrapper.Native.GPU;
 
 namespace HeliosPlus.Shared
 {
@@ -714,29 +714,37 @@ namespace HeliosPlus.Shared
             return displayIdentifiers;
         }
 
-        public static List<string> GenerateAllDisplayIdentifiers()
+        public static List<string> GenerateAllAvailableDisplayIdentifiers()
         {
             List<string> displayIdentifiers = new List<string>();
 
             // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
-            NvAPIWrapper.GPU.LogicalGPU[] myLogicalGPUs = NvAPIWrapper.GPU.LogicalGPU.GetLogicalGPUs();
-            if (myLogicalGPUs.Length > 0)
+            bool isNvidia = false;
+            NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = null;
+            try
+            {
+                myPhysicalGPUs = NvAPIWrapper.GPU.PhysicalGPU.GetPhysicalGPUs();
+                isNvidia = true;
+            }
+            catch (Exception ex)
+            { }
+
+            if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             {
 
-                foreach (NvAPIWrapper.GPU.LogicalGPU myLogicalGPU in myLogicalGPUs)
+                foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
                 {
-                    NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = myLogicalGPU.CorrespondingPhysicalGPUs;
-                    foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
+                    // get a list of all physical outputs attached to the GPUs
+                    NvAPIWrapper.Display.DisplayDevice[] allDisplayDevices = myPhysicalGPU.GetConnectedDisplayDevices(ConnectedIdsFlag.None);
+                    foreach (NvAPIWrapper.Display.DisplayDevice aDisplayDevice in allDisplayDevices)
                     {
-                        // get a list of all physical outputs attached to the GPUs
-                        NvAPIWrapper.Display.DisplayDevice[] allDisplayDevices = myPhysicalGPU.GetDisplayDevices();
-                        foreach (NvAPIWrapper.Display.DisplayDevice aDisplayDevice in allDisplayDevices)
-                        {
 
+                        if (aDisplayDevice.IsAvailable== true)
+                        {
                             // Create an array of all the important display info we need to record
                             string[] displayInfo = {
                                 "NVIDIA",
-                                myLogicalGPU.ToString(),
+                                myPhysicalGPU.CorrespondingLogicalGPU.ToString(),
                                 myPhysicalGPU.ToString(),
                                 myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
                                 myPhysicalGPU.ArchitectInformation.Revision.ToString(),
@@ -754,7 +762,6 @@ namespace HeliosPlus.Shared
                             // Add it to the list of display identifiers so we can return it
                             displayIdentifiers.Add(displayIdentifier);
                         }
-
                     }
                 }
             }
