@@ -1089,5 +1089,6 @@ namespace HeliosPlus.UIForms
             else
                 _saveNameAutomatic = false;
         }
+
     }
 }
