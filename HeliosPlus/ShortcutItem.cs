@@ -316,6 +316,7 @@ namespace HeliosPlus
             shortcut.ShortcutBitmap = ShortcutBitmap;
             shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
             shortcut.IsPossible = IsPossible;
+            shortcut.StartPrograms = StartPrograms;
 
             return true;
         }
