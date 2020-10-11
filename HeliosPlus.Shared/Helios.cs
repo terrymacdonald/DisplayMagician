@@ -44,7 +44,7 @@ namespace HeliosPlus.Shared
         // ReSharper disable once MethodTooLong
         // ReSharper disable once TooManyArguments
         public static void Open(
-            HeliosStartupAction action = HeliosStartupAction.None,
+            HeliosStartupAction action = HeliosStartupAction.StartUpNormally,
             ProfileItem profile = null,
             string programAddress = null,
             bool asAdmin = false)
@@ -93,7 +93,7 @@ namespace HeliosPlus.Shared
         }
 
         public static void OpenSteamGame(
-            HeliosStartupAction action = HeliosStartupAction.None,
+            HeliosStartupAction action = HeliosStartupAction.StartUpNormally,
             ProfileItem profile = null,
             uint steamAppId = 0)
         {

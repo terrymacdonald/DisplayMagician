@@ -2,12 +2,7 @@
 {
     public enum HeliosStartupAction
     {
-        None,
-
-        SwitchProfile,
-
-        CreateShortcut,
-
-        EditProfile
+        RunShortcut,
+        StartUpNormally
     }
 }

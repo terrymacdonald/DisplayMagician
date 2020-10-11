@@ -477,24 +477,49 @@ namespace HeliosPlus
             }
 
             // Remember the profile we are on now
+            bool needToChangeProfiles = false;
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
+            if (!rollbackProfile.Equals(shortcutToUse.ProfileToUse))
+                needToChangeProfiles = true;
+
+
 
             // Tell the IPC Service we are busy right now, and keep the previous status for later
             InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;
             IPCService.GetInstance().Status = InstanceStatus.Busy;
 
-            // Apply the Profile!
-            //if (!ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse))
-            if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
+            // Only change profiles if we have to
+            if (needToChangeProfiles)
             {
-                throw new Exception(Language.Cannot_change_active_profile);
+                // Apply the Profile!
+                //if (!ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse))
+                if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
+                {
+                    throw new Exception(Language.Cannot_change_active_profile);
+                }
             }
 
             // Set the IP Service status back to what it was
             IPCService.GetInstance().Status = rollbackInstanceStatus;
 
             // Now run the pre-start applications
-            // TODO: Add the prestart applications
+            List<Process> startProgramsToStop = new List<Process>();
+            if (shortcutToUse.StartPrograms is List<StartProgram> && shortcutToUse.StartPrograms.Count > 0)
+            {
+                foreach (StartProgram myStartProgram in shortcutToUse.StartPrograms
+                    .Where(program => program.Enabled == true && program.CloseOnFinish == true)
+                    .OrderBy(program => program.Priority))
+                {
+                    // Start the executable
+                    Process process = null;
+                    if (myStartProgram.ExecutableArgumentsRequired)
+                        process = System.Diagnostics.Process.Start(myStartProgram.Executable, myStartProgram.Arguments);
+                    else
+                        process = System.Diagnostics.Process.Start(myStartProgram.Executable);
+                    // Record t
+                    startProgramsToStop.Add(process);
+                }
+            }
 
             // Now start the main game, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
@@ -507,13 +532,13 @@ namespace HeliosPlus
                     process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
 
                 // Create a list of processes to monitor
-                Process[] processesToMonitor = Array.Empty<Process>();
+                List<Process> processesToMonitor = new List<Process>();
 
                 // Work out if we are monitoring another process other than the main executable
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
                     // If we are monitoring the same executable we started, then lets do that
-                    processesToMonitor = new[] { process };
+                    processesToMonitor.Add(process);
                 }
                 else
                 {
@@ -522,10 +547,10 @@ namespace HeliosPlus
                     while (ticks < shortcutToUse.ExecutableTimeout * 1000)
                     {
                         // Look for the processes with the ProcessName we want (which in Windows is the filename without the extension)
-                        processesToMonitor = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor));
+                        processesToMonitor = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor)).ToList();
 
                         //  TODO: Fix this logic error that will only ever wait for the first process....
-                        if (processesToMonitor.Length > 0)
+                        if (processesToMonitor.Count > 0)
                         {
                             break;
                         }
@@ -534,10 +559,10 @@ namespace HeliosPlus
                         ticks += 300;
                     }
 
-                    // If none started up before the timeout, then ignore the 
-                    if (processesToMonitor.Length == 0)
+                    // If none started up before the timeout, then ignore them
+                    if (processesToMonitor.Count == 0)
                     {
-                        processesToMonitor = new[] { process };
+                        processesToMonitor.Add(process);
                     }
                 }
 
@@ -692,8 +717,19 @@ namespace HeliosPlus
 
             }
 
-            // Change back to the original profile if it is different
-            if (!ProfileRepository.IsActiveProfile(rollbackProfile))
+            // Stop the pre-started startPrograms that we'd started earlier
+            if (startProgramsToStop.Count > 0)
+            {
+                // Stop the programs in the reverse order we started them
+                foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
+                {
+                    // Stop the program
+                    processToStop.Close();
+                }
+            }
+
+            // Change back to the original profile only if it is different
+            if (needToChangeProfiles)
             {
                 //if (!ProfileRepository.ApplyProfile(rollbackProfile))
                 if (!Program.ApplyProfile(rollbackProfile))

@@ -603,7 +603,7 @@ namespace HeliosPlus
             var shortcutArgs = new List<string>
             {
                 // Add the SwitchProfile command as the first argument to start to switch to another profile
-                $"{HeliosStartupAction.SwitchProfile}",
+                $"{HeliosStartupAction.RunShortcut}",
                 $"\"{UUID}\""
             };
 

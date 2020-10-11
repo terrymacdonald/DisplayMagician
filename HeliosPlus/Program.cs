@@ -22,13 +22,7 @@ using System.Drawing;
 using System.Diagnostics.Contracts;
 
 namespace HeliosPlus {
-    public enum SupportedProgramMode
-    {
-        RunShortcut,
-        EditProfile,
-        StartUpNormally
-    }
-
+ 
     public enum SupportedGameLibrary
     {
         Unknown,
@@ -86,15 +80,15 @@ namespace HeliosPlus {
             });
 
             // This is the RunShortcut command
-            app.Command(SupportedProgramMode.RunShortcut.ToString(), (switchProfileCmd) =>
+            app.Command(HeliosStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
-                var argumentShortcut = switchProfileCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
+                var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
 
                 //description and help text of the command.
-                switchProfileCmd.Description = "Use this command to run favourite game or application with a display profile of your choosing.";
+                runShortcutCmd.Description = "Use this command to run favourite game or application with a display profile of your choosing.";
 
-                switchProfileCmd.OnExecute(() =>
+                runShortcutCmd.OnExecute(() =>
                 {
                     // 
                     RunShortcut(argumentShortcut.Value);
@@ -118,11 +112,12 @@ namespace HeliosPlus {
             }
             catch (CommandParsingException ex)
             {
-                Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                //Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
                 // "Unrecognized command or argument '<invalid-command>'"
-                Console.WriteLine(ex.Message);
+                //Console.WriteLine(ex.Message);
+                Console.WriteLine("Didn't recognise the supplied commandline options: {0}", ex.Message);
             }
             catch (Exception ex)
             {
