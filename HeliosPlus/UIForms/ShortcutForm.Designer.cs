@@ -109,6 +109,10 @@ namespace HeliosPlus.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
+            this.cb_start_program1 = new System.Windows.Forms.CheckBox();
+            this.cb_start_program2 = new System.Windows.Forms.CheckBox();
+            this.cb_start_program3 = new System.Windows.Forms.CheckBox();
+            this.cb_start_program4 = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_before.SuspendLayout();
@@ -280,6 +284,7 @@ namespace HeliosPlus.UIForms
             // 
             // pnl_start_program4
             // 
+            this.pnl_start_program4.Controls.Add(this.cb_start_program4);
             this.pnl_start_program4.Controls.Add(this.txt_start_program4);
             this.pnl_start_program4.Controls.Add(this.cb_start_program_close4);
             this.pnl_start_program4.Controls.Add(this.btn_start_program4);
@@ -293,7 +298,7 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program4
             // 
-            this.txt_start_program4.Location = new System.Drawing.Point(269, 11);
+            this.txt_start_program4.Location = new System.Drawing.Point(300, 11);
             this.txt_start_program4.Name = "txt_start_program4";
             this.txt_start_program4.Size = new System.Drawing.Size(416, 26);
             this.txt_start_program4.TabIndex = 17;
@@ -314,12 +319,13 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program4.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program4.Location = new System.Drawing.Point(691, 10);
+            this.btn_start_program4.Location = new System.Drawing.Point(722, 10);
             this.btn_start_program4.Name = "btn_start_program4";
             this.btn_start_program4.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program4.TabIndex = 15;
             this.btn_start_program4.Text = "Choose";
             this.btn_start_program4.UseVisualStyleBackColor = true;
+            this.btn_start_program4.Click += new System.EventHandler(this.btn_start_program4_Click);
             // 
             // txt_start_program_args4
             // 
@@ -344,7 +350,7 @@ namespace HeliosPlus.UIForms
             // lbl_start_program4
             // 
             this.lbl_start_program4.AutoSize = true;
-            this.lbl_start_program4.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program4.Location = new System.Drawing.Point(46, 14);
             this.lbl_start_program4.Name = "lbl_start_program4";
             this.lbl_start_program4.Size = new System.Drawing.Size(244, 20);
             this.lbl_start_program4.TabIndex = 0;
@@ -352,6 +358,7 @@ namespace HeliosPlus.UIForms
             // 
             // pnl_start_program3
             // 
+            this.pnl_start_program3.Controls.Add(this.cb_start_program3);
             this.pnl_start_program3.Controls.Add(this.txt_start_program3);
             this.pnl_start_program3.Controls.Add(this.cb_start_program_close3);
             this.pnl_start_program3.Controls.Add(this.btn_start_program3);
@@ -365,7 +372,7 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program3
             // 
-            this.txt_start_program3.Location = new System.Drawing.Point(269, 11);
+            this.txt_start_program3.Location = new System.Drawing.Point(300, 11);
             this.txt_start_program3.Name = "txt_start_program3";
             this.txt_start_program3.Size = new System.Drawing.Size(416, 26);
             this.txt_start_program3.TabIndex = 17;
@@ -386,12 +393,13 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program3.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program3.Location = new System.Drawing.Point(691, 10);
+            this.btn_start_program3.Location = new System.Drawing.Point(722, 10);
             this.btn_start_program3.Name = "btn_start_program3";
             this.btn_start_program3.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program3.TabIndex = 15;
             this.btn_start_program3.Text = "Choose";
             this.btn_start_program3.UseVisualStyleBackColor = true;
+            this.btn_start_program3.Click += new System.EventHandler(this.btn_start_program3_Click);
             // 
             // txt_start_program_args3
             // 
@@ -416,7 +424,7 @@ namespace HeliosPlus.UIForms
             // lbl_start_program3
             // 
             this.lbl_start_program3.AutoSize = true;
-            this.lbl_start_program3.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program3.Location = new System.Drawing.Point(46, 14);
             this.lbl_start_program3.Name = "lbl_start_program3";
             this.lbl_start_program3.Size = new System.Drawing.Size(233, 20);
             this.lbl_start_program3.TabIndex = 0;
@@ -424,6 +432,7 @@ namespace HeliosPlus.UIForms
             // 
             // pnl_start_program2
             // 
+            this.pnl_start_program2.Controls.Add(this.cb_start_program2);
             this.pnl_start_program2.Controls.Add(this.txt_start_program2);
             this.pnl_start_program2.Controls.Add(this.cb_start_program_close2);
             this.pnl_start_program2.Controls.Add(this.btn_start_program2);
@@ -437,7 +446,7 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program2
             // 
-            this.txt_start_program2.Location = new System.Drawing.Point(270, 11);
+            this.txt_start_program2.Location = new System.Drawing.Point(301, 11);
             this.txt_start_program2.Name = "txt_start_program2";
             this.txt_start_program2.Size = new System.Drawing.Size(416, 26);
             this.txt_start_program2.TabIndex = 17;
@@ -458,12 +467,13 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program2.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program2.Location = new System.Drawing.Point(692, 10);
+            this.btn_start_program2.Location = new System.Drawing.Point(723, 10);
             this.btn_start_program2.Name = "btn_start_program2";
             this.btn_start_program2.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program2.TabIndex = 15;
             this.btn_start_program2.Text = "Choose";
             this.btn_start_program2.UseVisualStyleBackColor = true;
+            this.btn_start_program2.Click += new System.EventHandler(this.btn_start_program2_Click);
             // 
             // txt_start_program_args2
             // 
@@ -488,7 +498,7 @@ namespace HeliosPlus.UIForms
             // lbl_start_program2
             // 
             this.lbl_start_program2.AutoSize = true;
-            this.lbl_start_program2.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program2.Location = new System.Drawing.Point(46, 14);
             this.lbl_start_program2.Name = "lbl_start_program2";
             this.lbl_start_program2.Size = new System.Drawing.Size(254, 20);
             this.lbl_start_program2.TabIndex = 0;
@@ -496,6 +506,7 @@ namespace HeliosPlus.UIForms
             // 
             // pnl_start_program1
             // 
+            this.pnl_start_program1.Controls.Add(this.cb_start_program1);
             this.pnl_start_program1.Controls.Add(this.txt_start_program1);
             this.pnl_start_program1.Controls.Add(this.cb_start_program_close1);
             this.pnl_start_program1.Controls.Add(this.btn_start_program1);
@@ -509,7 +520,7 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program1
             // 
-            this.txt_start_program1.Location = new System.Drawing.Point(269, 11);
+            this.txt_start_program1.Location = new System.Drawing.Point(300, 11);
             this.txt_start_program1.Name = "txt_start_program1";
             this.txt_start_program1.Size = new System.Drawing.Size(416, 26);
             this.txt_start_program1.TabIndex = 17;
@@ -530,12 +541,13 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program1.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program1.Location = new System.Drawing.Point(691, 10);
+            this.btn_start_program1.Location = new System.Drawing.Point(722, 10);
             this.btn_start_program1.Name = "btn_start_program1";
             this.btn_start_program1.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program1.TabIndex = 15;
             this.btn_start_program1.Text = "Choose";
             this.btn_start_program1.UseVisualStyleBackColor = true;
+            this.btn_start_program1.Click += new System.EventHandler(this.btn_start_program1_Click);
             // 
             // txt_start_program_args1
             // 
@@ -560,7 +572,7 @@ namespace HeliosPlus.UIForms
             // lbl_start_program1
             // 
             this.lbl_start_program1.AutoSize = true;
-            this.lbl_start_program1.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program1.Location = new System.Drawing.Point(46, 14);
             this.lbl_start_program1.Name = "lbl_start_program1";
             this.lbl_start_program1.Size = new System.Drawing.Size(228, 20);
             this.lbl_start_program1.TabIndex = 0;
@@ -1015,6 +1027,38 @@ namespace HeliosPlus.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
+            // cb_start_program1
+            // 
+            this.cb_start_program1.Location = new System.Drawing.Point(21, 18);
+            this.cb_start_program1.Name = "cb_start_program1";
+            this.cb_start_program1.Size = new System.Drawing.Size(15, 14);
+            this.cb_start_program1.TabIndex = 0;
+            this.cb_start_program1.UseVisualStyleBackColor = true;
+            // 
+            // cb_start_program2
+            // 
+            this.cb_start_program2.Location = new System.Drawing.Point(21, 18);
+            this.cb_start_program2.Name = "cb_start_program2";
+            this.cb_start_program2.Size = new System.Drawing.Size(15, 14);
+            this.cb_start_program2.TabIndex = 18;
+            this.cb_start_program2.UseVisualStyleBackColor = true;
+            // 
+            // cb_start_program3
+            // 
+            this.cb_start_program3.Location = new System.Drawing.Point(21, 18);
+            this.cb_start_program3.Name = "cb_start_program3";
+            this.cb_start_program3.Size = new System.Drawing.Size(15, 14);
+            this.cb_start_program3.TabIndex = 18;
+            this.cb_start_program3.UseVisualStyleBackColor = true;
+            // 
+            // cb_start_program4
+            // 
+            this.cb_start_program4.Location = new System.Drawing.Point(21, 18);
+            this.cb_start_program4.Name = "cb_start_program4";
+            this.cb_start_program4.Size = new System.Drawing.Size(15, 14);
+            this.cb_start_program4.TabIndex = 18;
+            this.cb_start_program4.UseVisualStyleBackColor = true;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1144,5 +1188,9 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.Button btn_start_program1;
         private System.Windows.Forms.TextBox txt_start_program_args1;
         private System.Windows.Forms.CheckBox cb_start_program_pass_args1;
+        private System.Windows.Forms.CheckBox cb_start_program4;
+        private System.Windows.Forms.CheckBox cb_start_program3;
+        private System.Windows.Forms.CheckBox cb_start_program2;
+        private System.Windows.Forms.CheckBox cb_start_program1;
     }
 }

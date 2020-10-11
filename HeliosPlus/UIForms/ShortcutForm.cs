@@ -1052,24 +1052,7 @@ namespace HeliosPlus.UIForms
 
         private void btn_exe_to_start_Click(object sender, EventArgs e)
         {
-            if (dialog_open.ShowDialog(this) == DialogResult.OK)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
-                {
-                    txt_executable.Text = dialog_open.FileName;
-                    dialog_open.FileName = string.Empty;
-                }
-                else
-                {
-                    MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_executable_file,
-                        Language.Executable,
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
-            }
+            txt_executable.Text = get_exe_file();
         }
 
         private void txt_shortcut_save_name_Click(object sender, EventArgs e)
@@ -1090,5 +1073,46 @@ namespace HeliosPlus.UIForms
                 _saveNameAutomatic = false;
         }
 
+        private void btn_start_program1_Click(object sender, EventArgs e)
+        {
+            btn_start_program1.Text = get_exe_file();
+        }
+
+        private string get_exe_file()
+        {
+            string textToReturn = "";
+            if (dialog_open.ShowDialog(this) == DialogResult.OK)
+            {
+                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
+                {
+                    textToReturn = dialog_open.FileName;
+                    dialog_open.FileName = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        Language.Selected_file_is_not_a_valid_executable_file,
+                        Language.Executable,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+            }
+            return textToReturn;
+        }
+
+        private void btn_start_program2_Click(object sender, EventArgs e)
+        {
+            btn_start_program2.Text = get_exe_file();
+        }
+
+        private void btn_start_program3_Click(object sender, EventArgs e)
+        {
+            btn_start_program3.Text = get_exe_file();
+        }
+
+        private void btn_start_program4_Click(object sender, EventArgs e)
+        {
+            btn_start_program4.Text = get_exe_file();
+        }
     }
 }
