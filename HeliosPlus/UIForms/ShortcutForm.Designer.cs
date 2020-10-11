@@ -353,6 +353,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args4.UseVisualStyleBackColor = true;
             this.cb_start_program_pass_args4.Visible = false;
+            this.cb_start_program_pass_args4.CheckedChanged += new System.EventHandler(this.cb_start_program_pass_args4_CheckedChanged);
             // 
             // lbl_start_program4
             // 
@@ -432,6 +433,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args3.UseVisualStyleBackColor = true;
             this.cb_start_program_pass_args3.Visible = false;
+            this.cb_start_program_pass_args3.CheckedChanged += new System.EventHandler(this.cb_start_program_pass_args3_CheckedChanged);
             // 
             // lbl_start_program3
             // 
@@ -511,6 +513,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args2.UseVisualStyleBackColor = true;
             this.cb_start_program_pass_args2.Visible = false;
+            this.cb_start_program_pass_args2.CheckedChanged += new System.EventHandler(this.cb_start_program_pass_args2_CheckedChanged);
             // 
             // lbl_start_program2
             // 
@@ -590,6 +593,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args1.UseVisualStyleBackColor = true;
             this.cb_start_program_pass_args1.Visible = false;
+            this.cb_start_program_pass_args1.CheckedChanged += new System.EventHandler(this.cb_start_program_pass_args1_CheckedChanged);
             // 
             // lbl_start_program1
             // 

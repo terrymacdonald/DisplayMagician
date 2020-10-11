@@ -40,6 +40,16 @@ namespace HeliosPlus
         NoGame,
     }
 
+    public struct StartProgram
+    {
+        public int Priority;
+        public bool Enabled;
+        public string Executable;
+        public string Arguments;
+        public bool ExecutableArgumentsRequired;
+        public bool CloseOnFinish;
+    }
+
     public class ShortcutItem
     {
         
@@ -185,6 +195,8 @@ namespace HeliosPlus
         public string GameArguments { get; set; } = "";
 
         public bool GameArgumentsRequired { get; set; } = false;
+
+        public StartProgram[] StartPrograms { get; set; }
 
         public string OriginalIconPath {
             get

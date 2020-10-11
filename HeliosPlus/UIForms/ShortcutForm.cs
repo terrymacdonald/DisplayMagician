@@ -428,6 +428,59 @@ namespace HeliosPlus.UIForms
             // Update the profile to use
             _shortcutToEdit.ProfileToUse = _profileToUse;
 
+            StartProgram[] myStartPrograms = { };
+            // Update the 4 programs to start
+            if (cb_start_program1.Checked)
+            {
+                StartProgram myStartProgram = new StartProgram();
+                myStartProgram.Priority = 1; 
+                myStartProgram.Executable = txt_start_program1.Text;
+                myStartProgram.Enabled = cb_start_program1.Checked;
+                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked;
+                myStartProgram.Arguments = txt_start_program_args1.Text;
+                myStartProgram.CloseOnFinish = cb_start_program_close1.Checked;
+                myStartPrograms.Append(myStartProgram);
+            }
+
+            if (cb_start_program2.Checked)
+            {
+                StartProgram myStartProgram = new StartProgram();
+                myStartProgram.Priority = 2;
+                myStartProgram.Executable = txt_start_program2.Text;
+                myStartProgram.Enabled = cb_start_program2.Checked;
+                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked;
+                myStartProgram.Arguments = txt_start_program_args2.Text;
+                myStartProgram.CloseOnFinish = cb_start_program_close2.Checked;
+                myStartPrograms.Append(myStartProgram);
+            }
+
+            if (cb_start_program3.Checked)
+            {
+                StartProgram myStartProgram = new StartProgram();
+                myStartProgram.Priority = 3;
+                myStartProgram.Executable = txt_start_program3.Text;
+                myStartProgram.Enabled = cb_start_program3.Checked;
+                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked;
+                myStartProgram.Arguments = txt_start_program_args3.Text;
+                myStartProgram.CloseOnFinish = cb_start_program_close3.Checked;
+                myStartPrograms.Append(myStartProgram);
+            }
+
+            if (cb_start_program4.Checked)
+            {
+                StartProgram myStartProgram = new StartProgram();
+                myStartProgram.Priority = 4;
+                myStartProgram.Executable = txt_start_program4.Text;
+                myStartProgram.Enabled = cb_start_program4.Checked;
+                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked;
+                myStartProgram.Arguments = txt_start_program_args4.Text;
+                myStartProgram.CloseOnFinish = cb_start_program_close4.Checked;
+                myStartPrograms.Append(myStartProgram);
+            }
+
+            // Save the start programs to the shortcut
+            _shortcutToEdit.StartPrograms = myStartPrograms;
+
             // Update the Category as well as the OriginalIconPath
             // (as we need the OriginalIconPath to run the SaveShortcutIconToCache method)
             if (rb_launcher.Checked)
@@ -1139,7 +1192,6 @@ namespace HeliosPlus.UIForms
             {
                 // Enable the Executable Arguments Text field
                 txt_start_program1.Visible = true;
-                txt_start_program_args1.Visible = true;
                 btn_start_program1.Visible = true;
                 cb_start_program_pass_args1.Visible = true;
                 cb_start_program_close1.Visible = true;
@@ -1148,7 +1200,6 @@ namespace HeliosPlus.UIForms
             {
                 // Disable the Executable Arguments Text field
                 txt_start_program1.Visible = false;
-                txt_start_program_args1.Visible = false;
                 btn_start_program1.Visible = false;
                 cb_start_program_pass_args1.Visible = false;
                 cb_start_program_close1.Visible = false;
@@ -1159,12 +1210,11 @@ namespace HeliosPlus.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            // Disable the start program 1 fields
+            // Disable the start program 2 fields
             if (cb_start_program2.Checked)
             {
                 // Enable the Executable Arguments Text field
                 txt_start_program2.Visible = true;
-                txt_start_program_args2.Visible = true;
                 btn_start_program2.Visible = true;
                 cb_start_program_pass_args2.Visible = true;
                 cb_start_program_close2.Visible = true;
@@ -1173,7 +1223,6 @@ namespace HeliosPlus.UIForms
             {
                 // Disable the Executable Arguments Text field
                 txt_start_program2.Visible = false;
-                txt_start_program_args2.Visible = false;
                 btn_start_program2.Visible = false;
                 cb_start_program_pass_args2.Visible = false;
                 cb_start_program_close2.Visible = false;
@@ -1184,12 +1233,11 @@ namespace HeliosPlus.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            // Disable the start program 1 fields
+            // Disable the start program 3 fields
             if (cb_start_program3.Checked)
             {
                 // Enable the Executable Arguments Text field
                 txt_start_program3.Visible = true;
-                txt_start_program_args3.Visible = true;
                 btn_start_program3.Visible = true;
                 cb_start_program_pass_args3.Visible = true;
                 cb_start_program_close3.Visible = true;
@@ -1198,7 +1246,6 @@ namespace HeliosPlus.UIForms
             {
                 // Disable the Executable Arguments Text field
                 txt_start_program3.Visible = false;
-                txt_start_program_args3.Visible = false;
                 btn_start_program3.Visible = false;
                 cb_start_program_pass_args3.Visible = false;
                 cb_start_program_close3.Visible = false;
@@ -1209,12 +1256,11 @@ namespace HeliosPlus.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            // Disable the start program 1 fields
+            // Disable the start program 4 fields
             if (cb_start_program4.Checked)
             {
                 // Enable the Executable Arguments Text field
                 txt_start_program4.Visible = true;
-                txt_start_program_args4.Visible = true;
                 btn_start_program4.Visible = true;
                 cb_start_program_pass_args4.Visible = true;
                 cb_start_program_close4.Visible = true;
@@ -1223,10 +1269,77 @@ namespace HeliosPlus.UIForms
             {
                 // Disable the Executable Arguments Text field
                 txt_start_program4.Visible = false;
-                txt_start_program_args4.Visible = false;
                 btn_start_program4.Visible = false;
                 cb_start_program_pass_args4.Visible = false;
                 cb_start_program_close4.Visible = false;
+            }
+        }
+
+        private void cb_start_program_pass_args1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 1 fields
+            if (cb_start_program_pass_args1.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program_args1.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program_args1.Visible = false;
+            }
+        }
+
+        private void cb_start_program_pass_args2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 2 fields
+            if (cb_start_program_pass_args2.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program_args2.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program_args2.Visible = false;
+            }
+        }
+
+        private void cb_start_program_pass_args3_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 3 fields
+            if (cb_start_program_pass_args3.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program_args3.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program_args3.Visible = false;
+            }
+        }
+
+        private void cb_start_program_pass_args4_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 4 fields
+            if (cb_start_program_pass_args4.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program_args4.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program_args4.Visible = false;
             }
         }
     }
