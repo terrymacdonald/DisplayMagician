@@ -123,6 +123,9 @@
   <metadata name="dialog_open.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
+  <data name="ilv_saved_profiles.Colors" xml:space="preserve">
+    <value>BorderColor = 406d6d6d; UnFocusedColor1 = ffff8080; UnFocusedColor2 = LightCoral; UnFocusedBorderColor = Maroon; HoverColor1 = Transparent; HoverColor2 = Transparent; HoverBorderColor = Transparent; SelectedColor1 = ffff8080; SelectedColor2 = LightCoral; SelectedBorderColor = Maroon; DisabledColor1 = 6d6d6d; DisabledColor2 = 206d6d6d; DisabledBorderColor = 206d6d6d; DisabledForeColor = ff808080; ColumnHeaderBackColor1 = 20f0f0f0; ColumnHeaderBackColor2 = c4f0f0f0; ColumnHeaderHoverColor1 = 100078d7; ColumnHeaderHoverColor2 = 400078d7; ColumnSelectColor = 106d6d6d; ColumnSeparatorColor = 206d6d6d; PaneBackColor = 106d6d6d; PaneSeparatorColor = 806d6d6d; SelectionRectangleColor1 = ffff8080; SelectionRectangleColor2 = 800078d7</value>
+  </data>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>67</value>
   </metadata>

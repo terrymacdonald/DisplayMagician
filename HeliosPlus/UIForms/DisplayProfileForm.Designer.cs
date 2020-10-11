@@ -251,6 +251,7 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.AllowColumnResize = false;
             this.ilv_saved_profiles.AllowItemReorder = false;
             this.ilv_saved_profiles.AllowPaneResize = false;
+            this.ilv_saved_profiles.Colors = new Manina.Windows.Forms.ImageListViewColor(resources.GetString("ilv_saved_profiles.Colors"));
             this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 601);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
