@@ -189,11 +189,16 @@ namespace HeliosPlus.UIForms
                 }
                 else
                 {
-                    lbl_profile_shown_subtitle.Text = "";
                     if (ProfileRepository.IsActiveProfile(_selectedProfile))
+                    {
                         btn_apply.Visible = false;
+                        lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
+                    }
                     else
+                    {
                         btn_apply.Visible = true;
+                        lbl_profile_shown_subtitle.Text = "";
+                    }
                 }
             }
             else
@@ -201,7 +206,7 @@ namespace HeliosPlus.UIForms
                 // we don't have the profile stored yet
                 _saveOrRenameMode = "save";
                 btn_save_or_rename.Text = "Save As";
-                lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet";
+                lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet.";
                 btn_apply.Visible = false;
             }
 

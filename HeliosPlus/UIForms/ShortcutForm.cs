@@ -793,6 +793,9 @@ namespace HeliosPlus.UIForms
 
             _loadedShortcut = true;
 
+            // Finally enable the save button if it's still valid
+            enableSaveButtonIfValid();
+
         }
 
         private void rb_wait_process_CheckedChanged(object sender, EventArgs e)
@@ -904,7 +907,7 @@ namespace HeliosPlus.UIForms
             lbl_profile_shown.Text = _profileToUse.Name;
 
             if (_profileToUse.Equals(ProfileRepository.CurrentProfile))
-                lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
+                lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
             else
                 lbl_profile_shown_subtitle.Text = "";
 
