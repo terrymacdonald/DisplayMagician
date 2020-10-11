@@ -196,7 +196,7 @@ namespace HeliosPlus
 
         public bool GameArgumentsRequired { get; set; } = false;
 
-        public StartProgram[] StartPrograms { get; set; }
+        public List<StartProgram> StartPrograms { get; set; }
 
         public string OriginalIconPath {
             get

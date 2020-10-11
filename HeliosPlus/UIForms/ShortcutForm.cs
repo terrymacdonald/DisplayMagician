@@ -428,55 +428,44 @@ namespace HeliosPlus.UIForms
             // Update the profile to use
             _shortcutToEdit.ProfileToUse = _profileToUse;
 
-            StartProgram[] myStartPrograms = { };
-            // Update the 4 programs to start
-            if (cb_start_program1.Checked)
-            {
-                StartProgram myStartProgram = new StartProgram();
-                myStartProgram.Priority = 1; 
-                myStartProgram.Executable = txt_start_program1.Text;
-                myStartProgram.Enabled = cb_start_program1.Checked;
-                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked;
-                myStartProgram.Arguments = txt_start_program_args1.Text;
-                myStartProgram.CloseOnFinish = cb_start_program_close1.Checked;
-                myStartPrograms.Append(myStartProgram);
-            }
+            List<StartProgram> myStartPrograms = new List<StartProgram>();
 
-            if (cb_start_program2.Checked)
-            {
-                StartProgram myStartProgram = new StartProgram();
-                myStartProgram.Priority = 2;
-                myStartProgram.Executable = txt_start_program2.Text;
-                myStartProgram.Enabled = cb_start_program2.Checked;
-                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked;
-                myStartProgram.Arguments = txt_start_program_args2.Text;
-                myStartProgram.CloseOnFinish = cb_start_program_close2.Checked;
-                myStartPrograms.Append(myStartProgram);
-            }
+            // Save the start program 1
+            StartProgram myStartProgram = new StartProgram();
+            myStartProgram.Priority = 1;
+            myStartProgram.Enabled = cb_start_program1.Checked;
+            myStartProgram.Executable = txt_start_program1.Text;
+            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked;
+            myStartProgram.Arguments = txt_start_program_args1.Text;
+            myStartProgram.CloseOnFinish = cb_start_program_close1.Checked;
+            myStartPrograms.Add(myStartProgram);
 
-            if (cb_start_program3.Checked)
-            {
-                StartProgram myStartProgram = new StartProgram();
-                myStartProgram.Priority = 3;
-                myStartProgram.Executable = txt_start_program3.Text;
-                myStartProgram.Enabled = cb_start_program3.Checked;
-                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked;
-                myStartProgram.Arguments = txt_start_program_args3.Text;
-                myStartProgram.CloseOnFinish = cb_start_program_close3.Checked;
-                myStartPrograms.Append(myStartProgram);
-            }
+            myStartProgram = new StartProgram();
+            myStartProgram.Priority = 2;
+            myStartProgram.Executable = txt_start_program2.Text;
+            myStartProgram.Enabled = cb_start_program2.Checked;
+            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked;
+            myStartProgram.Arguments = txt_start_program_args2.Text;
+            myStartProgram.CloseOnFinish = cb_start_program_close2.Checked;
+            myStartPrograms.Add(myStartProgram);
 
-            if (cb_start_program4.Checked)
-            {
-                StartProgram myStartProgram = new StartProgram();
-                myStartProgram.Priority = 4;
-                myStartProgram.Executable = txt_start_program4.Text;
-                myStartProgram.Enabled = cb_start_program4.Checked;
-                myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked;
-                myStartProgram.Arguments = txt_start_program_args4.Text;
-                myStartProgram.CloseOnFinish = cb_start_program_close4.Checked;
-                myStartPrograms.Append(myStartProgram);
-            }
+            myStartProgram = new StartProgram();
+            myStartProgram.Priority = 3;
+            myStartProgram.Executable = txt_start_program3.Text;
+            myStartProgram.Enabled = cb_start_program3.Checked;
+            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked;
+            myStartProgram.Arguments = txt_start_program_args3.Text;
+            myStartProgram.CloseOnFinish = cb_start_program_close3.Checked;
+            myStartPrograms.Add(myStartProgram);
+
+            myStartProgram = new StartProgram();
+            myStartProgram.Priority = 4;
+            myStartProgram.Executable = txt_start_program4.Text;
+            myStartProgram.Enabled = cb_start_program4.Checked;
+            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked;
+            myStartProgram.Arguments = txt_start_program_args4.Text;
+            myStartProgram.CloseOnFinish = cb_start_program_close4.Checked;
+            myStartPrograms.Add(myStartProgram);
 
             // Save the start programs to the shortcut
             _shortcutToEdit.StartPrograms = myStartPrograms;
@@ -841,7 +830,7 @@ namespace HeliosPlus.UIForms
 
             // Set up the start programs
 
-            if (_shortcutToEdit.StartPrograms is StartProgram[] && _shortcutToEdit.StartPrograms.Length > 0)
+            if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
                 foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms)
                 {

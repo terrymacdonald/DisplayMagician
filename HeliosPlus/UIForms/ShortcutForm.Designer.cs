@@ -334,7 +334,6 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program_args4
             // 
-            this.txt_start_program_args4.Enabled = false;
             this.txt_start_program_args4.Location = new System.Drawing.Point(397, 50);
             this.txt_start_program_args4.Name = "txt_start_program_args4";
             this.txt_start_program_args4.Size = new System.Drawing.Size(540, 26);
@@ -414,7 +413,6 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program_args3
             // 
-            this.txt_start_program_args3.Enabled = false;
             this.txt_start_program_args3.Location = new System.Drawing.Point(397, 50);
             this.txt_start_program_args3.Name = "txt_start_program_args3";
             this.txt_start_program_args3.Size = new System.Drawing.Size(540, 26);
@@ -494,7 +492,6 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program_args2
             // 
-            this.txt_start_program_args2.Enabled = false;
             this.txt_start_program_args2.Location = new System.Drawing.Point(397, 50);
             this.txt_start_program_args2.Name = "txt_start_program_args2";
             this.txt_start_program_args2.Size = new System.Drawing.Size(540, 26);
@@ -574,7 +571,6 @@ namespace HeliosPlus.UIForms
             // 
             // txt_start_program_args1
             // 
-            this.txt_start_program_args1.Enabled = false;
             this.txt_start_program_args1.Location = new System.Drawing.Point(397, 50);
             this.txt_start_program_args1.Name = "txt_start_program_args1";
             this.txt_start_program_args1.Size = new System.Drawing.Size(540, 26);
@@ -986,9 +982,9 @@ namespace HeliosPlus.UIForms
             this.rb_switch_permanent.ForeColor = System.Drawing.Color.White;
             this.rb_switch_permanent.Location = new System.Drawing.Point(308, 131);
             this.rb_switch_permanent.Name = "rb_switch_permanent";
-            this.rb_switch_permanent.Size = new System.Drawing.Size(388, 24);
+            this.rb_switch_permanent.Size = new System.Drawing.Size(508, 24);
             this.rb_switch_permanent.TabIndex = 10;
-            this.rb_switch_permanent.Text = "Keep using the Display Profile  (permanent change)";
+            this.rb_switch_permanent.Text = "Keep using the Display Profile after Game ends (permanent change)";
             this.rb_switch_permanent.UseVisualStyleBackColor = true;
             this.rb_switch_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_permanent_CheckedChanged);
             // 
