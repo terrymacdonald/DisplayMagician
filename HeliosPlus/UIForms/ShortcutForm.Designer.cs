@@ -44,8 +44,34 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.tabp_before = new System.Windows.Forms.TabPage();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.label3 = new System.Windows.Forms.Label();
+            this.pnl_start_program4 = new System.Windows.Forms.Panel();
+            this.txt_start_program4 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_close4 = new System.Windows.Forms.CheckBox();
+            this.btn_start_program4 = new System.Windows.Forms.Button();
+            this.txt_start_program_args4 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_pass_args4 = new System.Windows.Forms.CheckBox();
+            this.lbl_start_program4 = new System.Windows.Forms.Label();
+            this.pnl_start_program3 = new System.Windows.Forms.Panel();
+            this.txt_start_program3 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_close3 = new System.Windows.Forms.CheckBox();
+            this.btn_start_program3 = new System.Windows.Forms.Button();
+            this.txt_start_program_args3 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_pass_args3 = new System.Windows.Forms.CheckBox();
+            this.lbl_start_program3 = new System.Windows.Forms.Label();
+            this.pnl_start_program2 = new System.Windows.Forms.Panel();
+            this.txt_start_program2 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_close2 = new System.Windows.Forms.CheckBox();
+            this.btn_start_program2 = new System.Windows.Forms.Button();
+            this.txt_start_program_args2 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_pass_args2 = new System.Windows.Forms.CheckBox();
+            this.lbl_start_program2 = new System.Windows.Forms.Label();
+            this.pnl_start_program1 = new System.Windows.Forms.Panel();
+            this.txt_start_program1 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_close1 = new System.Windows.Forms.CheckBox();
+            this.btn_start_program1 = new System.Windows.Forms.Button();
+            this.txt_start_program_args1 = new System.Windows.Forms.TextBox();
+            this.cb_start_program_pass_args1 = new System.Windows.Forms.CheckBox();
+            this.lbl_start_program1 = new System.Windows.Forms.Label();
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.p_standalone = new System.Windows.Forms.Panel();
             this.btn_exe_to_start = new System.Windows.Forms.Button();
@@ -83,45 +109,19 @@ namespace HeliosPlus.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
-            this.checkBox2 = new System.Windows.Forms.CheckBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.textBox3 = new System.Windows.Forms.TextBox();
-            this.checkBox3 = new System.Windows.Forms.CheckBox();
-            this.button2 = new System.Windows.Forms.Button();
-            this.textBox4 = new System.Windows.Forms.TextBox();
-            this.checkBox4 = new System.Windows.Forms.CheckBox();
-            this.label4 = new System.Windows.Forms.Label();
-            this.panel3 = new System.Windows.Forms.Panel();
-            this.textBox5 = new System.Windows.Forms.TextBox();
-            this.checkBox5 = new System.Windows.Forms.CheckBox();
-            this.button3 = new System.Windows.Forms.Button();
-            this.textBox6 = new System.Windows.Forms.TextBox();
-            this.checkBox6 = new System.Windows.Forms.CheckBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.panel4 = new System.Windows.Forms.Panel();
-            this.textBox7 = new System.Windows.Forms.TextBox();
-            this.checkBox7 = new System.Windows.Forms.CheckBox();
-            this.button4 = new System.Windows.Forms.Button();
-            this.textBox8 = new System.Windows.Forms.TextBox();
-            this.checkBox8 = new System.Windows.Forms.CheckBox();
-            this.label6 = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_before.SuspendLayout();
-            this.panel1.SuspendLayout();
+            this.pnl_start_program4.SuspendLayout();
+            this.pnl_start_program3.SuspendLayout();
+            this.pnl_start_program2.SuspendLayout();
+            this.pnl_start_program1.SuspendLayout();
             this.tabp_game.SuspendLayout();
             this.p_standalone.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_executable)).BeginInit();
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
             this.tabp_after.SuspendLayout();
-            this.panel2.SuspendLayout();
-            this.panel3.SuspendLayout();
-            this.panel4.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -265,10 +265,10 @@ namespace HeliosPlus.UIForms
             // tabp_before
             // 
             this.tabp_before.BackColor = System.Drawing.Color.Black;
-            this.tabp_before.Controls.Add(this.panel4);
-            this.tabp_before.Controls.Add(this.panel3);
-            this.tabp_before.Controls.Add(this.panel2);
-            this.tabp_before.Controls.Add(this.panel1);
+            this.tabp_before.Controls.Add(this.pnl_start_program4);
+            this.tabp_before.Controls.Add(this.pnl_start_program3);
+            this.tabp_before.Controls.Add(this.pnl_start_program2);
+            this.tabp_before.Controls.Add(this.pnl_start_program1);
             this.tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_before.ForeColor = System.Drawing.Color.White;
             this.tabp_before.Location = new System.Drawing.Point(4, 32);
@@ -278,27 +278,293 @@ namespace HeliosPlus.UIForms
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "2. Choose what happens before";
             // 
-            // panel1
+            // pnl_start_program4
             // 
-            this.panel1.Controls.Add(this.textBox2);
-            this.panel1.Controls.Add(this.checkBox2);
-            this.panel1.Controls.Add(this.button1);
-            this.panel1.Controls.Add(this.textBox1);
-            this.panel1.Controls.Add(this.checkBox1);
-            this.panel1.Controls.Add(this.label3);
-            this.panel1.Location = new System.Drawing.Point(48, 28);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(959, 124);
-            this.panel1.TabIndex = 0;
+            this.pnl_start_program4.Controls.Add(this.txt_start_program4);
+            this.pnl_start_program4.Controls.Add(this.cb_start_program_close4);
+            this.pnl_start_program4.Controls.Add(this.btn_start_program4);
+            this.pnl_start_program4.Controls.Add(this.txt_start_program_args4);
+            this.pnl_start_program4.Controls.Add(this.cb_start_program_pass_args4);
+            this.pnl_start_program4.Controls.Add(this.lbl_start_program4);
+            this.pnl_start_program4.Location = new System.Drawing.Point(48, 443);
+            this.pnl_start_program4.Name = "pnl_start_program4";
+            this.pnl_start_program4.Size = new System.Drawing.Size(959, 124);
+            this.pnl_start_program4.TabIndex = 19;
             // 
-            // label3
+            // txt_start_program4
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(15, 14);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(228, 20);
-            this.label3.TabIndex = 0;
-            this.label3.Text = "Choose a program to start first:";
+            this.txt_start_program4.Location = new System.Drawing.Point(269, 11);
+            this.txt_start_program4.Name = "txt_start_program4";
+            this.txt_start_program4.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program4.TabIndex = 17;
+            // 
+            // cb_start_program_close4
+            // 
+            this.cb_start_program_close4.AutoSize = true;
+            this.cb_start_program_close4.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_close4.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close4.Name = "cb_start_program_close4";
+            this.cb_start_program_close4.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close4.TabIndex = 16;
+            this.cb_start_program_close4.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_close4.UseVisualStyleBackColor = true;
+            // 
+            // btn_start_program4
+            // 
+            this.btn_start_program4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_start_program4.ForeColor = System.Drawing.Color.White;
+            this.btn_start_program4.Location = new System.Drawing.Point(691, 10);
+            this.btn_start_program4.Name = "btn_start_program4";
+            this.btn_start_program4.Size = new System.Drawing.Size(85, 27);
+            this.btn_start_program4.TabIndex = 15;
+            this.btn_start_program4.Text = "Choose";
+            this.btn_start_program4.UseVisualStyleBackColor = true;
+            // 
+            // txt_start_program_args4
+            // 
+            this.txt_start_program_args4.Enabled = false;
+            this.txt_start_program_args4.Location = new System.Drawing.Point(397, 50);
+            this.txt_start_program_args4.Name = "txt_start_program_args4";
+            this.txt_start_program_args4.Size = new System.Drawing.Size(540, 26);
+            this.txt_start_program_args4.TabIndex = 14;
+            // 
+            // cb_start_program_pass_args4
+            // 
+            this.cb_start_program_pass_args4.AutoSize = true;
+            this.cb_start_program_pass_args4.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_pass_args4.Location = new System.Drawing.Point(167, 52);
+            this.cb_start_program_pass_args4.Name = "cb_start_program_pass_args4";
+            this.cb_start_program_pass_args4.Size = new System.Drawing.Size(228, 24);
+            this.cb_start_program_pass_args4.TabIndex = 13;
+            this.cb_start_program_pass_args4.Text = "Pass arguments to program:";
+            this.cb_start_program_pass_args4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_pass_args4.UseVisualStyleBackColor = true;
+            // 
+            // lbl_start_program4
+            // 
+            this.lbl_start_program4.AutoSize = true;
+            this.lbl_start_program4.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program4.Name = "lbl_start_program4";
+            this.lbl_start_program4.Size = new System.Drawing.Size(244, 20);
+            this.lbl_start_program4.TabIndex = 0;
+            this.lbl_start_program4.Text = "Choose a program to start fourth:";
+            // 
+            // pnl_start_program3
+            // 
+            this.pnl_start_program3.Controls.Add(this.txt_start_program3);
+            this.pnl_start_program3.Controls.Add(this.cb_start_program_close3);
+            this.pnl_start_program3.Controls.Add(this.btn_start_program3);
+            this.pnl_start_program3.Controls.Add(this.txt_start_program_args3);
+            this.pnl_start_program3.Controls.Add(this.cb_start_program_pass_args3);
+            this.pnl_start_program3.Controls.Add(this.lbl_start_program3);
+            this.pnl_start_program3.Location = new System.Drawing.Point(48, 306);
+            this.pnl_start_program3.Name = "pnl_start_program3";
+            this.pnl_start_program3.Size = new System.Drawing.Size(959, 124);
+            this.pnl_start_program3.TabIndex = 18;
+            // 
+            // txt_start_program3
+            // 
+            this.txt_start_program3.Location = new System.Drawing.Point(269, 11);
+            this.txt_start_program3.Name = "txt_start_program3";
+            this.txt_start_program3.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program3.TabIndex = 17;
+            // 
+            // cb_start_program_close3
+            // 
+            this.cb_start_program_close3.AutoSize = true;
+            this.cb_start_program_close3.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_close3.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close3.Name = "cb_start_program_close3";
+            this.cb_start_program_close3.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close3.TabIndex = 16;
+            this.cb_start_program_close3.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_close3.UseVisualStyleBackColor = true;
+            // 
+            // btn_start_program3
+            // 
+            this.btn_start_program3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_start_program3.ForeColor = System.Drawing.Color.White;
+            this.btn_start_program3.Location = new System.Drawing.Point(691, 10);
+            this.btn_start_program3.Name = "btn_start_program3";
+            this.btn_start_program3.Size = new System.Drawing.Size(85, 27);
+            this.btn_start_program3.TabIndex = 15;
+            this.btn_start_program3.Text = "Choose";
+            this.btn_start_program3.UseVisualStyleBackColor = true;
+            // 
+            // txt_start_program_args3
+            // 
+            this.txt_start_program_args3.Enabled = false;
+            this.txt_start_program_args3.Location = new System.Drawing.Point(397, 50);
+            this.txt_start_program_args3.Name = "txt_start_program_args3";
+            this.txt_start_program_args3.Size = new System.Drawing.Size(540, 26);
+            this.txt_start_program_args3.TabIndex = 14;
+            // 
+            // cb_start_program_pass_args3
+            // 
+            this.cb_start_program_pass_args3.AutoSize = true;
+            this.cb_start_program_pass_args3.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_pass_args3.Location = new System.Drawing.Point(167, 52);
+            this.cb_start_program_pass_args3.Name = "cb_start_program_pass_args3";
+            this.cb_start_program_pass_args3.Size = new System.Drawing.Size(228, 24);
+            this.cb_start_program_pass_args3.TabIndex = 13;
+            this.cb_start_program_pass_args3.Text = "Pass arguments to program:";
+            this.cb_start_program_pass_args3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_pass_args3.UseVisualStyleBackColor = true;
+            // 
+            // lbl_start_program3
+            // 
+            this.lbl_start_program3.AutoSize = true;
+            this.lbl_start_program3.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program3.Name = "lbl_start_program3";
+            this.lbl_start_program3.Size = new System.Drawing.Size(233, 20);
+            this.lbl_start_program3.TabIndex = 0;
+            this.lbl_start_program3.Text = "Choose a program to start third:";
+            // 
+            // pnl_start_program2
+            // 
+            this.pnl_start_program2.Controls.Add(this.txt_start_program2);
+            this.pnl_start_program2.Controls.Add(this.cb_start_program_close2);
+            this.pnl_start_program2.Controls.Add(this.btn_start_program2);
+            this.pnl_start_program2.Controls.Add(this.txt_start_program_args2);
+            this.pnl_start_program2.Controls.Add(this.cb_start_program_pass_args2);
+            this.pnl_start_program2.Controls.Add(this.lbl_start_program2);
+            this.pnl_start_program2.Location = new System.Drawing.Point(48, 167);
+            this.pnl_start_program2.Name = "pnl_start_program2";
+            this.pnl_start_program2.Size = new System.Drawing.Size(959, 124);
+            this.pnl_start_program2.TabIndex = 18;
+            // 
+            // txt_start_program2
+            // 
+            this.txt_start_program2.Location = new System.Drawing.Point(270, 11);
+            this.txt_start_program2.Name = "txt_start_program2";
+            this.txt_start_program2.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program2.TabIndex = 17;
+            // 
+            // cb_start_program_close2
+            // 
+            this.cb_start_program_close2.AutoSize = true;
+            this.cb_start_program_close2.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_close2.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close2.Name = "cb_start_program_close2";
+            this.cb_start_program_close2.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close2.TabIndex = 16;
+            this.cb_start_program_close2.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_close2.UseVisualStyleBackColor = true;
+            // 
+            // btn_start_program2
+            // 
+            this.btn_start_program2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_start_program2.ForeColor = System.Drawing.Color.White;
+            this.btn_start_program2.Location = new System.Drawing.Point(692, 10);
+            this.btn_start_program2.Name = "btn_start_program2";
+            this.btn_start_program2.Size = new System.Drawing.Size(85, 27);
+            this.btn_start_program2.TabIndex = 15;
+            this.btn_start_program2.Text = "Choose";
+            this.btn_start_program2.UseVisualStyleBackColor = true;
+            // 
+            // txt_start_program_args2
+            // 
+            this.txt_start_program_args2.Enabled = false;
+            this.txt_start_program_args2.Location = new System.Drawing.Point(397, 50);
+            this.txt_start_program_args2.Name = "txt_start_program_args2";
+            this.txt_start_program_args2.Size = new System.Drawing.Size(540, 26);
+            this.txt_start_program_args2.TabIndex = 14;
+            // 
+            // cb_start_program_pass_args2
+            // 
+            this.cb_start_program_pass_args2.AutoSize = true;
+            this.cb_start_program_pass_args2.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_pass_args2.Location = new System.Drawing.Point(167, 52);
+            this.cb_start_program_pass_args2.Name = "cb_start_program_pass_args2";
+            this.cb_start_program_pass_args2.Size = new System.Drawing.Size(228, 24);
+            this.cb_start_program_pass_args2.TabIndex = 13;
+            this.cb_start_program_pass_args2.Text = "Pass arguments to program:";
+            this.cb_start_program_pass_args2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_pass_args2.UseVisualStyleBackColor = true;
+            // 
+            // lbl_start_program2
+            // 
+            this.lbl_start_program2.AutoSize = true;
+            this.lbl_start_program2.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program2.Name = "lbl_start_program2";
+            this.lbl_start_program2.Size = new System.Drawing.Size(254, 20);
+            this.lbl_start_program2.TabIndex = 0;
+            this.lbl_start_program2.Text = "Choose a program to start second:";
+            // 
+            // pnl_start_program1
+            // 
+            this.pnl_start_program1.Controls.Add(this.txt_start_program1);
+            this.pnl_start_program1.Controls.Add(this.cb_start_program_close1);
+            this.pnl_start_program1.Controls.Add(this.btn_start_program1);
+            this.pnl_start_program1.Controls.Add(this.txt_start_program_args1);
+            this.pnl_start_program1.Controls.Add(this.cb_start_program_pass_args1);
+            this.pnl_start_program1.Controls.Add(this.lbl_start_program1);
+            this.pnl_start_program1.Location = new System.Drawing.Point(48, 28);
+            this.pnl_start_program1.Name = "pnl_start_program1";
+            this.pnl_start_program1.Size = new System.Drawing.Size(959, 124);
+            this.pnl_start_program1.TabIndex = 0;
+            // 
+            // txt_start_program1
+            // 
+            this.txt_start_program1.Location = new System.Drawing.Point(269, 11);
+            this.txt_start_program1.Name = "txt_start_program1";
+            this.txt_start_program1.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program1.TabIndex = 17;
+            // 
+            // cb_start_program_close1
+            // 
+            this.cb_start_program_close1.AutoSize = true;
+            this.cb_start_program_close1.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_close1.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close1.Name = "cb_start_program_close1";
+            this.cb_start_program_close1.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close1.TabIndex = 16;
+            this.cb_start_program_close1.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_close1.UseVisualStyleBackColor = true;
+            // 
+            // btn_start_program1
+            // 
+            this.btn_start_program1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_start_program1.ForeColor = System.Drawing.Color.White;
+            this.btn_start_program1.Location = new System.Drawing.Point(691, 10);
+            this.btn_start_program1.Name = "btn_start_program1";
+            this.btn_start_program1.Size = new System.Drawing.Size(85, 27);
+            this.btn_start_program1.TabIndex = 15;
+            this.btn_start_program1.Text = "Choose";
+            this.btn_start_program1.UseVisualStyleBackColor = true;
+            // 
+            // txt_start_program_args1
+            // 
+            this.txt_start_program_args1.Enabled = false;
+            this.txt_start_program_args1.Location = new System.Drawing.Point(397, 50);
+            this.txt_start_program_args1.Name = "txt_start_program_args1";
+            this.txt_start_program_args1.Size = new System.Drawing.Size(540, 26);
+            this.txt_start_program_args1.TabIndex = 14;
+            // 
+            // cb_start_program_pass_args1
+            // 
+            this.cb_start_program_pass_args1.AutoSize = true;
+            this.cb_start_program_pass_args1.ForeColor = System.Drawing.Color.White;
+            this.cb_start_program_pass_args1.Location = new System.Drawing.Point(167, 52);
+            this.cb_start_program_pass_args1.Name = "cb_start_program_pass_args1";
+            this.cb_start_program_pass_args1.Size = new System.Drawing.Size(228, 24);
+            this.cb_start_program_pass_args1.TabIndex = 13;
+            this.cb_start_program_pass_args1.Text = "Pass arguments to program:";
+            this.cb_start_program_pass_args1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_pass_args1.UseVisualStyleBackColor = true;
+            // 
+            // lbl_start_program1
+            // 
+            this.lbl_start_program1.AutoSize = true;
+            this.lbl_start_program1.Location = new System.Drawing.Point(15, 14);
+            this.lbl_start_program1.Name = "lbl_start_program1";
+            this.lbl_start_program1.Size = new System.Drawing.Size(228, 20);
+            this.lbl_start_program1.TabIndex = 0;
+            this.lbl_start_program1.Text = "Choose a program to start first:";
             // 
             // tabp_game
             // 
@@ -749,272 +1015,6 @@ namespace HeliosPlus.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
-            // button1
-            // 
-            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button1.ForeColor = System.Drawing.Color.White;
-            this.button1.Location = new System.Drawing.Point(691, 10);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(85, 27);
-            this.button1.TabIndex = 15;
-            this.button1.Text = "Choose";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
-            // textBox1
-            // 
-            this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(397, 50);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(540, 26);
-            this.textBox1.TabIndex = 14;
-            // 
-            // checkBox1
-            // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.ForeColor = System.Drawing.Color.White;
-            this.checkBox1.Location = new System.Drawing.Point(167, 52);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(228, 24);
-            this.checkBox1.TabIndex = 13;
-            this.checkBox1.Text = "Pass arguments to program:";
-            this.checkBox1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox1.UseVisualStyleBackColor = true;
-            // 
-            // checkBox2
-            // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.ForeColor = System.Drawing.Color.White;
-            this.checkBox2.Location = new System.Drawing.Point(167, 87);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(344, 24);
-            this.checkBox2.TabIndex = 16;
-            this.checkBox2.Text = "Close program when you finish playing Game";
-            this.checkBox2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox2.UseVisualStyleBackColor = true;
-            // 
-            // textBox2
-            // 
-            this.textBox2.Location = new System.Drawing.Point(269, 11);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(416, 26);
-            this.textBox2.TabIndex = 17;
-            // 
-            // panel2
-            // 
-            this.panel2.Controls.Add(this.textBox3);
-            this.panel2.Controls.Add(this.checkBox3);
-            this.panel2.Controls.Add(this.button2);
-            this.panel2.Controls.Add(this.textBox4);
-            this.panel2.Controls.Add(this.checkBox4);
-            this.panel2.Controls.Add(this.label4);
-            this.panel2.Location = new System.Drawing.Point(48, 167);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(959, 124);
-            this.panel2.TabIndex = 18;
-            // 
-            // textBox3
-            // 
-            this.textBox3.Location = new System.Drawing.Point(270, 11);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(416, 26);
-            this.textBox3.TabIndex = 17;
-            // 
-            // checkBox3
-            // 
-            this.checkBox3.AutoSize = true;
-            this.checkBox3.ForeColor = System.Drawing.Color.White;
-            this.checkBox3.Location = new System.Drawing.Point(167, 87);
-            this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Size = new System.Drawing.Size(344, 24);
-            this.checkBox3.TabIndex = 16;
-            this.checkBox3.Text = "Close program when you finish playing Game";
-            this.checkBox3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox3.UseVisualStyleBackColor = true;
-            // 
-            // button2
-            // 
-            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button2.ForeColor = System.Drawing.Color.White;
-            this.button2.Location = new System.Drawing.Point(692, 10);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(85, 27);
-            this.button2.TabIndex = 15;
-            this.button2.Text = "Choose";
-            this.button2.UseVisualStyleBackColor = true;
-            // 
-            // textBox4
-            // 
-            this.textBox4.Enabled = false;
-            this.textBox4.Location = new System.Drawing.Point(397, 50);
-            this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(540, 26);
-            this.textBox4.TabIndex = 14;
-            // 
-            // checkBox4
-            // 
-            this.checkBox4.AutoSize = true;
-            this.checkBox4.ForeColor = System.Drawing.Color.White;
-            this.checkBox4.Location = new System.Drawing.Point(167, 52);
-            this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Size = new System.Drawing.Size(228, 24);
-            this.checkBox4.TabIndex = 13;
-            this.checkBox4.Text = "Pass arguments to program:";
-            this.checkBox4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox4.UseVisualStyleBackColor = true;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(15, 14);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(254, 20);
-            this.label4.TabIndex = 0;
-            this.label4.Text = "Choose a program to start second:";
-            // 
-            // panel3
-            // 
-            this.panel3.Controls.Add(this.textBox5);
-            this.panel3.Controls.Add(this.checkBox5);
-            this.panel3.Controls.Add(this.button3);
-            this.panel3.Controls.Add(this.textBox6);
-            this.panel3.Controls.Add(this.checkBox6);
-            this.panel3.Controls.Add(this.label5);
-            this.panel3.Location = new System.Drawing.Point(48, 306);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(959, 124);
-            this.panel3.TabIndex = 18;
-            // 
-            // textBox5
-            // 
-            this.textBox5.Location = new System.Drawing.Point(269, 11);
-            this.textBox5.Name = "textBox5";
-            this.textBox5.Size = new System.Drawing.Size(416, 26);
-            this.textBox5.TabIndex = 17;
-            // 
-            // checkBox5
-            // 
-            this.checkBox5.AutoSize = true;
-            this.checkBox5.ForeColor = System.Drawing.Color.White;
-            this.checkBox5.Location = new System.Drawing.Point(167, 87);
-            this.checkBox5.Name = "checkBox5";
-            this.checkBox5.Size = new System.Drawing.Size(344, 24);
-            this.checkBox5.TabIndex = 16;
-            this.checkBox5.Text = "Close program when you finish playing Game";
-            this.checkBox5.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox5.UseVisualStyleBackColor = true;
-            // 
-            // button3
-            // 
-            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button3.ForeColor = System.Drawing.Color.White;
-            this.button3.Location = new System.Drawing.Point(691, 10);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(85, 27);
-            this.button3.TabIndex = 15;
-            this.button3.Text = "Choose";
-            this.button3.UseVisualStyleBackColor = true;
-            // 
-            // textBox6
-            // 
-            this.textBox6.Enabled = false;
-            this.textBox6.Location = new System.Drawing.Point(397, 50);
-            this.textBox6.Name = "textBox6";
-            this.textBox6.Size = new System.Drawing.Size(540, 26);
-            this.textBox6.TabIndex = 14;
-            // 
-            // checkBox6
-            // 
-            this.checkBox6.AutoSize = true;
-            this.checkBox6.ForeColor = System.Drawing.Color.White;
-            this.checkBox6.Location = new System.Drawing.Point(167, 52);
-            this.checkBox6.Name = "checkBox6";
-            this.checkBox6.Size = new System.Drawing.Size(228, 24);
-            this.checkBox6.TabIndex = 13;
-            this.checkBox6.Text = "Pass arguments to program:";
-            this.checkBox6.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox6.UseVisualStyleBackColor = true;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(15, 14);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(233, 20);
-            this.label5.TabIndex = 0;
-            this.label5.Text = "Choose a program to start third:";
-            // 
-            // panel4
-            // 
-            this.panel4.Controls.Add(this.textBox7);
-            this.panel4.Controls.Add(this.checkBox7);
-            this.panel4.Controls.Add(this.button4);
-            this.panel4.Controls.Add(this.textBox8);
-            this.panel4.Controls.Add(this.checkBox8);
-            this.panel4.Controls.Add(this.label6);
-            this.panel4.Location = new System.Drawing.Point(48, 443);
-            this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(959, 124);
-            this.panel4.TabIndex = 19;
-            // 
-            // textBox7
-            // 
-            this.textBox7.Location = new System.Drawing.Point(269, 11);
-            this.textBox7.Name = "textBox7";
-            this.textBox7.Size = new System.Drawing.Size(416, 26);
-            this.textBox7.TabIndex = 17;
-            // 
-            // checkBox7
-            // 
-            this.checkBox7.AutoSize = true;
-            this.checkBox7.ForeColor = System.Drawing.Color.White;
-            this.checkBox7.Location = new System.Drawing.Point(167, 87);
-            this.checkBox7.Name = "checkBox7";
-            this.checkBox7.Size = new System.Drawing.Size(344, 24);
-            this.checkBox7.TabIndex = 16;
-            this.checkBox7.Text = "Close program when you finish playing Game";
-            this.checkBox7.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox7.UseVisualStyleBackColor = true;
-            // 
-            // button4
-            // 
-            this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button4.ForeColor = System.Drawing.Color.White;
-            this.button4.Location = new System.Drawing.Point(691, 10);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(85, 27);
-            this.button4.TabIndex = 15;
-            this.button4.Text = "Choose";
-            this.button4.UseVisualStyleBackColor = true;
-            // 
-            // textBox8
-            // 
-            this.textBox8.Enabled = false;
-            this.textBox8.Location = new System.Drawing.Point(397, 50);
-            this.textBox8.Name = "textBox8";
-            this.textBox8.Size = new System.Drawing.Size(540, 26);
-            this.textBox8.TabIndex = 14;
-            // 
-            // checkBox8
-            // 
-            this.checkBox8.AutoSize = true;
-            this.checkBox8.ForeColor = System.Drawing.Color.White;
-            this.checkBox8.Location = new System.Drawing.Point(167, 52);
-            this.checkBox8.Name = "checkBox8";
-            this.checkBox8.Size = new System.Drawing.Size(228, 24);
-            this.checkBox8.TabIndex = 13;
-            this.checkBox8.Text = "Pass arguments to program:";
-            this.checkBox8.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox8.UseVisualStyleBackColor = true;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(15, 14);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(244, 20);
-            this.label6.TabIndex = 0;
-            this.label6.Text = "Choose a program to start fourth:";
-            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1044,8 +1044,14 @@ namespace HeliosPlus.UIForms
             this.tabp_display.ResumeLayout(false);
             this.tabp_display.PerformLayout();
             this.tabp_before.ResumeLayout(false);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this.pnl_start_program4.ResumeLayout(false);
+            this.pnl_start_program4.PerformLayout();
+            this.pnl_start_program3.ResumeLayout(false);
+            this.pnl_start_program3.PerformLayout();
+            this.pnl_start_program2.ResumeLayout(false);
+            this.pnl_start_program2.PerformLayout();
+            this.pnl_start_program1.ResumeLayout(false);
+            this.pnl_start_program1.PerformLayout();
             this.tabp_game.ResumeLayout(false);
             this.tabp_game.PerformLayout();
             this.p_standalone.ResumeLayout(false);
@@ -1056,12 +1062,6 @@ namespace HeliosPlus.UIForms
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
             this.tabp_after.ResumeLayout(false);
             this.tabp_after.PerformLayout();
-            this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
-            this.panel3.ResumeLayout(false);
-            this.panel3.PerformLayout();
-            this.panel4.ResumeLayout(false);
-            this.panel4.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1116,33 +1116,33 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.Label lbl_shortcut_name;
         private System.Windows.Forms.Button btn_exe_to_start;
         private System.Windows.Forms.CheckBox cb_autosuggest;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Panel panel4;
-        private System.Windows.Forms.TextBox textBox7;
-        private System.Windows.Forms.CheckBox checkBox7;
-        private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.TextBox textBox8;
-        private System.Windows.Forms.CheckBox checkBox8;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Panel panel3;
-        private System.Windows.Forms.TextBox textBox5;
-        private System.Windows.Forms.CheckBox checkBox5;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.TextBox textBox6;
-        private System.Windows.Forms.CheckBox checkBox6;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.TextBox textBox3;
-        private System.Windows.Forms.CheckBox checkBox3;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.TextBox textBox4;
-        private System.Windows.Forms.CheckBox checkBox4;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.CheckBox checkBox2;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.Panel pnl_start_program1;
+        private System.Windows.Forms.Label lbl_start_program1;
+        private System.Windows.Forms.Panel pnl_start_program4;
+        private System.Windows.Forms.TextBox txt_start_program4;
+        private System.Windows.Forms.CheckBox cb_start_program_close4;
+        private System.Windows.Forms.Button btn_start_program4;
+        private System.Windows.Forms.TextBox txt_start_program_args4;
+        private System.Windows.Forms.CheckBox cb_start_program_pass_args4;
+        private System.Windows.Forms.Label lbl_start_program4;
+        private System.Windows.Forms.Panel pnl_start_program3;
+        private System.Windows.Forms.TextBox txt_start_program3;
+        private System.Windows.Forms.CheckBox cb_start_program_close3;
+        private System.Windows.Forms.Button btn_start_program3;
+        private System.Windows.Forms.TextBox txt_start_program_args3;
+        private System.Windows.Forms.CheckBox cb_start_program_pass_args3;
+        private System.Windows.Forms.Label lbl_start_program3;
+        private System.Windows.Forms.Panel pnl_start_program2;
+        private System.Windows.Forms.TextBox txt_start_program2;
+        private System.Windows.Forms.CheckBox cb_start_program_close2;
+        private System.Windows.Forms.Button btn_start_program2;
+        private System.Windows.Forms.TextBox txt_start_program_args2;
+        private System.Windows.Forms.CheckBox cb_start_program_pass_args2;
+        private System.Windows.Forms.Label lbl_start_program2;
+        private System.Windows.Forms.TextBox txt_start_program1;
+        private System.Windows.Forms.CheckBox cb_start_program_close1;
+        private System.Windows.Forms.Button btn_start_program1;
+        private System.Windows.Forms.TextBox txt_start_program_args1;
+        private System.Windows.Forms.CheckBox cb_start_program_pass_args1;
     }
 }
