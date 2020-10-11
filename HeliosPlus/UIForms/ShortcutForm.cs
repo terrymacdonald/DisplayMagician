@@ -1129,5 +1129,105 @@ namespace HeliosPlus.UIForms
         {
             txt_start_program4.Text = get_exe_file();
         }
+
+        private void cb_start_program1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 1 fields
+            if (cb_start_program1.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program1.Visible = true;
+                txt_start_program_args1.Visible = true;
+                btn_start_program1.Visible = true;
+                cb_start_program_pass_args1.Visible = true;
+                cb_start_program_close1.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program1.Visible = false;
+                txt_start_program_args1.Visible = false;
+                btn_start_program1.Visible = false;
+                cb_start_program_pass_args1.Visible = false;
+                cb_start_program_close1.Visible = false;
+            }
+        }
+
+        private void cb_start_program2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 1 fields
+            if (cb_start_program2.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program2.Visible = true;
+                txt_start_program_args2.Visible = true;
+                btn_start_program2.Visible = true;
+                cb_start_program_pass_args2.Visible = true;
+                cb_start_program_close2.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program2.Visible = false;
+                txt_start_program_args2.Visible = false;
+                btn_start_program2.Visible = false;
+                cb_start_program_pass_args2.Visible = false;
+                cb_start_program_close2.Visible = false;
+            }
+        }
+
+        private void cb_start_program3_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 1 fields
+            if (cb_start_program3.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program3.Visible = true;
+                txt_start_program_args3.Visible = true;
+                btn_start_program3.Visible = true;
+                cb_start_program_pass_args3.Visible = true;
+                cb_start_program_close3.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program3.Visible = false;
+                txt_start_program_args3.Visible = false;
+                btn_start_program3.Visible = false;
+                cb_start_program_pass_args3.Visible = false;
+                cb_start_program_close3.Visible = false;
+            }
+        }
+
+        private void cb_start_program4_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the start program 1 fields
+            if (cb_start_program4.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_start_program4.Visible = true;
+                txt_start_program_args4.Visible = true;
+                btn_start_program4.Visible = true;
+                cb_start_program_pass_args4.Visible = true;
+                cb_start_program_close4.Visible = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_start_program4.Visible = false;
+                txt_start_program_args4.Visible = false;
+                btn_start_program4.Visible = false;
+                cb_start_program_pass_args4.Visible = false;
+                cb_start_program_close4.Visible = false;
+            }
+        }
     }
 }

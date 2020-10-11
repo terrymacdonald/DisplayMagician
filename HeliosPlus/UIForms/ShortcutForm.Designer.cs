@@ -304,6 +304,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program4.Name = "txt_start_program4";
             this.txt_start_program4.Size = new System.Drawing.Size(535, 26);
             this.txt_start_program4.TabIndex = 17;
+            this.txt_start_program4.Visible = false;
             // 
             // cb_start_program_close4
             // 
@@ -316,6 +317,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_close4.Text = "Close program when you finish playing Game";
             this.cb_start_program_close4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close4.UseVisualStyleBackColor = true;
+            this.cb_start_program_close4.Visible = false;
             // 
             // btn_start_program4
             // 
@@ -327,6 +329,7 @@ namespace HeliosPlus.UIForms
             this.btn_start_program4.TabIndex = 15;
             this.btn_start_program4.Text = "Choose";
             this.btn_start_program4.UseVisualStyleBackColor = true;
+            this.btn_start_program4.Visible = false;
             this.btn_start_program4.Click += new System.EventHandler(this.btn_start_program4_Click);
             // 
             // txt_start_program_args4
@@ -336,6 +339,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program_args4.Name = "txt_start_program_args4";
             this.txt_start_program_args4.Size = new System.Drawing.Size(540, 26);
             this.txt_start_program_args4.TabIndex = 14;
+            this.txt_start_program_args4.Visible = false;
             // 
             // cb_start_program_pass_args4
             // 
@@ -348,6 +352,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args4.Text = "Pass arguments to program:";
             this.cb_start_program_pass_args4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args4.UseVisualStyleBackColor = true;
+            this.cb_start_program_pass_args4.Visible = false;
             // 
             // lbl_start_program4
             // 
@@ -378,6 +383,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program3.Name = "txt_start_program3";
             this.txt_start_program3.Size = new System.Drawing.Size(535, 26);
             this.txt_start_program3.TabIndex = 17;
+            this.txt_start_program3.Visible = false;
             // 
             // cb_start_program_close3
             // 
@@ -390,6 +396,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_close3.Text = "Close program when you finish playing Game";
             this.cb_start_program_close3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close3.UseVisualStyleBackColor = true;
+            this.cb_start_program_close3.Visible = false;
             // 
             // btn_start_program3
             // 
@@ -401,6 +408,7 @@ namespace HeliosPlus.UIForms
             this.btn_start_program3.TabIndex = 15;
             this.btn_start_program3.Text = "Choose";
             this.btn_start_program3.UseVisualStyleBackColor = true;
+            this.btn_start_program3.Visible = false;
             this.btn_start_program3.Click += new System.EventHandler(this.btn_start_program3_Click);
             // 
             // txt_start_program_args3
@@ -410,6 +418,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program_args3.Name = "txt_start_program_args3";
             this.txt_start_program_args3.Size = new System.Drawing.Size(540, 26);
             this.txt_start_program_args3.TabIndex = 14;
+            this.txt_start_program_args3.Visible = false;
             // 
             // cb_start_program_pass_args3
             // 
@@ -422,6 +431,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args3.Text = "Pass arguments to program:";
             this.cb_start_program_pass_args3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args3.UseVisualStyleBackColor = true;
+            this.cb_start_program_pass_args3.Visible = false;
             // 
             // lbl_start_program3
             // 
@@ -452,6 +462,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program2.Name = "txt_start_program2";
             this.txt_start_program2.Size = new System.Drawing.Size(534, 26);
             this.txt_start_program2.TabIndex = 17;
+            this.txt_start_program2.Visible = false;
             // 
             // cb_start_program_close2
             // 
@@ -464,6 +475,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_close2.Text = "Close program when you finish playing Game";
             this.cb_start_program_close2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close2.UseVisualStyleBackColor = true;
+            this.cb_start_program_close2.Visible = false;
             // 
             // btn_start_program2
             // 
@@ -475,6 +487,7 @@ namespace HeliosPlus.UIForms
             this.btn_start_program2.TabIndex = 15;
             this.btn_start_program2.Text = "Choose";
             this.btn_start_program2.UseVisualStyleBackColor = true;
+            this.btn_start_program2.Visible = false;
             this.btn_start_program2.Click += new System.EventHandler(this.btn_start_program2_Click);
             // 
             // txt_start_program_args2
@@ -484,6 +497,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program_args2.Name = "txt_start_program_args2";
             this.txt_start_program_args2.Size = new System.Drawing.Size(540, 26);
             this.txt_start_program_args2.TabIndex = 14;
+            this.txt_start_program_args2.Visible = false;
             // 
             // cb_start_program_pass_args2
             // 
@@ -496,6 +510,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args2.Text = "Pass arguments to program:";
             this.cb_start_program_pass_args2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args2.UseVisualStyleBackColor = true;
+            this.cb_start_program_pass_args2.Visible = false;
             // 
             // lbl_start_program2
             // 
@@ -526,6 +541,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program1.Name = "txt_start_program1";
             this.txt_start_program1.Size = new System.Drawing.Size(535, 26);
             this.txt_start_program1.TabIndex = 17;
+            this.txt_start_program1.Visible = false;
             // 
             // cb_start_program_close1
             // 
@@ -538,6 +554,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_close1.Text = "Close program when you finish playing Game";
             this.cb_start_program_close1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close1.UseVisualStyleBackColor = true;
+            this.cb_start_program_close1.Visible = false;
             // 
             // btn_start_program1
             // 
@@ -549,6 +566,7 @@ namespace HeliosPlus.UIForms
             this.btn_start_program1.TabIndex = 15;
             this.btn_start_program1.Text = "Choose";
             this.btn_start_program1.UseVisualStyleBackColor = true;
+            this.btn_start_program1.Visible = false;
             this.btn_start_program1.Click += new System.EventHandler(this.btn_start_program1_Click);
             // 
             // txt_start_program_args1
@@ -558,6 +576,7 @@ namespace HeliosPlus.UIForms
             this.txt_start_program_args1.Name = "txt_start_program_args1";
             this.txt_start_program_args1.Size = new System.Drawing.Size(540, 26);
             this.txt_start_program_args1.TabIndex = 14;
+            this.txt_start_program_args1.Visible = false;
             // 
             // cb_start_program_pass_args1
             // 
@@ -570,6 +589,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program_pass_args1.Text = "Pass arguments to program:";
             this.cb_start_program_pass_args1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args1.UseVisualStyleBackColor = true;
+            this.cb_start_program_pass_args1.Visible = false;
             // 
             // lbl_start_program1
             // 
@@ -1036,6 +1056,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program1.Size = new System.Drawing.Size(15, 14);
             this.cb_start_program1.TabIndex = 0;
             this.cb_start_program1.UseVisualStyleBackColor = true;
+            this.cb_start_program1.CheckedChanged += new System.EventHandler(this.cb_start_program1_CheckedChanged);
             // 
             // cb_start_program2
             // 
@@ -1044,6 +1065,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program2.Size = new System.Drawing.Size(15, 14);
             this.cb_start_program2.TabIndex = 18;
             this.cb_start_program2.UseVisualStyleBackColor = true;
+            this.cb_start_program2.CheckedChanged += new System.EventHandler(this.cb_start_program2_CheckedChanged);
             // 
             // cb_start_program3
             // 
@@ -1052,6 +1074,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program3.Size = new System.Drawing.Size(15, 14);
             this.cb_start_program3.TabIndex = 18;
             this.cb_start_program3.UseVisualStyleBackColor = true;
+            this.cb_start_program3.CheckedChanged += new System.EventHandler(this.cb_start_program3_CheckedChanged);
             // 
             // cb_start_program4
             // 
@@ -1060,6 +1083,7 @@ namespace HeliosPlus.UIForms
             this.cb_start_program4.Size = new System.Drawing.Size(15, 14);
             this.cb_start_program4.TabIndex = 18;
             this.cb_start_program4.UseVisualStyleBackColor = true;
+            this.cb_start_program4.CheckedChanged += new System.EventHandler(this.cb_start_program4_CheckedChanged);
             // 
             // ShortcutForm
             // 
