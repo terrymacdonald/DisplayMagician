@@ -604,6 +604,7 @@ namespace HeliosPlus.UIForms
             {
                 matchingImageListViewItems.First().Selected = true;
                 matchingImageListViewItems.First().Focused = true;
+                matchingImageListViewItems.First().Enabled = true;
             }
         }
 
@@ -611,38 +612,67 @@ namespace HeliosPlus.UIForms
         {
 
             // Load all the profiles to prepare things
-            bool foundCurrentProfileInLoadedProfiles = false;
-            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            bool foundChosenProfileInLoadedProfiles = false;
+            ProfileItem chosenProfile = null;
+
+            if (_shortcutToEdit is ShortcutItem && _shortcutToEdit.ProfileToUse is ProfileItem)
             {
-                if (ProfileRepository.IsActiveProfile(loadedProfile))
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
-                    // We have already saved the selected profile!
-                    // so we need to show the selected profile 
-                    ChangeSelectedProfile(loadedProfile);
-                    foundCurrentProfileInLoadedProfiles = true;
-
-                    // If the profile is the same, but the user has renamed the profile
-                    // since the shortcut was last created, then we need to tell the user
-                    if (!loadedProfile.Name.Equals(ProfileRepository.CurrentProfile.Name))
+                    if (_shortcutToEdit.ProfileToUse.Equals(loadedProfile))
                     {
+                        // We have loaded the profile used last time
+                        // so we need to show the selected profile in the UI
+                        chosenProfile = loadedProfile;
+                        foundChosenProfileInLoadedProfiles = true;
 
-                        MessageBox.Show(
-                        @"The Display Profile used by this Shortcut still exists, but it's changed it's name. We've updated the shortcut's name to reflect this change.",
-                        @"Display Profile name changed",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
+                        // If the profile is the same, but the user has renamed the profile
+                        // since the shortcut was last created, then we need to tell the user
+                        if (!loadedProfile.Name.Equals(_shortcutToEdit.ProfileToUse.Name))
+                        {
+
+                            MessageBox.Show(
+                            @"The Display Profile used by this Shortcut still exists, but it's changed it's name. We've updated the shortcut's name to reflect this change.",
+                            @"Display Profile name changed",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        }
+
                     }
 
                 }
-
             }
 
             // If we get to the end of the loaded profiles and haven't
-            // found a matching profile, then we need to show the first
-            // Profile
-            if (!foundCurrentProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
-                ChangeSelectedProfile(ProfileRepository.AllProfiles[0]);
+            // found a matching profile, then we need to show the current profile
+            // that we're running now
+            if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
+            {
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+                {
+                    if (ProfileRepository.CurrentProfile.Equals(loadedProfile))
+                    {
+                        // We have loaded the profile used last time
+                        // so we need to show the selected profile in the UI
+                        chosenProfile = loadedProfile;
+                        foundChosenProfileInLoadedProfiles = true;
 
+                        // If the profile is the same, but the user has renamed the profile
+                        // since the shortcut was last created, then we need to tell the user
+                        if (!loadedProfile.Name.Equals(ProfileRepository.CurrentProfile.Name))
+                        {
+
+                            MessageBox.Show(
+                            @"The Display Profile used by this Shortcut still exists, but it's changed it's name. We've updated the shortcut's name to reflect this change.",
+                            @"Display Profile name changed",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                        }
+
+                    }
+
+                }
+            }
 
             // Start finding the games and loading the Games ListView
             foreach (var game in SteamLibrary.AllInstalledGames.OrderBy(game => game.GameName))
@@ -758,6 +788,8 @@ namespace HeliosPlus.UIForms
 
             // Refresh the Shortcut UI
             RefreshShortcutUI();
+            ChangeSelectedProfile(chosenProfile);
+            RefreshImageListView(chosenProfile);
 
             _loadedShortcut = true;
 
@@ -845,15 +877,16 @@ namespace HeliosPlus.UIForms
 
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
-            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            foreach (ProfileItem savedProfile in ProfileRepository.AllProfiles)
             {
-                if (loadedProfile.Name == e.Item.Text)
+                if (savedProfile.Name == e.Item.Text)
                 {
-                    ChangeSelectedProfile(loadedProfile);
-                    if (_loadedShortcut)
-                        _isUnsaved = true;
+                    ChangeSelectedProfile(savedProfile);
                 }
             }
+
+            suggestShortcutName();
+            enableSaveButtonIfValid();
 
         }
 
@@ -871,21 +904,10 @@ namespace HeliosPlus.UIForms
             lbl_profile_shown.Text = _profileToUse.Name;
 
             if (_profileToUse.Equals(ProfileRepository.CurrentProfile))
-            {
                 lbl_profile_shown_subtitle.Text = "(Current Display Profile in use)";
-            }
             else
-            {
-                if (!_profileToUse.IsPossible)
-                {
-                    lbl_profile_shown_subtitle.Text = "(Display Profile is not valid so cannot be used)";
-                }
-                else
-                {
-                    lbl_profile_shown_subtitle.Text = "";
-                }
+                lbl_profile_shown_subtitle.Text = "";
 
-            }
             // Refresh the image list view
             RefreshImageListView(profile);
 
@@ -906,7 +928,6 @@ namespace HeliosPlus.UIForms
                 ilv_saved_profiles.SuspendLayout();
 
                 ImageListViewItem newItem = null;
-                bool foundCurrentProfileInLoadedProfiles = false;
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
                     bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
@@ -921,17 +942,6 @@ namespace HeliosPlus.UIForms
                     }
 
                 }
-
-                // If we get to the end of the loaded profiles and haven't
-                // found a matching profile, then we need to show the current
-                // Profile
-                if (!foundCurrentProfileInLoadedProfiles)
-                    ChangeSelectedProfile(ProfileRepository.CurrentProfile);
-
-                // Check if we were loading a profile to edit
-                // If so, select that instead of all that other stuff above!
-                //if (_shortcutToEdit != null)
-                //    ChangeSelectedProfile(_shortcutToEdit.ProfileToUse);*/
 
                 // Restart updating the saved_profiles listview
                 ilv_saved_profiles.ResumeLayout();
@@ -1068,14 +1078,12 @@ namespace HeliosPlus.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             if (cb_autosuggest.Checked)
+            {
                 _saveNameAutomatic = true;
+                suggestShortcutName();
+            }
             else
                 _saveNameAutomatic = false;
-        }
-
-        private void btn_start_program1_Click(object sender, EventArgs e)
-        {
-            btn_start_program1.Text = get_exe_file();
         }
 
         private string get_exe_file()
@@ -1099,20 +1107,24 @@ namespace HeliosPlus.UIForms
             }
             return textToReturn;
         }
+        private void btn_start_program1_Click(object sender, EventArgs e)
+        {
+            txt_start_program1.Text = get_exe_file();
+        }
 
         private void btn_start_program2_Click(object sender, EventArgs e)
         {
-            btn_start_program2.Text = get_exe_file();
+            txt_start_program2.Text = get_exe_file();
         }
 
         private void btn_start_program3_Click(object sender, EventArgs e)
         {
-            btn_start_program3.Text = get_exe_file();
+            txt_start_program3.Text = get_exe_file();
         }
 
         private void btn_start_program4_Click(object sender, EventArgs e)
         {
-            btn_start_program4.Text = get_exe_file();
+            txt_start_program4.Text = get_exe_file();
         }
     }
 }

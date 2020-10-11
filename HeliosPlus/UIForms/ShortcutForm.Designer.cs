@@ -250,6 +250,7 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.TabIndex = 24;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
+            this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
             // 
             // dv_profile
             // 
@@ -300,7 +301,7 @@ namespace HeliosPlus.UIForms
             // 
             this.txt_start_program4.Location = new System.Drawing.Point(300, 11);
             this.txt_start_program4.Name = "txt_start_program4";
-            this.txt_start_program4.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program4.Size = new System.Drawing.Size(535, 26);
             this.txt_start_program4.TabIndex = 17;
             // 
             // cb_start_program_close4
@@ -319,7 +320,7 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program4.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program4.Location = new System.Drawing.Point(722, 10);
+            this.btn_start_program4.Location = new System.Drawing.Point(851, 10);
             this.btn_start_program4.Name = "btn_start_program4";
             this.btn_start_program4.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program4.TabIndex = 15;
@@ -374,7 +375,7 @@ namespace HeliosPlus.UIForms
             // 
             this.txt_start_program3.Location = new System.Drawing.Point(300, 11);
             this.txt_start_program3.Name = "txt_start_program3";
-            this.txt_start_program3.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program3.Size = new System.Drawing.Size(535, 26);
             this.txt_start_program3.TabIndex = 17;
             // 
             // cb_start_program_close3
@@ -393,7 +394,7 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program3.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program3.Location = new System.Drawing.Point(722, 10);
+            this.btn_start_program3.Location = new System.Drawing.Point(851, 10);
             this.btn_start_program3.Name = "btn_start_program3";
             this.btn_start_program3.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program3.TabIndex = 15;
@@ -448,7 +449,7 @@ namespace HeliosPlus.UIForms
             // 
             this.txt_start_program2.Location = new System.Drawing.Point(301, 11);
             this.txt_start_program2.Name = "txt_start_program2";
-            this.txt_start_program2.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program2.Size = new System.Drawing.Size(534, 26);
             this.txt_start_program2.TabIndex = 17;
             // 
             // cb_start_program_close2
@@ -467,7 +468,7 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program2.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program2.Location = new System.Drawing.Point(723, 10);
+            this.btn_start_program2.Location = new System.Drawing.Point(852, 10);
             this.btn_start_program2.Name = "btn_start_program2";
             this.btn_start_program2.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program2.TabIndex = 15;
@@ -522,7 +523,7 @@ namespace HeliosPlus.UIForms
             // 
             this.txt_start_program1.Location = new System.Drawing.Point(300, 11);
             this.txt_start_program1.Name = "txt_start_program1";
-            this.txt_start_program1.Size = new System.Drawing.Size(416, 26);
+            this.txt_start_program1.Size = new System.Drawing.Size(535, 26);
             this.txt_start_program1.TabIndex = 17;
             // 
             // cb_start_program_close1
@@ -541,7 +542,7 @@ namespace HeliosPlus.UIForms
             // 
             this.btn_start_program1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program1.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program1.Location = new System.Drawing.Point(722, 10);
+            this.btn_start_program1.Location = new System.Drawing.Point(851, 10);
             this.btn_start_program1.Name = "btn_start_program1";
             this.btn_start_program1.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program1.TabIndex = 15;
