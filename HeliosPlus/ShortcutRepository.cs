@@ -506,16 +506,17 @@ namespace HeliosPlus
             List<Process> startProgramsToStop = new List<Process>();
             if (shortcutToUse.StartPrograms is List<StartProgram> && shortcutToUse.StartPrograms.Count > 0)
             {
-                foreach (StartProgram myStartProgram in shortcutToUse.StartPrograms
-                    .Where(program => program.Enabled == true && program.CloseOnFinish == true)
+                foreach (StartProgram processToStart in shortcutToUse.StartPrograms
+                    .Where(program => program.Enabled == true)
                     .OrderBy(program => program.Priority))
                 {
                     // Start the executable
+                    Console.WriteLine($"Starting process {processToStart.Executable}");
                     Process process = null;
-                    if (myStartProgram.ExecutableArgumentsRequired)
-                        process = System.Diagnostics.Process.Start(myStartProgram.Executable, myStartProgram.Arguments);
+                    if (processToStart.ExecutableArgumentsRequired)
+                        process = System.Diagnostics.Process.Start(processToStart.Executable, processToStart.Arguments);
                     else
-                        process = System.Diagnostics.Process.Start(myStartProgram.Executable);
+                        process = System.Diagnostics.Process.Start(processToStart.Executable);
                     // Record t
                     startProgramsToStop.Add(process);
                 }
@@ -657,7 +658,7 @@ namespace HeliosPlus
                         IPCService.GetInstance().HoldProcessId = steamProcess?.Id ?? 0;
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
-                        // Add a status notification icon in the status area
+                        /*// Add a status notification icon in the status area
                         NotifyIcon notify = null;
                         try
                         {
@@ -675,7 +676,7 @@ namespace HeliosPlus
                         {
                             Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                             // ignored
-                        }
+                        }*/
 
                         // Wait for the game to exit
                         if (steamGameToRun.IsRunning)
@@ -692,13 +693,13 @@ namespace HeliosPlus
                         }
 
                         // Remove the status notification icon from the status area
-                        // once we've existed the game
-                        if (notify != null)
+                        // once we've exited the game
+                        /*if (notify != null)
                         {
                             notify.Visible = false;
                             notify.Dispose();
                             Application.DoEvents();
-                        }
+                        }*/
 
                     }
 
@@ -723,6 +724,7 @@ namespace HeliosPlus
                 // Stop the programs in the reverse order we started them
                 foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
                 {
+                    Console.WriteLine($"Stopping process {processToStop.StartInfo.FileName}");
                     // Stop the program
                     processToStop.Close();
                 }

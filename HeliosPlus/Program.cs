@@ -310,6 +310,7 @@ namespace HeliosPlus {
                     if (!ProfileRepository.ApplyNVIDIAGridTopology(profile))
                     {
                         // Somehow return that this profile topology didn't apply
+                        throw new ApplyTopologyException("Program/ApplyProfile: ApplyNVIDIAGridTopology: Error setting up the NVIDIA Surround Grid Topology");
                     }
                 });
 
@@ -318,6 +319,7 @@ namespace HeliosPlus {
                     if (!ProfileRepository.ApplyWindowsDisplayPathInfo(profile))
                     {
                         // Somehow return that this profile path info didn't apply
+                        throw new ApplyPathInfoException("Program/ApplyProfile: ApplyWindowsDisplayPathInfo: Error configuring the Windows Display Devices");
                     }
 
                 });
