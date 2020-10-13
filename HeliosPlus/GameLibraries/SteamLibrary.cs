@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Drawing.IconLib;
 using System.Security;
+using System.Diagnostics;
 
 namespace HeliosPlus.GameLibraries
 {
@@ -357,7 +358,7 @@ namespace HeliosPlus.GameLibraries
                 var newAppInfo = new AppInfo();
                 newAppInfo.Read(appInfoVdfFile);
 
-                Console.WriteLine($"{newAppInfo.Apps.Count} apps");
+                Debug.WriteLine($"{newAppInfo.Apps.Count} apps");
 
                 // Chec through all the apps we've extracted
                 foreach (var app in newAppInfo.Apps)
@@ -376,28 +377,28 @@ namespace HeliosPlus.GameLibraries
 
                             foreach (KVObject data in app.Data)
                             {
-                                //Console.WriteLine($"App: {app.AppID} - Data.Name: {data.Name}");
+                                //Debug.WriteLine($"App: {app.AppID} - Data.Name: {data.Name}");
 
                                 if (data.Name == "common")
                                 {
                                     foreach (KVObject common in data.Children)
                                     {
 
-                                        //Console.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
+                                        //Debug.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
 
                                         if (common.Name == "name")
                                         {
-                                            Console.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
+                                            Debug.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
                                             steamGameAppInfo.GameName = common.Value.ToString();
                                         }
                                         else if (common.Name == "clienticon")
                                         {
-                                            Console.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
+                                            Debug.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
                                             steamGameAppInfo.GameSteamIconPath = Path.Combine(_steamPath, @"steam", @"games", String.Concat(common.Value, @".ico"));
                                         }
                                         else if (common.Name == "type")
                                         {
-                                            Console.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
+                                            Debug.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
                                         }
                                     }
                                 }
@@ -409,7 +410,7 @@ namespace HeliosPlus.GameLibraries
 
                                         if (config.Name == "installdir")
                                         {
-                                            Console.WriteLine($"App: {app.AppID} - Config {config.Name}: {config.Value}");
+                                            Debug.WriteLine($"App: {app.AppID} - Config {config.Name}: {config.Value}");
                                             steamGameAppInfo.GameInstallDir = config.Value.ToString();
                                         }
                                         else if (config.Name == "launch")
@@ -420,7 +421,7 @@ namespace HeliosPlus.GameLibraries
                                                 {
                                                     if (launch_num.Name == "executable")
                                                     {
-                                                        Console.WriteLine($"App: {app.AppID} - Config - Launch {launch.Name} - {launch_num.Name}: {launch_num.Value}");
+                                                        Debug.WriteLine($"App: {app.AppID} - Config - Launch {launch.Name} - {launch_num.Name}: {launch_num.Value}");
                                                         steamGameAppInfo.GameExes.Add(launch_num.Value.ToString());
                                                     }
 
@@ -439,7 +440,7 @@ namespace HeliosPlus.GameLibraries
                             //we just want to ignore it if we try to add it twice....
                         }
 
-                        Console.WriteLine($"App: {app.AppID} - Token: {app.Token}");
+                        Debug.WriteLine($"App: {app.AppID} - Token: {app.Token}");
                     }
                 }
 
@@ -463,7 +464,7 @@ namespace HeliosPlus.GameLibraries
                     if (steamLibraryMatch.Success)
                     { 
                         string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                        Console.WriteLine($"Found steam library: {steamLibraryPath}");
+                        Debug.WriteLine($"Found steam library: {steamLibraryPath}");
                         steamLibrariesPaths.Add(steamLibraryPath);
                     }
                 }

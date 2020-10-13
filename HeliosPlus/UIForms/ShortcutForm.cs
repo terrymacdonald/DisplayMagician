@@ -486,7 +486,9 @@ namespace HeliosPlus.UIForms
                 _shortcutToEdit.GameLibrary = SupportedGameLibrary.Uplay;
             }*/
             else if (rb_standalone.Checked)
+            {
                 _shortcutToEdit.Category = ShortcutCategory.Application;
+            }
 
             // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
             // but only if it's new... if it is an edit then it will already be in the list.

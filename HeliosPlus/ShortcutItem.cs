@@ -213,11 +213,15 @@ namespace HeliosPlus
 
                 // We now force creation of the bitmap
                 // straight away, so we know it has already been done.
-                _originalBitmap = ToBitmapFromIcon(_originalIconPath);
+
+                /*if (Category == ShortcutCategory.Application) 
+                    _originalBitmap = ToBitmapFromExe(_originalIconPath);
+                else 
+                    _originalBitmap = ToBitmapFromIcon(_originalIconPath);*/
 
                 // And we do the same for the Bitmap overlay, but only if the ProfileToUse is set
-                if (ProfileToUse is ProfileItem)
-                    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap, 256, 256);
+                //if (ProfileToUse is ProfileItem)
+                //    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap, 256, 256);
             }
         }
 
@@ -233,7 +237,12 @@ namespace HeliosPlus
                     if (String.IsNullOrEmpty(OriginalIconPath))
                         return null;
 
-                    return ToBitmapFromIcon(OriginalIconPath);
+                    if (Category == ShortcutCategory.Application)
+                        _originalBitmap = ToBitmapFromExe(OriginalIconPath);
+                    else
+                        _originalBitmap = ToBitmapFromIcon(OriginalIconPath);
+
+                    return _originalBitmap;
                 }
             }
 
