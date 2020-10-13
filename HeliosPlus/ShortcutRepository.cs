@@ -7,6 +7,7 @@ using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing.IconLib;
 using System.IO;
@@ -518,7 +519,8 @@ namespace HeliosPlus
                     else
                         process = System.Diagnostics.Process.Start(processToStart.Executable);
                     // Record t
-                    startProgramsToStop.Add(process);
+                    if (processToStart.CloseOnFinish)
+                        startProgramsToStop.Add(process);
                 }
             }
 
@@ -635,7 +637,7 @@ namespace HeliosPlus
                         }
 
                         // Start the URI Handler to run Steam
-                        var steamProcess = System.Diagnostics.Process.Start(address);
+                        var steamProcess = Process.Start(address);
 
                         // Wait for Steam game to update if needed
                         var ticks = 0;
@@ -678,12 +680,13 @@ namespace HeliosPlus
                             // ignored
                         }*/
 
-                        // Wait for the game to exit
-
-
-
+                        
+                        // Wait 300ms for the game process to spawn
+                        Thread.Sleep(300);
+                        // Now check it's actually started
                         if (steamGameToRun.IsRunning)
                         {
+                            // Wait for the game to exit
                             while (true)
                             {
                                 if (!steamGameToRun.IsRunning)
@@ -729,8 +732,23 @@ namespace HeliosPlus
                 foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
                 {
                     Console.WriteLine($"Stopping process {processToStop.StartInfo.FileName}");
-                    // Stop the program
-                    processToStop.Close();
+                    try
+                    {
+                        // Stop the program
+                        processToStop.CloseMainWindow();
+                        processToStop.WaitForExit(5000);
+                        if (!processToStop.HasExited)
+                        {
+                            Console.WriteLine($"- Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
+                            processToStop.Kill();
+                            processToStop.WaitForExit(5000);
+                        }
+                        processToStop.Close();
+                    }
+                    catch (Win32Exception ex) { }
+                    catch (InvalidOperationException ex) { }
+                    catch (AggregateException ae) { }
+
                 }
             }
 
