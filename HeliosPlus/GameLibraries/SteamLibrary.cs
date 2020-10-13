@@ -456,19 +456,17 @@ namespace HeliosPlus.GameLibraries
                 // There may be multiple so we need to check the whole file
                 Regex steamLibrariesRegex = new Regex(@"""BaseInstallFolder_\d+""\s+""(.*)""", RegexOptions.IgnoreCase);
                 // Try to match all lines against the Regex.
-                Match steamLibrariesMatches = steamLibrariesRegex.Match(steamConfigVdfText);
+                MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamConfigVdfText);
                 // If at least one of them matched!
-                if (steamLibrariesMatches.Success)
+                foreach (Match steamLibraryMatch in steamLibrariesMatches)
                 {
-                    // Loop throug the results and add to an array
-                    for (int i = 1; i < steamLibrariesMatches.Groups.Count; i++)
-                    {
-                        string steamLibraryPath = Regex.Unescape(steamLibrariesMatches.Groups[i].Value);
+                    if (steamLibraryMatch.Success)
+                    { 
+                        string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
                         Console.WriteLine($"Found steam library: {steamLibraryPath}");
                         steamLibrariesPaths.Add(steamLibraryPath);
                     }
                 }
-
                 // Now we go off and find the details for the games in each Steam Library
                 foreach (string steamLibraryPath in steamLibrariesPaths)
                 {
