@@ -679,6 +679,9 @@ namespace HeliosPlus
                         }*/
 
                         // Wait for the game to exit
+
+
+
                         if (steamGameToRun.IsRunning)
                         {
                             while (true)
@@ -690,6 +693,7 @@ namespace HeliosPlus
 
                                 Thread.Sleep(300);
                             }
+                            Console.WriteLine($"{steamGameToRun.GameName} has been exited. Now continuing with cleanup tasks.");
                         }
 
                         // Remove the status notification icon from the status area

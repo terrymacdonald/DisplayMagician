@@ -25,6 +25,7 @@ using HeliosPlus.GameLibraries.SteamAppInfoParser;
 using TsudaKageyu;
 using System.Drawing.IconLib;
 using System.Drawing.IconLib.Exceptions;
+using System.Diagnostics;
 
 namespace HeliosPlus.GameLibraries
 {
@@ -40,6 +41,7 @@ namespace HeliosPlus.GameLibraries
         private string _steamGameName;
         private string _steamGamePath;
         private string _steamGameExe;
+        private string _steamGameProcessName;
         private string _steamGameIconPath;
         private static List<SteamGame> _allInstalledSteamGames = null;
 
@@ -67,6 +69,7 @@ namespace HeliosPlus.GameLibraries
             _steamGameName = steamGameName;
             _steamGamePath = steamGamePath;
             _steamGameExe = steamGameExe;
+            _steamGameProcessName = Path.GetFileNameWithoutExtension(_steamGameExe);
             _steamGameIconPath = steamGameIconPath;
 
         }
@@ -89,7 +92,7 @@ namespace HeliosPlus.GameLibraries
         {
             get
             {
-                try
+                /*try
                 {
                     using (
                         var key = Registry.CurrentUser.OpenSubKey(_gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
@@ -116,7 +119,12 @@ namespace HeliosPlus.GameLibraries
                     if (ex.Source != null)
                         Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
-                }
+                }*/
+
+                bool isRunning = Process.GetProcessesByName(_steamGameProcessName)
+                    .FirstOrDefault(p => p.MainModule.FileName
+                    .StartsWith(GamePath,StringComparison.OrdinalIgnoreCase)) != default(Process);
+                return isRunning;
             }
         }
 
