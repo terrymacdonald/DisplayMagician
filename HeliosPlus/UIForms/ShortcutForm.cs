@@ -22,11 +22,15 @@ namespace HeliosPlus.UIForms
         private ProfileAdaptor _profileAdaptor;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
         private ProfileItem _profileToUse= null;
+        private GameStruct _gameToUse;
+        private Executable _executableToUse;
+        private ShortcutPermanence _permanence = ShortcutPermanence.Temporary;
+        List<StartProgram> _startPrograms = new List<StartProgram>();
         private ShortcutItem _shortcutToEdit = null;
-        private bool _isNewShortcut = false;
+        private bool _isNewShortcut = true;
         private bool _isUnsaved = false;
         private bool _loadedShortcut = false;
-        private bool _saveNameAutomatic = true;
+        private bool _autoName = true;
         private uint _gameId = 0;
         private string  _uuid = "";
 
@@ -41,12 +45,12 @@ namespace HeliosPlus.UIForms
             // Create a new SHortcut if we are creating a new one
             // And set up the page (otherwise this is all set when we load an
             // existing Shortcut)
-            if (_shortcutToEdit == null)
+            /*if (_shortcutToEdit == null)
             {
-                _shortcutToEdit = new ShortcutItem();
-                _isNewShortcut = true;
+                //_shortcutToEdit = new ShortcutItem();
+                //_isNewShortcut = true;
             }
-
+*/
 
         }
 
@@ -366,69 +370,14 @@ namespace HeliosPlus.UIForms
 
             }
 
-            // Fill the Shortcut object with the bits we care about saving
-            // Save the autonaming setting
-            _shortcutToEdit.AutoName = cb_autosuggest.Checked;
 
-            // Update the Executable args
-            _shortcutToEdit.ExecutableArguments = txt_args_executable.Text;
-
-            // Update if the executable args are needed
-            _shortcutToEdit.ExecutableArgumentsRequired = cb_args_executable.Checked;
-
-            // Update the Executable name and path
-            _shortcutToEdit.ExecutableNameAndPath = txt_executable.Text;
-
-            // Update the executable timeout
-            _shortcutToEdit.ExecutableTimeout = Convert.ToUInt32(nud_timeout_executable.Value);
-
-            // Update the game app id
-            _shortcutToEdit.GameAppId = _gameId;
-
-            // Update the game args
-            _shortcutToEdit.GameArguments = txt_args_game.Text;
-
-            // Update if the game args are needed
-            _shortcutToEdit.GameArgumentsRequired = cb_args_game.Checked;
-
-            // Update what game library it's from
-            //_shortcutToEdit.GameLibrary = SupportedGameLibrary.Steam;
-
-            // Update the Game Name
-            _shortcutToEdit.GameName = txt_game_name.Text;
-
-            // Update the Game Timeout
-            _shortcutToEdit.GameTimeout = Convert.ToUInt32(nud_timeout_game.Value);
-
-            // Update the Shortcut name
-            _shortcutToEdit.Name = txt_shortcut_save_name.Text;
-
+            // Set some values
             // Check the permanence requirements
             if (rb_switch_temp.Checked)
-                _shortcutToEdit.Permanence = ShortcutPermanence.Temporary;
+                _permanence = ShortcutPermanence.Temporary;
 
             if (rb_switch_permanent.Checked)
-                _shortcutToEdit.Permanence = ShortcutPermanence.Permanent;
-
-            // Update the process name to monitor
-            if (!String.IsNullOrWhiteSpace(txt_alternative_executable.Text)) {
-                _shortcutToEdit.DifferentExecutableToMonitor = txt_alternative_executable.Text;
-            }
-
-            if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
-            {
-                _shortcutToEdit.ProcessNameToMonitorUsesExecutable = true;
-                _shortcutToEdit.DifferentExecutableToMonitor = txt_alternative_executable.Text;
-            }
-            else
-            {
-                _shortcutToEdit.ProcessNameToMonitorUsesExecutable = false;
-            }
-
-            // Update the profile to use
-            _shortcutToEdit.ProfileToUse = _profileToUse;
-
-            List<StartProgram> myStartPrograms = new List<StartProgram>();
+                _permanence = ShortcutPermanence.Permanent;
 
             // Save the start program 1
             StartProgram myStartProgram = new StartProgram();
@@ -438,7 +387,7 @@ namespace HeliosPlus.UIForms
             myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked;
             myStartProgram.Arguments = txt_start_program_args1.Text;
             myStartProgram.CloseOnFinish = cb_start_program_close1.Checked;
-            myStartPrograms.Add(myStartProgram);
+            _startPrograms.Add(myStartProgram);
 
             myStartProgram = new StartProgram();
             myStartProgram.Priority = 2;
@@ -447,7 +396,7 @@ namespace HeliosPlus.UIForms
             myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked;
             myStartProgram.Arguments = txt_start_program_args2.Text;
             myStartProgram.CloseOnFinish = cb_start_program_close2.Checked;
-            myStartPrograms.Add(myStartProgram);
+            _startPrograms.Add(myStartProgram);
 
             myStartProgram = new StartProgram();
             myStartProgram.Priority = 3;
@@ -456,7 +405,7 @@ namespace HeliosPlus.UIForms
             myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked;
             myStartProgram.Arguments = txt_start_program_args3.Text;
             myStartProgram.CloseOnFinish = cb_start_program_close3.Checked;
-            myStartPrograms.Add(myStartProgram);
+            _startPrograms.Add(myStartProgram);
 
             myStartProgram = new StartProgram();
             myStartProgram.Priority = 4;
@@ -465,31 +414,80 @@ namespace HeliosPlus.UIForms
             myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked;
             myStartProgram.Arguments = txt_start_program_args4.Text;
             myStartProgram.CloseOnFinish = cb_start_program_close4.Checked;
-            myStartPrograms.Add(myStartProgram);
+            _startPrograms.Add(myStartProgram);
 
-            // Save the start programs to the shortcut
-            _shortcutToEdit.StartPrograms = myStartPrograms;
-
-            // Update the Category as well as the OriginalIconPath
-            // (as we need the OriginalIconPath to run the SaveShortcutIconToCache method)
+            // Now we create the Shortcut Object ready to save
+            // If we're launching a game
             if (rb_launcher.Checked)
-                _shortcutToEdit.Category = ShortcutCategory.Game;
+            {
+                // If the game is a SteamGame
+                if(txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
+                {
+                    // Find the SteamGame
+                    _gameToUse = new GameStruct();
+                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.Id == _gameId select steamGame).First();
+                    _gameToUse.StartTimeout = Convert.ToUInt32(nud_timeout_game.Value);
+                    _gameToUse.GameArguments = txt_args_game.Text;
+                    _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
-            if (txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
-            {
-                _shortcutToEdit.OriginalIconPath = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.GameId == _shortcutToEdit.GameAppId select steamGame.GameIconPath).First();
-                _shortcutToEdit.GameLibrary = SupportedGameLibrary.Steam;
-            }
-            /*else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
-            {
-                _shortcutToEdit.OriginalIconPath = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.GameId == _shortcutToEdit.GameAppId select uplayGame.GameIconPath).First();
-                _shortcutToEdit.GameLibrary = SupportedGameLibrary.Uplay;
-            }*/
+                    _shortcutToEdit = new ShortcutItem(
+                        Name,
+                        _profileToUse,
+                        _gameToUse,
+                        _permanence,
+                        _gameToUse.GameToPlay.IconPath,
+                        _startPrograms,
+                        _autoName
+                    );
+
+                }
+                // If the game is a SteamGame
+                /*else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
+                {
+                    // Find the UplayGame
+                    _steamGameToUse = (from UplayGame in SteamLibrary.AllInstalledGames where UplayGame.GameId == _shortcutToEdit.GameAppId).First();
+
+                    _shortcutToEdit = new ShortcutItem(
+                        Name,
+                        _profileToUse,
+                        _steamGameToUse,
+                        _permanence,
+                        _steamGameToUse.GameIconPath,
+                        _startPrograms,
+                        _autoName
+                    );
+
+                }*/
+            } 
             else if (rb_standalone.Checked)
             {
-                _shortcutToEdit.Category = ShortcutCategory.Application;
-            }
+                _executableToUse = new Executable();
+                _executableToUse.ExecutableArguments = txt_args_executable.Text;
+                _executableToUse.ExecutableArgumentsRequired = cb_args_executable.Checked;
+                _executableToUse.ExecutableNameAndPath = txt_executable.Text;
+                _executableToUse.ExecutableTimeout = Convert.ToUInt32(nud_timeout_executable.Value);
 
+                if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
+                {
+                    _executableToUse.ProcessNameToMonitorUsesExecutable = true;
+                    _executableToUse.DifferentExecutableToMonitor = txt_alternative_executable.Text;
+                }
+                else
+                {
+                    _executableToUse.ProcessNameToMonitorUsesExecutable = false;
+                }
+                
+                _shortcutToEdit = new ShortcutItem(
+                    Name,
+                    _profileToUse,
+                    _executableToUse,
+                    _permanence,
+                    _executableToUse.ExecutableNameAndPath,
+                    _startPrograms,
+                    _autoName
+                );
+            }
+            
             // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
             // but only if it's new... if it is an edit then it will already be in the list.
             ShortcutRepository.AddShortcut(_shortcutToEdit);
@@ -539,7 +537,7 @@ namespace HeliosPlus.UIForms
 
         private void suggestShortcutName()
         {
-            if (_saveNameAutomatic && _profileToUse is ProfileItem)
+            if (_autoName && _profileToUse is ProfileItem)
             {
                 if (rb_no_game.Checked)
                 {
@@ -659,6 +657,65 @@ namespace HeliosPlus.UIForms
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
 
+
+            // Load the Games ListView
+            foreach (var game in SteamLibrary.AllInstalledGames.OrderBy(game => game.Name))
+            {
+                if (File.Exists(game.IconPath))
+                {
+                    try
+                    {
+                        if (game.IconPath.EndsWith(".ico"))
+                        {
+                            // if it's an icon try to load it as a bitmap
+                            il_games.Images.Add(Image.FromFile(game.IconPath));
+                        }
+                        else if (game.IconPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase) || game.IconPath.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // otherwise use IconExtractor
+                            /*IconExtractor IconEx = new IconExtractor(game.GameIconPath);
+                            Icon icoAppIcon = IconEx.GetIcon(0); // Because standard System.Drawing.Icon.ExtractAssociatedIcon() returns ONLY 32x32.*/
+
+                            Icon icoAppIcon = Icon.ExtractAssociatedIcon(game.IconPath);
+                            // We first try high quality icons
+                            Bitmap extractedBitmap = ShortcutItem.ExtractVistaIcon(icoAppIcon);
+                            if (extractedBitmap == null)
+                                extractedBitmap = icoAppIcon.ToBitmap();
+                            il_games.Images.Add(extractedBitmap);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
+                    }
+                }
+                else
+                {
+                    //(Icon)global::Calculate.Properties.Resources.ResourceManager.GetObject("Steam.ico");
+                    il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
+                }
+
+
+                if (!Visible)
+                {
+                    return;
+                }
+
+                lv_games.Items.Add(new ListViewItem
+                {
+                    Text = game.Name,
+                    Tag = game,
+                    ImageIndex = il_games.Images.Count - 1
+                });
+            }
+
+
+
+            // If it is a new Shortcut then we don't have to load anything!
+            if (_isNewShortcut)
+                return;
+
             if (_shortcutToEdit is ShortcutItem && _shortcutToEdit.ProfileToUse is ProfileItem)
             {
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
@@ -718,57 +775,6 @@ namespace HeliosPlus.UIForms
                 }
             }
 
-            // Start finding the games and loading the Games ListView
-            foreach (var game in SteamLibrary.AllInstalledGames.OrderBy(game => game.GameName))
-            {
-                if (File.Exists(game.GameIconPath))
-                {
-                    try
-                    {
-                        if (game.GameIconPath.EndsWith(".ico"))
-                        {
-                            // if it's an icon try to load it as a bitmap
-                            il_games.Images.Add(Image.FromFile(game.GameIconPath));
-                        }
-                        else if (game.GameIconPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase) || game.GameIconPath.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            // otherwise use IconExtractor
-                            /*IconExtractor IconEx = new IconExtractor(game.GameIconPath);
-                            Icon icoAppIcon = IconEx.GetIcon(0); // Because standard System.Drawing.Icon.ExtractAssociatedIcon() returns ONLY 32x32.*/
-
-                            Icon icoAppIcon = Icon.ExtractAssociatedIcon(game.GameIconPath);
-                            // We first try high quality icons
-                            Bitmap extractedBitmap = ShortcutItem.ExtractVistaIcon(icoAppIcon);
-                            if (extractedBitmap == null)
-                                extractedBitmap = icoAppIcon.ToBitmap();
-                            il_games.Images.Add(extractedBitmap);
-                        }
-                    } 
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
-                    }
-                } else
-                {
-                    //(Icon)global::Calculate.Properties.Resources.ResourceManager.GetObject("Steam.ico");
-                    il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
-                }
-
-
-                if (!Visible)
-                {
-                    return;
-                }
-
-                lv_games.Items.Add(new ListViewItem
-                {
-                    Text = game.GameName,
-                    Tag = game,
-                    ImageIndex = il_games.Images.Count - 1
-                });
-            }
-
             // Now start populating the other fields
             _uuid = _shortcutToEdit.UUID;
             // Set if we launch App/Game/NoGame
@@ -789,7 +795,7 @@ namespace HeliosPlus.UIForms
             txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
             txt_game_name.Text = _shortcutToEdit.GameName;
             _gameId = _shortcutToEdit.GameAppId;
-            nud_timeout_game.Value = _shortcutToEdit.GameTimeout;
+            nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
             txt_args_game.Text = _shortcutToEdit.GameArguments;
             if (_shortcutToEdit.GameArgumentsRequired)
             {
@@ -809,7 +815,7 @@ namespace HeliosPlus.UIForms
 
             // Set the executable items if we have them
             txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
-            nud_timeout_executable.Value = _shortcutToEdit.ExecutableTimeout;
+            nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
             txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
             if (_shortcutToEdit.ExecutableArgumentsRequired)
             {
@@ -950,12 +956,12 @@ namespace HeliosPlus.UIForms
                 txt_game_name.Text = lv_games.SelectedItems[0].Text;
                 foreach (SteamGame game in SteamLibrary.AllInstalledGames)
                 {
-                    if (game.GameName == txt_game_name.Text)
+                    if (game.Name == txt_game_name.Text)
                     {
                         if (_loadedShortcut)
                             _isUnsaved = true;
                         txt_game_launcher.Text = game.GameLibrary.ToString();
-                        _gameId = game.GameId;
+                        _gameId = game.Id;
                     }
                 }
             }
@@ -1159,7 +1165,7 @@ namespace HeliosPlus.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            _saveNameAutomatic = false;
+            _autoName = false;
             cb_autosuggest.Checked = false;
         }
 
@@ -1169,11 +1175,11 @@ namespace HeliosPlus.UIForms
                 _isUnsaved = true;
             if (cb_autosuggest.Checked)
             {
-                _saveNameAutomatic = true;
+                _autoName = true;
                 suggestShortcutName();
             }
             else
-                _saveNameAutomatic = false;
+                _autoName = false;
         }
 
         private string get_exe_file()
