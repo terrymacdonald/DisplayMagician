@@ -547,7 +547,7 @@ namespace HeliosPlus
                 {
                     // Now wait a little while for all the processes we want to monitor to start up
                     var ticks = 0;
-                    while (ticks < shortcutToUse.StartTimeout * 1000)
+                    while (ticks < shortcutToUse.ExecutableTimeout * 1000)
                     {
                         // Look for the processes with the ProcessName we want (which in Windows is the filename without the extension)
                         processesToMonitor = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor)).ToList();
@@ -630,7 +630,7 @@ namespace HeliosPlus
                     {
                         // Prepare to start the steam game using the URI interface 
                         // as used by Steam for it's own desktop shortcuts.
-                        var address = $"steam://rungameid/{steamGameToRun.Id}";
+                        var address = $"steam://rungameid/{steamGameToRun.GameId}";
                         if (shortcutToUse.GameArgumentsRequired)
                         {
                             address += "/" + shortcutToUse.GameArguments;
@@ -641,7 +641,7 @@ namespace HeliosPlus
 
                         // Wait for Steam game to update if needed
                         var ticks = 0;
-                        while (ticks < shortcutToUse.StartTimeout * 1000)
+                        while (ticks < shortcutToUse.GameTimeout * 1000)
                         {
                             if (steamGameToRun.IsRunning)
                             {
@@ -696,7 +696,7 @@ namespace HeliosPlus
 
                                 Thread.Sleep(300);
                             }
-                            Console.WriteLine($"{steamGameToRun.Name} has been exited. Now continuing with cleanup tasks.");
+                            Console.WriteLine($"{steamGameToRun.GameName} has been exited. Now continuing with cleanup tasks.");
                         }
 
                         // Remove the status notification icon from the status area

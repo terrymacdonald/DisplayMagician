@@ -24,7 +24,6 @@ using System.Diagnostics;
 using System.Threading;
 using HeliosPlus.InterProcess;
 using HeliosPlus.UIForms;
-using ComponentFactory.Krypton.Toolkit;
 
 namespace HeliosPlus
 {
@@ -51,264 +50,29 @@ namespace HeliosPlus
         public bool CloseOnFinish;
     }
 
-    public struct Executable
-    {
-        public string DifferentExecutableToMonitor;
-        public string ExecutableNameAndPath;
-        public uint ExecutableTimeout;
-        public string ExecutableArguments;
-        public bool ExecutableArgumentsRequired;
-        public bool ProcessNameToMonitorUsesExecutable;
-    }
-
-    public struct GameStruct
-    {
-        public Game GameToPlay;
-        public uint StartTimeout;
-        public string GameArguments;
-        public bool GameArgumentsRequired;
-    }
-
     public class ShortcutItem
     {
         
         //private static List<ShortcutItem> _allSavedShortcuts = new List<ShortcutItem>();
         //private MultiIcon _shortcutIcon, _originalIcon = null;
+        private Bitmap _shortcutBitmap, _originalBitmap = null;
+        private ProfileItem _profileToUse = null;
+        private string _originalIconPath = "";
         //private string _savedShortcutIconCacheFilename = "";
-        private string _profileUuid = "";
-        private ProfileItem _profileToUse;
         private string _uuid = "";
         private string _name = "";
-        private ShortcutCategory _category = ShortcutCategory.NoGame;
-        private string _differentExecutableToMonitor;
-        private string _executableNameAndPath = "";
-        private string _executableArguments;
-        private bool _executableArgumentsRequired;
-        private bool _processNameToMonitorUsesExecutable;
-        private uint _gameAppId;
-        private string _gameName;
-        private SupportedGameLibrary _gameLibrary;
-        private uint _startTimeout;
-        private string _gameArguments;
-        private bool _gameArgumentsRequired;
-        private ShortcutPermanence _permanence;
-        private bool _autoName;
-        private bool _isPossible;
-        private List<StartProgram> _startPrograms;
-        public string _originalIconPath;
-        private Bitmap _shortcutBitmap, _originalBitmap;
-
+        //private uint _id = 0;
+        private string _profileUuid = "";
+        private bool _isPossible = false;
 
         public ShortcutItem()
         {
-            // Create a new UUID for the shortcut if one wasn't created already
-            if (String.IsNullOrWhiteSpace(_uuid))
-                _uuid = Guid.NewGuid().ToString("D");
-
-            // Autocreate a name for the shortcut if AutoName is on
-            // (and if we have a profile to use)
-            if (AutoName && _profileToUse is ProfileItem)
-            {
-                // If Autoname is on, and then lets autoname it!
-                // That populates all the right things
-                AutoSuggestShortcutName();
-            }
-
         }
 
-        public ShortcutItem(
-            string name,
-            ProfileItem profile, 
-            uint gameAppId,
-            string gameName,
-            SupportedGameLibrary gameLibrary,
-            uint gameTimeout,
-            string gameArguments,
-            bool gameArgumentsRequired,
-            ShortcutPermanence permanence,
-            string originalIconPath,
-            List<StartProgram> startPrograms = null,
-            bool autoName = true,
-            string uuid = ""
-            ) : this()
+        public ShortcutItem(ProfileItem profile) : this()
         {
-            _uuid = uuid;
-            _name = name; 
-            _profileToUse = profile;
-            _category = ShortcutCategory.Game;
-            _profileToUse = profile;
-            _gameAppId = gameAppId;
-            _gameName = gameName;
-            _gameLibrary = gameLibrary;
-            _startTimeout = gameTimeout;
-            _gameArguments = gameArguments;
-            _gameArgumentsRequired = gameArgumentsRequired;
-            _permanence = permanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
+            ProfileToUse = profile;
         }
-
-        public ShortcutItem(string name, ProfileItem profile, GameStruct game, ShortcutPermanence permanence, string originalIconPath,
-            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
-        {
-            _uuid = uuid;
-            _name = name;
-            _profileToUse = profile;
-            _category = ShortcutCategory.Game;
-            _gameAppId = game.GameToPlay.Id;
-            _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibrary;
-            _startTimeout = game.StartTimeout;
-            _gameArguments = game.GameArguments;
-            _gameArgumentsRequired = game.GameArgumentsRequired;
-            _permanence = permanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-        }
-
-
-
-        public ShortcutItem(string name, string profileUuid, GameStruct game, ShortcutPermanence permanence, string originalIconPath,
-            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
-        {
-            _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.Game;
-            _gameAppId = game.GameToPlay.Id;
-            _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibrary;
-            _startTimeout = game.StartTimeout;
-            _gameArguments = game.GameArguments;
-            _gameArgumentsRequired = game.GameArgumentsRequired;
-            _gameArgumentsRequired = false;
-            _permanence = permanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-            {
-                if (profileToTest.UUID.Equals(_profileUuid,StringComparison.InvariantCultureIgnoreCase))
-                {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
-            }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-        }
-
-        public ShortcutItem(
-            string name,
-            ProfileItem profile,
-            string differentExecutableToMonitor,
-            string executableNameAndPath,
-            uint executableTimeout,
-            string executableArguments,
-            bool executableArgumentsRequired,
-            bool processNameToMonitorUsesExecutable,
-            ShortcutPermanence permanence,
-            string originalIconPath,
-            List<StartProgram> startPrograms = null,
-            bool autoName = true,
-            string uuid = ""
-            ) : this()
-        {
-            _uuid = uuid;
-            _name = name;
-            _profileToUse = profile;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = differentExecutableToMonitor;
-            _executableNameAndPath = executableNameAndPath;
-            _startTimeout = executableTimeout;
-            _executableArguments = executableArguments;
-            _executableArgumentsRequired = executableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = processNameToMonitorUsesExecutable;
-            _permanence = permanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-        }
-
-        public ShortcutItem(string name, ProfileItem profile, Executable executable, ShortcutPermanence permanence, string originalIconPath,
-            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
-        {
-            _uuid = uuid;
-            _name = name; 
-            _profileToUse = profile;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
-            _executableNameAndPath = executable.ExecutableNameAndPath;
-            _startTimeout = executable.ExecutableTimeout;
-            _executableArguments = executable.ExecutableArguments;
-            _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            _permanence = permanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-        }
-
-        public ShortcutItem(string name, string profileUuid, Executable executable, ShortcutPermanence permanence, string originalIconPath,
-            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
-        {
-            _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
-            _executableNameAndPath = executable.ExecutableNameAndPath;
-            _startTimeout = executable.ExecutableTimeout;
-            _executableArguments = executable.ExecutableArguments;
-            _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            _permanence = permanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-            {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
-            }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-
-        }
-
 
         public static Version Version
         {
@@ -319,6 +83,8 @@ namespace HeliosPlus
         {
             get
             {
+                if (String.IsNullOrWhiteSpace(_uuid))
+                    _uuid = Guid.NewGuid().ToString("D");
                 return _uuid;
             }
             set
@@ -334,6 +100,11 @@ namespace HeliosPlus
         {
             get
             {
+                if (AutoName && _profileToUse is ProfileItem)
+                {
+                    // If Autoname is on, and then lets autoname it!
+                    AutoSuggestShortcutName();
+                }
                 return _name;
             }
             set
@@ -342,23 +113,23 @@ namespace HeliosPlus
             }
         }
 
-        public bool AutoName
-        {
-            get
-            {
-                return _autoName;
-            }
-            set
-            {
-                _autoName = value;
-            }
-        }   
+        public bool AutoName { get; set; } = true;
 
 
         [JsonIgnore]
         public ProfileItem ProfileToUse {
             get
             {
+                if (_profileToUse == null && !String.IsNullOrWhiteSpace(_profileUuid))
+                    foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+                    {
+                        if (profileToTest.UUID.Equals(_profileUuid))
+                        {
+                            _profileToUse = profileToTest;
+                            break;
+                        }
+
+                    }
                 return _profileToUse;
             }
             set
@@ -367,7 +138,9 @@ namespace HeliosPlus
                 {
                     _profileToUse = value;
                     _profileUuid = _profileToUse.UUID;
-                    // We should try to set the Profile
+                    // And if we have the _originalBitmap we can also save the Bitmap overlay, but only if the ProfileToUse is set
+                    if (_originalBitmap is Bitmap)
+                        _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap,256,256);
                     // And we rename the shortcut if the AutoName is on
                     if (AutoName)
                         AutoSuggestShortcutName();
@@ -378,6 +151,8 @@ namespace HeliosPlus
         public string ProfileUUID { 
             get 
             {
+                if (_profileUuid == null && _profileToUse is ProfileItem)
+                    _profileUuid = _profileToUse.UUID;
                 return _profileUuid;
             }
             set
@@ -393,198 +168,42 @@ namespace HeliosPlus
             }
         }
 
-        public ShortcutPermanence Permanence 
-        { 
-            get 
-            {
-                return _permanence;
-            }
+        public ShortcutPermanence Permanence { get; set; } = ShortcutPermanence.Temporary;
 
-            set 
-            {
-                _permanence = value;
-            }
-        }
+        public ShortcutCategory Category { get; set; } = ShortcutCategory.Game;
 
-        public ShortcutCategory Category
-        {
-            get
-            {
-                return _category;
-            }
+        public string DifferentExecutableToMonitor { get; set; } = "";
 
-            set
-            {
-                _category = value;
-            }
-        }
+        public string ExecutableNameAndPath { get; set; } = "";
 
-        public string DifferentExecutableToMonitor
-        {
-            get
-            {
-                return _differentExecutableToMonitor;
-            }
+        public uint ExecutableTimeout { get; set; } = 30;
 
-            set
-            {
-                _differentExecutableToMonitor = value;
-            }
-        }
+        public string ExecutableArguments { get; set; } = "";
 
-        public string ExecutableNameAndPath
-        {
-            get
-            {
-                return _executableNameAndPath;
-            }
+        public bool ExecutableArgumentsRequired { get; set; } = false;
 
-            set
-            {
-                _executableNameAndPath = value;
+        public bool ProcessNameToMonitorUsesExecutable { get; set; } = true;
 
-                // If the executableNameandPath is set then we also want to update the originalIconPath
-                // so it's the path to the application. This will kick of the icon grabbing processes
-                if (!String.IsNullOrWhiteSpace(_originalIconPath))
-                    if (Category.Equals(ShortcutCategory.Application))
-                        _originalIconPath = value;
+        public uint GameAppId { get; set; } = 0;
 
-            }
-        }
+        public string GameName { get; set; } = "";
 
-        public string ExecutableArguments
-        {
-            get
-            {
-                return _executableArguments;
-            }
+        public SupportedGameLibrary GameLibrary { get; set; } = SupportedGameLibrary.Unknown;
 
-            set
-            {
-                _executableArguments = value;
-            }
-        }
+        public uint GameTimeout { get; set; } = 30;
 
-        public bool ExecutableArgumentsRequired
-        {
-            get
-            {
-                return _executableArgumentsRequired;
-            }
+        public string GameArguments { get; set; } = "";
 
-            set
-            {
-                _executableArgumentsRequired = value;
-            }
-        }
+        public bool GameArgumentsRequired { get; set; } = false;
 
-        public bool ProcessNameToMonitorUsesExecutable
-        {
-            get
-            {
-                return _processNameToMonitorUsesExecutable;
-            }
-
-            set
-            {
-                _processNameToMonitorUsesExecutable = value;
-            }
-        }
-
-        public uint GameAppId
-        {
-            get
-            {
-                return _gameAppId;
-            }
-
-            set
-            {
-                _gameAppId = value;
-            }
-        }
-
-        public string GameName
-        {
-            get
-            {
-                return _gameName;
-            }
-
-            set
-            {
-                _gameName = value;
-            }
-        }
-
-        public SupportedGameLibrary GameLibrary
-        {
-            get
-            {
-                return _gameLibrary;
-            }
-
-            set
-            {
-                _gameLibrary = value;
-            }
-        }
-
-        public uint StartTimeout
-        {
-            get
-            {
-                return _startTimeout;
-            }
-
-            set
-            {
-                _startTimeout = value;
-            }
-        }
-
-        public string GameArguments
-        {
-            get
-            {
-                return _gameArguments;
-            }
-
-            set
-            {
-                _gameArguments = value;
-            }
-        }
-
-        public bool GameArgumentsRequired
-        {
-            get
-            {
-                return _gameArgumentsRequired;
-            }
-
-            set
-            {
-                _gameArgumentsRequired = value;
-            }
-        }
-
-        public List<StartProgram> StartPrograms
-        {
-            get
-            {
-                return _startPrograms;
-            }
-
-            set
-            {
-                _startPrograms = value;
-            }
-        }
+        public List<StartProgram> StartPrograms { get; set; }
 
         public string OriginalIconPath {
             get
             {
+                if (String.IsNullOrEmpty(_originalIconPath))
+                    return null;
+
                 return _originalIconPath;
             }
 
@@ -592,9 +211,17 @@ namespace HeliosPlus
             {
                 _originalIconPath = value;
 
-                // And we do the same for the OriginalBitmap 
-                if (_originalBitmap == null)
-                    _originalBitmap = ToBitmap(_originalIconPath);                
+                // We now force creation of the bitmap
+                // straight away, so we know it has already been done.
+
+                /*if (Category == ShortcutCategory.Application) 
+                    _originalBitmap = ToBitmapFromExe(_originalIconPath);
+                else 
+                    _originalBitmap = ToBitmapFromIcon(_originalIconPath);*/
+
+                // And we do the same for the Bitmap overlay, but only if the ProfileToUse is set
+                //if (ProfileToUse is ProfileItem)
+                //    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap, 256, 256);
             }
         }
 
@@ -603,17 +230,25 @@ namespace HeliosPlus
         {
             get
             {
-                return _originalBitmap;
+                if (_originalBitmap is Bitmap)
+                    return _originalBitmap;
+                else
+                {
+                    if (String.IsNullOrEmpty(OriginalIconPath))
+                        return null;
+
+                    if (Category == ShortcutCategory.Application)
+                        _originalBitmap = ToBitmapFromExe(OriginalIconPath);
+                    else
+                        _originalBitmap = ToBitmapFromIcon(OriginalIconPath);
+
+                    return _originalBitmap;
+                }
             }
 
             set
             {
                 _originalBitmap = value;
-
-                // And we do the same for the Bitmap overlay, but only if the ProfileToUse is set
-                if (_profileToUse is ProfileItem)
-                    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
             }
         }
 
@@ -622,12 +257,25 @@ namespace HeliosPlus
         {
             get
             {
-                return _shortcutBitmap;
+                if (_shortcutBitmap is Bitmap)
+                    return _shortcutBitmap;
+                else
+                {
+
+                    if (ProfileToUse == null)
+                        return null;
+
+                    if (OriginalBitmap == null)
+                        return null;
+
+                    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap, 256, 256);
+                    return _shortcutBitmap;
+                }
             }
 
             set
             {
-                _shortcutBitmap = value;
+                _originalBitmap = value;
             }
         }
 
@@ -662,13 +310,14 @@ namespace HeliosPlus
             shortcut.Category = Category;
             shortcut.DifferentExecutableToMonitor = DifferentExecutableToMonitor;
             shortcut.ExecutableNameAndPath = ExecutableNameAndPath;
+            shortcut.ExecutableTimeout = ExecutableTimeout;
             shortcut.ExecutableArguments = ExecutableArguments;
             shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
             shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
             shortcut.GameLibrary = GameLibrary;
-            shortcut.StartTimeout = StartTimeout;
+            shortcut.GameTimeout = GameTimeout;
             shortcut.GameArguments = GameArguments;
             shortcut.GameArgumentsRequired = GameArgumentsRequired;
             shortcut.OriginalIconPath = OriginalIconPath;

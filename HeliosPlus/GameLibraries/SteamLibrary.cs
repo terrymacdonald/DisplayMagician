@@ -48,6 +48,8 @@ namespace HeliosPlus.GameLibraries
                 _steamPath = _steamPath.Replace('/', '\\');
             }
 
+            // Load the Shortcuts from storage
+            LoadInstalledSteamGames();
         }
         #endregion
 
@@ -58,7 +60,7 @@ namespace HeliosPlus.GameLibraries
             {
                 // Load the Steam Games from Steam Client if needed
                 if (_allSteamGames == null)
-                    LoadInstalledGames();
+                    LoadInstalledSteamGames();
                 return _allSteamGames;
             }
         }
@@ -130,7 +132,7 @@ namespace HeliosPlus.GameLibraries
             if (ContainsSteamGame(steamGame))
             {
                 // We update the existing Shortcut with the data over
-                SteamGame steamGameToUpdate = GetSteamGame(steamGame.Id.ToString());
+                SteamGame steamGameToUpdate = GetSteamGame(steamGame.GameId.ToString());
                 steamGame.CopyTo(steamGameToUpdate);
             }
             else
@@ -155,7 +157,7 @@ namespace HeliosPlus.GameLibraries
                 return false;
 
             // Remove the steamGame from the list.
-            int numRemoved = _allSteamGames.RemoveAll(item => item.Id.Equals(steamGame.Id));
+            int numRemoved = _allSteamGames.RemoveAll(item => item.GameId.Equals(steamGame.GameId));
 
             if (numRemoved == 1)
             {
@@ -176,9 +178,9 @@ namespace HeliosPlus.GameLibraries
             int numRemoved;
             Match match = Regex.Match(steamGameNameOrUuid, steamAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
-                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(Convert.ToUInt32(item.Id)));
+                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(Convert.ToUInt32(item.GameId)));
             else
-                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(item.Name));
+                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(item.GameName));
 
             if (numRemoved == 1)
                 return true;
@@ -197,7 +199,7 @@ namespace HeliosPlus.GameLibraries
 
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
-                if (testSteamGame.Id.Equals(steamGame.Id))
+                if (testSteamGame.GameId.Equals(steamGame.GameId))
                     return true;
             }
 
@@ -215,7 +217,7 @@ namespace HeliosPlus.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToUInt32(testSteamGame.Id)))
+                    if (steamGameNameOrUuid.Equals(Convert.ToUInt32(testSteamGame.GameId)))
                         return true;
                 }
 
@@ -224,7 +226,7 @@ namespace HeliosPlus.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(testSteamGame.Name))
+                    if (steamGameNameOrUuid.Equals(testSteamGame.GameName))
                         return true;
                 }
 
@@ -238,7 +240,7 @@ namespace HeliosPlus.GameLibraries
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
-                if (steamGameId == testSteamGame.Id)
+                if (steamGameId == testSteamGame.GameId)
                     return true;
             }
 
@@ -258,7 +260,7 @@ namespace HeliosPlus.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToUInt32(testSteamGame.Id)))
+                    if (steamGameNameOrUuid.Equals(Convert.ToUInt32(testSteamGame.GameId)))
                         return testSteamGame;
                 }
 
@@ -267,7 +269,7 @@ namespace HeliosPlus.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(testSteamGame.Name))
+                    if (steamGameNameOrUuid.Equals(testSteamGame.GameName))
                         return testSteamGame;
                 }
 
@@ -281,7 +283,7 @@ namespace HeliosPlus.GameLibraries
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
-                if (steamGameId == testSteamGame.Id)
+                if (steamGameId == testSteamGame.GameId)
                     return testSteamGame;
             }
 
@@ -289,7 +291,7 @@ namespace HeliosPlus.GameLibraries
 
         }
 
-        public static bool LoadInstalledGames()
+        private static bool LoadInstalledSteamGames()
         {
             try
             {
@@ -545,7 +547,7 @@ namespace HeliosPlus.GameLibraries
                                     }
 
                                     // And we add the Game to the list of games we have!
-                                    _allSteamGames.Add(new SteamGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath));
+                                    _allSteamGames.Add(new SteamGame(steamGameId, steamGameName, steamGameInstallDir, steamGameExe, steamGameIconPath));
 
                                 }
                             }

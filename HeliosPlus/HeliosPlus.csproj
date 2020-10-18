@@ -73,7 +73,6 @@
     <Reference Include="System.Xml.Serialization" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GameLibraries\Game.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\AppInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\EUniverse.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />

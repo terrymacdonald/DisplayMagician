@@ -104,8 +104,6 @@ namespace HeliosPlus {
                 return 0;
             });
 
-            // Try to load all the games in parallel to this process
-            Task.Run(() => LoadGamesInBackground());
 
             try
             {
@@ -420,92 +418,7 @@ namespace HeliosPlus {
             }
         }
 
-        public static bool LoadGamesInBackground()
-        {
-
-            Debug.WriteLine("Program/LoadGamesInBackground : Starting");
-            // Now lets prepare loading all the Steam games we have installed
-            Task loadSteamGamesTask = new Task(() =>
-            {
-                // Load Steam library games
-                Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Steam Games ");
-                if (!HeliosPlus.GameLibraries.SteamLibrary.LoadInstalledGames())
-                {
-                    // Somehow return that this profile topology didn't apply
-                    throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Steam Games!");
-                }                
-            });
-
-            // Now lets prepare loading all the Uplay games we have installed
-            Task loadUplayGamesTask = new Task(() =>
-            {
-                // Load Uplay library games
-                Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Uplay Games ");
-                /* if (!HeliosPlus.GameLibraries.UplayLibrary.LoadInstalledGames())
-                {
-                    // Somehow return that this profile topology didn't apply
-                    throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
-                }
-                */
-
-            });
-
-            // Store all the tasks in an array so we can wait on them later
-            Task[] loadGamesTasks = new Task[2];
-            loadGamesTasks[0] = loadSteamGamesTask;
-            loadGamesTasks[1] = loadUplayGamesTask;
-
-            Console.WriteLine("Program/LoadGamesInBackground : Running tasks");
-            // Go through and start all the tasks
-            foreach (Task loadGameTask in loadGamesTasks)
-                loadGameTask.Start();
-
-            try
-            {
-                Console.WriteLine("Program/LoadGamesInBackground : Waiting for tasks to finish");
-                Task.WaitAll(loadGamesTasks);
-                Console.WriteLine("Program/LoadGamesInBackground : All tasks completed!");
-            }
-            catch (AggregateException ae)
-            {
-                Console.WriteLine("Program/LoadGamesInBackground : Task exception!");
-                foreach (var e in ae.InnerExceptions)
-                {
-                    // Handle the custom exception.
-                    if (e is LoadingInstalledGamesException)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                    // Rethrow any other exception.
-                    else
-                    {
-                        throw;
-                    }
-                }
-            }
-
-            bool failedTask = false;
-            foreach (var loadGameTask in loadGamesTasks)
-            {
-                Console.WriteLine($"Program/LoadGamesInBackground: LoadGameTask #{loadGameTask.Id}: {loadGameTask.Status}");
-                if (loadGameTask.Exception != null)
-                {
-                    failedTask = true;
-                    foreach (var ex in loadGameTask.Exception.InnerExceptions)
-                        Console.WriteLine("      {0}: {1}", ex.GetType().Name,
-                                          ex.Message);
-                }
-            }
-
-            if (failedTask)
-                return false;
-
-            return true;
-
-        }
-
     }
-
 
     public class ApplyTopologyException : Exception
     {
@@ -516,12 +429,6 @@ namespace HeliosPlus {
     public class ApplyPathInfoException : Exception
     {
         public ApplyPathInfoException(String message) : base(message)
-        { }
-    }
-
-    public class LoadingInstalledGamesException : Exception
-    {
-        public LoadingInstalledGamesException(String message) : base(message)
         { }
     }
 }
