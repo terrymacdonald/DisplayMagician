@@ -29,7 +29,7 @@ using System.Diagnostics;
 
 namespace HeliosPlus.GameLibraries
 {
-    public class SteamGame
+    public class SteamGame : Game
     {
         /*private static string SteamLibrary.SteamExe;
         private static string SteamLibrary.SteamPath;
@@ -39,7 +39,8 @@ namespace HeliosPlus.GameLibraries
         private string _gameRegistryKey;
         private uint _steamGameId;
         private string _steamGameName;
-        private string _steamGamePath;
+        private string _steamGameExePath;
+        private string _steamGameDir;
         private string _steamGameExe;
         private string _steamGameProcessName;
         private string _steamGameIconPath;
@@ -61,34 +62,53 @@ namespace HeliosPlus.GameLibraries
         }
 
 
-        public SteamGame(uint steamGameId, string steamGameName, string steamGamePath, string steamGameExe, string steamGameIconPath)
+        public SteamGame(uint steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
         {
 
             _gameRegistryKey = $@"{SteamLibrary.SteamAppsRegistryKey}\\{steamGameId}";
             _steamGameId = steamGameId;
             _steamGameName = steamGameName;
-            _steamGamePath = steamGamePath;
-            _steamGameExe = steamGameExe;
-            _steamGameProcessName = Path.GetFileNameWithoutExtension(_steamGameExe);
+            _steamGameExePath = steamGameExePath;
+            _steamGameDir = Path.GetDirectoryName(steamGameExePath);
+            _steamGameExe = Path.GetFileName(_steamGameExePath);
+            _steamGameProcessName = Path.GetFileNameWithoutExtension(_steamGameExePath);
             _steamGameIconPath = steamGameIconPath;
 
         }
 
-        public uint GameId { 
+        public override uint Id { 
             get => _steamGameId;
             set => _steamGameId = value;
         }
 
-        public SupportedGameLibrary GameLibrary { 
+        public override string Name
+        {
+            get => _steamGameName;
+            set => _steamGameName = value;
+        }
+
+        public override SupportedGameLibrary GameLibrary { 
             get => SupportedGameLibrary.Steam; 
         }
 
-        public string GameIconPath { 
+        public override string IconPath { 
             get => _steamGameIconPath; 
             set => _steamGameIconPath = value;
         }
-                  
-        public bool IsRunning
+
+        public override string ExePath
+        {
+            get => _steamGameExePath;
+            set => _steamGameExePath = value;
+        }
+
+        public override string Directory
+        {
+            get => _steamGameExePath;
+            set => _steamGameExePath = value;
+        }
+
+        public override bool IsRunning
         {
             get
             {
@@ -123,12 +143,12 @@ namespace HeliosPlus.GameLibraries
 
                 bool isRunning = Process.GetProcessesByName(_steamGameProcessName)
                     .FirstOrDefault(p => p.MainModule.FileName
-                    .StartsWith(GamePath,StringComparison.OrdinalIgnoreCase)) != default(Process);
+                    .StartsWith(ExePath,StringComparison.OrdinalIgnoreCase)) != default(Process);
                 return isRunning;
             }
         }
 
-        public bool IsUpdating
+        public override bool IsUpdating
         {
             get
             {
@@ -163,26 +183,16 @@ namespace HeliosPlus.GameLibraries
             }
         }
 
-        public string GameName { 
-            get => _steamGameName; 
-            set => _steamGameName = value;
-        }
-
-        public string GamePath { 
-            get => _steamGamePath;
-            set => _steamGamePath = value;
-        }
-
         public bool CopyTo(SteamGame steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
 
             // Copy all the game data over to the other game
-            steamGame.GameIconPath = GameIconPath;
-            steamGame.GameId = GameId;
-            steamGame.GameName = GameName;
-            steamGame.GamePath = GamePath;
+            steamGame.IconPath = IconPath;
+            steamGame.Id = Id;
+            steamGame.Name = Name;
+            steamGame.ExePath = ExePath;
             return true;
         }
 
