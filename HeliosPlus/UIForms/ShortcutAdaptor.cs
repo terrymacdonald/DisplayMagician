@@ -43,15 +43,8 @@ namespace HeliosPlus.UIForms
             {
                 ShortcutItem shortcut = (ShortcutItem) key;
 
-                if (shortcut == null)
-                {
-                    return null;
-                }
-
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
-                //return shortcut.ShortcutBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
-                //return Manina.Windows.Forms.Instance.GetThumbnail(shortcut.ShortcutBitmap, size, useEmbeddedThumbnails, useExifOrientation);
-                return shortcut.ShortcutBitmap;
+                return shortcut.ShortcutBitmap.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
             }
             catch (Exception ex)
             {
@@ -85,18 +78,7 @@ namespace HeliosPlus.UIForms
                 ShortcutItem shortcut = (ShortcutItem) key;
                 //return shortcut.Name;
 
-
-                StringBuilder sb = new StringBuilder();
-                sb.Append(shortcut.ToString());// Filename
-                sb.Append(':');
-                sb.Append(size.Width); // Thumbnail size
-                sb.Append(',');
-                sb.Append(size.Height);
-                sb.Append(':');
-                sb.Append(useEmbeddedThumbnails);
-                sb.Append(':');
-                sb.Append(useExifOrientation);
-                return sb.ToString();
+                return shortcut.Name;
             }
             catch (Exception ex)
             {

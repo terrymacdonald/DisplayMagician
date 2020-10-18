@@ -95,8 +95,11 @@ namespace HeliosPlus
         private bool _autoName;
         private bool _isPossible;
         private List<StartProgram> _startPrograms;
+        [JsonIgnore]
         public string _originalIconPath;
         private Bitmap _shortcutBitmap, _originalBitmap;
+        [JsonIgnore]
+        public string _savedShortcutIconCacheFilename;
 
 
         public ShortcutItem()
@@ -132,7 +135,8 @@ namespace HeliosPlus
             string uuid = ""
             ) : this()
         {
-            _uuid = uuid;
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
             _name = name; 
             _profileToUse = profile;
             _category = ShortcutCategory.Game;
@@ -151,12 +155,22 @@ namespace HeliosPlus
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
+            // We create the OriginalBitmap from the IconPath
+            _originalBitmap = ToBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
         }
 
         public ShortcutItem(string name, ProfileItem profile, GameStruct game, ShortcutPermanence permanence, string originalIconPath,
             List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
         {
-            _uuid = uuid;
+            // Create a new UUID for the shortcut if one wasn't created already
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
             _name = name;
             _profileToUse = profile;
             _category = ShortcutCategory.Game;
@@ -174,6 +188,13 @@ namespace HeliosPlus
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
+            // We create the OriginalBitmap from the IconPath
+            _originalBitmap = ToBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
         }
 
 
@@ -181,7 +202,8 @@ namespace HeliosPlus
         public ShortcutItem(string name, string profileUuid, GameStruct game, ShortcutPermanence permanence, string originalIconPath,
             List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
         {
-            _uuid = uuid;
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
             _name = name;
             _profileUuid = profileUuid;
             _category = ShortcutCategory.Game;
@@ -212,6 +234,14 @@ namespace HeliosPlus
             {
                 throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
             }
+
+            // We create the OriginalBitmap from the IconPath
+            _originalBitmap = ToBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
         }
 
         public ShortcutItem(
@@ -230,7 +260,8 @@ namespace HeliosPlus
             string uuid = ""
             ) : this()
         {
-            _uuid = uuid;
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
             _name = name;
             _profileToUse = profile;
             _category = ShortcutCategory.Application;
@@ -248,12 +279,21 @@ namespace HeliosPlus
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
+            // We create the OriginalBitmap from the IconPath
+            _originalBitmap = ToBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
         }
 
         public ShortcutItem(string name, ProfileItem profile, Executable executable, ShortcutPermanence permanence, string originalIconPath,
             List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
         {
-            _uuid = uuid;
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
             _name = name; 
             _profileToUse = profile;
             _category = ShortcutCategory.Application;
@@ -271,12 +311,21 @@ namespace HeliosPlus
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
+            // We create the OriginalBitmap from the IconPath
+            _originalBitmap = ToBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
         }
 
         public ShortcutItem(string name, string profileUuid, Executable executable, ShortcutPermanence permanence, string originalIconPath,
             List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
         {
-            _uuid = uuid;
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
             _name = name;
             _profileUuid = profileUuid;
             _category = ShortcutCategory.Application;
@@ -306,6 +355,14 @@ namespace HeliosPlus
             {
                 throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
             }
+
+            // We create the OriginalBitmap from the IconPath
+            _originalBitmap = ToBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
         }
 
@@ -445,9 +502,8 @@ namespace HeliosPlus
 
                 // If the executableNameandPath is set then we also want to update the originalIconPath
                 // so it's the path to the application. This will kick of the icon grabbing processes
-                if (!String.IsNullOrWhiteSpace(_originalIconPath))
-                    if (Category.Equals(ShortcutCategory.Application))
-                        _originalIconPath = value;
+                if (Category.Equals(ShortcutCategory.Application))
+                    _originalIconPath = value;
 
             }
         }
@@ -593,8 +649,7 @@ namespace HeliosPlus
                 _originalIconPath = value;
 
                 // And we do the same for the OriginalBitmap 
-                if (_originalBitmap == null)
-                    _originalBitmap = ToBitmap(_originalIconPath);                
+                _originalBitmap = ToBitmap(_originalIconPath);                
             }
         }
 
@@ -631,7 +686,17 @@ namespace HeliosPlus
             }
         }
 
-        public string SavedShortcutIconCacheFilename { get; set; }
+        public string SavedShortcutIconCacheFilename
+        {
+            get
+            {
+                return _savedShortcutIconCacheFilename;
+            }
+            set
+            {
+                _savedShortcutIconCacheFilename = value;
+            }
+        }
 
         [JsonIgnore]
         public bool IsPossible
@@ -679,6 +744,40 @@ namespace HeliosPlus
             shortcut.StartPrograms = StartPrograms;
 
             return true;
+        }
+
+        public void SaveShortcutIconToCache()
+        {
+
+            // Only add this set of options if the shortcut is to an standalone application
+            if (_category == ShortcutCategory.Application)
+            {
+                // Work out the name of the shortcut we'll save.
+                _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, String.Concat(@"executable-", _profileToUse.UUID, "-", Path.GetFileNameWithoutExtension(_executableNameAndPath), @".ico"));
+
+            }
+            else 
+            {
+                // Work out the name of the shortcut we'll save.
+                _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, String.Concat(_gameLibrary.ToString().ToLower(CultureInfo.InvariantCulture),@"-", _profileToUse.UUID, "-", _gameAppId.ToString(), @".ico"));
+            }
+
+            MultiIcon shortcutIcon;
+            try
+            {
+                //shortcutIcon = new ProfileIcon(shortcut.ProfileToUse).ToIconOverlay(shortcut.OriginalIconPath);
+                shortcutIcon = ToIconOverlay();
+                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ShortcutRepository/SaveShortcutIconToCache exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+
+                // If we fail to create an icon based on the original executable or game
+                // Then we use the standard HeliosPlus profile one.
+                shortcutIcon = _profileToUse.ProfileIcon.ToIcon();
+                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+            }
         }
 
         public static Bitmap ExtractVistaIcon(Icon icoIcon)
@@ -768,7 +867,7 @@ namespace HeliosPlus
                 return null;
 
             string fileExtension = Path.GetExtension(fileNameAndPath);
-            if (fileExtension.Equals("ico",StringComparison.OrdinalIgnoreCase))
+            if (fileExtension.Equals(".ico",StringComparison.OrdinalIgnoreCase))
             {
                 return ToBitmapFromIcon(fileNameAndPath);
             } 

@@ -117,7 +117,7 @@ namespace HeliosPlus
             if (ContainsShortcut(shortcut))
             {
                 // Generate the Shortcut Icon ready to be used
-                SaveShortcutIconToCache(shortcut);
+                //shortcut.SaveShortcutIconToCache();
 
                 // Save the shortcuts JSON as it's different
                 SaveShortcuts();
@@ -374,6 +374,7 @@ namespace HeliosPlus
                 }
             }
 
+
             try
             {
                 var json = JsonConvert.SerializeObject(_allShortcuts, Formatting.Indented, new JsonSerializerSettings
@@ -401,8 +402,10 @@ namespace HeliosPlus
             return false;
         }
 
-        private static void SaveShortcutIconToCache(ShortcutItem shortcut)
+       /* private static void SaveShortcutIconToCache(ShortcutItem shortcut)
         {
+
+            // Force the creation of the ShortcutBitmap
 
             // Only add the rest of the options if the permanence is temporary
             if (shortcut.Permanence == ShortcutPermanence.Temporary)
@@ -458,7 +461,7 @@ namespace HeliosPlus
                 shortcutIcon = shortcut.ProfileToUse.ProfileIcon.ToIcon();
                 shortcutIcon.Save(shortcut.SavedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
-        }
+        }*/
 
 
         // ReSharper disable once CyclomaticComplexity

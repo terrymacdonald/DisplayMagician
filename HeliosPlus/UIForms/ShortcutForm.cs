@@ -28,7 +28,7 @@ namespace HeliosPlus.UIForms
         List<StartProgram> _startPrograms = new List<StartProgram>();
         private ShortcutItem _shortcutToEdit = null;
         private bool _isNewShortcut = true;
-        private bool _isUnsaved = false;
+        private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
         private uint _gameId = 0;
@@ -437,7 +437,8 @@ namespace HeliosPlus.UIForms
                         _permanence,
                         _gameToUse.GameToPlay.IconPath,
                         _startPrograms,
-                        _autoName
+                        _autoName,
+                        _uuid
                     );
 
                 }
@@ -490,8 +491,14 @@ namespace HeliosPlus.UIForms
             
             // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
             // but only if it's new... if it is an edit then it will already be in the list.
-            ShortcutRepository.AddShortcut(_shortcutToEdit);
-
+            if (_isNewShortcut)
+            {
+                // Generate the Shortcut Icon ready to be used
+                _shortcutToEdit.SaveShortcutIconToCache();
+                //SAve the shortcut to the Shortcut Repository
+                ShortcutRepository.AddShortcut(_shortcutToEdit);
+            }
+                
             // We've saved, so mark it as so
             _isUnsaved = false;
 
@@ -714,8 +721,14 @@ namespace HeliosPlus.UIForms
 
             // If it is a new Shortcut then we don't have to load anything!
             if (_isNewShortcut)
+            {
+                RefreshShortcutUI();
+                ChangeSelectedProfile(ProfileRepository.CurrentProfile);
+                _isUnsaved = true;
                 return;
+            }
 
+            // We only get down here if the form has loaded a shortcut to edit
             if (_shortcutToEdit is ShortcutItem && _shortcutToEdit.ProfileToUse is ProfileItem)
             {
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
@@ -885,6 +898,7 @@ namespace HeliosPlus.UIForms
             RefreshImageListView(chosenProfile);
 
             _loadedShortcut = true;
+            _isUnsaved = false;
 
             // Finally enable the save button if it's still valid
             enableSaveButtonIfValid();
@@ -1153,7 +1167,7 @@ namespace HeliosPlus.UIForms
                     MessageBoxIcon.Exclamation);
                 e.Cancel = (result == DialogResult.No); 
             }
-           
+
         }
 
         private void btn_exe_to_start_Click(object sender, EventArgs e)
