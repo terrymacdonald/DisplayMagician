@@ -63,6 +63,12 @@ namespace HeliosPlus {
             Console.WriteLine($"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
             Console.WriteLine(@"Based on Helios Display Management - Copyright © Soroush Falahati 2017-2020");
 
+
+            //Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+
             var app = new CommandLineApplication();
 
             //app.Name = "HeliosDM+";

@@ -501,7 +501,7 @@ namespace HeliosPlus.GameLibraries
                                     // Next, we need to get the Icons we want to use, and make sure it's the latest one.
                                     string steamGameIconPath = "";
                                     // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
-                                    if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath))
+                                    if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath) && steamAppInfo[steamGameId].GameSteamIconPath.EndsWith(".ico"))
                                     {
                                         steamGameIconPath = steamAppInfo[steamGameId].GameSteamIconPath;
                                     }
@@ -516,6 +516,7 @@ namespace HeliosPlus.GameLibraries
                                             {
                                                 // Now we need to get the Icon from the app if possible if it's not in the games folder
                                                 steamGameIconPath = steamGameExe;
+                                                break;
                                             }
                                         }
 

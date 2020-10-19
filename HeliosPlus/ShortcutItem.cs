@@ -25,6 +25,8 @@ using System.Threading;
 using HeliosPlus.InterProcess;
 using HeliosPlus.UIForms;
 using ComponentFactory.Krypton.Toolkit;
+using MintPlayer.IconUtils;
+using System.Windows.Media.Imaging;
 
 namespace HeliosPlus
 {
@@ -97,7 +99,7 @@ namespace HeliosPlus
         private List<StartProgram> _startPrograms;
         [JsonIgnore]
         public string _originalIconPath;
-        private Bitmap _shortcutBitmap, _originalBitmap;
+        private Bitmap _shortcutBitmap, _originalLargeBitmap, _originalSmallBitmap;
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
 
@@ -155,13 +157,14 @@ namespace HeliosPlus
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            // We create the OriginalBitmap from the IconPath
-            _originalBitmap = ToBitmap(_originalIconPath);
+            // We create the OriginalLargeBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
         }
 
@@ -189,12 +192,12 @@ namespace HeliosPlus
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalBitmap = ToBitmap(_originalIconPath);
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
         }
 
 
@@ -236,12 +239,12 @@ namespace HeliosPlus
             }
 
             // We create the OriginalBitmap from the IconPath
-            _originalBitmap = ToBitmap(_originalIconPath);
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
         }
 
         public ShortcutItem(
@@ -280,12 +283,12 @@ namespace HeliosPlus
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalBitmap = ToBitmap(_originalIconPath);
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
         }
 
@@ -312,12 +315,12 @@ namespace HeliosPlus
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalBitmap = ToBitmap(_originalIconPath);
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
         }
 
@@ -357,12 +360,12 @@ namespace HeliosPlus
             }
 
             // We create the OriginalBitmap from the IconPath
-            _originalBitmap = ToBitmap(_originalIconPath);
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
         }
 
@@ -649,25 +652,39 @@ namespace HeliosPlus
                 _originalIconPath = value;
 
                 // And we do the same for the OriginalBitmap 
-                _originalBitmap = ToBitmap(_originalIconPath);                
+                _originalLargeBitmap = ToLargeBitmap(_originalIconPath);                
             }
         }
 
-        [JsonConverter(typeof(CustomBitmapConverter))]
-        public Bitmap OriginalBitmap
+        /*[JsonConverter(typeof(CustomBitmapConverter))]
+        public Bitmap OriginalSmallBitmap
         {
             get
             {
-                return _originalBitmap;
+                return _originalSmallBitmap;
             }
 
             set
             {
-                _originalBitmap = value;
+                _originalSmallBitmap = value;
+            }
+        }*/
+
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public Bitmap OriginalLargeBitmap
+        {
+            get
+            {
+                return _originalLargeBitmap;
+            }
+
+            set
+            {
+                _originalLargeBitmap = value;
 
                 // And we do the same for the Bitmap overlay, but only if the ProfileToUse is set
                 if (_profileToUse is ProfileItem)
-                    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             }
         }
@@ -737,7 +754,7 @@ namespace HeliosPlus
             shortcut.GameArguments = GameArguments;
             shortcut.GameArgumentsRequired = GameArgumentsRequired;
             shortcut.OriginalIconPath = OriginalIconPath;
-            shortcut.OriginalBitmap = OriginalBitmap;
+            shortcut.OriginalLargeBitmap = OriginalLargeBitmap;
             shortcut.ShortcutBitmap = ShortcutBitmap;
             shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
             shortcut.IsPossible = IsPossible;
@@ -780,7 +797,7 @@ namespace HeliosPlus
             }
         }
 
-        public static Bitmap ExtractVistaIcon(Icon icoIcon)
+       /* public static Bitmap ExtractVistaIcon(Icon icoIcon)
         {
             Bitmap bmpPngExtracted = null;
             try
@@ -815,7 +832,7 @@ namespace HeliosPlus
                 return null; 
             }
             return bmpPngExtracted;
-        }
+        }*/
 
         /*        public Bitmap ToBitmap(int width = 256, int height = 256, PixelFormat format = PixelFormat.Format32bppArgb)
                 {
@@ -831,26 +848,102 @@ namespace HeliosPlus
                     return bitmap;
                 }*/
 
-        private Bitmap ToBitmapFromExe(string fileNameAndPath) 
+        private const string Shell32 = "shell32.dll";
+
+        /*private Bitmap ToBitmapFromExe(string fileNameAndPath) 
         {
-            /*            IconExtractor ie = new IconExtractor(fileNameAndPath);
-                        Icon[] allIcons = ie.GetAllIcons();
-                        Icon biggestIcon = allIcons.OrderByDescending(item => item.Size).First();
-                        //_originalBitmap = ExtractVistaIcon(biggestIcon);
-                        Bitmap bitmapToReturn = IconUtil.ToBitmap(biggestIcon);
-                        if (bitmapToReturn == null)
-                            bitmapToReturn = biggestIcon.ToBitmap();
-                        return bitmapToReturn;
-            */
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
                 return null;
-            Icon exeIcon = IconUtils.ExtractIcon.ExtractIconFromExecutable(fileNameAndPath);
-            Bitmap bitmapToReturn = exeIcon.ToBitmap();
-            exeIcon.Dispose();
-            return bitmapToReturn;
-        }
 
-        private Bitmap ToBitmapFromIcon(string fileNameAndPath)
+            *//*IconActions ia = new IconActions();
+
+            int index = 0;
+            var sb = new StringBuilder(fileNameAndPath, 500);
+            IconReference iconReference = new IconReference(sb.ToString(), index);
+
+            var largeIcons = new IntPtr[1];
+            var smallIcons = new IntPtr[1];
+            ia.ExtractIcon(iconReference.FilePath, iconReference.IconIndex, largeIcons, smallIcons, 1);
+
+            System.Windows.
+
+            BitmapSource bitmapSource;
+            try
+            {
+                bitmapSource = Imaging.CreateBitmapSourceFromHIcon(largeIcons[0], Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            }
+            catch
+            {
+                return null;
+            }
+
+            ia.DestroyIconAtHandle(largeIcons[0]);
+            ia.DestroyIconAtHandle(smallIcons[0]);
+
+            return bitmapSource;
+*//*
+            //IconFromFile iconFromFile = new IconFromFile();
+            Bitmap bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, true);
+            return bm;
+
+            //var icons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
+
+            *//*var folder = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(fileNameAndPath), "Split");
+            if (!System.IO.Directory.Exists(folder)) System.IO.Directory.CreateDirectory(folder);
+            var index = 1;
+            foreach (var icon in icons)
+            {
+                var filename = System.IO.Path.Combine(folder, "icon_" + (index++).ToString() + ".ico");
+                using (var fs = new System.IO.FileStream(filename, System.IO.FileMode.Create, System.IO.FileAccess.ReadWrite))
+                {
+                    icon.Save(fs);
+                }
+            }
+*//*
+
+            Icon ExeIcon = ExtractIcon.ExtractIconFromExecutable(fileNameAndPath);
+            FileStream fs = new FileStream(fileNameAndPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            MultiIcon mi = new MultiIcon();
+            mi.Load(fs);
+            int count = mi.Count;
+            TsudaKageyu.IconExtractor ie = new TsudaKageyu.IconExtractor(fileNameAndPath);
+            Icon[] allIcons = ie.GetAllIcons();
+            Icon biggestIcon = allIcons.OrderByDescending(item => item.Size).First();
+            //_originalBitmap = ExtractVistaIcon(biggestIcon);
+            Bitmap bitmapToReturn = IconUtil.ToBitmap(biggestIcon);
+            if (bitmapToReturn == null)
+                bitmapToReturn = biggestIcon.ToBitmap();
+
+            // Only gets the 32x32 icon!
+            //Icon exeIcon = IconUtils.ExtractIcon.ExtractIconFromExecutable(fileNameAndPath);
+            //Bitmap bitmapToReturn = exeIcon.ToBitmap();
+            //exeIcon.Dispose();
+            return bitmapToReturn;
+        }*/
+
+/*        public static BitmapSource ConvertBitmap(Bitmap source)
+        {
+            return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                          source.GetHbitmap(),
+                          IntPtr.Zero,
+                          Int32Rect.Empty,
+                          BitmapSizeOptions.FromEmptyOptions());
+        }*/
+
+        /*public static Bitmap BitmapFromSource(BitmapSource bitmapsource)
+        {
+            Bitmap bitmap;
+            using (var outStream = new MemoryStream())
+            {
+                BitmapEncoder enc = new BmpBitmapEncoder();
+                enc.Frames.Add(BitmapFrame.Create(bitmapsource));
+                enc.Save(outStream);
+                bitmap = new Bitmap(outStream);
+            }
+            return bitmap;
+        }*/
+
+        /*private Bitmap ToBitmapFromIcon(string fileNameAndPath)
         {
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
                 return null;
@@ -859,23 +952,26 @@ namespace HeliosPlus
             Bitmap bitmapToReturn = icoIcon.ToBitmap();
             icoIcon.Dispose();
             return bitmapToReturn;
-        }
+        }*/
 
-        private Bitmap ToBitmap(string fileNameAndPath)
+        private Bitmap ToLargeBitmap(string fileNameAndPath)
         {
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
                 return null;
 
-            string fileExtension = Path.GetExtension(fileNameAndPath);
-            if (fileExtension.Equals(".ico",StringComparison.OrdinalIgnoreCase))
-            {
-                return ToBitmapFromIcon(fileNameAndPath);
-            } 
-            else
-            {
-                return ToBitmapFromExe(fileNameAndPath);
-            }
+            Bitmap bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, true);
+            return bm;
         }
+
+        private Bitmap ToSmallBitmap(string fileNameAndPath)
+        {
+            if (String.IsNullOrWhiteSpace(fileNameAndPath))
+                return null;
+
+            Bitmap bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, true, false);
+            return bm;
+        }
+
 
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
@@ -919,7 +1015,7 @@ namespace HeliosPlus
             return combinedBitmap;
         }
 
-        public MultiIcon ToIcon()
+        /*public MultiIcon ToIcon()
         {
             var iconSizes = new[]
             {
@@ -942,7 +1038,7 @@ namespace HeliosPlus
                     g.InterpolationMode = InterpolationMode.NearestNeighbor;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.CompositingQuality = CompositingQuality.AssumeLinear;
-                    g.DrawImage(_originalBitmap, new Rectangle(0, 0, size.Width, size.Height));
+                    g.DrawImage(_originalLargeBitmap, new Rectangle(0, 0, size.Width, size.Height));
                 }
 
                 icon.Add(bitmap);
@@ -957,7 +1053,7 @@ namespace HeliosPlus
             multiIcon.SelectedIndex = 0;
 
             return multiIcon;
-        }
+        }*/
 
         public MultiIcon ToIconOverlay()
         {
@@ -975,7 +1071,7 @@ namespace HeliosPlus
 
             foreach (var size in iconSizes)
             {
-                Bitmap bitmapOverlay = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap, size.Width, size.Height);
+                Bitmap bitmapOverlay = ToBitmapOverlay(_originalLargeBitmap, ProfileToUse.ProfileTightestBitmap, size.Width, size.Height);
                 icon.Add(bitmapOverlay);
 
                 if (size.Width >= 256 && size.Height >= 256)
@@ -991,6 +1087,112 @@ namespace HeliosPlus
             return multiIcon;
         }
 
+        /*internal static class ExtractIcon
+        {
+            [UnmanagedFunctionPointer(CallingConvention.Winapi, SetLastError = true, CharSet = CharSet.Unicode)]
+            //[SuppressUnmanagedCodeSecurity]
+            internal delegate bool ENUMRESNAMEPROC(IntPtr hModule, IntPtr lpszType, IntPtr lpszName, IntPtr lParam);
+            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+            public static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hFile, uint dwFlags);
+
+            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+            public static extern IntPtr FindResource(IntPtr hModule, IntPtr lpName, IntPtr lpType);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            public static extern IntPtr LoadResource(IntPtr hModule, IntPtr hResInfo);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            public static extern IntPtr LockResource(IntPtr hResData);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            public static extern uint SizeofResource(IntPtr hModule, IntPtr hResInfo);
+
+            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+            //[SuppressUnmanagedCodeSecurity]
+            public static extern bool EnumResourceNames(IntPtr hModule, IntPtr lpszType, ENUMRESNAMEPROC lpEnumFunc, IntPtr lParam);
+
+
+            private const uint LOAD_LIBRARY_AS_DATAFILE = 0x00000002;
+            private readonly static IntPtr RT_ICON = (IntPtr)3;
+            private readonly static IntPtr RT_GROUP_ICON = (IntPtr)14;
+
+            public static Icon ExtractIconFromExecutable(string path)
+            {
+                IntPtr hModule = LoadLibraryEx(path, IntPtr.Zero, LOAD_LIBRARY_AS_DATAFILE);
+                var tmpData = new List<byte[]>();
+
+                ENUMRESNAMEPROC callback = (h, t, name, l) =>
+                {
+                    var dir = GetDataFromResource(hModule, RT_GROUP_ICON, name);
+
+                    // Calculate the size of an entire .icon file.
+
+                    int count = BitConverter.ToUInt16(dir, 4);  // GRPICONDIR.idCount
+                    int len = 6 + 16 * count;                   // sizeof(ICONDIR) + sizeof(ICONDIRENTRY) * count
+                    for (int i = 0; i < count; ++i)
+                        len += BitConverter.ToInt32(dir, 6 + 14 * i + 8);   // GRPICONDIRENTRY.dwBytesInRes
+
+                    using (var dst = new BinaryWriter(new MemoryStream(len)))
+                    {
+                        // Copy GRPICONDIR to ICONDIR.
+
+                        dst.Write(dir, 0, 6);
+
+                        int picOffset = 6 + 16 * count; // sizeof(ICONDIR) + sizeof(ICONDIRENTRY) * count
+
+                        for (int i = 0; i < count; ++i)
+                        {
+                            // Load the picture.
+
+                            ushort id = BitConverter.ToUInt16(dir, 6 + 14 * i + 12);    // GRPICONDIRENTRY.nID
+                            var pic = GetDataFromResource(hModule, RT_ICON, (IntPtr)id);
+
+                            // Copy GRPICONDIRENTRY to ICONDIRENTRY.
+
+                            dst.Seek(6 + 16 * i, 0);
+
+                            dst.Write(dir, 6 + 14 * i, 8);  // First 8bytes are identical.
+                            dst.Write(pic.Length);          // ICONDIRENTRY.dwBytesInRes
+                            dst.Write(picOffset);           // ICONDIRENTRY.dwImageOffset
+
+                            // Copy a picture.
+
+                            dst.Seek(picOffset, 0);
+                            dst.Write(pic, 0, pic.Length);
+
+                            picOffset += pic.Length;
+                        }
+
+                        tmpData.Add(((MemoryStream)dst.BaseStream).ToArray());
+                    }
+                    return true;
+                };
+                EnumResourceNames(hModule, RT_GROUP_ICON, callback, IntPtr.Zero);
+                byte[][] iconData = tmpData.ToArray();
+                using (var ms = new MemoryStream(iconData[0]))
+                {
+                    return new Icon(ms);
+                }
+            }
+            private static byte[] GetDataFromResource(IntPtr hModule, IntPtr type, IntPtr name)
+            {
+                // Load the binary data from the specified resource.
+
+                IntPtr hResInfo = FindResource(hModule, name, type);
+
+                IntPtr hResData = LoadResource(hModule, hResInfo);
+
+                IntPtr pResData = LockResource(hResData);
+
+                uint size = SizeofResource(hModule, hResInfo);
+
+                byte[] buf = new byte[size];
+                Marshal.Copy(pResData, buf, 0, buf.Length);
+
+                return buf;
+            }
+        }
+*/
 
         public (bool,string) IsValid()
         {
@@ -1170,6 +1372,144 @@ namespace HeliosPlus
         }
 
     }
+
+    /*internal class IconActions
+    {
+        //  Constants
+        //  =========
+
+        private const string Shell32 = "shell32.dll";
+        private const string User32 = "user32.dll";
+
+        //  External Methods
+        //  ================
+
+        [DllImport(Shell32, CharSet = CharSet.Auto)]
+        private static extern int PickIconDlg(IntPtr hwndOwner, StringBuilder lpstrFile, int nMaxFile, ref int lpdwIconIndex);
+
+        [DllImport(Shell32, CharSet = CharSet.Auto)]
+        private static extern uint ExtractIconEx(string szFileName, int nIconIndex, IntPtr[] phiconLarge, IntPtr[] phiconSmall, uint nIcons);
+
+        [DllImport(User32, CharSet = CharSet.Auto)]
+        private static extern bool DestroyIcon(IntPtr handle);
+
+        //  Methods
+        //  =======
+
+        public int PickIconDialog(IntPtr hwndOwner, StringBuilder lpstrFile, int nMaxFile, ref int lpdwIconIndex)
+        {
+            return PickIconDlg(hwndOwner, lpstrFile, nMaxFile, ref lpdwIconIndex);
+        }
+
+        public uint ExtractIcon(string szFileName, int nIconIndex, IntPtr[] phiconLarge, IntPtr[] phiconSmall, uint nIcons)
+        {
+            return ExtractIconEx(szFileName, nIconIndex, phiconLarge, phiconSmall, nIcons);
+        }
+
+        public bool DestroyIconAtHandle(IntPtr handle)
+        {
+            return DestroyIcon(handle);
+        }
+    }
+
+    public class IconReference
+    {
+        //  Constants
+        //  =========
+
+        private const string comma = ",";
+
+        //  Variables
+        //  =========
+
+        private static readonly Regex regex = new Regex(@".+\,[0-9]+$");
+
+        //  Properties
+        //  ==========
+
+        /// <summary>
+        /// File path to the icon.
+        /// </summary>
+        public string FilePath { get; private set; }
+
+        /// <summary>
+        /// Index of the icon within the file.
+        /// </summary>
+        public int IconIndex { get; private set; }
+
+        //  Constructors
+        //  ============
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="reference">A reference for an icon within either an .ico, .exe, or .dll. Must be a valid file location followed by a comma and then an int.</param>
+        /// <exception cref="RegexMatchTimeoutException">Ignore.</exception>
+        public IconReference(string reference)
+        {
+            if (!regex.IsMatch(reference))
+            {
+                throw new ArgumentException("[reference] must be a valid file location followed by a comma and then an int");
+            }
+
+            string[] split = reference.Split(',');
+            string index = split[split.Length - 1];
+            string filePath = reference.Substring(0, reference.Length - index.Length - 1);
+
+            Setup(filePath, index);
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="filePath">A valid file location for an .ico, .exe, or .dll.</param>
+        /// <param name="index">The index of the icon wanted within the file.</param>
+        public IconReference(string filePath, string index)
+        {
+            Setup(filePath, index);
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="filePath">A valid file location for an .ico, .exe, or .dll.</param>
+        /// <param name="index">The index of the icon wanted within the file.</param>
+        public IconReference(string filePath, int index)
+        {
+            Setup(filePath, index);
+        }
+
+        /// <summary>
+        /// Returns the FileName and the IconIndex separated by a comma
+        /// </summary>
+        /// <returns>Returns the FileName and the IconIndex separated by a comma</returns>
+        public override string ToString()
+        {
+            return (FilePath ?? string.Empty) + comma + (IconIndex.ToString() ?? string.Empty);
+        }
+
+        private void Setup(string filepath, string index)
+        {
+            if (!int.TryParse(index, out int iconIndex))
+            {
+                throw new ArgumentException("Parameter [index] needs to be castable to an integer");
+            }
+
+            Setup(filepath, iconIndex);
+        }
+
+        private void Setup(string filepath, int index)
+        {
+            if (index < 0)
+            {
+                throw new ArgumentException("Parameter [index] needs to be greater than or equal to zero");
+            }
+
+            FilePath = filepath;
+            IconIndex = index;
+        }
+    }*/
+
 
     #region JsonConverterBitmap
     internal class CustomBitmapConverter : JsonConverter

@@ -668,47 +668,34 @@ namespace HeliosPlus.UIForms
             // Load the Games ListView
             foreach (var game in SteamLibrary.AllInstalledGames.OrderBy(game => game.Name))
             {
-                if (File.Exists(game.IconPath))
+                Bitmap bm = null;
+                try
                 {
-                    try
-                    {
-                        if (game.IconPath.EndsWith(".ico"))
-                        {
-                            // if it's an icon try to load it as a bitmap
-                            il_games.Images.Add(Image.FromFile(game.IconPath));
-                        }
-                        else if (game.IconPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase) || game.IconPath.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            // otherwise use IconExtractor
-                            /*IconExtractor IconEx = new IconExtractor(game.GameIconPath);
-                            Icon icoAppIcon = IconEx.GetIcon(0); // Because standard System.Drawing.Icon.ExtractAssociatedIcon() returns ONLY 32x32.*/
-
-                            Icon icoAppIcon = Icon.ExtractAssociatedIcon(game.IconPath);
-                            // We first try high quality icons
-                            Bitmap extractedBitmap = ShortcutItem.ExtractVistaIcon(icoAppIcon);
-                            if (extractedBitmap == null)
-                                extractedBitmap = icoAppIcon.ToBitmap();
-                            il_games.Images.Add(extractedBitmap);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
-                    }
+                    bm = IconFromFile.GetSmallBitmapFromFile(game.IconPath, false, true, false);
                 }
-                else
+                catch (Exception ex)
                 {
-                    //(Icon)global::Calculate.Properties.Resources.ResourceManager.GetObject("Steam.ico");
-                    il_games.Images.Add(Image.FromFile("Resources/Steam.ico"));
+                    Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
-
+                try
+                {
+                    bm = IconFromFile.GetSmallBitmapFromFile(game.ExePath, false, true, false);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    bm = Properties.Resources.Steam.ToBitmap();
+                }
+                
+                // Add the images to the images array
+                il_games.Images.Add(bm);
 
                 if (!Visible)
                 {
                     return;
                 }
 
+                // ADd the game to the game array
                 lv_games.Items.Add(new ListViewItem
                 {
                     Text = game.Name,
