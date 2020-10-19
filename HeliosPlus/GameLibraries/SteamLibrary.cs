@@ -498,37 +498,6 @@ namespace HeliosPlus.GameLibraries
                                     // Construct the full path to the game dir from the appInfo and libraryAppManifest data
                                     string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
 
-                                    // Next, we need to get the Icons we want to use, and make sure it's the latest one.
-                                    string steamGameIconPath = "";
-                                    // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
-                                    if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath) && steamAppInfo[steamGameId].GameSteamIconPath.EndsWith(".ico"))
-                                    {
-                                        steamGameIconPath = steamAppInfo[steamGameId].GameSteamIconPath;
-                                    }
-                                    // If there isn't an icon for us to use, then we need to extract one from the Game Executables
-                                    else if (steamAppInfo[steamGameId].GameExes.Count > 0)
-                                    {
-                                        foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
-                                        {
-                                            steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
-                                            // If the game executable exists, then we can proceed
-                                            if (File.Exists(steamGameExe))
-                                            {
-                                                // Now we need to get the Icon from the app if possible if it's not in the games folder
-                                                steamGameIconPath = steamGameExe;
-                                                break;
-                                            }
-                                        }
-
-                                    }
-                                    // The absolute worst case means we don't have an icon to use. SO we use the Steam one.
-                                    else
-                                    {
-                                        // And we have to make do with a Steam Icon
-                                        steamGameIconPath = _steamPath;
-
-                                    }
-
                                     // And finally we try to populate the 'where', to see what gets run
                                     // And so we can extract the process name
                                     if (steamAppInfo[steamGameId].GameExes.Count > 0)
@@ -543,6 +512,25 @@ namespace HeliosPlus.GameLibraries
                                             }
                                         }
 
+                                    }
+
+                                    // Next, we need to get the Icons we want to use, and make sure it's the latest one.
+                                    string steamGameIconPath = "";
+                                    // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
+                                    if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath) && steamAppInfo[steamGameId].GameSteamIconPath.EndsWith(".ico"))
+                                    {
+                                        steamGameIconPath = steamAppInfo[steamGameId].GameSteamIconPath;
+                                    }
+                                    // If there isn't an icon for us to use, then we need to extract one from the Game Executables
+                                    else if (!String.IsNullOrEmpty(steamGameExe))
+                                    {
+                                        steamGameIconPath = steamGameExe;
+                                    }
+                                    // The absolute worst case means we don't have an icon to use. SO we use the Steam one.
+                                    else
+                                    {
+                                        // And we have to make do with a Steam Icon
+                                        steamGameIconPath = _steamPath;
                                     }
 
                                     // And we add the Game to the list of games we have!

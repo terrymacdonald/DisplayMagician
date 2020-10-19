@@ -287,8 +287,9 @@ namespace HeliosPlus
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            //if (_profileToUse is ProfileItem)
+            //     _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
         }
 
@@ -319,9 +320,9 @@ namespace HeliosPlus
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
+            //if (_profileToUse is ProfileItem)
+            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
         }
 
         public ShortcutItem(string name, string profileUuid, Executable executable, ShortcutPermanence permanence, string originalIconPath,
@@ -360,13 +361,24 @@ namespace HeliosPlus
             }
 
             // We create the OriginalBitmap from the IconPath
+            if (_originalIconPath.EndsWith(".ico"))
+            {
+                Icon icoIcon = new Icon(_originalIconPath, 256, 256);
+                //_originalBitmap = ExtractVistaIcon(biggestIcon);
+                _originalLargeBitmap = icoIcon.ToBitmap();
+                icoIcon.Dispose();
+            }
+            else
+            {
+                _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            }
             _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
+            //if (_profileToUse is ProfileItem)
+            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
         }
 
 
@@ -652,23 +664,9 @@ namespace HeliosPlus
                 _originalIconPath = value;
 
                 // And we do the same for the OriginalBitmap 
-                _originalLargeBitmap = ToLargeBitmap(_originalIconPath);                
+                //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);                
             }
         }
-
-        /*[JsonConverter(typeof(CustomBitmapConverter))]
-        public Bitmap OriginalSmallBitmap
-        {
-            get
-            {
-                return _originalSmallBitmap;
-            }
-
-            set
-            {
-                _originalSmallBitmap = value;
-            }
-        }*/
 
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap OriginalLargeBitmap
@@ -683,8 +681,8 @@ namespace HeliosPlus
                 _originalLargeBitmap = value;
 
                 // And we do the same for the Bitmap overlay, but only if the ProfileToUse is set
-                if (_profileToUse is ProfileItem)
-                    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                //if (_profileToUse is ProfileItem)
+                //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             }
         }
@@ -942,8 +940,8 @@ namespace HeliosPlus
             }
             return bitmap;
         }*/
-
-        /*private Bitmap ToBitmapFromIcon(string fileNameAndPath)
+/*
+        public Bitmap ToBitmapFromIcon(string fileNameAndPath)
         {
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
                 return null;
@@ -954,21 +952,41 @@ namespace HeliosPlus
             return bitmapToReturn;
         }*/
 
-        private Bitmap ToLargeBitmap(string fileNameAndPath)
+        public static Bitmap ToLargeBitmap(string fileNameAndPath)
         {
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
                 return null;
 
-            Bitmap bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, true);
+            Bitmap bm = null
+;            if (fileNameAndPath.EndsWith(".ico"))
+            {
+                Icon icoIcon = new Icon(fileNameAndPath, 256, 256);
+                bm = icoIcon.ToBitmap();
+                icoIcon.Dispose();
+            }
+            else
+            {
+                bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, true);
+            }           
             return bm;
         }
 
-        private Bitmap ToSmallBitmap(string fileNameAndPath)
+        public static Bitmap ToSmallBitmap(string fileNameAndPath)
         {
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
                 return null;
 
-            Bitmap bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, true, false);
+            Bitmap bm = null; 
+            if (fileNameAndPath.EndsWith(".ico"))
+            {
+                Icon icoIcon = new Icon(fileNameAndPath, 128, 128);
+                bm = icoIcon.ToBitmap();
+                icoIcon.Dispose();
+            }
+            else
+            {
+                bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, true, false);
+            }
             return bm;
         }
 

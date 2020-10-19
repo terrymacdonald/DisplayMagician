@@ -488,13 +488,15 @@ namespace HeliosPlus.UIForms
                     _autoName
                 );
             }
-            
+
+            // Generate the Shortcut Icon ready to be used
+            _shortcutToEdit.SaveShortcutIconToCache();
+
+
             // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
             // but only if it's new... if it is an edit then it will already be in the list.
             if (_isNewShortcut)
             {
-                // Generate the Shortcut Icon ready to be used
-                _shortcutToEdit.SaveShortcutIconToCache();
                 //SAve the shortcut to the Shortcut Repository
                 ShortcutRepository.AddShortcut(_shortcutToEdit);
             }
@@ -668,25 +670,19 @@ namespace HeliosPlus.UIForms
             // Load the Games ListView
             foreach (var game in SteamLibrary.AllInstalledGames.OrderBy(game => game.Name))
             {
+                // Get the bitmap out of the IconPath 
+                // IconPath can be an ICO, or an EXE
                 Bitmap bm = null;
                 try
                 {
-                    bm = IconFromFile.GetSmallBitmapFromFile(game.IconPath, false, true, false);
+                    bm = ShortcutItem.ToSmallBitmap(game.IconPath);
                 }
-                catch (Exception ex)
+                catch (Exception innerEx)
                 {
-                    Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                }
-                try
-                {
-                    bm = IconFromFile.GetSmallBitmapFromFile(game.ExePath, false, true, false);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"ShortcutForm exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    Console.WriteLine($"ShortcutForm exception: {innerEx.Message}: {innerEx.StackTrace} - {innerEx.InnerException}");
                     bm = Properties.Resources.Steam.ToBitmap();
                 }
-                
+
                 // Add the images to the images array
                 il_games.Images.Add(bm);
 

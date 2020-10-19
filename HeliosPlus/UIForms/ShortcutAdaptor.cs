@@ -147,6 +147,7 @@ namespace HeliosPlus.UIForms
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
+                            mySize = new Size(256, 256);
                         }
                     }
 
@@ -164,6 +165,7 @@ namespace HeliosPlus.UIForms
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
+                            mySizeF = new SizeF(256, 256);
                         }
                     }
 

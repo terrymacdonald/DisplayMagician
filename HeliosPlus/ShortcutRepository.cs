@@ -402,67 +402,6 @@ namespace HeliosPlus
             return false;
         }
 
-       /* private static void SaveShortcutIconToCache(ShortcutItem shortcut)
-        {
-
-            // Force the creation of the ShortcutBitmap
-
-            // Only add the rest of the options if the permanence is temporary
-            if (shortcut.Permanence == ShortcutPermanence.Temporary)
-            {
-                // Only add this set of options if the shortcut is to an standalone application
-                if (shortcut.Category == ShortcutCategory.Application)
-                {
-                    // Work out the name of the shortcut we'll save.
-                    shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"executable-", shortcut.ProfileToUse.UUID, "-", Path.GetFileNameWithoutExtension(shortcut.ExecutableNameAndPath), @".ico"));
-
-                }
-                // Only add the rest of the options if the temporary switch radio button is set
-                // and if the game launching radio button is set
-                else if (shortcut.Permanence == ShortcutPermanence.Temporary)
-                {
-                    // TODO need to make this work so at least one game library is installed
-                    // i.e. if (!SteamGame.SteamInstalled && !UplayGame.UplayInstalled )
-                    if (shortcut.GameLibrary == SupportedGameLibrary.Steam)
-                    {
-                        // Work out the name of the shortcut we'll save.
-                        shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"steam-", shortcut.ProfileToUse.UUID, "-", shortcut.GameAppId.ToString(), @".ico"));
-
-                    }
-                    else if (shortcut.GameLibrary == SupportedGameLibrary.Uplay)
-                    {
-                        // Work out the name of the shortcut we'll save.
-                        shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"uplay-", shortcut.ProfileToUse.UUID, "-", shortcut.GameAppId.ToString(), @".ico"));
-                    }
-
-                }
-
-            }
-            // Only add the rest of the options if the shortcut is permanent 
-            else
-            {
-                // Work out the name of the shortcut we'll save.
-                shortcut.SavedShortcutIconCacheFilename = Path.Combine(AppShortcutStoragePath, String.Concat(@"permanent-", shortcut.ProfileToUse.UUID, @".ico"));
-            }
-
-            MultiIcon shortcutIcon;
-            try
-            {
-                //shortcutIcon = new ProfileIcon(shortcut.ProfileToUse).ToIconOverlay(shortcut.OriginalIconPath);
-                shortcutIcon = shortcut.ToIconOverlay();
-                shortcutIcon.Save(shortcut.SavedShortcutIconCacheFilename, MultiIconFormat.ICO);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ShortcutRepository/SaveShortcutIconToCache exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-
-                // If we fail to create an icon based on the original executable or game
-                // Then we use the standard HeliosPlus profile one.
-                shortcutIcon = shortcut.ProfileToUse.ProfileIcon.ToIcon();
-                shortcutIcon.Save(shortcut.SavedShortcutIconCacheFilename, MultiIconFormat.ICO);
-            }
-        }*/
-
 
         // ReSharper disable once CyclomaticComplexity
         public static void RunShortcut(ShortcutItem shortcutToUse)
