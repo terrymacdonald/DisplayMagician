@@ -71,6 +71,7 @@ namespace HeliosPlus
         public bool GameArgumentsRequired;
     }
 
+
     public class ShortcutItem
     {
         
@@ -121,6 +122,81 @@ namespace HeliosPlus
 
         }
 
+
+        public ShortcutItem(
+            string name,
+            ProfileItem profile,
+            ShortcutPermanence permanence,
+            string originalIconPath,
+            List<StartProgram> startPrograms = null,
+            bool autoName = true,
+            string uuid = ""
+            ) : this()
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _category = ShortcutCategory.NoGame;
+            _profileToUse = profile;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            // We create the OriginalLargeBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+        }
+
+        public ShortcutItem(string name, string profileUuid, ShortcutPermanence permanence, string originalIconPath,
+            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileUuid = profileUuid;
+            _category = ShortcutCategory.NoGame;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileToUse
+            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+            {
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    _profileToUse = profileToTest;
+                    break;
+                }
+
+            }
+
+            if (_profileToUse == null)
+            {
+                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
+            }
+
+            // We create the OriginalBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+        }
+
+
+
         public ShortcutItem(
             string name,
             ProfileItem profile, 
@@ -142,7 +218,6 @@ namespace HeliosPlus
             _name = name; 
             _profileToUse = profile;
             _category = ShortcutCategory.Game;
-            _profileToUse = profile;
             _gameAppId = gameAppId;
             _gameName = gameName;
             _gameLibrary = gameLibrary;
@@ -726,7 +801,341 @@ namespace HeliosPlus
             }
         }
 
-        public  bool CopyTo (ShortcutItem shortcut, bool overwriteUUID = false)
+        public void UpdateNoGameShortcut(
+            string name,
+            ProfileItem profile,
+            ShortcutPermanence permanence,
+            string originalIconPath,
+            List<StartProgram> startPrograms = null,
+            bool autoName = true,
+            string uuid = ""
+            )
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _category = ShortcutCategory.NoGame;
+            _profileToUse = profile;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            // We create the OriginalLargeBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+        }
+
+        public void UpdateNoGameShortcut(string name, string profileUuid, ShortcutPermanence permanence, string originalIconPath,
+            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileUuid = profileUuid;
+            _category = ShortcutCategory.NoGame;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileToUse
+            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+            {
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    _profileToUse = profileToTest;
+                    break;
+                }
+
+            }
+
+            if (_profileToUse == null)
+            {
+                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
+            }
+
+            // We create the OriginalBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+        }
+
+
+
+        public void UpdateGameShortcut(
+            string name,
+            ProfileItem profile,
+            uint gameAppId,
+            string gameName,
+            SupportedGameLibrary gameLibrary,
+            uint gameTimeout,
+            string gameArguments,
+            bool gameArgumentsRequired,
+            ShortcutPermanence permanence,
+            string originalIconPath,
+            List<StartProgram> startPrograms = null,
+            bool autoName = true,
+            string uuid = ""
+            )
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileToUse = profile;
+            _category = ShortcutCategory.Game;
+            _gameAppId = gameAppId;
+            _gameName = gameName;
+            _gameLibrary = gameLibrary;
+            _startTimeout = gameTimeout;
+            _gameArguments = gameArguments;
+            _gameArgumentsRequired = gameArgumentsRequired;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            // We create the OriginalLargeBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+        }
+
+        public void UpdateGameShortcut(string name, ProfileItem profile, GameStruct game, ShortcutPermanence permanence, string originalIconPath,
+            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+        {
+            // Create a new UUID for the shortcut if one wasn't created already
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileToUse = profile;
+            _category = ShortcutCategory.Game;
+            _gameAppId = game.GameToPlay.Id;
+            _gameName = game.GameToPlay.Name;
+            _gameLibrary = game.GameToPlay.GameLibrary;
+            _startTimeout = game.StartTimeout;
+            _gameArguments = game.GameArguments;
+            _gameArgumentsRequired = game.GameArgumentsRequired;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            // We create the OriginalBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+        }
+
+
+
+        public void UpdateGameShortcut(string name, string profileUuid, GameStruct game, ShortcutPermanence permanence, string originalIconPath,
+            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileUuid = profileUuid;
+            _category = ShortcutCategory.Game;
+            _gameAppId = game.GameToPlay.Id;
+            _gameName = game.GameToPlay.Name;
+            _gameLibrary = game.GameToPlay.GameLibrary;
+            _startTimeout = game.StartTimeout;
+            _gameArguments = game.GameArguments;
+            _gameArgumentsRequired = game.GameArgumentsRequired;
+            _gameArgumentsRequired = false;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileToUse
+            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+            {
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    _profileToUse = profileToTest;
+                    break;
+                }
+
+            }
+
+            if (_profileToUse == null)
+            {
+                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
+            }
+
+            // We create the OriginalBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            if (_profileToUse is ProfileItem)
+                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+        }
+
+        public void UpdateExecutableShortcut(
+            string name,
+            ProfileItem profile,
+            string differentExecutableToMonitor,
+            string executableNameAndPath,
+            uint executableTimeout,
+            string executableArguments,
+            bool executableArgumentsRequired,
+            bool processNameToMonitorUsesExecutable,
+            ShortcutPermanence permanence,
+            string originalIconPath,
+            List<StartProgram> startPrograms = null,
+            bool autoName = true,
+            string uuid = ""
+            )
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileToUse = profile;
+            _category = ShortcutCategory.Application;
+            _differentExecutableToMonitor = differentExecutableToMonitor;
+            _executableNameAndPath = executableNameAndPath;
+            _startTimeout = executableTimeout;
+            _executableArguments = executableArguments;
+            _executableArgumentsRequired = executableArgumentsRequired;
+            _processNameToMonitorUsesExecutable = processNameToMonitorUsesExecutable;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            // We create the OriginalBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            //if (_profileToUse is ProfileItem)
+            //     _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+        }
+
+        public void UpdateExecutableShortcut(string name, ProfileItem profile, Executable executable, ShortcutPermanence permanence, string originalIconPath,
+            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileToUse = profile;
+            _category = ShortcutCategory.Application;
+            _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
+            _executableNameAndPath = executable.ExecutableNameAndPath;
+            _startTimeout = executable.ExecutableTimeout;
+            _executableArguments = executable.ExecutableArguments;
+            _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
+            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            // We create the OriginalBitmap from the IconPath
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            //if (_profileToUse is ProfileItem)
+            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+        }
+
+        public void UpdateExecutableShortcut(string name, string profileUuid, Executable executable, ShortcutPermanence permanence, string originalIconPath,
+            List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileUuid = profileUuid;
+            _category = ShortcutCategory.Application;
+            _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
+            _executableNameAndPath = executable.ExecutableNameAndPath;
+            _startTimeout = executable.ExecutableTimeout;
+            _executableArguments = executable.ExecutableArguments;
+            _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
+            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
+            _permanence = permanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _originalIconPath = originalIconPath;
+
+            // Now we need to find and populate the profileToUse
+            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+            {
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    _profileToUse = profileToTest;
+                    break;
+                }
+
+            }
+
+            if (_profileToUse == null)
+            {
+                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
+            }
+
+            // We create the OriginalBitmap from the IconPath
+            if (_originalIconPath.EndsWith(".ico"))
+            {
+                Icon icoIcon = new Icon(_originalIconPath, 256, 256);
+                //_originalBitmap = ExtractVistaIcon(biggestIcon);
+                _originalLargeBitmap = icoIcon.ToBitmap();
+                icoIcon.Dispose();
+            }
+            else
+            {
+                _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            }
+            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+
+            // We create the ShortcutBitmap from the OriginalBitmap 
+            // (We only do it if there is a valid profile)
+            //if (_profileToUse is ProfileItem)
+            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+        }
+
+
+        public bool CopyTo (ShortcutItem shortcut, bool overwriteUUID = false)
         {
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -794,163 +1203,6 @@ namespace HeliosPlus
                 shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
         }
-
-       /* public static Bitmap ExtractVistaIcon(Icon icoIcon)
-        {
-            Bitmap bmpPngExtracted = null;
-            try
-            {
-                byte[] srcBuf = null;
-                using (System.IO.MemoryStream stream = new System.IO.MemoryStream())
-                { icoIcon.Save(stream); srcBuf = stream.ToArray(); }
-                const int SizeICONDIR = 6;
-                const int SizeICONDIRENTRY = 16;
-                int iCount = BitConverter.ToInt16(srcBuf, 4);
-                for (int iIndex = 0; iIndex < iCount; iIndex++)
-                {
-                    int iWidth = srcBuf[SizeICONDIR + SizeICONDIRENTRY * iIndex];
-                    int iHeight = srcBuf[SizeICONDIR + SizeICONDIRENTRY * iIndex + 1];
-                    int iBitCount = BitConverter.ToInt16(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 6);
-                    if (iWidth == 0 && iHeight == 0 && iBitCount == 32)
-                    {
-                        int iImageSize = BitConverter.ToInt32(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 8);
-                        int iImageOffset = BitConverter.ToInt32(srcBuf, SizeICONDIR + SizeICONDIRENTRY * iIndex + 12);
-                        System.IO.MemoryStream destStream = new System.IO.MemoryStream();
-                        System.IO.BinaryWriter writer = new System.IO.BinaryWriter(destStream);
-                        writer.Write(srcBuf, iImageOffset, iImageSize);
-                        destStream.Seek(0, System.IO.SeekOrigin.Begin);
-                        bmpPngExtracted = new Bitmap(destStream); // This is PNG! :)
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ShortcutItem/ExtractVisataIcon exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                return null; 
-            }
-            return bmpPngExtracted;
-        }*/
-
-        /*        public Bitmap ToBitmap(int width = 256, int height = 256, PixelFormat format = PixelFormat.Format32bppArgb)
-                {
-                    var bitmap = new Bitmap(width, height, format);
-                    bitmap.MakeTransparent();
-
-                    using (var g = Graphics.FromImage(bitmap))
-                    {
-                        g.SmoothingMode = SmoothingMode.HighQuality;
-                        g.DrawImage(g, width, height);
-                    }
-
-                    return bitmap;
-                }*/
-
-        private const string Shell32 = "shell32.dll";
-
-        /*private Bitmap ToBitmapFromExe(string fileNameAndPath) 
-        {
-            if (String.IsNullOrWhiteSpace(fileNameAndPath))
-                return null;
-
-            *//*IconActions ia = new IconActions();
-
-            int index = 0;
-            var sb = new StringBuilder(fileNameAndPath, 500);
-            IconReference iconReference = new IconReference(sb.ToString(), index);
-
-            var largeIcons = new IntPtr[1];
-            var smallIcons = new IntPtr[1];
-            ia.ExtractIcon(iconReference.FilePath, iconReference.IconIndex, largeIcons, smallIcons, 1);
-
-            System.Windows.
-
-            BitmapSource bitmapSource;
-            try
-            {
-                bitmapSource = Imaging.CreateBitmapSourceFromHIcon(largeIcons[0], Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-            }
-            catch
-            {
-                return null;
-            }
-
-            ia.DestroyIconAtHandle(largeIcons[0]);
-            ia.DestroyIconAtHandle(smallIcons[0]);
-
-            return bitmapSource;
-*//*
-            //IconFromFile iconFromFile = new IconFromFile();
-            Bitmap bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, true);
-            return bm;
-
-            //var icons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
-
-            *//*var folder = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(fileNameAndPath), "Split");
-            if (!System.IO.Directory.Exists(folder)) System.IO.Directory.CreateDirectory(folder);
-            var index = 1;
-            foreach (var icon in icons)
-            {
-                var filename = System.IO.Path.Combine(folder, "icon_" + (index++).ToString() + ".ico");
-                using (var fs = new System.IO.FileStream(filename, System.IO.FileMode.Create, System.IO.FileAccess.ReadWrite))
-                {
-                    icon.Save(fs);
-                }
-            }
-*//*
-
-            Icon ExeIcon = ExtractIcon.ExtractIconFromExecutable(fileNameAndPath);
-            FileStream fs = new FileStream(fileNameAndPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            MultiIcon mi = new MultiIcon();
-            mi.Load(fs);
-            int count = mi.Count;
-            TsudaKageyu.IconExtractor ie = new TsudaKageyu.IconExtractor(fileNameAndPath);
-            Icon[] allIcons = ie.GetAllIcons();
-            Icon biggestIcon = allIcons.OrderByDescending(item => item.Size).First();
-            //_originalBitmap = ExtractVistaIcon(biggestIcon);
-            Bitmap bitmapToReturn = IconUtil.ToBitmap(biggestIcon);
-            if (bitmapToReturn == null)
-                bitmapToReturn = biggestIcon.ToBitmap();
-
-            // Only gets the 32x32 icon!
-            //Icon exeIcon = IconUtils.ExtractIcon.ExtractIconFromExecutable(fileNameAndPath);
-            //Bitmap bitmapToReturn = exeIcon.ToBitmap();
-            //exeIcon.Dispose();
-            return bitmapToReturn;
-        }*/
-
-/*        public static BitmapSource ConvertBitmap(Bitmap source)
-        {
-            return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
-                          source.GetHbitmap(),
-                          IntPtr.Zero,
-                          Int32Rect.Empty,
-                          BitmapSizeOptions.FromEmptyOptions());
-        }*/
-
-        /*public static Bitmap BitmapFromSource(BitmapSource bitmapsource)
-        {
-            Bitmap bitmap;
-            using (var outStream = new MemoryStream())
-            {
-                BitmapEncoder enc = new BmpBitmapEncoder();
-                enc.Frames.Add(BitmapFrame.Create(bitmapsource));
-                enc.Save(outStream);
-                bitmap = new Bitmap(outStream);
-            }
-            return bitmap;
-        }*/
-/*
-        public Bitmap ToBitmapFromIcon(string fileNameAndPath)
-        {
-            if (String.IsNullOrWhiteSpace(fileNameAndPath))
-                return null;
-            Icon icoIcon = new Icon(fileNameAndPath, 256, 256);
-            //_originalBitmap = ExtractVistaIcon(biggestIcon);
-            Bitmap bitmapToReturn = icoIcon.ToBitmap();
-            icoIcon.Dispose();
-            return bitmapToReturn;
-        }*/
 
         public static Bitmap ToLargeBitmap(string fileNameAndPath)
         {
@@ -1033,46 +1285,6 @@ namespace HeliosPlus
             return combinedBitmap;
         }
 
-        /*public MultiIcon ToIcon()
-        {
-            var iconSizes = new[]
-            {
-                new Size(256, 256),
-                new Size(64, 64),
-                new Size(48, 48),
-                new Size(32, 32),
-                new Size(24, 24),
-                new Size(16, 16)
-            };
-            var multiIcon = new MultiIcon();
-            var icon = multiIcon.Add("Icon1");
-
-            foreach (var size in iconSizes)
-            {
-                Bitmap bitmap = new Bitmap(size.Width, size.Height);
-                using (var g = Graphics.FromImage(bitmap))
-                {
-                    g.SmoothingMode = SmoothingMode.None;
-                    g.InterpolationMode = InterpolationMode.NearestNeighbor;
-                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.CompositingQuality = CompositingQuality.AssumeLinear;
-                    g.DrawImage(_originalLargeBitmap, new Rectangle(0, 0, size.Width, size.Height));
-                }
-
-                icon.Add(bitmap);
-
-                if (size.Width >= 256 && size.Height >= 256)
-                {
-                    icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
-                }
-                bitmap.Dispose();
-            }
-
-            multiIcon.SelectedIndex = 0;
-
-            return multiIcon;
-        }*/
-
         public MultiIcon ToIconOverlay()
         {
             var iconSizes = new[]
@@ -1105,112 +1317,6 @@ namespace HeliosPlus
             return multiIcon;
         }
 
-        /*internal static class ExtractIcon
-        {
-            [UnmanagedFunctionPointer(CallingConvention.Winapi, SetLastError = true, CharSet = CharSet.Unicode)]
-            //[SuppressUnmanagedCodeSecurity]
-            internal delegate bool ENUMRESNAMEPROC(IntPtr hModule, IntPtr lpszType, IntPtr lpszName, IntPtr lParam);
-            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-            public static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hFile, uint dwFlags);
-
-            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-            public static extern IntPtr FindResource(IntPtr hModule, IntPtr lpName, IntPtr lpType);
-
-            [DllImport("kernel32.dll", SetLastError = true)]
-            public static extern IntPtr LoadResource(IntPtr hModule, IntPtr hResInfo);
-
-            [DllImport("kernel32.dll", SetLastError = true)]
-            public static extern IntPtr LockResource(IntPtr hResData);
-
-            [DllImport("kernel32.dll", SetLastError = true)]
-            public static extern uint SizeofResource(IntPtr hModule, IntPtr hResInfo);
-
-            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-            //[SuppressUnmanagedCodeSecurity]
-            public static extern bool EnumResourceNames(IntPtr hModule, IntPtr lpszType, ENUMRESNAMEPROC lpEnumFunc, IntPtr lParam);
-
-
-            private const uint LOAD_LIBRARY_AS_DATAFILE = 0x00000002;
-            private readonly static IntPtr RT_ICON = (IntPtr)3;
-            private readonly static IntPtr RT_GROUP_ICON = (IntPtr)14;
-
-            public static Icon ExtractIconFromExecutable(string path)
-            {
-                IntPtr hModule = LoadLibraryEx(path, IntPtr.Zero, LOAD_LIBRARY_AS_DATAFILE);
-                var tmpData = new List<byte[]>();
-
-                ENUMRESNAMEPROC callback = (h, t, name, l) =>
-                {
-                    var dir = GetDataFromResource(hModule, RT_GROUP_ICON, name);
-
-                    // Calculate the size of an entire .icon file.
-
-                    int count = BitConverter.ToUInt16(dir, 4);  // GRPICONDIR.idCount
-                    int len = 6 + 16 * count;                   // sizeof(ICONDIR) + sizeof(ICONDIRENTRY) * count
-                    for (int i = 0; i < count; ++i)
-                        len += BitConverter.ToInt32(dir, 6 + 14 * i + 8);   // GRPICONDIRENTRY.dwBytesInRes
-
-                    using (var dst = new BinaryWriter(new MemoryStream(len)))
-                    {
-                        // Copy GRPICONDIR to ICONDIR.
-
-                        dst.Write(dir, 0, 6);
-
-                        int picOffset = 6 + 16 * count; // sizeof(ICONDIR) + sizeof(ICONDIRENTRY) * count
-
-                        for (int i = 0; i < count; ++i)
-                        {
-                            // Load the picture.
-
-                            ushort id = BitConverter.ToUInt16(dir, 6 + 14 * i + 12);    // GRPICONDIRENTRY.nID
-                            var pic = GetDataFromResource(hModule, RT_ICON, (IntPtr)id);
-
-                            // Copy GRPICONDIRENTRY to ICONDIRENTRY.
-
-                            dst.Seek(6 + 16 * i, 0);
-
-                            dst.Write(dir, 6 + 14 * i, 8);  // First 8bytes are identical.
-                            dst.Write(pic.Length);          // ICONDIRENTRY.dwBytesInRes
-                            dst.Write(picOffset);           // ICONDIRENTRY.dwImageOffset
-
-                            // Copy a picture.
-
-                            dst.Seek(picOffset, 0);
-                            dst.Write(pic, 0, pic.Length);
-
-                            picOffset += pic.Length;
-                        }
-
-                        tmpData.Add(((MemoryStream)dst.BaseStream).ToArray());
-                    }
-                    return true;
-                };
-                EnumResourceNames(hModule, RT_GROUP_ICON, callback, IntPtr.Zero);
-                byte[][] iconData = tmpData.ToArray();
-                using (var ms = new MemoryStream(iconData[0]))
-                {
-                    return new Icon(ms);
-                }
-            }
-            private static byte[] GetDataFromResource(IntPtr hModule, IntPtr type, IntPtr name)
-            {
-                // Load the binary data from the specified resource.
-
-                IntPtr hResInfo = FindResource(hModule, name, type);
-
-                IntPtr hResData = LoadResource(hModule, hResInfo);
-
-                IntPtr pResData = LockResource(hResData);
-
-                uint size = SizeofResource(hModule, hResInfo);
-
-                byte[] buf = new byte[size];
-                Marshal.Copy(pResData, buf, 0, buf.Length);
-
-                return buf;
-            }
-        }
-*/
 
         public (bool,string) IsValid()
         {

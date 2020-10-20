@@ -58,7 +58,9 @@ namespace HeliosPlus.UIForms
 
             ImageListViewItem newItem = null;
             ilv_saved_shortcuts.Items.Clear();
-            foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts)
+
+            
+            foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
                 //loadedProfile.SaveProfileImageToCache();
                 //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
@@ -157,11 +159,17 @@ namespace HeliosPlus.UIForms
             if (_selectedShortcut == null)
                 return;
 
+            ShortcutItem oldShortcut = _selectedShortcut;
             var shortcutForm = new ShortcutForm(_selectedShortcut);
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
+                ShortcutRepository.RemoveShortcut(oldShortcut);
+                _selectedShortcut = shortcutForm.Shortcut;
+                ShortcutRepository.AddShortcut(_selectedShortcut);
                 RefreshShortcutLibraryUI();
+                // As this is an edit, we need to manually force saving the shortcut library
+                //ShortcutRepository.SaveShortcuts();
             }
 
         }
@@ -180,14 +188,24 @@ namespace HeliosPlus.UIForms
 
         private void btn_edit_Click(object sender, EventArgs e)
         {
+            int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
+            string shortcutName = ilv_saved_shortcuts.Items[currentIlvIndex].Text;
+            _selectedShortcut = GetShortcutFromName(shortcutName);
+
             if (_selectedShortcut == null)
                 return;
 
+            ShortcutItem oldShortcut = _selectedShortcut;
             var shortcutForm = new ShortcutForm(_selectedShortcut);
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
+                ShortcutRepository.RemoveShortcut(oldShortcut);
+                _selectedShortcut = shortcutForm.Shortcut;
+                ShortcutRepository.AddShortcut(_selectedShortcut);
                 RefreshShortcutLibraryUI();
+                // As this is an edit, we need to manually force saving the shortcut library
+                //ShortcutRepository.SaveShortcuts();
             }
 
         }
@@ -208,7 +226,7 @@ namespace HeliosPlus.UIForms
             ShortcutRepository.RemoveShortcut(_selectedShortcut);
             _selectedShortcut = null;
 
-            RefreshShortcutLibraryUI(); 
+            RefreshShortcutLibraryUI();
         }
 
         private void btn_run_Click(object sender, EventArgs e)

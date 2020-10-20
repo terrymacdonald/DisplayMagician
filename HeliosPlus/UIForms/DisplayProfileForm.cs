@@ -120,7 +120,7 @@ namespace HeliosPlus.UIForms
             ilv_saved_profiles.Items.Clear();
 
             // Fill it back up with the Profiles we have
-            foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+            foreach (ProfileItem profile in ProfileRepository.AllProfiles.OrderBy(p=>p.Name))
             {
                 // Create a new ImageListViewItem from the profile
                 newItem = new ImageListViewItem(profile, profile.Name);

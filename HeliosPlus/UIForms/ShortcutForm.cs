@@ -47,11 +47,9 @@ namespace HeliosPlus.UIForms
             // existing Shortcut)
             /*if (_shortcutToEdit == null)
             {
-                //_shortcutToEdit = new ShortcutItem();
-                //_isNewShortcut = true;
-            }
-*/
-
+                shortcutToEdit = new ShortcutItem();
+                isNewShortcut = true;
+            }*/
         }
 
         public ShortcutForm(ShortcutItem shortcutToEdit) : this()
@@ -371,7 +369,7 @@ namespace HeliosPlus.UIForms
             }
 
 
-            // Set some values
+
             // Check the permanence requirements
             if (rb_switch_temp.Checked)
                 _permanence = ShortcutPermanence.Temporary;
@@ -431,7 +429,7 @@ namespace HeliosPlus.UIForms
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
                     _shortcutToEdit = new ShortcutItem(
-                        Name,
+                        txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
                         _permanence,
@@ -440,7 +438,17 @@ namespace HeliosPlus.UIForms
                         _autoName,
                         _uuid
                     );
-
+                    /*_shortcutToEdit.UpdateGameShortcut(
+                        Name,
+                        _profileToUse,
+                        _gameToUse,
+                        _permanence,
+                        _gameToUse.GameToPlay.IconPath,
+                        _startPrograms,
+                        _autoName,
+                        _uuid
+                    );*/
+                    
                 }
                 // If the game is a SteamGame
                 /*else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
@@ -448,7 +456,7 @@ namespace HeliosPlus.UIForms
                     // Find the UplayGame
                     _steamGameToUse = (from UplayGame in SteamLibrary.AllInstalledGames where UplayGame.GameId == _shortcutToEdit.GameAppId).First();
 
-                    _shortcutToEdit = new ShortcutItem(
+                    _shortcutToEdit.UpdateGameShortcut(
                         Name,
                         _profileToUse,
                         _steamGameToUse,
@@ -459,7 +467,7 @@ namespace HeliosPlus.UIForms
                     );
 
                 }*/
-            } 
+            }
             else if (rb_standalone.Checked)
             {
                 _executableToUse = new Executable();
@@ -477,8 +485,17 @@ namespace HeliosPlus.UIForms
                 {
                     _executableToUse.ProcessNameToMonitorUsesExecutable = false;
                 }
-                
+
                 _shortcutToEdit = new ShortcutItem(
+                    txt_shortcut_save_name.Text,
+                    _profileToUse,
+                    _executableToUse,
+                    _permanence,
+                    _executableToUse.ExecutableNameAndPath,
+                    _startPrograms,
+                    _autoName
+                );
+/*                _shortcutToEdit.UpdateExecutableShortcut(
                     Name,
                     _profileToUse,
                     _executableToUse,
@@ -487,6 +504,28 @@ namespace HeliosPlus.UIForms
                     _startPrograms,
                     _autoName
                 );
+*/
+            }
+            else
+            {
+
+                _shortcutToEdit = new ShortcutItem(
+                    txt_shortcut_save_name.Text,
+                    _profileToUse,
+                    _permanence,
+                    _executableToUse.ExecutableNameAndPath,
+                    _startPrograms,
+                    _autoName
+                );
+/*                _shortcutToEdit.UpdateNoGameShortcut(
+                    Name,
+                    _profileToUse,
+                    _permanence,
+                    _executableToUse.ExecutableNameAndPath,
+                    _startPrograms,
+                    _autoName
+                );
+*/
             }
 
             // Generate the Shortcut Icon ready to be used
@@ -495,11 +534,6 @@ namespace HeliosPlus.UIForms
 
             // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
             // but only if it's new... if it is an edit then it will already be in the list.
-            if (_isNewShortcut)
-            {
-                //SAve the shortcut to the Shortcut Repository
-                ShortcutRepository.AddShortcut(_shortcutToEdit);
-            }
                 
             // We've saved, so mark it as so
             _isUnsaved = false;
@@ -700,8 +734,6 @@ namespace HeliosPlus.UIForms
                 });
             }
 
-
-
             // If it is a new Shortcut then we don't have to load anything!
             if (_isNewShortcut)
             {
@@ -733,8 +765,9 @@ namespace HeliosPlus.UIForms
                             @"Display Profile name changed",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Exclamation);
+                            break;
                         }
-
+                        
                     }
 
                 }
@@ -771,8 +804,12 @@ namespace HeliosPlus.UIForms
                 }
             }
 
+
             // Now start populating the other fields
             _uuid = _shortcutToEdit.UUID;
+
+
+
             // Set if we launch App/Game/NoGame
             switch (_shortcutToEdit.Category)
             {
@@ -806,6 +843,7 @@ namespace HeliosPlus.UIForms
                 if (gameItem.Text.Equals(_shortcutToEdit.GameName))
                 {
                     gameItem.Selected = true;
+                    break;
                 }
             }
 
@@ -975,6 +1013,7 @@ namespace HeliosPlus.UIForms
                 if (savedProfile.Name == e.Item.Text)
                 {
                     ChangeSelectedProfile(savedProfile);
+                    break;
                 }
             }
 
@@ -1023,7 +1062,7 @@ namespace HeliosPlus.UIForms
                 ImageListViewItem newItem = null;
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
-                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name select item.Text).Any();
+                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
                     if (!thisLoadedProfileIsAlreadyHere)
                     {
                         //loadedProfile.SaveProfileImageToCache();

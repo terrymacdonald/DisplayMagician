@@ -308,6 +308,55 @@ namespace HeliosPlus
             return true;
         }
 
+/*        public static bool ReplaceShortcut(ShortcutItem oldShortcut, ShortcutItem newShortcut)
+        {
+            if (!(oldShortcut is ShortcutItem) || !(newShortcut is ShortcutItem))
+                return false;
+
+            // Remove the old Shortcut Icons from the Cache
+            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(oldShortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
+            foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
+            {
+                try
+                {
+                    File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ShortcutRepository/ReplaceShortcut exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+
+                    // TODO check and report
+                }
+            }
+
+            // Remove the shortcut from the list.
+            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
+
+            if (numRemoved == 1)
+            {
+                SaveShortcuts();
+                return true;
+            }
+            else if (numRemoved == 0)
+                return false;
+            else
+                throw new ShortcutRepositoryException();
+
+
+            foreach (ShortcutItem testShortcut in ShortcutRepository.AllShortcuts)
+            {
+                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.InvariantCultureIgnoreCase) && testShortcut.AutoName)
+                {
+                    testShortcut.ProfileToUse = newProfile;
+                    testShortcut.AutoSuggestShortcutName();
+                }
+            }
+
+            SaveShortcuts();
+
+            return true;
+        }*/
+
 
         private static bool LoadShortcuts()
         {
@@ -356,7 +405,7 @@ namespace HeliosPlus
             return true;
         }
 
-        private static bool SaveShortcuts()
+        public static bool SaveShortcuts()
         {
 
             if (!Directory.Exists(AppShortcutStoragePath))
