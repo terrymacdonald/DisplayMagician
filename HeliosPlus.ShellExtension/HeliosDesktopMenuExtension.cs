@@ -16,16 +16,14 @@ namespace HeliosPlus.ShellExtension
         private static ToolStripMenuItem CreateProfileMenu(ProfileItem profile)
         {
             var profileMenu = new ToolStripMenuItem(profile.Name, new ProfileIcon(profile).ToBitmap(16, 16));
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Apply, null,
-                (sender, args) => HeliosPlus.Open(HeliosStartupAction.SwitchProfile, profile))
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem("Change Profile", null,
+                (sender, args) => HeliosPlus.Open(HeliosStartupAction.ChangeProfile, profile))
             {
                 Enabled = profile.IsPossible && !profile.IsActive
-            });
+            }) ;
             profileMenu.DropDownItems.Add(new ToolStripSeparator());
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Edit, null,
-                (sender, args) => HeliosPlus.Open(HeliosStartupAction.EditProfile, profile)));
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, null,
-                (sender, args) => HeliosPlus.Open(HeliosStartupAction.CreateShortcut, profile)));
+            profileMenu.DropDownItems.Add(new ToolStripMenuItem("Run Shortcut", null,
+                (sender, args) => HeliosPlus.Open(HeliosStartupAction.RunShortcut, profile)));
 
             return profileMenu;
         }
@@ -39,20 +37,19 @@ namespace HeliosPlus.ShellExtension
         {
             var explorerMenu = new ContextMenuStrip();
 
-            if (ProfileItem.LoadAllProfiles().Any())
+            if (ProfileRepository.AllProfiles.Any())
             {
-                ProfileItem.UpdateCurrentProfile();
                 var extensionMenu = new ToolStripMenuItem(Language.Display_Profiles,
-                    Properties.Resources.Icon_x16);
+                    Properties.Resources.HeliosPlus.ToBitmap());
 
-                foreach (var profile in ProfileItem.LoadAllProfiles())
+                foreach (var profile in ProfileRepository.AllProfiles)
                 {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
                 }
 
                 extensionMenu.DropDownItems.Add(new ToolStripSeparator());
                 extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
-                    Properties.Resources.Icon_x16,
+                    Properties.Resources.HeliosPlus.ToBitmap(),
                     (sender, args) =>
                     {
                         HeliosPlus.Open();
@@ -63,7 +60,7 @@ namespace HeliosPlus.ShellExtension
             else
             {
                 var extensionMenu = new ToolStripMenuItem(Language.Manage_Profiles,
-                    Properties.Resources.Icon_x16,
+                    Properties.Resources.HeliosPlus.ToBitmap(),
                     (sender, args) =>
                     {
                         HeliosPlus.Open();

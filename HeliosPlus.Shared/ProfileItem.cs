@@ -158,6 +158,20 @@ namespace HeliosPlus.Shared
             }
         }
 
+        [JsonIgnore]
+        public bool IsActive
+        {
+            get
+            {
+                
+                if (this.Equals(ProfileRepository.CurrentProfile))
+                    return true;
+                else
+                    return false;
+
+            }
+        }
+
         public string Name { get; set; }
 
         public Topology.Path[] Paths { get; set; } = new Topology.Path[0];

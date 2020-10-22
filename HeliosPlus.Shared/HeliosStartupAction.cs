@@ -3,6 +3,7 @@
     public enum HeliosStartupAction
     {
         RunShortcut,
+        ChangeProfile,
         StartUpNormally
     }
 }
