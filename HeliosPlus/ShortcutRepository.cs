@@ -484,9 +484,10 @@ namespace HeliosPlus
             if (needToChangeProfiles)
             {
                 // Apply the Profile!
+                Console.WriteLine($"Changing to '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                 if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
                 {
-                    throw new Exception(Language.Cannot_change_active_profile);
+                    Console.WriteLine($"ERROR - Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                 }
             }
 
@@ -497,12 +498,13 @@ namespace HeliosPlus
             List<Process> startProgramsToStop = new List<Process>();
             if (shortcutToUse.StartPrograms is List<StartProgram> && shortcutToUse.StartPrograms.Count > 0)
             {
+                Console.WriteLine("Starting programs before main game/executable:");
                 foreach (StartProgram processToStart in shortcutToUse.StartPrograms
                     .Where(program => program.Enabled == true)
                     .OrderBy(program => program.Priority))
                 {
                     // Start the executable
-                    Console.WriteLine($"Starting process {processToStart.Executable}");
+                    Console.WriteLine($" - Starting process {processToStart.Executable}");
                     Process process = null;
                     if (processToStart.ExecutableArgumentsRequired)
                         process = System.Diagnostics.Process.Start(processToStart.Executable, processToStart.Arguments);
@@ -627,6 +629,7 @@ namespace HeliosPlus
                         }
 
                         // Start the URI Handler to run Steam
+                        Console.WriteLine($"Starting Steam Game: {steamGameToRun.Name}");
                         var steamProcess = Process.Start(address);
 
                         // Wait for Steam game to update if needed
@@ -677,6 +680,7 @@ namespace HeliosPlus
                         if (steamGameToRun.IsRunning)
                         {
                             // Wait for the game to exit
+                            Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
                             while (true)
                             {
                                 if (!steamGameToRun.IsRunning)
@@ -686,7 +690,7 @@ namespace HeliosPlus
 
                                 Thread.Sleep(300);
                             }
-                            Console.WriteLine($"{steamGameToRun.Name} has been exited. Now continuing with cleanup tasks.");
+                            Console.WriteLine($"{steamGameToRun.Name} has exited.");
                         }
 
                         // Remove the status notification icon from the status area
@@ -748,7 +752,7 @@ namespace HeliosPlus
                 //if (!ProfileRepository.ApplyProfile(rollbackProfile))
                 if (!Program.ApplyProfile(rollbackProfile))
                 {
-                    throw new Exception(Language.Cannot_change_active_profile);
+                    Console.WriteLine($"ERROR - Cannot revert back to '{rollbackProfile.Name}' Display Profile");
                 }
             }
 

@@ -53,7 +53,7 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\HeliosPlus.ico</ApplicationIcon>
+    <ApplicationIcon>HeliosPlus.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>HeliosPlus.Program</StartupObject>
@@ -252,6 +252,8 @@
     <None Include="Resources\HeliosPlus.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HeliosPlus.ico" />
+    <Content Include="Resources\Icon2.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
