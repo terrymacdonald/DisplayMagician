@@ -301,9 +301,6 @@ namespace HeliosPlus {
         // ApplyProfile lives here so that the UI works.
         public static bool ApplyProfile(ProfileItem profile)
         {
-            // If we're already on the wanted profile then no need to change!
-            if (ProfileRepository.IsActiveProfile(profile))
-                return true;
 
             // We need to check if the profile is valid
             if (!profile.IsPossible)
@@ -384,11 +381,13 @@ namespace HeliosPlus {
 
                     if (applyTopologyTask.IsFaulted)
                         Console.WriteLine("Program/ApplyProfile : Applying Profile Topology stage failed to complete");
+
+                    if (!applyTopologyTask.IsCompleted)
+                        return false;
                 }
 
                 // We always want to do the WindowsDisplayAPI PathInfo part
                 pathInfoForm.ShowDialog();
-                applyPathInfoTask.Wait();
                 try
                 {
                     applyPathInfoTask.Wait();
@@ -413,9 +412,7 @@ namespace HeliosPlus {
                 if (applyPathInfoTask.IsFaulted)
                     Console.WriteLine("Program/ApplyProfile : Applying Profile PathInfo stage failed to complete");
 
-                if (applyTopologyTask.IsCompleted && applyPathInfoTask.IsCompleted)
-                    return true;
-                else
+                if (!applyPathInfoTask.IsCompleted)
                     return false;
 
             }
@@ -424,6 +421,8 @@ namespace HeliosPlus {
                 Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return false;
             }
+
+            return true;
         }
 
         public static bool LoadGamesInBackground()

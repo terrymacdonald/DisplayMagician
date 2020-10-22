@@ -139,7 +139,9 @@ namespace HeliosPlus.UIForms
         {
             lock (_progressPositions)
             {
-
+                // Screen.Allscreens is a static variable and won't be updated while the program is running.
+                // SO we use reflection to wipe the value and force it to be updated afresh.
+                typeof(Screen).GetField("screens", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).SetValue(null, null);
                 Screen[] screens = Screen.AllScreens;
                 Size = screens.Select(screen => screen.Bounds)
                                             .Aggregate(Rectangle.Union)

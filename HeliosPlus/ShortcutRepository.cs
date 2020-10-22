@@ -484,7 +484,6 @@ namespace HeliosPlus
             if (needToChangeProfiles)
             {
                 // Apply the Profile!
-                //if (!ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse))
                 if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
                 {
                     throw new Exception(Language.Cannot_change_active_profile);
