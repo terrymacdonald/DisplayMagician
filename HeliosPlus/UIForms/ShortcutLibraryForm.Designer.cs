@@ -198,6 +198,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "ShortcutLibraryForm";
+            this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "HeliosPlus - Setup Game Shortcuts";
             this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);

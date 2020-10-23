@@ -249,11 +249,7 @@
     <None Include="Resources\Epic.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\HeliosPlus.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="HeliosPlus.ico" />
-    <Content Include="Resources\Icon2.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

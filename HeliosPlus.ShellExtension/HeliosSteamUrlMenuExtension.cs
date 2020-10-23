@@ -19,7 +19,7 @@ namespace HeliosPlus.ShellExtension
         {
             return Helios.IsInstalled &&
                    SelectedItemPaths.Count() == 1 &&
-                   ProfileItem.LoadAllProfiles().Any() &&
+                   ProfileRepository.AllProfiles.Any() &&
                    ParseSteamAppId() > 0;
         }
 
@@ -27,13 +27,11 @@ namespace HeliosPlus.ShellExtension
         {
             var explorerMenu = new ContextMenuStrip();
             var extensionMenu = new ToolStripMenuItem(Language.Open_under_Display_Profile,
-                Properties.Resources.Icon_x16);
+                Properties.Resources.HeliosPlus.ToBitmap());
 
-            if (ProfileItem.LoadAllProfiles().Any())
+            if (ProfileRepository.AllProfiles.Any())
             {
-                ProfileItem.UpdateCurrentProfile();
-
-                foreach (var profile in ProfileItem.LoadAllProfiles())
+                foreach (var profile in ProfileRepository.AllProfiles)
                 {
                     extensionMenu.DropDownItems.Add(CreateProfileMenu(profile));
                 }
@@ -42,7 +40,7 @@ namespace HeliosPlus.ShellExtension
             }
 
             extensionMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Manage_Profiles,
-                Properties.Resources.Icon_x16,
+                Properties.Resources.HeliosPlus.ToBitmap(),
                 (sender, args) =>
                 {
                     HeliosPlus.Open();
@@ -59,13 +57,9 @@ namespace HeliosPlus.ShellExtension
             var profileMenu = new ToolStripMenuItem(profile.Name, new ProfileIcon(profile).ToBitmap(16, 16));
             profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Run, null,
                 (sender, args) =>
-                    HeliosPlus.OpenSteamGame(HeliosStartupAction.SwitchProfile, profile,
+                    HeliosPlus.OpenSteamGame(HeliosStartupAction.ChangeProfile, profile,
                         appId)));
-            profileMenu.DropDownItems.Add(new ToolStripSeparator());
-            profileMenu.DropDownItems.Add(new ToolStripMenuItem(Language.Create_Shortcut, null,
-                (sender, args) =>
-                    HeliosPlus.OpenSteamGame(HeliosStartupAction.CreateShortcut, profile,
-                        appId)));
+
 
             return profileMenu;
         }
