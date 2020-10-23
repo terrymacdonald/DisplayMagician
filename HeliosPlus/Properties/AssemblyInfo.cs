@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 
 [assembly: AssemblyTitle("HeliosPlus")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Automatically run your games with a different display profile and revert when finished.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("HeliosPlus")]
@@ -38,4 +38,4 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion("0.9.9.*")]
 [assembly: AssemblyFileVersion("0.9.9.0")]
-[assembly: NeutralResourcesLanguage("")]
+[assembly: NeutralResourcesLanguage("en")]
