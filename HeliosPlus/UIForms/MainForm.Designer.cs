@@ -37,13 +37,23 @@
             this.btn_setup_game_shortcuts = new System.Windows.Forms.Button();
             this.btn_exit = new System.Windows.Forms.Button();
             this.pb_game_shortcut = new System.Windows.Forms.PictureBox();
-            this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.mainNotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.mainContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.changeDisplayProfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.profilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.runShortcutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openApplicationWindowToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_display_profile)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb_game_shortcut)).BeginInit();
+            this.mainContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -117,9 +127,65 @@
             this.pb_game_shortcut.TabStop = false;
             this.pb_game_shortcut.Click += new System.EventHandler(this.pb_game_shortcut_Click);
             // 
-            // notifyIcon
+            // mainNotifyIcon
             // 
-            resources.ApplyResources(this.notifyIcon, "notifyIcon");
+            resources.ApplyResources(this.mainNotifyIcon, "mainNotifyIcon");
+            this.mainNotifyIcon.ContextMenuStrip = this.mainContextMenuStrip;
+            // 
+            // mainContextMenuStrip
+            // 
+            this.mainContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem1,
+            this.toolStripSeparator1,
+            this.openApplicationWindowToolStripMenuItem,
+            this.changeDisplayProfileToolStripMenuItem,
+            this.runShortcutToolStripMenuItem});
+            this.mainContextMenuStrip.Name = "mainContextMenuStrip";
+            resources.ApplyResources(this.mainContextMenuStrip, "mainContextMenuStrip");
+            // 
+            // toolStripMenuItem1
+            // 
+            resources.ApplyResources(this.toolStripMenuItem1, "toolStripMenuItem1");
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            resources.ApplyResources(this.toolStripSeparator1, "toolStripSeparator1");
+            // 
+            // changeDisplayProfileToolStripMenuItem
+            // 
+            this.changeDisplayProfileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.profilesToolStripMenuItem,
+            this.toolStripSeparator2,
+            this.toolStripMenuItem2});
+            this.changeDisplayProfileToolStripMenuItem.Name = "changeDisplayProfileToolStripMenuItem";
+            resources.ApplyResources(this.changeDisplayProfileToolStripMenuItem, "changeDisplayProfileToolStripMenuItem");
+            // 
+            // profilesToolStripMenuItem
+            // 
+            this.profilesToolStripMenuItem.Name = "profilesToolStripMenuItem";
+            resources.ApplyResources(this.profilesToolStripMenuItem, "profilesToolStripMenuItem");
+            // 
+            // runShortcutToolStripMenuItem
+            // 
+            this.runShortcutToolStripMenuItem.Name = "runShortcutToolStripMenuItem";
+            resources.ApplyResources(this.runShortcutToolStripMenuItem, "runShortcutToolStripMenuItem");
+            // 
+            // openApplicationWindowToolStripMenuItem
+            // 
+            resources.ApplyResources(this.openApplicationWindowToolStripMenuItem, "openApplicationWindowToolStripMenuItem");
+            this.openApplicationWindowToolStripMenuItem.Name = "openApplicationWindowToolStripMenuItem";
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            resources.ApplyResources(this.toolStripSeparator2, "toolStripSeparator2");
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            resources.ApplyResources(this.toolStripMenuItem2, "toolStripMenuItem2");
             // 
             // MainForm
             // 
@@ -138,6 +204,7 @@
             this.splitContainer1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pb_display_profile)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb_game_shortcut)).EndInit();
+            this.mainContextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -151,6 +218,15 @@
         private System.Windows.Forms.Button btn_setup_display_profiles;
         private System.Windows.Forms.Button btn_setup_game_shortcuts;
         private System.Windows.Forms.Label lbl_version;
-        private System.Windows.Forms.NotifyIcon notifyIcon;
+        private System.Windows.Forms.NotifyIcon mainNotifyIcon;
+        private System.Windows.Forms.ContextMenuStrip mainContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem changeDisplayProfileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem profilesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem runShortcutToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openApplicationWindowToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
     }
 }

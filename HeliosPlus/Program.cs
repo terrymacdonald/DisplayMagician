@@ -40,10 +40,8 @@ namespace HeliosPlus {
         public static string AppHeliosPlusIconFilename = Path.Combine(AppIconPath, @"HeliosPlus.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
-        public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
+        public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
-        //internal static string ShortcutIconCachePath;
-
 
         
         /// <summary>
@@ -61,7 +59,7 @@ namespace HeliosPlus {
             }
             Console.WriteLine("=");
             Console.WriteLine($"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
-            Console.WriteLine(@"Based on Helios Display Management - Copyright © Soroush Falahati 2017-2020");
+            Console.WriteLine(@"Derived from Helios Display Management - Copyright © Soroush Falahati 2017-2020");
 
 
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
@@ -120,20 +118,19 @@ namespace HeliosPlus {
             }
             catch (CommandParsingException ex)
             {
-                //Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
-                // the message will usually be something like:
-                // "Unrecognized command or argument '<invalid-command>'"
-                //Console.WriteLine(ex.Message);
                 Console.WriteLine("Didn't recognise the supplied commandline options: {0}", ex.Message);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Program/Main exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                Console.WriteLine("Unable to execute application: {0}", ex.Message);
+                //Console.WriteLine($"Program/Main commandParsingException: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
+                // the message will usually be something like:
+                // "Unrecognized command or argument '<invalid-command>'"
+                Console.WriteLine($"Program/Main exception: Unable to execute application - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
+
+            // Exit with a 0 Errorlevel to indicate everything worked fine!
             return 0;
-            //return app.Execute(args);
         }
 
         private static void StartUpNormally()
@@ -227,9 +224,7 @@ namespace HeliosPlus {
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    // TODO
                 }
-
                 IPCService.GetInstance().Status = InstanceStatus.User;
                 Application.Run(new UIForms.MainForm());
 
