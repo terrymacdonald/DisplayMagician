@@ -88,6 +88,7 @@
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ProgressReporter.cs" />
+    <Compile Include="ProgramSettings.cs" />
     <Compile Include="ShellIcon.cs" />
     <Compile Include="ShortcutItem.cs" />
     <Compile Include="ShortcutRepository.cs" />

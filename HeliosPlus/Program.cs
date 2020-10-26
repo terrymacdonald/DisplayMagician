@@ -42,8 +42,8 @@ namespace HeliosPlus {
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
+        public static ProgramSettings AppProgramSettings;
 
-        
         /// <summary>
         ///     The main entry point for the application.
         /// </summary>
@@ -65,7 +65,9 @@ namespace HeliosPlus {
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
+            
+            // Load the program settings
+            AppProgramSettings = ProgramSettings.LoadSettings();
 
             var app = new CommandLineApplication();
 

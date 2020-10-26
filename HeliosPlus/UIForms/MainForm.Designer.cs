@@ -50,6 +50,7 @@
             this.shortcutToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -72,6 +73,7 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.cb_minimise_notification_area);
             this.splitContainer1.Panel2.Controls.Add(this.lbl_version);
             this.splitContainer1.Panel2.Controls.Add(this.btn_setup_game_shortcuts);
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
@@ -211,6 +213,14 @@
             resources.ApplyResources(this.exitToolStripMenuItem, "exitToolStripMenuItem");
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
+            // cb_minimise_notification_area
+            // 
+            resources.ApplyResources(this.cb_minimise_notification_area, "cb_minimise_notification_area");
+            this.cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
+            this.cb_minimise_notification_area.Name = "cb_minimise_notification_area";
+            this.cb_minimise_notification_area.UseVisualStyleBackColor = true;
+            this.cb_minimise_notification_area.CheckedChanged += new System.EventHandler(this.cb_minimise_notification_area_CheckedChanged);
+            // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
@@ -255,5 +265,6 @@
         private System.Windows.Forms.ToolStripSeparator shortcutToolStripSeparator;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.CheckBox cb_minimise_notification_area;
     }
 }

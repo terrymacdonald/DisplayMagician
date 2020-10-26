@@ -27,11 +27,26 @@ namespace HeliosPlus.UIForms
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
             lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);
             notifyIcon.Visible = true;
-            // Make the form show
-            allowVisible = true;
-            // Close the application when the form is closed
-            allowClose = true;
             RefreshNotifyIconMenus();
+
+            if (Program.AppProgramSettings.MinimiseOnStart) 
+            {
+                // Make the form minimised on start 
+                allowVisible = false;
+                // Hide the application to notification area when the form is closed
+                allowClose = false;
+                cb_minimise_notification_area.Checked = true;
+            }
+            else
+            {
+                // Make the form show to the user on startup
+                allowVisible = true;
+                // Really close the application when the form is closed
+                allowClose = true;
+                cb_minimise_notification_area.Checked = false;
+            }
+
+
         }
 
         protected override void SetVisibleCore(bool value)
@@ -148,6 +163,28 @@ namespace HeliosPlus.UIForms
         {
             allowClose = true;
             Application.Exit();
+        }
+
+        private void cb_minimise_notification_area_CheckedChanged(object sender, EventArgs e)
+        {            
+            if (cb_minimise_notification_area.Checked)
+            {
+                // Make the form minimised on start 
+                allowVisible = false;
+                // Hide the application to notification area when the form is closed
+                allowClose = false;
+                // Enable the MinimiseOnStart setting
+                Program.AppProgramSettings.MinimiseOnStart = true;
+            }
+            else
+            {
+                // Make the form show to the user on startup
+                allowVisible = true;
+                // Really close the application when the form is closed
+                allowClose = true;
+                // Disable the MinimiseOnStart setting
+                Program.AppProgramSettings.MinimiseOnStart = false;
+            }
         }
     }
 }

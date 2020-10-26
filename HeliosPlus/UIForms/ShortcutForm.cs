@@ -1418,5 +1418,6 @@ namespace HeliosPlus.UIForms
                 txt_start_program_args4.Visible = false;
             }
         }
+
     }
 }
