@@ -399,6 +399,9 @@ namespace HeliosPlus
                             }
                         }
                     }
+
+                    // Sort the shortcuts alphabetically
+                    _allShortcuts.Sort();
                 }
             }
             _shortcutsLoaded = true;

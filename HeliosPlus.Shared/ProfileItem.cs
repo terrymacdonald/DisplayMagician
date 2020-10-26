@@ -20,7 +20,7 @@ using NvAPIWrapper.Display;
 
 namespace HeliosPlus.Shared
 {
-    public class ProfileItem
+    public class ProfileItem : IComparable
     {
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
@@ -388,10 +388,21 @@ namespace HeliosPlus.Shared
             }
             return uncheckedFilename;
         }
-        
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null) return 1;
+
+            ProfileItem otherProfile = obj as ProfileItem;
+            if (otherProfile != null)
+                return this.Name.CompareTo(otherProfile.Name);
+            else
+                throw new ArgumentException("Object to CompareTo is not a Shortcut");
+        }
+
     }
 
-    // Custom comparer for the Profile class
+    // Custom Equality comparer for the Profile class
     // Allows us to use 'Contains'
     class ProfileComparer : IEqualityComparer<ProfileItem>
     {

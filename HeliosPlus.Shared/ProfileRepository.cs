@@ -468,6 +468,10 @@ namespace HeliosPlus.Shared
                             _currentProfile = loadedProfile;
 
                     }
+
+                    // Sort the profiles alphabetically
+                    _allProfiles.Sort();
+
                 }
             } else
             {

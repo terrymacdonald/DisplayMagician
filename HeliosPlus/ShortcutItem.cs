@@ -72,7 +72,7 @@ namespace HeliosPlus
     }
 
 
-    public class ShortcutItem
+    public class ShortcutItem : IComparable
     {
         
         //private static List<ShortcutItem> _allSavedShortcuts = new List<ShortcutItem>();
@@ -1493,6 +1493,17 @@ namespace HeliosPlus
                     _name = $"{baseName} ({_profileToUse.Name})";
                 }
             }
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null) return 1;
+
+            ShortcutItem otherShortcut = obj as ShortcutItem;
+            if (otherShortcut != null)
+                return this.Name.CompareTo(otherShortcut.Name);
+            else
+                throw new ArgumentException("Object to CompareTo is not a Shortcut");
         }
 
     }
