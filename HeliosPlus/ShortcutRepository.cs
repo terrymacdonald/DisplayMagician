@@ -499,14 +499,14 @@ namespace HeliosPlus
 
             // Now run the pre-start applications
             List<Process> startProgramsToStop = new List<Process>();
-            if (shortcutToUse.StartPrograms is List<StartProgram> && shortcutToUse.StartPrograms.Count > 0)
+            List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Enabled == true).OrderBy(program => program.Priority).ToList();
+            if (startProgramsToStart.Count > 0)
             {
-                Console.WriteLine("Starting programs before main game/executable:");
-                foreach (StartProgram processToStart in shortcutToUse.StartPrograms
-                    .Where(program => program.Enabled == true)
-                    .OrderBy(program => program.Priority))
+                foreach (StartProgram processToStart in startProgramsToStart)
                 {
                     // Start the executable
+                    Console.WriteLine("Starting programs before main game/executable:");
+
                     Console.WriteLine($" - Starting process {processToStart.Executable}");
                     Process process = null;
                     if (processToStart.ExecutableArgumentsRequired)

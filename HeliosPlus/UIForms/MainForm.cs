@@ -144,12 +144,44 @@ namespace HeliosPlus.UIForms
 
         private void runProfileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Show();
+            var menuItem = sender as ToolStripMenuItem;
+            ProfileItem profileToRun = null;
+            if (menuItem != null)
+            {
+                foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+                {
+                    if (profile.Name.Equals(menuItem.Text))
+                    {
+                        profileToRun = profile;
+                        break;
+                    }
+                }
+
+                // Run the shortcut if it's still there
+                if (profileToRun != null)
+                    Program.ApplyProfile(profileToRun);
+            }
         }
 
         private void runShortcutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Show();
+            var menuItem = sender as ToolStripMenuItem;
+            ShortcutItem shortcutToRun = null;
+            if (menuItem != null)
+            {
+                foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
+                {
+                    if (shortcut.Name.Equals(menuItem.Text))
+                    {
+                        shortcutToRun = shortcut;
+                        break;
+                    }
+                }
+
+                // Run the shortcut if it's still there
+                if (shortcutToRun != null)
+                    ShortcutRepository.RunShortcut(shortcutToRun);
+            }
         }
 
         private void openApplicationWindowToolStripMenuItem_Click(object sender, EventArgs e)

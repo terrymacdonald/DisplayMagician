@@ -1218,7 +1218,7 @@ namespace HeliosPlus
             }
             else
             {
-                bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, true);
+                bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, false);
             }           
             return bm;
         }
@@ -1237,7 +1237,7 @@ namespace HeliosPlus
             }
             else
             {
-                bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, true, false);
+                bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
             }
             return bm;
         }
