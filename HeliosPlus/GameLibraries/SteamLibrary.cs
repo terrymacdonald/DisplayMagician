@@ -295,13 +295,13 @@ namespace HeliosPlus.GameLibraries
             {
 
                 // Find the SteamExe location, and the SteamPath for later
-                using (var key = Registry.CurrentUser.OpenSubKey(_registrySteamKey, RegistryKeyPermissionCheck.ReadSubTree))
+                /*using (var key = Registry.CurrentUser.OpenSubKey(_registrySteamKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     _steamExe = (string)key?.GetValue(@"SteamExe", string.Empty) ?? string.Empty;
                     _steamExe = _steamExe.Replace('/', '\\');
                     _steamPath = (string)key?.GetValue(@"SteamPath", string.Empty) ?? string.Empty;
                     _steamPath = _steamPath.Replace('/', '\\');
-                }
+                }*/
 
                 if (_steamExe == string.Empty || !File.Exists(_steamExe))
                 {
@@ -312,8 +312,8 @@ namespace HeliosPlus.GameLibraries
                 //Icon _steamIcon = Icon.ExtractAssociatedIcon(_steamExe);
                 //IconExtractor steamIconExtractor = new IconExtractor(_steamExe);
                 //Icon _steamIcon = steamIconExtractor.GetIcon(0);
-                MultiIcon _steamIcon = new MultiIcon();
-                _steamIcon.Load(_steamExe);
+                //MultiIcon _steamIcon = new MultiIcon();
+                //_steamIcon.Load(_steamExe);
 
                 List<uint> steamAppIdsInstalled = new List<uint>();
                 // Now look for what games app id's are actually installed on this computer

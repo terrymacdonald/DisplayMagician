@@ -443,13 +443,11 @@ namespace HeliosPlus {
             {
                 // Load Uplay library games
                 Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Uplay Games ");
-                /* if (!HeliosPlus.GameLibraries.UplayLibrary.LoadInstalledGames())
+                if (!HeliosPlus.GameLibraries.UplayLibrary.LoadInstalledGames())
                 {
                     // Somehow return that this profile topology didn't apply
                     throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                 }
-                */
-
             });
 
             // Store all the tasks in an array so we can wait on them later
