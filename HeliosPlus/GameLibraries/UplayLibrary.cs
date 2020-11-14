@@ -35,7 +35,7 @@ namespace HeliosPlus.GameLibraries
         {
             public uint GameID;
             public string GameName;
-            public List<string> GameExes;
+            public string GameExe;
             public string GameInstallDir;
             public string GameUplayIconPath;
         }
@@ -291,8 +291,8 @@ namespace HeliosPlus.GameLibraries
                 //string uplayInstallDir = uplayInstallKey.GetValue("InstallDir", "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\").ToString();
 
                 // Access {installdir}\\cache\\configuration\\configurations file
-                string mypath = _uplayPath + @"cache\\configuration\\configurations";
-                string uplayConfigFileString = File.ReadAllText(mypath);
+                string uplayConfigFilePath = _uplayPath + @"cache\configuration\configurations";
+                string uplayConfigFileString = File.ReadAllText(uplayConfigFilePath);
                 uplayConfigFileString = uplayConfigFileString.Remove(0, 12);
                 // Split the file into records at the SOH unicode character
                 List<string> uplayConfigFile = uplayConfigFileString.Split((Char)1).ToList();
@@ -319,6 +319,10 @@ namespace HeliosPlus.GameLibraries
                     // if we get here then we have a real game to parse!
                     // Yay us :). 
 
+                    // First we want to know the index of the start_game entry to use later
+                    int startGameIndex = uplayEntryLines.FindIndex(a => a == "  start_game:");
+                    MatchCollection mc;
+
                     // First we check if there are any localization CONSTANTS that we will need to map later.
                     Dictionary<string, string> localizations = new Dictionary<string, string>();
                     int localizationsIndex = uplayEntryLines.FindIndex(a => a == "localizations:");
@@ -331,56 +335,95 @@ namespace HeliosPlus.GameLibraries
                         
                         // Grab all EntryLines with 4 leading spaces (these are all the localizations)
                         while (uplayEntryLines[currentIndex].StartsWith("    ")){
-                            string[] split = uplayEntryLines[currentIndex].Trim().Split(':');
-                            localizations.Add(split[0], split[1]);
+                            string[] split = uplayEntryLines[currentIndex].Split(':');
+                            localizations.Add(split[0].Trim(), split[1].Trim());
                             currentIndex++;
                         }
                             
                     }
 
                     // for each game record grab:
+                    UplayAppInfo uplayGameAppInfo = new UplayAppInfo();
+
                     // name: (lookup the id in lookup table to find the name if needed)
+                    if (uplayEntryLines.Exists(a => a.StartsWith("  name:", StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        mc = Regex.Matches(uplayEntry, @"  name\: (.*)");
+                        uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
+                        // if the name contains a localization reference, then dereference it
+                        if (localizations.ContainsKey(uplayGameAppInfo.GameName))
+                        {
+                            uplayGameAppInfo.GameName = localizations[uplayGameAppInfo.GameName];
+                        }
+                    }
+                    else
+                        continue;
 
-
-                    // thumb_image: (lookup the id in lookup table to find the thumbnail)
                     // icon_image: (lookup the id in lookup table to find the ICON)
+                    if (uplayEntryLines.Exists(a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        mc = Regex.Matches(uplayEntry, @"  icon_image: (.*)");
+                        string iconImageFileName = mc[0].Groups[1].ToString();
+                        // if the icon_image contains a localization reference, then dereference it
+                        if (localizations.ContainsKey(iconImageFileName))
+                        {
+                            iconImageFileName = localizations[iconImageFileName];
+                        }
+                        //61fdd16f06ae08158d0a6d476f1c6bd5.ico
+                        string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
+                        if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
+                        {
+                            uplayGameAppInfo.GameUplayIconPath = uplayGameIconPath;
+                        }
+                    }
+
                     // find the exe name looking at root: -> start_game: -> online: -> executables: -> path: -> relative: (get ACU.exe)
                     // Lookup the Game registry key from looking at root: -> start_game: -> online: -> executables: -> working_directory: -> register: (get HKEY_LOCAL_MACHINE\SOFTWARE\Ubisoft\Launcher\Installs\720\InstallDir)
                     // Extract the GameAppID from the number in the working directory (e.g. 720)
                     // Lookup the Game install path by reading the game registry key: D:/Ubisoft Game Launcher/Assassin's Creed Unity/
                     // join the Game install path and the exe name to get the full game exe path: D:/Ubisoft Game Launcher/Assassin's Creed Unity/ACU.exe
-                    // Then we have the gameID, the thumbimage, the icon, the name, the exe path
-                }
 
+                    //if (uplayEntryLines.Find (a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
 
-                List<uint> uplayAppIdsInstalled = new List<uint>();
-                // Now look for what games app id's are actually installed on this computer
-                using (RegistryKey uplayAppsKey = Registry.CurrentUser.OpenSubKey(registryUplayInstallsKey, RegistryKeyPermissionCheck.ReadSubTree))
-                {
-                    if (uplayAppsKey != null)
+                    string gameFileName = "";
+                    bool gotGameFileName = false;
+                    string gameId = "";
+                    bool gotGameId = false;
+                    for (int i = startGameIndex; i<= (startGameIndex+30); i++)
                     {
-                        // Loop through the subKeys as they are the Uplay Game IDs
-                        foreach (string uplayGameKeyName in uplayAppsKey.GetSubKeyNames())
+                        // Stop this loop once we have both filname and gameid
+                        if (gotGameFileName && gotGameId)
+                            break;
+
+                        // This line contains the filename
+                        if (uplayEntryLines[i].StartsWith("            relative:") && !gotGameFileName)
                         {
-                            uint uplayAppId = 0;
-                            if (uint.TryParse(uplayGameKeyName, out uplayAppId))
-                            {
-                                string uplayGameKeyFullName = $"{ registryUplayInstallsKey}\\{uplayGameKeyName}";
-                                using (RegistryKey uplayGameKey = Registry.CurrentUser.OpenSubKey(uplayGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
-                                {
-                                    // If the Installed Value is set to 1, then the game is installed
-                                    // We want to keep track of that for later
-                                    if ((int)uplayGameKey.GetValue(@"Installed", 0) == 1)
-                                    {
-                                        // Add this Uplay App ID to the list we're keeping for later
-                                        uplayAppIdsInstalled.Add(uplayAppId);
-                                    }
-
-                                }
-
-                            }
+                            mc = Regex.Matches(uplayEntryLines[i], @"            relative: (.*)");
+                            gameFileName = mc[0].Groups[1].ToString();
+                            gotGameFileName = true;
+                        }
+                        // This line contains the registryKey 
+                        if (uplayEntryLines[i].StartsWith("            register: HKEY_LOCAL_MACHINE") && !gotGameId)
+                        {
+                            // Lookup the GameId within the registry key
+                            mc = Regex.Matches(uplayEntryLines[i], @"Installs\\(\d+)\\InstallDir");
+                            gameId = mc[0].Groups[1].ToString();
+                            gotGameId = true;
                         }
                     }
+
+                    // Now we need to lookup the game install path in registry using the gameId
+                    string registryUplayGameInstallsKey = registryUplayInstallsKey + "\\" + gameId;
+                    RegistryKey uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayGameInstallsKey, RegistryKeyPermissionCheck.ReadSubTree);
+
+                    // From that  we lookup the actual game path
+                    uplayGameAppInfo.GameInstallDir = Path.GetFullPath(uplayGameInstallKey.GetValue("InstallDir", "").ToString()).TrimEnd('\\');
+                    uplayGameAppInfo.GameExe = uplayGameAppInfo.GameInstallDir + gameFileName;
+                    uplayGameAppInfo.GameID = uint.Parse(gameId);
+
+                    // Then we have the gameID, the thumbimage, the icon, the name, the exe path
+                    // And we add the Game to the list of games we have!
+                    _allUplayGames.Add(new UplayGame(uplayGameAppInfo.GameID, uplayGameAppInfo.GameName, uplayGameAppInfo.GameExe, uplayGameAppInfo.GameUplayIconPath));
                 }
 
             }
