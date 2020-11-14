@@ -27,6 +27,7 @@ namespace HeliosPlus.UIForms
         private ShortcutPermanence _permanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
         private ShortcutItem _shortcutToEdit = null;
+        List<Game> allGames;
         private bool _isNewShortcut = true;
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
@@ -451,22 +452,27 @@ namespace HeliosPlus.UIForms
                     
                 }
                 // If the game is a SteamGame
-                /*else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
+                else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
                 {
                     // Find the UplayGame
-                    _steamGameToUse = (from UplayGame in SteamLibrary.AllInstalledGames where UplayGame.GameId == _shortcutToEdit.GameAppId).First();
+                    _gameToUse = new GameStruct();
+                    _gameToUse.GameToPlay = (from uplayGame in SteamLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
+                    _gameToUse.StartTimeout = Convert.ToUInt32(nud_timeout_game.Value);
+                    _gameToUse.GameArguments = txt_args_game.Text;
+                    _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
-                    _shortcutToEdit.UpdateGameShortcut(
-                        Name,
+                    _shortcutToEdit = new ShortcutItem(
+                        txt_shortcut_save_name.Text,
                         _profileToUse,
-                        _steamGameToUse,
+                        _gameToUse,
                         _permanence,
-                        _steamGameToUse.GameIconPath,
+                        _gameToUse.GameToPlay.IconPath,
                         _startPrograms,
-                        _autoName
+                        _autoName,
+                        _uuid
                     );
 
-                }*/
+                }
             }
             else if (rb_standalone.Checked)
             {
@@ -700,9 +706,15 @@ namespace HeliosPlus.UIForms
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
 
+            // Populate a full list of games
+            // Start with the Steam Games
+            allGames = SteamLibrary.AllInstalledGames;
+            // Then add the Uplay Games
+            allGames.AddRange(UplayLibrary.AllInstalledGames);
 
-            // Load the Games ListView
-            foreach (var game in SteamLibrary.AllInstalledGames.OrderBy(game => game.Name))
+
+            // Load the Steam Games into the Games ListView
+            foreach (var game in allGames.OrderBy(game => game.Name))
             {
                 // Get the bitmap out of the IconPath 
                 // IconPath can be an ICO, or an EXE
@@ -733,6 +745,7 @@ namespace HeliosPlus.UIForms
                     ImageIndex = il_games.Images.Count - 1
                 });
             }
+
 
             // If it is a new Shortcut then we don't have to load anything!
             if (_isNewShortcut)
@@ -989,7 +1002,7 @@ namespace HeliosPlus.UIForms
             if (lv_games.SelectedItems.Count > 0)
             {
                 txt_game_name.Text = lv_games.SelectedItems[0].Text;
-                foreach (SteamGame game in SteamLibrary.AllInstalledGames)
+                foreach (Game game in allGames)
                 {
                     if (game.Name == txt_game_name.Text)
                     {

@@ -17,7 +17,7 @@ namespace HeliosPlus.GameLibraries
     {
         #region Class Variables
         // Common items to the class
-        private static List<SteamGame> _allSteamGames = new List<SteamGame>();
+        private static List<Game> _allSteamGames = new List<Game>();
         private static string steamAppIdRegex = @"/^[0-9A-F]{1,10}$";
         private static string _steamExe;
         private static string _steamPath;
@@ -52,7 +52,7 @@ namespace HeliosPlus.GameLibraries
         #endregion
 
         #region Class Properties
-        public static List<SteamGame> AllInstalledGames
+        public static List<Game> AllInstalledGames
         {
             get
             {

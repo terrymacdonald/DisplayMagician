@@ -19,7 +19,7 @@ namespace HeliosPlus.GameLibraries
     {
         #region Class Variables
         // Common items to the class
-        private static List<UplayGame> _allUplayGames = new List<UplayGame>();
+        private static List<Game> _allUplayGames = new List<Game>();
         private static string uplayAppIdRegex = @"/^[0-9A-F]{1,10}$";
         private static string _uplayExe;
         private static string _uplayPath;
@@ -51,7 +51,7 @@ namespace HeliosPlus.GameLibraries
         #endregion
 
         #region Class Properties
-        public static List<UplayGame> AllInstalledGames
+        public static List<Game> AllInstalledGames
         {
             get
             {
