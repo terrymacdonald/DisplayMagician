@@ -731,7 +731,7 @@ namespace HeliosPlus
                         }
 
                         // Start the URI Handler to run Uplay
-                        Console.WriteLine($"Starting Steam Game: {uplayGameToRun.Name}");
+                        Console.WriteLine($"Starting Uplay Game: {uplayGameToRun.Name}");
                         var uplayProcess = Process.Start(address);
 
                         // Wait for Steam game to update if needed
@@ -745,10 +745,10 @@ namespace HeliosPlus
 
                             Thread.Sleep(300);
 
-                            if (!uplayGameToRun.IsUpdating)
+                            /*if (!uplayGameToRun.IsUpdating)
                             {
                                 ticks += 300;
-                            }
+                            }*/
                         }
 
                         // Store the Steam Process ID for later

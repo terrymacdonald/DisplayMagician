@@ -151,7 +151,7 @@ namespace HeliosPlus.GameLibraries
             }
         }
 
-        public override bool IsUpdating
+        /*public override bool IsUpdating
         {
             get
             {
@@ -184,7 +184,7 @@ namespace HeliosPlus.GameLibraries
                     throw;
                 }
             }
-        }
+        }*/
 
         public bool CopyTo(UplayGame uplayGame)
         {
@@ -213,10 +213,10 @@ namespace HeliosPlus.GameLibraries
                 return name + " " + Language.Running;
             }
 
-            if (IsUpdating)
+            /*if (IsUpdating)
             {
                 return name + " " + Language.Updating;
-            }
+            }*/
 
             return name;
         }

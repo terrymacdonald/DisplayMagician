@@ -321,7 +321,7 @@ namespace HeliosPlus.GameLibraries
                     // Yay us :). 
 
                     // First we want to know the index of the start_game entry to use later
-                    int startGameIndex = uplayEntryLines.FindIndex(a => a.StartsWith("  start_game:"));
+                    //int startGameIndex = uplayEntryLines.FindIndex(a => a.StartsWith("  start_game:"));
                     MatchCollection mc;
 
                     // First we check if there are any localization CONSTANTS that we will need to map later.
@@ -346,7 +346,7 @@ namespace HeliosPlus.GameLibraries
                     // for each game record grab:
                     UplayAppInfo uplayGameAppInfo = new UplayAppInfo();
 
-                    // name: (lookup the id in lookup table to find the name if needed)
+/*                    // name: (lookup the id in lookup table to find the name if needed)
                     if (uplayEntryLines.Exists(a => a.StartsWith("  name:", StringComparison.InvariantCultureIgnoreCase)))
                     {
                         mc = Regex.Matches(uplayEntry, @"  name\: (.*)");
@@ -359,11 +359,11 @@ namespace HeliosPlus.GameLibraries
                     }
                     else
                         continue;
-
+*/
                     // icon_image: (lookup the id in lookup table to find the ICON)
-                    if (uplayEntryLines.Exists(a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
+                    /*if (uplayEntryLines.Exists(a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
                     {
-                        mc = Regex.Matches(uplayEntry, @"  icon_image: (.*)");
+                        mc = Regex.Matches(uplayEntry, @"icon_image: (.*)");
                         string iconImageFileName = mc[0].Groups[1].ToString();
                         // if the icon_image contains a localization reference, then dereference it
                         if (localizations.ContainsKey(iconImageFileName))
@@ -376,7 +376,7 @@ namespace HeliosPlus.GameLibraries
                         {
                             uplayGameAppInfo.GameUplayIconPath = uplayGameIconPath;
                         }
-                    }
+                    }*/
 
                     // find the exe name looking at root: -> start_game: -> online: -> executables: -> path: -> relative: (get ACU.exe)
                     // Lookup the Game registry key from looking at root: -> start_game: -> online: -> executables: -> working_directory: -> register: (get HKEY_LOCAL_MACHINE\SOFTWARE\Ubisoft\Launcher\Installs\720\InstallDir)
@@ -386,25 +386,55 @@ namespace HeliosPlus.GameLibraries
 
                     //if (uplayEntryLines.Find (a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
 
+                    bool gotGameIconPath = false;
+                    bool gotGameName = false;
                     string gameFileName = "";
                     bool gotGameFileName = false;
                     string gameId = "";
                     bool gotGameId = false;
-                    for (int i = startGameIndex; i<= (startGameIndex+30); i++)
+                    for (int i = 0; i <= 50; i++)
                     {
                         // Stop this loop once we have both filname and gameid
-                        if (gotGameFileName && gotGameId)
+                        if (gotGameFileName && gotGameId && gotGameIconPath && gotGameName)
                             break;
-
+                        // This line contains the Game Name
+                        if (uplayEntryLines[i].StartsWith("  name:", StringComparison.InvariantCultureIgnoreCase) && !gotGameName)
+                        {
+                            mc = Regex.Matches(uplayEntryLines[i], @"  name\: (.*)");
+                            uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
+                            // if the name contains a localization reference, then dereference it
+                            if (localizations.ContainsKey(uplayGameAppInfo.GameName))
+                            {
+                                uplayGameAppInfo.GameName = localizations[uplayGameAppInfo.GameName];
+                            }
+                            gotGameName = true;
+                        }
+                        else if (uplayEntryLines[i].StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase) && !gotGameIconPath)
+                        {
+                            mc = Regex.Matches(uplayEntryLines[i], @"icon_image: (.*)");
+                            string iconImageFileName = mc[0].Groups[1].ToString();
+                            // if the icon_image contains a localization reference, then dereference it
+                            if (localizations.ContainsKey(iconImageFileName))
+                            {
+                                iconImageFileName = localizations[iconImageFileName];
+                            }
+                            //61fdd16f06ae08158d0a6d476f1c6bd5.ico
+                            string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
+                            if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
+                            {
+                                uplayGameAppInfo.GameUplayIconPath = uplayGameIconPath;
+                            }
+                            gotGameIconPath = true;
+                        }
                         // This line contains the filename
-                        if (uplayEntryLines[i].StartsWith("          relative:") && !gotGameFileName)
+                        else if (uplayEntryLines[i].StartsWith("          relative:") && !gotGameFileName)
                         {
                             mc = Regex.Matches(uplayEntryLines[i], @"relative: (.*)");
                             gameFileName = mc[0].Groups[1].ToString();
                             gotGameFileName = true;
                         }
                         // This line contains the registryKey 
-                        if (uplayEntryLines[i].StartsWith("          register: HKEY_LOCAL_MACHINE") && !gotGameId)
+                        else if (uplayEntryLines[i].StartsWith("          register: HKEY_LOCAL_MACHINE") && !gotGameId)
                         {
                             // Lookup the GameId within the registry key
                             mc = Regex.Matches(uplayEntryLines[i], @"Installs\\(\d+)\\InstallDir");
@@ -419,7 +449,7 @@ namespace HeliosPlus.GameLibraries
 
                     // From that  we lookup the actual game path
                     uplayGameAppInfo.GameInstallDir = Path.GetFullPath(uplayGameInstallKey.GetValue("InstallDir", "").ToString()).TrimEnd('\\');
-                    uplayGameAppInfo.GameExe = uplayGameAppInfo.GameInstallDir + gameFileName;
+                    uplayGameAppInfo.GameExe = Path.Combine(uplayGameAppInfo.GameInstallDir,gameFileName);
                     uplayGameAppInfo.GameID = uint.Parse(gameId);
 
                     // Then we have the gameID, the thumbimage, the icon, the name, the exe path
