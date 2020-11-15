@@ -11,6 +11,7 @@ using HeliosPlus.GameLibraries;
 using System.Threading;
 using System.Reflection;
 using HeliosPlus.Shared;
+using System.Runtime.InteropServices;
 
 namespace HeliosPlus.UIForms
 {
@@ -187,6 +188,7 @@ namespace HeliosPlus.UIForms
         private void openApplicationWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
             allowVisible = true;
+            Restore();
             Show();
             BringToFront();
         }
@@ -216,6 +218,19 @@ namespace HeliosPlus.UIForms
                 allowClose = true;
                 // Disable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = false;
+            }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern int ShowWindow(IntPtr hWnd, uint Msg);
+
+        private const uint SW_RESTORE = 0x09;
+
+        public void Restore()
+        {
+            if (WindowState == FormWindowState.Minimized)
+            {
+                ShowWindow(Handle, SW_RESTORE);
             }
         }
     }
