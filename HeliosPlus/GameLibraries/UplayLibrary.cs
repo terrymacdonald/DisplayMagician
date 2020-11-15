@@ -304,7 +304,8 @@ namespace HeliosPlus.GameLibraries
                         continue;
 
                     //Split the record into entrylines
-                    List<string> uplayEntryLines = uplayEntry.Split('\n').ToList();
+                    string[] delimeters = { "\r\n" };
+                    List<string> uplayEntryLines = uplayEntry.Split(delimeters, System.StringSplitOptions.RemoveEmptyEntries).ToList();
 
                     // Skip any records NOT containing an entryline with '  start_game:' (note 2 leading spaces)
                     // All games contain a start_game entry
@@ -320,7 +321,7 @@ namespace HeliosPlus.GameLibraries
                     // Yay us :). 
 
                     // First we want to know the index of the start_game entry to use later
-                    int startGameIndex = uplayEntryLines.FindIndex(a => a == "  start_game:");
+                    int startGameIndex = uplayEntryLines.FindIndex(a => a.StartsWith("  start_game:"));
                     MatchCollection mc;
 
                     // First we check if there are any localization CONSTANTS that we will need to map later.
@@ -396,14 +397,14 @@ namespace HeliosPlus.GameLibraries
                             break;
 
                         // This line contains the filename
-                        if (uplayEntryLines[i].StartsWith("            relative:") && !gotGameFileName)
+                        if (uplayEntryLines[i].StartsWith("          relative:") && !gotGameFileName)
                         {
-                            mc = Regex.Matches(uplayEntryLines[i], @"            relative: (.*)");
+                            mc = Regex.Matches(uplayEntryLines[i], @"relative: (.*)");
                             gameFileName = mc[0].Groups[1].ToString();
                             gotGameFileName = true;
                         }
                         // This line contains the registryKey 
-                        if (uplayEntryLines[i].StartsWith("            register: HKEY_LOCAL_MACHINE") && !gotGameId)
+                        if (uplayEntryLines[i].StartsWith("          register: HKEY_LOCAL_MACHINE") && !gotGameId)
                         {
                             // Lookup the GameId within the registry key
                             mc = Regex.Matches(uplayEntryLines[i], @"Installs\\(\d+)\\InstallDir");

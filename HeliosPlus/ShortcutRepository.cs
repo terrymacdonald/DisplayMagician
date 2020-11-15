@@ -617,6 +617,7 @@ namespace HeliosPlus
                 // If the game is a Steam Game we check for that
                 if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Steam))
                 {
+
                     // We now need to get the SteamGame info
                     SteamGame steamGameToRun = SteamLibrary.GetSteamGame(shortcutToUse.GameAppId);
 
@@ -676,7 +677,7 @@ namespace HeliosPlus
                             // ignored
                         }*/
 
-                        
+
                         // Wait 300ms for the game process to spawn
                         Thread.Sleep(300);
                         // Now check it's actually started
@@ -709,17 +710,104 @@ namespace HeliosPlus
 
                 }
                 // If the game is a Uplay Game we check for that
-                /*else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
+                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Uplay))
                 {
-                    // We need to look up details about the game
-                    if (!UplayGame.IsInstalled(GameAppId))
+                    // We now need to get the SteamGame info
+                    UplayGame uplayGameToRun = UplayLibrary.GetUplayGame(shortcutToUse.GameAppId);
+
+                    // If the GameAppID matches a Steam game, then lets run it
+                    if (uplayGameToRun is UplayGame)
                     {
-                        return (false, string.Format("The Uplay Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                        // Prepare to start the steam game using the URI interface 
+                        // as used by Steam for it's own desktop shortcuts.
+                        var address = $"uplay://launch/{uplayGameToRun.Id}";
+                        if (shortcutToUse.GameArgumentsRequired)
+                        {
+                            address += "/" + shortcutToUse.GameArguments;
+                        }
+                        else
+                        {
+                            address += "/0";
+                        }
+
+                        // Start the URI Handler to run Uplay
+                        Console.WriteLine($"Starting Steam Game: {uplayGameToRun.Name}");
+                        var uplayProcess = Process.Start(address);
+
+                        // Wait for Steam game to update if needed
+                        var ticks = 0;
+                        while (ticks < shortcutToUse.StartTimeout * 1000)
+                        {
+                            if (uplayGameToRun.IsRunning)
+                            {
+                                break;
+                            }
+
+                            Thread.Sleep(300);
+
+                            if (!uplayGameToRun.IsUpdating)
+                            {
+                                ticks += 300;
+                            }
+                        }
+
+                        // Store the Steam Process ID for later
+                        IPCService.GetInstance().HoldProcessId = uplayProcess?.Id ?? 0;
+                        IPCService.GetInstance().Status = InstanceStatus.OnHold;
+
+                        /*// Add a status notification icon in the status area
+                        NotifyIcon notify = null;
+                        try
+                        {
+                            notify = new NotifyIcon
+                            {
+                                Icon = Properties.Resources.HeliosPlus,
+                                Text = string.Format(
+                                    Language.Waiting_for_the_0_to_terminate,
+                                    steamGameToRun.GameName),
+                                Visible = true
+                            };
+                            Application.DoEvents();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                            // ignored
+                        }*/
+
+
+                        // Wait 300ms for the game process to spawn
+                        Thread.Sleep(300);
+                        // Now check it's actually started
+                        if (uplayGameToRun.IsRunning)
+                        {
+                            // Wait for the game to exit
+                            Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
+                            while (true)
+                            {
+                                if (!uplayGameToRun.IsRunning)
+                                {
+                                    break;
+                                }
+
+                                Thread.Sleep(300);
+                            }
+                            Console.WriteLine($"{uplayGameToRun.Name} has exited.");
+                        }
+
+                        // Remove the status notification icon from the status area
+                        // once we've exited the game
+                        /*if (notify != null)
+                        {
+                            notify.Visible = false;
+                            notify.Dispose();
+                            Application.DoEvents();
+                        }*/
+
                     }
 
-                }*/
 
-
+                }
             }
 
             // Stop the pre-started startPrograms that we'd started earlier
