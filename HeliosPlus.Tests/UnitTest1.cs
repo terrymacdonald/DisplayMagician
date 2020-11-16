@@ -1,15 +1,20 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
+using System.IO;
+using System;
 
 namespace HeliosPlus.Tests
 {
-    [TestClass]
-    public class UnitTest1
+    public class Tests
     {
-        [TestMethod]
-        public void TestMethod1()
+        [SetUp]
+        public void Setup()
         {
-            Assert.IsTrue(true);
+        }
+
+        [Test]
+        public void Test1()
+        {
+            Assert.Pass();
         }
     }
 }

@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("HeliosDisplayManagement.Reporting")]
+[assembly: AssemblyTitle("HeliosPlus.Reporting")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("HeliosDisplayManagement.Reporting")]
-[assembly: AssemblyCopyright("Copyright ©  2018")]
+[assembly: AssemblyProduct("HeliosPlus.Reporting")]
+[assembly: AssemblyCopyright("Copyright © 2020 Terry MacDonald")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("76df2bcf-911b-4820-b63e-8f3468db5e79")]
+[assembly: Guid("6593e413-dadb-457b-892a-f17db1cf308b")]
 
 // Version information for an assembly consists of the following four values:
 //

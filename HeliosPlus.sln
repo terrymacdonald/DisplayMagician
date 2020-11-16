@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Reporting", "Hel
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Tests", "HeliosPlus.Tests\HeliosPlus.Tests.csproj", "{D7AFD3CC-53BF-4991-ABFE-638A3F355310}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "HeliosPlus.Setup", "HeliosPlus.Setup\HeliosPlus.Setup.vdproj", "{2DC67145-6BCC-4BAB-AE6C-EDAEC25B87DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -38,6 +40,8 @@ Global
 		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|AnyCPU.ActiveCfg = Release|Any CPU
 		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Release|AnyCPU.Build.0 = Release|Any CPU
+		{2DC67145-6BCC-4BAB-AE6C-EDAEC25B87DA}.Debug|AnyCPU.ActiveCfg = Debug
+		{2DC67145-6BCC-4BAB-AE6C-EDAEC25B87DA}.Release|AnyCPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

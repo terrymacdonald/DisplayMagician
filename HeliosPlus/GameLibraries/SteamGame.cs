@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HeliosPlus.Resources;
 using HeliosPlus.Shared;
-using HtmlAgilityPack;
+//using HtmlAgilityPack;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 //using VdfParser;
