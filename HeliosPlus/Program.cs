@@ -42,6 +42,7 @@ namespace HeliosPlus {
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
+        public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
 
         /// <summary>

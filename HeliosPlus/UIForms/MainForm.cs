@@ -28,7 +28,12 @@ namespace HeliosPlus.UIForms
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
             lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);
             notifyIcon.Visible = true;
+            notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
+
+            /*WaitingForm testform = new WaitingForm();
+            testform.Owner = this;
+            testform.Show();*/
 
             if (Program.AppProgramSettings.MinimiseOnStart) 
             {
@@ -181,7 +186,7 @@ namespace HeliosPlus.UIForms
 
                 // Run the shortcut if it's still there
                 if (shortcutToRun != null)
-                    ShortcutRepository.RunShortcut(shortcutToRun);
+                    ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
             }
         }
 
@@ -233,5 +238,6 @@ namespace HeliosPlus.UIForms
                 ShowWindow(Handle, SW_RESTORE);
             }
         }
+
     }
 }

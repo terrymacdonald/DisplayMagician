@@ -733,7 +733,7 @@ namespace HeliosPlus.Shared
                                 myPhysicalGPU.Foundry.ToString(),
                                 myPhysicalGPU.GPUId.ToString(),
                                 myPhysicalGPU.GPUType.ToString(),
-                                aDisplayDevice.Output.OutputId.ToString(),
+                                //aDisplayDevice.Output.OutputId.ToString(),
                                 aDisplayDevice.ConnectionType.ToString(),
                                 aDisplayDevice.DisplayId.ToString(),
                             };

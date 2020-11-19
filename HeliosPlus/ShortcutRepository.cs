@@ -454,9 +454,8 @@ namespace HeliosPlus
             return false;
         }
 
-
         // ReSharper disable once CyclomaticComplexity
-        public static void RunShortcut(ShortcutItem shortcutToUse)
+        public static void RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         {
             // Do some validation to make sure the shortcut is sensible
             // And that we have enough to try and action within the shortcut
@@ -519,6 +518,57 @@ namespace HeliosPlus
                 }
             }
 
+            // Add a status notification icon in the status area
+            // but only if we are going to wait for a process to finish
+            string oldNotifyText = "";
+            bool temporaryNotifyIcon = false;
+            ContextMenuStrip oldContextMenuStrip = null;
+
+            // If we're running the shortcut from the ShortcutLibrary
+            // then we get given the NotifyIcon through the function
+            // parameters i.e. if temporaryIcon is false in that case.
+            // This means we need to save the state if the temporaryIcon
+            // is false.
+            // Conversely, if temporaryIcon is true, then we need 
+            // to create a NotifyIncon as MainFOrm isn't running to create
+            // one for us already!
+            if (notifyIcon == null)
+                temporaryNotifyIcon = true;
+
+            if (temporaryNotifyIcon)
+            {
+                if (!shortcutToUse.Category.Equals(ShortcutCategory.NoGame))
+                {
+
+                    try
+                    {
+                        notifyIcon = new NotifyIcon
+                        {
+                            Icon = Properties.Resources.HeliosPlus,
+                            //Text = string.Format("HeliosPlus: Waiting for the Game {} to exit...", steamGameToRun.Name),
+                            Visible = true
+                        };
+                        Application.DoEvents();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"ShortcutRepository/RunShortcut exception: Trying to  {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        // ignored
+                    }
+                }
+            }
+            else
+            {
+                // If we reach here then we're running the shortcut
+                // from the ShortcutLibrary window, so we need to 
+                // remember what the text was so we can return it to
+                // normal after we're done!
+                oldNotifyText = notifyIcon.Text;
+                oldContextMenuStrip = notifyIcon.ContextMenuStrip;
+                notifyIcon.ContextMenuStrip = null;
+                Application.DoEvents();
+            }
+
             // Now start the main game, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
             {
@@ -568,25 +618,8 @@ namespace HeliosPlus
                 IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
                 IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
-                // Add a status notification icon in the status area
-                NotifyIcon notify = null;
-                try
-                {
-                    notify = new NotifyIcon
-                    {
-                        Icon = Properties.Resources.HeliosPlus,
-                        Text = string.Format(
-                            Language.Waiting_for_the_0_to_terminate,
-                            processesToMonitor[0].ProcessName),
-                        Visible = true
-                    };
-                    Application.DoEvents();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"ShortcutItem/Run exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    // ignored
-                }
+                notifyIcon.Text = $"HeliosPlus: Waiting for the Application {processesToMonitor[0].ProcessName} to exit...";
+                Application.DoEvents();
 
                 // Wait for the monitored process to exit
                 foreach (var p in processesToMonitor)
@@ -597,18 +630,9 @@ namespace HeliosPlus
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ShortcutItem/Run exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        Console.WriteLine($"ShortcutRepository/RunShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }
-                }
-
-                // Remove the status notification icon from the status area
-                // once we've existed the game
-                if (notify != null)
-                {
-                    notify.Visible = false;
-                    notify.Dispose();
-                    Application.DoEvents();
                 }
 
             }
@@ -657,26 +681,9 @@ namespace HeliosPlus
                         IPCService.GetInstance().HoldProcessId = steamProcess?.Id ?? 0;
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
-                        /*// Add a status notification icon in the status area
-                        NotifyIcon notify = null;
-                        try
-                        {
-                            notify = new NotifyIcon
-                            {
-                                Icon = Properties.Resources.HeliosPlus,
-                                Text = string.Format(
-                                    Language.Waiting_for_the_0_to_terminate,
-                                    steamGameToRun.GameName),
-                                Visible = true
-                            };
-                            Application.DoEvents();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                            // ignored
-                        }*/
-
+                        // Add a status notification icon in the status area
+                        notifyIcon.Text = $"HeliosPlus: Waiting for the Game {steamGameToRun.Name} to exit...";
+                        Application.DoEvents();
 
                         // Wait 300ms for the game process to spawn
                         Thread.Sleep(300);
@@ -696,15 +703,6 @@ namespace HeliosPlus
                             }
                             Console.WriteLine($"{steamGameToRun.Name} has exited.");
                         }
-
-                        // Remove the status notification icon from the status area
-                        // once we've exited the game
-                        /*if (notify != null)
-                        {
-                            notify.Visible = false;
-                            notify.Dispose();
-                            Application.DoEvents();
-                        }*/
 
                     }
 
@@ -755,26 +753,9 @@ namespace HeliosPlus
                         IPCService.GetInstance().HoldProcessId = uplayProcess?.Id ?? 0;
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
-                        /*// Add a status notification icon in the status area
-                        NotifyIcon notify = null;
-                        try
-                        {
-                            notify = new NotifyIcon
-                            {
-                                Icon = Properties.Resources.HeliosPlus,
-                                Text = string.Format(
-                                    Language.Waiting_for_the_0_to_terminate,
-                                    steamGameToRun.GameName),
-                                Visible = true
-                            };
-                            Application.DoEvents();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Program/SwitchToSteamGame exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                            // ignored
-                        }*/
-
+                        // Add a status notification icon in the status area
+                        notifyIcon.Text = $"HeliosPlus: Waiting for the Game {uplayGameToRun.Name} to exit...";
+                        Application.DoEvents();
 
                         // Wait 300ms for the game process to spawn
                         Thread.Sleep(300);
@@ -795,19 +776,33 @@ namespace HeliosPlus
                             Console.WriteLine($"{uplayGameToRun.Name} has exited.");
                         }
 
-                        // Remove the status notification icon from the status area
-                        // once we've exited the game
-                        /*if (notify != null)
-                        {
-                            notify.Visible = false;
-                            notify.Dispose();
-                            Application.DoEvents();
-                        }*/
-
                     }
 
 
                 }
+            }
+
+            // Remove the status notification icon from the status area
+            // once we've exited the game, but only if its a game or app
+            if (temporaryNotifyIcon)
+            { 
+                if (!shortcutToUse.Category.Equals(ShortcutCategory.NoGame))
+                {
+                    if (notifyIcon != null)
+                    {
+                        notifyIcon.Visible = false;
+                        notifyIcon.Dispose();
+                        Application.DoEvents();
+                    }
+                }
+            }
+            else
+            {
+                // If we're running the shortcut from the ShortcutLibrary
+                // then we want to reset the NotifyIcon back
+                notifyIcon.Text = oldNotifyText;
+                notifyIcon.ContextMenuStrip = oldContextMenuStrip;
+                Application.DoEvents();
             }
 
             // Stop the pre-started startPrograms that we'd started earlier

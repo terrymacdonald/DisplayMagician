@@ -33,6 +33,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btn_setup_display_profiles = new System.Windows.Forms.Button();
             this.pb_display_profile = new System.Windows.Forms.PictureBox();
+            this.cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             this.lbl_version = new System.Windows.Forms.Label();
             this.btn_setup_game_shortcuts = new System.Windows.Forms.Button();
             this.btn_exit = new System.Windows.Forms.Button();
@@ -50,7 +51,6 @@
             this.shortcutToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -96,6 +96,14 @@
             this.pb_display_profile.Name = "pb_display_profile";
             this.pb_display_profile.TabStop = false;
             this.pb_display_profile.Click += new System.EventHandler(this.pb_display_profile_Click);
+            // 
+            // cb_minimise_notification_area
+            // 
+            resources.ApplyResources(this.cb_minimise_notification_area, "cb_minimise_notification_area");
+            this.cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
+            this.cb_minimise_notification_area.Name = "cb_minimise_notification_area";
+            this.cb_minimise_notification_area.UseVisualStyleBackColor = true;
+            this.cb_minimise_notification_area.CheckedChanged += new System.EventHandler(this.cb_minimise_notification_area_CheckedChanged);
             // 
             // lbl_version
             // 
@@ -213,14 +221,6 @@
             resources.ApplyResources(this.exitToolStripMenuItem, "exitToolStripMenuItem");
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
-            // cb_minimise_notification_area
-            // 
-            resources.ApplyResources(this.cb_minimise_notification_area, "cb_minimise_notification_area");
-            this.cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
-            this.cb_minimise_notification_area.Name = "cb_minimise_notification_area";
-            this.cb_minimise_notification_area.UseVisualStyleBackColor = true;
-            this.cb_minimise_notification_area.CheckedChanged += new System.EventHandler(this.cb_minimise_notification_area_CheckedChanged);
-            // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
@@ -252,7 +252,6 @@
         private System.Windows.Forms.Button btn_setup_display_profiles;
         private System.Windows.Forms.Button btn_setup_game_shortcuts;
         private System.Windows.Forms.Label lbl_version;
-        private System.Windows.Forms.NotifyIcon notifyIcon;
         private System.Windows.Forms.ContextMenuStrip mainContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemHeading;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator;
@@ -266,5 +265,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.CheckBox cb_minimise_notification_area;
+        public System.Windows.Forms.NotifyIcon notifyIcon;
     }
 }

@@ -234,8 +234,10 @@ namespace HeliosPlus.UIForms
             if (_selectedShortcut == null)
                 return;
 
+            MainForm mf = (MainForm)this.Owner;
+
             // Run the shortcut
-            ShortcutRepository.RunShortcut(_selectedShortcut);
+            ShortcutRepository.RunShortcut(_selectedShortcut, mf.notifyIcon);
         }
     }
 }
