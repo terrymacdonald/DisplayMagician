@@ -34,6 +34,12 @@
   <PropertyGroup>
     <ApplicationIcon>HeliosPlus2.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -82,6 +88,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Key.snk" />
     <None Include="Resources\HeliosPlus.ico" />
   </ItemGroup>
   <ItemGroup>

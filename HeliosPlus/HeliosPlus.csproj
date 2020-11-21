@@ -53,7 +53,8 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>HeliosPlus2.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>HeliosPlus.Program</StartupObject>
@@ -273,7 +274,6 @@
     <None Include="Resources\Epic.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="HeliosPlus2.ico" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
