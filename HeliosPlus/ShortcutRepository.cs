@@ -618,7 +618,10 @@ namespace HeliosPlus
                 IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
                 IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
-                notifyIcon.Text = $"HeliosPlus: Waiting for the Application {processesToMonitor[0].ProcessName} to exit...";
+                int substringStart = shortcutToUse.ExecutableNameAndPath.Length - 42;
+                if (substringStart < 0)
+                    substringStart = 0;
+                notifyIcon.Text = $"HeliosPlus: Running {shortcutToUse.ExecutableNameAndPath.Substring(substringStart)}...";
                 Application.DoEvents();
 
                 // Wait for the monitored process to exit
@@ -682,7 +685,7 @@ namespace HeliosPlus
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                         // Add a status notification icon in the status area
-                        notifyIcon.Text = $"HeliosPlus: Waiting for the Game {steamGameToRun.Name} to exit...";
+                        notifyIcon.Text = $"HeliosPlus: Running {steamGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
                         // Wait 300ms for the game process to spawn
@@ -754,7 +757,7 @@ namespace HeliosPlus
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                         // Add a status notification icon in the status area
-                        notifyIcon.Text = $"HeliosPlus: Waiting for the Game {uplayGameToRun.Name} to exit...";
+                        notifyIcon.Text = $"HeliosPlus: Running {uplayGameToRun.Name.Substring(0,41)}...";
                         Application.DoEvents();
 
                         // Wait 300ms for the game process to spawn

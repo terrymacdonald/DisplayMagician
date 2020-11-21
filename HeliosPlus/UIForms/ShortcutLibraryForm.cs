@@ -234,10 +234,25 @@ namespace HeliosPlus.UIForms
             if (_selectedShortcut == null)
                 return;
 
-            MainForm mf = (MainForm)this.Owner;
+            // Figure out the string we're going to use as the MaskedForm message
+            string message = "";
+            if (_selectedShortcut.Category.Equals(ShortcutCategory.Application))
+                message = $"Starting the {_selectedShortcut.ExecutableNameAndPath} application and waiting until you close it.";
+            else if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
+                message = $"Starting the {_selectedShortcut.GameName} game and waiting until you close it.";
+
+            // Create a MaskForm that will cover the ShortcutLibrary Window to lock
+            // the controls and inform the user that the game is running....
+            MaskedForm maskedForm = MaskedForm.Show(this, message);
+
+            // Get the MainForm so we can access the NotifyIcon on it.
+            MainForm mainForm = (MainForm)this.Owner;
+
 
             // Run the shortcut
-            ShortcutRepository.RunShortcut(_selectedShortcut, mf.notifyIcon);
+            ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
+
+            maskedForm.Close();
         }
     }
 }
