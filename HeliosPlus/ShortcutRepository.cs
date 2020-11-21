@@ -597,17 +597,22 @@ namespace HeliosPlus
                         // Look for the processes with the ProcessName we want (which in Windows is the filename without the extension)
                         processesToMonitor = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor)).ToList();
 
-                        //  TODO: Fix this logic error that will only ever wait for the first process....
+                        // If we have found one or more processes then we should be good to go
+                        // so let's break
                         if (processesToMonitor.Count > 0)
                         {
                             break;
                         }
 
+                        // Let's wait a little while if we couldn't find
+                        // any processes yet
                         Thread.Sleep(300);
                         ticks += 300;
                     }
 
-                    // If none started up before the timeout, then ignore them
+                    // If we have reached the timeout and we cannot detect any
+                    // of the alernative executables to monitor, then ignore that
+                    // setting, and just monitor the process we just started instead
                     if (processesToMonitor.Count == 0)
                     {
                         processesToMonitor.Add(process);
@@ -622,20 +627,33 @@ namespace HeliosPlus
                 if (substringStart < 0)
                     substringStart = 0;
                 notifyIcon.Text = $"HeliosPlus: Running {shortcutToUse.ExecutableNameAndPath.Substring(substringStart)}...";
-                Application.DoEvents();
+                //Application.DoEvents();
 
                 // Wait for the monitored process to exit
-                foreach (var p in processesToMonitor)
+                while (true)
                 {
-                    try
+                    int processExitCount = 0;
+                    // Check each process to see if it's exited
+                    foreach (var p in processesToMonitor)
                     {
-                        p.WaitForExit();
+                        try
+                        {
+                            if (p.HasExited)
+                            {
+                                processExitCount++;
+                            }
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            Console.WriteLine($"ShortcutRepository/RunShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                            processExitCount++;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"ShortcutRepository/RunShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        // ignored
-                    }
+
+                    // Make sure that all processes have exited
+                    // then start the shutdown process
+                    if (processExitCount == processesToMonitor.Count)
+                        break;
                 }
 
             }

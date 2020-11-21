@@ -593,11 +593,11 @@ namespace HeliosPlus.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Selected file is not a valid executable file..
+        ///   Looks up a localized string similar to Selected file is not a valid file..
         /// </summary>
-        internal static string Selected_file_is_not_a_valid_executable_file {
+        internal static string Selected_file_is_not_a_valid_file {
             get {
-                return ResourceManager.GetString("Selected_file_is_not_a_valid_executable_file", resourceCulture);
+                return ResourceManager.GetString("Selected_file_is_not_a_valid_file", resourceCulture);
             }
         }
         

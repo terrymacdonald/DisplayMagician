@@ -42,6 +42,7 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
+            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.tabp_before = new System.Windows.Forms.TabPage();
             this.pnl_start_program4 = new System.Windows.Forms.Panel();
             this.cb_start_program4 = new System.Windows.Forms.CheckBox();
@@ -112,7 +113,6 @@ namespace HeliosPlus.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_before.SuspendLayout();
@@ -169,7 +169,7 @@ namespace HeliosPlus.UIForms
             // 
             this.dialog_open.DefaultExt = "exe";
             this.dialog_open.FileName = "*.exe";
-            this.dialog_open.Filter = global::HeliosPlus.Resources.Language.Executable_Files_Filter;
+            this.dialog_open.Filter = "All Files|*.*";
             this.dialog_open.RestoreDirectory = true;
             this.dialog_open.SupportMultiDottedExtensions = true;
             // 
@@ -252,6 +252,21 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
             this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
+            // 
+            // dv_profile
+            // 
+            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
+            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.dv_profile.Location = new System.Drawing.Point(0, 0);
+            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
+            this.dv_profile.Name = "dv_profile";
+            this.dv_profile.PaddingX = 100;
+            this.dv_profile.PaddingY = 100;
+            this.dv_profile.Profile = null;
+            this.dv_profile.Size = new System.Drawing.Size(1082, 467);
+            this.dv_profile.TabIndex = 23;
             // 
             // tabp_before
             // 
@@ -1069,21 +1084,6 @@ namespace HeliosPlus.UIForms
             this.cb_autosuggest.Text = "Auto-suggest name";
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
-            // 
-            // dv_profile
-            // 
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 0);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(1082, 467);
-            this.dv_profile.TabIndex = 23;
             // 
             // ShortcutForm
             // 

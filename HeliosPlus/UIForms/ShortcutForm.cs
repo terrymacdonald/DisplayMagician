@@ -234,7 +234,7 @@ namespace HeliosPlus.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_executable_file,
+                        Language.Selected_file_is_not_a_valid_file,
                         Language.Executable,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
@@ -484,12 +484,12 @@ namespace HeliosPlus.UIForms
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
                 {
-                    _executableToUse.ProcessNameToMonitorUsesExecutable = true;
+                    _executableToUse.ProcessNameToMonitorUsesExecutable = false;
                     _executableToUse.DifferentExecutableToMonitor = txt_alternative_executable.Text;
                 }
                 else
                 {
-                    _executableToUse.ProcessNameToMonitorUsesExecutable = false;
+                    _executableToUse.ProcessNameToMonitorUsesExecutable = true;
                 }
 
                 _shortcutToEdit = new ShortcutItem(
@@ -522,6 +522,7 @@ namespace HeliosPlus.UIForms
                     _executableToUse.ExecutableNameAndPath,
                     _startPrograms,
                     _autoName
+
                 );
 /*                _shortcutToEdit.UpdateNoGameShortcut(
                     Name,
@@ -976,7 +977,7 @@ namespace HeliosPlus.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_executable_file,
+                        Language.Selected_file_is_not_a_valid_file,
                         Language.Executable,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
@@ -1236,7 +1237,7 @@ namespace HeliosPlus.UIForms
             string textToReturn = "";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
-                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
+                if (File.Exists(dialog_open.FileName))
                 {
                     textToReturn = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -1244,7 +1245,7 @@ namespace HeliosPlus.UIForms
                 else
                 {
                     MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_executable_file,
+                        Language.Selected_file_is_not_a_valid_file,
                         Language.Executable,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);

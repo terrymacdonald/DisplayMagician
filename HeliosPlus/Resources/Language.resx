@@ -195,8 +195,8 @@
   <data name="Helios_Display_Management" xml:space="preserve">
     <value>Helios Display Management</value>
   </data>
-  <data name="Selected_file_is_not_a_valid_executable_file" xml:space="preserve">
-    <value>Selected file is not a valid executable file.</value>
+  <data name="Selected_file_is_not_a_valid_file" xml:space="preserve">
+    <value>Selected file is not a valid file.</value>
   </data>
   <data name="Executable" xml:space="preserve">
     <value>Executable</value>
