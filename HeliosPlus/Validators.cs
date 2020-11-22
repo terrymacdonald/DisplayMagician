@@ -14,13 +14,13 @@ using System.ServiceModel.Dispatcher;
 
 namespace HeliosPlus
 {
-    class ProfileMustExistValidator : IOptionValidator
+    class ProfileMustExistValidator : IArgumentValidator
     {
-        public ValidationResult GetValidationResult(CommandOption optionProfile, ValidationContext context)
+        public ValidationResult GetValidationResult(CommandArgument argumentProfileName, ValidationContext context)
         {
             // This validator only runs if there is a value
-            if (!optionProfile.HasValue()) return ValidationResult.Success;
-            var profileName = (string) optionProfile.Value();
+            if (argumentProfileName.Value == "") return ValidationResult.Success;
+            var profileName = (string)argumentProfileName.Value;
 
             // Try to find the Profile Name
             if (!ProfileRepository.ContainsProfile(profileName))

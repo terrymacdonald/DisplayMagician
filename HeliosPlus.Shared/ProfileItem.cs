@@ -30,6 +30,7 @@ namespace HeliosPlus.Shared
         private static List<WindowsDisplayAPI.UnAttachedDisplay> _unavailableDisplays;
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeliosPlus");
+        private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
         private Version _version;
@@ -125,7 +126,6 @@ namespace HeliosPlus.Shared
             }
             set
             {
-                string uuidV4Regex = @"[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}";
                 Match match = Regex.Match(value, uuidV4Regex, RegexOptions.IgnoreCase);
                 if (match.Success)
                     _uuid = value;
@@ -272,7 +272,6 @@ namespace HeliosPlus.Shared
 
         public static bool IsValidUUID(string testId)
         {
-            string uuidV4Regex = @"/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
             Match match = Regex.Match(testId, uuidV4Regex, RegexOptions.IgnoreCase);
             if (match.Success)
                 return true;
