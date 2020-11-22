@@ -27,6 +27,7 @@
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
+    <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -53,8 +54,7 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>
-    </ApplicationIcon>
+    <ApplicationIcon>Resources\HeliosPlus.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>HeliosPlus.Program</StartupObject>
@@ -63,6 +63,13 @@
   <PropertyGroup />
   <PropertyGroup>
     <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -106,12 +113,6 @@
     </Compile>
     <Compile Include="UIForms\MaskedDialog.cs">
       <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UIForms\WaitingForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UIForms\WaitingForm.Designer.cs">
-      <DependentUpon>WaitingForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UIForms\ShortcutAdaptor.cs" />
     <Compile Include="UIForms\ProfileAdaptor.cs" />
@@ -169,9 +170,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\MaskedForm.resx">
       <DependentUpon>MaskedForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UIForms\WaitingForm.resx">
-      <DependentUpon>WaitingForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
@@ -274,6 +272,7 @@
     <None Include="Resources\Epic.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\HeliosPlus.ico" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

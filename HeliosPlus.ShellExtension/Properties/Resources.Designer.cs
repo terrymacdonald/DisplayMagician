@@ -69,5 +69,15 @@ namespace HeliosPlus.ShellExtension.Properties {
                 return ((System.Drawing.Icon)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap HeliosPlusMenuImage {
+            get {
+                object obj = ResourceManager.GetObject("HeliosPlusMenuImage", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

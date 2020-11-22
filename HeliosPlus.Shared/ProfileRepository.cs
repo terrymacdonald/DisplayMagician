@@ -38,7 +38,7 @@ namespace HeliosPlus.Shared
         // Common items to the class
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
         private static bool _profilesLoaded = false;
-        public static Version Version = new Version(1, 0, 0);
+        public static Version _version = new Version(1, 0, 0);
         private static ProfileItem _currentProfile;
 
         // Other constants that are useful
@@ -46,7 +46,7 @@ namespace HeliosPlus.Shared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppHeliosPlusIconFilename = System.IO.Path.Combine(AppIconPath, @"HeliosPlus.ico");
         private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{Version.ToString(2)}.json");
+        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_version.ToString(2)}.json");
 
 
         #endregion
