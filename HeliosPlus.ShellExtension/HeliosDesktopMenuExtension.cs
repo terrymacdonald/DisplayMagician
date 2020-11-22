@@ -31,6 +31,7 @@ namespace HeliosPlus.ShellExtension
         internal static string registryHeliosPlus = @"SOFTWARE\HeliosPlus";
         string heliosPlusFullname = "";
         string heliosPlusInstallDir = "";
+        Process heliosPlusProcess = null;
 
         public HeliosDesktopMenuExtension()
         { }
@@ -105,8 +106,9 @@ namespace HeliosPlus.ShellExtension
                         extensionMenu.DropDownItems.Add(new ToolStripMenuItem(pair.Key, null,
                             (sender, args) =>
                             {
-                                Logging.Log(heliosPlusFullname + $" ChangeProfile {pair.Value}");
-                                Process.Start(heliosPlusFullname + $" ChangeProfile {pair.Value}");
+                                Logging.Log(heliosPlusFullname + $" ChangeProfile \"{pair.Value}\"");
+                                heliosPlusProcess = Process.Start(heliosPlusFullname,$"ChangeProfile \"{pair.Value}\"");
+                                Logging.Log(heliosPlusProcess.ToString());
                             }
                         ));
                     }
