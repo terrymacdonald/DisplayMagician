@@ -330,6 +330,10 @@ namespace HeliosPlus {
             if (!profile.IsPossible)
                 return false;
 
+            // We need to check if the profile is the same one that we're on
+            if (profile.IsActive)
+                return false;
+
             try
             {
                 // Now lets prepare changing the display topology task
