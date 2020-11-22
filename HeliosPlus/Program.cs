@@ -103,6 +103,23 @@ namespace HeliosPlus {
                 });
             });
 
+            // This is the ApplyProfile command
+            app.Command(HeliosStartupAction.ChangeProfile.ToString(), (runShortcutCmd) =>
+            {
+                var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
+                argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
+
+                //description and help text of the command.
+                runShortcutCmd.Description = "Use this command to run favourite game or application with a display profile of your choosing.";
+
+                runShortcutCmd.OnExecute(() =>
+                {
+                    // 
+                    RunShortcut(argumentShortcut.Value);
+                    return 0;
+                });
+            });
+
             app.OnExecute(() =>
             {
 
