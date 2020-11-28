@@ -366,6 +366,18 @@ namespace HeliosPlus.UIForms
             base.WndProc(ref m);
         }
 
+        private void ilv_saved_profiles_ItemHover(object sender, ItemHoverEventArgs e)
+        {
+            if (e.Item != null)
+            {
+                tt_selected.SetToolTip(ilv_saved_profiles, e.Item.Text);
+            }
+            else
+            {
+                tt_selected.RemoveAll();
+            }
+        }
+
         /*private static void MainWindow_Closed(object sender, EventArgs e)
         {
             DeviceNotification.UnRegisterUsbDeviceNotification();

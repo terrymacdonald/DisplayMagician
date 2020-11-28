@@ -53,6 +53,7 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -255,6 +256,7 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
             this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
+            this.ilv_saved_profiles.ItemHover += new Manina.Windows.Forms.ItemHoverEventHandler(this.ilv_saved_profiles_ItemHover);
             // 
             // lbl_profile_shown_subtitle
             // 
@@ -339,6 +341,7 @@ namespace HeliosPlus.UIForms
         private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ToolTip tt_selected;
     }
 }
 

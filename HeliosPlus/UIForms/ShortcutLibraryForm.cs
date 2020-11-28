@@ -250,5 +250,17 @@ namespace HeliosPlus.UIForms
 
             maskedForm.Close();
         }
+
+        private void ilv_saved_shortcuts_ItemHover(object sender, ItemHoverEventArgs e)
+        {
+            if (e.Item != null)
+            {
+                tt_selected.SetToolTip(ilv_saved_shortcuts, e.Item.Text);
+            }
+            else
+            {
+                tt_selected.RemoveAll();
+            }
+        }
     }
 }

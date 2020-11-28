@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutLibraryForm));
             this.ilv_saved_shortcuts = new Manina.Windows.Forms.ImageListView();
             this.btn_delete = new System.Windows.Forms.Button();
@@ -38,6 +39,7 @@
             this.btn_save = new System.Windows.Forms.Button();
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.label1 = new System.Windows.Forms.Label();
+            this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
             this.SuspendLayout();
             // 
             // ilv_saved_shortcuts
@@ -56,21 +58,22 @@
             this.ilv_saved_shortcuts.Name = "ilv_saved_shortcuts";
             this.ilv_saved_shortcuts.PersistentCacheDirectory = "";
             this.ilv_saved_shortcuts.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_shortcuts.Size = new System.Drawing.Size(1123, 645);
+            this.ilv_saved_shortcuts.Size = new System.Drawing.Size(1134, 512);
             this.ilv_saved_shortcuts.TabIndex = 22;
             this.ilv_saved_shortcuts.UseWIC = true;
             this.ilv_saved_shortcuts.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_shortcuts_ItemClick);
+            this.ilv_saved_shortcuts.ItemHover += new Manina.Windows.Forms.ItemHoverEventHandler(this.ilv_saved_shortcuts_ItemHover);
             this.ilv_saved_shortcuts.ItemDoubleClick += new Manina.Windows.Forms.ItemDoubleClickEventHandler(this.ilv_saved_shortcuts_ItemDoubleClick);
             // 
             // btn_delete
             // 
-            this.btn_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_delete.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btn_delete.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_delete.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(455, 771);
+            this.btn_delete.Location = new System.Drawing.Point(462, 630);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 26;
@@ -80,13 +83,13 @@
             // 
             // btn_back
             // 
-            this.btn_back.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_back.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(1036, 804);
+            this.btn_back.Location = new System.Drawing.Point(1047, 681);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 27;
@@ -96,14 +99,14 @@
             // 
             // btn_run
             // 
-            this.btn_run.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_run.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btn_run.BackColor = System.Drawing.Color.Black;
             this.btn_run.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_run.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_run.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_run.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_run.ForeColor = System.Drawing.Color.White;
-            this.btn_run.Location = new System.Drawing.Point(582, 771);
+            this.btn_run.Location = new System.Drawing.Point(588, 630);
             this.btn_run.Name = "btn_run";
             this.btn_run.Size = new System.Drawing.Size(120, 40);
             this.btn_run.TabIndex = 25;
@@ -113,14 +116,14 @@
             // 
             // btn_edit
             // 
-            this.btn_edit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_edit.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btn_edit.BackColor = System.Drawing.Color.Black;
             this.btn_edit.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_edit.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_edit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_edit.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_edit.ForeColor = System.Drawing.Color.White;
-            this.btn_edit.Location = new System.Drawing.Point(329, 771);
+            this.btn_edit.Location = new System.Drawing.Point(336, 630);
             this.btn_edit.Name = "btn_edit";
             this.btn_edit.Size = new System.Drawing.Size(120, 40);
             this.btn_edit.TabIndex = 28;
@@ -130,14 +133,14 @@
             // 
             // btn_new
             // 
-            this.btn_new.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_new.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btn_new.BackColor = System.Drawing.Color.Black;
             this.btn_new.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_new.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_new.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_new.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_new.ForeColor = System.Drawing.Color.White;
-            this.btn_new.Location = new System.Drawing.Point(203, 771);
+            this.btn_new.Location = new System.Drawing.Point(210, 630);
             this.btn_new.Name = "btn_new";
             this.btn_new.Size = new System.Drawing.Size(120, 40);
             this.btn_new.TabIndex = 29;
@@ -147,14 +150,14 @@
             // 
             // btn_save
             // 
-            this.btn_save.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btn_save.BackColor = System.Drawing.Color.Black;
             this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(708, 771);
+            this.btn_save.Location = new System.Drawing.Point(714, 630);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(211, 40);
             this.btn_save.TabIndex = 30;
@@ -171,6 +174,7 @@
             // 
             // label1
             // 
+            this.label1.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.White;
@@ -186,7 +190,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
-            this.ClientSize = new System.Drawing.Size(1123, 839);
+            this.ClientSize = new System.Drawing.Size(1134, 716);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btn_save);
             this.Controls.Add(this.btn_new);
@@ -197,6 +201,8 @@
             this.Controls.Add(this.ilv_saved_shortcuts);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(1150, 755);
+            this.MinimumSize = new System.Drawing.Size(756, 375);
             this.Name = "ShortcutLibraryForm";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
@@ -218,5 +224,6 @@
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.SaveFileDialog dialog_save;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ToolTip tt_selected;
     }
 }
