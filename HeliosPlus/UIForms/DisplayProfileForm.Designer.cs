@@ -50,7 +50,6 @@ namespace HeliosPlus.UIForms
             this.pb_down_arrow = new System.Windows.Forms.PictureBox();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.txt_profile_save_name = new System.Windows.Forms.TextBox();
-            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
@@ -238,12 +237,6 @@ namespace HeliosPlus.UIForms
             this.txt_profile_save_name.TabIndex = 20;
             this.txt_profile_save_name.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_profile_save_name_KeyDown);
             // 
-            // imageList1
-            // 
-            this.imageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
-            this.imageList1.ImageSize = new System.Drawing.Size(16, 16);
-            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            // 
             // ilv_saved_profiles
             // 
             this.ilv_saved_profiles.AllowCheckBoxClick = false;
@@ -343,7 +336,6 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.PictureBox pb_down_arrow;
         private System.Windows.Forms.Label lbl_profile_shown;
         private System.Windows.Forms.TextBox txt_profile_save_name;
-        private System.Windows.Forms.ImageList imageList1;
         private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.Label label1;
