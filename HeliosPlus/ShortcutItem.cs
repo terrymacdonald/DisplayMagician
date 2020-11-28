@@ -82,7 +82,7 @@ namespace HeliosPlus
         private ProfileItem _profileToUse;
         private string _uuid = "";
         private string _name = "";
-        private ShortcutCategory _category = ShortcutCategory.NoGame;
+        private ShortcutCategory _category = ShortcutCategory.Game;
         private string _differentExecutableToMonitor;
         private string _executableNameAndPath = "";
         private string _executableArguments;
@@ -94,8 +94,8 @@ namespace HeliosPlus
         private uint _startTimeout;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
-        private ShortcutPermanence _permanence;
-        private bool _autoName;
+        private ShortcutPermanence _permanence = ShortcutPermanence.Temporary;
+        private bool _autoName = true;
         private bool _isPossible;
         private List<StartProgram> _startPrograms;
         [JsonIgnore]
@@ -833,6 +833,7 @@ namespace HeliosPlus
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            ReplaceShortcutIconInCache();
         }
 
         public void UpdateNoGameShortcut(string name, string profileUuid, ShortcutPermanence permanence, string originalIconPath,
@@ -871,6 +872,8 @@ namespace HeliosPlus
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            ReplaceShortcutIconInCache();
         }
 
 
@@ -919,6 +922,7 @@ namespace HeliosPlus
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            ReplaceShortcutIconInCache();
         }
 
         public void UpdateGameShortcut(string name, ProfileItem profile, GameStruct game, ShortcutPermanence permanence, string originalIconPath,
@@ -951,6 +955,8 @@ namespace HeliosPlus
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            ReplaceShortcutIconInCache();
         }
 
 
@@ -998,6 +1004,8 @@ namespace HeliosPlus
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            ReplaceShortcutIconInCache();
         }
 
         public void UpdateExecutableShortcut(
@@ -1044,6 +1052,7 @@ namespace HeliosPlus
             //     _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            ReplaceShortcutIconInCache();
         }
 
         public void UpdateExecutableShortcut(string name, ProfileItem profile, Executable executable, ShortcutPermanence permanence, string originalIconPath,
@@ -1076,6 +1085,8 @@ namespace HeliosPlus
             //if (_profileToUse is ProfileItem)
             //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            ReplaceShortcutIconInCache();
         }
 
         public void UpdateExecutableShortcut(string name, string profileUuid, Executable executable, ShortcutPermanence permanence, string originalIconPath,
@@ -1132,10 +1143,12 @@ namespace HeliosPlus
             //if (_profileToUse is ProfileItem)
             //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            ReplaceShortcutIconInCache();
         }
 
 
-        public bool CopyTo (ShortcutItem shortcut, bool overwriteUUID = false)
+        public bool CopyTo (ShortcutItem shortcut, bool overwriteUUID = true)
         {
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -1167,8 +1180,39 @@ namespace HeliosPlus
             shortcut.IsPossible = IsPossible;
             shortcut.StartPrograms = StartPrograms;
 
+            // Save the shortcut incon to the icon cache
+            shortcut.ReplaceShortcutIconInCache();
+
             return true;
         }
+
+        public void ReplaceShortcutIconInCache()
+        {
+            string newShortcutIconFilename = "";
+            if (_category == ShortcutCategory.Application)
+            {
+                // Work out the name of the shortcut we'll save.
+                newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, String.Concat(@"executable-", _profileToUse.UUID, "-", Path.GetFileNameWithoutExtension(_executableNameAndPath), @".ico"));
+
+            }
+            else
+            {
+                // Work out the name of the shortcut we'll save.
+                newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, String.Concat(_gameLibrary.ToString().ToLower(CultureInfo.InvariantCulture), @"-", _profileToUse.UUID, "-", _gameAppId.ToString(), @".ico"));
+            }
+
+            // If the new shortcut icon should be named differently
+            // then change the name of it
+            if (!newShortcutIconFilename.Equals(_savedShortcutIconCacheFilename))
+            {
+                if (System.IO.File.Exists(_savedShortcutIconCacheFilename))
+                    System.IO.File.Delete(_savedShortcutIconCacheFilename);
+
+                SaveShortcutIconToCache();
+            }
+
+        }
+
 
         public void SaveShortcutIconToCache()
         {
@@ -1202,6 +1246,7 @@ namespace HeliosPlus
                 shortcutIcon = _profileToUse.ProfileIcon.ToIcon();
                 shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
+
         }
 
         public static Bitmap ToLargeBitmap(string fileNameAndPath)

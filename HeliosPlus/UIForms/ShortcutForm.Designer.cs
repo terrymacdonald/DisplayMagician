@@ -794,11 +794,6 @@ namespace HeliosPlus.UIForms
             0,
             0,
             0});
-            this.nud_timeout_executable.Minimum = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
             this.nud_timeout_executable.Name = "nud_timeout_executable";
             this.nud_timeout_executable.Size = new System.Drawing.Size(70, 26);
             this.nud_timeout_executable.TabIndex = 6;
@@ -952,11 +947,6 @@ namespace HeliosPlus.UIForms
             this.nud_timeout_game.Location = new System.Drawing.Point(895, 77);
             this.nud_timeout_game.Maximum = new decimal(new int[] {
             240,
-            0,
-            0,
-            0});
-            this.nud_timeout_game.Minimum = new decimal(new int[] {
-            5,
             0,
             0,
             0});

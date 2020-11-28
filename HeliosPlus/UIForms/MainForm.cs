@@ -94,8 +94,8 @@ namespace HeliosPlus.UIForms
 
         private void pb_game_shortcut_Click(object sender, EventArgs e)
         {
-            var shortcutForm = new ShortcutForm();
-            shortcutForm.ShowDialog(this);
+            var shortcutLibraryForm = new ShortcutLibraryForm();
+            shortcutLibraryForm.ShowDialog(this);
         }
 
         private void btn_setup_game_shortcuts_Click(object sender, EventArgs e)

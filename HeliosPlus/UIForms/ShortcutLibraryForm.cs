@@ -159,24 +159,22 @@ namespace HeliosPlus.UIForms
             if (_selectedShortcut == null)
                 return;
 
-            ShortcutItem oldShortcut = _selectedShortcut;
             var shortcutForm = new ShortcutForm(_selectedShortcut);
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                ShortcutRepository.RemoveShortcut(oldShortcut);
-                _selectedShortcut = shortcutForm.Shortcut;
-                ShortcutRepository.AddShortcut(_selectedShortcut);
+                //ShortcutRepository.ReplaceShortcut(shortcutForm.Shortcut);
+                //_selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
                 // As this is an edit, we need to manually force saving the shortcut library
-                //ShortcutRepository.SaveShortcuts();
+                ShortcutRepository.SaveShortcuts();
             }
 
         }
 
         private void btn_new_Click(object sender, EventArgs e)
         {
-            var shortcutForm = new ShortcutForm();
+            var shortcutForm = new ShortcutForm(new ShortcutItem());
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
@@ -195,17 +193,15 @@ namespace HeliosPlus.UIForms
             if (_selectedShortcut == null)
                 return;
 
-            ShortcutItem oldShortcut = _selectedShortcut;
             var shortcutForm = new ShortcutForm(_selectedShortcut);
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                ShortcutRepository.RemoveShortcut(oldShortcut);
-                _selectedShortcut = shortcutForm.Shortcut;
-                ShortcutRepository.AddShortcut(_selectedShortcut);
+                //ShortcutRepository.ReplaceShortcut(shortcutForm.Shortcut);
+                //_selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
                 // As this is an edit, we need to manually force saving the shortcut library
-                //ShortcutRepository.SaveShortcuts();
+                ShortcutRepository.SaveShortcuts();
             }
 
         }

@@ -28,14 +28,13 @@ namespace HeliosPlus.UIForms
         List<StartProgram> _startPrograms = new List<StartProgram>();
         private ShortcutItem _shortcutToEdit = null;
         List<Game> allGames;
-        private bool _isNewShortcut = true;
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
         private uint _gameId = 0;
         private string  _uuid = "";
 
-        public ShortcutForm()
+        public ShortcutForm(ShortcutItem shortcutToEdit)
         {
             InitializeComponent();
 
@@ -43,6 +42,7 @@ namespace HeliosPlus.UIForms
             // into the Profiles ImageListView
             _profileAdaptor = new ProfileAdaptor();
 
+            _shortcutToEdit = shortcutToEdit;
             // Create a new SHortcut if we are creating a new one
             // And set up the page (otherwise this is all set when we load an
             // existing Shortcut)
@@ -51,12 +51,6 @@ namespace HeliosPlus.UIForms
                 shortcutToEdit = new ShortcutItem();
                 isNewShortcut = true;
             }*/
-        }
-
-        public ShortcutForm(ShortcutItem shortcutToEdit) : this()
-        {
-            _shortcutToEdit = shortcutToEdit;
-            _isNewShortcut = false;
         }
 
         public string ProcessNameToMonitor
@@ -260,8 +254,8 @@ namespace HeliosPlus.UIForms
                 return;
             }
 
-            // Please use a plain name that can be
-            if (_isNewShortcut && ShortcutRepository.ContainsShortcut(txt_shortcut_save_name.Text))
+            /*// Please use a plain name that can be
+            if (ShortcutRepository.ContainsShortcut(txt_shortcut_save_name.Text))
             {
                 MessageBox.Show(
                     @"A shortcut has already been created with this name. Please enter a different name for this shortcut.",
@@ -269,7 +263,7 @@ namespace HeliosPlus.UIForms
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
                 return;
-            }
+            }*/
 
             // Check the profile is set and that it's still valid
             if (!(_profileToUse is ProfileItem))
@@ -429,7 +423,17 @@ namespace HeliosPlus.UIForms
                     _gameToUse.GameArguments = txt_args_game.Text;
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
-                    _shortcutToEdit = new ShortcutItem(
+                   /* _shortcutToEdit = new ShortcutItem(
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _gameToUse,
+                        _permanence,
+                        _gameToUse.GameToPlay.IconPath,
+                        _startPrograms,
+                        _autoName,
+                        _uuid
+                    );*/
+                    _shortcutToEdit.UpdateGameShortcut(
                         txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
@@ -439,17 +443,7 @@ namespace HeliosPlus.UIForms
                         _autoName,
                         _uuid
                     );
-                    /*_shortcutToEdit.UpdateGameShortcut(
-                        Name,
-                        _profileToUse,
-                        _gameToUse,
-                        _permanence,
-                        _gameToUse.GameToPlay.IconPath,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );*/
-                    
+
                 }
                 // If the game is a SteamGame
                 else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
@@ -461,7 +455,17 @@ namespace HeliosPlus.UIForms
                     _gameToUse.GameArguments = txt_args_game.Text;
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
-                    _shortcutToEdit = new ShortcutItem(
+                    /*_shortcutToEdit = new ShortcutItem(
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _gameToUse,
+                        _permanence,
+                        _gameToUse.GameToPlay.IconPath,
+                        _startPrograms,
+                        _autoName,
+                        _uuid
+                    );*/
+                    _shortcutToEdit.UpdateGameShortcut(
                         txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
@@ -492,7 +496,16 @@ namespace HeliosPlus.UIForms
                     _executableToUse.ProcessNameToMonitorUsesExecutable = true;
                 }
 
-                _shortcutToEdit = new ShortcutItem(
+                /*_shortcutToEdit = new ShortcutItem(
+                    txt_shortcut_save_name.Text,
+                    _profileToUse,
+                    _executableToUse,
+                    _permanence,
+                    _executableToUse.ExecutableNameAndPath,
+                    _startPrograms,
+                    _autoName
+                );*/
+                _shortcutToEdit.UpdateExecutableShortcut(
                     txt_shortcut_save_name.Text,
                     _profileToUse,
                     _executableToUse,
@@ -501,21 +514,12 @@ namespace HeliosPlus.UIForms
                     _startPrograms,
                     _autoName
                 );
-/*                _shortcutToEdit.UpdateExecutableShortcut(
-                    Name,
-                    _profileToUse,
-                    _executableToUse,
-                    _permanence,
-                    _executableToUse.ExecutableNameAndPath,
-                    _startPrograms,
-                    _autoName
-                );
-*/
+
             }
             else
             {
 
-                _shortcutToEdit = new ShortcutItem(
+/*                _shortcutToEdit = new ShortcutItem(
                     txt_shortcut_save_name.Text,
                     _profileToUse,
                     _permanence,
@@ -524,24 +528,17 @@ namespace HeliosPlus.UIForms
                     _autoName
 
                 );
-/*                _shortcutToEdit.UpdateNoGameShortcut(
-                    Name,
+*/                _shortcutToEdit.UpdateNoGameShortcut(
+                    txt_shortcut_save_name.Text,
                     _profileToUse,
                     _permanence,
                     _executableToUse.ExecutableNameAndPath,
                     _startPrograms,
                     _autoName
                 );
-*/
+
             }
 
-            // Generate the Shortcut Icon ready to be used
-            _shortcutToEdit.SaveShortcutIconToCache();
-
-
-            // Add the Shortcut to the list of saved Shortcuts so it gets saved for later
-            // but only if it's new... if it is an edit then it will already be in the list.
-                
             // We've saved, so mark it as so
             _isUnsaved = false;
 
@@ -747,16 +744,6 @@ namespace HeliosPlus.UIForms
                 });
             }
 
-
-            // If it is a new Shortcut then we don't have to load anything!
-            if (_isNewShortcut)
-            {
-                RefreshShortcutUI();
-                ChangeSelectedProfile(ProfileRepository.CurrentProfile);
-                _isUnsaved = true;
-                return;
-            }
-
             // We only get down here if the form has loaded a shortcut to edit
             if (_shortcutToEdit is ShortcutItem && _shortcutToEdit.ProfileToUse is ProfileItem)
             {
@@ -819,10 +806,18 @@ namespace HeliosPlus.UIForms
             }
 
 
-            // Now start populating the other fields
+            // If it is a new Shortcut then we don't have to load anything!
+            //if (_isNewShortcut)
+            //{
+            //    RefreshShortcutUI();
+            //    ChangeSelectedProfile(ProfileRepository.CurrentProfile);
+            //    _isUnsaved = true;
+            //    return;
+            //}
+
+
+            // Now start populating the other fields if they need it
             _uuid = _shortcutToEdit.UUID;
-
-
 
             // Set if we launch App/Game/NoGame
             switch (_shortcutToEdit.Category)
@@ -835,6 +830,16 @@ namespace HeliosPlus.UIForms
                     break;
                 case ShortcutCategory.Application:
                     rb_standalone.Checked = true;
+                    break;
+            }
+
+            switch (_shortcutToEdit.Permanence)
+            {
+                case ShortcutPermanence.Permanent:
+                    rb_switch_permanent.Checked = true;
+                    break;
+                case ShortcutPermanence.Temporary:
+                    rb_switch_temp.Checked = true;
                     break;
             }
 
@@ -1197,11 +1202,16 @@ namespace HeliosPlus.UIForms
             {
                 // If the user doesn't want to close this window without saving, then don't close the window.
                 DialogResult result = MessageBox.Show(
-                    @"You have unsaved changes! Do you want to close this window without saving your changes?",
+                    @"You have unsaved changes! Do you want to save your changes?",
                     @"You have unsaved changes.",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Exclamation);
-                e.Cancel = (result == DialogResult.No); 
+                if (result == DialogResult.Yes) 
+                {
+                    // Press the save button for the user
+                    btn_save.PerformClick();
+                }
+
             }
 
         }

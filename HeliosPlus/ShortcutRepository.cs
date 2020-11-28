@@ -99,19 +99,8 @@ namespace HeliosPlus
             if (!(shortcut is ShortcutItem))
                 return false;
 
-            // Doublecheck if it already exists
-            // Because then we just update the one that already exists
-            if (ContainsShortcut(shortcut))
-            {
-                // We update the existing Shortcut with the data over
-                ShortcutItem shortcutToUpdate = GetShortcut(shortcut.UUID);
-                shortcut.CopyTo(shortcutToUpdate);
-            }
-            else
-            {
-                // Add the shortcut to the list of shortcuts
-                _allShortcuts.Add(shortcut);
-            }
+            // Add the shortcut to the list of shortcuts
+            _allShortcuts.Add(shortcut);
 
             //Doublecheck it's been added
             if (ContainsShortcut(shortcut))
@@ -128,6 +117,29 @@ namespace HeliosPlus
                 return false;
 
         }
+
+       /* public static bool ReplaceShortcut(ShortcutItem shortcut)
+        {
+            if (!(shortcut is ShortcutItem))
+                return false;
+
+            // Doublecheck if it already exists
+            // Because then we just update the one that already exists
+            if (ContainsShortcut(shortcut))
+            {
+                // We update the existing Shortcut with the data over
+                ShortcutItem shortcutToUpdate = GetShortcut(shortcut.UUID);
+                shortcutToUpdate = shortcut;
+                // Save the shortcuts JSON as it's different
+                SaveShortcuts();
+
+                return true;
+            }
+            else
+                return false;
+
+        }*/
+
 
         public static bool RemoveShortcut(ShortcutItem shortcut)
         {
@@ -307,56 +319,6 @@ namespace HeliosPlus
 
             return true;
         }
-
-/*        public static bool ReplaceShortcut(ShortcutItem oldShortcut, ShortcutItem newShortcut)
-        {
-            if (!(oldShortcut is ShortcutItem) || !(newShortcut is ShortcutItem))
-                return false;
-
-            // Remove the old Shortcut Icons from the Cache
-            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(oldShortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
-            foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
-            {
-                try
-                {
-                    File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"ShortcutRepository/ReplaceShortcut exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-
-                    // TODO check and report
-                }
-            }
-
-            // Remove the shortcut from the list.
-            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
-
-            if (numRemoved == 1)
-            {
-                SaveShortcuts();
-                return true;
-            }
-            else if (numRemoved == 0)
-                return false;
-            else
-                throw new ShortcutRepositoryException();
-
-
-            foreach (ShortcutItem testShortcut in ShortcutRepository.AllShortcuts)
-            {
-                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.InvariantCultureIgnoreCase) && testShortcut.AutoName)
-                {
-                    testShortcut.ProfileToUse = newProfile;
-                    testShortcut.AutoSuggestShortcutName();
-                }
-            }
-
-            SaveShortcuts();
-
-            return true;
-        }*/
-
 
         private static bool LoadShortcuts()
         {
