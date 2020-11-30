@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>true</UseVSHostingProcess>
+    <RegisterForComInterop>false</RegisterForComInterop>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -38,7 +39,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>HeliosPlusSigningKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -72,9 +73,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Shield.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="EDIDParser">
       <Version>1.2.0.1</Version>
     </PackageReference>
@@ -86,16 +84,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="HeliosPlusSigningKey.pfx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\HeliosPlus.Shared\HeliosPlus.Shared.csproj">
-      <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
-      <Name>HeliosPlus.Shared</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Resources\HeliosPlus.ico" />
+    <None Include="key.snk" />
     <None Include="Resources\HeliosPlusMenuImage.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

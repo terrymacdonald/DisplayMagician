@@ -8,25 +8,11 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.IconLib;
 using System.Drawing.Imaging;
-using TsudaKageyu;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.ServiceModel.Dispatcher;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using NvAPIWrapper.Native.Display.Structures;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
-using System.Diagnostics;
-using System.Threading;
-using HeliosPlus.InterProcess;
-using HeliosPlus.UIForms;
-using ComponentFactory.Krypton.Toolkit;
-using MintPlayer.IconUtils;
-using System.Windows.Media.Imaging;
 
 namespace HeliosPlus
 {

@@ -1,11 +1,8 @@
 ﻿using System.Linq;
 using System.Runtime.InteropServices;
-using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
 using System;
-using HeliosPlus.ShellExtension.Resources;
-using HeliosPlus;
 using SharpShell.Attributes;
 using SharpShell.SharpContextMenu;
 using SharpShell.Diagnostics;
@@ -38,6 +35,7 @@ namespace HeliosPlus.ShellExtension
 
         protected override bool CanShowMenu()
         {
+            Logging.Log($"Starting CanShowMenu");
             // Only show this menu if HeliosPlus is installed
             heliosPlusInstallDir = "";
             try
@@ -52,16 +50,24 @@ namespace HeliosPlus.ShellExtension
 
             heliosPlusFullname = Path.Combine(heliosPlusInstallDir, "HeliosPlus.exe");
 
+            Logging.Log($"HeliosPlus is installed in {heliosPlusFullname}");
+
 
             if (File.Exists(heliosPlusFullname))
+            {
+                Logging.Log($"CanShowMenu is returning true (can show menu)");
                 return true;
+            }
             else
+            {
+                Logging.Log($"CanShowMenu is returning false (cannot show menu)");
                 return false;
+            }   
         }
 
         protected override ContextMenuStrip CreateMenu()
         {
-
+            Logging.Log($"Starting CreateMenu");
             var explorerMenuStrip = new ContextMenuStrip();
 
             if (File.Exists(heliosPlusFullname))

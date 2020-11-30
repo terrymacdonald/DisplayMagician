@@ -10,9 +10,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Shared", "Helios
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Reporting", "HeliosPlus.Reporting\HeliosPlus.Reporting.csproj", "{76DF2BCF-911B-4820-B63E-8F3468DB5E79}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosPlus.Tests", "HeliosPlus.Tests\HeliosPlus.Tests.csproj", "{D7AFD3CC-53BF-4991-ABFE-638A3F355310}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HeliosPlus.Tests", "HeliosPlus.Tests\HeliosPlus.Tests.csproj", "{D7AFD3CC-53BF-4991-ABFE-638A3F355310}"
+	ProjectSection(ProjectDependencies) = postProject
+		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68} = {55D4FF65-EDC7-48EF-933E-B6E7F3809B68}
+	EndProjectSection
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "HeliosPlus.Setup", "HeliosPlus.Setup\HeliosPlus.Setup.vdproj", "{2DC67145-6BCC-4BAB-AE6C-EDAEC25B87DA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68} = {55D4FF65-EDC7-48EF-933E-B6E7F3809B68}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

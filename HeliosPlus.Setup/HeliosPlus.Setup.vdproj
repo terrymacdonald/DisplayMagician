@@ -33,8 +33,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_0FE1D01715DF6459C391EBD158D274B7"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
+        "MsmKey" = "8:_0C37C492BD61B47597773A395796B43A"
+        "OwnerKey" = "8:_421DEEA736F14466A32568905067E9A7"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_0C37C492BD61B47597773A395796B43A"
+        "OwnerKey" = "8:_AF0CEA76E15F427B95FFB76749B52E17"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -64,12 +70,6 @@
         "Entry"
         {
         "MsmKey" = "8:_1F472B27928AAF875547361F33301756"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_1F472B27928AAF875547361F33301756"
         "OwnerKey" = "8:_EF2DD8DAE57B72AF49C7CD06B2B9D472"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -89,12 +89,6 @@
         {
         "MsmKey" = "8:_20C50515084193D4C8ADF9B6B676DE77"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_20C50515084193D4C8ADF9B6B676DE77"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -125,12 +119,6 @@
         {
         "MsmKey" = "8:_2BECE346513978E22D85CF70C5335C00"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_2BECE346513978E22D85CF70C5335C00"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -172,12 +160,6 @@
         "Entry"
         {
         "MsmKey" = "8:_328C0F8CD9164AB0EB6387D511274083"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_328C0F8CD9164AB0EB6387D511274083"
         "OwnerKey" = "8:_EF2DD8DAE57B72AF49C7CD06B2B9D472"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -189,56 +171,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_33E8027C1549FD306C9C60BF6784D3F4"
-        "OwnerKey" = "8:_67171A07900A41E57F5F72450C1BFC18"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_33E8027C1549FD306C9C60BF6784D3F4"
-        "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_33E8027C1549FD306C9C60BF6784D3F4"
-        "OwnerKey" = "8:_FF6D554CE118E79F58DCB9853C63A620"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_33E8027C1549FD306C9C60BF6784D3F4"
-        "OwnerKey" = "8:_3F455C22A1A9A91AAAEF9129230063B1"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_33E8027C1549FD306C9C60BF6784D3F4"
-        "OwnerKey" = "8:_3974B2C2B04B123A3BB11256A94A55FC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_3974B2C2B04B123A3BB11256A94A55FC"
-        "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_3CFA58EA114B2FA18FD3B55528473583"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_3F455C22A1A9A91AAAEF9129230063B1"
-        "OwnerKey" = "8:_3974B2C2B04B123A3BB11256A94A55FC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_3F455C22A1A9A91AAAEF9129230063B1"
-        "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
+        "MsmKey" = "8:_421DEEA736F14466A32568905067E9A7"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -257,24 +197,6 @@
         {
         "MsmKey" = "8:_4FABC52BA03E938FFC3C8012A8BF1DAC"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_67171A07900A41E57F5F72450C1BFC18"
-        "OwnerKey" = "8:_3974B2C2B04B123A3BB11256A94A55FC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_67171A07900A41E57F5F72450C1BFC18"
-        "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_67171A07900A41E57F5F72450C1BFC18"
-        "OwnerKey" = "8:_3F455C22A1A9A91AAAEF9129230063B1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -358,13 +280,13 @@
         "Entry"
         {
         "MsmKey" = "8:_95C44E99226D63EB02DEE495E36BEC80"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
+        "OwnerKey" = "8:_CCD39A4DC1C9485F961A6E6EF8D7ED61"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_95C44E99226D63EB02DEE495E36BEC80"
-        "OwnerKey" = "8:_CCD39A4DC1C9485F961A6E6EF8D7ED61"
+        "MsmKey" = "8:_AF0CEA76E15F427B95FFB76749B52E17"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -377,18 +299,6 @@
         {
         "MsmKey" = "8:_BD72F94F74F20DED3B5752C78BFB566C"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_CAA63FA8ADECF7D0E6C4D0AB3EC02B0E"
-        "OwnerKey" = "8:_0FE1D01715DF6459C391EBD158D274B7"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_CAA63FA8ADECF7D0E6C4D0AB3EC02B0E"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -424,12 +334,6 @@
         "Entry"
         {
         "MsmKey" = "8:_D05DB69FF9722F53BCEC1895D9EF5A2A"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_D05DB69FF9722F53BCEC1895D9EF5A2A"
         "OwnerKey" = "8:_EF2DD8DAE57B72AF49C7CD06B2B9D472"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -455,12 +359,6 @@
         {
         "MsmKey" = "8:_D47C1FAE9FDF0F8BB5D0C4E665421D5A"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
-        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -501,12 +399,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_EF2DD8DAE57B72AF49C7CD06B2B9D472"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_F28FBBAC98C5E96A3B233D50EDBE7E97"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
         "MsmSig" = "8:_UNDEFINED"
@@ -519,14 +411,26 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_FF6D554CE118E79F58DCB9853C63A620"
+        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_E5F37DD38C5142669C0C67A50EC67181"
+        "OwnerKey" = "8:_AF0CEA76E15F427B95FFB76749B52E17"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_421DEEA736F14466A32568905067E9A7"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_0C37C492BD61B47597773A395796B43A"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -545,36 +449,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_D47C1FAE9FDF0F8BB5D0C4E665421D5A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_FF6D554CE118E79F58DCB9853C63A620"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_3974B2C2B04B123A3BB11256A94A55FC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_3F455C22A1A9A91AAAEF9129230063B1"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_67171A07900A41E57F5F72450C1BFC18"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_33E8027C1549FD306C9C60BF6784D3F4"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -682,24 +556,6 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_D72F9D5842C142EABAF5CA3B7A18A785"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_0FE1D01715DF6459C391EBD158D274B7"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_CAA63FA8ADECF7D0E6C4D0AB3EC02B0E"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_CCD39A4DC1C9485F961A6E6EF8D7ED61"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -784,10 +640,10 @@
             "ComponentsUrl" = "8:"
                 "Items"
                 {
-                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.8"
                     {
-                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
-                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    "Name" = "8:Microsoft .NET Framework 4.8 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.8"
                     }
                 }
             }
@@ -814,6 +670,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
             }
         }
     }
@@ -821,6 +685,36 @@
     {
         "CustomAction"
         {
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_9E6AFF3A69E04882B40F480F3C6E8CF0"
+            {
+            "Name" = "8:ServerRegistrationManager.exe"
+            "Condition" = "8:"
+            "Object" = "8:_AF0CEA76E15F427B95FFB76749B52E17"
+            "FileType" = "3:2"
+            "InstallAction" = "3:1"
+            "Arguments" = "8:install \"[TARGETDIR]HeliosPlus.ShellExtension.dll\" -codebase -os64"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_A9DCAABC_D2B2_488B_B97E_491E72D0AF60"
+            "InstallerClass" = "11:FALSE"
+            "CustomActionData" = "8:"
+            "Run64Bit" = "11:TRUE"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_AC2E36CD433740F68E94266102347A68"
+            {
+            "Name" = "8:ServerRegistrationManager.exe"
+            "Condition" = "8:"
+            "Object" = "8:_AF0CEA76E15F427B95FFB76749B52E17"
+            "FileType" = "3:2"
+            "InstallAction" = "3:4"
+            "Arguments" = "8:uninstall \"[TARGETDIR]HeliosPlus.ShellExtension.dll\""
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_E291BA87_BFFC_4C4B_9F45_CAFD6EFDA7CC"
+            "InstallerClass" = "11:FALSE"
+            "CustomActionData" = "8:"
+            "Run64Bit" = "11:TRUE"
+            }
         }
         "DefaultFeature"
         {
@@ -836,7 +730,7 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "FrameworkVersion" = "8:.NETFramework,Version=v4.7.2"
+                "FrameworkVersion" = "8:.NETFramework,Version=v4.8"
                 "AllowLaterVersions" = "11:FALSE"
                 "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=863262"
                 }
@@ -871,7 +765,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -902,24 +796,24 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_0FE1D01715DF6459C391EBD158D274B7"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_0C37C492BD61B47597773A395796B43A"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:ServerRegistrationManager, Version=2.7.2.0, Culture=neutral, PublicKeyToken=68bd4561cc3495fc, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:SharpShell, Version=2.7.2.0, Culture=neutral, PublicKeyToken=f14dc899472fe6fb, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_0FE1D01715DF6459C391EBD158D274B7"
+                    "_0C37C492BD61B47597773A395796B43A"
                     {
-                    "Name" = "8:ServerRegistrationManager.exe"
+                    "Name" = "8:SharpShell.DLL"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:ServerRegistrationManager.exe"
+            "SourcePath" = "8:SharpShell.DLL"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
@@ -1185,68 +1079,6 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_33E8027C1549FD306C9C60BF6784D3F4"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Krypton Toolkit, Version=5.480.2098.0, Culture=neutral, PublicKeyToken=a87e673e9ecb6e8e, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_33E8027C1549FD306C9C60BF6784D3F4"
-                    {
-                    "Name" = "8:Krypton Toolkit.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:Krypton Toolkit.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3974B2C2B04B123A3BB11256A94A55FC"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Krypton Docking, Version=5.480.753.0, Culture=neutral, PublicKeyToken=a87e673e9ecb6e8e, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_3974B2C2B04B123A3BB11256A94A55FC"
-                    {
-                    "Name" = "8:Krypton Docking.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:Krypton Docking.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3CFA58EA114B2FA18FD3B55528473583"
             {
             "AssemblyRegister" = "3:1"
@@ -1278,20 +1110,20 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3F455C22A1A9A91AAAEF9129230063B1"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_421DEEA736F14466A32568905067E9A7"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Krypton Workspace, Version=5.480.727.0, Culture=neutral, PublicKeyToken=a87e673e9ecb6e8e, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:HeliosPlus.ShellExtension, Version=0.9.5.39729, Culture=neutral, PublicKeyToken=20bd5a8aff754671, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_3F455C22A1A9A91AAAEF9129230063B1"
+                    "_421DEEA736F14466A32568905067E9A7"
                     {
-                    "Name" = "8:Krypton Workspace.dll"
+                    "Name" = "8:HeliosPlus.ShellExtension.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:Krypton Workspace.dll"
+            "SourcePath" = "8:..\\Debug\\HeliosPlus.ShellExtension.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
@@ -1306,7 +1138,7 @@
             "PackageAs" = "3:1"
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_4FABC52BA03E938FFC3C8012A8BF1DAC"
@@ -1323,37 +1155,6 @@
                     }
                 }
             "SourcePath" = "8:WinFormAnimation.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_67171A07900A41E57F5F72450C1BFC18"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Krypton Navigator, Version=5.480.796.0, Culture=neutral, PublicKeyToken=a87e673e9ecb6e8e, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_67171A07900A41E57F5F72450C1BFC18"
-                    {
-                    "Name" = "8:Krypton Navigator.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:Krypton Navigator.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
@@ -1619,6 +1420,37 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_AF0CEA76E15F427B95FFB76749B52E17"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:ServerRegistrationManager, Version=2.7.2.0, Culture=neutral, PublicKeyToken=68bd4561cc3495fc, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_AF0CEA76E15F427B95FFB76749B52E17"
+                    {
+                    "Name" = "8:ServerRegistrationManager.exe"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:..\\Debug\\ServerRegistrationManager.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BA36701EA973451CBE81355EA0F1572D"
             {
             "SourcePath" = "8:Resources\\HeliosPlus.ico"
@@ -1666,38 +1498,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_CAA63FA8ADECF7D0E6C4D0AB3EC02B0E"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:SharpShell, Version=2.7.2.0, Culture=neutral, PublicKeyToken=f14dc899472fe6fb, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_CAA63FA8ADECF7D0E6C4D0AB3EC02B0E"
-                    {
-                    "Name" = "8:SharpShell.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:SharpShell.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1728,7 +1529,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1790,7 +1591,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1891,7 +1692,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:HeliosPlus.Shared, Version=0.9.5.33461, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:HeliosPlus.Shared, Version=0.9.5.38711, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_EF2DD8DAE57B72AF49C7CD06B2B9D472"
@@ -1914,7 +1715,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1980,37 +1781,6 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_FF6D554CE118E79F58DCB9853C63A620"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Krypton Ribbon, Version=5.480.850.0, Culture=neutral, PublicKeyToken=a87e673e9ecb6e8e, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_FF6D554CE118E79F58DCB9853C63A620"
-                    {
-                    "Name" = "8:Krypton Ribbon.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:Krypton Ribbon.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
         }
         "FileType"
         {
@@ -2019,7 +1789,7 @@
         {
             "{3C67513D-01DD-4637-8A68-80971EB9504F}:_994B36D509C14116B6C6DCEC92ED8846"
             {
-            "DefaultLocation" = "8:[ProgramFiles64Folder]\\[ProductName]"
+            "DefaultLocation" = "8:[ProgramFiles64Folder][ProductName]"
             "Name" = "8:#1925"
             "AlwaysCreate" = "11:TRUE"
             "Condition" = "8:"
@@ -2040,7 +1810,7 @@
                 {
                     "{9EF0B969-E518-4E46-987F-47570745A589}:_5AF97EC9EA2843FB8CB7128E28CA7776"
                     {
-                    "Name" = "8:[ProgramName]"
+                    "Name" = "8:[ProductName]"
                     "AlwaysCreate" = "11:FALSE"
                     "Condition" = "8:"
                     "Transitive" = "11:FALSE"
@@ -2079,13 +1849,13 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:HeliosPlus"
         "ProductCode" = "8:{9D8BB73C-4F82-49A5-BE9B-2BB81D434FD1}"
-        "PackageCode" = "8:{10B8EA94-E934-404A-941D-E298D7ACD15C}"
+        "PackageCode" = "8:{F62D9241-5216-49A0-8AF0-73F0202C5F39}"
         "UpgradeCode" = "8:{79DB774B-3016-4512-823C-04C42AB028C5}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "InstallAllUsers" = "11:FALSE"
+        "InstallAllUsers" = "11:TRUE"
         "ProductVersion" = "8:0.9.0"
         "Manufacturer" = "8:Terry MacDonald"
         "ARPHELPTELEPHONE" = "8:"
@@ -2138,7 +1908,7 @@
                                     "Condition" = "8:"
                                     "Transitive" = "11:FALSE"
                                     "ValueTypes" = "3:1"
-                                    "Value" = "8:[ProgramFilesFolder]\\[ProductName]"
+                                    "Value" = "8:[ProgramFiles64Folder][ProductName]"
                                     }
                                 }
                             }
@@ -2209,7 +1979,7 @@
         {
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_0CCA95A018424E769F1AA53F44EB50AF"
             {
-            "Name" = "8:[ProgramName]"
+            "Name" = "8:[ProductName]"
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
@@ -2648,34 +2418,6 @@
                 {
                 }
             }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_22F30D1D61E446D9AF502E5C882D7375"
-            {
-            "SourcePath" = "8:"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:2"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:LocalizedResourceDlls"
-            "OutputProjectGuid" = "8:{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4F488048273045DD8EE3B904E25EE5FB"
             {
             "SourcePath" = "8:..\\HeliosPlus.Shared\\obj\\Debug\\HeliosPlus.Shared.dll"
@@ -2783,34 +2525,6 @@
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:Built"
             "OutputProjectGuid" = "8:{76DF2BCF-911B-4820-B63E-8F3468DB5E79}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_D72F9D5842C142EABAF5CA3B7A18A785"
-            {
-            "SourcePath" = "8:..\\HeliosPlus.ShellExtension\\obj\\Debug\\HeliosPlus.ShellExtension.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:4"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {

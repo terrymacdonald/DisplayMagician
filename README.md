@@ -30,12 +30,13 @@ Feel free to report missing features or bugs using the project [issue tracker](h
 ## Current features
 
 HeliosPlus lets you set up the following information for each game or application:
-* Create a Display Profile to be used within a Shortcut
-* Change to a different Display Profile when you click on a Shortcut on the Desktop
-* Add one or more programs to pre-start before your game or application when you lick on the Shortcut on the Desktop
+* Create and save a Display Profile to be used within future Desktop Shortcuts
+* Save a Desktop Shortcut that will automatically change to a different Display Profile when you double-click on it.
+* Add one or more programs to pre-start before your game or application
 * Works with Steam and Uplay Game libraries!
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
+* Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround and NVIDIA Mosaic settings
 
 ## Planned features
@@ -61,6 +62,7 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusShortcutLibrary.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut1.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut3.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusShellExtension.png"/></div>
 
 ### Initial Setup:
 
