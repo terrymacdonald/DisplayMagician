@@ -42,6 +42,7 @@ namespace HeliosPlus.UIForms
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
+            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
             this.tabp_before = new System.Windows.Forms.TabPage();
             this.pnl_start_program4 = new System.Windows.Forms.Panel();
             this.cb_start_program4 = new System.Windows.Forms.CheckBox();
@@ -112,7 +113,7 @@ namespace HeliosPlus.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.dv_profile = new HeliosPlus.Shared.UserControls.DisplayView();
+            this.tabp_audio = new System.Windows.Forms.TabPage();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_before.SuspendLayout();
@@ -180,6 +181,7 @@ namespace HeliosPlus.UIForms
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabc_shortcut.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
             this.tabc_shortcut.Controls.Add(this.tabp_display);
+            this.tabc_shortcut.Controls.Add(this.tabp_audio);
             this.tabc_shortcut.Controls.Add(this.tabp_before);
             this.tabc_shortcut.Controls.Add(this.tabp_game);
             this.tabc_shortcut.Controls.Add(this.tabp_after);
@@ -253,6 +255,21 @@ namespace HeliosPlus.UIForms
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
             this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
             // 
+            // dv_profile
+            // 
+            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
+            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.dv_profile.Location = new System.Drawing.Point(0, 0);
+            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
+            this.dv_profile.Name = "dv_profile";
+            this.dv_profile.PaddingX = 100;
+            this.dv_profile.PaddingY = 100;
+            this.dv_profile.Profile = null;
+            this.dv_profile.Size = new System.Drawing.Size(1082, 467);
+            this.dv_profile.TabIndex = 23;
+            // 
             // tabp_before
             // 
             this.tabp_before.BackColor = System.Drawing.Color.Black;
@@ -267,7 +284,7 @@ namespace HeliosPlus.UIForms
             this.tabp_before.Padding = new System.Windows.Forms.Padding(3);
             this.tabp_before.Size = new System.Drawing.Size(1082, 594);
             this.tabp_before.TabIndex = 1;
-            this.tabp_before.Text = "2. Choose what happens before";
+            this.tabp_before.Text = "3. Choose what happens before";
             // 
             // pnl_start_program4
             // 
@@ -636,7 +653,7 @@ namespace HeliosPlus.UIForms
             this.tabp_game.Padding = new System.Windows.Forms.Padding(3);
             this.tabp_game.Size = new System.Drawing.Size(1082, 594);
             this.tabp_game.TabIndex = 2;
-            this.tabp_game.Text = "3. Choose Game to start";
+            this.tabp_game.Text = "4. Choose Game to start";
             // 
             // p_standalone
             // 
@@ -985,7 +1002,7 @@ namespace HeliosPlus.UIForms
             this.tabp_after.Padding = new System.Windows.Forms.Padding(3);
             this.tabp_after.Size = new System.Drawing.Size(1082, 594);
             this.tabp_after.TabIndex = 3;
-            this.tabp_after.Text = "4. Choose what happens afterwards";
+            this.tabp_after.Text = "5. Choose what happens afterwards";
             // 
             // rb_switch_permanent
             // 
@@ -1060,20 +1077,15 @@ namespace HeliosPlus.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
-            // dv_profile
+            // tabp_audio
             // 
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 0);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(1082, 467);
-            this.dv_profile.TabIndex = 23;
+            this.tabp_audio.BackColor = System.Drawing.Color.Black;
+            this.tabp_audio.Location = new System.Drawing.Point(4, 32);
+            this.tabp_audio.Name = "tabp_audio";
+            this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
+            this.tabp_audio.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_audio.TabIndex = 4;
+            this.tabp_audio.Text = "2. Choose Audio";
             // 
             // ShortcutForm
             // 
@@ -1208,5 +1220,6 @@ namespace HeliosPlus.UIForms
         private System.Windows.Forms.CheckBox cb_start_program3;
         private System.Windows.Forms.CheckBox cb_start_program2;
         private System.Windows.Forms.CheckBox cb_start_program1;
+        private System.Windows.Forms.TabPage tabp_audio;
     }
 }
