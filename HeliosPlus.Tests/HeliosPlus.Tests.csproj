@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HeliosPlus.LogReporting\HeliosPlus.LogReporter.csproj" />
+    <ProjectReference Include="..\HeliosPlus.LogReporter\HeliosPlus.LogReporter.csproj" />
     <ProjectReference Include="..\HeliosPlus.Shared\HeliosPlus.Shared.csproj" />
     <ProjectReference Include="..\HeliosPlus\HeliosPlus.csproj" />
   </ItemGroup>
