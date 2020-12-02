@@ -43,6 +43,10 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.dv_profile = new DisplayMagician.Shared.UserControls.DisplayView();
+            this.tabp_audio = new System.Windows.Forms.TabPage();
+            this.cb_audio_device = new System.Windows.Forms.ComboBox();
+            this.rb_change_audio = new System.Windows.Forms.RadioButton();
+            this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
             this.pnl_start_program4 = new System.Windows.Forms.Panel();
             this.cb_start_program4 = new System.Windows.Forms.CheckBox();
@@ -113,9 +117,10 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.tabp_audio = new System.Windows.Forms.TabPage();
+            this.btn_rescan_audio = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
+            this.tabp_audio.SuspendLayout();
             this.tabp_before.SuspendLayout();
             this.pnl_start_program4.SuspendLayout();
             this.pnl_start_program3.SuspendLayout();
@@ -269,6 +274,56 @@ namespace DisplayMagician.UIForms
             this.dv_profile.Profile = null;
             this.dv_profile.Size = new System.Drawing.Size(1082, 467);
             this.dv_profile.TabIndex = 23;
+            // 
+            // tabp_audio
+            // 
+            this.tabp_audio.BackColor = System.Drawing.Color.Black;
+            this.tabp_audio.Controls.Add(this.btn_rescan_audio);
+            this.tabp_audio.Controls.Add(this.cb_audio_device);
+            this.tabp_audio.Controls.Add(this.rb_change_audio);
+            this.tabp_audio.Controls.Add(this.rb_no_change_audio);
+            this.tabp_audio.Location = new System.Drawing.Point(4, 32);
+            this.tabp_audio.Name = "tabp_audio";
+            this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
+            this.tabp_audio.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_audio.TabIndex = 4;
+            this.tabp_audio.Text = "2. Choose Audio";
+            // 
+            // cb_audio_device
+            // 
+            this.cb_audio_device.Enabled = false;
+            this.cb_audio_device.FormattingEnabled = true;
+            this.cb_audio_device.Location = new System.Drawing.Point(392, 186);
+            this.cb_audio_device.Name = "cb_audio_device";
+            this.cb_audio_device.Size = new System.Drawing.Size(429, 28);
+            this.cb_audio_device.TabIndex = 2;
+            this.cb_audio_device.SelectedIndexChanged += new System.EventHandler(this.cb_audio_device_SelectedIndexChanged);
+            // 
+            // rb_change_audio
+            // 
+            this.rb_change_audio.AutoSize = true;
+            this.rb_change_audio.ForeColor = System.Drawing.Color.White;
+            this.rb_change_audio.Location = new System.Drawing.Point(188, 186);
+            this.rb_change_audio.Name = "rb_change_audio";
+            this.rb_change_audio.Size = new System.Drawing.Size(198, 24);
+            this.rb_change_audio.TabIndex = 1;
+            this.rb_change_audio.Text = "Change audio output to:";
+            this.rb_change_audio.UseVisualStyleBackColor = true;
+            this.rb_change_audio.CheckedChanged += new System.EventHandler(this.rb_change_audio_CheckedChanged);
+            // 
+            // rb_no_change_audio
+            // 
+            this.rb_no_change_audio.AutoSize = true;
+            this.rb_no_change_audio.Checked = true;
+            this.rb_no_change_audio.ForeColor = System.Drawing.Color.White;
+            this.rb_no_change_audio.Location = new System.Drawing.Point(188, 114);
+            this.rb_no_change_audio.Name = "rb_no_change_audio";
+            this.rb_no_change_audio.Size = new System.Drawing.Size(215, 24);
+            this.rb_no_change_audio.TabIndex = 0;
+            this.rb_no_change_audio.TabStop = true;
+            this.rb_no_change_audio.Text = "Don\'t change audio output";
+            this.rb_no_change_audio.UseVisualStyleBackColor = true;
+            this.rb_no_change_audio.CheckedChanged += new System.EventHandler(this.rb_no_change_audio_CheckedChanged);
             // 
             // tabp_before
             // 
@@ -1077,15 +1132,15 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
-            // tabp_audio
+            // btn_rescan_audio
             // 
-            this.tabp_audio.BackColor = System.Drawing.Color.Black;
-            this.tabp_audio.Location = new System.Drawing.Point(4, 32);
-            this.tabp_audio.Name = "tabp_audio";
-            this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_audio.Size = new System.Drawing.Size(1082, 594);
-            this.tabp_audio.TabIndex = 4;
-            this.tabp_audio.Text = "2. Choose Audio";
+            this.btn_rescan_audio.Location = new System.Drawing.Point(827, 186);
+            this.btn_rescan_audio.Name = "btn_rescan_audio";
+            this.btn_rescan_audio.Size = new System.Drawing.Size(71, 28);
+            this.btn_rescan_audio.TabIndex = 3;
+            this.btn_rescan_audio.Text = "rescan";
+            this.btn_rescan_audio.UseVisualStyleBackColor = true;
+            this.btn_rescan_audio.Click += new System.EventHandler(this.btn_rescan_audio_Click);
             // 
             // ShortcutForm
             // 
@@ -1115,6 +1170,8 @@ namespace DisplayMagician.UIForms
             this.tabc_shortcut.ResumeLayout(false);
             this.tabp_display.ResumeLayout(false);
             this.tabp_display.PerformLayout();
+            this.tabp_audio.ResumeLayout(false);
+            this.tabp_audio.PerformLayout();
             this.tabp_before.ResumeLayout(false);
             this.pnl_start_program4.ResumeLayout(false);
             this.pnl_start_program4.PerformLayout();
@@ -1221,5 +1278,9 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_start_program2;
         private System.Windows.Forms.CheckBox cb_start_program1;
         private System.Windows.Forms.TabPage tabp_audio;
+        private System.Windows.Forms.RadioButton rb_no_change_audio;
+        private System.Windows.Forms.RadioButton rb_change_audio;
+        private System.Windows.Forms.ComboBox cb_audio_device;
+        private System.Windows.Forms.Button btn_rescan_audio;
     }
 }

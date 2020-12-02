@@ -13,6 +13,7 @@ using DisplayMagician.GameLibraries;
 using System.Globalization;
 using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
+using AudioSwitcher.AudioApi.CoreAudio;
 
 namespace DisplayMagician.UIForms
 {
@@ -33,6 +34,7 @@ namespace DisplayMagician.UIForms
         private bool _autoName = true;
         private uint _gameId = 0;
         private string  _uuid = "";
+        private CoreAudioController audioController = new CoreAudioController();
 
         public ShortcutForm(ShortcutItem shortcutToEdit)
         {
@@ -703,6 +705,19 @@ namespace DisplayMagician.UIForms
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
+
+            // Populate all the Audio devices in the audio devices list.
+            cb_audio_device.Items.Clear();
+            List<CoreAudioDevice> audioDevices = audioController.GetPlaybackDevices().ToList();
+            foreach (CoreAudioDevice audioDevice in audioDevices)
+            {
+                if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                {
+                    int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                    if (audioDevice.IsDefaultDevice)
+                        cb_audio_device.SelectedIndex = index;
+                }
+            }          
 
             // Populate a full list of games
             // Start with the Steam Games
@@ -1444,5 +1459,47 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void rb_no_change_audio_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_no_change_audio.Checked)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                cb_audio_device.Enabled = false;
+            }
+        }
+
+        private void rb_change_audio_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_change_audio.Checked)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                cb_audio_device.Enabled = true;
+            }
+        }
+
+        private void cb_audio_device_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+        }
+
+        private void btn_rescan_audio_Click(object sender, EventArgs e)
+        {
+            // Populate all the Audio devices in the audio devices list.
+            cb_audio_device.Items.Clear();
+            List<CoreAudioDevice> audioDevices = audioController.GetPlaybackDevices().ToList();
+            foreach (CoreAudioDevice audioDevice in audioDevices)
+            {
+                if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                {
+                    int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                    if (audioDevice.IsDefaultDevice)
+                        cb_audio_device.SelectedIndex = index;
+                }
+            }
+
+        }
     }
 }
