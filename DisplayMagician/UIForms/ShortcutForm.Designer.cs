@@ -44,6 +44,7 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.dv_profile = new DisplayMagician.Shared.UserControls.DisplayView();
             this.tabp_audio = new System.Windows.Forms.TabPage();
+            this.btn_rescan_audio = new System.Windows.Forms.Button();
             this.cb_audio_device = new System.Windows.Forms.ComboBox();
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
@@ -117,7 +118,6 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.btn_rescan_audio = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -288,6 +288,20 @@ namespace DisplayMagician.UIForms
             this.tabp_audio.Size = new System.Drawing.Size(1082, 594);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
+            // 
+            // btn_rescan_audio
+            // 
+            this.btn_rescan_audio.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_rescan_audio.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_rescan_audio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_rescan_audio.ForeColor = System.Drawing.Color.White;
+            this.btn_rescan_audio.Location = new System.Drawing.Point(827, 186);
+            this.btn_rescan_audio.Name = "btn_rescan_audio";
+            this.btn_rescan_audio.Size = new System.Drawing.Size(71, 28);
+            this.btn_rescan_audio.TabIndex = 3;
+            this.btn_rescan_audio.Text = "rescan";
+            this.btn_rescan_audio.UseVisualStyleBackColor = true;
+            this.btn_rescan_audio.Click += new System.EventHandler(this.btn_rescan_audio_Click);
             // 
             // cb_audio_device
             // 
@@ -1131,16 +1145,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.Text = "Auto-suggest name";
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
-            // 
-            // btn_rescan_audio
-            // 
-            this.btn_rescan_audio.Location = new System.Drawing.Point(827, 186);
-            this.btn_rescan_audio.Name = "btn_rescan_audio";
-            this.btn_rescan_audio.Size = new System.Drawing.Size(71, 28);
-            this.btn_rescan_audio.TabIndex = 3;
-            this.btn_rescan_audio.Text = "rescan";
-            this.btn_rescan_audio.UseVisualStyleBackColor = true;
-            this.btn_rescan_audio.Click += new System.EventHandler(this.btn_rescan_audio_Click);
             // 
             // ShortcutForm
             // 
