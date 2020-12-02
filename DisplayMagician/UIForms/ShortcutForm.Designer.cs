@@ -291,6 +291,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_rescan_audio
             // 
+            this.btn_rescan_audio.Enabled = false;
             this.btn_rescan_audio.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_rescan_audio.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_rescan_audio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;

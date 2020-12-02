@@ -1466,6 +1466,7 @@ namespace DisplayMagician.UIForms
                 if (_loadedShortcut)
                     _isUnsaved = true;
                 cb_audio_device.Enabled = false;
+                btn_rescan_audio.Enabled = false;
             }
         }
 
@@ -1476,6 +1477,7 @@ namespace DisplayMagician.UIForms
                 if (_loadedShortcut)
                     _isUnsaved = true;
                 cb_audio_device.Enabled = true;
+                btn_rescan_audio.Enabled = true;
             }
         }
 
