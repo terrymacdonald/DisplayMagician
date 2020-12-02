@@ -1,35 +1,35 @@
-# HeliosPlus
-[![](https://img.shields.io/github/license/terrymacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/blob/master/LICENSE)
-[![](https://img.shields.io/github/commit-activity/y/terrymacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/commits/master)
-[![](https://img.shields.io/github/issues/terrymacdonald/HeliosPlus.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/issues)
+# DisplayMagician
+[![](https://img.shields.io/github/license/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/blob/master/LICENSE)
+[![](https://img.shields.io/github/commit-activity/y/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/commits/master)
+[![](https://img.shields.io/github/issues/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/issues)
 
-HeliosPlus is an open source tool for automatically configuring your displays for a game or application from a single Windows Shortcut. HeliosPlus is designed to change your display profile, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
+DisplayMagician is an open source tool for automatically configuring your displays for a game or application from a single Windows Shortcut. DisplayMagician is designed to change your display profile, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
 
-**This program is heavily based on the original HeliosDisplayManagement software created by Soroush Falahati!**
+**This program is based on the original HeliosDisplayManagement software created by Soroush Falahati!**
 
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusMainScreen.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianMainScreen.png"/></div>
 
 ## Download
-[![](https://img.shields.io/github/downloads/terrymacdonald/HeliosPlus/total.svg?style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/releases)
-[![](https://img.shields.io/github/tag-date/terrymacdonald/HeliosPlus.svg?label=version&style=flat-square)](https://github.com/terrymacdonald/HeliosPlus/releases)
+[![](https://img.shields.io/github/downloads/terrymacdonald/DisplayMagician/total.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
+[![](https://img.shields.io/github/tag-date/terrymacdonald/DisplayMagician.svg?label=version&style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
 
-The latest version of this application is available for download via the [release](https://github.com/terrymacdonald/HeliosPlus/releases) page.
+The latest version of this application is available for download via the [release](https://github.com/terrymacdonald/DisplayMagician/releases) page.
 
 ## What it does
 
 Different games require your displays configured in different ways. If you're a simracer like me, you also require a lot of additional 'helper' applications the give you the additional functionality to game the way you want. Making all those changes each time I wanted to play each game REALLY started annoying me, and I thought there must be a better way.
 
-There is now. HeliosPlus allows you to configure multiple different display profiles, and then use those different display profiles to create Game Shortcuts. These Game Shortcuts allow you to have your game or application start exactly the way you like it.
+There is now. DisplayMagician allows you to configure multiple different display profiles, and then use those different display profiles to create Game Shortcuts. These Game Shortcuts allow you to have your game or application start exactly the way you like it.
 
-Do you like running Dirt Rally 2.0 on a single NVidia Surround window across triple screens, and yet you run Project Cars 2 across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with HeliosPlus you can do all that with a single Desktop Shortcut!
+Do you like running Dirt Rally 2.0 on a single NVidia Surround window across triple screens, and yet you run Project Cars 2 across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut!
 
 Please read through the README for features (current and planned) and issues you may encounter while using the program. 
 
-Feel free to report missing features or bugs using the project [issue tracker](https://github.com/terrymacdonald/HeliosPlus/issues).
+Feel free to report missing features or bugs using the project [issue tracker](https://github.com/terrymacdonald/DisplayMagician/issues).
 
 ## Current features
 
-HeliosPlus lets you set up the following information for each game or application:
+DisplayMagician lets you set up the following information for each game or application:
 * Create and save a Display Profile to be used within future Desktop Shortcuts
 * Save a Desktop Shortcut that will automatically change to a different Display Profile when you double-click on it.
 * Add one or more programs to pre-start before your game or application
@@ -57,20 +57,20 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
 ## Usage
 
 ### Screenshots
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusMainScreen.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusDisplayProfiles.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusShortcutLibrary.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut1.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusConfigureShortcut3.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusShellExtension.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianMainScreen.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianDisplayProfiles.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShortcutLibrary.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut1.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShellExtension.png"/></div>
 
 ### Initial Setup:
 
-1. Install 'HeliosPlus' and restart your computer
-2. Run 'HeliosPlus', and click on the 'Setup Display Profiles' button
+1. Install 'DisplayMagician' and restart your computer
+2. Run 'DisplayMagician', and click on the 'Setup Display Profiles' button
     * Use 'Windows Display Settings' or 'NVIDIA Control Panel' to configure your display(s) exactly as you would like them
-    * ALT-TAB back to HeliosPlus, and you should see the new display configuration shown in the Display Profile window.
-    * Click the 'Save As/Rename' button so that HeliosPlus will remember the current Display Profile so you can use it in your Shortcuts.
+    * ALT-TAB back to DisplayMagician, and you should see the new display configuration shown in the Display Profile window.
+    * Click the 'Save As/Rename' button so that DisplayMagician will remember the current Display Profile so you can use it in your Shortcuts.
     * You will need to do this for each different display configuration you want to use in any of your games or applications.
     * Click 'Back' button to go back to the Main HelioPlus window.
 2. Now that you have some Display Profiles set up, you can create some shortcuts that will use them! Click on the 'Setup Game Shortcuts' button.
@@ -84,8 +84,8 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
     * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. THe Save button only shows if you have a valid SHortcut set up.
 5. Once you've saved the Short cut, you should see it in the Shortcut Library.
 6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusShortcutOnDesktop.png"/></div>
-7. You can now double-click on the Desktop shortcut you just saved, and HeliosPlus will do exactly what you asked it to!
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></div>
+7. You can now double-click on the Desktop shortcut you just saved, and DisplayMagician will do exactly what you asked it to!
 
 
 ## Related Projects
@@ -100,7 +100,7 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
 
 Copyright © Terry MacDonald 2020-2021
 
-Original HelioDisplayManagement  - copyright © Soroush Falahati 2017-2020
+Original HelioDisplayManagement - copyright © Soroush Falahati 2017-2020
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
