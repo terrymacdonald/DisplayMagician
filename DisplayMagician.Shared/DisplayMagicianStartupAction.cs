@@ -1,6 +1,6 @@
 ﻿namespace DisplayMagician.Shared
 {
-    public enum HeliosStartupAction
+    public enum DisplayMagicianStartupAction
     {
         RunShortcut,
         ChangeProfile,

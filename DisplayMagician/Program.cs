@@ -87,7 +87,7 @@ namespace DisplayMagician {
             });
 
             // This is the RunShortcut command
-            app.Command(HeliosStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
+            app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
@@ -104,7 +104,7 @@ namespace DisplayMagician {
             });
 
             // This is the ChangeProfile command
-            app.Command(HeliosStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
+            app.Command(DisplayMagicianStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
             {
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
                 argumentProfile.Validators.Add(new ProfileMustExistValidator());

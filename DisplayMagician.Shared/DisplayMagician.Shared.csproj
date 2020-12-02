@@ -7,8 +7,8 @@
     <ProjectGuid>{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>HeliosPlus.Shared</RootNamespace>
-    <AssemblyName>HeliosPlus.Shared</AssemblyName>
+    <RootNamespace>DisplayMagician.Shared</RootNamespace>
+    <AssemblyName>DisplayMagician.Shared</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -33,8 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>
-    </ApplicationIcon>
+    <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
@@ -60,13 +59,12 @@
     <Compile Include="ResizeDrawing.cs" />
     <Compile Include="RestartManagerSession.cs" />
     <Compile Include="ScanLineOrdering.cs" />
-    <Compile Include="Helios.cs" />
     <Compile Include="NVIDIA\SurroundHelper.cs" />
     <Compile Include="NVIDIA\SurroundTopologyDisplay.cs" />
     <Compile Include="PixelShift.cs" />
     <Compile Include="ProfileItem.cs" />
     <Compile Include="NVIDIA\SurroundTopology.cs" />
-    <Compile Include="HeliosStartupAction.cs" />
+    <Compile Include="DisplayMagicianStartupAction.cs" />
     <Compile Include="ProfileIcon.cs" />
     <Compile Include="Rotation.cs" />
     <Compile Include="Scaling.cs" />

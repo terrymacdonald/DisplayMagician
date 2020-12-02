@@ -1419,7 +1419,7 @@ namespace DisplayMagician
             var shortcutArgs = new List<string>
             {
                 // Add the SwitchProfile command as the first argument to start to switch to another profile
-                $"{HeliosStartupAction.RunShortcut}",
+                $"{DisplayMagicianStartupAction.RunShortcut}",
                 $"\"{UUID}\""
             };
 
