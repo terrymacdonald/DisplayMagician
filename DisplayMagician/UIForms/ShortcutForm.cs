@@ -27,7 +27,7 @@ namespace DisplayMagician.UIForms
         private ShortcutPermanence _permanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
         private ShortcutItem _shortcutToEdit = null;
-        List<Game> allGames;
+        List<Game> allGames = new List<Game>();
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
@@ -450,7 +450,7 @@ namespace DisplayMagician.UIForms
                 {
                     // Find the UplayGame
                     _gameToUse = new GameStruct();
-                    _gameToUse.GameToPlay = (from uplayGame in SteamLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
+                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
                     _gameToUse.StartTimeout = Convert.ToUInt32(nud_timeout_game.Value);
                     _gameToUse.GameArguments = txt_args_game.Text;
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
@@ -706,7 +706,8 @@ namespace DisplayMagician.UIForms
 
             // Populate a full list of games
             // Start with the Steam Games
-            allGames = SteamLibrary.AllInstalledGames;
+            allGames = new List<Game>();
+            allGames.AddRange(SteamLibrary.AllInstalledGames);
             // Then add the Uplay Games
             allGames.AddRange(UplayLibrary.AllInstalledGames);
 
@@ -766,9 +767,9 @@ namespace DisplayMagician.UIForms
                             @"Display Profile name changed",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Exclamation);
-                            break;
+                            
                         }
-                        
+                        break;
                     }
 
                 }
@@ -935,7 +936,7 @@ namespace DisplayMagician.UIForms
             // Refresh the Shortcut UI
             RefreshShortcutUI();
             ChangeSelectedProfile(chosenProfile);
-            RefreshImageListView(chosenProfile);
+            //RefreshImageListView(chosenProfile);
 
             _loadedShortcut = true;
             _isUnsaved = false;

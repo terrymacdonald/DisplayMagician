@@ -56,7 +56,7 @@ namespace DisplayMagician.GameLibraries
             get
             {
                 // Load the Uplay Games from Uplay Client if needed
-                if (_allUplayGames == null)
+                if (_allUplayGames.Count == 0)
                     LoadInstalledGames();
                 return _allUplayGames;
             }

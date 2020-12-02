@@ -57,7 +57,7 @@ namespace DisplayMagician.GameLibraries
             get
             {
                 // Load the Steam Games from Steam Client if needed
-                if (_allSteamGames == null)
+                if (_allSteamGames.Count == 0)
                     LoadInstalledGames();
                 return _allSteamGames;
             }
