@@ -27,6 +27,8 @@ namespace DisplayMagician.UIForms
         private Executable _executableToUse;
         private ShortcutPermanence _permanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
+        private string _audioDevice = "";
+        private bool _changeAudioDevice = false;
         private ShortcutItem _shortcutToEdit = null;
         List<Game> allGames = new List<Game>();
         private bool _isUnsaved = true;
@@ -256,17 +258,6 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            /*// Please use a plain name that can be
-            if (ShortcutRepository.ContainsShortcut(txt_shortcut_save_name.Text))
-            {
-                MessageBox.Show(
-                    @"A shortcut has already been created with this name. Please enter a different name for this shortcut.",
-                    @"Please rename this Shortcut.",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Exclamation);
-                return;
-            }*/
-
             // Check the profile is set and that it's still valid
             if (!(_profileToUse is ProfileItem))
             {
@@ -365,6 +356,15 @@ namespace DisplayMagician.UIForms
 
             }
 
+            // Save the Audio features
+            if (rb_change_audio.Checked)
+            {
+                _changeAudioDevice = true;
+                _audioDevice = cb_audio_device.Text;
+            }
+            else
+                _changeAudioDevice = false;
+
 
 
             // Check the permanence requirements
@@ -425,22 +425,13 @@ namespace DisplayMagician.UIForms
                     _gameToUse.GameArguments = txt_args_game.Text;
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
-                   /* _shortcutToEdit = new ShortcutItem(
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _permanence,
-                        _gameToUse.GameToPlay.IconPath,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );*/
                     _shortcutToEdit.UpdateGameShortcut(
                         txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
                         _permanence,
                         _gameToUse.GameToPlay.IconPath,
+                        _audioDevice,
                         _startPrograms,
                         _autoName,
                         _uuid
@@ -457,22 +448,13 @@ namespace DisplayMagician.UIForms
                     _gameToUse.GameArguments = txt_args_game.Text;
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
-                    /*_shortcutToEdit = new ShortcutItem(
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _permanence,
-                        _gameToUse.GameToPlay.IconPath,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );*/
                     _shortcutToEdit.UpdateGameShortcut(
                         txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
                         _permanence,
                         _gameToUse.GameToPlay.IconPath,
+                        _audioDevice,
                         _startPrograms,
                         _autoName,
                         _uuid
@@ -498,21 +480,13 @@ namespace DisplayMagician.UIForms
                     _executableToUse.ProcessNameToMonitorUsesExecutable = true;
                 }
 
-                /*_shortcutToEdit = new ShortcutItem(
-                    txt_shortcut_save_name.Text,
-                    _profileToUse,
-                    _executableToUse,
-                    _permanence,
-                    _executableToUse.ExecutableNameAndPath,
-                    _startPrograms,
-                    _autoName
-                );*/
                 _shortcutToEdit.UpdateExecutableShortcut(
                     txt_shortcut_save_name.Text,
                     _profileToUse,
                     _executableToUse,
                     _permanence,
                     _executableToUse.ExecutableNameAndPath,
+                    _audioDevice,
                     _startPrograms,
                     _autoName
                 );
@@ -521,20 +495,12 @@ namespace DisplayMagician.UIForms
             else
             {
 
-/*                _shortcutToEdit = new ShortcutItem(
+                _shortcutToEdit.UpdateNoGameShortcut(
                     txt_shortcut_save_name.Text,
                     _profileToUse,
                     _permanence,
                     _executableToUse.ExecutableNameAndPath,
-                    _startPrograms,
-                    _autoName
-
-                );
-*/                _shortcutToEdit.UpdateNoGameShortcut(
-                    txt_shortcut_save_name.Text,
-                    _profileToUse,
-                    _permanence,
-                    _executableToUse.ExecutableNameAndPath,
+                    _audioDevice,
                     _startPrograms,
                     _autoName
                 );
@@ -714,6 +680,7 @@ namespace DisplayMagician.UIForms
                 if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
                 {
                     int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                    // Set the audio device to the default device by default
                     if (audioDevice.IsDefaultDevice)
                         cb_audio_device.SelectedIndex = index;
                 }
@@ -821,17 +788,6 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-
-            // If it is a new Shortcut then we don't have to load anything!
-            //if (_isNewShortcut)
-            //{
-            //    RefreshShortcutUI();
-            //    ChangeSelectedProfile(ProfileRepository.CurrentProfile);
-            //    _isUnsaved = true;
-            //    return;
-            //}
-
-
             // Now start populating the other fields if they need it
             _uuid = _shortcutToEdit.UUID;
 
@@ -858,6 +814,35 @@ namespace DisplayMagician.UIForms
                     rb_switch_temp.Checked = true;
                     break;
             }
+
+            // Set the Audio device to the shortcut audio device only if 
+            // the Change Audio radiobutton is set
+            rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
+            if (_shortcutToEdit.ChangeAudioDevice)
+            {
+                bool foundAudioDevice = false;
+                for (int i = 0; i < cb_audio_device.Items.Count; i++)
+                {
+                    if (cb_audio_device.Items[i].Equals(_shortcutToEdit.AudioDevice))
+                    {
+                        cb_audio_device.SelectedIndex = i;
+                        foundAudioDevice = true;
+                        break;
+                    }
+                        
+                }
+                // If we have a saved Audio device which isn't plugged in
+                // or isn't turned on right now, we don't want to lose the
+                // information, as the user has specifically set that audio device
+                // and they may plug it in when it comes time to use the shortcut
+                // So we add the audiodevice as an extra selection in this case.
+                if (!foundAudioDevice)
+                {
+                    int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
+                    cb_audio_device.SelectedIndex = index;
+                }
+            }
+            
 
             // Set the launcher items if we have them
             txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
@@ -1500,6 +1485,28 @@ namespace DisplayMagician.UIForms
                     if (audioDevice.IsDefaultDevice)
                         cb_audio_device.SelectedIndex = index;
                 }
+            }
+
+            bool foundAudioDevice = false;
+            for (int i = 0; i < cb_audio_device.Items.Count; i++)
+            {
+                if (cb_audio_device.Items[i].Equals(_shortcutToEdit.AudioDevice))
+                {
+                    cb_audio_device.SelectedIndex = i;
+                    foundAudioDevice = true;
+                    break;
+                }
+
+            }
+            // If we have a saved Audio device which isn't plugged in
+            // or isn't turned on right now, we don't want to lose the
+            // information, as the user has specifically set that audio device
+            // and they may plug it in when it comes time to use the shortcut
+            // So we add the audiodevice as an extra selection in this case.
+            if (!foundAudioDevice)
+            {
+                int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
+                cb_audio_device.SelectedIndex = index;
             }
 
         }
