@@ -13,6 +13,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
+using AudioSwitcher.AudioApi.CoreAudio;
 
 namespace DisplayMagician
 {
@@ -92,7 +93,6 @@ namespace DisplayMagician
         private Bitmap _shortcutBitmap, _originalLargeBitmap, _originalSmallBitmap;
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
-
 
         public ShortcutItem()
         {
@@ -1565,19 +1565,45 @@ namespace DisplayMagician
                     }
                 }
                 // If the game is a Uplay Game we check for that
-                /*else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
+                else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
                 {
+                    // First check if Steam is installed
+                    // Check if Steam is installed and error if it isn't
+                    if (!UplayLibrary.IsUplayInstalled)
+                    {
+                        return (false, "Cannot find the Uplay executable! Uplay doesn't appear to be installed");
+                    }
+
                     // We need to look up details about the game
-                    if (!UplayGame.IsInstalled(GameAppId))
+                    if (!UplayLibrary.ContainsUplayGame(GameAppId))
                     {
                         return (false, string.Format("The Uplay Game with AppID '{0}' is not installed on this computer.", GameAppId));
                     }
 
-                }*/
+                }
 
 
             }
-            // Do all the specified pre-start apps still exist?
+            // Check the Audio Device is still valid (if one is specified)
+            if (ChangeAudioDevice)
+            {
+                CoreAudioController audioController = ShortcutRepository.AudioController;
+                IEnumerable<CoreAudioDevice> audioDevices = audioController.GetPlaybackDevices();
+                foreach (CoreAudioDevice audioDevice in audioDevices)
+                {
+                    if (audioDevice.FullName.Equals(AudioDevice))
+                    {
+                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
+                            return (false, $"The Audio Device {AudioDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.");
+                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
+                            return (false, $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.");
+                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
+                            return (false, $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.");
+                    }
+                }
+            }
+
+            // TODO Do all the specified pre-start apps still exist?
 
             return (true, "Shortcut is valid");
 
@@ -1713,143 +1739,6 @@ namespace DisplayMagician
         }
 
     }
-
-    /*internal class IconActions
-    {
-        //  Constants
-        //  =========
-
-        private const string Shell32 = "shell32.dll";
-        private const string User32 = "user32.dll";
-
-        //  External Methods
-        //  ================
-
-        [DllImport(Shell32, CharSet = CharSet.Auto)]
-        private static extern int PickIconDlg(IntPtr hwndOwner, StringBuilder lpstrFile, int nMaxFile, ref int lpdwIconIndex);
-
-        [DllImport(Shell32, CharSet = CharSet.Auto)]
-        private static extern uint ExtractIconEx(string szFileName, int nIconIndex, IntPtr[] phiconLarge, IntPtr[] phiconSmall, uint nIcons);
-
-        [DllImport(User32, CharSet = CharSet.Auto)]
-        private static extern bool DestroyIcon(IntPtr handle);
-
-        //  Methods
-        //  =======
-
-        public int PickIconDialog(IntPtr hwndOwner, StringBuilder lpstrFile, int nMaxFile, ref int lpdwIconIndex)
-        {
-            return PickIconDlg(hwndOwner, lpstrFile, nMaxFile, ref lpdwIconIndex);
-        }
-
-        public uint ExtractIcon(string szFileName, int nIconIndex, IntPtr[] phiconLarge, IntPtr[] phiconSmall, uint nIcons)
-        {
-            return ExtractIconEx(szFileName, nIconIndex, phiconLarge, phiconSmall, nIcons);
-        }
-
-        public bool DestroyIconAtHandle(IntPtr handle)
-        {
-            return DestroyIcon(handle);
-        }
-    }
-
-    public class IconReference
-    {
-        //  Constants
-        //  =========
-
-        private const string comma = ",";
-
-        //  Variables
-        //  =========
-
-        private static readonly Regex regex = new Regex(@".+\,[0-9]+$");
-
-        //  Properties
-        //  ==========
-
-        /// <summary>
-        /// File path to the icon.
-        /// </summary>
-        public string FilePath { get; private set; }
-
-        /// <summary>
-        /// Index of the icon within the file.
-        /// </summary>
-        public int IconIndex { get; private set; }
-
-        //  Constructors
-        //  ============
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="reference">A reference for an icon within either an .ico, .exe, or .dll. Must be a valid file location followed by a comma and then an int.</param>
-        /// <exception cref="RegexMatchTimeoutException">Ignore.</exception>
-        public IconReference(string reference)
-        {
-            if (!regex.IsMatch(reference))
-            {
-                throw new ArgumentException("[reference] must be a valid file location followed by a comma and then an int");
-            }
-
-            string[] split = reference.Split(',');
-            string index = split[split.Length - 1];
-            string filePath = reference.Substring(0, reference.Length - index.Length - 1);
-
-            Setup(filePath, index);
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="filePath">A valid file location for an .ico, .exe, or .dll.</param>
-        /// <param name="index">The index of the icon wanted within the file.</param>
-        public IconReference(string filePath, string index)
-        {
-            Setup(filePath, index);
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="filePath">A valid file location for an .ico, .exe, or .dll.</param>
-        /// <param name="index">The index of the icon wanted within the file.</param>
-        public IconReference(string filePath, int index)
-        {
-            Setup(filePath, index);
-        }
-
-        /// <summary>
-        /// Returns the FileName and the IconIndex separated by a comma
-        /// </summary>
-        /// <returns>Returns the FileName and the IconIndex separated by a comma</returns>
-        public override string ToString()
-        {
-            return (FilePath ?? string.Empty) + comma + (IconIndex.ToString() ?? string.Empty);
-        }
-
-        private void Setup(string filepath, string index)
-        {
-            if (!int.TryParse(index, out int iconIndex))
-            {
-                throw new ArgumentException("Parameter [index] needs to be castable to an integer");
-            }
-
-            Setup(filepath, iconIndex);
-        }
-
-        private void Setup(string filepath, int index)
-        {
-            if (index < 0)
-            {
-                throw new ArgumentException("Parameter [index] needs to be greater than or equal to zero");
-            }
-
-            FilePath = filepath;
-            IconIndex = index;
-        }
-    }*/
 
 
     #region JsonConverterBitmap

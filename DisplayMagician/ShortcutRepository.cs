@@ -1,4 +1,5 @@
-﻿using DisplayMagician.GameLibraries;
+﻿using AudioSwitcher.AudioApi.CoreAudio;
+using DisplayMagician.GameLibraries;
 using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
 using DisplayMagician.Shared;
@@ -31,6 +32,7 @@ namespace DisplayMagician
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_{Version.ToString(2)}.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
+        private static CoreAudioController _audioController = null;
         #endregion
 
         #region Class Constructors
@@ -40,6 +42,7 @@ namespace DisplayMagician
             try
             {
                 NvAPIWrapper.NVIDIA.Initialize();
+                _audioController = new CoreAudioController();
 
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppShortcutStoragePath))
@@ -86,6 +89,14 @@ namespace DisplayMagician
             }
         }
 
+        public static CoreAudioController AudioController
+        {
+            get
+            {
+                return _audioController;
+            }
+        }
+
         public static Version Version
         {
             get => new Version(1, 0, 0);
@@ -117,29 +128,6 @@ namespace DisplayMagician
                 return false;
 
         }
-
-       /* public static bool ReplaceShortcut(ShortcutItem shortcut)
-        {
-            if (!(shortcut is ShortcutItem))
-                return false;
-
-            // Doublecheck if it already exists
-            // Because then we just update the one that already exists
-            if (ContainsShortcut(shortcut))
-            {
-                // We update the existing Shortcut with the data over
-                ShortcutItem shortcutToUpdate = GetShortcut(shortcut.UUID);
-                shortcutToUpdate = shortcut;
-                // Save the shortcuts JSON as it's different
-                SaveShortcuts();
-
-                return true;
-            }
-            else
-                return false;
-
-        }*/
-
 
         public static bool RemoveShortcut(ShortcutItem shortcut)
         {
@@ -455,6 +443,24 @@ namespace DisplayMagician
                 }
             }
 
+            // record the old audio device
+            CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
+
+            // Change Audio Device (if one specified)
+            if (shortcutToUse.ChangeAudioDevice)
+            {
+                IEnumerable<CoreAudioDevice> audioDevices = _audioController.GetPlaybackDevices();
+                foreach (CoreAudioDevice audioDevice in audioDevices)
+                {
+                    if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                    {
+                        // use the Audio Device
+                        audioDevice.SetAsDefault();
+
+                    }
+                }
+            }
+
             // Set the IP Service status back to what it was
             IPCService.GetInstance().Status = rollbackInstanceStatus;
 
@@ -665,7 +671,10 @@ namespace DisplayMagician
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                         // Add a status notification icon in the status area
-                        notifyIcon.Text = $"DisplayMagician: Running {steamGameToRun.Name.Substring(0, 41)}...";
+                        if (steamGameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {steamGameToRun.Name}...";
+                        else
+                            notifyIcon.Text = $"DisplayMagician: Running {steamGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
                         // Wait 300ms for the game process to spawn
@@ -814,6 +823,14 @@ namespace DisplayMagician
 
                 }
             }
+
+            // Change Audio Device back (if one specified)
+            if (shortcutToUse.ChangeAudioDevice)
+            {
+                // use the Audio Device
+                rollbackAudioDevice.SetAsDefault();
+            }
+
 
             // Change back to the original profile only if it is different
             if (needToChangeProfiles)
