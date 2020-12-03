@@ -32,6 +32,7 @@ Feel free to report missing features or bugs using the project [issue tracker](h
 DisplayMagician lets you set up the following information for each game or application:
 * Create and save a Display Profile to be used within future Desktop Shortcuts
 * Save a Desktop Shortcut that will automatically change to a different Display Profile when you double-click on it.
+* Choose which Audio Device you want the shortcut to use. Like using the wireless headset when driving? This lets you with a single click.
 * Add one or more programs to pre-start before your game or application
 * Works with Steam and Uplay Game libraries!
 * Optionally rollback to your previous Display profile once the game or application has closed.
