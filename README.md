@@ -85,7 +85,7 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
     * Choose the Game from the list shown (be sure to click the > button), or if it's not listed there then select the game or application executable. You can also choose to not start anything if you want to permanently change to a different display profile. 
     * Click on the 'Chose what happens afterwards' tab, and choose if you want to rollback any display changes you make while starting the game, or if you want to keep them.
     * If the 'auto-suggest name' option is enabled then you should have a Shortcut Name already entered in automatically. 
-    * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. THe Save button only shows if you have a valid SHortcut set up.
+    * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. The Save button only shows if you have a valid Shortcut set up.
 5. Once you've saved the Short cut, you should see it in the Shortcut Library.
 6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></div>
