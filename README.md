@@ -3,7 +3,7 @@
 [![](https://img.shields.io/github/commit-activity/y/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/commits/master)
 [![](https://img.shields.io/github/issues/terrymacdonald/DisplayMagician.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/issues)
 
-DisplayMagician is an open source tool for automatically configuring your displays for a game or application from a single Windows Shortcut. DisplayMagician is designed to change your display profile, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
+DisplayMagician is an open source tool for automatically configuring your displays and sound for a game or application from a single Windows Shortcut. DisplayMagician is designed to change your display profile, change audio devices, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
 
 **This program is based on the original HeliosDisplayManagement software created by Soroush Falahati!**
 
@@ -22,6 +22,8 @@ Different games require your displays configured in different ways. If you're a 
 There is now. DisplayMagician allows you to configure multiple different display profiles, and then use those different display profiles to create Game Shortcuts. These Game Shortcuts allow you to have your game or application start exactly the way you like it.
 
 Do you like running Dirt Rally 2.0 on a single NVidia Surround window across triple screens, and yet you run Project Cars 2 across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut!
+
+DisplayMagician also allows you to automatically change to a different audio device just for one game, and will revert that change when you close the game. Great if you have some special audio devices you use only for certain games. No more fiddling with audio settings - just play the game!
 
 Please read through the README for features (current and planned) and issues you may encounter while using the program. 
 
