@@ -112,8 +112,12 @@ namespace DisplayMagician.UIForms
             this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.tabp_after = new System.Windows.Forms.TabPage();
-            this.rb_switch_permanent = new System.Windows.Forms.RadioButton();
-            this.rb_switch_temp = new System.Windows.Forms.RadioButton();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.rb_switch_audio_permanent = new System.Windows.Forms.RadioButton();
+            this.rb_switch_audio_temp = new System.Windows.Forms.RadioButton();
+            this.gb_display_after = new System.Windows.Forms.GroupBox();
+            this.rb_switch_display_permanent = new System.Windows.Forms.RadioButton();
+            this.rb_switch_display_temp = new System.Windows.Forms.RadioButton();
             this.txt_shortcut_save_name = new System.Windows.Forms.TextBox();
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
@@ -132,6 +136,8 @@ namespace DisplayMagician.UIForms
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
             this.tabp_after.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            this.gb_display_after.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -1063,8 +1069,8 @@ namespace DisplayMagician.UIForms
             // tabp_after
             // 
             this.tabp_after.BackColor = System.Drawing.Color.Black;
-            this.tabp_after.Controls.Add(this.rb_switch_permanent);
-            this.tabp_after.Controls.Add(this.rb_switch_temp);
+            this.tabp_after.Controls.Add(this.groupBox1);
+            this.tabp_after.Controls.Add(this.gb_display_after);
             this.tabp_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_after.ForeColor = System.Drawing.Color.White;
             this.tabp_after.Location = new System.Drawing.Point(4, 32);
@@ -1074,31 +1080,79 @@ namespace DisplayMagician.UIForms
             this.tabp_after.TabIndex = 3;
             this.tabp_after.Text = "5. Choose what happens afterwards";
             // 
-            // rb_switch_permanent
+            // groupBox1
             // 
-            this.rb_switch_permanent.AutoSize = true;
-            this.rb_switch_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_permanent.Location = new System.Drawing.Point(308, 131);
-            this.rb_switch_permanent.Name = "rb_switch_permanent";
-            this.rb_switch_permanent.Size = new System.Drawing.Size(508, 24);
-            this.rb_switch_permanent.TabIndex = 10;
-            this.rb_switch_permanent.Text = "Keep using the Display Profile after Game ends (permanent change)";
-            this.rb_switch_permanent.UseVisualStyleBackColor = true;
-            this.rb_switch_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_permanent_CheckedChanged);
+            this.groupBox1.Controls.Add(this.rb_switch_audio_permanent);
+            this.groupBox1.Controls.Add(this.rb_switch_audio_temp);
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox1.ForeColor = System.Drawing.Color.White;
+            this.groupBox1.Location = new System.Drawing.Point(175, 311);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(765, 203);
+            this.groupBox1.TabIndex = 12;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "What happens to the Audio afterwards?";
             // 
-            // rb_switch_temp
+            // rb_switch_audio_permanent
             // 
-            this.rb_switch_temp.AutoSize = true;
-            this.rb_switch_temp.Checked = true;
-            this.rb_switch_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_temp.Location = new System.Drawing.Point(308, 83);
-            this.rb_switch_temp.Name = "rb_switch_temp";
-            this.rb_switch_temp.Size = new System.Drawing.Size(569, 24);
-            this.rb_switch_temp.TabIndex = 9;
-            this.rb_switch_temp.TabStop = true;
-            this.rb_switch_temp.Text = "Revert back to original Display Profile (temporary change while running game)";
-            this.rb_switch_temp.UseVisualStyleBackColor = true;
-            this.rb_switch_temp.CheckedChanged += new System.EventHandler(this.rb_switch_temp_CheckedChanged);
+            this.rb_switch_audio_permanent.AutoSize = true;
+            this.rb_switch_audio_permanent.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_audio_permanent.Location = new System.Drawing.Point(98, 116);
+            this.rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
+            this.rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
+            this.rb_switch_audio_permanent.TabIndex = 12;
+            this.rb_switch_audio_permanent.Text = "Keep using the Audio Device after Game ends (permanent change)";
+            this.rb_switch_audio_permanent.UseVisualStyleBackColor = true;
+            // 
+            // rb_switch_audio_temp
+            // 
+            this.rb_switch_audio_temp.AutoSize = true;
+            this.rb_switch_audio_temp.Checked = true;
+            this.rb_switch_audio_temp.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_audio_temp.Location = new System.Drawing.Point(98, 68);
+            this.rb_switch_audio_temp.Name = "rb_switch_audio_temp";
+            this.rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
+            this.rb_switch_audio_temp.TabIndex = 11;
+            this.rb_switch_audio_temp.TabStop = true;
+            this.rb_switch_audio_temp.Text = "Revert back to original Audio Device (temporary change while running game)";
+            this.rb_switch_audio_temp.UseVisualStyleBackColor = true;
+            // 
+            // gb_display_after
+            // 
+            this.gb_display_after.Controls.Add(this.rb_switch_display_permanent);
+            this.gb_display_after.Controls.Add(this.rb_switch_display_temp);
+            this.gb_display_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gb_display_after.ForeColor = System.Drawing.Color.White;
+            this.gb_display_after.Location = new System.Drawing.Point(175, 58);
+            this.gb_display_after.Name = "gb_display_after";
+            this.gb_display_after.Size = new System.Drawing.Size(765, 203);
+            this.gb_display_after.TabIndex = 11;
+            this.gb_display_after.TabStop = false;
+            this.gb_display_after.Text = "What happens to the Display Profile afterwards?";
+            // 
+            // rb_switch_display_permanent
+            // 
+            this.rb_switch_display_permanent.AutoSize = true;
+            this.rb_switch_display_permanent.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_display_permanent.Location = new System.Drawing.Point(98, 116);
+            this.rb_switch_display_permanent.Name = "rb_switch_display_permanent";
+            this.rb_switch_display_permanent.Size = new System.Drawing.Size(508, 24);
+            this.rb_switch_display_permanent.TabIndex = 12;
+            this.rb_switch_display_permanent.Text = "Keep using the Display Profile after Game ends (permanent change)";
+            this.rb_switch_display_permanent.UseVisualStyleBackColor = true;
+            // 
+            // rb_switch_display_temp
+            // 
+            this.rb_switch_display_temp.AutoSize = true;
+            this.rb_switch_display_temp.Checked = true;
+            this.rb_switch_display_temp.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_display_temp.Location = new System.Drawing.Point(98, 68);
+            this.rb_switch_display_temp.Name = "rb_switch_display_temp";
+            this.rb_switch_display_temp.Size = new System.Drawing.Size(569, 24);
+            this.rb_switch_display_temp.TabIndex = 11;
+            this.rb_switch_display_temp.TabStop = true;
+            this.rb_switch_display_temp.Text = "Revert back to original Display Profile (temporary change while running game)";
+            this.rb_switch_display_temp.UseVisualStyleBackColor = true;
             // 
             // txt_shortcut_save_name
             // 
@@ -1195,7 +1249,10 @@ namespace DisplayMagician.UIForms
             this.p_game.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
             this.tabp_after.ResumeLayout(false);
-            this.tabp_after.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.gb_display_after.ResumeLayout(false);
+            this.gb_display_after.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1244,8 +1301,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.NumericUpDown nud_timeout_executable;
         private System.Windows.Forms.RadioButton rb_standalone;
-        private System.Windows.Forms.RadioButton rb_switch_permanent;
-        private System.Windows.Forms.RadioButton rb_switch_temp;
         private System.Windows.Forms.Label lbl_title;
         private System.Windows.Forms.Label lbl_shortcut_name;
         private System.Windows.Forms.Button btn_exe_to_start;
@@ -1287,5 +1342,11 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.RadioButton rb_change_audio;
         private System.Windows.Forms.ComboBox cb_audio_device;
         private System.Windows.Forms.Button btn_rescan_audio;
+        private System.Windows.Forms.GroupBox gb_display_after;
+        private System.Windows.Forms.RadioButton rb_switch_display_permanent;
+        private System.Windows.Forms.RadioButton rb_switch_display_temp;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.RadioButton rb_switch_audio_permanent;
+        private System.Windows.Forms.RadioButton rb_switch_audio_temp;
     }
 }

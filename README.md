@@ -61,8 +61,11 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianDisplayProfiles.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianShortcutLibrary.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut1.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut2.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShellExtension.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/HeliosPlusShellExtension.png"/></div>
 
 ### Initial Setup:
 

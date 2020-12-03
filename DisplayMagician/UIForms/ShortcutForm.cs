@@ -25,7 +25,8 @@ namespace DisplayMagician.UIForms
         private ProfileItem _profileToUse= null;
         private GameStruct _gameToUse;
         private Executable _executableToUse;
-        private ShortcutPermanence _permanence = ShortcutPermanence.Temporary;
+        private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
+        private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
         private string _audioDevice = "";
         private bool _changeAudioDevice = false;
@@ -61,7 +62,7 @@ namespace DisplayMagician.UIForms
         {
             get
             {
-                if (rb_switch_temp.Checked && rb_standalone.Checked) {
+                if (rb_switch_display_temp.Checked && rb_standalone.Checked) {
                     if (rb_wait_executable.Checked)
                     {
                         return txt_alternative_executable.Text;
@@ -79,12 +80,12 @@ namespace DisplayMagician.UIForms
 
         public string ExecutableNameAndPath
         {
-            get => rb_switch_temp.Checked && rb_launcher.Checked ? txt_executable.Text : string.Empty;
+            get => rb_switch_display_temp.Checked && rb_launcher.Checked ? txt_executable.Text : string.Empty;
             set
             {
                 if (File.Exists(txt_executable.Text))
                 {
-                    rb_switch_temp.Checked = true;
+                    rb_switch_display_temp.Checked = true;
                     rb_launcher.Checked = true;
                     txt_executable.Text = value;
                 }
@@ -122,10 +123,10 @@ namespace DisplayMagician.UIForms
 
         public uint GameAppId
         {
-            get => rb_switch_temp.Checked && rb_launcher.Checked ? _gameId : 0;
+            get => rb_switch_display_temp.Checked && rb_launcher.Checked ? _gameId : 0;
             set
             {
-                rb_switch_temp.Checked = true;
+                rb_switch_display_temp.Checked = true;
                 rb_launcher.Checked = true;
                 _gameId = value;
             }
@@ -133,10 +134,10 @@ namespace DisplayMagician.UIForms
 
         public string GameName
         {
-            get => rb_switch_temp.Checked && rb_launcher.Checked ? txt_game_name.Text : string.Empty;
+            get => rb_switch_display_temp.Checked && rb_launcher.Checked ? txt_game_name.Text : string.Empty;
             set
             {
-                rb_switch_temp.Checked = true;
+                rb_switch_display_temp.Checked = true;
                 rb_launcher.Checked = true;
                 txt_game_name.Text = value;
             }
@@ -152,7 +153,7 @@ namespace DisplayMagician.UIForms
         {
             get
             {
-                if (rb_switch_temp.Checked && rb_launcher.Checked)
+                if (rb_switch_display_temp.Checked && rb_launcher.Checked)
                 {
                     if (txt_game_launcher.Text.Contains("Steam"))
                     {
@@ -168,7 +169,7 @@ namespace DisplayMagician.UIForms
             }
             set
             {
-                rb_switch_temp.Checked = true;
+                rb_switch_display_temp.Checked = true;
                 rb_launcher.Checked = true;
                 switch (value)
                 {
@@ -191,7 +192,7 @@ namespace DisplayMagician.UIForms
         {
             get
             {
-                if (rb_switch_temp.Checked && rb_launcher.Checked)
+                if (rb_switch_display_temp.Checked && rb_launcher.Checked)
                 {
                     return (uint)nud_timeout_game.Value;
                 }
@@ -365,14 +366,19 @@ namespace DisplayMagician.UIForms
             else
                 _changeAudioDevice = false;
 
+            // Check the audio permanence requirements
+            if (rb_switch_audio_temp.Checked)
+                _audioPermanence = ShortcutPermanence.Temporary;
 
+            if (rb_switch_audio_permanent.Checked)
+                _audioPermanence = ShortcutPermanence.Permanent;
 
-            // Check the permanence requirements
-            if (rb_switch_temp.Checked)
-                _permanence = ShortcutPermanence.Temporary;
+            // Check the display permanence requirements
+            if (rb_switch_display_temp.Checked)
+                _displayPermanence = ShortcutPermanence.Temporary;
 
-            if (rb_switch_permanent.Checked)
-                _permanence = ShortcutPermanence.Permanent;
+            if (rb_switch_display_permanent.Checked)
+                _displayPermanence = ShortcutPermanence.Permanent;
 
             // Save the start program 1
             StartProgram myStartProgram = new StartProgram();
@@ -429,7 +435,8 @@ namespace DisplayMagician.UIForms
                         txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
-                        _permanence,
+                        _displayPermanence,
+                        _audioPermanence,
                         _gameToUse.GameToPlay.IconPath,
                         _audioDevice,
                         _startPrograms,
@@ -452,7 +459,8 @@ namespace DisplayMagician.UIForms
                         txt_shortcut_save_name.Text,
                         _profileToUse,
                         _gameToUse,
-                        _permanence,
+                        _displayPermanence,
+                        _audioPermanence,
                         _gameToUse.GameToPlay.IconPath,
                         _audioDevice,
                         _startPrograms,
@@ -484,7 +492,8 @@ namespace DisplayMagician.UIForms
                     txt_shortcut_save_name.Text,
                     _profileToUse,
                     _executableToUse,
-                    _permanence,
+                    _displayPermanence,
+                    _audioPermanence,
                     _executableToUse.ExecutableNameAndPath,
                     _audioDevice,
                     _startPrograms,
@@ -498,7 +507,8 @@ namespace DisplayMagician.UIForms
                 _shortcutToEdit.UpdateNoGameShortcut(
                     txt_shortcut_save_name.Text,
                     _profileToUse,
-                    _permanence,
+                    _displayPermanence,
+                    _audioPermanence,
                     _executableToUse.ExecutableNameAndPath,
                     _audioDevice,
                     _startPrograms,
@@ -556,9 +566,9 @@ namespace DisplayMagician.UIForms
             {
                 if (rb_no_game.Checked)
                 {
-                    if (rb_switch_permanent.Checked)
+                    if (rb_switch_display_permanent.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name}";
-                    else if (rb_switch_temp.Checked)
+                    else if (rb_switch_display_temp.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
                 }
                 else if (rb_launcher.Checked && txt_game_name.Text.Length > 0)
@@ -805,13 +815,23 @@ namespace DisplayMagician.UIForms
                     break;
             }
 
-            switch (_shortcutToEdit.Permanence)
+            switch (_shortcutToEdit.DisplayPermanence)
             {
                 case ShortcutPermanence.Permanent:
-                    rb_switch_permanent.Checked = true;
+                    rb_switch_display_permanent.Checked = true;
                     break;
                 case ShortcutPermanence.Temporary:
-                    rb_switch_temp.Checked = true;
+                    rb_switch_display_temp.Checked = true;
+                    break;
+            }
+
+            switch (_shortcutToEdit.AudioPermanence)
+            {
+                case ShortcutPermanence.Permanent:
+                    rb_switch_audio_permanent.Checked = true;
+                    break;
+                case ShortcutPermanence.Temporary:
+                    rb_switch_audio_temp.Checked = true;
                     break;
             }
 
@@ -1166,25 +1186,25 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void rb_switch_temp_CheckedChanged(object sender, EventArgs e)
+        private void rb_switch_display_temp_CheckedChanged(object sender, EventArgs e)
         {
-            if (rb_switch_temp.Checked)
+            if (rb_switch_display_temp.Checked)
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                rb_switch_permanent.Checked = false;
+                rb_switch_display_permanent.Checked = false;
 
                 suggestShortcutName();
             }
         }
 
-        private void rb_switch_permanent_CheckedChanged(object sender, EventArgs e)
+        private void rb_switch_display_permanent_CheckedChanged(object sender, EventArgs e)
         {
-            if (rb_switch_permanent.Checked)
+            if (rb_switch_display_permanent.Checked)
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                rb_switch_temp.Checked = false;
+                rb_switch_display_temp.Checked = false;
                 suggestShortcutName();
             }
         }
@@ -1510,5 +1530,6 @@ namespace DisplayMagician.UIForms
             }
 
         }
+
     }
 }

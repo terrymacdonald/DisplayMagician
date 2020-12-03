@@ -99,7 +99,7 @@ namespace DisplayMagician.UIForms
                     // Set the Shortcut save folder to the Desktop as that's where people will want it most likely
                     dialog_save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                     // Try to set up some sensible suggestions for the Shortcut name
-                    if (_selectedShortcut.Permanence == ShortcutPermanence.Permanent)
+                    if (_selectedShortcut.DisplayPermanence == ShortcutPermanence.Permanent)
                     {
 
                         dialog_save.FileName = _selectedShortcut.Name;
