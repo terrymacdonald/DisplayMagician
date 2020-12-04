@@ -1515,15 +1515,7 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 cb_audio_device.Enabled = false;
                 btn_rescan_audio.Enabled = false;
-                rb_set_audio_volume.Visible = false;
-                rb_keep_audio_volume.Visible = false;
-                nud_audio_volume.Visible = false;
-                lbl_audio_volume.Visible = false;
-                rb_set_audio_volume.Enabled = false;
-                rb_keep_audio_volume.Enabled = false;
-                nud_audio_volume.Enabled = false;
-                lbl_audio_volume.Enabled = false;
-
+                gb_audio_volume.Visible = false;
             }
         }
 
@@ -1535,14 +1527,7 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 cb_audio_device.Enabled = true;
                 btn_rescan_audio.Enabled = true;
-                rb_set_audio_volume.Visible = true;
-                rb_keep_audio_volume.Visible = true;
-                nud_audio_volume.Visible = true;
-                lbl_audio_volume.Visible = true;
-                rb_set_audio_volume.Enabled = true;
-                rb_keep_audio_volume.Enabled = true;
-                nud_audio_volume.Enabled = false;
-                lbl_audio_volume.Enabled = true;
+                gb_audio_volume.Visible = true;
             }
         }
 

@@ -1220,11 +1220,11 @@ namespace DisplayMagician.UIForms
             this.gb_audio_volume.Size = new System.Drawing.Size(506, 147);
             this.gb_audio_volume.TabIndex = 10;
             this.gb_audio_volume.TabStop = false;
+            this.gb_audio_volume.Visible = false;
             // 
             // rb_set_audio_volume
             // 
             this.rb_set_audio_volume.AutoSize = true;
-            this.rb_set_audio_volume.Enabled = false;
             this.rb_set_audio_volume.ForeColor = System.Drawing.Color.White;
             this.rb_set_audio_volume.Location = new System.Drawing.Point(38, 84);
             this.rb_set_audio_volume.Name = "rb_set_audio_volume";
@@ -1236,19 +1236,19 @@ namespace DisplayMagician.UIForms
             // rb_keep_audio_volume
             // 
             this.rb_keep_audio_volume.AutoSize = true;
-            this.rb_keep_audio_volume.Enabled = false;
+            this.rb_keep_audio_volume.Checked = true;
             this.rb_keep_audio_volume.ForeColor = System.Drawing.Color.White;
             this.rb_keep_audio_volume.Location = new System.Drawing.Point(38, 36);
             this.rb_keep_audio_volume.Name = "rb_keep_audio_volume";
             this.rb_keep_audio_volume.Size = new System.Drawing.Size(203, 24);
             this.rb_keep_audio_volume.TabIndex = 12;
+            this.rb_keep_audio_volume.TabStop = true;
             this.rb_keep_audio_volume.Text = "Leave audio volume as is";
             this.rb_keep_audio_volume.UseVisualStyleBackColor = true;
             // 
             // lbl_audio_volume
             // 
             this.lbl_audio_volume.AutoSize = true;
-            this.lbl_audio_volume.Enabled = false;
             this.lbl_audio_volume.ForeColor = System.Drawing.Color.White;
             this.lbl_audio_volume.Location = new System.Drawing.Point(275, 86);
             this.lbl_audio_volume.Name = "lbl_audio_volume";
@@ -1258,7 +1258,6 @@ namespace DisplayMagician.UIForms
             // 
             // nud_audio_volume
             // 
-            this.nud_audio_volume.Enabled = false;
             this.nud_audio_volume.Location = new System.Drawing.Point(209, 84);
             this.nud_audio_volume.Name = "nud_audio_volume";
             this.nud_audio_volume.Size = new System.Drawing.Size(60, 26);
