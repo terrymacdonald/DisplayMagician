@@ -83,6 +83,8 @@ namespace DisplayMagician
         private bool _gameArgumentsRequired;
         private string _audioDevice;
         private bool _changeAudioDevice;
+        private bool _setAudioVolume = false;
+        private decimal _audioVolume = -1;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private bool _autoName = true;
@@ -119,6 +121,7 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence,
             string originalIconPath,
             string audioDevice = "", 
+            decimal audioVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -133,8 +136,12 @@ namespace DisplayMagician
                 _changeAudioDevice = false;
             else
                 _changeAudioDevice = true;
-
-            _audioDevice = audioDevice;
+            _audioDevice = audioDevice; 
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -157,7 +164,8 @@ namespace DisplayMagician
 
         public ShortcutItem(string name, string profileUuid, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "") : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -170,6 +178,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -215,7 +228,8 @@ namespace DisplayMagician
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             string originalIconPath,
-            string audioDevice = "", 
+            string audioDevice = "",
+            decimal audioVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -238,6 +252,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -260,7 +279,8 @@ namespace DisplayMagician
 
         public ShortcutItem(string name, ProfileItem profile, GameStruct game, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "") : this()
         {
             // Create a new UUID for the shortcut if one wasn't created already
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -279,6 +299,11 @@ namespace DisplayMagician
             else
                 _changeAudioDevice = true;
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -301,7 +326,8 @@ namespace DisplayMagician
 
         public ShortcutItem(string name, string profileUuid, GameStruct game, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "") : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -320,6 +346,11 @@ namespace DisplayMagician
             else
                 _changeAudioDevice = true;
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -363,7 +394,8 @@ namespace DisplayMagician
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             string originalIconPath,
-            string audioDevice = "", 
+            string audioDevice = "",
+            decimal audioVolume = -1, 
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -384,7 +416,12 @@ namespace DisplayMagician
                 _changeAudioDevice = false;
             else
                 _changeAudioDevice = true;
-            _audioDevice = audioDevice; 
+            _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -407,7 +444,8 @@ namespace DisplayMagician
 
         public ShortcutItem(string name, ProfileItem profile, Executable executable, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "") : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -425,6 +463,11 @@ namespace DisplayMagician
             else
                 _changeAudioDevice = true;
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -446,7 +489,8 @@ namespace DisplayMagician
 
         public ShortcutItem(string name, string profileUuid, Executable executable, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "") : this()
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "") : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -464,6 +508,11 @@ namespace DisplayMagician
             else
                 _changeAudioDevice = true;
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -805,6 +854,31 @@ namespace DisplayMagician
             }
         }
 
+        public decimal AudioVolume
+        {
+            get
+            {
+                return _audioVolume;
+            }
+
+            set
+            {
+                _audioVolume = value;
+            }
+        }
+
+        public bool SetAudioVolume
+        {
+            get
+            {
+                return _setAudioVolume;
+            }
+
+            set
+            {
+                _setAudioVolume = value;
+            }
+        }
 
         public List<StartProgram> StartPrograms
         {
@@ -898,7 +972,8 @@ namespace DisplayMagician
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             string originalIconPath,
-            string audioDevice = "", 
+            string audioDevice = "",
+            decimal audioVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -915,6 +990,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -938,7 +1018,8 @@ namespace DisplayMagician
 
         public void UpdateNoGameShortcut(string name, string profileUuid, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "")
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -951,6 +1032,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -998,7 +1084,8 @@ namespace DisplayMagician
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             string originalIconPath,
-            string audioDevice = "", 
+            string audioDevice = "",
+            decimal audioVolume = -1, 
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -1021,6 +1108,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -1044,7 +1136,8 @@ namespace DisplayMagician
 
         public void UpdateGameShortcut(string name, ProfileItem profile, GameStruct game, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "")
         {
             // Create a new UUID for the shortcut if one wasn't created already
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1064,6 +1157,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -1088,7 +1186,8 @@ namespace DisplayMagician
 
         public void UpdateGameShortcut(string name, string profileUuid, GameStruct game, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "")
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -1108,6 +1207,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -1153,7 +1257,8 @@ namespace DisplayMagician
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             string originalIconPath,
-            string audioDevice = "", 
+            string audioDevice = "",
+            decimal audioVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -1176,6 +1281,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -1199,7 +1309,8 @@ namespace DisplayMagician
 
         public void UpdateExecutableShortcut(string name, ProfileItem profile, Executable executable, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "")
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -1218,6 +1329,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -1241,7 +1357,8 @@ namespace DisplayMagician
 
         public void UpdateExecutableShortcut(string name, string profileUuid, Executable executable, ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", List<StartProgram> startPrograms = null, bool autoName = true, string uuid = "")
+            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
+            bool autoName = true, string uuid = "")
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -1260,6 +1377,11 @@ namespace DisplayMagician
                 _changeAudioDevice = true;
 
             _audioDevice = audioDevice;
+            if (audioVolume >= 0 && audioVolume <= 100)
+                _setAudioVolume = true;
+            else
+                _setAudioVolume = false;
+            _audioVolume = audioVolume; 
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
             _autoName = autoName;
@@ -1340,7 +1462,8 @@ namespace DisplayMagician
             shortcut.StartPrograms = StartPrograms;
             shortcut.ChangeAudioDevice = ChangeAudioDevice;
             shortcut.AudioDevice = AudioDevice;
-
+            shortcut.SetAudioVolume = SetAudioVolume;
+            shortcut.AudioVolume = AudioVolume;
             // Save the shortcut incon to the icon cache
             shortcut.ReplaceShortcutIconInCache();
 

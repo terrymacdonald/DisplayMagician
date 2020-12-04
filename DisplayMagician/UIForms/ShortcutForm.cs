@@ -30,6 +30,8 @@ namespace DisplayMagician.UIForms
         List<StartProgram> _startPrograms = new List<StartProgram>();
         private string _audioDevice = "";
         private bool _changeAudioDevice = false;
+        private bool _setAudioVolume = false;
+        private decimal _audioVolume = -1;
         private ShortcutItem _shortcutToEdit = null;
         List<Game> allGames = new List<Game>();
         private bool _isUnsaved = true;
@@ -366,6 +368,17 @@ namespace DisplayMagician.UIForms
             else
                 _changeAudioDevice = false;
 
+            if (rb_set_audio_volume.Checked)
+            {
+                _setAudioVolume = true;
+                _audioVolume = nud_audio_volume.Value;
+            }
+            else
+            {
+                _setAudioVolume = false;
+                _audioVolume = -1;
+            }
+
             // Check the audio permanence requirements
             if (rb_switch_audio_temp.Checked)
                 _audioPermanence = ShortcutPermanence.Temporary;
@@ -439,6 +452,7 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _gameToUse.GameToPlay.IconPath,
                         _audioDevice,
+                        _audioVolume,
                         _startPrograms,
                         _autoName,
                         _uuid
@@ -463,6 +477,7 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _gameToUse.GameToPlay.IconPath,
                         _audioDevice,
+                        _audioVolume, 
                         _startPrograms,
                         _autoName,
                         _uuid
@@ -496,6 +511,7 @@ namespace DisplayMagician.UIForms
                     _audioPermanence,
                     _executableToUse.ExecutableNameAndPath,
                     _audioDevice,
+                    _audioVolume, 
                     _startPrograms,
                     _autoName
                 );
@@ -511,6 +527,7 @@ namespace DisplayMagician.UIForms
                     _audioPermanence,
                     _executableToUse.ExecutableNameAndPath,
                     _audioDevice,
+                    _audioVolume, 
                     _startPrograms,
                     _autoName
                 );
@@ -862,10 +879,36 @@ namespace DisplayMagician.UIForms
                     cb_audio_device.SelectedIndex = index;
                 }
             }
-            
 
-            // Set the launcher items if we have them
-            txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
+            if (_shortcutToEdit.SetAudioVolume)
+            {
+                if (_shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
+                {
+                    nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                    rb_set_audio_volume.Checked = true;
+                }
+                else
+                {
+                    bool foundVolumeDevice = false;
+                    foreach (CoreAudioDevice audioDevice in audioDevices)
+                    {
+                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active &&
+                            audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
+                        {
+                            nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                            foundVolumeDevice = true;
+                        }
+                    }
+                    if (foundVolumeDevice)
+                        nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                    else
+                        nud_audio_volume.Value = 100;
+                    rb_set_audio_volume.Checked = false;
+                }
+
+            }
+                // Set the launcher items if we have them
+                txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
             txt_game_name.Text = _shortcutToEdit.GameName;
             _gameId = _shortcutToEdit.GameAppId;
             nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
@@ -1472,6 +1515,15 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 cb_audio_device.Enabled = false;
                 btn_rescan_audio.Enabled = false;
+                rb_set_audio_volume.Visible = false;
+                rb_keep_audio_volume.Visible = false;
+                nud_audio_volume.Visible = false;
+                lbl_audio_volume.Visible = false;
+                rb_set_audio_volume.Enabled = false;
+                rb_keep_audio_volume.Enabled = false;
+                nud_audio_volume.Enabled = false;
+                lbl_audio_volume.Enabled = false;
+
             }
         }
 
@@ -1483,6 +1535,14 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 cb_audio_device.Enabled = true;
                 btn_rescan_audio.Enabled = true;
+                rb_set_audio_volume.Visible = true;
+                rb_keep_audio_volume.Visible = true;
+                nud_audio_volume.Visible = true;
+                lbl_audio_volume.Visible = true;
+                rb_set_audio_volume.Enabled = true;
+                rb_keep_audio_volume.Enabled = true;
+                nud_audio_volume.Enabled = false;
+                lbl_audio_volume.Enabled = true;
             }
         }
 
@@ -1531,5 +1591,19 @@ namespace DisplayMagician.UIForms
 
         }
 
+        private void rb_keep_audio_volume_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            nud_audio_volume.Enabled = false;
+
+        }
+
+        private void rb_set_audio_volume_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            nud_audio_volume.Enabled = true;
+        }
     }
 }
