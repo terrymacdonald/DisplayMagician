@@ -735,10 +735,6 @@ namespace DisplayMagician
 
                             Thread.Sleep(300);
 
-                            /*if (!uplayGameToRun.IsUpdating)
-                            {
-                                ticks += 300;
-                            }*/
                         }
 
                         // Store the Steam Process ID for later
