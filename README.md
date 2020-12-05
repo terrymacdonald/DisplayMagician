@@ -94,14 +94,6 @@ No need to donate! I am doing this work to scratch a programming itch I've had f
 7. You can now double-click on the Desktop shortcut you just saved, and DisplayMagician will do exactly what you asked it to!
 
 
-## Related Projects
-
-- [**WindowsDisplayAPI**](https://github.com/falahati/WindowsDisplayAPI/): WindowsDisplayAPI is a .Net wrapper for Windows Display and Windows CCD APIs
-
-- [**EDIDParser**](https://github.com/falahati/EDIDParser/): EDIDParser is a library allowing all .Net developers to parse and to extract information from raw EDID binary data. (Extended Display Identification Data)
-
-- [**NvAPIWrapper**](https://github.com/falahati/NvAPIWrapper/): NvAPIWrapper is a .Net wrapper for NVIDIA public API, capable of managing all aspects of a display setup using NVIDIA GPUs.
-
 ## License
 
 Copyright © Terry MacDonald 2020-2021
