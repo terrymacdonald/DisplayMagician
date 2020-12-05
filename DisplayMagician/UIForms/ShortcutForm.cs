@@ -40,6 +40,9 @@ namespace DisplayMagician.UIForms
         private uint _gameId = 0;
         private string  _uuid = "";
         private CoreAudioController audioController = new CoreAudioController();
+        private List<CoreAudioDevice> audioDevices = null;
+        private CoreAudioDevice selectedAudioDevice = null;
+        private bool audioVolumeSetToDefault = true;
 
         public ShortcutForm(ShortcutItem shortcutToEdit)
         {
@@ -366,7 +369,11 @@ namespace DisplayMagician.UIForms
                 _audioDevice = cb_audio_device.Text;
             }
             else
+            {
                 _changeAudioDevice = false;
+                _audioDevice = "";
+            }
+
 
             if (rb_set_audio_volume.Checked)
             {
@@ -700,18 +707,79 @@ namespace DisplayMagician.UIForms
             ProfileItem chosenProfile = null;
 
             // Populate all the Audio devices in the audio devices list.
+            // Set the Audio device to the shortcut audio device only if 
+            // the Change Audio radiobutton is set
+            rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
             cb_audio_device.Items.Clear();
-            List<CoreAudioDevice> audioDevices = audioController.GetPlaybackDevices().ToList();
-            foreach (CoreAudioDevice audioDevice in audioDevices)
+            audioDevices = audioController.GetPlaybackDevices().ToList();
+
+            // If the shortcut is to change the audio device
+            if (_shortcutToEdit.ChangeAudioDevice)
             {
-                if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                // Then we need to populate the list 
+                bool foundAudioDevice = false;
+                foreach (CoreAudioDevice audioDevice in audioDevices)
                 {
-                    int index = cb_audio_device.Items.Add(audioDevice.FullName);
-                    // Set the audio device to the default device by default
-                    if (audioDevice.IsDefaultDevice)
-                        cb_audio_device.SelectedIndex = index;
+                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                    {
+                        int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                        // Set the audio device to the default device by default
+                        if (audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
+                        {
+                            foundAudioDevice = true;
+                            selectedAudioDevice = audioDevice;
+                            cb_audio_device.SelectedIndex = index;
+                            if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
+                                nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                            else
+                                nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                        }
+                    }
                 }
-            }          
+
+                // We need to handle the edgecase where the selected audio device
+                // isn't currently plugged in. We don't want to break the shortcut
+                // as it could be plugged in when it comes time to actually run
+                // the shortcut, so we need to just add it to the list to not break
+                // the UI.
+
+                if (!foundAudioDevice)
+                {
+                    int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
+                    cb_audio_device.SelectedIndex = index;
+                    selectedAudioDevice = null;
+                    if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
+                    {
+                        rb_set_audio_volume.Checked = true;
+                        nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                    }
+                    else
+                    {
+                        rb_keep_audio_volume.Checked = true;
+                        nud_audio_volume.Value = 50;
+                    }  
+                }
+            }
+            else
+            {
+                audioVolumeSetToDefault = true;
+                // Then we need to populate the list 
+                foreach (CoreAudioDevice audioDevice in audioDevices)
+                {
+                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                    {
+                        int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                        // Set the audio device to the default device by default
+                        if (audioDevice.IsDefaultDevice)
+                        {
+                            selectedAudioDevice = audioDevice;
+                            cb_audio_device.SelectedIndex = index;
+                            nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                        }
+                    }
+                }
+                rb_keep_audio_volume.Checked = true;
+            }
 
             // Populate a full list of games
             // Start with the Steam Games
@@ -852,63 +920,8 @@ namespace DisplayMagician.UIForms
                     break;
             }
 
-            // Set the Audio device to the shortcut audio device only if 
-            // the Change Audio radiobutton is set
-            rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
-            if (_shortcutToEdit.ChangeAudioDevice)
-            {
-                bool foundAudioDevice = false;
-                for (int i = 0; i < cb_audio_device.Items.Count; i++)
-                {
-                    if (cb_audio_device.Items[i].Equals(_shortcutToEdit.AudioDevice))
-                    {
-                        cb_audio_device.SelectedIndex = i;
-                        foundAudioDevice = true;
-                        break;
-                    }
-                        
-                }
-                // If we have a saved Audio device which isn't plugged in
-                // or isn't turned on right now, we don't want to lose the
-                // information, as the user has specifically set that audio device
-                // and they may plug it in when it comes time to use the shortcut
-                // So we add the audiodevice as an extra selection in this case.
-                if (!foundAudioDevice)
-                {
-                    int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
-                    cb_audio_device.SelectedIndex = index;
-                }
-            }
-
-            if (_shortcutToEdit.SetAudioVolume)
-            {
-                if (_shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
-                {
-                    nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
-                    rb_set_audio_volume.Checked = true;
-                }
-                else
-                {
-                    bool foundVolumeDevice = false;
-                    foreach (CoreAudioDevice audioDevice in audioDevices)
-                    {
-                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active &&
-                            audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
-                        {
-                            nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
-                            foundVolumeDevice = true;
-                        }
-                    }
-                    if (foundVolumeDevice)
-                        nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
-                    else
-                        nud_audio_volume.Value = 100;
-                    rb_set_audio_volume.Checked = false;
-                }
-
-            }
-                // Set the launcher items if we have them
-                txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
+            // Set the launcher items if we have them
+            txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
             txt_game_name.Text = _shortcutToEdit.GameName;
             _gameId = _shortcutToEdit.GameAppId;
             nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
@@ -1535,43 +1548,141 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
+
+            // Populate all the Audio devices in the audio devices list.
+            // Set the Audio device to the shortcut audio device only if 
+            // the Change Audio radiobutton is set
+            audioDevices = audioController.GetPlaybackDevices().ToList();
+
+            // If the shortcut is to change the audio device
+            if (_shortcutToEdit.ChangeAudioDevice)
+            {
+                // Then we need to populate the list 
+                bool foundAudioDevice = false;
+                foreach (CoreAudioDevice audioDevice in audioDevices)
+                {
+                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                    {
+                        // Set the audio device to the default device by default
+                        if (audioDevice.FullName.Equals(cb_audio_device.SelectedItem.ToString()))
+                        {
+                            foundAudioDevice = true;
+                            selectedAudioDevice = audioDevice;
+                            nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                        }
+                    }
+                }
+
+                // We need to handle the edgecase where the selected audio device
+                // isn't currently plugged in. We don't want to break the shortcut
+                // as it could be plugged in when it comes time to actually run
+                // the shortcut, so we need to just add it to the list to not break
+                // the UI.
+
+                if (!foundAudioDevice)
+                {
+                    selectedAudioDevice = null;
+                    nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                }
+            }
+            else
+            {
+                audioVolumeSetToDefault = true;
+                // Then we need to populate the list 
+                foreach (CoreAudioDevice audioDevice in audioDevices)
+                {
+                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                    {
+                        int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                        // Set the audio device to the default device by default
+                        if (audioDevice.IsDefaultDevice)
+                        {
+                            selectedAudioDevice = audioDevice;
+                            cb_audio_device.SelectedIndex = index;
+                            nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                        }
+                    }
+                }
+                rb_keep_audio_volume.Checked = true;
+            }
         }
 
         private void btn_rescan_audio_Click(object sender, EventArgs e)
         {
             // Populate all the Audio devices in the audio devices list.
+            // Set the Audio device to the shortcut audio device only if 
+            // the Change Audio radiobutton is set
+            rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
             cb_audio_device.Items.Clear();
-            List<CoreAudioDevice> audioDevices = audioController.GetPlaybackDevices().ToList();
-            foreach (CoreAudioDevice audioDevice in audioDevices)
+            audioDevices = audioController.GetPlaybackDevices().ToList();
+
+            // If the shortcut is to change the audio device
+            if (_shortcutToEdit.ChangeAudioDevice)
             {
-                if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                // Then we need to populate the list 
+                bool foundAudioDevice = false;
+                foreach (CoreAudioDevice audioDevice in audioDevices)
                 {
-                    int index = cb_audio_device.Items.Add(audioDevice.FullName);
-                    if (audioDevice.IsDefaultDevice)
-                        cb_audio_device.SelectedIndex = index;
+                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                    {
+                        int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                        // Set the audio device to the default device by default
+                        if (audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
+                        {
+                            foundAudioDevice = true;
+                            selectedAudioDevice = audioDevice;
+                            cb_audio_device.SelectedIndex = index;
+                            if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
+                                nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                            else
+                                nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                        }
+                    }
+                }
+
+                // We need to handle the edgecase where the selected audio device
+                // isn't currently plugged in. We don't want to break the shortcut
+                // as it could be plugged in when it comes time to actually run
+                // the shortcut, so we need to just add it to the list to not break
+                // the UI.
+
+                if (!foundAudioDevice)
+                {
+                    int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
+                    cb_audio_device.SelectedIndex = index;
+                    selectedAudioDevice = null;
+                    if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
+                    {
+                        rb_set_audio_volume.Checked = true;
+                        nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                    }
+                    else
+                    {
+                        rb_keep_audio_volume.Checked = true;
+                        nud_audio_volume.Value = 50;
+                    }
+
                 }
             }
-
-            bool foundAudioDevice = false;
-            for (int i = 0; i < cb_audio_device.Items.Count; i++)
+            else
             {
-                if (cb_audio_device.Items[i].Equals(_shortcutToEdit.AudioDevice))
+                audioVolumeSetToDefault = true;
+                // Then we need to populate the list 
+                foreach (CoreAudioDevice audioDevice in audioDevices)
                 {
-                    cb_audio_device.SelectedIndex = i;
-                    foundAudioDevice = true;
-                    break;
+                    if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Active)
+                    {
+                        int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                        // Set the audio device to the default device by default
+                        if (audioDevice.IsDefaultDevice)
+                        {
+                            selectedAudioDevice = audioDevice;
+                            cb_audio_device.SelectedIndex = index;
+                            nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                        }
+                    }
                 }
-
-            }
-            // If we have a saved Audio device which isn't plugged in
-            // or isn't turned on right now, we don't want to lose the
-            // information, as the user has specifically set that audio device
-            // and they may plug it in when it comes time to use the shortcut
-            // So we add the audiodevice as an extra selection in this case.
-            if (!foundAudioDevice)
-            {
-                int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
-                cb_audio_device.SelectedIndex = index;
+                rb_keep_audio_volume.Checked = true;
             }
 
         }
@@ -1580,7 +1691,8 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            nud_audio_volume.Enabled = false;
+            if (rb_set_audio_volume.Checked)
+                nud_audio_volume.Enabled = false;
 
         }
 
@@ -1588,7 +1700,9 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            nud_audio_volume.Enabled = true;
+            if (rb_set_audio_volume.Checked)
+                nud_audio_volume.Enabled = true;
         }
+
     }
 }

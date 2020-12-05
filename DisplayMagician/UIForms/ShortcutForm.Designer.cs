@@ -44,6 +44,11 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.dv_profile = new DisplayMagician.Shared.UserControls.DisplayView();
             this.tabp_audio = new System.Windows.Forms.TabPage();
+            this.gb_audio_volume = new System.Windows.Forms.GroupBox();
+            this.rb_set_audio_volume = new System.Windows.Forms.RadioButton();
+            this.rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
+            this.lbl_audio_volume = new System.Windows.Forms.Label();
+            this.nud_audio_volume = new System.Windows.Forms.NumericUpDown();
             this.btn_rescan_audio = new System.Windows.Forms.Button();
             this.cb_audio_device = new System.Windows.Forms.ComboBox();
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
@@ -122,14 +127,11 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.gb_audio_volume = new System.Windows.Forms.GroupBox();
-            this.rb_set_audio_volume = new System.Windows.Forms.RadioButton();
-            this.rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
-            this.lbl_audio_volume = new System.Windows.Forms.Label();
-            this.nud_audio_volume = new System.Windows.Forms.NumericUpDown();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
+            this.gb_audio_volume.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).BeginInit();
             this.tabp_before.SuspendLayout();
             this.pnl_start_program4.SuspendLayout();
             this.pnl_start_program3.SuspendLayout();
@@ -143,8 +145,6 @@ namespace DisplayMagician.UIForms
             this.tabp_after.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gb_display_after.SuspendLayout();
-            this.gb_audio_volume.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_save
@@ -302,6 +302,70 @@ namespace DisplayMagician.UIForms
             this.tabp_audio.Size = new System.Drawing.Size(1082, 594);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
+            // 
+            // gb_audio_volume
+            // 
+            this.gb_audio_volume.Controls.Add(this.rb_set_audio_volume);
+            this.gb_audio_volume.Controls.Add(this.rb_keep_audio_volume);
+            this.gb_audio_volume.Controls.Add(this.lbl_audio_volume);
+            this.gb_audio_volume.Controls.Add(this.nud_audio_volume);
+            this.gb_audio_volume.ForeColor = System.Drawing.Color.White;
+            this.gb_audio_volume.Location = new System.Drawing.Point(392, 240);
+            this.gb_audio_volume.Name = "gb_audio_volume";
+            this.gb_audio_volume.Size = new System.Drawing.Size(429, 147);
+            this.gb_audio_volume.TabIndex = 10;
+            this.gb_audio_volume.TabStop = false;
+            this.gb_audio_volume.Text = "Audio Output Volume";
+            this.gb_audio_volume.Visible = false;
+            // 
+            // rb_set_audio_volume
+            // 
+            this.rb_set_audio_volume.AutoSize = true;
+            this.rb_set_audio_volume.ForeColor = System.Drawing.Color.White;
+            this.rb_set_audio_volume.Location = new System.Drawing.Point(38, 84);
+            this.rb_set_audio_volume.Name = "rb_set_audio_volume";
+            this.rb_set_audio_volume.Size = new System.Drawing.Size(167, 24);
+            this.rb_set_audio_volume.TabIndex = 13;
+            this.rb_set_audio_volume.Text = "Set audio volume at";
+            this.rb_set_audio_volume.UseVisualStyleBackColor = true;
+            this.rb_set_audio_volume.CheckedChanged += new System.EventHandler(this.rb_set_audio_volume_CheckedChanged);
+            // 
+            // rb_keep_audio_volume
+            // 
+            this.rb_keep_audio_volume.AutoSize = true;
+            this.rb_keep_audio_volume.Checked = true;
+            this.rb_keep_audio_volume.ForeColor = System.Drawing.Color.White;
+            this.rb_keep_audio_volume.Location = new System.Drawing.Point(38, 41);
+            this.rb_keep_audio_volume.Name = "rb_keep_audio_volume";
+            this.rb_keep_audio_volume.Size = new System.Drawing.Size(203, 24);
+            this.rb_keep_audio_volume.TabIndex = 12;
+            this.rb_keep_audio_volume.TabStop = true;
+            this.rb_keep_audio_volume.Text = "Leave audio volume as is";
+            this.rb_keep_audio_volume.UseVisualStyleBackColor = true;
+            this.rb_keep_audio_volume.CheckedChanged += new System.EventHandler(this.rb_keep_audio_volume_CheckedChanged);
+            // 
+            // lbl_audio_volume
+            // 
+            this.lbl_audio_volume.AutoSize = true;
+            this.lbl_audio_volume.ForeColor = System.Drawing.Color.White;
+            this.lbl_audio_volume.Location = new System.Drawing.Point(275, 86);
+            this.lbl_audio_volume.Name = "lbl_audio_volume";
+            this.lbl_audio_volume.Size = new System.Drawing.Size(63, 20);
+            this.lbl_audio_volume.TabIndex = 11;
+            this.lbl_audio_volume.Text = "percent";
+            // 
+            // nud_audio_volume
+            // 
+            this.nud_audio_volume.Enabled = false;
+            this.nud_audio_volume.Location = new System.Drawing.Point(209, 84);
+            this.nud_audio_volume.Name = "nud_audio_volume";
+            this.nud_audio_volume.Size = new System.Drawing.Size(60, 26);
+            this.nud_audio_volume.TabIndex = 10;
+            this.nud_audio_volume.Value = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
             // 
             // btn_rescan_audio
             // 
@@ -1209,65 +1273,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
-            // gb_audio_volume
-            // 
-            this.gb_audio_volume.Controls.Add(this.rb_set_audio_volume);
-            this.gb_audio_volume.Controls.Add(this.rb_keep_audio_volume);
-            this.gb_audio_volume.Controls.Add(this.lbl_audio_volume);
-            this.gb_audio_volume.Controls.Add(this.nud_audio_volume);
-            this.gb_audio_volume.Location = new System.Drawing.Point(392, 240);
-            this.gb_audio_volume.Name = "gb_audio_volume";
-            this.gb_audio_volume.Size = new System.Drawing.Size(506, 147);
-            this.gb_audio_volume.TabIndex = 10;
-            this.gb_audio_volume.TabStop = false;
-            this.gb_audio_volume.Visible = false;
-            // 
-            // rb_set_audio_volume
-            // 
-            this.rb_set_audio_volume.AutoSize = true;
-            this.rb_set_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_set_audio_volume.Location = new System.Drawing.Point(38, 84);
-            this.rb_set_audio_volume.Name = "rb_set_audio_volume";
-            this.rb_set_audio_volume.Size = new System.Drawing.Size(167, 24);
-            this.rb_set_audio_volume.TabIndex = 13;
-            this.rb_set_audio_volume.Text = "Set audio volume at";
-            this.rb_set_audio_volume.UseVisualStyleBackColor = true;
-            // 
-            // rb_keep_audio_volume
-            // 
-            this.rb_keep_audio_volume.AutoSize = true;
-            this.rb_keep_audio_volume.Checked = true;
-            this.rb_keep_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_keep_audio_volume.Location = new System.Drawing.Point(38, 36);
-            this.rb_keep_audio_volume.Name = "rb_keep_audio_volume";
-            this.rb_keep_audio_volume.Size = new System.Drawing.Size(203, 24);
-            this.rb_keep_audio_volume.TabIndex = 12;
-            this.rb_keep_audio_volume.TabStop = true;
-            this.rb_keep_audio_volume.Text = "Leave audio volume as is";
-            this.rb_keep_audio_volume.UseVisualStyleBackColor = true;
-            // 
-            // lbl_audio_volume
-            // 
-            this.lbl_audio_volume.AutoSize = true;
-            this.lbl_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.lbl_audio_volume.Location = new System.Drawing.Point(275, 86);
-            this.lbl_audio_volume.Name = "lbl_audio_volume";
-            this.lbl_audio_volume.Size = new System.Drawing.Size(63, 20);
-            this.lbl_audio_volume.TabIndex = 11;
-            this.lbl_audio_volume.Text = "percent";
-            // 
-            // nud_audio_volume
-            // 
-            this.nud_audio_volume.Location = new System.Drawing.Point(209, 84);
-            this.nud_audio_volume.Name = "nud_audio_volume";
-            this.nud_audio_volume.Size = new System.Drawing.Size(60, 26);
-            this.nud_audio_volume.TabIndex = 10;
-            this.nud_audio_volume.Value = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1298,6 +1303,9 @@ namespace DisplayMagician.UIForms
             this.tabp_display.PerformLayout();
             this.tabp_audio.ResumeLayout(false);
             this.tabp_audio.PerformLayout();
+            this.gb_audio_volume.ResumeLayout(false);
+            this.gb_audio_volume.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).EndInit();
             this.tabp_before.ResumeLayout(false);
             this.pnl_start_program4.ResumeLayout(false);
             this.pnl_start_program4.PerformLayout();
@@ -1320,9 +1328,6 @@ namespace DisplayMagician.UIForms
             this.groupBox1.PerformLayout();
             this.gb_display_after.ResumeLayout(false);
             this.gb_display_after.PerformLayout();
-            this.gb_audio_volume.ResumeLayout(false);
-            this.gb_audio_volume.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
