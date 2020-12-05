@@ -417,7 +417,14 @@ namespace DisplayMagician
             (bool valid, string reason) = shortcutToUse.IsValid();
             if (!valid)
             {
-                throw new Exception(string.Format("ShortcutRepository/SaveShortcutIconToCache exception: Unable to run the shortcut '{0}': {1}", shortcutToUse.Name, reason));
+                MessageBox.Show(
+                    $"Unable to run the shortcut '{shortcutToUse.Name}': {reason}",
+                    @"Cannot run the Shortcut",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Exclamation);
+                return;
+                //throw new Exception(string.Format("ShortcutRepository/SaveShortcutIconToCache exception: Unable to run the shortcut '{0}': {1}", shortcutToUse.Name, reason));
+
             }
 
             // Remember the profile we are on now
@@ -445,6 +452,7 @@ namespace DisplayMagician
 
             // record the old audio device
             CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
+            double rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
 
             // Change Audio Device (if one specified)
             if (shortcutToUse.ChangeAudioDevice)
@@ -456,6 +464,16 @@ namespace DisplayMagician
                     {
                         // use the Audio Device
                         audioDevice.SetAsDefault();
+
+                        if (shortcutToUse.SetAudioVolume)
+                        {
+                            Task myTask = new Task(() =>
+                            {
+                                audioDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                            });
+                            myTask.Start();
+                            myTask.Wait(2000);
+                        }
 
                     }
                 }
@@ -825,6 +843,17 @@ namespace DisplayMagician
             {
                 // use the Audio Device
                 rollbackAudioDevice.SetAsDefault();
+
+                if (shortcutToUse.SetAudioVolume)
+                {
+                    Task myTask = new Task(() =>
+                    {
+                        rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
+                    });
+                    myTask.Start();
+                    myTask.Wait(2000);
+                }
+
             }
 
 
