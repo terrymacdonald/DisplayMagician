@@ -7,9 +7,9 @@ using System.Linq;
 using System.Reflection;
 using WindowsDisplayAPI;
 using WindowsDisplayAPI.DisplayConfig;
-using DisplayMagician.Shared;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
+using AudioSwitcher.AudioApi.CoreAudio;
 
 namespace DisplayMagician.LogReporter
 {
@@ -273,7 +273,17 @@ namespace DisplayMagician.LogReporter
 
             try
             {
-                DumpObject(GridTopology.GetGridTopologies(), "Storing a list of configured NZIVIDA Surround/Mosaic settings involving multiple Displays via a NVIDIA GPU", null, 3);
+                DumpObject(GridTopology.GetGridTopologies(), "Storing a list of configured NVIDIA Surround/Mosaic settings involving multiple Displays via a NVIDIA GPU", null, 3);
+            }
+            catch (Exception e)
+            {
+                WriteException(e);
+            }
+
+            try
+            {
+                CoreAudioController audioController = new CoreAudioController();                
+                DumpObject(audioController.GetPlaybackDevices(), "Storing a list of detected Audio Devices", null, 3);
             }
             catch (Exception e)
             {

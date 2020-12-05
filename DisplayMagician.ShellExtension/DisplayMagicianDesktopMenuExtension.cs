@@ -16,7 +16,7 @@ namespace DisplayMagician.ShellExtension
 {
     [ComVisible(true)]
     [COMServerAssociation(AssociationType.DesktopBackground)]
-    [Guid("346e3285-43ca-45bc-8b33-1d4cdfe32e00")]
+    [Guid("592dcbe6-3052-47bb-b962-101abb5e0ce8")]
     public class HeliosDesktopMenuExtension : SharpContextMenu
     {
         // Other constants that are useful

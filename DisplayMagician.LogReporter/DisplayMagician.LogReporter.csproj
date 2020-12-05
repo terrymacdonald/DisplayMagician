@@ -8,8 +8,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{76DF2BCF-911B-4820-B63E-8F3468DB5E79}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>HeliosPlus.LogReporter</RootNamespace>
-    <AssemblyName>HeliosPlus.LogReporter</AssemblyName>
+    <RootNamespace>DisplayMagician.LogReporter</RootNamespace>
+    <AssemblyName>LogReporter</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -37,7 +37,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -48,7 +48,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -83,6 +83,9 @@
     <Content Include="DisplayMagician.ico" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio">
+      <Version>3.0.0.1</Version>
+    </PackageReference>
     <PackageReference Include="Costura.Fody">
       <Version>4.1.0</Version>
     </PackageReference>

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 
 [assembly: AssemblyTitle("DisplayMagician Shell Extension")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Change display profiles from your Desktop using this popup menu.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("DisplayMagician")]
-[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021, Copyright © Soroush Falahati 2017-2020")]
+[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021, Soroush Falahati 2017-2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
-[assembly: Guid("346e3285-43ca-45bc-8b33-1d4cdfe32e00")]
+[assembly: Guid("592dcbe6-3052-47bb-b962-101abb5e0ce8")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -35,5 +35,5 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("0.9.5.*")]
-[assembly: AssemblyFileVersion("0.9.5.0")]
+[assembly: AssemblyVersion("0.1.0.*")]
+[assembly: AssemblyFileVersion("0.1.0.0")]
