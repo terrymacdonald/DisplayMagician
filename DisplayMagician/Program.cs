@@ -132,26 +132,14 @@ namespace DisplayMagician {
             // This is the CreateProfile command
             app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
             {
-                var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
-                argumentProfile.Validators.Add(new ProfileMustExistValidator());
-
                 //description and help text of the command.
                 createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
 
                 createProfileCmd.OnExecute(() =>
                 {
-                    try
-                    {
-                        // Lookup the profile
-                        ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(argumentProfile.Value)).First();
-
-                        ApplyProfile(profileToUse);
-                        return 0;
-                    }
-                    catch (Exception)
-                    {
-                        return 1;
-                    }
+                    Console.WriteLine("Starting up and creating a new Display Profile...");
+                    StartUpApplication(DisplayMagicianStartupAction.CreateProfile);
+                    return 0;
                 });
             });
 
@@ -159,7 +147,7 @@ namespace DisplayMagician {
             {
 
                 Console.WriteLine("Starting Normally...");
-                StartUpNormally();
+                StartUpApplication();
                 return 0;
             });
 
@@ -188,7 +176,7 @@ namespace DisplayMagician {
             return 0;
         }
 
-        private static void StartUpNormally()
+        private static void StartUpApplication(DisplayMagicianStartupAction startupAction = DisplayMagicianStartupAction.StartUpNormally)
         {
             
 
@@ -280,8 +268,14 @@ namespace DisplayMagician {
                 {
                     Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
+
                 IPCService.GetInstance().Status = InstanceStatus.User;
-                Application.Run(new UIForms.MainForm());
+
+                // Run the program with normal startup
+                if (startupAction == DisplayMagicianStartupAction.StartUpNormally)
+                    Application.Run(new MainForm());
+                else if (startupAction == DisplayMagicianStartupAction.CreateProfile) 
+                    Application.Run(new DisplayProfileForm());
 
             }
             catch (Exception ex)

@@ -21,7 +21,7 @@ namespace DisplayMagician.UIForms
         private bool allowVisible;     // ContextMenu's Show command used
         private bool allowClose;       // ContextMenu's Exit command used
 
-        public MainForm()
+        public MainForm(Form formToOpen = null)
         {
             InitializeComponent();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
@@ -52,6 +52,17 @@ namespace DisplayMagician.UIForms
                 cb_minimise_notification_area.Checked = false;
             }
 
+            // If we've been handed a Form of some kind, then open it straight away
+            if (formToOpen is DisplayProfileForm)
+            {
+                var displayProfileForm = new DisplayProfileForm();
+                displayProfileForm.ShowDialog(this);
+            }
+            else if (formToOpen is ShortcutLibraryForm)
+            {
+                var shortcutLibraryForm = new ShortcutLibraryForm();
+                shortcutLibraryForm.ShowDialog(this);
+            }
 
         }
 
