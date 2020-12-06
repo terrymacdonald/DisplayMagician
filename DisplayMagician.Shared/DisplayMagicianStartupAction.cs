@@ -4,6 +4,7 @@
     {
         RunShortcut,
         ChangeProfile,
+        CreateProfile,
         StartUpNormally
     }
 }

@@ -15,22 +15,23 @@ using Microsoft.Win32;
 namespace DisplayMagician.ShellExtension
 {
     [ComVisible(true)]
+    [Guid("de271cd7-fa82-439f-b128-202d473bb51e")]
+    [RegistrationName("DisplayMagician.ShellExtension")]
     [COMServerAssociation(AssociationType.DesktopBackground)]
-    [Guid("592dcbe6-3052-47bb-b962-101abb5e0ce8")]
-    public class HeliosDesktopMenuExtension : SharpContextMenu
+    public class DisplayMagicianDesktopMenuExtension : SharpContextMenu
     {
         // Other constants that are useful
-        internal static Version _version = new Version(1, 0, 0);
+        internal static Version _version = new Version(0, 1, 0);
         internal static string AlternateAppHomePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DisplayMagician");
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_version.ToString(2)}.json");
+        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_1.0.json");
         internal static string registryDisplayMagician = @"SOFTWARE\DisplayMagician";
         string DisplayMagicianFullname = "";
         string DisplayMagicianInstallDir = "";
         Process DisplayMagicianProcess = null;
 
-        public HeliosDesktopMenuExtension()
+        public DisplayMagicianDesktopMenuExtension()
         { }
 
         protected override bool CanShowMenu()
@@ -70,54 +71,65 @@ namespace DisplayMagician.ShellExtension
             //Logging.Log($"Starting CreateMenu");
             var explorerMenuStrip = new ContextMenuStrip();
 
-            if (File.Exists(DisplayMagicianFullname))
+            Dictionary<string, string> profiles = new Dictionary<string, string>();
+
+            if (File.Exists(_profileStorageJsonFileName))
             {
+                //Logging.Log($"{_profileStorageJsonFileName} file exists");
+                MatchCollection mc;
+                string uuid = "";
+                string profileName = "";
 
-                var extensionMenu = new ToolStripMenuItem("DisplayMagician: Change display profiles...", Properties.Resources.DisplayMagicianMenuImage);
-                explorerMenuStrip.Items.Add(extensionMenu);
-
-                Dictionary<string, string> profiles = new Dictionary<string, string>();
-
-                if (File.Exists(_profileStorageJsonFileName))
+                foreach (string aLine in File.ReadLines(_profileStorageJsonFileName, Encoding.Unicode))
                 {
-                    MatchCollection mc;
-                    string uuid = "";
-                    string profileName = "";
-
-                    foreach (string aLine in File.ReadLines(_profileStorageJsonFileName, Encoding.Unicode))
+                    //Logging.Log($"Processing line: {_profileStorageJsonFileName}");
+                    string lineToProcess = aLine;
+                    if (lineToProcess.StartsWith("    \"UUID\""))
                     {
-                        string lineToProcess = aLine;
-                        if (lineToProcess.StartsWith("    \"UUID\""))
-                        {
-                            mc = Regex.Matches(lineToProcess, "    \"UUID\": \"(.*)\"");
-                            uuid = mc[0].Groups[1].ToString();
-                        }
-                        else if (lineToProcess.StartsWith("    \"Name\""))
-                        {
-                            mc = Regex.Matches(lineToProcess, "    \"Name\": \"(.*)\"");
-                            profileName = mc[0].Groups[1].ToString();
-                            if (!uuid.Equals(""))
-                                profiles.Add(profileName, uuid);
-                        }
-
+                        //Logging.Log($"Line starts with 4 spaces and UUID");
+                        mc = Regex.Matches(lineToProcess, "    \"UUID\": \"(.*)\"");
+                        uuid = mc[0].Groups[1].ToString();
+                    }
+                    else if (lineToProcess.StartsWith("    \"Name\""))
+                    {
+                        //Logging.Log($"Line starts with 4 spaces and Name");
+                        mc = Regex.Matches(lineToProcess, "    \"Name\": \"(.*)\"");
+                        profileName = mc[0].Groups[1].ToString();
+                        if (!uuid.Equals(""))
+                            profiles.Add(profileName, uuid);
                     }
 
                 }
 
-                if (profiles.Count > 0)
-                {
+            }
 
-                    foreach (KeyValuePair<string, string> pair in profiles.OrderBy(key => key.Key))
-                    {
-                        extensionMenu.DropDownItems.Add(new ToolStripMenuItem(pair.Key, null,
-                            (sender, args) =>
-                            {
-                                Logging.Log(DisplayMagicianFullname + $" ChangeProfile \"{pair.Value}\"");
-                                DisplayMagicianProcess = Process.Start(DisplayMagicianFullname,$"ChangeProfile \"{pair.Value}\"");
-                                Logging.Log(DisplayMagicianProcess.ToString());
-                            }
-                        ));
-                    }
+            var extensionMenu = new ToolStripMenuItem("DisplayMagician: Change display profiles...", Properties.Resources.DisplayMagicianMenuImage);
+            explorerMenuStrip.Items.Add(extensionMenu);
+
+            // Add the first menu to create a new Displaay Profile
+            extensionMenu.DropDownItems.Add(new ToolStripMenuItem("Create a new display profile", null,
+                (sender, args) =>
+                {
+                    //Logging.Log(DisplayMagicianFullname + $" CreateProfile");
+                    DisplayMagicianProcess = Process.Start(DisplayMagicianFullname, $"CreateProfile");
+                    //Logging.Log(DisplayMagicianProcess.ToString());
+                }
+            ));
+
+            if (profiles.Count > 0)
+            {
+                extensionMenu.DropDownItems.Add(new ToolStripSeparator());
+
+                foreach (KeyValuePair<string, string> pair in profiles.OrderBy(key => key.Key))
+                {
+                    extensionMenu.DropDownItems.Add(new ToolStripMenuItem(pair.Key, null,
+                        (sender, args) =>
+                        {
+                            //Logging.Log(DisplayMagicianFullname + $" ChangeProfile \"{pair.Value}\"");
+                            DisplayMagicianProcess = Process.Start(DisplayMagicianFullname,$"ChangeProfile \"{pair.Value}\"");
+                            //Logging.Log(DisplayMagicianProcess.ToString());
+                        }
+                    ));
                 }
             }
 

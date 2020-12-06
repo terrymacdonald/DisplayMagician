@@ -1,16 +1,12 @@
 ﻿using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.InterProcess;
-using DisplayMagician.Resources;
 using DisplayMagician.Shared;
 using Newtonsoft.Json;
-using NvAPIWrapper.Mosaic;
-using NvAPIWrapper.Native.Mosaic;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing.IconLib;
 using System.IO;
 using System.Linq;
 using System.Text;

@@ -129,6 +129,32 @@ namespace DisplayMagician {
                 });
             });
 
+            // This is the CreateProfile command
+            app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
+            {
+                var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
+                argumentProfile.Validators.Add(new ProfileMustExistValidator());
+
+                //description and help text of the command.
+                createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
+
+                createProfileCmd.OnExecute(() =>
+                {
+                    try
+                    {
+                        // Lookup the profile
+                        ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(argumentProfile.Value)).First();
+
+                        ApplyProfile(profileToUse);
+                        return 0;
+                    }
+                    catch (Exception)
+                    {
+                        return 1;
+                    }
+                });
+            });
+
             app.OnExecute(() =>
             {
 

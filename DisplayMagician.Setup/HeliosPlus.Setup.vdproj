@@ -226,13 +226,13 @@
         "Entry"
         {
         "MsmKey" = "8:_7E279826AED3D503C2B7F7DB69F2C6E7"
-        "OwnerKey" = "8:_60AA7260CBB14B2DA5A5237FEBBA6E3B"
+        "OwnerKey" = "8:_3427114400C346E681DEA717B5D9A237"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_7E279826AED3D503C2B7F7DB69F2C6E7"
-        "OwnerKey" = "8:_3427114400C346E681DEA717B5D9A237"
+        "OwnerKey" = "8:_60AA7260CBB14B2DA5A5237FEBBA6E3B"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -394,13 +394,25 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_3427114400C346E681DEA717B5D9A237"
+        "OwnerKey" = "8:_65F5D368273B99C7FE49B20D33031A7B"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_6F55062F4B8FDA7C720DAA94953D9E90"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_60AA7260CBB14B2DA5A5237FEBBA6E3B"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_3427114400C346E681DEA717B5D9A237"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -583,18 +595,6 @@
         "OwnerKey" = "8:_90FC8214331F53FD9474FAE9E83D2C2C"
         "MsmSig" = "8:_UNDEFINED"
         }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_65F5D368273B99C7FE49B20D33031A7B"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_6F55062F4B8FDA7C720DAA94953D9E90"
-        "MsmSig" = "8:_UNDEFINED"
-        }
     }
     "Configurations"
     {
@@ -678,7 +678,7 @@
             "EntryPoint" = "8:"
             "Sequence" = "3:1"
             "Identifier" = "8:_703939FB_1800_4C54_9228_AE37F541938E"
-            "InstallerClass" = "11:TRUE"
+            "InstallerClass" = "11:FALSE"
             "CustomActionData" = "8:"
             "Run64Bit" = "11:TRUE"
             }
@@ -693,7 +693,7 @@
             "EntryPoint" = "8:"
             "Sequence" = "3:1"
             "Identifier" = "8:_4CB63466_63BE_413E_AFD3_98040D42F4F1"
-            "InstallerClass" = "11:TRUE"
+            "InstallerClass" = "11:FALSE"
             "CustomActionData" = "8:"
             "Run64Bit" = "11:TRUE"
             }
@@ -1034,7 +1034,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DisplayMagician.ShellExtension, Version=0.1.0.41963, Culture=neutral, PublicKeyToken=23a864d3136391eb, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:DisplayMagician.ShellExtension, Version=0.1.0.37800, Culture=neutral, PublicKeyToken=23a864d3136391eb, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_3427114400C346E681DEA717B5D9A237"
@@ -1542,7 +1542,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
+            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1581,7 +1581,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DisplayMagician.Shared, Version=0.9.5.40335, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:DisplayMagician.Shared, Version=0.9.5.36656, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_CF2B5512697D3444DA5C7C187AE26988"
@@ -1892,15 +1892,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
-        "ProductCode" = "8:{78BBD2D7-BE5D-4C74-B612-091C756EF26B}"
-        "PackageCode" = "8:{2712909A-C2E7-4E3C-907A-CEF66D9B7438}"
+        "ProductCode" = "8:{65098CF0-9B4F-4078-9DCA-3EB25C8497B7}"
+        "PackageCode" = "8:{7C3CC1F3-8872-45A6-A688-90E6938B88DC}"
         "UpgradeCode" = "8:{48CB9401-ADED-4D62-B779-8317C7D069E1}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:0.9.0"
+        "ProductVersion" = "8:0.1.0"
         "Manufacturer" = "8:Terry MacDonald"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
