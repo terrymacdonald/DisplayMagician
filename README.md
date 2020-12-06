@@ -55,7 +55,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Support of AMD Eyefinity (Needs a C# wrapper for AMD ADL)
 
 ## Donation
-No need to donate! I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. Thanks to Soroush for making HeliosDisplayMangement and licensing it under GPL2 so I could make the improvements I was longing for!
+I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. That said, I'd appreciate a donation to help buy a coffee or two! If you're so inclined, you can [sponsor me on GitHub Sponsors](https://github.com/sponsors/terrymacdonald). 
 
 ## Usage
 
