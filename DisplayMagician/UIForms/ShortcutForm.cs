@@ -1598,7 +1598,6 @@ namespace DisplayMagician.UIForms
                         if (audioDevice.IsDefaultDevice)
                         {
                             selectedAudioDevice = audioDevice;
-                            cb_audio_device.SelectedIndex = index;
                             nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
                         }
                     }

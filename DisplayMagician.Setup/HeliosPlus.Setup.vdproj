@@ -33,6 +33,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_17318CC18ADCD5BC9DA9C8A310A67048"
         "OwnerKey" = "8:_60B51A1095E94B74AA2206DF3550327A"
         "MsmSig" = "8:_UNDEFINED"
@@ -782,6 +788,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0AABD6506465427BA9CC59EE51C5B2D3"
+            {
+            "SourcePath" = "8:Resources\\installer_bitmap.png"
+            "TargetName" = "8:installer_bitmap.png"
+            "Tag" = "8:"
+            "Folder" = "8:_994B36D509C14116B6C6DCEC92ED8846"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_17318CC18ADCD5BC9DA9C8A310A67048"
             {
             "AssemblyRegister" = "3:1"
@@ -1034,7 +1060,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DisplayMagician.ShellExtension, Version=0.1.0.37800, Culture=neutral, PublicKeyToken=23a864d3136391eb, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:DisplayMagician.ShellExtension, Version=0.1.0.38105, Culture=neutral, PublicKeyToken=23a864d3136391eb, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_3427114400C346E681DEA717B5D9A237"
@@ -1581,7 +1607,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DisplayMagician.Shared, Version=0.9.5.36656, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:DisplayMagician.Shared, Version=0.9.5.38666, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_CF2B5512697D3444DA5C7C187AE26988"
@@ -1893,7 +1919,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
         "ProductCode" = "8:{65098CF0-9B4F-4078-9DCA-3EB25C8497B7}"
-        "PackageCode" = "8:{7C3CC1F3-8872-45A6-A688-90E6938B88DC}"
+        "PackageCode" = "8:{1D6DDA6E-93EC-4A0D-A934-B30AD68B76BE}"
         "UpgradeCode" = "8:{48CB9401-ADED-4D62-B779-8317C7D069E1}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -2034,7 +2060,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "InstallAllUsersVisible"
@@ -2069,7 +2096,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -2091,7 +2119,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "CopyrightWarning"
@@ -2102,8 +2131,8 @@
                             "Type" = "3:3"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:1"
-                            "Value" = "8:#1202"
+                            "Setting" = "3:2"
+                            "Value" = "8:This computer program is shared under GPLv3. Find out more at https://www.gnu.org/licenses/gpl-3.0.en.html ."
                             "DefaultValue" = "8:#1202"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -2115,8 +2144,8 @@
                             "Type" = "3:3"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:1"
-                            "Value" = "8:#1203"
+                            "Setting" = "3:2"
+                            "Value" = "8:Hi! DisplayMagician is designed to automate configuring your displays, changing your audio and running additional applications before your game starts, and then reverting everything back to the way it was. It's all designed to make it far easier for you play your video games. The installer will guide you through the steps required to install [ProductName] on your computer."
                             "DefaultValue" = "8:#1203"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -2148,7 +2177,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "ShowProgress"
@@ -2192,7 +2222,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -2214,7 +2245,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -2236,7 +2268,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "CopyrightWarning"
@@ -2247,8 +2280,8 @@
                             "Type" = "3:3"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:1"
-                            "Value" = "8:#1202"
+                            "Setting" = "3:2"
+                            "Value" = "8:This computer program is shared under GPLv3. Find out more at https://www.gnu.org/licenses/gpl-3.0.en.html ."
                             "DefaultValue" = "8:#1202"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -2260,8 +2293,8 @@
                             "Type" = "3:3"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:1"
-                            "Value" = "8:#1203"
+                            "Setting" = "3:2"
+                            "Value" = "8:Hi! DisplayMagician is designed to automate configuring your displays, changing your audio and running additional applications before your game starts, and then reverting everything back to the way it was. It's all designed to make it far easier for you play your video games. The installer will guide you through the steps required to install [ProductName] on your computer."
                             "DefaultValue" = "8:#1203"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -2299,7 +2332,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "UpdateText"
@@ -2343,7 +2377,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -2374,7 +2409,8 @@
                             "Type" = "3:8"
                             "ContextData" = "8:Bitmap"
                             "Attributes" = "3:4"
-                            "Setting" = "3:1"
+                            "Setting" = "3:2"
+                            "Value" = "8:_0AABD6506465427BA9CC59EE51C5B2D3"
                             "UsePlugInResources" = "11:TRUE"
                             }
                             "ShowProgress"
