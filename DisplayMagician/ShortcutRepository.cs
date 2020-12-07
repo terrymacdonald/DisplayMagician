@@ -447,8 +447,12 @@ namespace DisplayMagician
             }
 
             // record the old audio device
+            bool needToChangeAudio = false;
             CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
             double rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
+            if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                needToChangeAudio = true;
+
 
             // Change Audio Device (if one specified)
             if (shortcutToUse.ChangeAudioDevice)
@@ -835,7 +839,7 @@ namespace DisplayMagician
             }
 
             // Change Audio Device back (if one specified)
-            if (shortcutToUse.ChangeAudioDevice)
+            if (needToChangeAudio)
             {
                 // use the Audio Device
                 rollbackAudioDevice.SetAsDefault();
