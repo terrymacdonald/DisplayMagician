@@ -37,6 +37,7 @@ namespace DisplayMagician {
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
         public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
         public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
+        public static string AppLogPath = Path.Combine(Program.AppDataPath, $"Logs");
         public static string AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, @"DisplayMagician.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
@@ -45,12 +46,47 @@ namespace DisplayMagician {
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
 
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         /// <summary>
         ///     The main entry point for the application.
         /// </summary>
         [STAThread]
         private static int Main(string[] args)
         {
+
+            // Prepare NLog for logging
+            var config = new NLog.Config.LoggingConfiguration();
+
+            // Targets where to log to: File and Console
+            string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
+            string AppLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{date}.log");
+
+            // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
+            if (!Directory.Exists(AppLogPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppLogPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                }
+            }
+
+            var logfile = new NLog.Targets.FileTarget("logfile") { 
+                FileName = AppLogFilename 
+            };
+            var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
+
+            // Rules for mapping loggers to targets            
+            config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole);
+            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logfile);
+
+            // Apply config           
+            NLog.LogManager.Configuration = config;
+
 
             // Write the Application Name
             Console.WriteLine($"{Application.ProductName} v{Application.ProductVersion}");
@@ -122,8 +158,9 @@ namespace DisplayMagician {
                         ApplyProfile(profileToUse);
                         return 0;
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        logger.Error(ex, $"Program/Main exception running ApplyProfile(profileToUse)");
                         return 1;
                     }
                 });
@@ -161,6 +198,7 @@ namespace DisplayMagician {
             }
             catch (CommandParsingException ex)
             {
+                logger.Error(ex, $"Program/Main exception parsing the Commands passed to the program");
                 Console.WriteLine("Didn't recognise the supplied commandline options: {0}", ex.Message);
             }
             catch (Exception ex)
@@ -169,8 +207,12 @@ namespace DisplayMagician {
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
                 // "Unrecognized command or argument '<invalid-command>'"
+                logger.Error(ex, $"Program/Main general exception during app.Execute(args)");
                 Console.WriteLine($"Program/Main exception: Unable to execute application - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
+
+            // Shutdown NLog
+            NLog.LogManager.Shutdown();
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
             return 0;
@@ -192,7 +234,6 @@ namespace DisplayMagician {
                     throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
                 }
 
-                
                 // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppIconPath))
                 {
@@ -203,22 +244,7 @@ namespace DisplayMagician {
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        // TODO
-                    }
-                }
-
-
-                // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
-                if (!Directory.Exists(AppIconPath))
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(AppIconPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        // TODO
+                        logger.Error(ex, $"Program/StartUpNormally exception while trying to create directory {AppIconPath}");
                     }
                 }
 
@@ -267,6 +293,7 @@ namespace DisplayMagician {
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    logger.Error(ex, $"Program/StartUpNormally exception create Icon files for future use in {AppIconPath}");
                 }
 
                 IPCService.GetInstance().Status = InstanceStatus.User;
@@ -281,6 +308,7 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"Program/StartUpNormally top level exception");
                 MessageBox.Show(
                     ex.Message,
                     Language.Fatal_Error,
@@ -412,6 +440,7 @@ namespace DisplayMagician {
                     }
                     catch (AggregateException ae)
                     {
+                        logger.Error(ae, $"Program/ApplyProfile exception during applyTopologyTask");
                         foreach (var e in ae.InnerExceptions)
                         {
                             // Handle the custom exception.
@@ -442,6 +471,7 @@ namespace DisplayMagician {
                 }
                 catch (AggregateException ae)
                 {
+                    logger.Error(ae, $"Program/ApplyProfile exception during applyPathInfoTask");
                     foreach (var e in ae.InnerExceptions)
                     {
                         // Handle the custom exception.
@@ -519,6 +549,7 @@ namespace DisplayMagician {
             }
             catch (AggregateException ae)
             {
+                logger.Error(ae, $"Program/LoadGamesInBackground exception during loadGamesTasks");
                 Console.WriteLine("Program/LoadGamesInBackground : Task exception!");
                 foreach (var e in ae.InnerExceptions)
                 {
