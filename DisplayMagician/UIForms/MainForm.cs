@@ -12,6 +12,7 @@ using System.Threading;
 using System.Reflection;
 using DisplayMagician.Shared;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace DisplayMagician.UIForms
 {
@@ -119,7 +120,25 @@ namespace DisplayMagician.UIForms
         {
             // Start loading the Steam Games just after the Main form opens
             //SteamGame.GetAllInstalledGames();
+            EnableShortcutButtonIfProfiles();
         }
+
+        private void EnableShortcutButtonIfProfiles()
+        {
+            if (ProfileRepository.AllProfiles.Count > 0)
+            {
+                btn_setup_game_shortcuts.Visible = true;
+                pb_game_shortcut.Enabled = true;
+            }
+            else
+            {
+                btn_setup_game_shortcuts.Visible = false;
+                pb_game_shortcut.Enabled = false;
+
+            }
+
+        }
+
 
         private void RefreshNotifyIconMenus()
         {
@@ -250,5 +269,9 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void MainForm_Activated(object sender, EventArgs e)
+        {
+            EnableShortcutButtonIfProfiles();
+        }
     }
 }

@@ -1036,11 +1036,14 @@ namespace DisplayMagician.UIForms
             // 
             // btn_choose_game
             // 
+            this.btn_choose_game.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_choose_game.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_choose_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_choose_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_choose_game.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_game.Location = new System.Drawing.Point(411, 115);
+            this.btn_choose_game.Location = new System.Drawing.Point(408, 117);
             this.btn_choose_game.Name = "btn_choose_game";
-            this.btn_choose_game.Size = new System.Drawing.Size(29, 31);
+            this.btn_choose_game.Size = new System.Drawing.Size(40, 46);
             this.btn_choose_game.TabIndex = 16;
             this.btn_choose_game.Text = ">>";
             this.btn_choose_game.UseVisualStyleBackColor = true;
