@@ -11,9 +11,11 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Win32;
+using System.Drawing;
 
 namespace DisplayMagician.ShellExtension
 {
+
     [ComVisible(true)]
     [Guid("de271cd7-fa82-439f-b128-202d473bb51e")]
     [RegistrationName("DisplayMagician.ShellExtension")]
@@ -30,6 +32,13 @@ namespace DisplayMagician.ShellExtension
         string DisplayMagicianFullname = "";
         string DisplayMagicianInstallDir = "";
         Process DisplayMagicianProcess = null;
+
+        private struct ProfileData
+        {
+            public string UUID;
+            public string Name;
+            public Bitmap Bitmap;
+        }
 
         public DisplayMagicianDesktopMenuExtension()
         { }
@@ -71,7 +80,7 @@ namespace DisplayMagician.ShellExtension
             //Logging.Log($"Starting CreateMenu");
             var explorerMenuStrip = new ContextMenuStrip();
 
-            Dictionary<string, string> profiles = new Dictionary<string, string>();
+            List<ProfileData> profiles = new List<ProfileData>();
 
             if (File.Exists(_profileStorageJsonFileName))
             {
@@ -79,6 +88,7 @@ namespace DisplayMagician.ShellExtension
                 MatchCollection mc;
                 string uuid = "";
                 string profileName = "";
+                string profileBitmapData = "";
 
                 foreach (string aLine in File.ReadLines(_profileStorageJsonFileName, Encoding.Unicode))
                 {
@@ -95,9 +105,60 @@ namespace DisplayMagician.ShellExtension
                         //Logging.Log($"Line starts with 4 spaces and Name");
                         mc = Regex.Matches(lineToProcess, "    \"Name\": \"(.*)\"");
                         profileName = mc[0].Groups[1].ToString();
-                        if (!uuid.Equals(""))
-                            profiles.Add(profileName, uuid);
                     }
+
+                    
+                    else if (lineToProcess.StartsWith("    \"ProfileBitmap\""))
+                    {
+                        //Logging.Log($"Line starts with 4 spaces and Name");
+                        mc = Regex.Matches(lineToProcess, "    \"ProfileBitmap\": \"(.*)\"");
+                        profileBitmapData = mc[0].Groups[1].ToString();
+                        if (!String.IsNullOrEmpty(uuid) && !String.IsNullOrEmpty(profileName))
+                        {
+                            var bytes = Convert.FromBase64String(profileBitmapData);
+                            Bitmap profileBitmap;
+                            using (var ms = new MemoryStream(bytes))
+                                profileBitmap = new Bitmap(Bitmap.FromStream(ms),16,16);
+
+
+                            ProfileData newProfile = new ProfileData();
+                            newProfile.UUID = uuid;
+                            newProfile.Name = profileName;
+                            if (profileBitmap is Bitmap)
+                            {
+                                newProfile.Bitmap = profileBitmap;
+                            }
+                            else
+                                newProfile.Bitmap = null;
+
+                            profiles.Add(newProfile);
+                        }
+                            
+                    }
+
+                    /*else if (lineToProcess.StartsWith("    \"SavedProfileIconCacheFilename\""))
+                    {
+                        //Logging.Log($"Line starts with 4 spaces and Name");
+                        mc = Regex.Matches(lineToProcess, "    \"SavedProfileIconCacheFilename\": \"(.*)\"");
+                        profileIconPath = mc[0].Groups[1].ToString();
+                        if (!String.IsNullOrEmpty(uuid) && !String.IsNullOrEmpty(profileName))
+                        {
+                            ProfileData newProfile = new ProfileData();
+                            newProfile.UUID = uuid;
+                            newProfile.Name = profileName;
+                            if (File.Exists(profileIconPath))
+                            {
+
+                                Icon myIcon = Icon.ExtractAssociatedIcon(profileIconPath);
+                                newProfile.Bitmap = new Icon(myIcon, 16, 16).ToBitmap();
+                            }
+                            else
+                                newProfile.Bitmap = null;
+
+                            profiles.Add(newProfile);
+                        }
+                            
+                    }*/
 
                 }
 
@@ -106,7 +167,7 @@ namespace DisplayMagician.ShellExtension
             var extensionMenu = new ToolStripMenuItem("DisplayMagician: Change display profiles...", Properties.Resources.DisplayMagicianMenuImage);
             explorerMenuStrip.Items.Add(extensionMenu);
 
-            // Add the first menu to create a new Displaay Profile
+            // Add the first menu to create a new Display Profile
             extensionMenu.DropDownItems.Add(new ToolStripMenuItem("Create a new display profile", null,
                 (sender, args) =>
                 {
@@ -120,13 +181,13 @@ namespace DisplayMagician.ShellExtension
             {
                 extensionMenu.DropDownItems.Add(new ToolStripSeparator());
 
-                foreach (KeyValuePair<string, string> pair in profiles.OrderBy(key => key.Key))
+                foreach (ProfileData profile in profiles.OrderBy(p => p.Name))
                 {
-                    extensionMenu.DropDownItems.Add(new ToolStripMenuItem(pair.Key, null,
+                    extensionMenu.DropDownItems.Add(new ToolStripMenuItem(profile.Name, profile.Bitmap,
                         (sender, args) =>
                         {
                             //Logging.Log(DisplayMagicianFullname + $" ChangeProfile \"{pair.Value}\"");
-                            DisplayMagicianProcess = Process.Start(DisplayMagicianFullname,$"ChangeProfile \"{pair.Value}\"");
+                            DisplayMagicianProcess = Process.Start(DisplayMagicianFullname,$"ChangeProfile \"{profile.UUID}\"");
                             //Logging.Log(DisplayMagicianProcess.ToString());
                         }
                     ));
