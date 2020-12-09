@@ -5,7 +5,6 @@ using System.IO;
 using System;
 using SharpShell.Attributes;
 using SharpShell.SharpContextMenu;
-using SharpShell.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -135,30 +134,6 @@ namespace DisplayMagician.ShellExtension
                         }
                             
                     }
-
-                    /*else if (lineToProcess.StartsWith("    \"SavedProfileIconCacheFilename\""))
-                    {
-                        //Logging.Log($"Line starts with 4 spaces and Name");
-                        mc = Regex.Matches(lineToProcess, "    \"SavedProfileIconCacheFilename\": \"(.*)\"");
-                        profileIconPath = mc[0].Groups[1].ToString();
-                        if (!String.IsNullOrEmpty(uuid) && !String.IsNullOrEmpty(profileName))
-                        {
-                            ProfileData newProfile = new ProfileData();
-                            newProfile.UUID = uuid;
-                            newProfile.Name = profileName;
-                            if (File.Exists(profileIconPath))
-                            {
-
-                                Icon myIcon = Icon.ExtractAssociatedIcon(profileIconPath);
-                                newProfile.Bitmap = new Icon(myIcon, 16, 16).ToBitmap();
-                            }
-                            else
-                                newProfile.Bitmap = null;
-
-                            profiles.Add(newProfile);
-                        }
-                            
-                    }*/
 
                 }
 
