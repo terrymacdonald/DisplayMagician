@@ -107,47 +107,25 @@ namespace DisplayMagician.GameLibraries
 
         public override string Directory
         {
-            get => _uplayGameExePath;
-            set => _uplayGameExePath = value;
+            get => _uplayGameDir;
+            set => _uplayGameDir = value;
         }
 
         public override bool IsRunning
         {
             get
             {
-                /*try
+                int numGameProcesses = 0;
+                List<Process> gameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
+                foreach (Process gameProcess in gameProcesses)
                 {
-                    using (
-                        var key = Registry.CurrentUser.OpenSubKey(_gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
-                    {
-                        if ((int)key?.GetValue(@"Running", 0) == 1)
-                        {
-                            return true;
-                        }
-                        return false;
-                    }
+                    if (gameProcess.MainModule.FileName.StartsWith(_uplayGameExePath))
+                        numGameProcesses++;
                 }
-                catch (SecurityException ex)
-                {
-                    Console.WriteLine($"UplayGame/IsRunning securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
-                }
-                catch (IOException ex)
-                {
-                    // Extract some information from this exception, and then
-                    // throw it to the parent method.
-                    Console.WriteLine($"UplayGame/IsRunning ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
-                }*/
-
-                bool isRunning = Process.GetProcessesByName(_uplayGameProcessName)
-                    .FirstOrDefault(p => p.MainModule.FileName
-                    .StartsWith(ExePath, StringComparison.OrdinalIgnoreCase)) != default(Process);
-                return isRunning;
+                if (numGameProcesses > 0)
+                    return true;
+                else
+                    return false;
             }
         }
 
@@ -196,6 +174,7 @@ namespace DisplayMagician.GameLibraries
             uplayGame.Id = Id;
             uplayGame.Name = Name;
             uplayGame.ExePath = ExePath;
+            uplayGame.Directory = Directory;
             return true;
         }
 

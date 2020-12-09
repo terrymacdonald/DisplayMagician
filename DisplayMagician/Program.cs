@@ -1,25 +1,18 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using McMaster.Extensions.CommandLineUtils;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
-using DisplayMagician.GameLibraries;
 using DisplayMagician.Shared;
 using DisplayMagician.UIForms;
-using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Drawing;
-using System.Diagnostics.Contracts;
 
 namespace DisplayMagician {
  
@@ -60,7 +53,7 @@ namespace DisplayMagician {
 
             // Targets where to log to: File and Console
             string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
-            string AppLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician-{date}.log");
+            string AppLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
 
             // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
             if (!Directory.Exists(AppLogPath))
@@ -80,9 +73,34 @@ namespace DisplayMagician {
             };
             var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
 
-            // Rules for mapping loggers to targets            
+            // Load the program settings
+            AppProgramSettings = ProgramSettings.LoadSettings();
+
+            // Rules for mapping loggers to targets          
+            NLog.LogLevel logLevel = null;
+            switch (AppProgramSettings.LogLevel)
+            {
+                case "Trace":
+                    logLevel = NLog.LogLevel.Trace;
+                    break;
+                case "Info":
+                    logLevel = NLog.LogLevel.Info;
+                    break;
+                case "Warn":
+                    logLevel = NLog.LogLevel.Warn;
+                    break;
+                case "Error":
+                    logLevel = NLog.LogLevel.Error;
+                    break;
+                case "Debug":
+                    logLevel = NLog.LogLevel.Debug;
+                    break;
+                default:
+                    logLevel = NLog.LogLevel.Warn;
+                    break;
+            }
             config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole);
-            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logfile);
+            config.AddRule(logLevel, NLog.LogLevel.Fatal, logfile);
 
             // Apply config           
             NLog.LogManager.Configuration = config;
@@ -103,8 +121,6 @@ namespace DisplayMagician {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             
-            // Load the program settings
-            AppProgramSettings = ProgramSettings.LoadSettings();
 
             var app = new CommandLineApplication();
 

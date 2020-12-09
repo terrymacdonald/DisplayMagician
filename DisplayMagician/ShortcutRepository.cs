@@ -29,6 +29,7 @@ namespace DisplayMagician
         private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_{Version.ToString(2)}.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
         #region Class Constructors
@@ -48,7 +49,8 @@ namespace DisplayMagician
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                //Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"ShortcutRepository/Instansiation exception during class construction");
                 // ignored
             }
 
@@ -413,6 +415,7 @@ namespace DisplayMagician
             (bool valid, string reason) = shortcutToUse.IsValid();
             if (!valid)
             {
+                logger.Error($"ShortcutRepository/RunShortcut error. shortcutToUse isn't valid");
                 MessageBox.Show(
                     $"Unable to run the shortcut '{shortcutToUse.Name}': {reason}",
                     @"Cannot run the Shortcut",
@@ -443,6 +446,7 @@ namespace DisplayMagician
                 if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
                 {
                     Console.WriteLine($"ERROR - Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                 }
             }
 
@@ -516,7 +520,7 @@ namespace DisplayMagician
             // This means we need to save the state if the temporaryIcon
             // is false.
             // Conversely, if temporaryIcon is true, then we need 
-            // to create a NotifyIncon as MainFOrm isn't running to create
+            // to create a NotifyIncon as MainForm isn't running to create
             // one for us already!
             if (notifyIcon == null)
                 temporaryNotifyIcon = true;
@@ -539,6 +543,7 @@ namespace DisplayMagician
                     catch (Exception ex)
                     {
                         Console.WriteLine($"ShortcutRepository/RunShortcut exception: Trying to  {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut exception setting NotifyIcon");
                         // ignored
                     }
                 }
@@ -632,6 +637,7 @@ namespace DisplayMagician
                         catch (InvalidOperationException ex)
                         {
                             Console.WriteLine($"ShortcutRepository/RunShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                            logger.Error(ex, $"ShortcutRepository/RunShortcut exception waiting for the monitored process to exit");
                             processExitCount++;
                         }
                     }
@@ -662,6 +668,7 @@ namespace DisplayMagician
                         {
                             address += "/" + shortcutToUse.GameArguments;
                         }
+                        logger.Debug($"ShortcutRepository/RunShortcut Steam launch address is {address}");
 
                         // Start the URI Handler to run Steam
                         Console.WriteLine($"Starting Steam Game: {steamGameToRun.Name}");
@@ -695,24 +702,21 @@ namespace DisplayMagician
                             notifyIcon.Text = $"DisplayMagician: Running {steamGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
-                        // Wait 300ms for the game process to spawn
-                        Thread.Sleep(300);
-                        // Now check it's actually started
-                        if (steamGameToRun.IsRunning)
-                        {
-                            // Wait for the game to exit
-                            Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
-                            while (true)
-                            {
-                                if (!steamGameToRun.IsRunning)
-                                {
-                                    break;
-                                }
 
-                                Thread.Sleep(300);
+                        // Wait for the game to exit
+                        Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
+                        logger.Info($"ShortcutRepository/RunShortcut - waiting for Steam Game {steamGameToRun.Name} to exit.");
+                        while (true)
+                        {
+                            if (!steamGameToRun.IsRunning)
+                            {
+                                break;
                             }
-                            Console.WriteLine($"{steamGameToRun.Name} has exited.");
+
+                            Thread.Sleep(300);
                         }
+                        Console.WriteLine($"{steamGameToRun.Name} has exited.");
+                        logger.Info($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} has exited.");
 
                     }
 
@@ -729,6 +733,7 @@ namespace DisplayMagician
                         // Prepare to start the steam game using the URI interface 
                         // as used by Steam for it's own desktop shortcuts.
                         var address = $"uplay://launch/{uplayGameToRun.Id}";
+                        logger.Debug($"ShortcutRepository/RunShortcut Uplay launch address is {address}");
                         if (shortcutToUse.GameArgumentsRequired)
                         {
                             address += "/" + shortcutToUse.GameArguments;
@@ -760,28 +765,26 @@ namespace DisplayMagician
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                         // Add a status notification icon in the status area
-                        notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0,41)}...";
+                        if (uplayGameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name}...";
+                        else
+                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
-                        // Wait 300ms for the game process to spawn
-                        Thread.Sleep(300);
-                        // Now check it's actually started
-                        if (uplayGameToRun.IsRunning)
+                        // Wait for the game to exit
+                        Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
+                        logger.Info($"ShortcutRepository/RunShortcut - waiting for Uplay Game {uplayGameToRun.Name} to exit.");
+                        while (true)
                         {
-                            // Wait for the game to exit
-                            Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
-                            while (true)
+                            if (!uplayGameToRun.IsRunning)
                             {
-                                if (!uplayGameToRun.IsRunning)
-                                {
-                                    break;
-                                }
-
-                                Thread.Sleep(300);
+                                break;
                             }
-                            Console.WriteLine($"{uplayGameToRun.Name} has exited.");
-                        }
 
+                            Thread.Sleep(300);
+                        }
+                        Console.WriteLine($"{uplayGameToRun.Name} has exited.");
+                        logger.Info($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} has exited.");
                     }
 
 
@@ -883,6 +886,5 @@ namespace DisplayMagician
             System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
-
 
 }
