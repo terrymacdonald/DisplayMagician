@@ -129,12 +129,18 @@ namespace DisplayMagician.UIForms
             {
                 btn_setup_game_shortcuts.Visible = true;
                 pb_game_shortcut.Enabled = true;
+                lbl_create_profile.Visible = false;
+
+                if (ShortcutRepository.AllShortcuts.Count > 0)
+                    lbl_create_shortcut.Visible = false;
+                else
+                    lbl_create_shortcut.Visible = true;
             }
             else
             {
                 btn_setup_game_shortcuts.Visible = false;
                 pb_game_shortcut.Enabled = false;
-
+                lbl_create_profile.Visible = true;
             }
 
         }

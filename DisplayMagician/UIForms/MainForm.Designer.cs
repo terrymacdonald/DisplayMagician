@@ -51,6 +51,8 @@
             this.shortcutToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lbl_create_profile = new System.Windows.Forms.Label();
+            this.lbl_create_shortcut = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -68,11 +70,13 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.lbl_create_profile);
             this.splitContainer1.Panel1.Controls.Add(this.btn_setup_display_profiles);
             this.splitContainer1.Panel1.Controls.Add(this.pb_display_profile);
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.lbl_create_shortcut);
             this.splitContainer1.Panel2.Controls.Add(this.cb_minimise_notification_area);
             this.splitContainer1.Panel2.Controls.Add(this.lbl_version);
             this.splitContainer1.Panel2.Controls.Add(this.btn_setup_game_shortcuts);
@@ -221,6 +225,22 @@
             resources.ApplyResources(this.exitToolStripMenuItem, "exitToolStripMenuItem");
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
+            // lbl_create_profile
+            // 
+            resources.ApplyResources(this.lbl_create_profile, "lbl_create_profile");
+            this.lbl_create_profile.BackColor = System.Drawing.Color.Brown;
+            this.lbl_create_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_create_profile.ForeColor = System.Drawing.Color.White;
+            this.lbl_create_profile.Name = "lbl_create_profile";
+            // 
+            // lbl_create_shortcut
+            // 
+            resources.ApplyResources(this.lbl_create_shortcut, "lbl_create_shortcut");
+            this.lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
+            this.lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
+            this.lbl_create_shortcut.Name = "lbl_create_shortcut";
+            // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
@@ -233,6 +253,7 @@
             this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -267,5 +288,7 @@
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.CheckBox cb_minimise_notification_area;
         public System.Windows.Forms.NotifyIcon notifyIcon;
+        private System.Windows.Forms.Label lbl_create_profile;
+        private System.Windows.Forms.Label lbl_create_shortcut;
     }
 }

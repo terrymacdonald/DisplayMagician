@@ -45,6 +45,8 @@ namespace DisplayMagician.UIForms
         {
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
+
+            RemoveWarningIfShortcuts();
         }
 
         private void RefreshShortcutLibraryUI()
@@ -147,6 +149,14 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void RemoveWarningIfShortcuts()
+        {
+            if (ShortcutRepository.AllShortcuts.Count > 0)
+                lbl_create_shortcut.Visible = false;
+            else
+                lbl_create_shortcut.Visible = true;
+        }
+
         private void ilv_saved_shortcuts_ItemClick(object sender, ItemClickEventArgs e)
         {
             _selectedShortcut = GetShortcutFromName(e.Item.Text);
@@ -182,6 +192,7 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
             }
+            RemoveWarningIfShortcuts();
         }
 
         private void btn_edit_Click(object sender, EventArgs e)
@@ -223,6 +234,7 @@ namespace DisplayMagician.UIForms
             _selectedShortcut = null;
 
             RefreshShortcutLibraryUI();
+            RemoveWarningIfShortcuts();
         }
 
         private void btn_run_Click(object sender, EventArgs e)
@@ -261,6 +273,11 @@ namespace DisplayMagician.UIForms
             {
                 tt_selected.RemoveAll();
             }
+        }
+
+        private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
+        {
+            RemoveWarningIfShortcuts();
         }
     }
 }

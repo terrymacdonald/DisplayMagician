@@ -40,6 +40,7 @@
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.label1 = new System.Windows.Forms.Label();
             this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
+            this.lbl_create_shortcut = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // ilv_saved_shortcuts
@@ -184,6 +185,21 @@
             this.label1.TabIndex = 31;
             this.label1.Text = "Game Shortcut Library";
             // 
+            // lbl_create_shortcut
+            // 
+            this.lbl_create_shortcut.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_create_shortcut.AutoSize = true;
+            this.lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
+            this.lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_create_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
+            this.lbl_create_shortcut.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_create_shortcut.Location = new System.Drawing.Point(413, 562);
+            this.lbl_create_shortcut.Name = "lbl_create_shortcut";
+            this.lbl_create_shortcut.Size = new System.Drawing.Size(304, 22);
+            this.lbl_create_shortcut.TabIndex = 32;
+            this.lbl_create_shortcut.Text = "Click the \'New\' button to create a shortcut";
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -191,6 +207,7 @@
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(1134, 716);
+            this.Controls.Add(this.lbl_create_shortcut);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btn_save);
             this.Controls.Add(this.btn_new);
@@ -207,6 +224,7 @@
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "DisplayMagician - Setup Game Shortcuts";
+            this.Activated += new System.EventHandler(this.ShortcutLibraryForm_Activated);
             this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -225,5 +243,6 @@
         private System.Windows.Forms.SaveFileDialog dialog_save;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolTip tt_selected;
+        private System.Windows.Forms.Label lbl_create_shortcut;
     }
 }
