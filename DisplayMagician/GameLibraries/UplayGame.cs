@@ -3,39 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection;
-using System.Security;
-using System.Drawing;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using DisplayMagician.Resources;
-using DisplayMagician.Shared;
-//using HtmlAgilityPack;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-//using VdfParser;
-//using Gameloop.Vdf;
-using System.Collections.ObjectModel;
-using ValveKeyValue;
-using System.Security.Cryptography;
-using System.ServiceModel.Configuration;
-//using DisplayMagician.GameLibraries.UplayAppInfoParser;
-using TsudaKageyu;
-using System.Drawing.IconLib;
-using System.Drawing.IconLib.Exceptions;
 using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
     public class UplayGame : Game
     {
-        /*private static string UplayLibrary.UplayExe;
-        private static string UplayLibrary.UplayPath;
-        private static string _uplayConfigVdfFile;
-        private static string _registryUplayKey = @"SOFTWARE\\Valve\\Uplay";
-        private static string _registryAppsKey = $@"{_registryUplayKey}\\Apps";*/
         private string _gameRegistryKey;
         private uint _uplayGameId;
         private string _uplayGameName;
@@ -45,15 +19,6 @@ namespace DisplayMagician.GameLibraries
         private string _uplayGameProcessName;
         private string _uplayGameIconPath;
         private static List<UplayGame> _allInstalledUplayGames = null;
-
-        /*private struct UplayAppInfo
-        {
-            public uint GameID; 
-            public string GameName;
-            public List<string> GameExes;
-            public string GameInstallDir;
-            public string GameUplayIconPath;
-        }*/
 
         static UplayGame()
         {
