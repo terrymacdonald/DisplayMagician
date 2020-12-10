@@ -7,12 +7,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Drawing.IconLib;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -21,15 +18,11 @@ namespace DisplayMagician.UIForms
     {
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
-        //private ImageListViewItem _selectedShortcutILVItem = null;
         private ShortcutItem _selectedShortcut = null;
 
         public ShortcutLibraryForm()
         {
             InitializeComponent();
-            //_shortcutAdaptor = new ShortcutAdaptor();
-            //_shortcutRepository = new ShortcutRepository();
-            //_profileRepository = new ProfileRepository();
             ilv_saved_shortcuts.MultiSelect = false;
             ilv_saved_shortcuts.ThumbnailSize = new Size(100,100);
             ilv_saved_shortcuts.AllowDrag = false;
@@ -173,8 +166,6 @@ namespace DisplayMagician.UIForms
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                //ShortcutRepository.ReplaceShortcut(shortcutForm.Shortcut);
-                //_selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
                 // As this is an edit, we need to manually force saving the shortcut library
                 ShortcutRepository.SaveShortcuts();
@@ -208,8 +199,6 @@ namespace DisplayMagician.UIForms
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                //ShortcutRepository.ReplaceShortcut(shortcutForm.Shortcut);
-                //_selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
                 // As this is an edit, we need to manually force saving the shortcut library
                 ShortcutRepository.SaveShortcuts();
