@@ -702,7 +702,8 @@ namespace DisplayMagician
                             notifyIcon.Text = $"DisplayMagician: Running {steamGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
-
+                        // Wait 5 seconds for the game process to spawn	
+                        Thread.Sleep(5000);
                         // Wait for the game to exit
                         Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
                         logger.Info($"ShortcutRepository/RunShortcut - waiting for Steam Game {steamGameToRun.Name} to exit.");
@@ -724,14 +725,14 @@ namespace DisplayMagician
                 // If the game is a Uplay Game we check for that
                 else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Uplay))
                 {
-                    // We now need to get the SteamGame info
+                    // We now need to get the Uplay Game  info
                     UplayGame uplayGameToRun = UplayLibrary.GetUplayGame(shortcutToUse.GameAppId);
 
-                    // If the GameAppID matches a Steam game, then lets run it
+                    // If the GameAppID matches a Uplay game, then lets run it
                     if (uplayGameToRun is UplayGame)
                     {
-                        // Prepare to start the steam game using the URI interface 
-                        // as used by Steam for it's own desktop shortcuts.
+                        // Prepare to start the Uplay game using the URI interface 
+                        // as used by Uplay for it's own desktop shortcuts.
                         var address = $"uplay://launch/{uplayGameToRun.Id}";
                         logger.Debug($"ShortcutRepository/RunShortcut Uplay launch address is {address}");
                         if (shortcutToUse.GameArgumentsRequired)
@@ -747,7 +748,7 @@ namespace DisplayMagician
                         Console.WriteLine($"Starting Uplay Game: {uplayGameToRun.Name}");
                         var uplayProcess = Process.Start(address);
 
-                        // Wait for Steam game to update if needed
+                        // Wait for Uplay game to update if needed
                         var ticks = 0;
                         while (ticks < shortcutToUse.StartTimeout * 1000)
                         {
@@ -760,7 +761,7 @@ namespace DisplayMagician
 
                         }
 
-                        // Store the Steam Process ID for later
+                        // Store the Uplay Process ID for later
                         IPCService.GetInstance().HoldProcessId = uplayProcess?.Id ?? 0;
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
@@ -771,6 +772,8 @@ namespace DisplayMagician
                             notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
+                        // Wait 5 seconds for the game process to spawn	
+                        Thread.Sleep(5000);
                         // Wait for the game to exit
                         Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
                         logger.Info($"ShortcutRepository/RunShortcut - waiting for Uplay Game {uplayGameToRun.Name} to exit.");
