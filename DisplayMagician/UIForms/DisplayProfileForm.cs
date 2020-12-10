@@ -182,13 +182,18 @@ namespace DisplayMagician.UIForms
                 // we already have the profile stored
                 _saveOrRenameMode = "rename";
                 btn_save_or_rename.Text = "Rename To";
+                lbl_save_profile.Visible = false;
                 if (!_selectedProfile.IsPossible)
                 {
                     lbl_profile_shown_subtitle.Text = "This Display Profile can't be used as not all Displays are connected.";
                     btn_apply.Visible = false;
+                    dv_profile.Profile = null;
+
                 }
                 else
                 {
+                    dv_profile.Profile = profile;
+
                     if (ProfileRepository.IsActiveProfile(_selectedProfile))
                     {
                         btn_apply.Visible = false;
@@ -208,6 +213,8 @@ namespace DisplayMagician.UIForms
                 btn_save_or_rename.Text = "Save As";
                 lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet.";
                 btn_apply.Visible = false;
+                lbl_save_profile.Visible = true;
+                dv_profile.Profile = profile;
             }
 
             // Refresh the image list view

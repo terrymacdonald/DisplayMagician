@@ -36,6 +36,10 @@ namespace DisplayMagician.Shared.UserControls
             {
                 DrawView(e.Graphics);
             }
+            else
+            {
+                DrawEmptyView(e.Graphics);
+            }
         }
 
         private void DrawPath(Graphics g, Path path)
@@ -232,6 +236,13 @@ namespace DisplayMagician.Shared.UserControls
             {
                 DrawPath(g, path);
             }
+        }
+
+        private void DrawEmptyView(Graphics g)
+        {
+            RectangleF rect = g.VisibleClipBounds;
+            g.FillRectangle(new SolidBrush(Color.FromArgb(15, Color.White)), rect);
+            g.DrawRectangle(Pens.Black, rect.X, rect.Y, rect.Width, rect.Height);
         }
     }
 }

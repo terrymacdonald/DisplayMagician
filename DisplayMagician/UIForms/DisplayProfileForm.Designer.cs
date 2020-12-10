@@ -54,6 +54,7 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
+            this.lbl_save_profile = new System.Windows.Forms.Label();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -122,6 +123,7 @@ namespace DisplayMagician.UIForms
             this.dv_profile.Profile = null;
             this.dv_profile.Size = new System.Drawing.Size(976, 517);
             this.dv_profile.TabIndex = 4;
+            this.dv_profile.Visible = false;
             // 
             // menu_profiles
             // 
@@ -281,6 +283,22 @@ namespace DisplayMagician.UIForms
             this.label1.TabIndex = 23;
             this.label1.Text = "Saved Profiles (These can be used to create shortcuts)";
             // 
+            // lbl_save_profile
+            // 
+            this.lbl_save_profile.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_save_profile.BackColor = System.Drawing.Color.Brown;
+            this.lbl_save_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
+            this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_save_profile.Location = new System.Drawing.Point(703, 80);
+            this.lbl_save_profile.Name = "lbl_save_profile";
+            this.lbl_save_profile.Size = new System.Drawing.Size(261, 102);
+            this.lbl_save_profile.TabIndex = 33;
+            this.lbl_save_profile.Text = "Setup your displays with Windows or NVIDIA Setup, then return to DisplayMagician " +
+    "and click \'Save As\' to save this Display Profile.";
+            this.lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -290,6 +308,7 @@ namespace DisplayMagician.UIForms
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 812);
+            this.Controls.Add(this.lbl_save_profile);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lbl_profile_shown_subtitle);
             this.Controls.Add(this.ilv_saved_profiles);
@@ -342,6 +361,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolTip tt_selected;
+        private System.Windows.Forms.Label lbl_save_profile;
     }
 }
 
