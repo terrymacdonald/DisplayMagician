@@ -347,15 +347,6 @@ namespace DisplayMagician.Shared
             // then we also need to reproduce the Icons
             if (ContainsProfile(profile))
             {
-
-
-                // rename the old Profile Icon to the new name
-                //string newSavedProfileIconCacheFilename = Path.Combine(_profileStorageJsonPath, String.Concat(@"profile-", profile.UUID, @".ico"));
-                //File.Move(profile.SavedProfileIconCacheFilename, newSavedProfileIconCacheFilename);
-
-                // Then update the profile too
-                //profile.SavedProfileIconCacheFilename = newSavedProfileIconCacheFilename;
-
                 // Save the Profiles JSON as it's different now
                 SaveProfiles();
 
@@ -599,7 +590,7 @@ namespace DisplayMagician.Shared
                             myPhysicalGPU.Foundry.ToString(),
                             myPhysicalGPU.GPUId.ToString(),
                             myPhysicalGPU.GPUType.ToString(),
-                            aGPUOutput.OutputId.ToString(),
+                            //aGPUOutput.OutputId.ToString(),
                             aConnectedDisplayDevice.ConnectionType.ToString(),
                             aConnectedDisplayDevice.DisplayId.ToString()
                         };
