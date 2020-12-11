@@ -73,8 +73,8 @@ namespace DisplayMagician
         private string _differentExecutableToMonitor;
         private string _executableNameAndPath = "";
         private string _executableArguments;
-        private bool _executableArgumentsRequired;
-        private bool _processNameToMonitorUsesExecutable;
+        private bool _executableArgumentsRequired = false;
+        private bool _processNameToMonitorUsesExecutable = true;
         private uint _gameAppId;
         private string _gameName;
         private SupportedGameLibrary _gameLibrary;

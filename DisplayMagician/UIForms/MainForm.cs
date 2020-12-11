@@ -277,7 +277,7 @@ namespace DisplayMagician.UIForms
 
         private void MainForm_Activated(object sender, EventArgs e)
         {
-            EnableShortcutButtonIfProfiles();
+            //EnableShortcutButtonIfProfiles();
         }
     }
 }

@@ -63,7 +63,7 @@ namespace DisplayMagician.UIForms
             }*/
         }
 
-        public string ProcessNameToMonitor
+/*        public string ProcessNameToMonitor
         {
             get
             {
@@ -79,11 +79,11 @@ namespace DisplayMagician.UIForms
             {
                 // We we're setting this entry, then we want to set it to a particular entry
                 txt_alternative_executable.Text = value;
-                rb_wait_executable.Checked = true;
+                //rb_wait_executable.Checked = true;
             }
         }
-
-        public string ExecutableNameAndPath
+*/
+  /*      public string ExecutableNameAndPath
         {
             get => rb_switch_display_temp.Checked && rb_launcher.Checked ? txt_executable.Text : string.Empty;
             set
@@ -96,8 +96,8 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
-
-        public uint ExecutableTimeout
+*/
+  /*      public uint ExecutableTimeout
         {
             get
             {
@@ -147,7 +147,7 @@ namespace DisplayMagician.UIForms
                 txt_game_name.Text = value;
             }
         }
-
+*/
         public ShortcutItem Shortcut
         {
             get => _shortcutToEdit;
@@ -549,7 +549,7 @@ namespace DisplayMagician.UIForms
             this.Close();
         }
 
-        private void txt_different_executable_TextChanged(object sender, EventArgs e)
+        private void txt_alternative_executable_TextChanged(object sender, EventArgs e)
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
@@ -951,14 +951,18 @@ namespace DisplayMagician.UIForms
             {
                 cb_args_executable.Checked = true;
             }
+            else
+            {
+                cb_args_executable.Checked = false;
+            }
             if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
             {
                 rb_wait_executable.Checked = true;
-                rb_wait_alternative_executable.Checked = false;
+                //rb_wait_alternative_executable.Checked = false;
             }
             else
             {
-                rb_wait_executable.Checked = false;
+                //rb_wait_executable.Checked = false;
                 rb_wait_alternative_executable.Checked = true;
             }
             txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
@@ -1022,7 +1026,7 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void rb_wait_process_CheckedChanged(object sender, EventArgs e)
+        private void rb_wait_alternative_executable_CheckedChanged(object sender, EventArgs e)
         {
             if (rb_wait_alternative_executable.Checked)
             {
@@ -1030,6 +1034,7 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 rb_wait_executable.Checked = false;
                 txt_alternative_executable.Enabled = true;
+                btn_choose_alternative_executable.Enabled = true;
             }
         }
 
@@ -1041,11 +1046,12 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 rb_wait_alternative_executable.Checked = false;
                 txt_alternative_executable.Enabled = false;
+                btn_choose_alternative_executable.Enabled = false;
             }
         }
 
 
-        private void btn_app_different_executable_Click(object sender, EventArgs e)
+        private void btn_choose_alternative_executable_Click(object sender, EventArgs e)
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {

@@ -570,83 +570,82 @@ namespace DisplayMagician
                 else
                     process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
 
-                // Create a list of processes to monitor
-                List<Process> processesToMonitor = new List<Process>();
-
-                // Work out if we are monitoring another process other than the main executable
+                // Figure out what we want to look for
+                string processNameToLookFor;                
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    // If we are monitoring the same executable we started, then lets do that
-                    processesToMonitor.Add(process);
+                    // If we are monitoring the same executable we started, then lets do get that name ready
+                    processNameToLookFor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.ExecutableNameAndPath);
                 }
                 else
                 {
-                    // Now wait a little while for all the processes we want to monitor to start up
-                    var ticks = 0;
-                    while (ticks < shortcutToUse.StartTimeout * 1000)
+                    // If we are monitoring a different executable, then lets do get that name ready instead
+                    processNameToLookFor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor);
+                }
+
+                // Now look for the thing we're supposed to monitor
+                // and wait until it starts up
+                List<Process> processesToMonitor = new List<Process>();
+                for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                {
+                    // Look for the processes with the ProcessName we sorted out earlier
+                    processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
+
+                    // If we have found one or more processes then we should be good to go
+                    // so let's break
+                    if (processesToMonitor.Count > 0)
                     {
-                        // Look for the processes with the ProcessName we want (which in Windows is the filename without the extension)
-                        processesToMonitor = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor)).ToList();
-
-                        // If we have found one or more processes then we should be good to go
-                        // so let's break
-                        if (processesToMonitor.Count > 0)
-                        {
-                            break;
-                        }
-
-                        // Let's wait a little while if we couldn't find
-                        // any processes yet
-                        Thread.Sleep(300);
-                        ticks += 300;
+                        logger.Info($"Found {processesToMonitor.Count} '{processNameToLookFor}' processes have started");
+                        break;
                     }
 
-                    // If we have reached the timeout and we cannot detect any
-                    // of the alernative executables to monitor, then ignore that
-                    // setting, and just monitor the process we just started instead
-                    if (processesToMonitor.Count == 0)
-                    {
-                        processesToMonitor.Add(process);
-                    }
+                    // Let's wait a little while if we couldn't find
+                    // any processes yet
+                    Thread.Sleep(500);
+                }
+                //  make sure we have things to monitor and alert if not
+                if (processesToMonitor.Count == 0)
+                {
+                    logger.Error($"No '{processNameToLookFor}' processes found before timeout");
                 }
 
                 // Store the process to monitor for later
                 IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
                 IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
-                int substringStart = shortcutToUse.ExecutableNameAndPath.Length - 42;
-                if (substringStart < 0)
-                    substringStart = 0;
-                notifyIcon.Text = $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath.Substring(substringStart)}...";
-                //Application.DoEvents();
-
-                // Wait for the monitored process to exit
-                while (true)
+                // Add a status notification icon in the status area
+                string notificationText = $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...";
+                if (notificationText.Length >= 64)
                 {
-                    int processExitCount = 0;
-                    // Check each process to see if it's exited
-                    foreach (var p in processesToMonitor)
+                    string thingToRun = shortcutToUse.ExecutableNameAndPath.Substring(0, 35);
+                    notifyIcon.Text = $"DisplayMagician: Running {thingToRun}...";
+                }
+                Application.DoEvents();
+
+                // Wait an extra few seconds to give the application time to settle down
+                Thread.Sleep(2000);
+
+                // if we have things to monitor, then we should start to wait for them
+                Console.WriteLine($"Waiting for application {processNameToLookFor} to exit.");
+                logger.Info($"ShortcutRepository/RunShortcut - waiting for application {processNameToLookFor} to exit.");
+                if (processesToMonitor.Count > 0)
+                {
+                    logger.Info($"{processesToMonitor.Count} '{processNameToLookFor}' processes are still running");
+                    while (true)
                     {
-                        try
+                        processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
+
+                        // If we have no more processes left then we're done!
+                        if (processesToMonitor.Count == 0)
                         {
-                            if (p.HasExited)
-                            {
-                                processExitCount++;
-                            }
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            Console.WriteLine($"ShortcutRepository/RunShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                            logger.Error(ex, $"ShortcutRepository/RunShortcut exception waiting for the monitored process to exit");
-                            processExitCount++;
+                            logger.Info($"No more '{processNameToLookFor}' processes are still running");
+                            break;
                         }
                     }
-
-                    // Make sure that all processes have exited
-                    // then start the shutdown process
-                    if (processExitCount == processesToMonitor.Count)
-                        break;
                 }
+                Console.WriteLine($"{processNameToLookFor} has exited.");
+                logger.Info($"ShortcutRepository/RunShortcut - Application {processNameToLookFor} has exited.");
+
 
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Game))
@@ -675,20 +674,21 @@ namespace DisplayMagician
                         var steamProcess = Process.Start(address);
 
                         // Wait for Steam game to update if needed
-                        var ticks = 0;
-                        while (ticks < shortcutToUse.StartTimeout * 1000)
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            if (steamGameToRun.IsRunning)
-                            {
-                                break;
-                            }
-
-                            Thread.Sleep(300);
 
                             if (!steamGameToRun.IsUpdating)
                             {
-                                ticks += 300;
+                                if (steamGameToRun.IsRunning)
+                                {
+                                    logger.Info($"Found the '{steamGameToRun.Name}' process has started");
+                                    break;
+                                }
+
                             }
+                            // Delay 500ms
+                            Thread.Sleep(500);
+
                         }
 
                         // Store the Steam Process ID for later
@@ -749,15 +749,17 @@ namespace DisplayMagician
                         var uplayProcess = Process.Start(address);
 
                         // Wait for Uplay game to update if needed
-                        var ticks = 0;
-                        while (ticks < shortcutToUse.StartTimeout * 1000)
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
+
                             if (uplayGameToRun.IsRunning)
                             {
+                                logger.Info($"Found the '{uplayGameToRun.Name}' process has started");
                                 break;
                             }
 
-                            Thread.Sleep(300);
+                            // Delay 500ms
+                            Thread.Sleep(500);
 
                         }
 
@@ -774,6 +776,7 @@ namespace DisplayMagician
 
                         // Wait 5 seconds for the game process to spawn	
                         Thread.Sleep(5000);
+
                         // Wait for the game to exit
                         Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
                         logger.Info($"ShortcutRepository/RunShortcut - waiting for Uplay Game {uplayGameToRun.Name} to exit.");

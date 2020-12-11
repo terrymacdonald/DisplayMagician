@@ -279,7 +279,7 @@ namespace DisplayMagician.UIForms
 
         private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
         {
-            RemoveWarningIfShortcuts();
+            //RemoveWarningIfShortcuts();
         }
 
         private void tsmi_save_to_desktop_Click(object sender, EventArgs e)

@@ -91,7 +91,7 @@ namespace DisplayMagician.UIForms
             this.btn_exe_to_start = new System.Windows.Forms.Button();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
             this.cb_args_executable = new System.Windows.Forms.CheckBox();
-            this.btn_app_different_executable = new System.Windows.Forms.Button();
+            this.btn_choose_alternative_executable = new System.Windows.Forms.Button();
             this.txt_alternative_executable = new System.Windows.Forms.TextBox();
             this.rb_wait_alternative_executable = new System.Windows.Forms.RadioButton();
             this.rb_wait_executable = new System.Windows.Forms.RadioButton();
@@ -808,7 +808,7 @@ namespace DisplayMagician.UIForms
             this.p_standalone.Controls.Add(this.btn_exe_to_start);
             this.p_standalone.Controls.Add(this.txt_args_executable);
             this.p_standalone.Controls.Add(this.cb_args_executable);
-            this.p_standalone.Controls.Add(this.btn_app_different_executable);
+            this.p_standalone.Controls.Add(this.btn_choose_alternative_executable);
             this.p_standalone.Controls.Add(this.txt_alternative_executable);
             this.p_standalone.Controls.Add(this.rb_wait_alternative_executable);
             this.p_standalone.Controls.Add(this.rb_wait_executable);
@@ -856,17 +856,17 @@ namespace DisplayMagician.UIForms
             this.cb_args_executable.CheckedChanged += new System.EventHandler(this.cb_args_executable_CheckedChanged);
             this.cb_args_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
             // 
-            // btn_app_different_executable
+            // btn_choose_alternative_executable
             // 
-            this.btn_app_different_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_app_different_executable.ForeColor = System.Drawing.Color.White;
-            this.btn_app_different_executable.Location = new System.Drawing.Point(877, 115);
-            this.btn_app_different_executable.Name = "btn_app_different_executable";
-            this.btn_app_different_executable.Size = new System.Drawing.Size(85, 27);
-            this.btn_app_different_executable.TabIndex = 9;
-            this.btn_app_different_executable.Text = "Choose";
-            this.btn_app_different_executable.UseVisualStyleBackColor = true;
-            this.btn_app_different_executable.Click += new System.EventHandler(this.btn_app_different_executable_Click);
+            this.btn_choose_alternative_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_choose_alternative_executable.ForeColor = System.Drawing.Color.White;
+            this.btn_choose_alternative_executable.Location = new System.Drawing.Point(877, 115);
+            this.btn_choose_alternative_executable.Name = "btn_choose_alternative_executable";
+            this.btn_choose_alternative_executable.Size = new System.Drawing.Size(85, 27);
+            this.btn_choose_alternative_executable.TabIndex = 9;
+            this.btn_choose_alternative_executable.Text = "Choose";
+            this.btn_choose_alternative_executable.UseVisualStyleBackColor = true;
+            this.btn_choose_alternative_executable.Click += new System.EventHandler(this.btn_choose_alternative_executable_Click);
             // 
             // txt_alternative_executable
             // 
@@ -875,7 +875,7 @@ namespace DisplayMagician.UIForms
             this.txt_alternative_executable.Name = "txt_alternative_executable";
             this.txt_alternative_executable.Size = new System.Drawing.Size(378, 26);
             this.txt_alternative_executable.TabIndex = 4;
-            this.txt_alternative_executable.TextChanged += new System.EventHandler(this.txt_different_executable_TextChanged);
+            this.txt_alternative_executable.TextChanged += new System.EventHandler(this.txt_alternative_executable_TextChanged);
             // 
             // rb_wait_alternative_executable
             // 
@@ -887,7 +887,7 @@ namespace DisplayMagician.UIForms
             this.rb_wait_alternative_executable.TabIndex = 8;
             this.rb_wait_alternative_executable.Text = "Wait until an alternative executable is closed before continuing:";
             this.rb_wait_alternative_executable.UseVisualStyleBackColor = true;
-            this.rb_wait_alternative_executable.CheckedChanged += new System.EventHandler(this.rb_wait_process_CheckedChanged);
+            this.rb_wait_alternative_executable.CheckedChanged += new System.EventHandler(this.rb_wait_alternative_executable_CheckedChanged);
             this.rb_wait_alternative_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // rb_wait_executable
@@ -1370,7 +1370,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel p_standalone;
         private System.Windows.Forms.TextBox txt_args_executable;
         private System.Windows.Forms.CheckBox cb_args_executable;
-        private System.Windows.Forms.Button btn_app_different_executable;
+        private System.Windows.Forms.Button btn_choose_alternative_executable;
         private System.Windows.Forms.TextBox txt_alternative_executable;
         private System.Windows.Forms.RadioButton rb_wait_alternative_executable;
         private System.Windows.Forms.RadioButton rb_wait_executable;
