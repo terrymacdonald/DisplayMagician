@@ -78,7 +78,7 @@ namespace DisplayMagician
         private uint _gameAppId;
         private string _gameName;
         private SupportedGameLibrary _gameLibrary;
-        private uint _startTimeout;
+        private uint _startTimeout = 20;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
         private string _audioDevice;

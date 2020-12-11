@@ -595,7 +595,7 @@ namespace DisplayMagician
                     // so let's break
                     if (processesToMonitor.Count > 0)
                     {
-                        logger.Info($"Found {processesToMonitor.Count} '{processNameToLookFor}' processes have started");
+                        logger.Debug($"Found {processesToMonitor.Count} '{processNameToLookFor}' processes have started");
                         break;
                     }
 
@@ -606,7 +606,7 @@ namespace DisplayMagician
                 //  make sure we have things to monitor and alert if not
                 if (processesToMonitor.Count == 0)
                 {
-                    logger.Error($"No '{processNameToLookFor}' processes found before timeout");
+                    logger.Error($"No '{processNameToLookFor}' processes found before waiting timeout");
                 }
 
                 // Store the process to monitor for later
@@ -627,10 +627,10 @@ namespace DisplayMagician
 
                 // if we have things to monitor, then we should start to wait for them
                 Console.WriteLine($"Waiting for application {processNameToLookFor} to exit.");
-                logger.Info($"ShortcutRepository/RunShortcut - waiting for application {processNameToLookFor} to exit.");
+                logger.Debug($"ShortcutRepository/RunShortcut - waiting for application {processNameToLookFor} to exit.");
                 if (processesToMonitor.Count > 0)
                 {
-                    logger.Info($"{processesToMonitor.Count} '{processNameToLookFor}' processes are still running");
+                    logger.Debug($"{processesToMonitor.Count} '{processNameToLookFor}' processes are still running");
                     while (true)
                     {
                         processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
@@ -638,13 +638,13 @@ namespace DisplayMagician
                         // If we have no more processes left then we're done!
                         if (processesToMonitor.Count == 0)
                         {
-                            logger.Info($"No more '{processNameToLookFor}' processes are still running");
+                            logger.Debug($"No more '{processNameToLookFor}' processes are still running");
                             break;
                         }
                     }
                 }
                 Console.WriteLine($"{processNameToLookFor} has exited.");
-                logger.Info($"ShortcutRepository/RunShortcut - Application {processNameToLookFor} has exited.");
+                logger.Debug($"ShortcutRepository/RunShortcut - Application {processNameToLookFor} has exited.");
 
 
             }
@@ -706,18 +706,19 @@ namespace DisplayMagician
                         Thread.Sleep(5000);
                         // Wait for the game to exit
                         Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
-                        logger.Info($"ShortcutRepository/RunShortcut - waiting for Steam Game {steamGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - waiting for Steam Game {steamGameToRun.Name} to exit.");
                         while (true)
                         {
                             if (!steamGameToRun.IsRunning)
                             {
+                                logger.Debug($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} is no longer running (IsRunning is false).");
                                 break;
                             }
 
                             Thread.Sleep(300);
                         }
                         Console.WriteLine($"{steamGameToRun.Name} has exited.");
-                        logger.Info($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} has exited.");
 
                     }
 
@@ -754,7 +755,7 @@ namespace DisplayMagician
 
                             if (uplayGameToRun.IsRunning)
                             {
-                                logger.Info($"Found the '{uplayGameToRun.Name}' process has started");
+                                logger.Debug($"Found the '{uplayGameToRun.Name}' process has started");
                                 break;
                             }
 
@@ -779,18 +780,19 @@ namespace DisplayMagician
 
                         // Wait for the game to exit
                         Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
-                        logger.Info($"ShortcutRepository/RunShortcut - waiting for Uplay Game {uplayGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - waiting for Uplay Game {uplayGameToRun.Name} to exit.");
                         while (true)
                         {
                             if (!uplayGameToRun.IsRunning)
                             {
+                                logger.Debug($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} is no longer running (IsRunning is false).");
                                 break;
                             }
 
                             Thread.Sleep(300);
                         }
                         Console.WriteLine($"{uplayGameToRun.Name} has exited.");
-                        logger.Info($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} has exited.");
                     }
 
 
@@ -840,9 +842,20 @@ namespace DisplayMagician
                         }
                         processToStop.Close();
                     }
-                    catch (Win32Exception ex) { }
-                    catch (InvalidOperationException ex) { }
-                    catch (AggregateException ae) { }
+                    catch (Win32Exception ex) {
+                        logger.Error(ex, $"RunShortcut - Couldn't access the wait status for a process we're trying to stop.");
+                    }
+                    catch (InvalidOperationException ex) {
+                        logger.Error(ex, $"RunShortcut - Couldn't kill the process as there is no process associated with the Process object.");
+                    }
+                    catch (SystemException ex)
+                    {
+                        logger.Error(ex, $"RunShortcut - Couldn't WaitForExit the process as there is no process associated with the Process object (or cannot get the ID from the process handle).");
+                    }
+
+                    catch (AggregateException ae) {
+                        logger.Error(ae, $"RunShortcut - Got an AggregateException.");
+                    }
 
                 }
             }

@@ -826,7 +826,7 @@ namespace DisplayMagician.UIForms
             // 
             this.btn_exe_to_start.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_exe_to_start.ForeColor = System.Drawing.Color.White;
-            this.btn_exe_to_start.Location = new System.Drawing.Point(593, 10);
+            this.btn_exe_to_start.Location = new System.Drawing.Point(666, 10);
             this.btn_exe_to_start.Name = "btn_exe_to_start";
             this.btn_exe_to_start.Size = new System.Drawing.Size(85, 27);
             this.btn_exe_to_start.TabIndex = 12;
@@ -909,7 +909,7 @@ namespace DisplayMagician.UIForms
             // 
             this.txt_executable.Location = new System.Drawing.Point(171, 10);
             this.txt_executable.Name = "txt_executable";
-            this.txt_executable.Size = new System.Drawing.Size(416, 26);
+            this.txt_executable.Size = new System.Drawing.Size(489, 26);
             this.txt_executable.TabIndex = 1;
             this.txt_executable.TextChanged += new System.EventHandler(this.txt_executable_TextChanged);
             // 
@@ -929,26 +929,26 @@ namespace DisplayMagician.UIForms
             // 
             this.label2.AutoSize = true;
             this.label2.ForeColor = System.Drawing.Color.Transparent;
-            this.label2.Location = new System.Drawing.Point(819, 12);
+            this.label2.Location = new System.Drawing.Point(783, 12);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(70, 20);
+            this.label2.Size = new System.Drawing.Size(125, 20);
             this.label2.TabIndex = 5;
-            this.label2.Text = "Timeout:";
+            this.label2.Text = "Max Wait (secs):";
             this.label2.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // nud_timeout_executable
             // 
-            this.nud_timeout_executable.Location = new System.Drawing.Point(895, 10);
+            this.nud_timeout_executable.Location = new System.Drawing.Point(910, 10);
             this.nud_timeout_executable.Maximum = new decimal(new int[] {
             240,
             0,
             0,
             0});
             this.nud_timeout_executable.Name = "nud_timeout_executable";
-            this.nud_timeout_executable.Size = new System.Drawing.Size(70, 26);
+            this.nud_timeout_executable.Size = new System.Drawing.Size(55, 26);
             this.nud_timeout_executable.TabIndex = 6;
             this.nud_timeout_executable.Value = new decimal(new int[] {
-            30,
+            20,
             0,
             0,
             0});
@@ -1000,7 +1000,7 @@ namespace DisplayMagician.UIForms
             this.txt_game_launcher.Location = new System.Drawing.Point(605, 76);
             this.txt_game_launcher.Name = "txt_game_launcher";
             this.txt_game_launcher.ReadOnly = true;
-            this.txt_game_launcher.Size = new System.Drawing.Size(175, 26);
+            this.txt_game_launcher.Size = new System.Drawing.Size(149, 26);
             this.txt_game_launcher.TabIndex = 23;
             // 
             // txt_game_name
@@ -1088,26 +1088,26 @@ namespace DisplayMagician.UIForms
             // 
             this.lbl_game_timeout.AutoSize = true;
             this.lbl_game_timeout.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_timeout.Location = new System.Drawing.Point(819, 79);
+            this.lbl_game_timeout.Location = new System.Drawing.Point(783, 79);
             this.lbl_game_timeout.Name = "lbl_game_timeout";
-            this.lbl_game_timeout.Size = new System.Drawing.Size(70, 20);
+            this.lbl_game_timeout.Size = new System.Drawing.Size(125, 20);
             this.lbl_game_timeout.TabIndex = 4;
-            this.lbl_game_timeout.Text = "Timeout:";
+            this.lbl_game_timeout.Text = "Max Wait (secs):";
             this.lbl_game_timeout.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // nud_timeout_game
             // 
-            this.nud_timeout_game.Location = new System.Drawing.Point(895, 77);
+            this.nud_timeout_game.Location = new System.Drawing.Point(911, 77);
             this.nud_timeout_game.Maximum = new decimal(new int[] {
             240,
             0,
             0,
             0});
             this.nud_timeout_game.Name = "nud_timeout_game";
-            this.nud_timeout_game.Size = new System.Drawing.Size(70, 26);
+            this.nud_timeout_game.Size = new System.Drawing.Size(54, 26);
             this.nud_timeout_game.TabIndex = 5;
             this.nud_timeout_game.Value = new decimal(new int[] {
-            120,
+            20,
             0,
             0,
             0});
