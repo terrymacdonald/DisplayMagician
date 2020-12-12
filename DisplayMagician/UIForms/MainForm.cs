@@ -125,8 +125,10 @@ namespace DisplayMagician.UIForms
             //SteamGame.GetAllInstalledGames();
             EnableShortcutButtonIfProfiles();
 
+            //Run the AutoUpdater to see if there are any updates available.
             AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
-            AutoUpdater.Start("http://rbsoft.org/updates/AutoUpdaterTest.json");
+            AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
+            AutoUpdater.Start("http://displaymagician.littlebitbig.com/updates/displaymagician.json");
         }
 
         private void EnableShortcutButtonIfProfiles()
