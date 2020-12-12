@@ -483,6 +483,38 @@ namespace DisplayMagician
                 }
             }
 
+            // record the old microphone device
+            bool needToChangeCaptureDevice = false;
+            CoreAudioDevice rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
+            double rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
+            if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                needToChangeCaptureDevice = true;
+
+            // Change capture Device (if one specified)
+            if (shortcutToUse.ChangeCaptureDevice)
+            {
+                IEnumerable<CoreAudioDevice> captureDevices = _audioController.GetCaptureDevices();
+                foreach (CoreAudioDevice captureDevice in captureDevices)
+                {
+                    if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                    {
+                        // use the Audio Device
+                        captureDevice.SetAsDefault();
+
+                        if (shortcutToUse.SetCaptureVolume)
+                        {
+                            Task myTask = new Task(() =>
+                            {
+                                captureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
+                            });
+                            myTask.Start();
+                            myTask.Wait(2000);
+                        }
+
+                    }
+                }
+            }
+
             // Set the IP Service status back to what it was
             IPCService.GetInstance().Status = rollbackInstanceStatus;
 
@@ -878,6 +910,23 @@ namespace DisplayMagician
 
             }
 
+            // Change Capture Device back (if one specified)
+            if (needToChangeCaptureDevice)
+            {
+                // use the Audio Device
+                rollbackCaptureDevice.SetAsDefault();
+
+                if (shortcutToUse.SetCaptureVolume)
+                {
+                    Task myTask = new Task(() =>
+                    {
+                        rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
+                    });
+                    myTask.Start();
+                    myTask.Wait(2000);
+                }
+
+            }
 
             // Change back to the original profile only if it is different
             if (needToChangeProfiles)
