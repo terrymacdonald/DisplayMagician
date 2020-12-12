@@ -214,6 +214,9 @@
     <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio">
       <Version>4.0.0-alpha5</Version>
     </PackageReference>
+    <PackageReference Include="Autoupdater.NET.Official">
+      <Version>1.6.4</Version>
+    </PackageReference>
     <PackageReference Include="CircularProgressBar">
       <Version>2.8.0.16</Version>
     </PackageReference>
