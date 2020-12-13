@@ -1,14 +1,14 @@
 {
   "version": "0.1-alpha.0",
-  "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v1.0-alpha.0/DisplayMagician-1.0-alpha.0.zip",
+  "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v0.1-alpha.0/DisplayMagicianSetup-0.1-alpha.0.msi",
   "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases",
   "mandatory": {
-    "value": true,
+    "value": false,
     "minVersion": "0.0.1.0",
-    "mode": 1
+    "mode": 0
   },
   "checksum": {
-    "value": "E5F59E50FC91A9E52634FFCB11F32BD37FE0E2F1",
-    "hashingAlgorithm": "SHA1"
+    "value": "818B9DC0A6615910998DCD3679311CB8A7B8B37D8D661AD6D4D97A6458F731BC",
+    "hashingAlgorithm": "SHA256"
   }
 }

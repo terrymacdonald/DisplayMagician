@@ -418,6 +418,30 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_2581C4CFA9B7C4227F9FE0594859036F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_32C91E29BE26A197A0B0AEACDD05A282"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_65F5D368273B99C7FE49B20D33031A7B"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_6F55062F4B8FDA7C720DAA94953D9E90"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_60AA7260CBB14B2DA5A5237FEBBA6E3B"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -431,12 +455,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_7E279826AED3D503C2B7F7DB69F2C6E7"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_2581C4CFA9B7C4227F9FE0594859036F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -509,12 +527,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_BD72F94F74F20DED3B5752C78BFB566C"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_32C91E29BE26A197A0B0AEACDD05A282"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -619,18 +631,6 @@
         "OwnerKey" = "8:_90FC8214331F53FD9474FAE9E83D2C2C"
         "MsmSig" = "8:_UNDEFINED"
         }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_65F5D368273B99C7FE49B20D33031A7B"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_6F55062F4B8FDA7C720DAA94953D9E90"
-        "MsmSig" = "8:_UNDEFINED"
-        }
     }
     "Configurations"
     {
@@ -639,7 +639,7 @@
         "DisplayName" = "8:Debug"
         "IsDebugOnly" = "11:TRUE"
         "IsReleaseOnly" = "11:FALSE"
-        "OutputFilename" = "8:Debug\\HeliosPlus.Setup.msi"
+        "OutputFilename" = "8:Debug\\DisplayMagicianSetup-0.1-alpha.0.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -671,7 +671,7 @@
         "DisplayName" = "8:Release"
         "IsDebugOnly" = "11:FALSE"
         "IsReleaseOnly" = "11:TRUE"
-        "OutputFilename" = "8:Release\\HeliosPlus.Setup.msi"
+        "OutputFilename" = "8:Release\\DisplayMagicianSetup-0.1-alpha.0.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -1144,7 +1144,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1152,7 +1152,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DisplayMagician.ShellExtension, Version=0.1.0.38350, Culture=neutral, PublicKeyToken=23a864d3136391eb, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:DisplayMagician.ShellExtension, Version=0.1.0.26375, Culture=neutral, PublicKeyToken=23a864d3136391eb, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_3427114400C346E681DEA717B5D9A237"
@@ -1423,7 +1423,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
+            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1699,7 +1699,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DisplayMagician.Shared, Version=0.9.5.38162, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:DisplayMagician.Shared, Version=0.9.5.26375, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_CF2B5512697D3444DA5C7C187AE26988"
@@ -2011,7 +2011,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DisplayMagician"
         "ProductCode" = "8:{65098CF0-9B4F-4078-9DCA-3EB25C8497B7}"
-        "PackageCode" = "8:{8DB2CDFF-DF85-41BA-BAA0-ACE4CEC03716}"
+        "PackageCode" = "8:{2E2F6806-174B-4BE8-B0A8-834064B1B77E}"
         "UpgradeCode" = "8:{48CB9401-ADED-4D62-B779-8317C7D069E1}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
