@@ -128,7 +128,7 @@ namespace DisplayMagician.UIForms
             //Run the AutoUpdater to see if there are any updates available.
             AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
             AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
-            AutoUpdater.Start("http://displaymagician.littlebitbig.com/updates/displaymagician.json");
+            AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/");
         }
 
         private void EnableShortcutButtonIfProfiles()
