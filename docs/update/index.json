@@ -1,10 +1,10 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.0.0",
   "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v0.1-alpha.0/DisplayMagicianSetup-0.1-alpha.0.msi",
   "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases",
   "mandatory": {
     "value": false,
-    "minVersion": "0.1.0",
+    "minVersion": "0.1.0.0",
     "mode": 0
   },
   "checksum": {
