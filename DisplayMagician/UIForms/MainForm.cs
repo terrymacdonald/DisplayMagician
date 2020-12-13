@@ -355,11 +355,11 @@ namespace DisplayMagician.UIForms
                         }
                     }
                 }
-                else
+                /*else
                 {
                     MessageBox.Show(@"There is no update available please try again later.", @"No update available",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                }*/
             }
             else
             {
