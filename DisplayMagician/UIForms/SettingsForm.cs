@@ -99,5 +99,10 @@ namespace DisplayMagician.UIForms
                 mySettings.LogLevel = "Warn";
 
         }
+
+        private void btn_back_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
     }
 }

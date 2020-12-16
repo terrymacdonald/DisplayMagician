@@ -32,6 +32,7 @@ namespace DisplayMagician.UIForms
             this.cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             this.cmb_loglevel = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.btn_back = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // cb_minimise_notification_area
@@ -68,19 +69,38 @@ namespace DisplayMagician.UIForms
             this.label1.TabIndex = 8;
             this.label1.Text = "What type of logging?";
             // 
+            // btn_back
+            // 
+            this.btn_back.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_back.ForeColor = System.Drawing.Color.White;
+            this.btn_back.Location = new System.Drawing.Point(457, 152);
+            this.btn_back.Name = "btn_back";
+            this.btn_back.Size = new System.Drawing.Size(75, 23);
+            this.btn_back.TabIndex = 9;
+            this.btn_back.Text = "&Back";
+            this.btn_back.UseVisualStyleBackColor = true;
+            this.btn_back.Click += new System.EventHandler(this.btn_back_Click);
+            // 
             // SettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(544, 187);
+            this.Controls.Add(this.btn_back);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cmb_loglevel);
             this.Controls.Add(this.cb_minimise_notification_area);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "SettingsForm";
             this.ShowIcon = false;
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Settings";
             this.TopMost = true;
@@ -96,5 +116,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_minimise_notification_area;
         private System.Windows.Forms.ComboBox cmb_loglevel;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btn_back;
     }
 }
