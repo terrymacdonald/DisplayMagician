@@ -377,5 +377,18 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
+
+        private void btn_settings_Click(object sender, EventArgs e)
+        {
+            var settingsForm = new SettingsForm();
+            settingsForm.ShowDialog(this);
+            ProgramSettings mySettings = Program.AppProgramSettings;
+            // if the MainForm settings are different to the changes made when
+            // tweaking the settings in the settings page, then align them
+            if (mySettings.MinimiseOnStart && !cb_minimise_notification_area.Checked)
+                cb_minimise_notification_area.Checked = true;
+            else if (!mySettings.MinimiseOnStart && cb_minimise_notification_area.Checked)
+                cb_minimise_notification_area.Checked = false;
+        }
     }
 }

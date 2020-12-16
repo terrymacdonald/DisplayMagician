@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btn_settings = new System.Windows.Forms.Button();
             this.lbl_create_profile = new System.Windows.Forms.Label();
             this.btn_setup_display_profiles = new System.Windows.Forms.Button();
             this.pb_display_profile = new System.Windows.Forms.PictureBox();
@@ -53,7 +54,6 @@
             this.shortcutToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -71,7 +71,7 @@
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.button1);
+            this.splitContainer1.Panel1.Controls.Add(this.btn_settings);
             this.splitContainer1.Panel1.Controls.Add(this.lbl_create_profile);
             this.splitContainer1.Panel1.Controls.Add(this.btn_setup_display_profiles);
             this.splitContainer1.Panel1.Controls.Add(this.pb_display_profile);
@@ -85,6 +85,16 @@
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
             this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
             this.splitContainer1.TabStop = false;
+            // 
+            // btn_settings
+            // 
+            this.btn_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            resources.ApplyResources(this.btn_settings, "btn_settings");
+            this.btn_settings.ForeColor = System.Drawing.Color.White;
+            this.btn_settings.Name = "btn_settings";
+            this.btn_settings.UseVisualStyleBackColor = true;
+            this.btn_settings.Click += new System.EventHandler(this.btn_settings_Click);
             // 
             // lbl_create_profile
             // 
@@ -243,15 +253,6 @@
             resources.ApplyResources(this.exitToolStripMenuItem, "exitToolStripMenuItem");
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
-            // button1
-            // 
-            this.button1.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.button1.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            resources.ApplyResources(this.button1, "button1");
-            this.button1.ForeColor = System.Drawing.Color.White;
-            this.button1.Name = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
             // MainForm
             // 
             resources.ApplyResources(this, "$this");
@@ -301,6 +302,6 @@
         public System.Windows.Forms.NotifyIcon notifyIcon;
         private System.Windows.Forms.Label lbl_create_profile;
         private System.Windows.Forms.Label lbl_create_shortcut;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btn_settings;
     }
 }
