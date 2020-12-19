@@ -13,6 +13,7 @@ using DisplayMagician.Shared;
 using DisplayMagician.UIForms;
 using System.Text.RegularExpressions;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace DisplayMagician {
  
@@ -25,7 +26,7 @@ namespace DisplayMagician {
 
     internal static class Program
     {
-
+        internal static string AUMID = "LittleBitBig.DisplayMagician";
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
         public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
@@ -47,6 +48,11 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
+
+            // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
+            // Windows 10 recognises the application, and allows features such as Toasts, 
+            // taskbar pinning and similar.
+            SetCurrentProcessExplicitAppUserModelID(AUMID);
 
             // Prepare NLog for logging
             var config = new NLog.Config.LoggingConfiguration();
@@ -601,6 +607,14 @@ namespace DisplayMagician {
             return true;
 
         }
+
+        // Add the ability to set an Application AUMID so that Windows 10+ recognises the
+        // application and things like Toasts, Tasbar pinning and similar functionality
+        // works as intended. This DLL import avoids the need to package the app as an MSIX
+        // or moving to a WiX based installer at this stage, or the need to add this to the
+        // Windows Store.
+        [DllImport("shell32.dll", SetLastError = true)]
+        static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
 
     }
 
