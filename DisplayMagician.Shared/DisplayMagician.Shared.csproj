@@ -68,6 +68,7 @@
     <Compile Include="Rotation.cs" />
     <Compile Include="Scaling.cs" />
     <Compile Include="ProfileRepository.cs" />
+    <Compile Include="ShellUtils.cs" />
     <Compile Include="Topology\Path.cs" />
     <Compile Include="Topology\PathHelper.cs" />
     <Compile Include="Topology\PathTarget.cs" />

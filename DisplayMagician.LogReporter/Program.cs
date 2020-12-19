@@ -10,11 +10,13 @@ using WindowsDisplayAPI.DisplayConfig;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using AudioSwitcher.AudioApi.CoreAudio;
+using DisplayMagician.Shared;
 
 namespace DisplayMagician.LogReporter
 {
     internal class Program
     {
+
         private static StreamWriter _writer;
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
 
@@ -87,6 +89,13 @@ namespace DisplayMagician.LogReporter
 
         private static void Main(string[] args)
         {
+            // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
+            // Windows 10 recognises the application, and allows features such as Toasts, 
+            // taskbar pinning and similar.
+            // This is a helper function that sets the AUMID  to a static default defined
+            // within ShellUtils under the DisplayMagician.Shared project.
+            ShellUtils.SetDefaultProcessExplicitAppUserModelID();
+
             Console.WriteLine("DisplayMagician LogReporter");
             Console.WriteLine("======================");
             Console.WriteLine();
