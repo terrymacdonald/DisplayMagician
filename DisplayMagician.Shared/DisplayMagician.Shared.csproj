@@ -57,7 +57,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="ResizeDrawing.cs" />
-    <Compile Include="RestartManagerSession.cs" />
     <Compile Include="ScanLineOrdering.cs" />
     <Compile Include="NVIDIA\SurroundHelper.cs" />
     <Compile Include="NVIDIA\SurroundTopologyDisplay.cs" />
@@ -68,10 +67,7 @@
     <Compile Include="ProfileIcon.cs" />
     <Compile Include="Rotation.cs" />
     <Compile Include="Scaling.cs" />
-    <Compile Include="ShellHelper.cs" />
     <Compile Include="ProfileRepository.cs" />
-    <Compile Include="TaskBarSettings.cs" />
-    <Compile Include="TaskBarStuckRectangle.cs" />
     <Compile Include="Topology\Path.cs" />
     <Compile Include="Topology\PathHelper.cs" />
     <Compile Include="Topology\PathTarget.cs" />
