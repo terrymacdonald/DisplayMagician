@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btn_toast = new System.Windows.Forms.Button();
             this.btn_settings = new System.Windows.Forms.Button();
             this.lbl_create_profile = new System.Windows.Forms.Label();
             this.btn_setup_display_profiles = new System.Windows.Forms.Button();
@@ -71,6 +72,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btn_toast);
             this.splitContainer1.Panel1.Controls.Add(this.btn_settings);
             this.splitContainer1.Panel1.Controls.Add(this.lbl_create_profile);
             this.splitContainer1.Panel1.Controls.Add(this.btn_setup_display_profiles);
@@ -85,6 +87,16 @@
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
             this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
             this.splitContainer1.TabStop = false;
+            // 
+            // btn_toast
+            // 
+            this.btn_toast.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_toast.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            resources.ApplyResources(this.btn_toast, "btn_toast");
+            this.btn_toast.ForeColor = System.Drawing.Color.White;
+            this.btn_toast.Name = "btn_toast";
+            this.btn_toast.UseVisualStyleBackColor = true;
+            this.btn_toast.Click += new System.EventHandler(this.btn_toast_Click);
             // 
             // btn_settings
             // 
@@ -303,5 +315,6 @@
         private System.Windows.Forms.Label lbl_create_profile;
         private System.Windows.Forms.Label lbl_create_shortcut;
         private System.Windows.Forms.Button btn_settings;
+        private System.Windows.Forms.Button btn_toast;
     }
 }

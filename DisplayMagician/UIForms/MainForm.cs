@@ -12,10 +12,16 @@ using System.Threading;
 using System.Reflection;
 using DisplayMagician.Shared;
 using System.Runtime.InteropServices;
+//using Microsoft.Toolkit.Uwp.Notifications;
+using DesktopNotifications;
+using Microsoft.QueryStringDotNET;
+using Windows.UI.Notifications;
 using System.IO;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Net;
+using Windows.Data.Xml.Dom;
+using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace DisplayMagician.UIForms
 {
@@ -389,6 +395,79 @@ namespace DisplayMagician.UIForms
                 cb_minimise_notification_area.Checked = true;
             else if (!mySettings.MinimiseOnStart && cb_minimise_notification_area.Checked)
                 cb_minimise_notification_area.Checked = false;
+        }
+
+        private void btn_toast_Click(object sender, EventArgs e)
+        {
+
+            // Construct the toast content
+            ToastContent toastContent = new ToastContent()
+            {
+                // Arguments when the user taps body of toast
+                Launch = "DisplayMagician_Notification",
+
+                Visual = new ToastVisual()
+                {
+                    BindingGeneric = new ToastBindingGeneric()
+                    {
+                        Children =
+                        {
+                            new AdaptiveText()
+                            {
+                                Text = "Hello from DisplayMagician!"
+                            },
+                        },
+
+                    }
+                },
+/*
+                Actions = new ToastActionsCustom()
+                {
+                    Inputs =
+                    {
+                        new ToastTextBox("tbReply")
+                        {
+                            PlaceholderContent = "Type a response"
+                        }
+                    },
+
+                    Buttons =
+                    {
+                        // Note that there's no reason to specify background activation, since our COM
+                        // activator decides whether to process in background or launch foreground window
+                        new ToastButton("Reply", new QueryString()
+                        {
+                            { "action", "reply" },
+                            { "conversationId", conversationId.ToString() }
+
+                        }.ToString()),
+
+                        new ToastButton("Like", new QueryString()
+                        {
+                            { "action", "like" },
+                            { "conversationId", conversationId.ToString() }
+
+                        }.ToString()),
+
+                        new ToastButton("View", new QueryString()
+                        {
+                            { "action", "viewImage" },
+                            { "imageUrl", image }
+
+                        }.ToString())
+                    }
+                }*/
+            };
+
+            // Make sure to use Windows.Data.Xml.Dom
+            var doc = new XmlDocument();
+            doc.LoadXml(toastContent.GetContent());
+
+            // And create the toast notification
+            var toast = new ToastNotification(doc);
+
+            // And then show it
+            DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
         }
     }
 }

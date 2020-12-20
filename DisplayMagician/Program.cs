@@ -13,6 +13,9 @@ using DisplayMagician.Shared;
 using DisplayMagician.UIForms;
 using System.Text.RegularExpressions;
 using System.Drawing;
+//using Microsoft.Toolkit.Uwp.Notifications;
+using DesktopNotifications;
+
 //using System.Runtime.InteropServices;
 
 namespace DisplayMagician {
@@ -53,7 +56,11 @@ namespace DisplayMagician {
             // taskbar pinning and similar.
             // This is a helper function that sets the AUMID  to a static default defined
             // within ShellUtils under the DisplayMagician.Shared project.
-            ShellUtils.SetDefaultProcessExplicitAppUserModelID();
+            //ShellUtils.SetDefaultProcessExplicitAppUserModelID();
+
+            // Register AUMID, COM server, and activator
+            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(ShellUtils.AUMID);
+            DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
 
             // Prepare NLog for logging
             var config = new NLog.Config.LoggingConfiguration();
