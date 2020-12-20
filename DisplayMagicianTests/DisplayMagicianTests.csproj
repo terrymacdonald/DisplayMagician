@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagician.LogReporter\DisplayMagician.LogReporter.csproj" />
-    <ProjectReference Include="..\DisplayMagician.Shared\DisplayMagician.Shared.csproj" />
+    <ProjectReference Include="..\DisplayMagician.LogReporter\DisplayMagicianLogReporter.csproj" />
+    <ProjectReference Include="..\DisplayMagician.Shared\DisplayMagicianShared.csproj" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" />
   </ItemGroup>
 

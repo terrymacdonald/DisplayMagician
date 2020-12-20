@@ -299,9 +299,9 @@
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagician.Shared\DisplayMagician.Shared.csproj">
+    <ProjectReference Include="..\DisplayMagician.Shared\DisplayMagicianShared.csproj">
       <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
-      <Name>DisplayMagician.Shared</Name>
+      <Name>DisplayMagicianShared</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

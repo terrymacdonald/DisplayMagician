@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" Name="DisplayMagician" Language="1033" Version="1.0.0.0" Manufacturer="LittleBitBig" UpgradeCode="33e22b4c-982f-4b02-a3de-085693742db5">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+		<MediaTemplate />
+
+		<Feature Id="ProductFeature" Title="DisplayMagician" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="INSTALLFOLDER" Name="DisplayMagician" />
+			</Directory>
+			<Directory Id="ProgramMenuFolder">
+			</Directory>
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+		<DirectoryRef Id="ProgramMenuFolder">
+			<Component Id="ApplicationShortcut" Guid="7F014819-08B3-4C05-A5F9-40E0917201A4">
+				<Shortcut Id="ApplicationStartMenuShortcut" Name="DisplayMagician" Description="DisplayMagician automates setting up your multi-monitor games." Target="[INSTALLFOLDER]DisplayMagician.exe" WorkingDirectory="INSTALLFOLDER">
+
+					<!--AUMID-->
+					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician"/>
+
+					<!--COM CLSID, specifying which CLSID to activate when toast clicked-->
+					<!--This uses the GUID specified in DisplayMagician.DesktopNotificationActivator-->
+					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}"/>
+
+				</Shortcut>
+
+				<RemoveFile Id="RemoveApplicationShortcut" Directory="ProgramMenuFolder" Name="DisplayMagician" On="uninstall"/>
+				<RegistryValue Root="HKCU" Key="Software\DesktopToasts" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<Component Id="DisplayMagician">
+				<File Id="DisplayMagicianVSOutput" Source="$(var.DisplayMagician.TargetPath)" />
+			</Component>
+			<Component Id="DisplayMagicianShared">
+				<File Id="DisplayMagicianSharedVSOutput" Source="$(var.DisplayMagicianShared.TargetPath)" />
+			</Component>
+			<Component Id="DisplayMagicianLogReporter">
+				<File Id="DisplayMagicianLogReporterVSOutput" Source="$(var.DisplayMagicianLogReporter.TargetPath)" />
+			</Component>
+			<Component Id="DisplayMagicianShellExtension">
+				<File Id="DisplayMagicianShellExtensionVSOutput" Source="$(var.DisplayMagicianShellExtension.TargetPath)" />
+			</Component>
+
+			<!--Tell WiX to install the shortcut-->
+			<ComponentRef Id="ApplicationShortcut"/>
+		</ComponentGroup>
+	</Fragment>
+</Wix>
