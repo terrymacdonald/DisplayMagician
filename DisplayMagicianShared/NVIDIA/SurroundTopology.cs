@@ -6,7 +6,7 @@ using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Interfaces.Mosaic;
 using System.Collections.Generic;
 
-namespace DisplayMagician.Shared.NVIDIA
+namespace DisplayMagicianShared.NVIDIA
 {
     public class SurroundTopology
     {

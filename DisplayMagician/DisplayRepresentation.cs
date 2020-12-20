@@ -4,8 +4,8 @@ using System.Drawing;
 using System.Linq;
 using WindowsDisplayAPI;
 using WindowsDisplayAPI.DisplayConfig;
-using DisplayMagician.Shared;
-using DisplayMagician.Shared.Topology;
+using DisplayMagicianShared;
+using DisplayMagicianShared.Topology;
 
 namespace DisplayMagician
 {

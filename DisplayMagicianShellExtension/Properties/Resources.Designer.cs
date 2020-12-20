@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace DisplayMagician.ShellExtension.Properties {
+namespace DisplayMagicianShellExtension.Properties {
     using System;
     
     
@@ -22,7 +22,7 @@ namespace DisplayMagician.ShellExtension.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,10 +36,10 @@ namespace DisplayMagician.ShellExtension.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("DisplayMagician.ShellExtension.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("DisplayMagicianShellExtension.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -51,7 +51,7 @@ namespace DisplayMagician.ShellExtension.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace DisplayMagician.ShellExtension.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        internal static System.Drawing.Icon DisplayMagician {
+        public static System.Drawing.Icon DisplayMagician {
             get {
                 object obj = ResourceManager.GetObject("DisplayMagician", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
@@ -73,9 +73,9 @@ namespace DisplayMagician.ShellExtension.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap DisplayMagicianMenuImage {
+        public static System.Drawing.Bitmap MenuImage {
             get {
-                object obj = ResourceManager.GetObject("DisplayMagicianMenuImage", resourceCulture);
+                object obj = ResourceManager.GetObject("MenuImage", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

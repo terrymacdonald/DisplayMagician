@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace DisplayMagician.Shared
+namespace DisplayMagicianShared
 {
     public static class ResizeDrawing
     {

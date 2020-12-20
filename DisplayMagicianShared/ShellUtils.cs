@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace DisplayMagician.Shared
+namespace DisplayMagicianShared
 {
     public class ShellUtils
     {

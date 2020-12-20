@@ -7,18 +7,18 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Diagnostics;
 using WindowsDisplayAPI.DisplayConfig;
-using DisplayMagician.Shared.Resources;
+using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using DisplayMagician.Shared.Topology;
+using DisplayMagicianShared.Topology;
 using System.Drawing;
 using System.Drawing.Imaging;
 using WindowsDisplayAPI;
 using System.Text.RegularExpressions;
 using NvAPIWrapper.Display;
 
-namespace DisplayMagician.Shared
+namespace DisplayMagicianShared
 {
     public class ProfileItem : IComparable
     {

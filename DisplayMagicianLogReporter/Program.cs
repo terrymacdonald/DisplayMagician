@@ -10,9 +10,9 @@ using WindowsDisplayAPI.DisplayConfig;
 using NvAPIWrapper.GPU;
 using NvAPIWrapper.Mosaic;
 using AudioSwitcher.AudioApi.CoreAudio;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 
-namespace DisplayMagician.LogReporter
+namespace DisplayMagicianLogReporter
 {
     internal class Program
     {
@@ -93,7 +93,7 @@ namespace DisplayMagician.LogReporter
             // Windows 10 recognises the application, and allows features such as Toasts, 
             // taskbar pinning and similar.
             // This is a helper function that sets the AUMID  to a static default defined
-            // within ShellUtils under the DisplayMagician.Shared project.
+            // within ShellUtils under the DisplayMagicianShared project.
             ShellUtils.SetDefaultProcessExplicitAppUserModelID();
 
             Console.WriteLine("DisplayMagician LogReporter");

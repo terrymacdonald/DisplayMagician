@@ -7,8 +7,8 @@
     <ProjectGuid>{55D4FF65-EDC7-48EF-933E-B6E7F3809B68}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DisplayMagician.ShellExtension</RootNamespace>
-    <AssemblyName>DisplayMagician.ShellExtension</AssemblyName>
+    <RootNamespace>DisplayMagicianShellExtension</RootNamespace>
+    <AssemblyName>DisplayMagicianShellExtension</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -63,7 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>

@@ -1,7 +1,7 @@
 ﻿using NvAPIWrapper.Native.Display;
 using NvAPIWrapper.Native.Mosaic;
 
-namespace DisplayMagician.Shared.NVIDIA
+namespace DisplayMagicianShared.NVIDIA
 {
     internal static class SurroundHelper
     {

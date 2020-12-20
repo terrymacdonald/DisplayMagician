@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.Shared
+﻿namespace DisplayMagicianShared
 {
     public enum Rotation
     {

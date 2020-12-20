@@ -1,5 +1,5 @@
 ﻿using DisplayMagician.Resources;
-using DisplayMagician.Shared.UserControls;
+using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
 {
@@ -42,7 +42,7 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
-            this.dv_profile = new DisplayMagician.Shared.UserControls.DisplayView();
+            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.tabp_audio = new System.Windows.Forms.TabPage();
             this.gb_capture_settings = new System.Windows.Forms.GroupBox();
             this.gb_capture_volume = new System.Windows.Forms.GroupBox();

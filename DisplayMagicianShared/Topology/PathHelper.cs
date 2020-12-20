@@ -1,6 +1,6 @@
 ﻿using WindowsDisplayAPI.Native.DisplayConfig;
 
-namespace DisplayMagician.Shared.Topology
+namespace DisplayMagicianShared.Topology
 {
     internal static class PathHelper
     {

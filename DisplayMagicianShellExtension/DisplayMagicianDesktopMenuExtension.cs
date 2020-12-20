@@ -12,7 +12,7 @@ using System.Diagnostics;
 using Microsoft.Win32;
 using System.Drawing;
 
-namespace DisplayMagician.ShellExtension
+namespace DisplayMagicianShellExtension
 {
 
     [ComVisible(true)]
@@ -139,7 +139,7 @@ namespace DisplayMagician.ShellExtension
 
             }
 
-            var extensionMenu = new ToolStripMenuItem("DisplayMagician: Change display profiles...", Properties.Resources.DisplayMagicianMenuImage);
+            var extensionMenu = new ToolStripMenuItem("DisplayMagician: Change display profiles...", Properties.Resources.MenuImage);
             explorerMenuStrip.Items.Add(extensionMenu);
 
             // Add the first menu to create a new Display Profile

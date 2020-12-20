@@ -1,4 +1,4 @@
-﻿namespace DisplayMagician.Shared.UserControls
+﻿namespace DisplayMagicianShared.UserControls
 {
     partial class DisplayView
     {

@@ -1,4 +1,4 @@
-﻿using DisplayMagician.Shared;
+﻿using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,11 +8,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using WindowsDisplayAPI.DisplayConfig;
-using DisplayMagician.Shared.Resources;
+using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using DisplayMagician.Shared.Topology;
+using DisplayMagicianShared.Topology;
 using System.Drawing;
 using System.Drawing.Imaging;
 using WindowsDisplayAPI;
@@ -26,10 +26,10 @@ using System.Resources;
 using System.Net.NetworkInformation;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Mosaic;
-using DisplayMagician.Shared.Topology;
+using DisplayMagicianShared.Topology;
 using NvAPIWrapper.Native.GPU;
 
-namespace DisplayMagician.Shared
+namespace DisplayMagicianShared
 {
 
     public static class ProfileRepository
@@ -364,7 +364,7 @@ namespace DisplayMagician.Shared
             ProfileItem activeProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
-                Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagician.Shared.Topology.Path(info)).ToArray()
+                Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
             };
 
             activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
@@ -443,7 +443,7 @@ namespace DisplayMagician.Shared
                     ProfileItem myCurrentProfile = new ProfileItem
                     {
                         Name = "Current Display Profile",
-                        Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagician.Shared.Topology.Path(info)).ToArray()
+                        Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
                     };
 
                     _currentProfile = myCurrentProfile;
@@ -472,7 +472,7 @@ namespace DisplayMagician.Shared
                 ProfileItem myCurrentProfile = new ProfileItem
                 {
                     Name = "Current Display Profile",
-                    Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagician.Shared.Topology.Path(info)).ToArray()
+                    Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
                 };
 
                 _currentProfile = myCurrentProfile;

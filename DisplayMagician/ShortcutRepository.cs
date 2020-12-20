@@ -1,7 +1,7 @@
 ﻿using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.InterProcess;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

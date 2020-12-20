@@ -5,9 +5,9 @@ using System.Drawing.IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
-using DisplayMagician.Shared.Topology;
+using DisplayMagicianShared.Topology;
 
-namespace DisplayMagician.Shared
+namespace DisplayMagicianShared
 {
     public class ProfileIcon
     {

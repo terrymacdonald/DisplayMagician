@@ -6,7 +6,7 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>dfd22d4d-f2e4-4ba4-b32a-7a990a35ba08</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>DisplayMagician.Setup</OutputName>
+    <OutputName>DisplayMagicianSetup</OutputName>
     <OutputType>Package</OutputType>
     <Name>DisplayMagicianSetup</Name>
   </PropertyGroup>
@@ -14,36 +14,59 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>Debug</DefineConstants>
+    <CompilerAdditionalOptions>
+    </CompilerAdditionalOptions>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <CompilerAdditionalOptions />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DefineConstants>Debug;DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\Debug</DefineConstants>
+    <CompilerAdditionalOptions>-arch x64</CompilerAdditionalOptions>
+    <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
+    <SuppressAllWarnings>False</SuppressAllWarnings>
+    <Pedantic>True</Pedantic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
+    <SuppressAllWarnings>False</SuppressAllWarnings>
+    <Pedantic>True</Pedantic>
+    <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\Debug</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CustomDialogs\LicenseAgreementDialogOverwritten.wxs" />
+    <Compile Include="Fragments\DisplayMagicianFilesFragment.wxs" />
     <Compile Include="Product.wxs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagician.LogReporter\DisplayMagicianLogReporter.csproj">
+    <ProjectReference Include="..\DisplayMagicianLogReporter\DisplayMagicianLogReporter.csproj">
       <Name>DisplayMagicianLogReporter</Name>
       <Project>{76df2bcf-911b-4820-b63e-8f3468db5e79}</Project>
       <Private>True</Private>
-      <DoNotHarvest>True</DoNotHarvest>
+      <DoNotHarvest>
+      </DoNotHarvest>
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
       <RefTargetDir>INSTALLFOLDER</RefTargetDir>
     </ProjectReference>
-    <ProjectReference Include="..\DisplayMagician.Shared\DisplayMagicianShared.csproj">
+    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj">
       <Name>DisplayMagicianShared</Name>
       <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
       <Private>True</Private>
-      <DoNotHarvest>True</DoNotHarvest>
+      <DoNotHarvest>
+      </DoNotHarvest>
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
       <RefTargetDir>INSTALLFOLDER</RefTargetDir>
     </ProjectReference>
-    <ProjectReference Include="..\DisplayMagician.ShellExtension\DisplayMagicianShellExtension.csproj">
+    <ProjectReference Include="..\DisplayMagicianShellExtension\DisplayMagicianShellExtension.csproj">
       <Name>DisplayMagicianShellExtension</Name>
       <Project>{55d4ff65-edc7-48ef-933e-b6e7f3809b68}</Project>
       <Private>True</Private>
-      <DoNotHarvest>True</DoNotHarvest>
+      <DoNotHarvest>
+      </DoNotHarvest>
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
       <RefTargetDir>INSTALLFOLDER</RefTargetDir>
     </ProjectReference>
@@ -51,16 +74,51 @@
       <Name>DisplayMagician</Name>
       <Project>{608d941a-b431-400c-a91d-c6f971c29577}</Project>
       <Private>True</Private>
-      <DoNotHarvest>True</DoNotHarvest>
+      <DoNotHarvest>
+      </DoNotHarvest>
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
       <RefTargetDir>INSTALLFOLDER</RefTargetDir>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Includes" />
+    <Folder Include="Fragments" />
+    <Folder Include="CustomActions" />
+    <Folder Include="CustomDialogs" />
+    <Folder Include="Lang" />
+    <Folder Include="Lang\en-us" />
+    <Folder Include="Resources" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Includes\DisplayMagicianVariables.wxi" />
+    <Content Include="Lang\en-us\EULA_en-us.rtf" />
+    <Content Include="Resources\DisplayMagician.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixNetFxExtension">
+      <HintPath>$(WixExtDir)\WixNetFxExtension.dll</HintPath>
+      <Name>WixNetFxExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixUtilExtension">
+      <HintPath>$(WixExtDir)\WixUtilExtension.dll</HintPath>
+      <Name>WixUtilExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
+    </WixExtension>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Lang\en-us\Loc_en-us.wxl" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets" Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
   <Target Name="EnsureWixToolsetInstalled" Condition=" '$(WixTargetsImported)' != 'true' ">
     <Error Text="The WiX Toolset v3.11 (or newer) build tools must be installed to build this project. To download the WiX Toolset, see http://wixtoolset.org/releases/" />
   </Target>
+  <PropertyGroup>
+    <PreBuildEvent>"$(WIX)bin\heat.exe" dir H:\vscode-projects\DisplayMagician\Debug -cg DisplayMagicianFiles -gg -scom -sreg -sfrag -srd -dr INSTALLLOCATION -var var.DisplayMagicianFilesDir -out "$(ProjectDir)Fragments\DisplayMagicianFilesFragment.wxs"</PreBuildEvent>
+  </PropertyGroup>
   <!--
 	To modify your build process, add your task inside one of the targets below and uncomment it.
 	Other similar extension points exist, see Wix.targets.

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using System.Text.RegularExpressions;
 using System.Drawing;

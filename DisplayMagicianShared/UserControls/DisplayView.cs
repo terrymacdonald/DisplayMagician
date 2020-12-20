@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
-using DisplayMagician.Shared.Topology;
+using DisplayMagicianShared.Topology;
 
-namespace DisplayMagician.Shared.UserControls
+namespace DisplayMagicianShared.UserControls
 {
     public partial class DisplayView : UserControl
     {

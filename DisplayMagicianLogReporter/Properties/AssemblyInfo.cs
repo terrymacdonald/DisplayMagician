@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DisplayMagician LogReporter")]
 [assembly: AssemblyDescription("Collect information about your computer to aid troubleshooting DisplayMagician errors.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("LittleBitBig")]
 [assembly: AssemblyProduct("DisplayMagician")]
-[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021, Soroush Falahati 2017-2020")]
+[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

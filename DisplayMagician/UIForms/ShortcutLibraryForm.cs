@@ -1,6 +1,6 @@
 ﻿using DisplayMagician.GameLibraries;
 using DisplayMagician.Resources;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;

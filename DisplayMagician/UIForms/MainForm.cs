@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using DisplayMagician.GameLibraries;
 using System.Threading;
 using System.Reflection;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using System.Runtime.InteropServices;
 //using Microsoft.Toolkit.Uwp.Notifications;
 using DesktopNotifications;

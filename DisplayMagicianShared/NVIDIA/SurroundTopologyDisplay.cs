@@ -10,7 +10,7 @@ using Newtonsoft.Json.Converters;
 using NvAPIWrapper.Mosaic;
 using NvAPIWrapper.Native.Exceptions;
 
-namespace DisplayMagician.Shared.NVIDIA
+namespace DisplayMagicianShared.NVIDIA
 {
     public class SurroundTopologyDisplay
     {

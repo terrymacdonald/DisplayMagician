@@ -1,5 +1,5 @@
 ﻿using DisplayMagician.Resources;
-using DisplayMagician.Shared.UserControls;
+using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
 {
@@ -54,7 +54,7 @@ namespace DisplayMagician.UIForms
             this.label1 = new System.Windows.Forms.Label();
             this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
             this.lbl_save_profile = new System.Windows.Forms.Label();
-            this.dv_profile = new DisplayMagician.Shared.UserControls.DisplayView();
+            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();

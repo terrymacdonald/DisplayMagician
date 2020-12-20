@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
 using WindowsDisplayAPI.DisplayConfig;
-using DisplayMagician.Shared.NVIDIA;
+using DisplayMagicianShared.NVIDIA;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 
-namespace DisplayMagician.Shared.Topology
+namespace DisplayMagicianShared.Topology
 {
     public class PathTarget : IEquatable<PathTarget>
     {
