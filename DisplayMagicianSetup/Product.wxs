@@ -14,10 +14,11 @@
 		<Package InstallerVersion="300" Compressed="yes" InstallScope="perMachine" Platform="x64"/>
 		<Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 		<!-- Upgrade settings. This will be explained in more detail in a future post -->
-		<Upgrade Id="$(var.UpgradeCode)">
+		<!-- <Upgrade Id="$(var.UpgradeCode)">
 			<UpgradeVersion OnlyDetect="yes" Minimum="$(var.VersionNumber)" IncludeMinimum="no" Property="NEWER_VERSION_FOUND" />
 			<UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="yes" Maximum="$(var.VersionNumber)" IncludeMaximum="no" Property="OLDER_VERSION_FOUND" />
-		</Upgrade>
+		</Upgrade> -->
+		<MajorUpgrade AllowDowngrades="yes" />
 		<!-- Reference the global NETFRAMEWORK462 property to check if it exists -->
 		<!-- <PropertyRef Id="NETFRAMEWORK462"/> -->
 		<!-- 
@@ -37,17 +38,17 @@
     This custom action in the InstallExecuteSequence is needed to 
     stop silent install (passing /qb to msiexec) from going around it. 
     -->
-		<CustomAction Id="NewerVersionFound" Error="!(loc.DisplayMagicianNewerVersionInstalled)" />
-		<InstallExecuteSequence>
+		<!-- <CustomAction Id="NewerVersionFound" Error="!(loc.DisplayMagicianNewerVersionInstalled)" />
+		<InstallExecuteSequence> -->
 			<!-- Check for newer versions with FindRelatedProducts and execute the custom action after it -->
-			<Custom Action="NewerVersionFound" After="FindRelatedProducts">
+		<!-- <Custom Action="NewerVersionFound" After="FindRelatedProducts">
 				<![CDATA[NEWER_VERSION_FOUND]]>
-			</Custom>
+			</Custom> -->
 			<!-- Remove the previous versions of the product -->
-			<RemoveExistingProducts After="InstallInitialize"/>
+		<!-- <RemoveExistingProducts After="InstallInitialize"/>  -->
 			<!-- WixCloseApplications is a built in custom action that uses util:CloseApplication below -->
-			<Custom Action="WixCloseApplications" Before="InstallInitialize" />
-		</InstallExecuteSequence>
+		<!-- <Custom Action="WixCloseApplications" Before="InstallInitialize" />
+		</InstallExecuteSequence> -->
 		<!-- This will ask the user to close the DisplayMagician app if it's running while upgrading -->
 		<util:CloseApplication Id="CloseDisplayMagician" CloseMessage="no" Description="!(loc.MustCloseDisplayMagician)"
 							   ElevatedCloseMessage="no" RebootPrompt="no" Target="$(var.ExeProcessName)" />
@@ -62,6 +63,7 @@
 			<Publish Dialog="LicenseAgreementDialogOverwritten" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
 			<Publish Dialog="LicenseAgreementDialogOverwritten" Control="Next" Event="NewDialog" Value="InstallDirDlg">LicenseAcceptedOverwritten = "1" AND NOT OLDER_VERSION_FOUND</Publish>
 			<!-- <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="ProductKeyCheckDialog">1</Publish> -->
+			<Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
 		</UI>
 		<!-- Set the icon to show next to the program name in Add/Remove programs -->
 		<Icon Id="DisplayMagicianIcon.ico" SourceFile="$(var.ResourcesDir)\DisplayMagician.ico" />
@@ -70,18 +72,46 @@
 		<WixVariable Id="WixUIDialogBmp" Value="MyAppLogo.jpg" /> <WixVariable Id="WixUIBannerBmp" Value="installBanner.jpg" /> -->
 		<!-- the default directory structure -->
 		<Directory Id="TARGETDIR" Name="SourceDir">
+			<!-- Create a 64-bit Programs Folder for the Application-->
 			<Directory Id="ProgramFiles64Folder">
-				<Directory Id="INSTALLLOCATION" Name="!(loc.ProductName)" />
+				<Directory Id="APPLICATIONROOTDIRECTORY" Name="!(loc.ProductName)" />
+			</Directory>
+			<!-- Create a Start Menu Folder for the Application-->
+			<Directory Id="ProgramMenuFolder">
+				<Directory Id="ApplicationProgramsFolder" Name="!(loc.ProductName)"/>
 			</Directory>
 		</Directory>
-		<!-- 
-    Set the default install location to the value of 
-    INSTALLLOCATION (usually c:\Program Files\YourProductName) 
-    -->
-		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLLOCATION" />
+		
+		<!-- Now we create an Application shortcut -->
+		<DirectoryRef Id="ApplicationProgramsFolder">
+			<Component Id="ApplicationShortcut" Guid="6C7BFB9E-8549-4E34-BE44-E1A718146755">
+				<Shortcut Id="ApplicationStartMenuShortcut"
+						  Name="!(loc.ProductName)"
+						  Description="!(loc.Description)"
+						  Target="[APPLICATIONROOTDIRECTORY]$(var.DisplayMagician.TargetFileName)"
+						  WorkingDirectory="APPLICATIONROOTDIRECTORY">
+					<!--AUMID-->
+					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician"/>
+					<!--COM CLSID-->
+					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}"/>
+				</Shortcut>
+				<RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+			</Component>
+		</DirectoryRef>
+		
+		
+		<!-- Set the default install location to the value of APPLICATIONROOTDIRECTORY (usually c:\Program Files\YourProductName) -->
+		<Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONROOTDIRECTORY" />
+		<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch !(loc.ProductName)" />
+
+		<Property Id="WixShellExecTarget" Value="[APPLICATIONROOTDIRECTORY]$(var.DisplayMagician.TargetFileName)" />
+		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+		
 		<!-- Set the components defined in our fragment files that will be used for our feature  -->
-		<Feature Id="SuperFormFeature" Title="!(loc.ProductName)" Level="1">
+		<Feature Id="DisplayMagicianFeature" Title="!(loc.ProductName)" Level="1">
 			<ComponentGroupRef Id="DisplayMagicianFiles" />
+			<ComponentRef Id="ApplicationShortcut" />
 			<!-- <ComponentRef Id="cmpVersionInRegistry" /> -->
 			<!-- <ComponentRef Id="cmpIsThisUpdateInRegistry" /> -->
 
