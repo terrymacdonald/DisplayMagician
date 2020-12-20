@@ -18,7 +18,7 @@
 			<UpgradeVersion OnlyDetect="yes" Minimum="$(var.VersionNumber)" IncludeMinimum="no" Property="NEWER_VERSION_FOUND" />
 			<UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="yes" Maximum="$(var.VersionNumber)" IncludeMaximum="no" Property="OLDER_VERSION_FOUND" />
 		</Upgrade> -->
-		<MajorUpgrade AllowDowngrades="yes" />
+		<MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="!(loc.DowngradeErrorMessage)" />
 		<!-- Reference the global NETFRAMEWORK462 property to check if it exists -->
 		<!-- <PropertyRef Id="NETFRAMEWORK462"/> -->
 		<!-- 
@@ -105,16 +105,37 @@
 		<Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONROOTDIRECTORY" />
 		<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch !(loc.ProductName)" />
 
+		<!-- Set the last page to show a Launch DisplayMagician checkbox -->
 		<Property Id="WixShellExecTarget" Value="[APPLICATIONROOTDIRECTORY]$(var.DisplayMagician.TargetFileName)" />
 		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+
+		<!-- Preapre custom actions to register and unregisterthe ShellExtension DLL -->
+		<CustomAction Id="InstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='install "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll" -codebase' Execute="deferred" Return="check" Impersonate="no" />
+		<CustomAction Id="UninstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='uninstall "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll"' Execute="deferred" Return="check" Impersonate="no" />
+
+		<!-- Plumb the registering and unregistering of the ShellExtension DLL into the instllation sequence -->
+		<InstallExecuteSequence>
+			<Custom Action="InstallShell" After="InstallFiles">NOT Installed</Custom>
+			<Custom Action="UninstallShell" Before="RemoveFiles">(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+		</InstallExecuteSequence>
 		
 		<!-- Set the components defined in our fragment files that will be used for our feature  -->
 		<Feature Id="DisplayMagicianFeature" Title="!(loc.ProductName)" Level="1">
 			<ComponentGroupRef Id="DisplayMagicianFiles" />
 			<ComponentRef Id="ApplicationShortcut" />
+			
+			<!-- Add in the 3 ShellExtension files we need to make the COM registration work -->
+			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
+				<File Id="DisplayMagicianShellExtension.dll" KeyPath="yes" Source="$(var.DisplayMagicianShellExtension.TargetDir)\DisplayMagicianShellExtension.dll" />
+			</Component>
+			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
+				<File Id="ServerRegistrationManager.exe" Source="$(var.DisplayMagicianShellExtension.TargetDir)\ServerRegistrationManager.exe" KeyPath="yes" />
+			</Component>
+			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
+				<File Id="SharpShell.dll" Source="$(var.DisplayMagicianShellExtension.TargetDir)\SharpShell.dll" KeyPath="yes" />
+			</Component>
 			<!-- <ComponentRef Id="cmpVersionInRegistry" /> -->
 			<!-- <ComponentRef Id="cmpIsThisUpdateInRegistry" /> -->
-
 		</Feature>
 	</Product>
 </Wix>
