@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--Code from https://weblogs.sqlteam.com/mladenp/2010/02/11/wix-3-tutorial-solutionproject-structure-and-dev-resources/ -->
 <!-- Add xmlns:util namespace definition to be able to use stuff from WixUtilExtension dll-->
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" 
-	 xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+	 xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+	 xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
 	<!-- This is how we include wxi files -->
 	<?include $(sys.CURRENTDIR)Includes\DisplayMagicianVariables.wxi ?>
 	<!-- 
@@ -11,7 +12,7 @@
   -->
 	<Product Id="*" Name="!(loc.ProductName) $(var.VersionNumber)" Language="!(loc.LANG)" Version="$(var.VersionNumber)" Manufacturer="!(loc.ManufacturerName)" UpgradeCode="$(var.UpgradeCode)">
 		<!-- Define the minimum supported installer version (3.0) and that the install should be done for the whole machine not just the current user -->
-		<Package InstallerVersion="300" Compressed="yes" InstallPrivileges="elevated" InstallScope="perMachine" Platform="x64"/>
+		<Package InstallerVersion="314" Compressed="yes" InstallPrivileges="elevated" InstallScope="perMachine" Platform="x64"/>
 		<Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 		<!-- Upgrade settings. This will be explained in more detail in a future post -->
 		<!-- <Upgrade Id="$(var.UpgradeCode)">
@@ -20,19 +21,24 @@
 		</Upgrade> -->
 		<MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="!(loc.DowngradeErrorMessage)" />
 		<!-- Reference the global WIXNETFX4RELEASEINSTALLED property so that will automatically pull in the .Net 4.8 variables -->
+		<!--<PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED"/>
+		<Condition Message="!(loc.DotNetFrameworkNeeded)">
+			<![CDATA[Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED]]>
+		</Condition>-->
+		<!-- Load the  -->
 		<PropertyRef Id="WIXNETFX4RELEASEINSTALLED"/>
+		<Condition Message="!(loc.DotNetFrameworkNeeded)">
+			<![CDATA[Installed OR (WIXNETFX4RELEASEINSTALLED >= "#528040")]]>
+		</Condition>
 		<!-- 
     Startup conditions that checks if .Net Framework 4.8 is installed or if 
-    we're running Windows 10 or higher as the OS.
+    we're running Windows 8.1 or higher as the OS.
     If not the installation is aborted.
     By doing the (Installed OR ...) property means that this condition will only 
     be evaluated if the app is being installed and not on uninstall or changing
     -->
-	    <Condition Message="!(loc.DotNetFrameworkNeeded)">
-			<![CDATA[Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED]]>
-		</Condition>
 		<Condition Message="!(loc.AppNotSupported)">
-			<![CDATA[Installed OR (VersionNT64 >= 1000)]]>
+			<![CDATA[Installed OR (VersionNT64 >= 603)]]>
 		</Condition>
 		<!-- 
     This custom action in the InstallExecuteSequence is needed to 
@@ -40,13 +46,13 @@
     -->
 		<!-- <CustomAction Id="NewerVersionFound" Error="!(loc.DisplayMagicianNewerVersionInstalled)" />
 		<InstallExecuteSequence> -->
-			<!-- Check for newer versions with FindRelatedProducts and execute the custom action after it -->
+		<!-- Check for newer versions with FindRelatedProducts and execute the custom action after it -->
 		<!-- <Custom Action="NewerVersionFound" After="FindRelatedProducts">
 				<![CDATA[NEWER_VERSION_FOUND]]>
 			</Custom> -->
-			<!-- Remove the previous versions of the product -->
+		<!-- Remove the previous versions of the product -->
 		<!-- <RemoveExistingProducts After="InstallInitialize"/>  -->
-			<!-- WixCloseApplications is a built in custom action that uses util:CloseApplication below -->
+		<!-- WixCloseApplications is a built in custom action that uses util:CloseApplication below -->
 		<!-- <Custom Action="WixCloseApplications" Before="InstallInitialize" />
 		</InstallExecuteSequence> -->
 		<!-- This will ask the user to close the DisplayMagician app if it's running while upgrading -->
@@ -87,7 +93,7 @@
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Type="string" Name="AppDataDir" Value="[LocalAppDataFolder]" KeyPath="yes"/>
 			</Component>
 		</Directory>
-		
+
 		<!-- Now we create an Application shortcut -->
 		<DirectoryRef Id="ApplicationProgramsFolder">
 			<Component Id="ApplicationShortcut" Guid="6C7BFB9E-8549-4E34-BE44-E1A718146755" >
@@ -110,14 +116,14 @@
 						  Name="!(loc.LogReporterName)"
 						  Description="!(loc.LogReporterDescription)"
 						  Target="[APPLICATIONROOTDIRECTORY]$(var.DisplayMagicianLogReporter.TargetFileName)"
-						  WorkingDirectory="APPLICATIONROOTDIRECTORY" 
+						  WorkingDirectory="APPLICATIONROOTDIRECTORY"
 						  Icon="DisplayMagicianIcon.ico" />
 				<RemoveFolder Id="CleanUpLogReporterShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="LogReporterInstalled" Type="integer" Value="1" KeyPath="yes"/>
 			</Component>
 		</DirectoryRef>
-		
-		
+
+
 		<!-- Set the default install location to the value of APPLICATIONROOTDIRECTORY (usually c:\Program Files\YourProductName) -->
 		<Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONROOTDIRECTORY" />
 		<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch !(loc.ProductName)" />
@@ -135,7 +141,7 @@
 			<Custom Action="InstallShell" After="InstallFiles">NOT Installed</Custom>
 			<Custom Action="UninstallShell" Before="RemoveFiles">(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
 		</InstallExecuteSequence>
-		
+
 		<!-- Set the components defined in our fragment files that will be used for our feature  -->
 		<Feature Id="DisplayMagicianFeature" Title="!(loc.ProductName)" Level="1">
 			<ComponentGroupRef Id="DisplayMagicianFiles" />
@@ -143,7 +149,7 @@
 			<ComponentRef Id="LogReporterShortcut" />
 			<ComponentRef Id="HKLMRegistryEntries" />
 			<ComponentRef Id="HKCURegistryEntries" />
-			
+
 			<!-- Add in the 3 ShellExtension files we need to make the COM registration work -->
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="DisplayMagicianShellExtension.dll" KeyPath="yes" Source="$(var.DisplayMagicianShellExtension.TargetDir)\DisplayMagicianShellExtension.dll" />
@@ -154,7 +160,7 @@
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="SharpShell.dll" Source="$(var.DisplayMagicianShellExtension.TargetDir)\SharpShell.dll" KeyPath="yes" />
 			</Component>
-			
+
 			<!-- Add in the LogReporter files we need  -->
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="LogReporter.exe" KeyPath="yes" Source="$(var.DisplayMagicianLogReporter.TargetDir)\LogReporter.exe" />
@@ -162,7 +168,7 @@
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="LogReporter.exe.config" KeyPath="yes" Source="$(var.DisplayMagicianLogReporter.TargetDir)\LogReporter.exe.config" />
 			</Component>
-			
+
 
 			<!-- <ComponentRef Id="cmpVersionInRegistry" /> -->
 			<!-- <ComponentRef Id="cmpIsThisUpdateInRegistry" /> -->

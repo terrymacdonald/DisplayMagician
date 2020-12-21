@@ -18,6 +18,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianTests", "Dis
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "DisplayMagicianSetup", "DisplayMagicianSetup\DisplayMagicianSetup.wixproj", "{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}"
 EndProject
+Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "DisplayMagicianBootstrapper", "DisplayMagicianBootstrapper\DisplayMagicianBootstrapper.wixproj", "{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -99,6 +101,14 @@ Global
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Release|x64.Build.0 = Release|x64
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Release|x86.ActiveCfg = Release|x86
 		{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}.Release|x86.Build.0 = Release|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Debug|AnyCPU.ActiveCfg = Debug|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Debug|x64.ActiveCfg = Debug|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Debug|x86.ActiveCfg = Debug|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Debug|x86.Build.0 = Debug|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Release|AnyCPU.ActiveCfg = Release|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Release|x64.ActiveCfg = Release|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Release|x86.ActiveCfg = Release|x86
+		{59F3F084-EC7E-42D4-B0F4-8131B82BDB3B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

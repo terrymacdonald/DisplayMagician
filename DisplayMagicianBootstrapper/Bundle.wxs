@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+	 xmlns:bal="http://schemas.microsoft.com/wix/BalExtension">
+	<Bundle Name="DisplayMagicianBootstrapper" 
+			Version="0.2.0.0" 
+			UpgradeCode="D965E245-6132-4760-AD2D-07CCC9FA98F9"
+			Manufacturer="!(loc.Manufacturer)"
+			HelpUrl="!(loc.HelpUrl)"
+			UpdateUrl="!(loc.UpdateUrl)"
+			AboutUrl="!(loc.AboutUrl)" 
+			>
+		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
+
+		<!-- Put in a restriction to only allow installation on Windows 10 or higher -->
+		<bal:Condition Message="This software can only be installed on Windows 10 or later (64-bit).">
+			<![CDATA[VersionNT64 >= 1000]]>
+		</bal:Condition>
+		
+		<Chain>
+			<!-- TODO: Define the list of chained packages. -->
+			<MsiPackage SourceFile="$(var.DisplayMagicianSetup.TargetDir)DisplayMagicianSetup.msi" />
+			<MsiPackage SourceFile="$(var.DisplayMagicianSetup.TargetDir)DisplayMagicianSetup.msi" />
+		</Chain>
+	</Bundle>
+</Wix>

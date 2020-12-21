@@ -5,10 +5,12 @@
 	<String Id="ProductDescription">DisplayMagician will automatically run your games with a different display profile or audio settings and then will revert everything back to the way it was when you've finished playing.</String>
 	<String Id="LicenseRtf" Overridable="yes">\Lang\en-us\EULA_en-us.rtf</String>
 	<String Id="ManufacturerName">LittleBitBig</String>
-	<String Id="LogReporterName">LogReporter</String>
+	<String Id="HelpUrl">https://displaymagician.littlebitbig.com</String>
+	<String Id="AboutUrl">https://displaymagician.littlebitbig.com</String>
+	<String Id="UpdateUrl">https://github.com/terrymacdonald/DisplayMagician/releases</String>
 	<String Id="LogReporterDescription">LogReporter will collect details about your computer to help us troubleshoot errors running DisplayMagician.</String>
-	<String Id="AppNotSupported">This application is is not supported on your current OS. Your OS must be Windows 8.1 or later (64-bit only).</String>
-	<String Id="DotNetFrameworkNeeded">.NET Framework 4.8 or higher is required for DisplayMagician to work. Please install the latest .NET Framework then run this installer again. You can download the latest .NET Framework from https://dotnet.microsoft.com/download/dotnet-framework.</String>
+	<String Id="AppNotSupported">This application is is not supported on your current OS. Your OS must be Windows 10 or later (64-bit only).</String>
+	<String Id="DotNetFrameworkNeeded">.NET Framework 4.8 or higher is required for DisplayMagician to work. Please install the latest .NET Framework then run this installer again.</String>
 	<String Id="MustCloseDisplayMagician">You must close !(loc.ProductName) in order to upgrade it!</String>
 	<String Id="DowngradeErrorMessage">You cannot downgrade !(loc.ProductName) to a lower version using this installer. Please uninstall the older version of !(loc.ProductName) first!</String>
 	<String Id="DisplayMagicianNewerVersionInstalled">A newer version of !(loc.ProductName) is already installed.</String>
