@@ -54,10 +54,6 @@ namespace DisplayMagician {
             // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
             // Windows 10 recognises the application, and allows features such as Toasts, 
             // taskbar pinning and similar.
-            // This is a helper function that sets the AUMID  to a static default defined
-            // within ShellUtils under the DisplayMagician.Shared project.
-            //ShellUtils.SetDefaultProcessExplicitAppUserModelID();
-
             // Register AUMID, COM server, and activator
             DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(ShellUtils.AUMID);
             DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();

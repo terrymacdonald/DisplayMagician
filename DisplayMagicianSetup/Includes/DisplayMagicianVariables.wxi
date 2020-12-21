@@ -25,4 +25,5 @@
   and creating the desktop shortcut
   -->
 	<?define ExeProcessName="DisplayMagician.exe" ?>
+
 </Include>

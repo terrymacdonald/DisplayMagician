@@ -23,12 +23,14 @@
     <CompilerAdditionalOptions />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
-    <DefineConstants>Debug;DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\Debug</DefineConstants>
+    <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug;</DefineConstants>
     <CompilerAdditionalOptions>-arch x64</CompilerAdditionalOptions>
     <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <SuppressAllWarnings>False</SuppressAllWarnings>
     <Pedantic>True</Pedantic>
+    <WixVariables>
+    </WixVariables>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
@@ -117,7 +119,7 @@
     <Error Text="The WiX Toolset v3.11 (or newer) build tools must be installed to build this project. To download the WiX Toolset, see http://wixtoolset.org/releases/" />
   </Target>
   <PropertyGroup>
-    <PreBuildEvent>"$(WIX)bin\heat.exe" dir H:\vscode-projects\DisplayMagician\Debug -cg DisplayMagicianFiles -gg -scom -sreg -sfrag -srd -dr APPLICATIONROOTDIRECTORY -var var.DisplayMagicianFilesDir -out "$(ProjectDir)Fragments\DisplayMagicianFilesFragment.wxs"</PreBuildEvent>
+    <PreBuildEvent>"$(WIX)bin\heat.exe" dir H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug -cg DisplayMagicianFiles -gg -scom -sreg -sfrag -srd -dr APPLICATIONROOTDIRECTORY -var var.DisplayMagicianFilesDir -out "$(ProjectDir)Fragments\DisplayMagicianFilesFragment.wxs"</PreBuildEvent>
   </PropertyGroup>
   <!--
 	To modify your build process, add your task inside one of the targets below and uncomment it.

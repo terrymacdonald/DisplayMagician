@@ -11,7 +11,7 @@
   -->
 	<Product Id="*" Name="!(loc.ProductName) $(var.VersionNumber)" Language="!(loc.LANG)" Version="$(var.VersionNumber)" Manufacturer="!(loc.ManufacturerName)" UpgradeCode="$(var.UpgradeCode)">
 		<!-- Define the minimum supported installer version (3.0) and that the install should be done for the whole machine not just the current user -->
-		<Package InstallerVersion="300" Compressed="yes" InstallScope="perMachine" Platform="x64"/>
+		<Package InstallerVersion="300" Compressed="yes" InstallPrivileges="elevated" InstallScope="perMachine" Platform="x64"/>
 		<Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 		<!-- Upgrade settings. This will be explained in more detail in a future post -->
 		<!-- <Upgrade Id="$(var.UpgradeCode)">
@@ -19,21 +19,21 @@
 			<UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="yes" Maximum="$(var.VersionNumber)" IncludeMaximum="no" Property="OLDER_VERSION_FOUND" />
 		</Upgrade> -->
 		<MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="!(loc.DowngradeErrorMessage)" />
-		<!-- Reference the global NETFRAMEWORK462 property to check if it exists -->
-		<!-- <PropertyRef Id="NETFRAMEWORK462"/> -->
+		<!-- Reference the global WIXNETFX4RELEASEINSTALLED property so that will automatically pull in the .Net 4.8 variables -->
+		<PropertyRef Id="WIXNETFX4RELEASEINSTALLED"/>
 		<!-- 
-    Startup conditions that checks if .Net Framework 4.6.2 is installed or if 
-    we're running the OS higher than Windows 8.1.
+    Startup conditions that checks if .Net Framework 4.8 is installed or if 
+    we're running Windows 10 or higher as the OS.
     If not the installation is aborted.
     By doing the (Installed OR ...) property means that this condition will only 
     be evaluated if the app is being installed and not on uninstall or changing
     -->
-		<!-- <Condition Message="!(loc.DotNetFrameworkNeeded)">
-			<![CDATA[Installed OR NETFRAMEWORK462]]>
+	    <Condition Message="!(loc.DotNetFrameworkNeeded)">
+			<![CDATA[Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED]]>
 		</Condition>
 		<Condition Message="!(loc.AppNotSupported)">
-			<![CDATA[Installed OR (VersionNT >= 603))]]>
-		</Condition>-->
+			<![CDATA[Installed OR (VersionNT64 >= 1000)]]>
+		</Condition>
 		<!-- 
     This custom action in the InstallExecuteSequence is needed to 
     stop silent install (passing /qb to msiexec) from going around it. 
@@ -80,23 +80,40 @@
 			<Directory Id="ProgramMenuFolder">
 				<Directory Id="ApplicationProgramsFolder" Name="!(loc.ProductName)"/>
 			</Directory>
+			<Component Id="HKLMRegistryEntries" Guid="4AB42CB7-3E2A-465B-9BE2-DDDE7D34797B">
+				<RegistryValue Root="HKLM" Key="Software\DisplayMagician" Type="string" Name="InstallDir" Value="[APPLICATIONROOTDIRECTORY]" KeyPath="yes"/>
+			</Component>
+			<Component Id="HKCURegistryEntries" Guid="481CA633-0BC0-49CD-B673-51BE9560B00F">
+				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Type="string" Name="AppDataDir" Value="[LocalAppDataFolder]" KeyPath="yes"/>
+			</Component>
 		</Directory>
 		
 		<!-- Now we create an Application shortcut -->
 		<DirectoryRef Id="ApplicationProgramsFolder">
-			<Component Id="ApplicationShortcut" Guid="6C7BFB9E-8549-4E34-BE44-E1A718146755">
+			<Component Id="ApplicationShortcut" Guid="6C7BFB9E-8549-4E34-BE44-E1A718146755" >
 				<Shortcut Id="ApplicationStartMenuShortcut"
 						  Name="!(loc.ProductName)"
-						  Description="!(loc.Description)"
+						  Description="!(loc.ProductDescription)"
 						  Target="[APPLICATIONROOTDIRECTORY]$(var.DisplayMagician.TargetFileName)"
-						  WorkingDirectory="APPLICATIONROOTDIRECTORY">
+						  WorkingDirectory="APPLICATIONROOTDIRECTORY"
+						  Icon="DisplayMagicianIcon.ico">
 					<!--AUMID-->
 					<ShortcutProperty Key="System.AppUserModel.ID" Value="LittleBitBig.DisplayMagician"/>
 					<!--COM CLSID-->
 					<ShortcutProperty Key="System.AppUserModel.ToastActivatorCLSID" Value="{56F14154-6339-4B94-8B82-80F78D5BCEAF}"/>
 				</Shortcut>
-				<RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
-				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+				<RemoveFolder Id="CleanUpApplicationShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="DisplayMagicianInstalled" Type="integer" Value="1" KeyPath="yes"/>
+			</Component>
+			<Component Id="LogReporterShortcut" Guid="1C24F22F-8796-4CF0-9E84-7D06B6662239">
+				<Shortcut Id="LogReporterStartMenuShortcut"
+						  Name="!(loc.LogReporterName)"
+						  Description="!(loc.LogReporterDescription)"
+						  Target="[APPLICATIONROOTDIRECTORY]$(var.DisplayMagicianLogReporter.TargetFileName)"
+						  WorkingDirectory="APPLICATIONROOTDIRECTORY" 
+						  Icon="DisplayMagicianIcon.ico" />
+				<RemoveFolder Id="CleanUpLogReporterShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="LogReporterInstalled" Type="integer" Value="1" KeyPath="yes"/>
 			</Component>
 		</DirectoryRef>
 		
@@ -123,6 +140,9 @@
 		<Feature Id="DisplayMagicianFeature" Title="!(loc.ProductName)" Level="1">
 			<ComponentGroupRef Id="DisplayMagicianFiles" />
 			<ComponentRef Id="ApplicationShortcut" />
+			<ComponentRef Id="LogReporterShortcut" />
+			<ComponentRef Id="HKLMRegistryEntries" />
+			<ComponentRef Id="HKCURegistryEntries" />
 			
 			<!-- Add in the 3 ShellExtension files we need to make the COM registration work -->
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
@@ -134,6 +154,16 @@
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="SharpShell.dll" Source="$(var.DisplayMagicianShellExtension.TargetDir)\SharpShell.dll" KeyPath="yes" />
 			</Component>
+			
+			<!-- Add in the LogReporter files we need  -->
+			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
+				<File Id="LogReporter.exe" KeyPath="yes" Source="$(var.DisplayMagicianLogReporter.TargetDir)\LogReporter.exe" />
+			</Component>
+			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
+				<File Id="LogReporter.exe.config" KeyPath="yes" Source="$(var.DisplayMagicianLogReporter.TargetDir)\LogReporter.exe.config" />
+			</Component>
+			
+
 			<!-- <ComponentRef Id="cmpVersionInRegistry" /> -->
 			<!-- <ComponentRef Id="cmpIsThisUpdateInRegistry" /> -->
 		</Feature>
