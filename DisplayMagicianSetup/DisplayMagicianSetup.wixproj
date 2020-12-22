@@ -95,6 +95,9 @@
     <Content Include="Includes\DisplayMagicianVariables.wxi" />
     <Content Include="Lang\en-us\EULA_en-us.rtf" />
     <Content Include="Resources\DisplayMagician.ico" />
+    <Content Include="Resources\WixUIBannerBmp.png" />
+    <Content Include="Resources\WixUIDialogBmp.png" />
+    <Content Include="Resources\WixUIDialogBmpDarker.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Lang\en-us\Loc_en-us.wxl" />
