@@ -2,196 +2,196 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
         <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
-            <Component Id="cmp53B07BB21F5AFE76F5469BD1F4BA65C9" Guid="{DE64CBE7-5D0F-4735-AD3D-1AA73A0CB08B}">
+            <Component Id="cmp53B07BB21F5AFE76F5469BD1F4BA65C9" Guid="{A39F225D-7C1E-4410-861D-D3130FF92A5E}">
                 <File Id="fil8CC3C83921B00F72D50A1E4EEB792DFE" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\AudioSwitcher.AudioApi.CoreAudio.dll" />
             </Component>
-            <Component Id="cmp8243CB1E312705B4BA74BC791635270C" Guid="{66F3211C-1F5F-411D-A228-189B57BC307A}">
+            <Component Id="cmp8243CB1E312705B4BA74BC791635270C" Guid="{F2057F8C-12E5-43D3-AEE8-2EF45E61E321}">
                 <File Id="filC0B7F66C67664353137460031E28BC1B" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\AudioSwitcher.AudioApi.dll" />
             </Component>
-            <Component Id="cmp493DD683A43D05F764F3DEEF08ECA4C6" Guid="{52666F85-C85F-450D-B50E-4CD6DD84D18F}">
+            <Component Id="cmp493DD683A43D05F764F3DEEF08ECA4C6" Guid="{ABFBD1C5-182F-4A24-A5BB-5FD2C906BDA9}">
                 <File Id="filC8194EB99DFB64B8589F5D80DC8E3B4D" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\AutoUpdater.NET.dll" />
             </Component>
-            <Component Id="cmp357CADF4E916AADB1DD6BD7938986798" Guid="{B450B1DB-253E-49B6-A69D-87A7FA68177E}">
+            <Component Id="cmp357CADF4E916AADB1DD6BD7938986798" Guid="{314587BC-93B6-4543-A9F0-010917914AFF}">
                 <File Id="fil900464E773972F43219693B12A52EDE2" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\AutoUpdater.NET.pdb" />
             </Component>
-            <Component Id="cmp78B9C7C9D51B2878B72DCBACE49DE398" Guid="{8B350B37-4AA1-41D7-AF7B-F16232CA1634}">
+            <Component Id="cmp78B9C7C9D51B2878B72DCBACE49DE398" Guid="{A71BF140-0F59-4A57-8582-900BD6860CC4}">
                 <File Id="filDE7F24A649EB60701DC0EC41FE83CBBE" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\CircularProgressBar.dll" />
             </Component>
-            <Component Id="cmp7EE113DB90D07F08FCE70C1861DEA947" Guid="{6A203071-1886-472C-94AF-99691D67371F}">
+            <Component Id="cmp7EE113DB90D07F08FCE70C1861DEA947" Guid="{EDE11E9C-6799-4323-8D90-5A15E2580D04}">
                 <File Id="filF7D383DE2E27A23D8552666CEA0DDC80" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\DisplayMagician.exe" />
             </Component>
-            <Component Id="cmpCF520827D65E51E3ECB59344A6F528D0" Guid="{42B65ECF-72A6-4D3A-ABD6-1E572988DB14}">
+            <Component Id="cmpCF520827D65E51E3ECB59344A6F528D0" Guid="{18E88716-7BE7-4DF4-920A-0E967057CF3F}">
                 <File Id="fil2841FB135B81D3B7EF6634B1E3E562DA" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\DisplayMagician.exe.config" />
             </Component>
-            <Component Id="cmp20CF355FCD243C61CF66FB91F20BEA24" Guid="{20DD92D9-6CC0-4968-9B7B-27803FE2021A}">
+            <Component Id="cmp20CF355FCD243C61CF66FB91F20BEA24" Guid="{A365C631-CFA9-4640-B3DC-6C2BFAFFED0A}">
                 <File Id="fil00FEE1F8F6F3766FD0431A9B72F4FCC7" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\DisplayMagician.pdb" />
             </Component>
-            <Component Id="cmp936B3459EEFF10D8EB978B7DD0F9FDDA" Guid="{6E06306B-6D8A-4375-828C-B1F99A64A7BC}">
+            <Component Id="cmp936B3459EEFF10D8EB978B7DD0F9FDDA" Guid="{6CDB6708-B682-4037-B257-0FF0C6B5E175}">
                 <File Id="fil44F64B4F8FBBEAA84A71077F7F3B6B4D" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\DisplayMagician.Shared.dll" />
             </Component>
-            <Component Id="cmpEFA0EED8369E2F430E0ED6D9EB027553" Guid="{4444A2F7-B602-46D9-8C8F-D7CF66E5129E}">
+            <Component Id="cmpEFA0EED8369E2F430E0ED6D9EB027553" Guid="{D0F41E0A-2236-44C0-B1CD-A46B334720FE}">
                 <File Id="fil52BE9F94EBFDF8C5CFEC426A17966F40" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\DisplayMagician.Shared.pdb" />
             </Component>
-            <Component Id="cmpE8833A8E220525D7707A018B20CEDD87" Guid="{BD9C0437-AD37-413B-AA41-B24F361FA9E6}">
+            <Component Id="cmpE8833A8E220525D7707A018B20CEDD87" Guid="{32D2B781-DC41-4D56-88A0-C474BAFE8CFC}">
                 <File Id="filD4FD53D2FBF78674DBC3A1B446B44FC5" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\EDIDParser.dll" />
             </Component>
-            <Component Id="cmp8C52E948AAB2D43DF696BB7D003A8E4B" Guid="{6A163CC9-8B19-4BA8-8F51-6CA32FACD2E1}">
+            <Component Id="cmp8C52E948AAB2D43DF696BB7D003A8E4B" Guid="{8AC40E68-B622-4561-884F-EDACA15B867A}">
                 <File Id="fil1965347683EC48A269FE672473CD04C2" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\HtmlAgilityPack.dll" />
             </Component>
-            <Component Id="cmp137F8F514DF6364F5BBFCBDB1B1B9807" Guid="{A540F65A-F3D1-4F3F-BD32-F647BB697C09}">
+            <Component Id="cmp137F8F514DF6364F5BBFCBDB1B1B9807" Guid="{E0DADEEC-96DB-4CC2-9D29-3BA88A073DE6}">
                 <File Id="filA79B24FCE8AA4DA0DC9A3ACBE5D830DD" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\HtmlAgilityPack.pdb" />
             </Component>
-            <Component Id="cmpC13B4DB64E30D03117ECF099B1A9CD9C" Guid="{3C6E01B7-DC34-454C-8005-20CF1CE28504}">
+            <Component Id="cmpC13B4DB64E30D03117ECF099B1A9CD9C" Guid="{89966322-98B5-4E78-893C-1EA194EF3E19}">
                 <File Id="fil44FFB513E29A8346713440B4BCB7F1E6" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\IconExtractor.dll" />
             </Component>
-            <Component Id="cmp6AB92D1CF70395670A490E1B9BD347DE" Guid="{BF0BEC23-EACB-4F26-8984-FD23F09E7895}">
+            <Component Id="cmp6AB92D1CF70395670A490E1B9BD347DE" Guid="{03DA3B3F-C075-4A52-8AFE-286DC205F2AE}">
                 <File Id="fil4DD582D50D7AC9DDD5292A76257854FA" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\IconLib.dll" />
             </Component>
-            <Component Id="cmp23C6CFB3962E9B4E2A7E8EF56F20A99F" Guid="{700F32BA-CC83-45E4-81C1-830C78E39FD7}">
+            <Component Id="cmp23C6CFB3962E9B4E2A7E8EF56F20A99F" Guid="{C654887D-26F9-4D36-B30D-58FAEF17E67E}">
                 <File Id="fil0F18A66FBBBB6C44A052B9FB77ACD8F8" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\IconPicker.dll" />
             </Component>
-            <Component Id="cmp5069692C1912B298A026EA30A39A2F36" Guid="{16264F2F-62CC-4694-8745-E1039D8EB9E6}">
+            <Component Id="cmp5069692C1912B298A026EA30A39A2F36" Guid="{BA1E5810-8986-48E4-83C2-83E65D408953}">
                 <File Id="fil15BCAD6A05EB985A23A6B9DE3EFEB933" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\ImageListView.dll" />
             </Component>
-            <Component Id="cmp6B91543EC1EAFC09F3C7747C1333F99A" Guid="{C834D24D-1A39-4380-979A-3251A48B40D1}">
+            <Component Id="cmp6B91543EC1EAFC09F3C7747C1333F99A" Guid="{4442D020-4162-4E35-975F-86F2C222D2FC}">
                 <File Id="fil34AC49C1FA6CC0335FB4F16BCD03AA7B" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\McMaster.Extensions.CommandLineUtils.dll" />
             </Component>
-            <Component Id="cmp8A11CDCDF04C29EC9CA9A0C1D0D78B04" Guid="{C3BA5C85-955F-4BF6-8E82-D7E32227C39C}">
+            <Component Id="cmp8A11CDCDF04C29EC9CA9A0C1D0D78B04" Guid="{499EADC1-07FF-45D5-9C0A-7BAFCDC02928}">
                 <File Id="fil151DD1163831E94E80724A88F88C2231" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\Microsoft.Toolkit.Uwp.Notifications.dll" />
             </Component>
-            <Component Id="cmp62D956D9975F1430FEAB37FCAD94474F" Guid="{FBF9E5CF-A0DE-4270-BB1E-E1E170E2D3A2}">
+            <Component Id="cmp62D956D9975F1430FEAB37FCAD94474F" Guid="{84DA2C4F-C979-480A-9180-D3A304E863BE}">
                 <File Id="fil4F519990E7E5387E7BAEB5C056617826" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\Microsoft.Toolkit.Uwp.Notifications.pdb" />
             </Component>
-            <Component Id="cmpA6AEEDB3EBF416E3AD000E7408FE3402" Guid="{A180D72B-826C-4B08-BDFE-24C0673D8809}">
+            <Component Id="cmpA6AEEDB3EBF416E3AD000E7408FE3402" Guid="{C959C7B9-ADAB-4335-9D9C-9AA1B35590B8}">
                 <File Id="filA93EB7C7565EEDD39AF3362752AE09DB" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\MintPlayer.IconUtils.dll" />
             </Component>
-            <Component Id="cmpA7927FF61A499CF81EE0A562CDFEDEC7" Guid="{4E5F209E-1EBA-4F3F-A97F-47B9D7A32905}">
+            <Component Id="cmpA7927FF61A499CF81EE0A562CDFEDEC7" Guid="{A0E7DE7B-89AD-41E8-A230-78ADA0114589}">
                 <File Id="filD7DC5F43B3964ACECD7725F05E664960" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\Newtonsoft.Json.dll" />
             </Component>
-            <Component Id="cmpC64ECA245317593760E42F3996F3A079" Guid="{A8617266-86D4-4611-88E6-31CF511F559E}">
+            <Component Id="cmpC64ECA245317593760E42F3996F3A079" Guid="{36B81B80-0870-4A7A-B5E0-951F52A11EDE}">
                 <File Id="fil5299F0448E950048C778AA65A04FB498" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\NLog.dll" />
             </Component>
-            <Component Id="cmp5CFF8A0C9C138424DA47E04F4B0986EB" Guid="{9B48387D-2FD1-422A-AEE9-A41AAAAF4BE4}">
+            <Component Id="cmp5CFF8A0C9C138424DA47E04F4B0986EB" Guid="{2B3B6944-4850-4566-9A4F-922899F2BACB}">
                 <File Id="filDB484734B403A8C8EE2F5B5165068C91" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\NvAPIWrapper.dll" />
             </Component>
-            <Component Id="cmpBEC07D0236076B07E4E7D7632CCA69CB" Guid="{E8CD9402-F43A-40D5-9A53-B0518C1D0A7B}">
+            <Component Id="cmpBEC07D0236076B07E4E7D7632CCA69CB" Guid="{C33AF36E-E61B-4631-B55F-BE0F3D30A27D}">
                 <File Id="fil8C59ED1965E9E2D1C82459BE5C1E903E" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\QueryString.NETCore.dll" />
             </Component>
-            <Component Id="cmpAE5FC77E7BB7E9CB720EF7CEE118A4CE" Guid="{4CD852BE-9A1C-494C-8DF5-BC27140BD7C7}">
+            <Component Id="cmpAE5FC77E7BB7E9CB720EF7CEE118A4CE" Guid="{5795DB83-27D4-4CD6-B2A5-BCE285887B21}">
                 <File Id="filD448167ABB54E447850BA2A203C5FCA1" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\QueryString.NETCore.pdb" />
             </Component>
-            <Component Id="cmpB76F273FDED5EA841158E966B403CFC8" Guid="{B3BBE64F-FE7C-43FF-BAD2-D408F62B77B6}">
+            <Component Id="cmpB76F273FDED5EA841158E966B403CFC8" Guid="{986911D8-6C95-4DB4-ADE1-5A5B0C26EDF4}">
                 <File Id="fil8A5957F9C3DCF1A6D414F9F34402CB53" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\System.Drawing.Common.dll" />
             </Component>
-            <Component Id="cmp7DD29D6442A6E450B2316729EA2C0F1D" Guid="{123C5A3E-440D-4524-B8D4-BC55BA73D3B5}">
+            <Component Id="cmp7DD29D6442A6E450B2316729EA2C0F1D" Guid="{3BE769A6-2299-44FD-82E2-B691A848B880}">
                 <File Id="fil9DF3290031BCB652454E62345D1FAE6B" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\System.ValueTuple.dll" />
             </Component>
-            <Component Id="cmpA8825A49786C04320E75BCFC8E961667" Guid="{A8EBCCA6-8EE6-4093-9002-A076E4B34321}">
+            <Component Id="cmpA8825A49786C04320E75BCFC8E961667" Guid="{F3C8C43A-6F65-402E-90B1-97A282E28073}">
                 <File Id="filD5FED76D92088BA98BD9CF7D4D9B7EF2" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\ValveKeyValue.dll" />
             </Component>
-            <Component Id="cmp650327FC006E09EDFC7039D6E7A6F340" Guid="{F831C171-6C56-4040-AB57-CF83A9C434AE}">
+            <Component Id="cmp650327FC006E09EDFC7039D6E7A6F340" Guid="{03E64E13-540A-4AAC-B4D2-B5FA15A3D126}">
                 <File Id="filB58835925907FAE2AB432C29CD8C03B4" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\WindowsDisplayAPI.dll" />
             </Component>
-            <Component Id="cmp27AC6F10258FA1C97C54F3C1D153D122" Guid="{C1AD79A2-49EB-4532-9525-63D4FA7CE484}">
+            <Component Id="cmp27AC6F10258FA1C97C54F3C1D153D122" Guid="{27290F16-A749-4211-927A-7DF22BF94155}">
                 <File Id="fil01CF08752F4284E3144706F10481AEA0" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\WinFormAnimation.dll" />
             </Component>
             <Directory Id="dirC9CEBA44737D7806DC2F52AE07FB1335" Name="ar">
-                <Component Id="cmp1D8A437520B8A88B5329BA85AF49F972" Guid="{F40490E0-3212-4CB5-B1CC-F9999AF69242}">
+                <Component Id="cmp1D8A437520B8A88B5329BA85AF49F972" Guid="{8CB6BEC6-7D34-42E6-B7D4-CB4714223C9A}">
                     <File Id="filC934041A1382ABA35ECB5DE3BB6C4148" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\ar\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir1764AC367AADA7667CA18D19856EB829" Name="cs">
-                <Component Id="cmp1B983AD82D33902E3869C2CD3E625557" Guid="{409549E4-14E4-470B-A74D-DB891439560A}">
+                <Component Id="cmp1B983AD82D33902E3869C2CD3E625557" Guid="{BBF36734-FACE-4D26-B360-8FFC71E87C45}">
                     <File Id="fil5CE1877B3764F3FA8C53E465EC4F1E6B" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\cs\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir70240FB68A7D32052E3646DFEC7177A6" Name="da">
-                <Component Id="cmp645D07231E6F1B4B9F84AAED05DE08B9" Guid="{02D1269F-58EF-4810-85F8-CEB64A8F566B}">
+                <Component Id="cmp645D07231E6F1B4B9F84AAED05DE08B9" Guid="{FA457C17-1324-46E9-ADC3-A045C43C853F}">
                     <File Id="fil6664ED7C2E9121315323240F4A94F71F" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\da\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir1C628EE15A29CD6ED08798D6B0A06B2F" Name="de">
-                <Component Id="cmpF7E34D6BF19681066F5E973C8D30C63A" Guid="{C05B08FD-40F2-4F0A-ADE4-62351DF7F78C}">
+                <Component Id="cmpF7E34D6BF19681066F5E973C8D30C63A" Guid="{779CA3E3-640B-4762-AED2-D91C24B8AD90}">
                     <File Id="filC2D506AF5C5B86FA443A326E067EF823" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\de\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir6B7DF5E7779A02DE589C2D4AABF889BA" Name="es">
-                <Component Id="cmpB54DE98A33D508FC6EF7E3761CDF0661" Guid="{E656B28C-2DA0-4112-9D9B-C1BD61DFC9BB}">
+                <Component Id="cmpB54DE98A33D508FC6EF7E3761CDF0661" Guid="{E8ABA67D-BEA3-40D8-BF06-FB4314363D44}">
                     <File Id="filCDFD6865877E32514969EAE54D3CC9F9" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\es\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirCCE997692B032DBDA6174416BFED255E" Name="fr">
-                <Component Id="cmp81105D91EF7C9FAB44E52202DBAF417C" Guid="{FE05F9C4-87A1-484F-AD10-74C259035D6E}">
+                <Component Id="cmp81105D91EF7C9FAB44E52202DBAF417C" Guid="{6B29E02B-B1C7-497F-9309-87D9CD0A0AD4}">
                     <File Id="fil6B84F6EC6C9F50B7139B0E99914B401A" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\fr\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirC0620602576770B728F6D7CF835E4230" Name="it">
-                <Component Id="cmpCC505044A437DF227E44E7B31A54D0BF" Guid="{EBCE4AA8-F412-4FF3-ACDB-CFC048882C9E}">
+                <Component Id="cmpCC505044A437DF227E44E7B31A54D0BF" Guid="{02EF77B6-6492-44DD-9849-D1D85B4765F7}">
                     <File Id="filD812096039F1E9D729065E7109AB857F" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\it\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir299EDA906CCCF90FED2B1DE9A0AE661D" Name="ja-JP">
-                <Component Id="cmp2B1808EAFED02DC5D42D475F2BB83458" Guid="{013BA14E-2C20-49EF-A2AB-7A57A230FC88}">
+                <Component Id="cmp2B1808EAFED02DC5D42D475F2BB83458" Guid="{44AD716D-CB87-4599-9F05-66CF3827ED65}">
                     <File Id="filA3B2CB69DE697F856902A5EB591C1BA9" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\ja-JP\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir5F675FF0062E1C1CACE0170EC20A5208" Name="ko">
-                <Component Id="cmpE8B7CCFB66BD36E9CF741814FEE6AD14" Guid="{34CCC1B7-93E6-407D-90C3-4A7A3DAED911}">
+                <Component Id="cmpE8B7CCFB66BD36E9CF741814FEE6AD14" Guid="{33D02C88-8FF2-4A08-B346-78948E66842B}">
                     <File Id="fil1A20D0790F057F2E9E188792193A32BD" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\ko\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir0BFBA37D9F94C8F490A10DA87815DED5" Name="nl">
-                <Component Id="cmp9449E2C32768367A145DF20983A12FF7" Guid="{78C04352-948D-42B4-B533-4ACF5BFBEDDF}">
+                <Component Id="cmp9449E2C32768367A145DF20983A12FF7" Guid="{67E8641C-D9D8-452D-8D4D-9727EC90D705}">
                     <File Id="filE87E30BFF942128946D7656D111B9E28" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\nl\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir5D30DDBDF1F855D2C3CFCAE5A7D4DFB7" Name="pl">
-                <Component Id="cmp34EDF353BCC5E92A39657F713CAF1AA0" Guid="{B5280573-16F4-4C8D-883F-6BCD424108B2}">
+                <Component Id="cmp34EDF353BCC5E92A39657F713CAF1AA0" Guid="{8E0F9214-A5CE-4E9B-806F-C183FAB7E2A5}">
                     <File Id="filB0BCC1B40E0F3F37F614E9AC51A1BEDF" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\pl\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir32D9AD0C9188498053C05E4C1D09269D" Name="pt">
-                <Component Id="cmp1E67A3938BF74EC5ADD54FAB69A80CB3" Guid="{3C56FCC6-B350-47DF-867A-D899E9CC944A}">
+                <Component Id="cmp1E67A3938BF74EC5ADD54FAB69A80CB3" Guid="{E45282F2-A315-4C63-BA15-5DC7204CAB1E}">
                     <File Id="filB6A7729764F42969B1A0A1093D3F600D" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\pt\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir3EA1054A4A68F70CEF22E983B9D684DB" Name="pt-BR">
-                <Component Id="cmpEEAAA81C74F88DC87008EB031C2F1030" Guid="{A9082895-3AE7-4310-94C9-21FB6A3FD83A}">
+                <Component Id="cmpEEAAA81C74F88DC87008EB031C2F1030" Guid="{94CDA56D-C95F-423A-86C2-291B2D095109}">
                     <File Id="filBDE4FF11B65DE8486E6AE2917075C4F2" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\pt-BR\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirF9A13AB290C9570B2C0CE7CB6EF9D86E" Name="ru">
-                <Component Id="cmpA923B5BC9CB54BE671D485B3A39D93A5" Guid="{18A9DA37-2453-4F65-A9EB-FE48B37D04E0}">
+                <Component Id="cmpA923B5BC9CB54BE671D485B3A39D93A5" Guid="{02079C18-4856-4977-86B1-744829E95E60}">
                     <File Id="fil0672B3CFA1451A14C32747BE1794732F" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\ru\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dir0A61397BAE3772A68E21EF1C51156F2C" Name="sk">
-                <Component Id="cmp8D4C4B444510137E2D82B4FD6A0B9776" Guid="{143EF212-8789-465F-804F-A417F875C563}">
+                <Component Id="cmp8D4C4B444510137E2D82B4FD6A0B9776" Guid="{33DD07F1-9BE8-4C8B-B349-0364A63DF6DB}">
                     <File Id="filC5765B8E01B5B47AAF9794806A76E690" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\sk\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirBBD306FA33D57073FD02CF4EFC3A0326" Name="sv">
-                <Component Id="cmpFB55A1004D6DF4923A748FDC2F523D8B" Guid="{D6DDF219-2EEC-4D18-A2C6-DDA531FDCE1F}">
+                <Component Id="cmpFB55A1004D6DF4923A748FDC2F523D8B" Guid="{AF6BD28C-F94B-49C0-B3C7-D7A300928AE3}">
                     <File Id="fil54738B12543ED9C06F79D373D2EB015B" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\sv\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirCE3BF130A177608F70523C718370D4AB" Name="th">
-                <Component Id="cmp4490FE644B0447492BBB39E2832B87C0" Guid="{19A86084-4FC3-42AF-94E9-E9C9EEDAC8FD}">
+                <Component Id="cmp4490FE644B0447492BBB39E2832B87C0" Guid="{AACEF05F-EB86-4E1C-94FD-071806C17904}">
                     <File Id="fil4735CFBE1739CDA690669E71EA774734" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\th\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirC06FC06848A827DE7E1246A3EEE173B9" Name="tr">
-                <Component Id="cmp7311ACB3A3BB0005E1BD421A03BAC70D" Guid="{B848C404-3649-4DC5-B1B3-23179422145D}">
+                <Component Id="cmp7311ACB3A3BB0005E1BD421A03BAC70D" Guid="{24C237B2-833C-4429-9105-FFD302EAF682}">
                     <File Id="fil9EDE895C94E3E737A7E2345A3354E4ED" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\tr\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirA9E5CFBEBA3415CA12E141D142550091" Name="zh">
-                <Component Id="cmp0E8893641CCC97E160269D736795633C" Guid="{32602A92-FF6D-4FA8-940C-79ADA36C5D03}">
+                <Component Id="cmp0E8893641CCC97E160269D736795633C" Guid="{9CB80D13-E967-4C7C-B635-DA2A47B1D8DD}">
                     <File Id="filD14D5D68900793C75702C773F11A305F" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\zh\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
             <Directory Id="dirB915F738D24EC7F5CE340DC7A43B9BD1" Name="zh-tw">
-                <Component Id="cmp1D85EF433AB8DDB383D91C1C33BAA91A" Guid="{59ADFE95-82DA-48D7-8254-899B78287C55}">
+                <Component Id="cmp1D85EF433AB8DDB383D91C1C33BAA91A" Guid="{012CC00A-45AB-415F-9275-BC00B0EB1CE4}">
                     <File Id="fil03FB6CBB0D2712EFAD51B20D66FE4B9B" KeyPath="yes" Source="$(var.DisplayMagicianFilesDir)\zh-tw\AutoUpdater.NET.resources.dll" />
                 </Component>
             </Directory>
