@@ -90,9 +90,9 @@
             // 
             // btn_toast
             // 
+            resources.ApplyResources(this.btn_toast, "btn_toast");
             this.btn_toast.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_toast.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            resources.ApplyResources(this.btn_toast, "btn_toast");
             this.btn_toast.ForeColor = System.Drawing.Color.White;
             this.btn_toast.Name = "btn_toast";
             this.btn_toast.UseVisualStyleBackColor = true;
@@ -100,9 +100,9 @@
             // 
             // btn_settings
             // 
+            resources.ApplyResources(this.btn_settings, "btn_settings");
             this.btn_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            resources.ApplyResources(this.btn_settings, "btn_settings");
             this.btn_settings.ForeColor = System.Drawing.Color.White;
             this.btn_settings.Name = "btn_settings";
             this.btn_settings.UseVisualStyleBackColor = true;
