@@ -25,7 +25,7 @@ namespace DisplayMagician.UIForms
             logLevelText.Add("Trace", "Full Application Trace (very large)");
             logLevelText.Add("Debug", "Detailed Debug messages (large)");
             logLevelText.Add("Info", "Information, Warning and Error messages");
-            logLevelText.Add("Warn", "Warning and Error messages only");
+            logLevelText.Add("Warn", "Warning and Error messages only (Default)");
             logLevelText.Add("Error", "Error messages only");
             logLevelText.Add("Fatal", "Fatal Error messages only");
 
@@ -36,38 +36,35 @@ namespace DisplayMagician.UIForms
 
         private void SettingsForm_Load(object sender, EventArgs e)
         {
-            // Load the program settings
-            mySettings = Program.AppProgramSettings;
-
             // setup minimise on start
-            if (mySettings.MinimiseOnStart)
+            if (Program.AppProgramSettings.MinimiseOnStart)
                 cb_minimise_notification_area.Checked = true;
             else
                 cb_minimise_notification_area.Checked = false;
 
             // setup loglevel on start
-            switch (mySettings.LogLevel)
+            switch (Program.AppProgramSettings.LogLevel)
             {
                 case "Trace":
-                    cmb_loglevel.SelectedItem = logLevelText["Trace"];
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Trace"]);
                     break;
                 case "Debug":
-                    cmb_loglevel.SelectedItem = logLevelText["Debug"];
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Debug"]);
                     break;
                 case "Info":
-                    cmb_loglevel.SelectedItem = logLevelText["Info"];
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Info"]);
                     break;
                 case "Warn":
-                    cmb_loglevel.SelectedItem = logLevelText["Warn"];
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Warn"]);
                     break;
                 case "Error":
-                    cmb_loglevel.SelectedItem = logLevelText["Error"];
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Error"]);
                     break;
                 case "Fatal":
-                    cmb_loglevel.SelectedItem = logLevelText["Fatal"];
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Fatal"]);
                     break;
                 default:
-                    cmb_loglevel.SelectedItem = logLevelText["Warn"];
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Warn"]);
                     break;
             }
 
@@ -78,26 +75,25 @@ namespace DisplayMagician.UIForms
 
             // save minimise on close
             if (cb_minimise_notification_area.Checked)
-                mySettings.MinimiseOnStart = true;
+                Program.AppProgramSettings.MinimiseOnStart = true;
             else
-                mySettings.MinimiseOnStart = false;
+                Program.AppProgramSettings.MinimiseOnStart = false;
 
             // save loglevel on close
             if (cmb_loglevel.SelectedItem.Equals(logLevelText["Trace"]))
-                mySettings.LogLevel = "Trace";
+                Program.AppProgramSettings.LogLevel = "Trace";
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Debug"]))
-                mySettings.LogLevel = "Debug";
+                Program.AppProgramSettings.LogLevel = "Debug";
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Info"]))
-                mySettings.LogLevel = "Info";
+                Program.AppProgramSettings.LogLevel = "Info";
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Warn"]))
-                mySettings.LogLevel = "Warn";
+                Program.AppProgramSettings.LogLevel = "Warn";
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Error"]))
-                mySettings.LogLevel = "Error";
+                Program.AppProgramSettings.LogLevel = "Error";
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Fatal"]))
-                mySettings.LogLevel = "Fatal";
+                Program.AppProgramSettings.LogLevel = "Fatal";
             else
-                mySettings.LogLevel = "Warn";
-
+                Program.AppProgramSettings.LogLevel = "Warn";
         }
 
         private void btn_back_Click(object sender, EventArgs e)

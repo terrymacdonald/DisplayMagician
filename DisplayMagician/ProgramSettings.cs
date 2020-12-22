@@ -64,8 +64,11 @@ namespace DisplayMagician
                     case "warn":
                         _logLevel = NLog.LogLevel.Warn.ToString();
                         break;
-                    case "Error":
+                    case "error":
                         _logLevel = NLog.LogLevel.Error.ToString();
+                        break;
+                    case "fatal":
+                        _logLevel = NLog.LogLevel.Fatal.ToString();
                         break;
                     default:
                         _logLevel = NLog.LogLevel.Warn.ToString();
