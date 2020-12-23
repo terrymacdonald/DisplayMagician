@@ -10,6 +10,7 @@ using System.Text;
 using System.Windows.Threading;
 using Microsoft.QueryStringDotNET;
 using System.Windows.Forms;
+using DisplayMagician.UIForms;
 
 namespace DisplayMagician
 {
@@ -21,15 +22,11 @@ namespace DisplayMagician
     {
         public override void OnActivated(string invokedArgs, NotificationUserInput userInput, string appUserModelId)
         {
-            Dispatcher.CurrentDispatcher.Invoke(delegate
+            // Invoke the code we're running on the UI Thread to avoid
+            // cross thread exceptions
+            Program.AppMainForm.Invoke((MethodInvoker)delegate
             {
-                // Tapping on the top-level header launches with empty args
-                /*if (arguments.Length == 0)
-                {
-                    // Perform a normal launch
-                    OpenWindowIfNeeded();
-                    return;
-                }*/
+                // This code is running on the main UI thread!
 
                 // Parse the query string (using NuGet package QueryString.NET)
                 QueryString args = QueryString.Parse(invokedArgs);
@@ -40,33 +37,18 @@ namespace DisplayMagician
                     // Open the image
                     case "open":
 
-                        MessageBox.Show("User just asked to open DisplayMagician");
-                        /*// The URL retrieved from the toast args
-                        string imageUrl = args["imageUrl"];
+                        // Open the Main DisplayMagician Window
+                        //OpenWindowIfNeeded();
+                        Program.AppMainForm.openApplicationWindow();
 
-                        // Make sure we have a window open and in foreground
-                        OpenWindowIfNeeded();
-
-                        // And then show the image
-                        (App.Current.Windows[0] as MainWindow).ShowImage(imageUrl);*/
 
                         break;
 
                     // Background: Quick reply to the conversation
                     case "exit":
 
-                        MessageBox.Show("User just asked to exit DisplayMagician");
-                        /*// Get the response the user typed
-                        string msg = userInput["tbReply"];
-
-                        // And send this message
-                        SendMessage(msg);
-
-                        // If there's no windows open, exit the app
-                        if (App.Current.Windows.Count == 0)
-                        {
-                            Application.Current.Shutdown();
-                        }*/
+                        // Exit the application (overriding the close restriction)
+                        Program.AppMainForm.exitApplication();
 
                         break;
 
@@ -95,17 +77,20 @@ namespace DisplayMagician
 
         private void OpenWindowIfNeeded()
         {
-            /*// Make sure we have a window open (in case user clicked toast while app closed)
-            if (App.Current.Windows.Count == 0)
+            // Make sure we have a window open (in case user clicked toast while app closed)
+            if (Program.AppMainForm == null)
             {
-                new MainWindow().Show();
+                Program.AppMainForm = new MainForm();
             }
 
             // Activate the window, bringing it to focus
-            App.Current.Windows[0].Activate();
+            Program.AppMainForm.openApplicationWindow();
+            //Program.AppMainForm.openApplicationWindow();
+
+            //Program.AppMainForm.Activate();
 
             // And make sure to maximize the window too, in case it was currently minimized
-            App.Current.Windows[0].WindowState = WindowState.Normal;*/
+            //Program.AppMainForm.WindowState = FormWindowState.Normal;
         }
     }
 }

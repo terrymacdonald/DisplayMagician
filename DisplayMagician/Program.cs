@@ -41,6 +41,7 @@ namespace DisplayMagician {
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
+        public static MainForm AppMainForm;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -329,7 +330,10 @@ namespace DisplayMagician {
 
                 // Run the program with normal startup
                 if (startupAction == DisplayMagicianStartupAction.StartUpNormally)
-                    Application.Run(new MainForm());
+                {
+                    AppMainForm = new MainForm();
+                    Application.Run(AppMainForm);
+                }
                 else if (startupAction == DisplayMagicianStartupAction.CreateProfile) 
                     Application.Run(new DisplayProfileForm());
 

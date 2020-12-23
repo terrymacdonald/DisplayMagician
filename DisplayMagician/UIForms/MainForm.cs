@@ -31,7 +31,7 @@ namespace DisplayMagician.UIForms
         private bool allowVisible;     // ContextMenu's Show command used
         private bool allowClose;       // ContextMenu's Exit command used
 
-        public MainForm(Form formToOpen = null)
+        public MainForm(Form formToOpen = null, bool FromToast = false)
         {
             InitializeComponent();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
@@ -119,8 +119,9 @@ namespace DisplayMagician.UIForms
                 // Construct the toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
                     .AddToastActivationInfo("notify=stillRunning", ToastActivationType.Foreground)
-                    .AddText("DisplayMagician is still running!", hintMaxLines: 1)
-                    .AddText("You can exit the application by right-clicking on the DisplayMagician icon in the notification area of the taskbar.")
+                    .AddText("DisplayMagician is still running...", hintMaxLines: 1)
+                    .AddText("DisplayMagician will wait in the background until you need it.")
+                    .AddButton("Open DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=open")
                     .AddButton("Exit DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=exit");
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
@@ -275,7 +276,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void openApplicationWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        public void openApplicationWindow()
         {
             allowVisible = true;
             Restore();
@@ -283,10 +284,20 @@ namespace DisplayMagician.UIForms
             BringToFront();
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        public void exitApplication()
         {
             allowClose = true;
             Application.Exit();
+        }
+
+        private void openApplicationWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openApplicationWindow();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            exitApplication();
         }
 
         private void cb_minimise_notification_area_CheckedChanged(object sender, EventArgs e)
