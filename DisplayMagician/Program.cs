@@ -237,6 +237,9 @@ namespace DisplayMagician {
                 Console.WriteLine($"Program/Main exception: Unable to execute application - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
+            // Remove all the notifications we have set as they don't matter now!
+            DesktopNotificationManagerCompat.History.Clear();
+
             // Shutdown NLog
             NLog.LogManager.Shutdown();
 

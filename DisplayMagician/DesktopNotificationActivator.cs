@@ -7,7 +7,9 @@ using DesktopNotifications;
 using static DesktopNotifications.NotificationActivator;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Threading;
+using Microsoft.QueryStringDotNET;
+using System.Windows.Forms;
 
 namespace DisplayMagician
 {
@@ -19,15 +21,15 @@ namespace DisplayMagician
     {
         public override void OnActivated(string invokedArgs, NotificationUserInput userInput, string appUserModelId)
         {
-            /*Application.Current.Dispatcher.Invoke(delegate
+            Dispatcher.CurrentDispatcher.Invoke(delegate
             {
                 // Tapping on the top-level header launches with empty args
-                if (arguments.Length == 0)
+                /*if (arguments.Length == 0)
                 {
                     // Perform a normal launch
                     OpenWindowIfNeeded();
                     return;
-                }
+                }*/
 
                 // Parse the query string (using NuGet package QueryString.NET)
                 QueryString args = QueryString.Parse(invokedArgs);
@@ -36,23 +38,25 @@ namespace DisplayMagician
                 switch (args["action"])
                 {
                     // Open the image
-                    case "viewImage":
+                    case "open":
 
-                        // The URL retrieved from the toast args
+                        MessageBox.Show("User just asked to open DisplayMagician");
+                        /*// The URL retrieved from the toast args
                         string imageUrl = args["imageUrl"];
 
                         // Make sure we have a window open and in foreground
                         OpenWindowIfNeeded();
 
                         // And then show the image
-                        (App.Current.Windows[0] as MainWindow).ShowImage(imageUrl);
+                        (App.Current.Windows[0] as MainWindow).ShowImage(imageUrl);*/
 
                         break;
 
                     // Background: Quick reply to the conversation
-                    case "reply":
+                    case "exit":
 
-                        // Get the response the user typed
+                        MessageBox.Show("User just asked to exit DisplayMagician");
+                        /*// Get the response the user typed
                         string msg = userInput["tbReply"];
 
                         // And send this message
@@ -62,11 +66,31 @@ namespace DisplayMagician
                         if (App.Current.Windows.Count == 0)
                         {
                             Application.Current.Shutdown();
-                        }
+                        }*/
 
                         break;
+
+                    case "stop":
+
+                        MessageBox.Show("User just asked DisplayMagician to stop monitoring the game");
+                        /*// Get the response the user typed
+                        string msg = userInput["tbReply"];
+
+                        // And send this message
+                        SendMessage(msg);
+
+                        // If there's no windows open, exit the app
+                        if (App.Current.Windows.Count == 0)
+                        {
+                            Application.Current.Shutdown();
+                        }*/
+
+                        break;
+
+                    default:
+                        break;
                 }
-            });*/
+            });
         }
 
         private void OpenWindowIfNeeded()

@@ -41,10 +41,6 @@ namespace DisplayMagician.UIForms
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
 
-            /*WaitingForm testform = new WaitingForm();
-            testform.Owner = this;
-            testform.Show();*/
-
             if (Program.AppProgramSettings.MinimiseOnStart) 
             {
                 // Make the form minimised on start 
@@ -52,6 +48,25 @@ namespace DisplayMagician.UIForms
                 // Hide the application to notification area when the form is closed
                 allowClose = false;
                 cb_minimise_notification_area.Checked = true;
+                // Change the exit_button text to say 'Close'
+                btn_exit.Text = "&Close";
+
+                // Remind the user that DisplayMagician is running the in background
+                // Construct the toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=minimiseStart", ToastActivationType.Foreground)
+                    .AddText("DisplayMagician has started minimised!", hintMaxLines: 1)
+                    .AddButton("Open DisplayMagician", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
             }
             else
             {
@@ -71,7 +86,7 @@ namespace DisplayMagician.UIForms
             else if (formToOpen is ShortcutLibraryForm)
             {
                 var shortcutLibraryForm = new ShortcutLibraryForm();
-                shortcutLibraryForm.ShowDialog(this);
+            shortcutLibraryForm.ShowDialog(this);
             }
 
         }
@@ -98,6 +113,26 @@ namespace DisplayMagician.UIForms
 
         private void btn_exit_Click(object sender, EventArgs e)
         {
+            if (cb_minimise_notification_area.Checked)
+            {
+                // Tell the user that 
+                // Construct the toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=stillRunning", ToastActivationType.Foreground)
+                    .AddText("DisplayMagician is still running!", hintMaxLines: 1)
+                    .AddText("You can exit the application by right-clicking on the DisplayMagician icon in the notification area of the taskbar.")
+                    .AddButton("Exit DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=exit");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+            }
             Application.Exit();
         }
 
@@ -264,6 +299,8 @@ namespace DisplayMagician.UIForms
                 allowClose = false;
                 // Enable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = true;
+                // Change the exit_button text to say 'Close'
+                btn_exit.Text = "&Close";
             }
             else
             {
@@ -273,6 +310,9 @@ namespace DisplayMagician.UIForms
                 allowClose = true;
                 // Disable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = false;
+                // Change the exit_button text to say 'Exit'
+                btn_exit.Text = "&Exit";
+
             }
         }
 
@@ -399,66 +439,13 @@ namespace DisplayMagician.UIForms
 
         private void btn_toast_Click(object sender, EventArgs e)
         {
-
             // Construct the toast content
-            ToastContent toastContent = new ToastContent()
-            {
-                // Arguments when the user taps body of toast
-                Launch = "DisplayMagician_Notification",
-
-                Visual = new ToastVisual()
-                {
-                    BindingGeneric = new ToastBindingGeneric()
-                    {
-                        Children =
-                        {
-                            new AdaptiveText()
-                            {
-                                Text = "Hello from DisplayMagician!"
-                            },
-                        },
-
-                    }
-                },
-/*
-                Actions = new ToastActionsCustom()
-                {
-                    Inputs =
-                    {
-                        new ToastTextBox("tbReply")
-                        {
-                            PlaceholderContent = "Type a response"
-                        }
-                    },
-
-                    Buttons =
-                    {
-                        // Note that there's no reason to specify background activation, since our COM
-                        // activator decides whether to process in background or launch foreground window
-                        new ToastButton("Reply", new QueryString()
-                        {
-                            { "action", "reply" },
-                            { "conversationId", conversationId.ToString() }
-
-                        }.ToString()),
-
-                        new ToastButton("Like", new QueryString()
-                        {
-                            { "action", "like" },
-                            { "conversationId", conversationId.ToString() }
-
-                        }.ToString()),
-
-                        new ToastButton("View", new QueryString()
-                        {
-                            { "action", "viewImage" },
-                            { "imageUrl", image }
-
-                        }.ToString())
-                    }
-                }*/
-            };
-
+            ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                .AddToastActivationInfo("notify=runningGame", ToastActivationType.Foreground)
+                .AddText("This is the notification title!", hintMaxLines: 1)
+                .AddText("This is the description")
+                .AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+            ToastContent toastContent = tcBuilder.Content;
             // Make sure to use Windows.Data.Xml.Dom
             var doc = new XmlDocument();
             doc.LoadXml(toastContent.GetContent());
