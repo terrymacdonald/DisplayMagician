@@ -51,7 +51,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
@@ -97,6 +98,7 @@
     <Compile Include="GameLibraries\UplayConfigurationParser\UplayConfigurationParser.cs" />
     <Compile Include="GameLibraries\UplayLibrary.cs" />
     <Compile Include="GameLibraries\SteamLibrary.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ProgressReporter.cs" />

@@ -64,6 +64,7 @@ namespace DesktopNotifications
         /// under Desktop Bridge. Call this upon application startup, before calling any other APIs.
         /// </summary>
         /// <param name="aumid">An AUMID that uniquely identifies your application.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         public static void RegisterAumidAndComServer<T>(string aumid)
             where T : NotificationActivator
         {
@@ -127,6 +128,7 @@ namespace DesktopNotifications
         /// Registers the activator type as a COM server client so that Windows can launch your activator.
         /// </summary>
         /// <typeparam name="T">Your implementation of NotificationActivator. Must have GUID and ComVisible attributes on class.</typeparam>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         public static void RegisterActivator<T>()
             where T : NotificationActivator, new()
         {
@@ -225,6 +227,7 @@ namespace DesktopNotifications
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "RegisterAumidAndComServer")]
         private static void EnsureRegistered()
         {
             // If not registered AUMID yet
@@ -350,6 +353,7 @@ namespace DesktopNotifications
         /// Gets all notifications sent by this app that are currently still in Action Center.
         /// </summary>
         /// <returns>A collection of toasts.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public IReadOnlyList<ToastNotification> GetHistory()
         {
             return _aumid != null ? _history.GetHistory(_aumid) : _history.GetHistory();

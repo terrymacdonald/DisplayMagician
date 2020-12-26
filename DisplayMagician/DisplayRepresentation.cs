@@ -15,7 +15,7 @@ namespace DisplayMagician
         {
             Name = display.DeviceName;
             Path = display.DevicePath;
-            var index = Path.IndexOf("{", StringComparison.InvariantCultureIgnoreCase);
+            var index = Path.IndexOf("{", StringComparison.OrdinalIgnoreCase);
 
             if (index > 0)
             {

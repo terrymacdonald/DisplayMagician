@@ -11,15 +11,16 @@
     <Name>DisplayMagicianSetup</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>Debug;DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug</DefineConstants>
     <CompilerAdditionalOptions>-arch x64</CompilerAdditionalOptions>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <CompilerAdditionalOptions />
+    <CompilerAdditionalOptions>-arch x64</CompilerAdditionalOptions>
+    <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
     <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug;</DefineConstants>
@@ -36,7 +37,7 @@
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <SuppressAllWarnings>False</SuppressAllWarnings>
     <Pedantic>True</Pedantic>
-    <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\Debug</DefineConstants>
+    <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CustomDialogs\LicenseAgreementDialogOverwritten.wxs" />

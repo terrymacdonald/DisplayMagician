@@ -216,7 +216,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -419,7 +419,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid,StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid,StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -617,7 +617,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -729,7 +729,7 @@ namespace DisplayMagician
                 // We try to find and set the ProfileTouse
                 foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
-                    if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                         _profileToUse = profileToTest;
                 }
             }
@@ -1224,7 +1224,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -1431,7 +1431,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -1634,7 +1634,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -1821,6 +1821,7 @@ namespace DisplayMagician
         }
 
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
 

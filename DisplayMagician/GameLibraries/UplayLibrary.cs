@@ -173,6 +173,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public static bool ContainsUplayGame(UplayGame uplayGame)
         {
             if (!(uplayGame is UplayGame))
@@ -300,7 +301,7 @@ namespace DisplayMagician.GameLibraries
                 // Go through every record and attempt to parse it
                 foreach (string uplayEntry in uplayConfigFile) {
                     // Skip any Uplay entry records that don't start with 'version:' 
-                    if (!uplayEntry.StartsWith("version:",StringComparison.InvariantCultureIgnoreCase))
+                    if (!uplayEntry.StartsWith("version:",StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     //Split the record into entrylines
@@ -398,7 +399,7 @@ namespace DisplayMagician.GameLibraries
                         if (gotGameFileName && gotGameId && gotGameIconPath && gotGameName)
                             break;
                         // This line contains the Game Name
-                        if (uplayEntryLines[i].StartsWith("  name:", StringComparison.InvariantCultureIgnoreCase) && !gotGameName)
+                        if (uplayEntryLines[i].StartsWith("  name:", StringComparison.OrdinalIgnoreCase) && !gotGameName)
                         {
                             mc = Regex.Matches(uplayEntryLines[i], @"  name\: (.*)");
                             uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
@@ -409,7 +410,7 @@ namespace DisplayMagician.GameLibraries
                             }
                             gotGameName = true;
                         }
-                        else if (uplayEntryLines[i].StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase) && !gotGameIconPath)
+                        else if (uplayEntryLines[i].StartsWith("  icon_image:", StringComparison.OrdinalIgnoreCase) && !gotGameIconPath)
                         {
                             mc = Regex.Matches(uplayEntryLines[i], @"icon_image: (.*)");
                             string iconImageFileName = mc[0].Groups[1].ToString();

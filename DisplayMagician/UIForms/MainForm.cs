@@ -31,7 +31,9 @@ namespace DisplayMagician.UIForms
         private bool allowVisible;     // ContextMenu's Show command used
         private bool allowClose;       // ContextMenu's Exit command used
 
-        public MainForm(Form formToOpen = null, bool FromToast = false)
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        public MainForm(Form formToOpen = null)
         {
             InitializeComponent();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
@@ -383,6 +385,7 @@ namespace DisplayMagician.UIForms
                     DialogResult dialogResult;
                     if (args.Mandatory.Value)
                     {
+                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
                         dialogResult =
                             MessageBox.Show(
                                 $@"There is new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is required update. Press Ok to begin updating the application.", @"Update Available",
@@ -391,6 +394,7 @@ namespace DisplayMagician.UIForms
                     }
                     else
                     {
+                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
                         dialogResult =
                             MessageBox.Show(
                                 $@"There is new version {args.CurrentVersion} available. You are using version {
@@ -407,34 +411,34 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
+                            logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Downloading {args.InstalledVersion} update.");
                             if (AutoUpdater.DownloadUpdate(args))
                             {
+                                logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Restarting to apply {args.InstalledVersion} update.");
                                 Application.Exit();
                             }
                         }
-                        catch (Exception exception)
+                        catch (Exception ex)
                         {
-                            MessageBox.Show(exception.Message, exception.GetType().ToString(), MessageBoxButtons.OK,
+                            logger.Warn(ex, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - Exception during update download.");
+                            MessageBox.Show(ex.Message, ex.GetType().ToString(), MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
                         }
                     }
                 }
-                /*else
-                {
-                    MessageBox.Show(@"There is no update available please try again later.", @"No update available",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }*/
             }
             else
             {
                 if (args.Error is WebException)
                 {
+                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - WebException - There was a problem reaching the update server.");
                     MessageBox.Show(
                         @"There is a problem reaching update server. Please check your internet connection and try again later.",
                         @"Update Check Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {
+                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
                     MessageBox.Show(args.Error.Message,
                         args.Error.GetType().ToString(), MessageBoxButtons.OK,
                         MessageBoxIcon.Error);

@@ -136,7 +136,7 @@ namespace DisplayMagician
                 return false;
 
             // Remove the Shortcut Icons from the Cache
-            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
+            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase));
             foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
             {
                 try
@@ -152,7 +152,7 @@ namespace DisplayMagician
             }
 
             // Remove the shortcut from the list.
-            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
+            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase));
 
             if (numRemoved == 1)
             {
@@ -178,13 +178,13 @@ namespace DisplayMagician
             Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
-                numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
+                shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
+                numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
-                numRemoved = _allShortcuts.RemoveAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
+                shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
+                numRemoved = _allShortcuts.RemoveAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
             }
             // Remove the Shortcut Icons from the Cache
             foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
@@ -221,7 +221,7 @@ namespace DisplayMagician
 
             foreach (ShortcutItem testShortcut in _allShortcuts)
             {
-                if (testShortcut.UUID.Equals(shortcut.UUID,StringComparison.InvariantCultureIgnoreCase))
+                if (testShortcut.UUID.Equals(shortcut.UUID,StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 
@@ -240,7 +240,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
 
@@ -249,7 +249,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
 
@@ -271,7 +271,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return testShortcut;
                 }
 
@@ -280,7 +280,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return testShortcut;
                 }
 
@@ -297,7 +297,7 @@ namespace DisplayMagician
 
             foreach (ShortcutItem testShortcut in ShortcutRepository.AllShortcuts)
             {
-                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.InvariantCultureIgnoreCase) && testShortcut.AutoName)
+                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.OrdinalIgnoreCase) && testShortcut.AutoName)
                 {
                     testShortcut.ProfileToUse = newProfile;
                     testShortcut.AutoSuggestShortcutName();

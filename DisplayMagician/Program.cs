@@ -13,10 +13,8 @@ using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using System.Text.RegularExpressions;
 using System.Drawing;
-//using Microsoft.Toolkit.Uwp.Notifications;
 using DesktopNotifications;
-
-//using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace DisplayMagician {
  
@@ -646,19 +644,40 @@ namespace DisplayMagician {
 
     public class ApplyTopologyException : Exception
     {
-        public ApplyTopologyException(String message) : base(message)
+        public ApplyTopologyException()
+        { }
+
+        public ApplyTopologyException(string message) : base(message)
+        { }
+
+        public ApplyTopologyException(string message, Exception innerException) : base(message, innerException)
+        { }
+        public ApplyTopologyException(SerializationInfo info, StreamingContext context) : base(info, context)
         { }
     }
 
     public class ApplyPathInfoException : Exception
     {
-        public ApplyPathInfoException(String message) : base(message)
+        public ApplyPathInfoException()
+        { }
+        
+        public ApplyPathInfoException(string message) : base(message)
+        { }
+        public ApplyPathInfoException(string message, Exception innerException) : base(message, innerException)
+        { }
+        public ApplyPathInfoException(SerializationInfo info, StreamingContext context) : base(info, context)
         { }
     }
 
     public class LoadingInstalledGamesException : Exception
     {
-        public LoadingInstalledGamesException(String message) : base(message)
+        public LoadingInstalledGamesException()
+        { }
+        public LoadingInstalledGamesException(string message) : base(message)
+        { }
+        public LoadingInstalledGamesException(string message, Exception innerException) : base(message, innerException)
+        { }
+        public LoadingInstalledGamesException(SerializationInfo info, StreamingContext context) : base(info, context)
         { }
     }
 }

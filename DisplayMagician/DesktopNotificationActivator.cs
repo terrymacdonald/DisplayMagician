@@ -20,7 +20,7 @@ namespace DisplayMagician
     [Guid("56F14154-6339-4B94-8B82-80F78D5BCEAF"), ComVisible(true)]
     public class DesktopNotificationActivator : NotificationActivator
     {
-        public override void OnActivated(string invokedArgs, NotificationUserInput userInput, string appUserModelId)
+        public override void OnActivated(string arguments, NotificationUserInput userInput, string appUserModelId)
         {
             // Invoke the code we're running on the UI Thread to avoid
             // cross thread exceptions
@@ -29,11 +29,11 @@ namespace DisplayMagician
                 // This code is running on the main UI thread!
 
                 // Parse the query string (using NuGet package QueryString.NET)
-                QueryString args = QueryString.Parse(invokedArgs);
+                QueryString args = QueryString.Parse(arguments);
 
                 foreach (QueryStringParameter myArg in args)
                 {
-                    if (myArg.Name.Equals("action",StringComparison.InvariantCultureIgnoreCase))
+                    if (myArg.Name.Equals("action",StringComparison.OrdinalIgnoreCase))
                     {
                         // See what action is being requested 
                         switch (args["action"].ToLowerInvariant())

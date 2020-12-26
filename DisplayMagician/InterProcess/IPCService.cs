@@ -10,6 +10,8 @@ namespace DisplayMagician.InterProcess
     {
         private static ServiceHost _serviceHost;
 
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private IPCService()
         {
             Status = InstanceStatus.Busy;
@@ -53,6 +55,7 @@ namespace DisplayMagician.InterProcess
                 }
                 catch (Exception ex)
                 {
+                    logger.Error(ex, $"IPCService/StartService exception: Couldn't create an IPC Service");
                     Console.WriteLine($"IPCService/StartService exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     try
                     {
@@ -60,6 +63,7 @@ namespace DisplayMagician.InterProcess
                     }
                     catch (Exception ex2)
                     {
+                        logger.Error(ex, $"IPCService/StartService exception: Couldn't close an IPC Service after error creating it");
                         Console.WriteLine($"IPCService/StartService exception 2: {ex2.Message}: {ex2.InnerException}");
                         // ignored
                     }
