@@ -54,9 +54,9 @@ namespace DisplayMagician.UIForms
                 // Remind the user that DisplayMagician is running the in background
                 // Construct the toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                    .AddToastActivationInfo("notify=minimiseStart", ToastActivationType.Foreground)
-                    .AddText("DisplayMagician has started minimised!", hintMaxLines: 1)
-                    .AddButton("Open DisplayMagician", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                    .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
+                    .AddText("DisplayMagician is minimised", hintMaxLines: 1)
+                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open");
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 var doc = new XmlDocument();
@@ -65,8 +65,12 @@ namespace DisplayMagician.UIForms
                 // And create the toast notification
                 var toast = new ToastNotification(doc);
 
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+
                 // And then show it
-                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);                                   
+
             }
             else
             {
@@ -131,6 +135,9 @@ namespace DisplayMagician.UIForms
                 // And create the toast notification
                 var toast = new ToastNotification(doc);
 
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                
                 // And then show it
                 DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
             }
@@ -448,24 +455,5 @@ namespace DisplayMagician.UIForms
                 cb_minimise_notification_area.Checked = false;
         }
 
-        private void btn_toast_Click(object sender, EventArgs e)
-        {
-            // Construct the toast content
-            ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                .AddToastActivationInfo("notify=runningGame", ToastActivationType.Foreground)
-                .AddText("This is the notification title!", hintMaxLines: 1)
-                .AddText("This is the description")
-                .AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
-            ToastContent toastContent = tcBuilder.Content;
-            // Make sure to use Windows.Data.Xml.Dom
-            var doc = new XmlDocument();
-            doc.LoadXml(toastContent.GetContent());
-
-            // And create the toast notification
-            var toast = new ToastNotification(doc);
-
-            // And then show it
-            DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
-        }
     }
 }

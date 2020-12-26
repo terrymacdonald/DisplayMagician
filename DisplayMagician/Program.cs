@@ -30,6 +30,7 @@ namespace DisplayMagician {
     internal static class Program
     {
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
+        public static string AppStartupPath = Application.StartupPath;
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
         public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
         public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
@@ -39,6 +40,7 @@ namespace DisplayMagician {
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
+        public static bool AppToastActivated = false;
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
@@ -133,7 +135,11 @@ namespace DisplayMagician {
             Application.SetCompatibleTextRenderingDefault(false);
             
 
-            var app = new CommandLineApplication();
+            var app = new CommandLineApplication
+            {
+                AllowArgumentSeparator = true,
+                UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.StopParsingAndCollect,
+            }; 
 
             //app.Name = "HeliosDM+";
             //app.Name = Assembly.GetEntryAssembly().GetName().Name;
@@ -210,6 +216,22 @@ namespace DisplayMagician {
             app.OnExecute(() =>
             {
 
+                // Add a workaround to handle the weird way that Windows tell us that DisplayMagician 
+                // was started from a Notification Toast when closed (Windows 10)
+                // Due to the way that CommandLineUtils library works we need to handle this as
+                // 'Remaining Arguments'
+                if (app.RemainingArguments != null && app.RemainingArguments.Count > 0)
+                {
+                    foreach (string myArg in app.RemainingArguments)
+                    {
+                        if (myArg.Equals("-ToastActivated"))
+                        {
+                            Program.AppToastActivated = true;
+                            break;
+                        }
+
+                    }
+                }
                 Console.WriteLine("Starting Normally...");
                 StartUpApplication();
                 return 0;

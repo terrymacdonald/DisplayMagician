@@ -31,46 +31,52 @@ namespace DisplayMagician
                 // Parse the query string (using NuGet package QueryString.NET)
                 QueryString args = QueryString.Parse(invokedArgs);
 
-                // See what action is being requested 
-                switch (args["action"])
+                foreach (QueryStringParameter myArg in args)
                 {
-                    // Open the image
-                    case "open":
-
-                        // Open the Main DisplayMagician Window
-                        //OpenWindowIfNeeded();
-                        Program.AppMainForm.openApplicationWindow();
-
-
-                        break;
-
-                    // Background: Quick reply to the conversation
-                    case "exit":
-
-                        // Exit the application (overriding the close restriction)
-                        Program.AppMainForm.exitApplication();
-
-                        break;
-
-                    case "stop":
-
-                        MessageBox.Show("User just asked DisplayMagician to stop monitoring the game");
-                        /*// Get the response the user typed
-                        string msg = userInput["tbReply"];
-
-                        // And send this message
-                        SendMessage(msg);
-
-                        // If there's no windows open, exit the app
-                        if (App.Current.Windows.Count == 0)
+                    if (myArg.Name.Equals("action",StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        // See what action is being requested 
+                        switch (args["action"].ToLowerInvariant())
                         {
-                            Application.Current.Shutdown();
-                        }*/
+                            // Open the image
+                            case "open":
 
-                        break;
+                                // Open the Main DisplayMagician Window
+                                //OpenWindowIfNeeded();
+                                Program.AppMainForm.openApplicationWindow();
 
-                    default:
-                        break;
+
+                                break;
+
+                            // Background: Quick reply to the conversation
+                            case "exit":
+
+                                // Exit the application (overriding the close restriction)
+                                Program.AppMainForm.exitApplication();
+
+                                break;
+
+                            case "stop":
+
+                                MessageBox.Show("User just asked DisplayMagician to stop monitoring the game");
+                                /*// Get the response the user typed
+                                string msg = userInput["tbReply"];
+
+                                // And send this message
+                                SendMessage(msg);
+
+                                // If there's no windows open, exit the app
+                                if (App.Current.Windows.Count == 0)
+                                {
+                                    Application.Current.Shutdown();
+                                }*/
+
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
                 }
             });
         }

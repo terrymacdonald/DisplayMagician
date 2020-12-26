@@ -2,6 +2,7 @@
 using DisplayMagician.GameLibraries;
 using DisplayMagician.InterProcess;
 using DisplayMagicianShared;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Windows.Data.Xml.Dom;
+using Windows.UI.Notifications;
 
 namespace DisplayMagician
 {
@@ -567,7 +570,6 @@ namespace DisplayMagician
                         notifyIcon = new NotifyIcon
                         {
                             Icon = Properties.Resources.DisplayMagician,
-                            //Text = string.Format("DisplayMagician: Waiting for the Game {} to exit...", steamGameToRun.Name),
                             Visible = true
                         };
                         Application.DoEvents();
@@ -591,6 +593,7 @@ namespace DisplayMagician
                 notifyIcon.ContextMenuStrip = null;
                 Application.DoEvents();
             }
+
 
             // Now start the main game, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
@@ -654,11 +657,29 @@ namespace DisplayMagician
                 }
                 Application.DoEvents();
 
+                // Now we want to tell the user we're running an application!
+                // Construct the Windows toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=runningApplication", ToastActivationType.Foreground)
+                    .AddText($"Running {processNameToLookFor} Shortcut", hintMaxLines: 1)
+                    .AddText($"Waiting for all {processNameToLookFor} windows to exit...");
+                    //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                // And then show this notification
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
                 // Wait an extra few seconds to give the application time to settle down
                 Thread.Sleep(2000);
 
                 // if we have things to monitor, then we should start to wait for them
-                Console.WriteLine($"Waiting for application {processNameToLookFor} to exit.");
+                Console.WriteLine($"Waiting for all {processNameToLookFor} windows to exit.");
                 logger.Debug($"ShortcutRepository/RunShortcut - waiting for application {processNameToLookFor} to exit.");
                 if (processesToMonitor.Count > 0)
                 {
@@ -734,6 +755,24 @@ namespace DisplayMagician
                             notifyIcon.Text = $"DisplayMagician: Running {steamGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=runningSteamGame", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName} Shortcut", hintMaxLines: 1)
+                            .AddText($"Waiting for the Steam Game {shortcutToUse.GameName} to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        ToastContent toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        var doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        var toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
                         // Wait 5 seconds for the game process to spawn	
                         Thread.Sleep(5000);
                         // Wait for the game to exit
@@ -807,6 +846,24 @@ namespace DisplayMagician
                             notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=runningUplayGame", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName} Shortcut", hintMaxLines: 1)
+                            .AddText($"Waiting for the Uplay Game {shortcutToUse.GameName} to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        ToastContent toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        var doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        var toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
                         // Wait 5 seconds for the game process to spawn	
                         Thread.Sleep(5000);
 
@@ -853,6 +910,32 @@ namespace DisplayMagician
                 notifyIcon.ContextMenuStrip = oldContextMenuStrip;
                 Application.DoEvents();
             }
+
+            // Remove any other Notifications from us
+            DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+
+            // Only replace the notification if we're minimised
+            if (Program.AppProgramSettings.MinimiseOnStart)
+            {
+                // Remind the user that DisplayMagician is running the in background
+                // Construct the toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
+                    .AddText("DisplayMagician is minimised", hintMaxLines: 1)
+                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+                toast.SuppressPopup = true;
+
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+            }
+            
 
             // Stop the pre-started startPrograms that we'd started earlier
             if (startProgramsToStop.Count > 0)
