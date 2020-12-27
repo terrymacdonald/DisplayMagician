@@ -19,6 +19,7 @@ namespace DisplayMagicianLogReporter
 
         private static StreamWriter _writer;
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
+        internal static string LoggingDirPath = Path.Combine(AppDataPath, "Logs");
 
         private static void DumpObject<T>(
             IEnumerable<T> items,
@@ -106,10 +107,60 @@ namespace DisplayMagicianLogReporter
             Console.WriteLine();
             Console.WriteLine("Starting the interrogation...");
             Console.WriteLine();
+
+            try
+            {
+                Directory.CreateDirectory(LoggingDirPath);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create logging directory as unauthorised: {LoggingDirPath}");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create logging directory as LoggingDirPath argument caused an ArgumentException: {LoggingDirPath}");
+            }
+            catch (PathTooLongException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create logging directory as the path is too long for Windows to create: {LoggingDirPath}");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create logging directory as the DisplayMagician Local Application Data directory doesn't exist: {LoggingDirPath}");
+            }
+            catch (NotSupportedException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create logging directory as the Directory.CreateDirectory function isn't supported: {LoggingDirPath}");
+            }
+
             string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
-            _writer = new StreamWriter(new FileStream(
-                string.Format("DisplayMagician.Reporting.{0}.log", date),
+            string logFile = Path.Combine(LoggingDirPath, $"LogReporter.{date}.log");
+            try
+            {
+                _writer = new StreamWriter(new FileStream(
+                logFile,
                 FileMode.CreateNew));
+            }
+            catch (System.Security.SecurityException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create log file due to a security exception: {logFile}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create log file as unauthorised: {logFile}");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create log file as LogFile argument caused an ArgumentException while creating Filestream or StreamWriter: {logFile}");
+            }
+            catch (PathTooLongException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create log file as the path is too long for Windows to create: {logFile}");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                Console.WriteLine($"ERROR - Cannot create log file as the DisplayMagician\\Logs Local Application Data directory doesn't exist: {logFile}");
+            }
 
             try
             {
@@ -305,7 +356,7 @@ namespace DisplayMagicianLogReporter
 
             Console.WriteLine(new string('=', Console.BufferWidth));
             Console.WriteLine();
-            Console.WriteLine(@"Done, press enter to exit.");
+            Console.WriteLine(@"Finished! Press enter to exit LogReporter.");
             Console.ReadLine();
         }
 
