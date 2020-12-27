@@ -63,10 +63,11 @@ namespace DisplayMagician {
             var config = new NLog.Config.LoggingConfiguration();
 
             // Targets where to log to: File and Console
-            string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
+            //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
             string AppLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
 
-            // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
+            // Create the Logging Dir if it doesn't exist so that it's avilable for all 
+            // parts of the program to use
             if (!Directory.Exists(AppLogPath))
             {
                 try
