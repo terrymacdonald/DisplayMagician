@@ -83,8 +83,16 @@ namespace DisplayMagician.GameLibraries
                 List<Process> gameProcesses = Process.GetProcessesByName(_steamGameProcessName).ToList();
                 foreach (Process gameProcess in gameProcesses)
                 {
-                    if (gameProcess.MainModule.FileName.StartsWith(_steamGameExePath))
-                        numGameProcesses++;
+                    try
+                    {
+                        if (gameProcess.MainModule.FileName.StartsWith(_steamGameExePath))
+                            numGameProcesses++;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (GameUtils.GetMainModuleFilepath(gameProcess.Id).StartsWith(_steamGameExePath))
+                            numGameProcesses++;
+                    }
                 }
                 if (numGameProcesses > 0)
                     return true;

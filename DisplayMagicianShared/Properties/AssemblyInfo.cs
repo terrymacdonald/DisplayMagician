@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("HeliosDisplayManagement.Shared")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("DisplayMagician.Shared")]
+[assembly: AssemblyDescription("Shared libraries for DisplayMagician")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DisplayMagicianShared")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyCompany("LittleBitBig")]
+[assembly: AssemblyProduct("DisplayMagician")]
+[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -35,5 +35,5 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("0.9.5.*")]
-[assembly: AssemblyFileVersion("0.9.5.0")]
+[assembly: AssemblyVersion("0.2.1.*")]
+[assembly: AssemblyFileVersion("0.2.1.0")]

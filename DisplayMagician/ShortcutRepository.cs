@@ -661,7 +661,7 @@ namespace DisplayMagician
                 // Construct the Windows toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
                     .AddToastActivationInfo("notify=runningApplication", ToastActivationType.Foreground)
-                    .AddText($"Running {processNameToLookFor} Shortcut", hintMaxLines: 1)
+                    .AddText($"Running {processNameToLookFor}", hintMaxLines: 1)
                     .AddText($"Waiting for all {processNameToLookFor} windows to exit...");
                     //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                 ToastContent toastContent = tcBuilder.Content;
@@ -698,6 +698,23 @@ namespace DisplayMagician
                 }
                 Console.WriteLine($"{processNameToLookFor} has exited.");
                 logger.Debug($"ShortcutRepository/RunShortcut - Application {processNameToLookFor} has exited.");
+
+                // Tell the user that the application has closed
+                // Construct the toast content
+                tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                    .AddText($"{processNameToLookFor} was closed", hintMaxLines: 1)
+                    .AddText($"All {processNameToLookFor} processes were shutdown and changes were reverted.");
+                toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+                // And create the toast notification
+                toast = new ToastNotification(doc);
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
 
             }
@@ -759,7 +776,7 @@ namespace DisplayMagician
                         // Construct the Windows toast content
                         ToastContentBuilder tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo("notify=runningSteamGame", ToastActivationType.Foreground)
-                            .AddText($"Running {shortcutToUse.GameName} Shortcut", hintMaxLines: 1)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
                             .AddText($"Waiting for the Steam Game {shortcutToUse.GameName} to exit...");
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                         ToastContent toastContent = tcBuilder.Content;
@@ -791,6 +808,24 @@ namespace DisplayMagician
                         Console.WriteLine($"{steamGameToRun.Name} has exited.");
                         logger.Debug($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} has exited.");
 
+                        // Tell the user that the Steam Game has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                            .AddText($"{shortcutToUse.GameName} game was shutdown and changes were reverted.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+
                     }
 
                 }
@@ -816,11 +851,56 @@ namespace DisplayMagician
                             address += "/0";
                         }
 
+                        // Now we want to tell the user we're starting upc.exe
+                        // Construct the Windows toast content
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=startingUplay", ToastActivationType.Foreground)
+                            .AddText($"Starting Uplay", hintMaxLines: 1)
+                            .AddText($"Waiting for Uplay to start (and update if needed)...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        ToastContent toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        var doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        var toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+
                         // Start the URI Handler to run Uplay
                         Console.WriteLine($"Starting Uplay Game: {uplayGameToRun.Name}");
-                        var uplayProcess = Process.Start(address);
+                        Process uplayStartProcess = Process.Start(address);
 
-                        // Wait for Uplay game to update if needed
+                        // Wait for Uplay to start
+                        List<Process> uplayProcesses = null;
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+
+                            // Look for the processes with the ProcessName we sorted out earlier
+                            uplayProcesses = Process.GetProcessesByName("upc").ToList();
+
+                            // If we have found one or more processes then we should be good to go
+                            // so let's break
+                            if (uplayProcesses.Count > 0)
+                            {
+                                logger.Debug($"Found {uplayProcesses.Count} 'upc' processes have started");
+                                break;
+                            }
+
+                            // Let's wait a little while if we couldn't find
+                            // any processes yet
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Delay 5secs
+                        Thread.Sleep(5000);
+
+                        // Now we know the Uplay app is running then 
+                        // we wait until the Uplay game is running (*allows for uplay update)
                         for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
@@ -836,7 +916,7 @@ namespace DisplayMagician
                         }
 
                         // Store the Uplay Process ID for later
-                        IPCService.GetInstance().HoldProcessId = uplayProcess?.Id ?? 0;
+                        IPCService.GetInstance().HoldProcessId = uplayStartProcess?.Id ?? 0;
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                         // Add a status notification icon in the status area
@@ -848,17 +928,17 @@ namespace DisplayMagician
 
                         // Now we want to tell the user we're running a game!
                         // Construct the Windows toast content
-                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                        tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo("notify=runningUplayGame", ToastActivationType.Foreground)
-                            .AddText($"Running {shortcutToUse.GameName} Shortcut", hintMaxLines: 1)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
                             .AddText($"Waiting for the Uplay Game {shortcutToUse.GameName} to exit...");
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
-                        ToastContent toastContent = tcBuilder.Content;
+                        toastContent = tcBuilder.Content;
                         // Make sure to use Windows.Data.Xml.Dom
-                        var doc = new XmlDocument();
+                        doc = new XmlDocument();
                         doc.LoadXml(toastContent.GetContent());
                         // And create the toast notification
-                        var toast = new ToastNotification(doc);
+                        toast = new ToastNotification(doc);
                         // Remove any other Notifications from us
                         DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
                         // And then show this notification
@@ -882,6 +962,23 @@ namespace DisplayMagician
                         }
                         Console.WriteLine($"{uplayGameToRun.Name} has exited.");
                         logger.Debug($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} has exited.");
+
+                        // Tell the user that the Uplay Game has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                            .AddText($"{shortcutToUse.GameName} game was shutdown and changes were reverted.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
                     }
 
 
@@ -911,12 +1008,10 @@ namespace DisplayMagician
                 Application.DoEvents();
             }
 
-            // Remove any other Notifications from us
-            DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
-
             // Only replace the notification if we're minimised
             if (Program.AppProgramSettings.MinimiseOnStart)
-            {
+            { 
+
                 // Remind the user that DisplayMagician is running the in background
                 // Construct the toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
