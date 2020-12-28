@@ -179,6 +179,8 @@ namespace DisplayMagician.UIForms
             //Run the AutoUpdater to see if there are any updates available.
             AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
             AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
             AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/");
         }
 

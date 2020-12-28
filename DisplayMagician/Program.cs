@@ -362,7 +362,7 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                logger.Error(ex, $"Program/StartUpNormally top level exception");
+                logger.Error(ex, $"Program/StartUpNormally top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 MessageBox.Show(
                     ex.Message,
                     Language.Fatal_Error,
