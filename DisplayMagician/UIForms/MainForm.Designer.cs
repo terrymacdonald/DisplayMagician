@@ -31,8 +31,11 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btn_settings = new System.Windows.Forms.Button();
+            this.lbl_create_profile = new System.Windows.Forms.Label();
             this.btn_setup_display_profiles = new System.Windows.Forms.Button();
             this.pb_display_profile = new System.Windows.Forms.PictureBox();
+            this.lbl_create_shortcut = new System.Windows.Forms.Label();
             this.cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             this.lbl_version = new System.Windows.Forms.Label();
             this.btn_setup_game_shortcuts = new System.Windows.Forms.Button();
@@ -68,17 +71,38 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btn_settings);
+            this.splitContainer1.Panel1.Controls.Add(this.lbl_create_profile);
             this.splitContainer1.Panel1.Controls.Add(this.btn_setup_display_profiles);
             this.splitContainer1.Panel1.Controls.Add(this.pb_display_profile);
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.lbl_create_shortcut);
             this.splitContainer1.Panel2.Controls.Add(this.cb_minimise_notification_area);
             this.splitContainer1.Panel2.Controls.Add(this.lbl_version);
             this.splitContainer1.Panel2.Controls.Add(this.btn_setup_game_shortcuts);
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
             this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
             this.splitContainer1.TabStop = false;
+            // 
+            // btn_settings
+            // 
+            resources.ApplyResources(this.btn_settings, "btn_settings");
+            this.btn_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_settings.ForeColor = System.Drawing.Color.White;
+            this.btn_settings.Name = "btn_settings";
+            this.btn_settings.UseVisualStyleBackColor = true;
+            this.btn_settings.Click += new System.EventHandler(this.btn_settings_Click);
+            // 
+            // lbl_create_profile
+            // 
+            resources.ApplyResources(this.lbl_create_profile, "lbl_create_profile");
+            this.lbl_create_profile.BackColor = System.Drawing.Color.Brown;
+            this.lbl_create_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_create_profile.ForeColor = System.Drawing.Color.White;
+            this.lbl_create_profile.Name = "lbl_create_profile";
             // 
             // btn_setup_display_profiles
             // 
@@ -96,6 +120,14 @@
             this.pb_display_profile.Name = "pb_display_profile";
             this.pb_display_profile.TabStop = false;
             this.pb_display_profile.Click += new System.EventHandler(this.pb_display_profile_Click);
+            // 
+            // lbl_create_shortcut
+            // 
+            resources.ApplyResources(this.lbl_create_shortcut, "lbl_create_shortcut");
+            this.lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
+            this.lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
+            this.lbl_create_shortcut.Name = "lbl_create_shortcut";
             // 
             // cb_minimise_notification_area
             // 
@@ -230,8 +262,10 @@
             this.Name = "MainForm";
             this.ShowIcon = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -266,5 +300,8 @@
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.CheckBox cb_minimise_notification_area;
         public System.Windows.Forms.NotifyIcon notifyIcon;
+        private System.Windows.Forms.Label lbl_create_profile;
+        private System.Windows.Forms.Label lbl_create_shortcut;
+        private System.Windows.Forms.Button btn_settings;
     }
 }

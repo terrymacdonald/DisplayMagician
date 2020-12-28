@@ -8,6 +8,9 @@ namespace DisplayMagician.InterProcess
 {
     internal class IPCClient : ClientBase<IService>, IService
     {
+
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public IPCClient(Process process)
             : base(
                 new ServiceEndpoint(
@@ -71,9 +74,10 @@ namespace DisplayMagician.InterProcess
             {
                 if (process.Id != thisProcess.Id)
                 {
+                    IPCClient processChannel = null;
                     try
                     {
-                        var processChannel = new IPCClient(process);
+                        processChannel = new IPCClient(process);
 
                         if (processChannel.Status == status)
                         {
@@ -82,6 +86,8 @@ namespace DisplayMagician.InterProcess
                     }
                     catch (Exception ex)
                     {
+                        processChannel = null;
+                        logger.Error(ex, $"IPCClient/QueryByStatus: Couldn't create an IPC Client");
                         Console.WriteLine($"IPCClient/QueryByStatus exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                         // ignored
                     }

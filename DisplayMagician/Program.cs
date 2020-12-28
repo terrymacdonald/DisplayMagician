@@ -1,25 +1,20 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using McMaster.Extensions.CommandLineUtils;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
-using DisplayMagician.GameLibraries;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using DisplayMagician.UIForms;
-using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Drawing;
-using System.Diagnostics.Contracts;
+using DesktopNotifications;
+using System.Runtime.Serialization;
 
 namespace DisplayMagician {
  
@@ -32,18 +27,23 @@ namespace DisplayMagician {
 
     internal static class Program
     {
-
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
+        public static string AppStartupPath = Application.StartupPath;
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
         public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
         public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
+        public static string AppLogPath = Path.Combine(Program.AppDataPath, $"Logs");
         public static string AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, @"DisplayMagician.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
+        public static bool AppToastActivated = false;
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
+        public static MainForm AppMainForm;
+
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         /// <summary>
         ///     The main entry point for the application.
@@ -51,6 +51,72 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
+
+            // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
+            // Windows 10 recognises the application, and allows features such as Toasts, 
+            // taskbar pinning and similar.
+            // Register AUMID, COM server, and activator
+            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(ShellUtils.AUMID);
+            DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
+
+            // Prepare NLog for logging
+            var config = new NLog.Config.LoggingConfiguration();
+
+            // Targets where to log to: File and Console
+            //string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
+            string AppLogFilename = Path.Combine(Program.AppLogPath, $"DisplayMagician.log");
+
+            // Create the Logging Dir if it doesn't exist so that it's avilable for all 
+            // parts of the program to use
+            if (!Directory.Exists(AppLogPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppLogPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                }
+            }
+
+            var logfile = new NLog.Targets.FileTarget("logfile") { 
+                FileName = AppLogFilename 
+            };
+            var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
+
+            // Load the program settings
+            AppProgramSettings = ProgramSettings.LoadSettings();
+
+            // Rules for mapping loggers to targets          
+            NLog.LogLevel logLevel = null;
+            switch (AppProgramSettings.LogLevel)
+            {
+                case "Trace":
+                    logLevel = NLog.LogLevel.Trace;
+                    break;
+                case "Info":
+                    logLevel = NLog.LogLevel.Info;
+                    break;
+                case "Warn":
+                    logLevel = NLog.LogLevel.Warn;
+                    break;
+                case "Error":
+                    logLevel = NLog.LogLevel.Error;
+                    break;
+                case "Debug":
+                    logLevel = NLog.LogLevel.Debug;
+                    break;
+                default:
+                    logLevel = NLog.LogLevel.Warn;
+                    break;
+            }
+            config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole);
+            config.AddRule(logLevel, NLog.LogLevel.Fatal, logfile);
+
+            // Apply config           
+            NLog.LogManager.Configuration = config;
+
 
             // Write the Application Name
             Console.WriteLine($"{Application.ProductName} v{Application.ProductVersion}");
@@ -67,10 +133,12 @@ namespace DisplayMagician {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             
-            // Load the program settings
-            AppProgramSettings = ProgramSettings.LoadSettings();
 
-            var app = new CommandLineApplication();
+            var app = new CommandLineApplication
+            {
+                AllowArgumentSeparator = true,
+                UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.StopParsingAndCollect,
+            }; 
 
             //app.Name = "HeliosDM+";
             //app.Name = Assembly.GetEntryAssembly().GetName().Name;
@@ -122,18 +190,49 @@ namespace DisplayMagician {
                         ApplyProfile(profileToUse);
                         return 0;
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        logger.Error(ex, $"Program/Main exception running ApplyProfile(profileToUse)");
                         return 1;
                     }
+                });
+            });
+
+            // This is the CreateProfile command
+            app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
+            {
+                //description and help text of the command.
+                createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
+
+                createProfileCmd.OnExecute(() =>
+                {
+                    Console.WriteLine("Starting up and creating a new Display Profile...");
+                    StartUpApplication(DisplayMagicianStartupAction.CreateProfile);
+                    return 0;
                 });
             });
 
             app.OnExecute(() =>
             {
 
+                // Add a workaround to handle the weird way that Windows tell us that DisplayMagician 
+                // was started from a Notification Toast when closed (Windows 10)
+                // Due to the way that CommandLineUtils library works we need to handle this as
+                // 'Remaining Arguments'
+                if (app.RemainingArguments != null && app.RemainingArguments.Count > 0)
+                {
+                    foreach (string myArg in app.RemainingArguments)
+                    {
+                        if (myArg.Equals("-ToastActivated"))
+                        {
+                            Program.AppToastActivated = true;
+                            break;
+                        }
+
+                    }
+                }
                 Console.WriteLine("Starting Normally...");
-                StartUpNormally();
+                StartUpApplication();
                 return 0;
             });
 
@@ -147,6 +246,7 @@ namespace DisplayMagician {
             }
             catch (CommandParsingException ex)
             {
+                logger.Error(ex, $"Program/Main exception parsing the Commands passed to the program");
                 Console.WriteLine("Didn't recognise the supplied commandline options: {0}", ex.Message);
             }
             catch (Exception ex)
@@ -155,14 +255,21 @@ namespace DisplayMagician {
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
                 // "Unrecognized command or argument '<invalid-command>'"
+                logger.Error(ex, $"Program/Main general exception during app.Execute(args)");
                 Console.WriteLine($"Program/Main exception: Unable to execute application - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
+
+            // Remove all the notifications we have set as they don't matter now!
+            DesktopNotificationManagerCompat.History.Clear();
+
+            // Shutdown NLog
+            NLog.LogManager.Shutdown();
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
             return 0;
         }
 
-        private static void StartUpNormally()
+        private static void StartUpApplication(DisplayMagicianStartupAction startupAction = DisplayMagicianStartupAction.StartUpNormally)
         {
             
 
@@ -178,7 +285,6 @@ namespace DisplayMagician {
                     throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
                 }
 
-                
                 // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppIconPath))
                 {
@@ -189,22 +295,7 @@ namespace DisplayMagician {
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        // TODO
-                    }
-                }
-
-
-                // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
-                if (!Directory.Exists(AppIconPath))
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(AppIconPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        // TODO
+                        logger.Error(ex, $"Program/StartUpNormally exception while trying to create directory {AppIconPath}");
                     }
                 }
 
@@ -253,14 +344,25 @@ namespace DisplayMagician {
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    logger.Error(ex, $"Program/StartUpNormally exception create Icon files for future use in {AppIconPath}");
                 }
+
                 IPCService.GetInstance().Status = InstanceStatus.User;
-                Application.Run(new UIForms.MainForm());
+
+                // Run the program with normal startup
+                if (startupAction == DisplayMagicianStartupAction.StartUpNormally)
+                {
+                    AppMainForm = new MainForm();
+                    Application.Run(AppMainForm);
+                }
+                else if (startupAction == DisplayMagicianStartupAction.CreateProfile) 
+                    Application.Run(new DisplayProfileForm());
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"Program/StartUpNormally top level exception");
                 MessageBox.Show(
                     ex.Message,
                     Language.Fatal_Error,
@@ -392,6 +494,7 @@ namespace DisplayMagician {
                     }
                     catch (AggregateException ae)
                     {
+                        logger.Error(ae, $"Program/ApplyProfile exception during applyTopologyTask");
                         foreach (var e in ae.InnerExceptions)
                         {
                             // Handle the custom exception.
@@ -422,6 +525,7 @@ namespace DisplayMagician {
                 }
                 catch (AggregateException ae)
                 {
+                    logger.Error(ae, $"Program/ApplyProfile exception during applyPathInfoTask");
                     foreach (var e in ae.InnerExceptions)
                     {
                         // Handle the custom exception.
@@ -499,6 +603,7 @@ namespace DisplayMagician {
             }
             catch (AggregateException ae)
             {
+                logger.Error(ae, $"Program/LoadGamesInBackground exception during loadGamesTasks");
                 Console.WriteLine("Program/LoadGamesInBackground : Task exception!");
                 foreach (var e in ae.InnerExceptions)
                 {
@@ -540,19 +645,40 @@ namespace DisplayMagician {
 
     public class ApplyTopologyException : Exception
     {
-        public ApplyTopologyException(String message) : base(message)
+        public ApplyTopologyException()
+        { }
+
+        public ApplyTopologyException(string message) : base(message)
+        { }
+
+        public ApplyTopologyException(string message, Exception innerException) : base(message, innerException)
+        { }
+        public ApplyTopologyException(SerializationInfo info, StreamingContext context) : base(info, context)
         { }
     }
 
     public class ApplyPathInfoException : Exception
     {
-        public ApplyPathInfoException(String message) : base(message)
+        public ApplyPathInfoException()
+        { }
+        
+        public ApplyPathInfoException(string message) : base(message)
+        { }
+        public ApplyPathInfoException(string message, Exception innerException) : base(message, innerException)
+        { }
+        public ApplyPathInfoException(SerializationInfo info, StreamingContext context) : base(info, context)
         { }
     }
 
     public class LoadingInstalledGamesException : Exception
     {
-        public LoadingInstalledGamesException(String message) : base(message)
+        public LoadingInstalledGamesException()
+        { }
+        public LoadingInstalledGamesException(string message) : base(message)
+        { }
+        public LoadingInstalledGamesException(string message, Exception innerException) : base(message, innerException)
+        { }
+        public LoadingInstalledGamesException(SerializationInfo info, StreamingContext context) : base(info, context)
         { }
     }
 }

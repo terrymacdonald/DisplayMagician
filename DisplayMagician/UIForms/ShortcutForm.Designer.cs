@@ -1,5 +1,5 @@
 ﻿using DisplayMagician.Resources;
-using DisplayMagician.Shared.UserControls;
+using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
 {
@@ -42,8 +42,19 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
-            this.dv_profile = new DisplayMagician.Shared.UserControls.DisplayView();
+            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.tabp_audio = new System.Windows.Forms.TabPage();
+            this.gb_capture_settings = new System.Windows.Forms.GroupBox();
+            this.gb_capture_volume = new System.Windows.Forms.GroupBox();
+            this.rb_set_capture_volume = new System.Windows.Forms.RadioButton();
+            this.rb_keep_capture_volume = new System.Windows.Forms.RadioButton();
+            this.lbl_capture_volume = new System.Windows.Forms.Label();
+            this.nud_capture_volume = new System.Windows.Forms.NumericUpDown();
+            this.btn_rescan_capture = new System.Windows.Forms.Button();
+            this.cb_capture_device = new System.Windows.Forms.ComboBox();
+            this.rb_change_capture = new System.Windows.Forms.RadioButton();
+            this.rb_no_change_capture = new System.Windows.Forms.RadioButton();
+            this.gb_audio_settings = new System.Windows.Forms.GroupBox();
             this.gb_audio_volume = new System.Windows.Forms.GroupBox();
             this.rb_set_audio_volume = new System.Windows.Forms.RadioButton();
             this.rb_keep_audio_volume = new System.Windows.Forms.RadioButton();
@@ -91,7 +102,7 @@ namespace DisplayMagician.UIForms
             this.btn_exe_to_start = new System.Windows.Forms.Button();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
             this.cb_args_executable = new System.Windows.Forms.CheckBox();
-            this.btn_app_different_executable = new System.Windows.Forms.Button();
+            this.btn_choose_alternative_executable = new System.Windows.Forms.Button();
             this.txt_alternative_executable = new System.Windows.Forms.TextBox();
             this.rb_wait_alternative_executable = new System.Windows.Forms.RadioButton();
             this.rb_wait_executable = new System.Windows.Forms.RadioButton();
@@ -117,6 +128,9 @@ namespace DisplayMagician.UIForms
             this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.tabp_after = new System.Windows.Forms.TabPage();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.rb_switch_capture_permanent = new System.Windows.Forms.RadioButton();
+            this.rb_switch_capture_temp = new System.Windows.Forms.RadioButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.rb_switch_audio_permanent = new System.Windows.Forms.RadioButton();
             this.rb_switch_audio_temp = new System.Windows.Forms.RadioButton();
@@ -130,6 +144,10 @@ namespace DisplayMagician.UIForms
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
+            this.gb_capture_settings.SuspendLayout();
+            this.gb_capture_volume.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_capture_volume)).BeginInit();
+            this.gb_audio_settings.SuspendLayout();
             this.gb_audio_volume.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).BeginInit();
             this.tabp_before.SuspendLayout();
@@ -143,6 +161,7 @@ namespace DisplayMagician.UIForms
             this.p_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
             this.tabp_after.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gb_display_after.SuspendLayout();
             this.SuspendLayout();
@@ -291,17 +310,160 @@ namespace DisplayMagician.UIForms
             // tabp_audio
             // 
             this.tabp_audio.BackColor = System.Drawing.Color.Black;
-            this.tabp_audio.Controls.Add(this.gb_audio_volume);
-            this.tabp_audio.Controls.Add(this.btn_rescan_audio);
-            this.tabp_audio.Controls.Add(this.cb_audio_device);
-            this.tabp_audio.Controls.Add(this.rb_change_audio);
-            this.tabp_audio.Controls.Add(this.rb_no_change_audio);
+            this.tabp_audio.Controls.Add(this.gb_capture_settings);
+            this.tabp_audio.Controls.Add(this.gb_audio_settings);
             this.tabp_audio.Location = new System.Drawing.Point(4, 32);
             this.tabp_audio.Name = "tabp_audio";
             this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
             this.tabp_audio.Size = new System.Drawing.Size(1082, 594);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
+            // 
+            // gb_capture_settings
+            // 
+            this.gb_capture_settings.Controls.Add(this.gb_capture_volume);
+            this.gb_capture_settings.Controls.Add(this.btn_rescan_capture);
+            this.gb_capture_settings.Controls.Add(this.cb_capture_device);
+            this.gb_capture_settings.Controls.Add(this.rb_change_capture);
+            this.gb_capture_settings.Controls.Add(this.rb_no_change_capture);
+            this.gb_capture_settings.ForeColor = System.Drawing.Color.White;
+            this.gb_capture_settings.Location = new System.Drawing.Point(65, 317);
+            this.gb_capture_settings.Name = "gb_capture_settings";
+            this.gb_capture_settings.Size = new System.Drawing.Size(953, 256);
+            this.gb_capture_settings.TabIndex = 21;
+            this.gb_capture_settings.TabStop = false;
+            this.gb_capture_settings.Text = "Microphone Settings";
+            // 
+            // gb_capture_volume
+            // 
+            this.gb_capture_volume.Controls.Add(this.rb_set_capture_volume);
+            this.gb_capture_volume.Controls.Add(this.rb_keep_capture_volume);
+            this.gb_capture_volume.Controls.Add(this.lbl_capture_volume);
+            this.gb_capture_volume.Controls.Add(this.nud_capture_volume);
+            this.gb_capture_volume.ForeColor = System.Drawing.Color.White;
+            this.gb_capture_volume.Location = new System.Drawing.Point(327, 114);
+            this.gb_capture_volume.Name = "gb_capture_volume";
+            this.gb_capture_volume.Size = new System.Drawing.Size(429, 128);
+            this.gb_capture_volume.TabIndex = 20;
+            this.gb_capture_volume.TabStop = false;
+            this.gb_capture_volume.Text = "Microphone Volume";
+            this.gb_capture_volume.Visible = false;
+            // 
+            // rb_set_capture_volume
+            // 
+            this.rb_set_capture_volume.AutoSize = true;
+            this.rb_set_capture_volume.ForeColor = System.Drawing.Color.White;
+            this.rb_set_capture_volume.Location = new System.Drawing.Point(62, 78);
+            this.rb_set_capture_volume.Name = "rb_set_capture_volume";
+            this.rb_set_capture_volume.Size = new System.Drawing.Size(167, 24);
+            this.rb_set_capture_volume.TabIndex = 13;
+            this.rb_set_capture_volume.Text = "Set audio volume at";
+            this.rb_set_capture_volume.UseVisualStyleBackColor = true;
+            this.rb_set_capture_volume.CheckedChanged += new System.EventHandler(this.rb_set_capture_volume_CheckedChanged);
+            // 
+            // rb_keep_capture_volume
+            // 
+            this.rb_keep_capture_volume.AutoSize = true;
+            this.rb_keep_capture_volume.Checked = true;
+            this.rb_keep_capture_volume.ForeColor = System.Drawing.Color.White;
+            this.rb_keep_capture_volume.Location = new System.Drawing.Point(62, 35);
+            this.rb_keep_capture_volume.Name = "rb_keep_capture_volume";
+            this.rb_keep_capture_volume.Size = new System.Drawing.Size(203, 24);
+            this.rb_keep_capture_volume.TabIndex = 12;
+            this.rb_keep_capture_volume.TabStop = true;
+            this.rb_keep_capture_volume.Text = "Leave audio volume as is";
+            this.rb_keep_capture_volume.UseVisualStyleBackColor = true;
+            this.rb_keep_capture_volume.CheckedChanged += new System.EventHandler(this.rb_keep_capture_volume_CheckedChanged);
+            // 
+            // lbl_capture_volume
+            // 
+            this.lbl_capture_volume.AutoSize = true;
+            this.lbl_capture_volume.ForeColor = System.Drawing.Color.White;
+            this.lbl_capture_volume.Location = new System.Drawing.Point(299, 80);
+            this.lbl_capture_volume.Name = "lbl_capture_volume";
+            this.lbl_capture_volume.Size = new System.Drawing.Size(63, 20);
+            this.lbl_capture_volume.TabIndex = 11;
+            this.lbl_capture_volume.Text = "percent";
+            // 
+            // nud_capture_volume
+            // 
+            this.nud_capture_volume.Enabled = false;
+            this.nud_capture_volume.Location = new System.Drawing.Point(233, 78);
+            this.nud_capture_volume.Name = "nud_capture_volume";
+            this.nud_capture_volume.Size = new System.Drawing.Size(60, 26);
+            this.nud_capture_volume.TabIndex = 10;
+            this.nud_capture_volume.Value = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.nud_capture_volume.ValueChanged += new System.EventHandler(this.nud_capture_volume_ValueChanged);
+            // 
+            // btn_rescan_capture
+            // 
+            this.btn_rescan_capture.Enabled = false;
+            this.btn_rescan_capture.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_rescan_capture.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_rescan_capture.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_rescan_capture.ForeColor = System.Drawing.Color.White;
+            this.btn_rescan_capture.Location = new System.Drawing.Point(760, 73);
+            this.btn_rescan_capture.Name = "btn_rescan_capture";
+            this.btn_rescan_capture.Size = new System.Drawing.Size(71, 28);
+            this.btn_rescan_capture.TabIndex = 19;
+            this.btn_rescan_capture.Text = "rescan";
+            this.btn_rescan_capture.UseVisualStyleBackColor = true;
+            this.btn_rescan_capture.Click += new System.EventHandler(this.btn_rescan_capture_Click);
+            // 
+            // cb_capture_device
+            // 
+            this.cb_capture_device.Enabled = false;
+            this.cb_capture_device.FormattingEnabled = true;
+            this.cb_capture_device.Location = new System.Drawing.Point(325, 73);
+            this.cb_capture_device.Name = "cb_capture_device";
+            this.cb_capture_device.Size = new System.Drawing.Size(429, 28);
+            this.cb_capture_device.TabIndex = 18;
+            this.cb_capture_device.SelectedIndexChanged += new System.EventHandler(this.cb_capture_device_SelectedIndexChanged);
+            // 
+            // rb_change_capture
+            // 
+            this.rb_change_capture.AutoSize = true;
+            this.rb_change_capture.ForeColor = System.Drawing.Color.White;
+            this.rb_change_capture.Location = new System.Drawing.Point(121, 73);
+            this.rb_change_capture.Name = "rb_change_capture";
+            this.rb_change_capture.Size = new System.Drawing.Size(192, 24);
+            this.rb_change_capture.TabIndex = 17;
+            this.rb_change_capture.Text = "Change microphone to:";
+            this.rb_change_capture.UseVisualStyleBackColor = true;
+            this.rb_change_capture.CheckedChanged += new System.EventHandler(this.rb_change_capture_CheckedChanged);
+            // 
+            // rb_no_change_capture
+            // 
+            this.rb_no_change_capture.AutoSize = true;
+            this.rb_no_change_capture.Checked = true;
+            this.rb_no_change_capture.ForeColor = System.Drawing.Color.White;
+            this.rb_no_change_capture.Location = new System.Drawing.Point(121, 35);
+            this.rb_no_change_capture.Name = "rb_no_change_capture";
+            this.rb_no_change_capture.Size = new System.Drawing.Size(308, 24);
+            this.rb_no_change_capture.TabIndex = 16;
+            this.rb_no_change_capture.TabStop = true;
+            this.rb_no_change_capture.Text = "Don\'t change microphone input settings";
+            this.rb_no_change_capture.UseVisualStyleBackColor = true;
+            this.rb_no_change_capture.CheckedChanged += new System.EventHandler(this.rb_no_change_capture_CheckedChanged);
+            // 
+            // gb_audio_settings
+            // 
+            this.gb_audio_settings.Controls.Add(this.gb_audio_volume);
+            this.gb_audio_settings.Controls.Add(this.btn_rescan_audio);
+            this.gb_audio_settings.Controls.Add(this.cb_audio_device);
+            this.gb_audio_settings.Controls.Add(this.rb_change_audio);
+            this.gb_audio_settings.Controls.Add(this.rb_no_change_audio);
+            this.gb_audio_settings.ForeColor = System.Drawing.Color.White;
+            this.gb_audio_settings.Location = new System.Drawing.Point(65, 30);
+            this.gb_audio_settings.Name = "gb_audio_settings";
+            this.gb_audio_settings.Size = new System.Drawing.Size(953, 272);
+            this.gb_audio_settings.TabIndex = 0;
+            this.gb_audio_settings.TabStop = false;
+            this.gb_audio_settings.Text = "Audio Output Settings";
             // 
             // gb_audio_volume
             // 
@@ -310,10 +472,10 @@ namespace DisplayMagician.UIForms
             this.gb_audio_volume.Controls.Add(this.lbl_audio_volume);
             this.gb_audio_volume.Controls.Add(this.nud_audio_volume);
             this.gb_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.gb_audio_volume.Location = new System.Drawing.Point(392, 240);
+            this.gb_audio_volume.Location = new System.Drawing.Point(325, 113);
             this.gb_audio_volume.Name = "gb_audio_volume";
-            this.gb_audio_volume.Size = new System.Drawing.Size(429, 147);
-            this.gb_audio_volume.TabIndex = 10;
+            this.gb_audio_volume.Size = new System.Drawing.Size(429, 133);
+            this.gb_audio_volume.TabIndex = 20;
             this.gb_audio_volume.TabStop = false;
             this.gb_audio_volume.Text = "Audio Output Volume";
             this.gb_audio_volume.Visible = false;
@@ -322,7 +484,7 @@ namespace DisplayMagician.UIForms
             // 
             this.rb_set_audio_volume.AutoSize = true;
             this.rb_set_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_set_audio_volume.Location = new System.Drawing.Point(38, 84);
+            this.rb_set_audio_volume.Location = new System.Drawing.Point(61, 82);
             this.rb_set_audio_volume.Name = "rb_set_audio_volume";
             this.rb_set_audio_volume.Size = new System.Drawing.Size(167, 24);
             this.rb_set_audio_volume.TabIndex = 13;
@@ -335,7 +497,7 @@ namespace DisplayMagician.UIForms
             this.rb_keep_audio_volume.AutoSize = true;
             this.rb_keep_audio_volume.Checked = true;
             this.rb_keep_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.rb_keep_audio_volume.Location = new System.Drawing.Point(38, 41);
+            this.rb_keep_audio_volume.Location = new System.Drawing.Point(61, 38);
             this.rb_keep_audio_volume.Name = "rb_keep_audio_volume";
             this.rb_keep_audio_volume.Size = new System.Drawing.Size(203, 24);
             this.rb_keep_audio_volume.TabIndex = 12;
@@ -348,7 +510,7 @@ namespace DisplayMagician.UIForms
             // 
             this.lbl_audio_volume.AutoSize = true;
             this.lbl_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.lbl_audio_volume.Location = new System.Drawing.Point(275, 86);
+            this.lbl_audio_volume.Location = new System.Drawing.Point(298, 84);
             this.lbl_audio_volume.Name = "lbl_audio_volume";
             this.lbl_audio_volume.Size = new System.Drawing.Size(63, 20);
             this.lbl_audio_volume.TabIndex = 11;
@@ -357,7 +519,7 @@ namespace DisplayMagician.UIForms
             // nud_audio_volume
             // 
             this.nud_audio_volume.Enabled = false;
-            this.nud_audio_volume.Location = new System.Drawing.Point(209, 84);
+            this.nud_audio_volume.Location = new System.Drawing.Point(232, 82);
             this.nud_audio_volume.Name = "nud_audio_volume";
             this.nud_audio_volume.Size = new System.Drawing.Size(60, 26);
             this.nud_audio_volume.TabIndex = 10;
@@ -366,6 +528,7 @@ namespace DisplayMagician.UIForms
             0,
             0,
             0});
+            this.nud_audio_volume.ValueChanged += new System.EventHandler(this.nud_audio_volume_ValueChanged);
             // 
             // btn_rescan_audio
             // 
@@ -374,10 +537,10 @@ namespace DisplayMagician.UIForms
             this.btn_rescan_audio.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_rescan_audio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_rescan_audio.ForeColor = System.Drawing.Color.White;
-            this.btn_rescan_audio.Location = new System.Drawing.Point(827, 186);
+            this.btn_rescan_audio.Location = new System.Drawing.Point(760, 72);
             this.btn_rescan_audio.Name = "btn_rescan_audio";
             this.btn_rescan_audio.Size = new System.Drawing.Size(71, 28);
-            this.btn_rescan_audio.TabIndex = 3;
+            this.btn_rescan_audio.TabIndex = 19;
             this.btn_rescan_audio.Text = "rescan";
             this.btn_rescan_audio.UseVisualStyleBackColor = true;
             this.btn_rescan_audio.Click += new System.EventHandler(this.btn_rescan_audio_Click);
@@ -386,20 +549,20 @@ namespace DisplayMagician.UIForms
             // 
             this.cb_audio_device.Enabled = false;
             this.cb_audio_device.FormattingEnabled = true;
-            this.cb_audio_device.Location = new System.Drawing.Point(392, 186);
+            this.cb_audio_device.Location = new System.Drawing.Point(325, 72);
             this.cb_audio_device.Name = "cb_audio_device";
             this.cb_audio_device.Size = new System.Drawing.Size(429, 28);
-            this.cb_audio_device.TabIndex = 2;
+            this.cb_audio_device.TabIndex = 18;
             this.cb_audio_device.SelectedIndexChanged += new System.EventHandler(this.cb_audio_device_SelectedIndexChanged);
             // 
             // rb_change_audio
             // 
             this.rb_change_audio.AutoSize = true;
             this.rb_change_audio.ForeColor = System.Drawing.Color.White;
-            this.rb_change_audio.Location = new System.Drawing.Point(188, 186);
+            this.rb_change_audio.Location = new System.Drawing.Point(121, 72);
             this.rb_change_audio.Name = "rb_change_audio";
             this.rb_change_audio.Size = new System.Drawing.Size(198, 24);
-            this.rb_change_audio.TabIndex = 1;
+            this.rb_change_audio.TabIndex = 17;
             this.rb_change_audio.Text = "Change audio output to:";
             this.rb_change_audio.UseVisualStyleBackColor = true;
             this.rb_change_audio.CheckedChanged += new System.EventHandler(this.rb_change_audio_CheckedChanged);
@@ -409,12 +572,12 @@ namespace DisplayMagician.UIForms
             this.rb_no_change_audio.AutoSize = true;
             this.rb_no_change_audio.Checked = true;
             this.rb_no_change_audio.ForeColor = System.Drawing.Color.White;
-            this.rb_no_change_audio.Location = new System.Drawing.Point(188, 114);
+            this.rb_no_change_audio.Location = new System.Drawing.Point(121, 34);
             this.rb_no_change_audio.Name = "rb_no_change_audio";
-            this.rb_no_change_audio.Size = new System.Drawing.Size(215, 24);
-            this.rb_no_change_audio.TabIndex = 0;
+            this.rb_no_change_audio.Size = new System.Drawing.Size(275, 24);
+            this.rb_no_change_audio.TabIndex = 16;
             this.rb_no_change_audio.TabStop = true;
-            this.rb_no_change_audio.Text = "Don\'t change audio output";
+            this.rb_no_change_audio.Text = "Don\'t change audio output settings";
             this.rb_no_change_audio.UseVisualStyleBackColor = true;
             this.rb_no_change_audio.CheckedChanged += new System.EventHandler(this.rb_no_change_audio_CheckedChanged);
             // 
@@ -808,7 +971,7 @@ namespace DisplayMagician.UIForms
             this.p_standalone.Controls.Add(this.btn_exe_to_start);
             this.p_standalone.Controls.Add(this.txt_args_executable);
             this.p_standalone.Controls.Add(this.cb_args_executable);
-            this.p_standalone.Controls.Add(this.btn_app_different_executable);
+            this.p_standalone.Controls.Add(this.btn_choose_alternative_executable);
             this.p_standalone.Controls.Add(this.txt_alternative_executable);
             this.p_standalone.Controls.Add(this.rb_wait_alternative_executable);
             this.p_standalone.Controls.Add(this.rb_wait_executable);
@@ -826,7 +989,7 @@ namespace DisplayMagician.UIForms
             // 
             this.btn_exe_to_start.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_exe_to_start.ForeColor = System.Drawing.Color.White;
-            this.btn_exe_to_start.Location = new System.Drawing.Point(593, 10);
+            this.btn_exe_to_start.Location = new System.Drawing.Point(666, 10);
             this.btn_exe_to_start.Name = "btn_exe_to_start";
             this.btn_exe_to_start.Size = new System.Drawing.Size(85, 27);
             this.btn_exe_to_start.TabIndex = 12;
@@ -856,17 +1019,17 @@ namespace DisplayMagician.UIForms
             this.cb_args_executable.CheckedChanged += new System.EventHandler(this.cb_args_executable_CheckedChanged);
             this.cb_args_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
             // 
-            // btn_app_different_executable
+            // btn_choose_alternative_executable
             // 
-            this.btn_app_different_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_app_different_executable.ForeColor = System.Drawing.Color.White;
-            this.btn_app_different_executable.Location = new System.Drawing.Point(877, 115);
-            this.btn_app_different_executable.Name = "btn_app_different_executable";
-            this.btn_app_different_executable.Size = new System.Drawing.Size(85, 27);
-            this.btn_app_different_executable.TabIndex = 9;
-            this.btn_app_different_executable.Text = "Choose";
-            this.btn_app_different_executable.UseVisualStyleBackColor = true;
-            this.btn_app_different_executable.Click += new System.EventHandler(this.btn_app_different_executable_Click);
+            this.btn_choose_alternative_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_choose_alternative_executable.ForeColor = System.Drawing.Color.White;
+            this.btn_choose_alternative_executable.Location = new System.Drawing.Point(877, 115);
+            this.btn_choose_alternative_executable.Name = "btn_choose_alternative_executable";
+            this.btn_choose_alternative_executable.Size = new System.Drawing.Size(85, 27);
+            this.btn_choose_alternative_executable.TabIndex = 9;
+            this.btn_choose_alternative_executable.Text = "Choose";
+            this.btn_choose_alternative_executable.UseVisualStyleBackColor = true;
+            this.btn_choose_alternative_executable.Click += new System.EventHandler(this.btn_choose_alternative_executable_Click);
             // 
             // txt_alternative_executable
             // 
@@ -875,7 +1038,7 @@ namespace DisplayMagician.UIForms
             this.txt_alternative_executable.Name = "txt_alternative_executable";
             this.txt_alternative_executable.Size = new System.Drawing.Size(378, 26);
             this.txt_alternative_executable.TabIndex = 4;
-            this.txt_alternative_executable.TextChanged += new System.EventHandler(this.txt_different_executable_TextChanged);
+            this.txt_alternative_executable.TextChanged += new System.EventHandler(this.txt_alternative_executable_TextChanged);
             // 
             // rb_wait_alternative_executable
             // 
@@ -887,7 +1050,7 @@ namespace DisplayMagician.UIForms
             this.rb_wait_alternative_executable.TabIndex = 8;
             this.rb_wait_alternative_executable.Text = "Wait until an alternative executable is closed before continuing:";
             this.rb_wait_alternative_executable.UseVisualStyleBackColor = true;
-            this.rb_wait_alternative_executable.CheckedChanged += new System.EventHandler(this.rb_wait_process_CheckedChanged);
+            this.rb_wait_alternative_executable.CheckedChanged += new System.EventHandler(this.rb_wait_alternative_executable_CheckedChanged);
             this.rb_wait_alternative_executable.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
             // 
             // rb_wait_executable
@@ -909,7 +1072,7 @@ namespace DisplayMagician.UIForms
             // 
             this.txt_executable.Location = new System.Drawing.Point(171, 10);
             this.txt_executable.Name = "txt_executable";
-            this.txt_executable.Size = new System.Drawing.Size(416, 26);
+            this.txt_executable.Size = new System.Drawing.Size(489, 26);
             this.txt_executable.TabIndex = 1;
             this.txt_executable.TextChanged += new System.EventHandler(this.txt_executable_TextChanged);
             // 
@@ -929,26 +1092,26 @@ namespace DisplayMagician.UIForms
             // 
             this.label2.AutoSize = true;
             this.label2.ForeColor = System.Drawing.Color.Transparent;
-            this.label2.Location = new System.Drawing.Point(819, 12);
+            this.label2.Location = new System.Drawing.Point(783, 12);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(70, 20);
+            this.label2.Size = new System.Drawing.Size(125, 20);
             this.label2.TabIndex = 5;
-            this.label2.Text = "Timeout:";
+            this.label2.Text = "Max Wait (secs):";
             this.label2.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // nud_timeout_executable
             // 
-            this.nud_timeout_executable.Location = new System.Drawing.Point(895, 10);
+            this.nud_timeout_executable.Location = new System.Drawing.Point(910, 10);
             this.nud_timeout_executable.Maximum = new decimal(new int[] {
             240,
             0,
             0,
             0});
             this.nud_timeout_executable.Name = "nud_timeout_executable";
-            this.nud_timeout_executable.Size = new System.Drawing.Size(70, 26);
+            this.nud_timeout_executable.Size = new System.Drawing.Size(55, 26);
             this.nud_timeout_executable.TabIndex = 6;
             this.nud_timeout_executable.Value = new decimal(new int[] {
-            30,
+            20,
             0,
             0,
             0});
@@ -1000,7 +1163,7 @@ namespace DisplayMagician.UIForms
             this.txt_game_launcher.Location = new System.Drawing.Point(605, 76);
             this.txt_game_launcher.Name = "txt_game_launcher";
             this.txt_game_launcher.ReadOnly = true;
-            this.txt_game_launcher.Size = new System.Drawing.Size(175, 26);
+            this.txt_game_launcher.Size = new System.Drawing.Size(149, 26);
             this.txt_game_launcher.TabIndex = 23;
             // 
             // txt_game_name
@@ -1036,11 +1199,14 @@ namespace DisplayMagician.UIForms
             // 
             // btn_choose_game
             // 
+            this.btn_choose_game.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_choose_game.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_choose_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_choose_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_choose_game.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_game.Location = new System.Drawing.Point(411, 115);
+            this.btn_choose_game.Location = new System.Drawing.Point(408, 117);
             this.btn_choose_game.Name = "btn_choose_game";
-            this.btn_choose_game.Size = new System.Drawing.Size(29, 31);
+            this.btn_choose_game.Size = new System.Drawing.Size(40, 46);
             this.btn_choose_game.TabIndex = 16;
             this.btn_choose_game.Text = ">>";
             this.btn_choose_game.UseVisualStyleBackColor = true;
@@ -1085,26 +1251,26 @@ namespace DisplayMagician.UIForms
             // 
             this.lbl_game_timeout.AutoSize = true;
             this.lbl_game_timeout.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_timeout.Location = new System.Drawing.Point(819, 79);
+            this.lbl_game_timeout.Location = new System.Drawing.Point(783, 79);
             this.lbl_game_timeout.Name = "lbl_game_timeout";
-            this.lbl_game_timeout.Size = new System.Drawing.Size(70, 20);
+            this.lbl_game_timeout.Size = new System.Drawing.Size(125, 20);
             this.lbl_game_timeout.TabIndex = 4;
-            this.lbl_game_timeout.Text = "Timeout:";
+            this.lbl_game_timeout.Text = "Max Wait (secs):";
             this.lbl_game_timeout.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // nud_timeout_game
             // 
-            this.nud_timeout_game.Location = new System.Drawing.Point(895, 77);
+            this.nud_timeout_game.Location = new System.Drawing.Point(911, 77);
             this.nud_timeout_game.Maximum = new decimal(new int[] {
             240,
             0,
             0,
             0});
             this.nud_timeout_game.Name = "nud_timeout_game";
-            this.nud_timeout_game.Size = new System.Drawing.Size(70, 26);
+            this.nud_timeout_game.Size = new System.Drawing.Size(54, 26);
             this.nud_timeout_game.TabIndex = 5;
             this.nud_timeout_game.Value = new decimal(new int[] {
-            120,
+            20,
             0,
             0,
             0});
@@ -1141,6 +1307,7 @@ namespace DisplayMagician.UIForms
             // tabp_after
             // 
             this.tabp_after.BackColor = System.Drawing.Color.Black;
+            this.tabp_after.Controls.Add(this.groupBox2);
             this.tabp_after.Controls.Add(this.groupBox1);
             this.tabp_after.Controls.Add(this.gb_display_after);
             this.tabp_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -1152,42 +1319,83 @@ namespace DisplayMagician.UIForms
             this.tabp_after.TabIndex = 3;
             this.tabp_after.Text = "5. Choose what happens afterwards";
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.rb_switch_capture_permanent);
+            this.groupBox2.Controls.Add(this.rb_switch_capture_temp);
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox2.ForeColor = System.Drawing.Color.White;
+            this.groupBox2.Location = new System.Drawing.Point(175, 404);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(765, 161);
+            this.groupBox2.TabIndex = 13;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "What happens to the Microphone afterwards?";
+            // 
+            // rb_switch_capture_permanent
+            // 
+            this.rb_switch_capture_permanent.AutoSize = true;
+            this.rb_switch_capture_permanent.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_capture_permanent.Location = new System.Drawing.Point(98, 96);
+            this.rb_switch_capture_permanent.Name = "rb_switch_capture_permanent";
+            this.rb_switch_capture_permanent.Size = new System.Drawing.Size(492, 24);
+            this.rb_switch_capture_permanent.TabIndex = 12;
+            this.rb_switch_capture_permanent.Text = "Keep using the Microphone after Game ends (permanent change)";
+            this.rb_switch_capture_permanent.UseVisualStyleBackColor = true;
+            this.rb_switch_capture_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_capture_permanent_CheckedChanged);
+            // 
+            // rb_switch_capture_temp
+            // 
+            this.rb_switch_capture_temp.AutoSize = true;
+            this.rb_switch_capture_temp.Checked = true;
+            this.rb_switch_capture_temp.ForeColor = System.Drawing.Color.White;
+            this.rb_switch_capture_temp.Location = new System.Drawing.Point(98, 48);
+            this.rb_switch_capture_temp.Name = "rb_switch_capture_temp";
+            this.rb_switch_capture_temp.Size = new System.Drawing.Size(553, 24);
+            this.rb_switch_capture_temp.TabIndex = 11;
+            this.rb_switch_capture_temp.TabStop = true;
+            this.rb_switch_capture_temp.Text = "Revert back to original Microphone (temporary change while running game)";
+            this.rb_switch_capture_temp.UseVisualStyleBackColor = true;
+            this.rb_switch_capture_temp.CheckedChanged += new System.EventHandler(this.rb_switch_capture_temp_CheckedChanged);
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.rb_switch_audio_permanent);
             this.groupBox1.Controls.Add(this.rb_switch_audio_temp);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.ForeColor = System.Drawing.Color.White;
-            this.groupBox1.Location = new System.Drawing.Point(175, 311);
+            this.groupBox1.Location = new System.Drawing.Point(175, 219);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(765, 203);
+            this.groupBox1.Size = new System.Drawing.Size(765, 161);
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "What happens to the Audio afterwards?";
+            this.groupBox1.Text = "What happens to the Audio output afterwards?";
             // 
             // rb_switch_audio_permanent
             // 
             this.rb_switch_audio_permanent.AutoSize = true;
             this.rb_switch_audio_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_audio_permanent.Location = new System.Drawing.Point(98, 116);
+            this.rb_switch_audio_permanent.Location = new System.Drawing.Point(98, 96);
             this.rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
             this.rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
             this.rb_switch_audio_permanent.TabIndex = 12;
             this.rb_switch_audio_permanent.Text = "Keep using the Audio Device after Game ends (permanent change)";
             this.rb_switch_audio_permanent.UseVisualStyleBackColor = true;
+            this.rb_switch_audio_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_audio_permanent_CheckedChanged);
             // 
             // rb_switch_audio_temp
             // 
             this.rb_switch_audio_temp.AutoSize = true;
             this.rb_switch_audio_temp.Checked = true;
             this.rb_switch_audio_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_audio_temp.Location = new System.Drawing.Point(98, 68);
+            this.rb_switch_audio_temp.Location = new System.Drawing.Point(98, 48);
             this.rb_switch_audio_temp.Name = "rb_switch_audio_temp";
             this.rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
             this.rb_switch_audio_temp.TabIndex = 11;
             this.rb_switch_audio_temp.TabStop = true;
             this.rb_switch_audio_temp.Text = "Revert back to original Audio Device (temporary change while running game)";
             this.rb_switch_audio_temp.UseVisualStyleBackColor = true;
+            this.rb_switch_audio_temp.CheckedChanged += new System.EventHandler(this.rb_switch_audio_temp_CheckedChanged);
             // 
             // gb_display_after
             // 
@@ -1195,9 +1403,9 @@ namespace DisplayMagician.UIForms
             this.gb_display_after.Controls.Add(this.rb_switch_display_temp);
             this.gb_display_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_display_after.ForeColor = System.Drawing.Color.White;
-            this.gb_display_after.Location = new System.Drawing.Point(175, 58);
+            this.gb_display_after.Location = new System.Drawing.Point(175, 31);
             this.gb_display_after.Name = "gb_display_after";
-            this.gb_display_after.Size = new System.Drawing.Size(765, 203);
+            this.gb_display_after.Size = new System.Drawing.Size(765, 162);
             this.gb_display_after.TabIndex = 11;
             this.gb_display_after.TabStop = false;
             this.gb_display_after.Text = "What happens to the Display Profile afterwards?";
@@ -1206,25 +1414,27 @@ namespace DisplayMagician.UIForms
             // 
             this.rb_switch_display_permanent.AutoSize = true;
             this.rb_switch_display_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_display_permanent.Location = new System.Drawing.Point(98, 116);
+            this.rb_switch_display_permanent.Location = new System.Drawing.Point(98, 96);
             this.rb_switch_display_permanent.Name = "rb_switch_display_permanent";
             this.rb_switch_display_permanent.Size = new System.Drawing.Size(508, 24);
             this.rb_switch_display_permanent.TabIndex = 12;
             this.rb_switch_display_permanent.Text = "Keep using the Display Profile after Game ends (permanent change)";
             this.rb_switch_display_permanent.UseVisualStyleBackColor = true;
+            this.rb_switch_display_permanent.CheckedChanged += new System.EventHandler(this.rb_switch_display_permanent_CheckedChanged);
             // 
             // rb_switch_display_temp
             // 
             this.rb_switch_display_temp.AutoSize = true;
             this.rb_switch_display_temp.Checked = true;
             this.rb_switch_display_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_display_temp.Location = new System.Drawing.Point(98, 68);
+            this.rb_switch_display_temp.Location = new System.Drawing.Point(98, 48);
             this.rb_switch_display_temp.Name = "rb_switch_display_temp";
             this.rb_switch_display_temp.Size = new System.Drawing.Size(569, 24);
             this.rb_switch_display_temp.TabIndex = 11;
             this.rb_switch_display_temp.TabStop = true;
             this.rb_switch_display_temp.Text = "Revert back to original Display Profile (temporary change while running game)";
             this.rb_switch_display_temp.UseVisualStyleBackColor = true;
+            this.rb_switch_display_temp.CheckedChanged += new System.EventHandler(this.rb_switch_display_temp_CheckedChanged);
             // 
             // txt_shortcut_save_name
             // 
@@ -1302,7 +1512,13 @@ namespace DisplayMagician.UIForms
             this.tabp_display.ResumeLayout(false);
             this.tabp_display.PerformLayout();
             this.tabp_audio.ResumeLayout(false);
-            this.tabp_audio.PerformLayout();
+            this.gb_capture_settings.ResumeLayout(false);
+            this.gb_capture_settings.PerformLayout();
+            this.gb_capture_volume.ResumeLayout(false);
+            this.gb_capture_volume.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_capture_volume)).EndInit();
+            this.gb_audio_settings.ResumeLayout(false);
+            this.gb_audio_settings.PerformLayout();
             this.gb_audio_volume.ResumeLayout(false);
             this.gb_audio_volume.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).EndInit();
@@ -1324,6 +1540,8 @@ namespace DisplayMagician.UIForms
             this.p_game.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
             this.tabp_after.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.gb_display_after.ResumeLayout(false);
@@ -1367,7 +1585,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel p_standalone;
         private System.Windows.Forms.TextBox txt_args_executable;
         private System.Windows.Forms.CheckBox cb_args_executable;
-        private System.Windows.Forms.Button btn_app_different_executable;
+        private System.Windows.Forms.Button btn_choose_alternative_executable;
         private System.Windows.Forms.TextBox txt_alternative_executable;
         private System.Windows.Forms.RadioButton rb_wait_alternative_executable;
         private System.Windows.Forms.RadioButton rb_wait_executable;
@@ -1413,20 +1631,34 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_start_program2;
         private System.Windows.Forms.CheckBox cb_start_program1;
         private System.Windows.Forms.TabPage tabp_audio;
-        private System.Windows.Forms.RadioButton rb_no_change_audio;
-        private System.Windows.Forms.RadioButton rb_change_audio;
-        private System.Windows.Forms.ComboBox cb_audio_device;
-        private System.Windows.Forms.Button btn_rescan_audio;
         private System.Windows.Forms.GroupBox gb_display_after;
         private System.Windows.Forms.RadioButton rb_switch_display_permanent;
         private System.Windows.Forms.RadioButton rb_switch_display_temp;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton rb_switch_audio_permanent;
         private System.Windows.Forms.RadioButton rb_switch_audio_temp;
+        private System.Windows.Forms.GroupBox gb_capture_settings;
+        private System.Windows.Forms.GroupBox gb_capture_volume;
+        private System.Windows.Forms.RadioButton rb_set_capture_volume;
+        private System.Windows.Forms.RadioButton rb_keep_capture_volume;
+        private System.Windows.Forms.Label lbl_capture_volume;
+        private System.Windows.Forms.NumericUpDown nud_capture_volume;
+        private System.Windows.Forms.Button btn_rescan_capture;
+        private System.Windows.Forms.ComboBox cb_capture_device;
+        private System.Windows.Forms.RadioButton rb_change_capture;
+        private System.Windows.Forms.RadioButton rb_no_change_capture;
+        private System.Windows.Forms.GroupBox gb_audio_settings;
         private System.Windows.Forms.GroupBox gb_audio_volume;
         private System.Windows.Forms.RadioButton rb_set_audio_volume;
         private System.Windows.Forms.RadioButton rb_keep_audio_volume;
         private System.Windows.Forms.Label lbl_audio_volume;
         private System.Windows.Forms.NumericUpDown nud_audio_volume;
+        private System.Windows.Forms.Button btn_rescan_audio;
+        private System.Windows.Forms.ComboBox cb_audio_device;
+        private System.Windows.Forms.RadioButton rb_change_audio;
+        private System.Windows.Forms.RadioButton rb_no_change_audio;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.RadioButton rb_switch_capture_permanent;
+        private System.Windows.Forms.RadioButton rb_switch_capture_temp;
     }
 }

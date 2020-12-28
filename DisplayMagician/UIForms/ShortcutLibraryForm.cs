@@ -1,18 +1,15 @@
 ﻿using DisplayMagician.GameLibraries;
 using DisplayMagician.Resources;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Drawing.IconLib;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -21,15 +18,11 @@ namespace DisplayMagician.UIForms
     {
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
-        //private ImageListViewItem _selectedShortcutILVItem = null;
         private ShortcutItem _selectedShortcut = null;
 
         public ShortcutLibraryForm()
         {
             InitializeComponent();
-            //_shortcutAdaptor = new ShortcutAdaptor();
-            //_shortcutRepository = new ShortcutRepository();
-            //_profileRepository = new ProfileRepository();
             ilv_saved_shortcuts.MultiSelect = false;
             ilv_saved_shortcuts.ThumbnailSize = new Size(100,100);
             ilv_saved_shortcuts.AllowDrag = false;
@@ -45,6 +38,8 @@ namespace DisplayMagician.UIForms
         {
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
+
+            RemoveWarningIfShortcuts();
         }
 
         private void RefreshShortcutLibraryUI()
@@ -62,9 +57,6 @@ namespace DisplayMagician.UIForms
             
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
-                //loadedProfile.SaveProfileImageToCache();
-                //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
-                //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
                 newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
 
                 // Select it if its the selectedProfile
@@ -147,9 +139,28 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void RemoveWarningIfShortcuts()
+        {
+            if (ShortcutRepository.AllShortcuts.Count > 0)
+                lbl_create_shortcut.Visible = false;
+            else
+                lbl_create_shortcut.Visible = true;
+        }
+
         private void ilv_saved_shortcuts_ItemClick(object sender, ItemClickEventArgs e)
         {
             _selectedShortcut = GetShortcutFromName(e.Item.Text);
+
+            if (e.Buttons == MouseButtons.Right)
+            {
+                /* MessageBox.Show(
+                                 "Right button was clicked!",
+                                 "Mouse Button detected",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Exclamation);*/
+
+                cms_shortcuts.Show(ilv_saved_shortcuts,e.Location);
+            }
         }
 
         private void ilv_saved_shortcuts_ItemDoubleClick(object sender, ItemClickEventArgs e)
@@ -159,16 +170,19 @@ namespace DisplayMagician.UIForms
             if (_selectedShortcut == null)
                 return;
 
-            var shortcutForm = new ShortcutForm(_selectedShortcut);
+            // Edit the Shortcut (now changed to RunShortcut)
+            /*var shortcutForm = new ShortcutForm(_selectedShortcut);
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                //ShortcutRepository.ReplaceShortcut(shortcutForm.Shortcut);
-                //_selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
                 // As this is an edit, we need to manually force saving the shortcut library
                 ShortcutRepository.SaveShortcuts();
             }
+            */
+
+            // Run the shortcut when doubleclicked
+            btn_run.PerformClick();
 
         }
 
@@ -182,6 +196,7 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
             }
+            RemoveWarningIfShortcuts();
         }
 
         private void btn_edit_Click(object sender, EventArgs e)
@@ -197,8 +212,6 @@ namespace DisplayMagician.UIForms
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
-                //ShortcutRepository.ReplaceShortcut(shortcutForm.Shortcut);
-                //_selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
                 // As this is an edit, we need to manually force saving the shortcut library
                 ShortcutRepository.SaveShortcuts();
@@ -223,6 +236,7 @@ namespace DisplayMagician.UIForms
             _selectedShortcut = null;
 
             RefreshShortcutLibraryUI();
+            RemoveWarningIfShortcuts();
         }
 
         private void btn_run_Click(object sender, EventArgs e)
@@ -233,9 +247,9 @@ namespace DisplayMagician.UIForms
             // Figure out the string we're going to use as the MaskedForm message
             string message = "";
             if (_selectedShortcut.Category.Equals(ShortcutCategory.Application))
-                message = $"Starting the {_selectedShortcut.ExecutableNameAndPath} application and waiting until you close it.";
+                message = $"Running the {_selectedShortcut.ExecutableNameAndPath} application and waiting until you close it.";
             else if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
-                message = $"Starting the {_selectedShortcut.GameName} game and waiting until you close it.";
+                message = $"Running the {_selectedShortcut.GameName} game and waiting until you close it.";
 
             // Create a MaskForm that will cover the ShortcutLibrary Window to lock
             // the controls and inform the user that the game is running....
@@ -261,6 +275,31 @@ namespace DisplayMagician.UIForms
             {
                 tt_selected.RemoveAll();
             }
+        }
+
+        private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
+        {
+            RemoveWarningIfShortcuts();
+        }
+
+        private void tsmi_save_to_desktop_Click(object sender, EventArgs e)
+        {
+            btn_save.PerformClick();
+        }
+
+        private void tsmi_run_Click(object sender, EventArgs e)
+        {
+            btn_run.PerformClick();
+        }
+
+        private void tsmi_edit_Click(object sender, EventArgs e)
+        {
+            btn_edit.PerformClick();
+        }
+
+        private void tsmi_delete_Click(object sender, EventArgs e)
+        {
+            btn_delete.PerformClick();
         }
     }
 }

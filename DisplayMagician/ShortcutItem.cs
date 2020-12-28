@@ -1,6 +1,6 @@
 ﻿using DisplayMagician.GameLibraries;
 using DisplayMagician.Resources;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -73,20 +73,25 @@ namespace DisplayMagician
         private string _differentExecutableToMonitor;
         private string _executableNameAndPath = "";
         private string _executableArguments;
-        private bool _executableArgumentsRequired;
-        private bool _processNameToMonitorUsesExecutable;
+        private bool _executableArgumentsRequired = false;
+        private bool _processNameToMonitorUsesExecutable = true;
         private uint _gameAppId;
         private string _gameName;
         private SupportedGameLibrary _gameLibrary;
-        private uint _startTimeout;
+        private uint _startTimeout = 20;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
         private string _audioDevice;
         private bool _changeAudioDevice;
         private bool _setAudioVolume = false;
         private decimal _audioVolume = -1;
+        private string _captureDevice;
+        private bool _changeCaptureDevice;
+        private bool _setCaptureVolume = false;
+        private decimal _captureVolume = -1;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
+        private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
         private bool _autoName = true;
         private bool _isPossible;
         private List<StartProgram> _startPrograms;
@@ -119,9 +124,16 @@ namespace DisplayMagician
             ProfileItem profile,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
             string originalIconPath,
-            string audioDevice = "", 
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
             decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -132,18 +144,17 @@ namespace DisplayMagician
             _name = name;
             _category = ShortcutCategory.NoGame;
             _profileToUse = profile;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-            _audioDevice = audioDevice; 
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
+            _changeAudioDevice = changeAudioDevice;
+            _audioDevice = audioDevice;
+            _setAudioVolume = setAudioVolume;
             _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -162,29 +173,42 @@ namespace DisplayMagician
 
         }
 
-        public ShortcutItem(string name, string profileUuid, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "") : this()
+        public ShortcutItem(
+            string name, 
+            string profileUuid, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false, 
+            string audioDevice = "", 
+            bool setAudioVolume = false, 
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false, 
+            decimal captureVolume = -1, 
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
             _name = name;
             _profileUuid = profileUuid;
             _category = ShortcutCategory.NoGame;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -192,7 +216,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -227,9 +251,16 @@ namespace DisplayMagician
             bool gameArgumentsRequired,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
             string originalIconPath,
+            bool changeAudioDevice = false,
             string audioDevice = "",
+            bool setAudioVolume = false,
             decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -246,19 +277,17 @@ namespace DisplayMagician
             _startTimeout = gameTimeout;
             _gameArguments = gameArguments;
             _gameArgumentsRequired = gameArgumentsRequired;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -277,10 +306,26 @@ namespace DisplayMagician
 
         }
 
-        public ShortcutItem(string name, ProfileItem profile, GameStruct game, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "") : this()
+        public ShortcutItem(
+            string name, 
+            ProfileItem profile, 
+            GameStruct game, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            ) : this()
         {
             // Create a new UUID for the shortcut if one wasn't created already
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -294,18 +339,17 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -324,10 +368,26 @@ namespace DisplayMagician
 
 
 
-        public ShortcutItem(string name, string profileUuid, GameStruct game, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "") : this()
+        public ShortcutItem(
+            string name, 
+            string profileUuid, 
+            GameStruct game, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -341,18 +401,17 @@ namespace DisplayMagician
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
             _gameArgumentsRequired = false;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -360,7 +419,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid,StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid,StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -393,9 +452,16 @@ namespace DisplayMagician
             bool processNameToMonitorUsesExecutable,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
             string originalIconPath,
+            bool changeAudioDevice = false,
             string audioDevice = "",
-            decimal audioVolume = -1, 
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -412,18 +478,17 @@ namespace DisplayMagician
             _executableArguments = executableArguments;
             _executableArgumentsRequired = executableArgumentsRequired;
             _processNameToMonitorUsesExecutable = processNameToMonitorUsesExecutable;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -442,10 +507,26 @@ namespace DisplayMagician
 
         }
 
-        public ShortcutItem(string name, ProfileItem profile, Executable executable, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "") : this()
+        public ShortcutItem(
+            string name, 
+            ProfileItem profile, 
+            Executable executable, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -458,18 +539,17 @@ namespace DisplayMagician
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -487,10 +567,26 @@ namespace DisplayMagician
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
         }
 
-        public ShortcutItem(string name, string profileUuid, Executable executable, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "") : this()
+        public ShortcutItem(
+            string name, 
+            string profileUuid, 
+            Executable executable, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -503,18 +599,17 @@ namespace DisplayMagician
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -522,7 +617,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -634,7 +729,7 @@ namespace DisplayMagician
                 // We try to find and set the ProfileTouse
                 foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
                 {
-                    if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                         _profileToUse = profileToTest;
                 }
             }
@@ -663,6 +758,19 @@ namespace DisplayMagician
             set
             {
                 _audioPermanence = value;
+            }
+        }
+
+        public ShortcutPermanence CapturePermanence
+        {
+            get
+            {
+                return _capturePermanence;
+            }
+
+            set
+            {
+                _capturePermanence = value;
             }
         }
 
@@ -880,6 +988,58 @@ namespace DisplayMagician
             }
         }
 
+        public string CaptureDevice
+        {
+            get
+            {
+                return _captureDevice;
+            }
+
+            set
+            {
+                _captureDevice = value;
+            }
+        }
+
+        public bool ChangeCaptureDevice
+        {
+            get
+            {
+                return _changeCaptureDevice;
+            }
+
+            set
+            {
+                _changeCaptureDevice = value;
+            }
+        }
+
+        public decimal CaptureVolume
+        {
+            get
+            {
+                return _captureVolume;
+            }
+
+            set
+            {
+                _captureVolume = value;
+            }
+        }
+
+        public bool SetCaptureVolume
+        {
+            get
+            {
+                return _setCaptureVolume;
+            }
+
+            set
+            {
+                _setCaptureVolume = value;
+            }
+        }
+
         public List<StartProgram> StartPrograms
         {
             get
@@ -971,9 +1131,16 @@ namespace DisplayMagician
             ProfileItem profile,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
             string originalIconPath,
+            bool changeAudioDevice = false,
             string audioDevice = "",
+            bool setAudioVolume = false,
             decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -984,19 +1151,17 @@ namespace DisplayMagician
             _name = name;
             _category = ShortcutCategory.NoGame;
             _profileToUse = profile;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1016,29 +1181,42 @@ namespace DisplayMagician
             ReplaceShortcutIconInCache();
         }
 
-        public void UpdateNoGameShortcut(string name, string profileUuid, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "")
+        public void UpdateNoGameShortcut(
+            string name, 
+            string profileUuid, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
             _name = name;
             _profileUuid = profileUuid;
             _category = ShortcutCategory.NoGame;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1046,7 +1224,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -1083,9 +1261,16 @@ namespace DisplayMagician
             bool gameArgumentsRequired,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
             string originalIconPath,
+            bool changeAudioDevice = false,
             string audioDevice = "",
-            decimal audioVolume = -1, 
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -1102,19 +1287,17 @@ namespace DisplayMagician
             _startTimeout = gameTimeout;
             _gameArguments = gameArguments;
             _gameArgumentsRequired = gameArgumentsRequired;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1134,10 +1317,25 @@ namespace DisplayMagician
             ReplaceShortcutIconInCache();
         }
 
-        public void UpdateGameShortcut(string name, ProfileItem profile, GameStruct game, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "")
+        public void UpdateGameShortcut(
+            string name, 
+            ProfileItem profile, 
+            GameStruct game, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = "")
         {
             // Create a new UUID for the shortcut if one wasn't created already
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1151,19 +1349,17 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1184,10 +1380,26 @@ namespace DisplayMagician
 
 
 
-        public void UpdateGameShortcut(string name, string profileUuid, GameStruct game, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "")
+        public void UpdateGameShortcut(
+            string name, 
+            string profileUuid, 
+            GameStruct game, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -1201,19 +1413,17 @@ namespace DisplayMagician
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
             _gameArgumentsRequired = false;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1221,7 +1431,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -1256,9 +1466,16 @@ namespace DisplayMagician
             bool processNameToMonitorUsesExecutable,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
             string originalIconPath,
+            bool changeAudioDevice = false,
             string audioDevice = "",
+            bool setAudioVolume = false,
             decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
             string uuid = ""
@@ -1275,19 +1492,17 @@ namespace DisplayMagician
             _executableArguments = executableArguments;
             _executableArgumentsRequired = executableArgumentsRequired;
             _processNameToMonitorUsesExecutable = processNameToMonitorUsesExecutable;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1307,10 +1522,26 @@ namespace DisplayMagician
             ReplaceShortcutIconInCache();
         }
 
-        public void UpdateExecutableShortcut(string name, ProfileItem profile, Executable executable, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "")
+        public void UpdateExecutableShortcut(
+            string name, 
+            ProfileItem profile, 
+            Executable executable, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -1323,19 +1554,17 @@ namespace DisplayMagician
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1355,10 +1584,26 @@ namespace DisplayMagician
             ReplaceShortcutIconInCache();
         }
 
-        public void UpdateExecutableShortcut(string name, string profileUuid, Executable executable, ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, string originalIconPath,
-            string audioDevice = "", decimal audioVolume = -1, List<StartProgram> startPrograms = null, 
-            bool autoName = true, string uuid = "")
+        public void UpdateExecutableShortcut(
+            string name, 
+            string profileUuid, 
+            Executable executable, 
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence, 
+            ShortcutPermanence capturePermanence,
+            string originalIconPath,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null, 
+            bool autoName = true, 
+            string uuid = ""
+            )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
                 _uuid = uuid;
@@ -1371,19 +1616,17 @@ namespace DisplayMagician
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            if (String.IsNullOrEmpty(audioDevice))
-                _changeAudioDevice = false;
-            else
-                _changeAudioDevice = true;
-
+            _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
-            if (audioVolume >= 0 && audioVolume <= 100)
-                _setAudioVolume = true;
-            else
-                _setAudioVolume = false;
-            _audioVolume = audioVolume; 
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
             _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
@@ -1391,7 +1634,7 @@ namespace DisplayMagician
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.InvariantCultureIgnoreCase))
+                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
                 {
                     _profileToUse = profileToTest;
                     break;
@@ -1442,6 +1685,7 @@ namespace DisplayMagician
             shortcut.ProfileUUID = ProfileUUID;
             shortcut.DisplayPermanence = DisplayPermanence;
             shortcut.AudioPermanence = AudioPermanence;
+            shortcut.CapturePermanence = CapturePermanence;
             shortcut.Category = Category;
             shortcut.DifferentExecutableToMonitor = DifferentExecutableToMonitor;
             shortcut.ExecutableNameAndPath = ExecutableNameAndPath;
@@ -1464,6 +1708,11 @@ namespace DisplayMagician
             shortcut.AudioDevice = AudioDevice;
             shortcut.SetAudioVolume = SetAudioVolume;
             shortcut.AudioVolume = AudioVolume;
+            shortcut.ChangeCaptureDevice = ChangeCaptureDevice;
+            shortcut.CaptureDevice = CaptureDevice;
+            shortcut.SetCaptureVolume = SetCaptureVolume;
+            shortcut.CaptureVolume = CaptureVolume;
+
             // Save the shortcut incon to the icon cache
             shortcut.ReplaceShortcutIconInCache();
 
@@ -1572,6 +1821,7 @@ namespace DisplayMagician
         }
 
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
 
@@ -1722,6 +1972,24 @@ namespace DisplayMagician
                             return (false, $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.");
                         if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
                             return (false, $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.");
+                    }
+                }
+            }
+            // Check the Capture Device is still valid (if one is specified)
+            if (ChangeCaptureDevice)
+            {
+                CoreAudioController audioController = ShortcutRepository.AudioController;
+                IEnumerable<CoreAudioDevice> captureDevices = audioController.GetCaptureDevices();
+                foreach (CoreAudioDevice captureDevice in captureDevices)
+                {
+                    if (captureDevice.FullName.Equals(CaptureDevice))
+                    {
+                        if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
+                            return (false, $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.");
+                        if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
+                            return (false, $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.");
+                        if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
+                            return (false, $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.");
                     }
                 }
             }

@@ -35,7 +35,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\Debug\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -51,7 +51,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
@@ -78,6 +79,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
@@ -86,7 +88,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DesktopNotificationActivator.cs" />
+    <Compile Include="DesktopNotificationManagerCompat.cs" />
     <Compile Include="GameLibraries\Game.cs" />
+    <Compile Include="GameLibraries\GameUtils.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\AppInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\EUniverse.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />
@@ -95,6 +100,7 @@
     <Compile Include="GameLibraries\UplayConfigurationParser\UplayConfigurationParser.cs" />
     <Compile Include="GameLibraries\UplayLibrary.cs" />
     <Compile Include="GameLibraries\SteamLibrary.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ProgressReporter.cs" />
@@ -118,6 +124,12 @@
     </Compile>
     <Compile Include="UIForms\MaskedDialog.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UIForms\ShortcutAdaptor.cs" />
     <Compile Include="UIForms\ProfileAdaptor.cs" />
@@ -175,6 +187,9 @@
       <DependentUpon>MainForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\SettingsForm.resx">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UIForms\ShortcutForm.resx">
       <DependentUpon>ShortcutForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -214,6 +229,9 @@
     <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio">
       <Version>4.0.0-alpha5</Version>
     </PackageReference>
+    <PackageReference Include="Autoupdater.NET.Official">
+      <Version>1.6.4</Version>
+    </PackageReference>
     <PackageReference Include="CircularProgressBar">
       <Version>2.8.0.16</Version>
     </PackageReference>
@@ -243,11 +261,20 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications">
+      <Version>6.1.1</Version>
+    </PackageReference>
     <PackageReference Include="MintPlayer.IconUtils">
       <Version>1.0.4</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="NLog">
+      <Version>4.7.6</Version>
+    </PackageReference>
+    <PackageReference Include="QueryString.NET">
+      <Version>1.0.0</Version>
     </PackageReference>
     <PackageReference Include="ValveKeyValue">
       <Version>0.3.1.152</Version>
@@ -276,14 +303,23 @@
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagician.Shared\DisplayMagician.Shared.csproj">
+    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj">
       <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
-      <Name>DisplayMagician.Shared</Name>
+      <Name>DisplayMagicianShared</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary">
       <Guid>{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="Shell32">
+      <Guid>{50A7E9B0-70EF-11D1-B75A-00A0C90564FE}</Guid>
       <VersionMajor>1</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>

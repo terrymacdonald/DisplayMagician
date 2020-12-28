@@ -3,39 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection;
-using System.Security;
-using System.Drawing;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using DisplayMagician.Resources;
-using DisplayMagician.Shared;
-//using HtmlAgilityPack;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-//using VdfParser;
-//using Gameloop.Vdf;
-using System.Collections.ObjectModel;
-using ValveKeyValue;
-using System.Security.Cryptography;
-using System.ServiceModel.Configuration;
-//using DisplayMagician.GameLibraries.UplayAppInfoParser;
-using TsudaKageyu;
-using System.Drawing.IconLib;
-using System.Drawing.IconLib.Exceptions;
 using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
     public class UplayGame : Game
     {
-        /*private static string UplayLibrary.UplayExe;
-        private static string UplayLibrary.UplayPath;
-        private static string _uplayConfigVdfFile;
-        private static string _registryUplayKey = @"SOFTWARE\\Valve\\Uplay";
-        private static string _registryAppsKey = $@"{_registryUplayKey}\\Apps";*/
         private string _gameRegistryKey;
         private uint _uplayGameId;
         private string _uplayGameName;
@@ -45,15 +19,6 @@ namespace DisplayMagician.GameLibraries
         private string _uplayGameProcessName;
         private string _uplayGameIconPath;
         private static List<UplayGame> _allInstalledUplayGames = null;
-
-        /*private struct UplayAppInfo
-        {
-            public uint GameID; 
-            public string GameName;
-            public List<string> GameExes;
-            public string GameInstallDir;
-            public string GameUplayIconPath;
-        }*/
 
         static UplayGame()
         {
@@ -107,47 +72,33 @@ namespace DisplayMagician.GameLibraries
 
         public override string Directory
         {
-            get => _uplayGameExePath;
-            set => _uplayGameExePath = value;
+            get => _uplayGameDir;
+            set => _uplayGameDir = value;
         }
 
         public override bool IsRunning
         {
             get
             {
-                /*try
+                int numGameProcesses = 0;
+                List<Process> gameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
+                foreach (Process gameProcess in gameProcesses)
                 {
-                    using (
-                        var key = Registry.CurrentUser.OpenSubKey(_gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
+                    try
                     {
-                        if ((int)key?.GetValue(@"Running", 0) == 1)
-                        {
-                            return true;
-                        }
-                        return false;
+                        if (gameProcess.MainModule.FileName.StartsWith(_uplayGameExePath))
+                            numGameProcesses++;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (GameUtils.GetMainModuleFilepath(gameProcess.Id).StartsWith(_uplayGameExePath))
+                            numGameProcesses++;
                     }
                 }
-                catch (SecurityException ex)
-                {
-                    Console.WriteLine($"UplayGame/IsRunning securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
-                }
-                catch (IOException ex)
-                {
-                    // Extract some information from this exception, and then
-                    // throw it to the parent method.
-                    Console.WriteLine($"UplayGame/IsRunning ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
-                }*/
-
-                bool isRunning = Process.GetProcessesByName(_uplayGameProcessName)
-                    .FirstOrDefault(p => p.MainModule.FileName
-                    .StartsWith(ExePath, StringComparison.OrdinalIgnoreCase)) != default(Process);
-                return isRunning;
+                if (numGameProcesses > 0)
+                    return true;
+                else
+                    return false;
             }
         }
 
@@ -186,6 +137,7 @@ namespace DisplayMagician.GameLibraries
             }
         }*/
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public bool CopyTo(UplayGame uplayGame)
         {
             if (!(uplayGame is UplayGame))
@@ -196,6 +148,7 @@ namespace DisplayMagician.GameLibraries
             uplayGame.Id = Id;
             uplayGame.Name = Name;
             uplayGame.ExePath = ExePath;
+            uplayGame.Directory = Directory;
             return true;
         }
 

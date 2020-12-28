@@ -5,9 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NLog;
 
 namespace DisplayMagician
 {
+
     public class ProgramSettings
     {
         #region Class Variables
@@ -19,6 +21,7 @@ namespace DisplayMagician
 
         #region Instance Variables
         private bool _minimiseOnStart = false;
+        private string _logLevel = NLog.LogLevel.Warn.ToString();
         #endregion
 
         #region Class Properties
@@ -36,6 +39,48 @@ namespace DisplayMagician
                 if (_programSettingsLoaded)
                     SaveSettings();
             } 
+        }
+
+        public string LogLevel
+        {
+            get
+            {
+                return _logLevel;
+            }
+            set
+            {
+
+                switch (value.ToLower())
+                {
+                    case "trace":
+                        _logLevel = NLog.LogLevel.Trace.ToString();
+                        break;
+                    case "debug":
+                        _logLevel = NLog.LogLevel.Debug.ToString();
+                        break;
+                    case "info":
+                        _logLevel = NLog.LogLevel.Info.ToString();
+                        break;
+                    case "warn":
+                        _logLevel = NLog.LogLevel.Warn.ToString();
+                        break;
+                    case "error":
+                        _logLevel = NLog.LogLevel.Error.ToString();
+                        break;
+                    case "fatal":
+                        _logLevel = NLog.LogLevel.Fatal.ToString();
+                        break;
+                    default:
+                        _logLevel = NLog.LogLevel.Warn.ToString();
+                        break;
+
+                }
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
         }
 
         public static Version FileVersion
@@ -75,6 +120,11 @@ namespace DisplayMagician
                         Console.WriteLine($"Unable to load Program Settings JSON file {_programSettingsStorageJsonFileName}: " + ex.Message);
                     }
                 }
+            }
+            else
+            {
+                programSettings = new ProgramSettings();
+                programSettings.SaveSettings();
             }
 
             // If there isn't any settings in the file then create a new ProgramSettings object

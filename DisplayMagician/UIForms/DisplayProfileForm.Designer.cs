@@ -1,5 +1,5 @@
 ﻿using DisplayMagician.Resources;
-using DisplayMagician.Shared.UserControls;
+using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
 {
@@ -36,7 +36,6 @@ namespace DisplayMagician.UIForms
             this.btn_apply = new System.Windows.Forms.Button();
             this.btn_back = new System.Windows.Forms.Button();
             this.btn_delete = new System.Windows.Forms.Button();
-            this.dv_profile = new DisplayMagician.Shared.UserControls.DisplayView();
             this.menu_profiles = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.applyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
@@ -54,6 +53,8 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
+            this.lbl_save_profile = new System.Windows.Forms.Label();
+            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -106,22 +107,6 @@ namespace DisplayMagician.UIForms
             this.btn_delete.Text = "&Delete";
             this.btn_delete.UseVisualStyleBackColor = true;
             this.btn_delete.Click += new System.EventHandler(this.Delete_Click);
-            // 
-            // dv_profile
-            // 
-            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 63);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(976, 517);
-            this.dv_profile.TabIndex = 4;
             // 
             // menu_profiles
             // 
@@ -281,6 +266,38 @@ namespace DisplayMagician.UIForms
             this.label1.TabIndex = 23;
             this.label1.Text = "Saved Profiles (These can be used to create shortcuts)";
             // 
+            // lbl_save_profile
+            // 
+            this.lbl_save_profile.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_save_profile.BackColor = System.Drawing.Color.Brown;
+            this.lbl_save_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
+            this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_save_profile.Location = new System.Drawing.Point(703, 80);
+            this.lbl_save_profile.Name = "lbl_save_profile";
+            this.lbl_save_profile.Size = new System.Drawing.Size(261, 102);
+            this.lbl_save_profile.TabIndex = 33;
+            this.lbl_save_profile.Text = "Setup your displays with Windows or NVIDIA Setup, then return to DisplayMagician " +
+    "and click \'Save As\' to save this Display Profile.";
+            this.lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // dv_profile
+            // 
+            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
+            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.dv_profile.Location = new System.Drawing.Point(0, 63);
+            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
+            this.dv_profile.Name = "dv_profile";
+            this.dv_profile.PaddingX = 100;
+            this.dv_profile.PaddingY = 100;
+            this.dv_profile.Profile = null;
+            this.dv_profile.Size = new System.Drawing.Size(976, 517);
+            this.dv_profile.TabIndex = 4;
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -290,6 +307,7 @@ namespace DisplayMagician.UIForms
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 812);
+            this.Controls.Add(this.lbl_save_profile);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lbl_profile_shown_subtitle);
             this.Controls.Add(this.ilv_saved_profiles);
@@ -342,6 +360,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolTip tt_selected;
+        private System.Windows.Forms.Label lbl_save_profile;
     }
 }
 

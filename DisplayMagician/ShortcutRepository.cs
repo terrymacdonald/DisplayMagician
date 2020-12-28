@@ -1,16 +1,13 @@
 ﻿using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.InterProcess;
-using DisplayMagician.Resources;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
-using NvAPIWrapper.Mosaic;
-using NvAPIWrapper.Native.Mosaic;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing.IconLib;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,6 +15,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Windows.Data.Xml.Dom;
+using Windows.UI.Notifications;
 
 namespace DisplayMagician
 {
@@ -33,6 +32,7 @@ namespace DisplayMagician
         private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_{Version.ToString(2)}.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
         #region Class Constructors
@@ -52,7 +52,8 @@ namespace DisplayMagician
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                //Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"ShortcutRepository/Instansiation exception during class construction");
                 // ignored
             }
 
@@ -135,7 +136,7 @@ namespace DisplayMagician
                 return false;
 
             // Remove the Shortcut Icons from the Cache
-            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
+            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase));
             foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
             {
                 try
@@ -151,7 +152,7 @@ namespace DisplayMagician
             }
 
             // Remove the shortcut from the list.
-            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.InvariantCultureIgnoreCase));
+            int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase));
 
             if (numRemoved == 1)
             {
@@ -177,13 +178,13 @@ namespace DisplayMagician
             Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
-                numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
+                shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
+                numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
-                numRemoved = _allShortcuts.RemoveAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase));
+                shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
+                numRemoved = _allShortcuts.RemoveAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
             }
             // Remove the Shortcut Icons from the Cache
             foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
@@ -220,7 +221,7 @@ namespace DisplayMagician
 
             foreach (ShortcutItem testShortcut in _allShortcuts)
             {
-                if (testShortcut.UUID.Equals(shortcut.UUID,StringComparison.InvariantCultureIgnoreCase))
+                if (testShortcut.UUID.Equals(shortcut.UUID,StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 
@@ -239,7 +240,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
 
@@ -248,7 +249,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
 
@@ -270,7 +271,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return testShortcut;
                 }
 
@@ -279,7 +280,7 @@ namespace DisplayMagician
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
-                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.InvariantCultureIgnoreCase))
+                    if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                         return testShortcut;
                 }
 
@@ -296,7 +297,7 @@ namespace DisplayMagician
 
             foreach (ShortcutItem testShortcut in ShortcutRepository.AllShortcuts)
             {
-                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.InvariantCultureIgnoreCase) && testShortcut.AutoName)
+                if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.OrdinalIgnoreCase) && testShortcut.AutoName)
                 {
                     testShortcut.ProfileToUse = newProfile;
                     testShortcut.AutoSuggestShortcutName();
@@ -417,6 +418,7 @@ namespace DisplayMagician
             (bool valid, string reason) = shortcutToUse.IsValid();
             if (!valid)
             {
+                logger.Error($"ShortcutRepository/RunShortcut error. shortcutToUse isn't valid");
                 MessageBox.Show(
                     $"Unable to run the shortcut '{shortcutToUse.Name}': {reason}",
                     @"Cannot run the Shortcut",
@@ -447,12 +449,17 @@ namespace DisplayMagician
                 if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
                 {
                     Console.WriteLine($"ERROR - Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                 }
             }
 
             // record the old audio device
+            bool needToChangeAudio = false;
             CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
             double rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
+            if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                needToChangeAudio = true;
+
 
             // Change Audio Device (if one specified)
             if (shortcutToUse.ChangeAudioDevice)
@@ -470,6 +477,38 @@ namespace DisplayMagician
                             Task myTask = new Task(() =>
                             {
                                 audioDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                            });
+                            myTask.Start();
+                            myTask.Wait(2000);
+                        }
+
+                    }
+                }
+            }
+
+            // record the old microphone device
+            bool needToChangeCaptureDevice = false;
+            CoreAudioDevice rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
+            double rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
+            if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                needToChangeCaptureDevice = true;
+
+            // Change capture Device (if one specified)
+            if (shortcutToUse.ChangeCaptureDevice)
+            {
+                IEnumerable<CoreAudioDevice> captureDevices = _audioController.GetCaptureDevices();
+                foreach (CoreAudioDevice captureDevice in captureDevices)
+                {
+                    if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                    {
+                        // use the Audio Device
+                        captureDevice.SetAsDefault();
+
+                        if (shortcutToUse.SetCaptureVolume)
+                        {
+                            Task myTask = new Task(() =>
+                            {
+                                captureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
                             });
                             myTask.Start();
                             myTask.Wait(2000);
@@ -516,7 +555,7 @@ namespace DisplayMagician
             // This means we need to save the state if the temporaryIcon
             // is false.
             // Conversely, if temporaryIcon is true, then we need 
-            // to create a NotifyIncon as MainFOrm isn't running to create
+            // to create a NotifyIncon as MainForm isn't running to create
             // one for us already!
             if (notifyIcon == null)
                 temporaryNotifyIcon = true;
@@ -531,7 +570,6 @@ namespace DisplayMagician
                         notifyIcon = new NotifyIcon
                         {
                             Icon = Properties.Resources.DisplayMagician,
-                            //Text = string.Format("DisplayMagician: Waiting for the Game {} to exit...", steamGameToRun.Name),
                             Visible = true
                         };
                         Application.DoEvents();
@@ -539,6 +577,7 @@ namespace DisplayMagician
                     catch (Exception ex)
                     {
                         Console.WriteLine($"ShortcutRepository/RunShortcut exception: Trying to  {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut exception setting NotifyIcon");
                         // ignored
                     }
                 }
@@ -555,6 +594,7 @@ namespace DisplayMagician
                 Application.DoEvents();
             }
 
+
             // Now start the main game, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
             {
@@ -565,82 +605,117 @@ namespace DisplayMagician
                 else
                     process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
 
-                // Create a list of processes to monitor
-                List<Process> processesToMonitor = new List<Process>();
-
-                // Work out if we are monitoring another process other than the main executable
+                // Figure out what we want to look for
+                string processNameToLookFor;                
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
                 {
-                    // If we are monitoring the same executable we started, then lets do that
-                    processesToMonitor.Add(process);
+                    // If we are monitoring the same executable we started, then lets do get that name ready
+                    processNameToLookFor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.ExecutableNameAndPath);
                 }
                 else
                 {
-                    // Now wait a little while for all the processes we want to monitor to start up
-                    var ticks = 0;
-                    while (ticks < shortcutToUse.StartTimeout * 1000)
+                    // If we are monitoring a different executable, then lets do get that name ready instead
+                    processNameToLookFor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor);
+                }
+
+                // Now look for the thing we're supposed to monitor
+                // and wait until it starts up
+                List<Process> processesToMonitor = new List<Process>();
+                for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                {
+                    // Look for the processes with the ProcessName we sorted out earlier
+                    processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
+
+                    // If we have found one or more processes then we should be good to go
+                    // so let's break
+                    if (processesToMonitor.Count > 0)
                     {
-                        // Look for the processes with the ProcessName we want (which in Windows is the filename without the extension)
-                        processesToMonitor = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor)).ToList();
-
-                        // If we have found one or more processes then we should be good to go
-                        // so let's break
-                        if (processesToMonitor.Count > 0)
-                        {
-                            break;
-                        }
-
-                        // Let's wait a little while if we couldn't find
-                        // any processes yet
-                        Thread.Sleep(300);
-                        ticks += 300;
+                        logger.Debug($"Found {processesToMonitor.Count} '{processNameToLookFor}' processes have started");
+                        break;
                     }
 
-                    // If we have reached the timeout and we cannot detect any
-                    // of the alernative executables to monitor, then ignore that
-                    // setting, and just monitor the process we just started instead
-                    if (processesToMonitor.Count == 0)
-                    {
-                        processesToMonitor.Add(process);
-                    }
+                    // Let's wait a little while if we couldn't find
+                    // any processes yet
+                    Thread.Sleep(500);
+                }
+                //  make sure we have things to monitor and alert if not
+                if (processesToMonitor.Count == 0)
+                {
+                    logger.Error($"No '{processNameToLookFor}' processes found before waiting timeout");
                 }
 
                 // Store the process to monitor for later
                 IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
                 IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
-                int substringStart = shortcutToUse.ExecutableNameAndPath.Length - 42;
-                if (substringStart < 0)
-                    substringStart = 0;
-                notifyIcon.Text = $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath.Substring(substringStart)}...";
-                //Application.DoEvents();
-
-                // Wait for the monitored process to exit
-                while (true)
+                // Add a status notification icon in the status area
+                string notificationText = $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...";
+                if (notificationText.Length >= 64)
                 {
-                    int processExitCount = 0;
-                    // Check each process to see if it's exited
-                    foreach (var p in processesToMonitor)
+                    string thingToRun = shortcutToUse.ExecutableNameAndPath.Substring(0, 35);
+                    notifyIcon.Text = $"DisplayMagician: Running {thingToRun}...";
+                }
+                Application.DoEvents();
+
+                // Now we want to tell the user we're running an application!
+                // Construct the Windows toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=runningApplication", ToastActivationType.Foreground)
+                    .AddText($"Running {processNameToLookFor}", hintMaxLines: 1)
+                    .AddText($"Waiting for all {processNameToLookFor} windows to exit...");
+                    //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                // And then show this notification
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                // Wait an extra few seconds to give the application time to settle down
+                Thread.Sleep(2000);
+
+                // if we have things to monitor, then we should start to wait for them
+                Console.WriteLine($"Waiting for all {processNameToLookFor} windows to exit.");
+                logger.Debug($"ShortcutRepository/RunShortcut - waiting for application {processNameToLookFor} to exit.");
+                if (processesToMonitor.Count > 0)
+                {
+                    logger.Debug($"{processesToMonitor.Count} '{processNameToLookFor}' processes are still running");
+                    while (true)
                     {
-                        try
+                        processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
+
+                        // If we have no more processes left then we're done!
+                        if (processesToMonitor.Count == 0)
                         {
-                            if (p.HasExited)
-                            {
-                                processExitCount++;
-                            }
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            Console.WriteLine($"ShortcutRepository/RunShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                            processExitCount++;
+                            logger.Debug($"No more '{processNameToLookFor}' processes are still running");
+                            break;
                         }
                     }
-
-                    // Make sure that all processes have exited
-                    // then start the shutdown process
-                    if (processExitCount == processesToMonitor.Count)
-                        break;
                 }
+                Console.WriteLine($"{processNameToLookFor} has exited.");
+                logger.Debug($"ShortcutRepository/RunShortcut - Application {processNameToLookFor} has exited.");
+
+                // Tell the user that the application has closed
+                // Construct the toast content
+                tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                    .AddText($"{processNameToLookFor} was closed", hintMaxLines: 1)
+                    .AddText($"All {processNameToLookFor} processes were shutdown and changes were reverted.");
+                toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+                // And create the toast notification
+                toast = new ToastNotification(doc);
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
 
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Game))
@@ -662,26 +737,28 @@ namespace DisplayMagician
                         {
                             address += "/" + shortcutToUse.GameArguments;
                         }
+                        logger.Debug($"ShortcutRepository/RunShortcut Steam launch address is {address}");
 
                         // Start the URI Handler to run Steam
                         Console.WriteLine($"Starting Steam Game: {steamGameToRun.Name}");
                         var steamProcess = Process.Start(address);
 
                         // Wait for Steam game to update if needed
-                        var ticks = 0;
-                        while (ticks < shortcutToUse.StartTimeout * 1000)
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            if (steamGameToRun.IsRunning)
-                            {
-                                break;
-                            }
-
-                            Thread.Sleep(300);
 
                             if (!steamGameToRun.IsUpdating)
                             {
-                                ticks += 300;
+                                if (steamGameToRun.IsRunning)
+                                {
+                                    logger.Info($"Found the '{steamGameToRun.Name}' process has started");
+                                    break;
+                                }
+
                             }
+                            // Delay 500ms
+                            Thread.Sleep(500);
+
                         }
 
                         // Store the Steam Process ID for later
@@ -695,24 +772,59 @@ namespace DisplayMagician
                             notifyIcon.Text = $"DisplayMagician: Running {steamGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
-                        // Wait 300ms for the game process to spawn
-                        Thread.Sleep(300);
-                        // Now check it's actually started
-                        if (steamGameToRun.IsRunning)
-                        {
-                            // Wait for the game to exit
-                            Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
-                            while (true)
-                            {
-                                if (!steamGameToRun.IsRunning)
-                                {
-                                    break;
-                                }
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=runningSteamGame", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
+                            .AddText($"Waiting for the Steam Game {shortcutToUse.GameName} to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        ToastContent toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        var doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        var toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
-                                Thread.Sleep(300);
+                        // Wait 5 seconds for the game process to spawn	
+                        Thread.Sleep(5000);
+                        // Wait for the game to exit
+                        Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - waiting for Steam Game {steamGameToRun.Name} to exit.");
+                        while (true)
+                        {
+                            if (!steamGameToRun.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} is no longer running (IsRunning is false).");
+                                break;
                             }
-                            Console.WriteLine($"{steamGameToRun.Name} has exited.");
+
+                            Thread.Sleep(300);
                         }
+                        Console.WriteLine($"{steamGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} has exited.");
+
+                        // Tell the user that the Steam Game has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                            .AddText($"{shortcutToUse.GameName} game was shutdown and changes were reverted.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
 
                     }
 
@@ -720,15 +832,16 @@ namespace DisplayMagician
                 // If the game is a Uplay Game we check for that
                 else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Uplay))
                 {
-                    // We now need to get the SteamGame info
+                    // We now need to get the Uplay Game  info
                     UplayGame uplayGameToRun = UplayLibrary.GetUplayGame(shortcutToUse.GameAppId);
 
-                    // If the GameAppID matches a Steam game, then lets run it
+                    // If the GameAppID matches a Uplay game, then lets run it
                     if (uplayGameToRun is UplayGame)
                     {
-                        // Prepare to start the steam game using the URI interface 
-                        // as used by Steam for it's own desktop shortcuts.
+                        // Prepare to start the Uplay game using the URI interface 
+                        // as used by Uplay for it's own desktop shortcuts.
                         var address = $"uplay://launch/{uplayGameToRun.Id}";
+                        logger.Debug($"ShortcutRepository/RunShortcut Uplay launch address is {address}");
                         if (shortcutToUse.GameArgumentsRequired)
                         {
                             address += "/" + shortcutToUse.GameArguments;
@@ -738,50 +851,134 @@ namespace DisplayMagician
                             address += "/0";
                         }
 
+                        // Now we want to tell the user we're starting upc.exe
+                        // Construct the Windows toast content
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=startingUplay", ToastActivationType.Foreground)
+                            .AddText($"Starting Uplay", hintMaxLines: 1)
+                            .AddText($"Waiting for Uplay to start (and update if needed)...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        ToastContent toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        var doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        var toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+
                         // Start the URI Handler to run Uplay
                         Console.WriteLine($"Starting Uplay Game: {uplayGameToRun.Name}");
-                        var uplayProcess = Process.Start(address);
+                        Process uplayStartProcess = Process.Start(address);
 
-                        // Wait for Steam game to update if needed
-                        var ticks = 0;
-                        while (ticks < shortcutToUse.StartTimeout * 1000)
+                        // Wait for Uplay to start
+                        List<Process> uplayProcesses = null;
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
+
+                            // Look for the processes with the ProcessName we sorted out earlier
+                            uplayProcesses = Process.GetProcessesByName("upc").ToList();
+
+                            // If we have found one or more processes then we should be good to go
+                            // so let's break
+                            if (uplayProcesses.Count > 0)
+                            {
+                                logger.Debug($"Found {uplayProcesses.Count} 'upc' processes have started");
+                                break;
+                            }
+
+                            // Let's wait a little while if we couldn't find
+                            // any processes yet
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Delay 5secs
+                        Thread.Sleep(5000);
+
+                        // Now we know the Uplay app is running then 
+                        // we wait until the Uplay game is running (*allows for uplay update)
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+
                             if (uplayGameToRun.IsRunning)
                             {
+                                logger.Debug($"Found the '{uplayGameToRun.Name}' process has started");
+                                break;
+                            }
+
+                            // Delay 500ms
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Store the Uplay Process ID for later
+                        IPCService.GetInstance().HoldProcessId = uplayStartProcess?.Id ?? 0;
+                        IPCService.GetInstance().Status = InstanceStatus.OnHold;
+
+                        // Add a status notification icon in the status area
+                        if (uplayGameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name}...";
+                        else
+                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0, 41)}...";
+                        Application.DoEvents();
+
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=runningUplayGame", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
+                            .AddText($"Waiting for the Uplay Game {shortcutToUse.GameName} to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        // Wait 5 seconds for the game process to spawn	
+                        Thread.Sleep(5000);
+
+                        // Wait for the game to exit
+                        Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - waiting for Uplay Game {uplayGameToRun.Name} to exit.");
+                        while (true)
+                        {
+                            if (!uplayGameToRun.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} is no longer running (IsRunning is false).");
                                 break;
                             }
 
                             Thread.Sleep(300);
-
                         }
+                        Console.WriteLine($"{uplayGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} has exited.");
 
-                        // Store the Steam Process ID for later
-                        IPCService.GetInstance().HoldProcessId = uplayProcess?.Id ?? 0;
-                        IPCService.GetInstance().Status = InstanceStatus.OnHold;
-
-                        // Add a status notification icon in the status area
-                        notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0,41)}...";
-                        Application.DoEvents();
-
-                        // Wait 300ms for the game process to spawn
-                        Thread.Sleep(300);
-                        // Now check it's actually started
-                        if (uplayGameToRun.IsRunning)
-                        {
-                            // Wait for the game to exit
-                            Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
-                            while (true)
-                            {
-                                if (!uplayGameToRun.IsRunning)
-                                {
-                                    break;
-                                }
-
-                                Thread.Sleep(300);
-                            }
-                            Console.WriteLine($"{uplayGameToRun.Name} has exited.");
-                        }
-
+                        // Tell the user that the Uplay Game has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                            .AddText($"{shortcutToUse.GameName} game was shutdown and changes were reverted.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
                     }
 
 
@@ -811,6 +1008,30 @@ namespace DisplayMagician
                 Application.DoEvents();
             }
 
+            // Only replace the notification if we're minimised
+            if (Program.AppProgramSettings.MinimiseOnStart)
+            { 
+
+                // Remind the user that DisplayMagician is running the in background
+                // Construct the toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
+                    .AddText("DisplayMagician is minimised", hintMaxLines: 1)
+                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+                toast.SuppressPopup = true;
+
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+            }
+            
+
             // Stop the pre-started startPrograms that we'd started earlier
             if (startProgramsToStop.Count > 0)
             {
@@ -831,15 +1052,26 @@ namespace DisplayMagician
                         }
                         processToStop.Close();
                     }
-                    catch (Win32Exception ex) { }
-                    catch (InvalidOperationException ex) { }
-                    catch (AggregateException ae) { }
+                    catch (Win32Exception ex) {
+                        logger.Error(ex, $"RunShortcut - Couldn't access the wait status for a process we're trying to stop.");
+                    }
+                    catch (InvalidOperationException ex) {
+                        logger.Error(ex, $"RunShortcut - Couldn't kill the process as there is no process associated with the Process object.");
+                    }
+                    catch (SystemException ex)
+                    {
+                        logger.Error(ex, $"RunShortcut - Couldn't WaitForExit the process as there is no process associated with the Process object (or cannot get the ID from the process handle).");
+                    }
+
+                    catch (AggregateException ae) {
+                        logger.Error(ae, $"RunShortcut - Got an AggregateException.");
+                    }
 
                 }
             }
 
             // Change Audio Device back (if one specified)
-            if (shortcutToUse.ChangeAudioDevice)
+            if (needToChangeAudio)
             {
                 // use the Audio Device
                 rollbackAudioDevice.SetAsDefault();
@@ -856,6 +1088,23 @@ namespace DisplayMagician
 
             }
 
+            // Change Capture Device back (if one specified)
+            if (needToChangeCaptureDevice)
+            {
+                // use the Audio Device
+                rollbackCaptureDevice.SetAsDefault();
+
+                if (shortcutToUse.SetCaptureVolume)
+                {
+                    Task myTask = new Task(() =>
+                    {
+                        rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
+                    });
+                    myTask.Start();
+                    myTask.Wait(2000);
+                }
+
+            }
 
             // Change back to the original profile only if it is different
             if (needToChangeProfiles)
@@ -883,6 +1132,5 @@ namespace DisplayMagician
             System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
-
 
 }

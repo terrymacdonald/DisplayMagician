@@ -40,6 +40,13 @@
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.label1 = new System.Windows.Forms.Label();
             this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
+            this.lbl_create_shortcut = new System.Windows.Forms.Label();
+            this.cms_shortcuts = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmi_edit = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmi_run = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmi_save_to_desktop = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmi_delete = new System.Windows.Forms.ToolStripMenuItem();
+            this.cms_shortcuts.SuspendLayout();
             this.SuspendLayout();
             // 
             // ilv_saved_shortcuts
@@ -184,6 +191,61 @@
             this.label1.TabIndex = 31;
             this.label1.Text = "Game Shortcut Library";
             // 
+            // lbl_create_shortcut
+            // 
+            this.lbl_create_shortcut.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_create_shortcut.AutoSize = true;
+            this.lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
+            this.lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_create_shortcut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
+            this.lbl_create_shortcut.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_create_shortcut.Location = new System.Drawing.Point(413, 562);
+            this.lbl_create_shortcut.Name = "lbl_create_shortcut";
+            this.lbl_create_shortcut.Size = new System.Drawing.Size(304, 22);
+            this.lbl_create_shortcut.TabIndex = 32;
+            this.lbl_create_shortcut.Text = "Click the \'New\' button to create a shortcut";
+            // 
+            // cms_shortcuts
+            // 
+            this.cms_shortcuts.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmi_edit,
+            this.tsmi_run,
+            this.tsmi_save_to_desktop,
+            this.tsmi_delete});
+            this.cms_shortcuts.Name = "cms_shortcuts";
+            this.cms_shortcuts.Size = new System.Drawing.Size(216, 114);
+            // 
+            // tsmi_edit
+            // 
+            this.tsmi_edit.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.tsmi_edit.Name = "tsmi_edit";
+            this.tsmi_edit.Size = new System.Drawing.Size(215, 22);
+            this.tsmi_edit.Text = "Edit Shortcut...";
+            this.tsmi_edit.Click += new System.EventHandler(this.tsmi_edit_Click);
+            // 
+            // tsmi_run
+            // 
+            this.tsmi_run.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.tsmi_run.Name = "tsmi_run";
+            this.tsmi_run.Size = new System.Drawing.Size(215, 22);
+            this.tsmi_run.Text = "Run Shortcut...";
+            this.tsmi_run.Click += new System.EventHandler(this.tsmi_run_Click);
+            // 
+            // tsmi_save_to_desktop
+            // 
+            this.tsmi_save_to_desktop.Name = "tsmi_save_to_desktop";
+            this.tsmi_save_to_desktop.Size = new System.Drawing.Size(215, 22);
+            this.tsmi_save_to_desktop.Text = "Save Shortcut to Desktop...";
+            this.tsmi_save_to_desktop.Click += new System.EventHandler(this.tsmi_save_to_desktop_Click);
+            // 
+            // tsmi_delete
+            // 
+            this.tsmi_delete.Name = "tsmi_delete";
+            this.tsmi_delete.Size = new System.Drawing.Size(215, 22);
+            this.tsmi_delete.Text = "Delete Shortcut...";
+            this.tsmi_delete.Click += new System.EventHandler(this.tsmi_delete_Click);
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -191,6 +253,7 @@
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(1134, 716);
+            this.Controls.Add(this.lbl_create_shortcut);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btn_save);
             this.Controls.Add(this.btn_new);
@@ -207,7 +270,9 @@
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "DisplayMagician - Setup Game Shortcuts";
+            this.Activated += new System.EventHandler(this.ShortcutLibraryForm_Activated);
             this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);
+            this.cms_shortcuts.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -225,5 +290,11 @@
         private System.Windows.Forms.SaveFileDialog dialog_save;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolTip tt_selected;
+        private System.Windows.Forms.Label lbl_create_shortcut;
+        private System.Windows.Forms.ContextMenuStrip cms_shortcuts;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_edit;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_run;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_delete;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_save_to_desktop;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Resources;
+﻿using System;
+using System.Resources;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -9,9 +10,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DisplayMagician")]
 [assembly: AssemblyDescription("Automatically run your games with a different display profile and revert when finished.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("LittleBitBig")]
 [assembly: AssemblyProduct("DisplayMagician")]
-[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021, Copyright © Soroush Falahati 2017-2020")]
+[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -19,11 +20,11 @@ using System.Runtime.InteropServices;
 // to COM components.  If you need to access a type in this assembly from 
 // COM, set the ComVisible attribute to true on that type.
 
-[assembly: ComVisible(false)]
+[assembly: ComVisible(true)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
-[assembly: Guid("1cbf2d06-199b-4d40-a15d-34fb9ed526c7")]
+[assembly: Guid("e4ceaf5e-ad01-4695-b179-31168eb74c48")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -36,6 +37,8 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("0.9.9.*")]
-[assembly: AssemblyFileVersion("0.9.9.0")]
+[assembly: AssemblyVersion("0.2.1.*")]
+[assembly: AssemblyFileVersion("0.2.1.0")]
 [assembly: NeutralResourcesLanguage("en")]
+
+[assembly: CLSCompliant(true)]

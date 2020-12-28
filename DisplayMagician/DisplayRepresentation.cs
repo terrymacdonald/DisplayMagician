@@ -4,8 +4,8 @@ using System.Drawing;
 using System.Linq;
 using WindowsDisplayAPI;
 using WindowsDisplayAPI.DisplayConfig;
-using DisplayMagician.Shared;
-using DisplayMagician.Shared.Topology;
+using DisplayMagicianShared;
+using DisplayMagicianShared.Topology;
 
 namespace DisplayMagician
 {
@@ -15,7 +15,7 @@ namespace DisplayMagician
         {
             Name = display.DeviceName;
             Path = display.DevicePath;
-            var index = Path.IndexOf("{", StringComparison.InvariantCultureIgnoreCase);
+            var index = Path.IndexOf("{", StringComparison.OrdinalIgnoreCase);
 
             if (index > 0)
             {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.Resources;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
@@ -182,6 +182,7 @@ namespace DisplayMagician.UIForms
                 // we already have the profile stored
                 _saveOrRenameMode = "rename";
                 btn_save_or_rename.Text = "Rename To";
+                lbl_save_profile.Visible = false;
                 if (!_selectedProfile.IsPossible)
                 {
                     lbl_profile_shown_subtitle.Text = "This Display Profile can't be used as not all Displays are connected.";
@@ -208,12 +209,13 @@ namespace DisplayMagician.UIForms
                 btn_save_or_rename.Text = "Save As";
                 lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet.";
                 btn_apply.Visible = false;
+                lbl_save_profile.Visible = true;
             }
 
             // Refresh the image list view
             //RefreshImageListView(profile);
 
-            // And finally show the profile in the display view
+            // And finally refresh the profile in the display view
             dv_profile.Profile = profile;
             dv_profile.Refresh();
 

@@ -10,8 +10,18 @@ using System.Windows.Forms;
 using DisplayMagician.GameLibraries;
 using System.Threading;
 using System.Reflection;
-using DisplayMagician.Shared;
+using DisplayMagicianShared;
 using System.Runtime.InteropServices;
+//using Microsoft.Toolkit.Uwp.Notifications;
+using DesktopNotifications;
+using Microsoft.QueryStringDotNET;
+using Windows.UI.Notifications;
+using System.IO;
+using AutoUpdaterDotNET;
+using Newtonsoft.Json;
+using System.Net;
+using Windows.Data.Xml.Dom;
+using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace DisplayMagician.UIForms
 {
@@ -21,7 +31,9 @@ namespace DisplayMagician.UIForms
         private bool allowVisible;     // ContextMenu's Show command used
         private bool allowClose;       // ContextMenu's Exit command used
 
-        public MainForm()
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        public MainForm(Form formToOpen = null)
         {
             InitializeComponent();
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
@@ -31,10 +43,6 @@ namespace DisplayMagician.UIForms
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
 
-            /*WaitingForm testform = new WaitingForm();
-            testform.Owner = this;
-            testform.Show();*/
-
             if (Program.AppProgramSettings.MinimiseOnStart) 
             {
                 // Make the form minimised on start 
@@ -42,6 +50,29 @@ namespace DisplayMagician.UIForms
                 // Hide the application to notification area when the form is closed
                 allowClose = false;
                 cb_minimise_notification_area.Checked = true;
+                // Change the exit_button text to say 'Close'
+                btn_exit.Text = "&Close";
+
+                // Remind the user that DisplayMagician is running the in background
+                // Construct the toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
+                    .AddText("DisplayMagician is minimised", hintMaxLines: 1)
+                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);                                   
+
             }
             else
             {
@@ -52,6 +83,17 @@ namespace DisplayMagician.UIForms
                 cb_minimise_notification_area.Checked = false;
             }
 
+            // If we've been handed a Form of some kind, then open it straight away
+            if (formToOpen is DisplayProfileForm)
+            {
+                var displayProfileForm = new DisplayProfileForm();
+                displayProfileForm.ShowDialog(this);
+            }
+            else if (formToOpen is ShortcutLibraryForm)
+            {
+                var shortcutLibraryForm = new ShortcutLibraryForm();
+            shortcutLibraryForm.ShowDialog(this);
+            }
 
         }
 
@@ -77,6 +119,30 @@ namespace DisplayMagician.UIForms
 
         private void btn_exit_Click(object sender, EventArgs e)
         {
+            if (cb_minimise_notification_area.Checked)
+            {
+                // Tell the user that 
+                // Construct the toast content
+                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    .AddToastActivationInfo("notify=stillRunning", ToastActivationType.Foreground)
+                    .AddText("DisplayMagician is still running...", hintMaxLines: 1)
+                    .AddText("DisplayMagician will wait in the background until you need it.")
+                    .AddButton("Open DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=open")
+                    .AddButton("Exit DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=exit");
+                ToastContent toastContent = tcBuilder.Content;
+                // Make sure to use Windows.Data.Xml.Dom
+                var doc = new XmlDocument();
+                doc.LoadXml(toastContent.GetContent());
+
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
+
+                // Remove any other Notifications from us
+                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                
+                // And then show it
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+            }
             Application.Exit();
         }
 
@@ -108,7 +174,36 @@ namespace DisplayMagician.UIForms
         {
             // Start loading the Steam Games just after the Main form opens
             //SteamGame.GetAllInstalledGames();
+            EnableShortcutButtonIfProfiles();
+
+            //Run the AutoUpdater to see if there are any updates available.
+            AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
+            AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
+            AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/");
         }
+
+        private void EnableShortcutButtonIfProfiles()
+        {
+            if (ProfileRepository.AllProfiles.Count > 0)
+            {
+                btn_setup_game_shortcuts.Visible = true;
+                pb_game_shortcut.Enabled = true;
+                lbl_create_profile.Visible = false;
+
+                if (ShortcutRepository.AllShortcuts.Count > 0)
+                    lbl_create_shortcut.Visible = false;
+                else
+                    lbl_create_shortcut.Visible = true;
+            }
+            else
+            {
+                btn_setup_game_shortcuts.Visible = false;
+                pb_game_shortcut.Enabled = false;
+                lbl_create_profile.Visible = true;
+            }
+
+        }
+
 
         private void RefreshNotifyIconMenus()
         {
@@ -190,7 +285,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void openApplicationWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        public void openApplicationWindow()
         {
             allowVisible = true;
             Restore();
@@ -198,10 +293,20 @@ namespace DisplayMagician.UIForms
             BringToFront();
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        public void exitApplication()
         {
             allowClose = true;
             Application.Exit();
+        }
+
+        private void openApplicationWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openApplicationWindow();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            exitApplication();
         }
 
         private void cb_minimise_notification_area_CheckedChanged(object sender, EventArgs e)
@@ -214,6 +319,8 @@ namespace DisplayMagician.UIForms
                 allowClose = false;
                 // Enable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = true;
+                // Change the exit_button text to say 'Close'
+                btn_exit.Text = "&Close";
             }
             else
             {
@@ -223,6 +330,9 @@ namespace DisplayMagician.UIForms
                 allowClose = true;
                 // Disable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = false;
+                // Change the exit_button text to say 'Exit'
+                btn_exit.Text = "&Exit";
+
             }
         }
 
@@ -237,6 +347,116 @@ namespace DisplayMagician.UIForms
             {
                 ShowWindow(Handle, SW_RESTORE);
             }
+        }
+
+        private void MainForm_Activated(object sender, EventArgs e)
+        {
+            EnableShortcutButtonIfProfiles();
+        }
+
+        private void AutoUpdaterOnParseUpdateInfoEvent(ParseUpdateInfoEventArgs args)
+        {
+            dynamic json = JsonConvert.DeserializeObject(args.RemoteData);
+            args.UpdateInfo = new UpdateInfoEventArgs
+            {
+                CurrentVersion = json.version,
+                ChangelogURL = json.changelog,
+                DownloadURL = json.url,
+                Mandatory = new Mandatory
+                {
+                    Value = json.mandatory.value,
+                    UpdateMode = json.mandatory.mode,
+                    MinimumVersion = json.mandatory.minVersion
+                },
+                CheckSum = new CheckSum
+                {
+                    Value = json.checksum.value,
+                    HashingAlgorithm = json.checksum.hashingAlgorithm
+                }
+            };
+        }        
+
+        private void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
+        {
+            if (args.Error == null)
+            {
+                if (args.IsUpdateAvailable)
+                {
+                    DialogResult dialogResult;
+                    if (args.Mandatory.Value)
+                    {
+                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
+                        dialogResult =
+                            MessageBox.Show(
+                                $@"There is new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is required update. Press Ok to begin updating the application.", @"Update Available",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
+                        dialogResult =
+                            MessageBox.Show(
+                                $@"There is new version {args.CurrentVersion} available. You are using version {
+                                        args.InstalledVersion
+                                    }. Do you want to update the application now?", @"Update Available",
+                                MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Information);
+                    }
+
+                    // Uncomment the following line if you want to show standard update dialog instead.
+                    // AutoUpdater.ShowUpdateForm(args);
+
+                    if (dialogResult.Equals(DialogResult.Yes) || dialogResult.Equals(DialogResult.OK))
+                    {
+                        try
+                        {
+                            logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Downloading {args.InstalledVersion} update.");
+                            if (AutoUpdater.DownloadUpdate(args))
+                            {
+                                logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Restarting to apply {args.InstalledVersion} update.");
+                                Application.Exit();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - Exception during update download.");
+                            MessageBox.Show(ex.Message, ex.GetType().ToString(), MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (args.Error is WebException)
+                {
+                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - WebException - There was a problem reaching the update server.");
+                    MessageBox.Show(
+                        @"There is a problem reaching update server. Please check your internet connection and try again later.",
+                        @"Update Check Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
+                    MessageBox.Show(args.Error.Message,
+                        args.Error.GetType().ToString(), MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btn_settings_Click(object sender, EventArgs e)
+        {
+            var settingsForm = new SettingsForm();
+            settingsForm.ShowDialog(this);
+            ProgramSettings mySettings = Program.AppProgramSettings;
+            // if the MainForm settings are different to the changes made when
+            // tweaking the settings in the settings page, then align them
+            if (mySettings.MinimiseOnStart && !cb_minimise_notification_area.Checked)
+                cb_minimise_notification_area.Checked = true;
+            else if (!mySettings.MinimiseOnStart && cb_minimise_notification_area.Checked)
+                cb_minimise_notification_area.Checked = false;
         }
 
     }

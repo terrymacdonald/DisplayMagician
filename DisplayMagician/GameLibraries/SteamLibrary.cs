@@ -131,7 +131,7 @@ namespace DisplayMagician.GameLibraries
             {
                 // We update the existing Shortcut with the data over
                 SteamGame steamGameToUpdate = GetSteamGame(steamGame.Id.ToString());
-                steamGame.CopyTo(steamGameToUpdate);
+                steamGame.CopyInto(steamGameToUpdate);
             }
             else
             {
@@ -190,6 +190,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public static bool ContainsSteamGame(SteamGame steamGame)
         {
             if (!(steamGame is SteamGame))
