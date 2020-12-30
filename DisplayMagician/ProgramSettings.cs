@@ -20,11 +20,28 @@ namespace DisplayMagician
         #endregion
 
         #region Instance Variables
+        private bool _startOnBootUp = false;
         private bool _minimiseOnStart = false;
         private string _logLevel = NLog.LogLevel.Warn.ToString();
         #endregion
 
         #region Class Properties
+        public bool StartOnBootUp
+        {
+            get
+            {
+                return _startOnBootUp;
+            }
+            set
+            {
+                _startOnBootUp = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
+        }
         public bool MinimiseOnStart { 
             get
             {

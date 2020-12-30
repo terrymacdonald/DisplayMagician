@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WK.Libraries.BootMeUpNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -36,11 +37,18 @@ namespace DisplayMagician.UIForms
 
         private void SettingsForm_Load(object sender, EventArgs e)
         {
+            // start displaymagician when computer starts
+            if (Program.AppProgramSettings.StartOnBootUp)
+                cb_start_on_boot.Checked = true;
+            else
+                cb_start_on_boot.Checked = false;
+
             // setup minimise on start
             if (Program.AppProgramSettings.MinimiseOnStart)
                 cb_minimise_notification_area.Checked = true;
             else
                 cb_minimise_notification_area.Checked = false;
+
 
             // setup loglevel on start
             switch (Program.AppProgramSettings.LogLevel)
@@ -72,6 +80,30 @@ namespace DisplayMagician.UIForms
 
         private void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+
+            var bootMeUp = new BootMeUp();
+
+            bootMeUp.UseAlternativeOnFail = true;
+            bootMeUp.BootArea = BootMeUp.BootAreas.Registry;
+            bootMeUp.TargetUser = BootMeUp.TargetUsers.CurrentUser;
+
+            // save start on Boot up
+            if (cb_start_on_boot.Checked)
+            {
+                Program.AppProgramSettings.StartOnBootUp = true;
+                bootMeUp.Enabled = true;
+                if (!bootMeUp.Successful)
+                    MessageBox.Show("There was an issue setting DisplayMagician to run when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");
+            }
+                
+            else
+            {
+                Program.AppProgramSettings.StartOnBootUp = false;
+                bootMeUp.Enabled = false;
+                if (!bootMeUp.Successful)
+                    MessageBox.Show("There was an issue stopping DisplayMagician from running when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");
+
+            }
 
             // save minimise on close
             if (cb_minimise_notification_area.Checked)
