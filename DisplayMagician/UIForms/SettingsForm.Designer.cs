@@ -33,6 +33,7 @@ namespace DisplayMagician.UIForms
             this.cmb_loglevel = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.btn_back = new System.Windows.Forms.Button();
+            this.cb_start_on_boot = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // cb_minimise_notification_area
@@ -42,7 +43,7 @@ namespace DisplayMagician.UIForms
             this.cb_minimise_notification_area.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.cb_minimise_notification_area.ForeColor = System.Drawing.Color.White;
             this.cb_minimise_notification_area.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.cb_minimise_notification_area.Location = new System.Drawing.Point(73, 41);
+            this.cb_minimise_notification_area.Location = new System.Drawing.Point(59, 61);
             this.cb_minimise_notification_area.Name = "cb_minimise_notification_area";
             this.cb_minimise_notification_area.Size = new System.Drawing.Size(332, 20);
             this.cb_minimise_notification_area.TabIndex = 6;
@@ -53,9 +54,9 @@ namespace DisplayMagician.UIForms
             // 
             this.cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmb_loglevel.FormattingEnabled = true;
-            this.cmb_loglevel.Location = new System.Drawing.Point(213, 86);
+            this.cmb_loglevel.Location = new System.Drawing.Point(199, 100);
             this.cmb_loglevel.Name = "cmb_loglevel";
-            this.cmb_loglevel.Size = new System.Drawing.Size(275, 24);
+            this.cmb_loglevel.Size = new System.Drawing.Size(294, 24);
             this.cmb_loglevel.TabIndex = 7;
             // 
             // label1
@@ -63,7 +64,7 @@ namespace DisplayMagician.UIForms
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Transparent;
-            this.label1.Location = new System.Drawing.Point(70, 89);
+            this.label1.Location = new System.Drawing.Point(56, 103);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(137, 16);
             this.label1.TabIndex = 8;
@@ -85,12 +86,27 @@ namespace DisplayMagician.UIForms
             this.btn_back.UseVisualStyleBackColor = true;
             this.btn_back.Click += new System.EventHandler(this.btn_back_Click);
             // 
+            // cb_start_on_boot
+            // 
+            this.cb_start_on_boot.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cb_start_on_boot.AutoSize = true;
+            this.cb_start_on_boot.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.cb_start_on_boot.ForeColor = System.Drawing.Color.White;
+            this.cb_start_on_boot.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.cb_start_on_boot.Location = new System.Drawing.Point(59, 25);
+            this.cb_start_on_boot.Name = "cb_start_on_boot";
+            this.cb_start_on_boot.Size = new System.Drawing.Size(389, 20);
+            this.cb_start_on_boot.TabIndex = 10;
+            this.cb_start_on_boot.Text = "Start DisplayMagician automatically when the computer starts";
+            this.cb_start_on_boot.UseVisualStyleBackColor = true;
+            // 
             // SettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(544, 187);
+            this.Controls.Add(this.cb_start_on_boot);
             this.Controls.Add(this.btn_back);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cmb_loglevel);
@@ -117,5 +133,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ComboBox cmb_loglevel;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btn_back;
+        private System.Windows.Forms.CheckBox cb_start_on_boot;
     }
 }
