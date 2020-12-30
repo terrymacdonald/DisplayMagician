@@ -743,12 +743,18 @@ namespace DisplayMagician
                         Console.WriteLine($"Starting Steam Game: {steamGameToRun.Name}");
                         var steamProcess = Process.Start(address);
 
+                        // Delay 500ms
+                        Thread.Sleep(500);
+
                         // Wait for Steam game to update if needed
                         for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
                             if (!steamGameToRun.IsUpdating)
                             {
+                                // Delay 500ms
+                                Thread.Sleep(500);
+
                                 if (steamGameToRun.IsRunning)
                                 {
                                     logger.Info($"Found the '{steamGameToRun.Name}' process has started");
