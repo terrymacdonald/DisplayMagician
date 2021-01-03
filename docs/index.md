@@ -6,7 +6,7 @@ DisplayMagician is an open source tool for automatically configuring your displa
 
 **This program is based on the original HeliosDisplayManagement software created by Soroush Falahati!**
 
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianMainScreen.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianMainScreen.png"/></div>
 
 ## Download
 [![](https://img.shields.io/github/downloads/terrymacdonald/DisplayMagician/total.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
@@ -59,15 +59,15 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 ## Usage
 
 ### Screenshots
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianMainScreen.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianDisplayProfiles.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianShortcutLibrary.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianConfigureShortcut1.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianConfigureShortcut2.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianConfigureShortcut3.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianConfigureShortcut4.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianConfigureShortcut5.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/HeliosPlusShellExtension.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianMainScreen.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianDisplayProfiles.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianShortcutLibrary.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut1.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut2.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut3.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut4.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut5.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/HeliosPlusShellExtension.png"/></div>
 
 ### Initial Setup:
 
@@ -89,7 +89,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
     * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. The Save button only shows if you have a valid Shortcut set up.
 5. Once you've saved the Short cut, you should see it in the Shortcut Library.
 6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/blob/main/READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></div>
 7. You can now double-click on the Desktop shortcut you just saved, and DisplayMagician will do exactly what you asked it to!
 
 
