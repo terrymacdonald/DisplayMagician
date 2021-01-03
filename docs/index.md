@@ -71,7 +71,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 
 ### Initial Setup:
 
-1. Install 'DisplayMagician' and restart your computer
+1. Install 'DisplayMagician'.
 2. Run 'DisplayMagician', and click on the 'Setup Display Profiles' button
     * Use 'Windows Display Settings' or 'NVIDIA Control Panel' to configure your display(s) exactly as you would like them
     * ALT-TAB back to DisplayMagician, and you should see the new display configuration shown in the Display Profile window.
