@@ -107,6 +107,14 @@ namespace DisplayMagician
             if (String.IsNullOrWhiteSpace(_uuid))
                 _uuid = Guid.NewGuid().ToString("D");
 
+            // If there are no GameLibraries then choose executable instead
+            if (!(UplayLibrary.IsUplayInstalled && SteamLibrary.IsSteamInstalled))
+            {
+                _gameLibrary = SupportedGameLibrary.Unknown;
+                _gameName = "";
+                _gameArguments = "";
+                _category = ShortcutCategory.Application;
+            }
             // Autocreate a name for the shortcut if AutoName is on
             // (and if we have a profile to use)
             if (AutoName && _profileToUse is ProfileItem)

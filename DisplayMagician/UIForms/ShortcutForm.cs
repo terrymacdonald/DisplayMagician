@@ -71,91 +71,6 @@ namespace DisplayMagician.UIForms
             }*/
         }
 
-/*        public string ProcessNameToMonitor
-        {
-            get
-            {
-                if (rb_switch_display_temp.Checked && rb_standalone.Checked) {
-                    if (rb_wait_executable.Checked)
-                    {
-                        return txt_alternative_executable.Text;
-                    } 
-                }
-                return string.Empty;
-            }
-            set
-            {
-                // We we're setting this entry, then we want to set it to a particular entry
-                txt_alternative_executable.Text = value;
-                //rb_wait_executable.Checked = true;
-            }
-        }
-*/
-  /*      public string ExecutableNameAndPath
-        {
-            get => rb_switch_display_temp.Checked && rb_launcher.Checked ? txt_executable.Text : string.Empty;
-            set
-            {
-                if (File.Exists(txt_executable.Text))
-                {
-                    rb_switch_display_temp.Checked = true;
-                    rb_launcher.Checked = true;
-                    txt_executable.Text = value;
-                }
-            }
-        }
-*/
-  /*      public uint ExecutableTimeout
-        {
-            get
-            {
-
-                if (rb_wait_executable.Checked)
-                {
-                    return (uint)nud_timeout_executable.Value;
-                }
-
-                return 0;
-            }
-            set
-            {
-                nud_timeout_executable.Value = value;
-            }
-        }
-
-        public string ExecutableArguments
-        {
-            get => cb_args_executable.Checked ? txt_args_executable.Text : string.Empty;
-            set
-            {
-                txt_args_executable.Text = value;
-                cb_args_executable.Checked = true;
-            }
-        }
-
-
-        public uint GameAppId
-        {
-            get => rb_switch_display_temp.Checked && rb_launcher.Checked ? _gameId : 0;
-            set
-            {
-                rb_switch_display_temp.Checked = true;
-                rb_launcher.Checked = true;
-                _gameId = value;
-            }
-        }
-
-        public string GameName
-        {
-            get => rb_switch_display_temp.Checked && rb_launcher.Checked ? txt_game_name.Text : string.Empty;
-            set
-            {
-                rb_switch_display_temp.Checked = true;
-                rb_launcher.Checked = true;
-                txt_game_name.Text = value;
-            }
-        }
-*/
         public ShortcutItem Shortcut
         {
             get => _shortcutToEdit;
@@ -166,7 +81,7 @@ namespace DisplayMagician.UIForms
         {
             get
             {
-                if (rb_switch_display_temp.Checked && rb_launcher.Checked)
+                if (rb_launcher.Checked)
                 {
                     if (txt_game_launcher.Text.Contains("Steam"))
                     {
@@ -182,8 +97,6 @@ namespace DisplayMagician.UIForms
             }
             set
             {
-                rb_switch_display_temp.Checked = true;
-                rb_launcher.Checked = true;
                 switch (value)
                 {
                     case SupportedGameLibrary.Steam:
@@ -194,8 +107,11 @@ namespace DisplayMagician.UIForms
                         txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibrary), SupportedGameLibrary.Uplay);
                         break;
 
+                    case SupportedGameLibrary.Unknown:
+                        txt_game_launcher.Text = "No supported Game Libraries found";
+                        break;
+
                 }
-                // TODO - If SupportedGameLibrary.Unknown; then we need to show an error message.
 
             }
         }
@@ -1088,27 +1004,41 @@ namespace DisplayMagician.UIForms
             }
 
             // Set the launcher items if we have them
-            txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
-            txt_game_name.Text = _shortcutToEdit.GameName;
-            _gameId = _shortcutToEdit.GameAppId;
-            nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
-            txt_args_game.Text = _shortcutToEdit.GameArguments;
-            if (_shortcutToEdit.GameArgumentsRequired)
+            if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibrary.Unknown))
             {
-                cb_args_game.Checked = true;
+                // Fill in the game library information to highliught there isn't one detected.
+                txt_game_launcher.Text = "None detected";
+                txt_game_name.Text = "No supported game libraries detected";
+                txt_args_game.Text = "";
+
+                // Disable the Game library option, and select the Executable option instead.
+                rb_wait_executable.Checked = true;
+                rb_launcher.Enabled = false;
+            }
+
+            else
+            {
+                txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
+                txt_game_name.Text = _shortcutToEdit.GameName;
+                _gameId = _shortcutToEdit.GameAppId;
+                nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
+                txt_args_game.Text = _shortcutToEdit.GameArguments;
+                if (_shortcutToEdit.GameArgumentsRequired)
+                {
+                    cb_args_game.Checked = true;
+                }
+                //select the loaded Game item if it is there
+                foreach (ListViewItem gameItem in lv_games.Items)
+                {
+                    if (gameItem.Text.Equals(_shortcutToEdit.GameName))
+                    {
+                        gameItem.Selected = true;
+                        break;
+                    }
+                }
             }
 
             cb_autosuggest.Checked = _shortcutToEdit.AutoName;
-
-            //select the loaded Game item if it is there
-            foreach (ListViewItem gameItem in lv_games.Items)
-            {
-                if (gameItem.Text.Equals(_shortcutToEdit.GameName))
-                {
-                    gameItem.Selected = true;
-                    break;
-                }
-            }
 
             // Set the executable items if we have them
             txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
