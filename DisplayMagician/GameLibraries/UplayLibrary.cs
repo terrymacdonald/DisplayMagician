@@ -21,12 +21,15 @@ namespace DisplayMagician.GameLibraries
         // Common items to the class
         private static List<Game> _allUplayGames = new List<Game>();
         private static string uplayAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private static bool _isUplayInstalled = false;
         private static string _uplayExe;
         private static string _uplayPath;
         private static string _uplayConfigVdfFile;
         internal static string registryUplayLauncherKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher";
         internal static string registryUplayInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
         internal static string registryUplayOpenCmdKey = @"SOFTWARE\Classes\uplay\Shell\Open\Command";
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
 
         // Other constants that are useful
         #endregion
@@ -43,10 +46,30 @@ namespace DisplayMagician.GameLibraries
         #region Class Constructors
         static UplayLibrary()
         {
-            // Find the UplayExe location, and the UplayPath for later
-            RegistryKey uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
-            _uplayPath = uplayInstallKey.GetValue("InstallDir", "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\").ToString();
-            _uplayExe = $"{_uplayPath}upc.exe";
+            try
+            {
+                // Find the UplayExe location, and the UplayPath for later
+                RegistryKey uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
+                _uplayPath = uplayInstallKey.GetValue("InstallDir", "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\").ToString();
+                _uplayExe = $"{_uplayPath}upc.exe";
+                _isUplayInstalled = true;
+            }
+            catch (SecurityException ex)
+            {
+                logger.Warn("The user does not have the permissions required to read the Uplay InstallDir registry key.");
+            }
+            catch(ObjectDisposedException ex)
+            {
+                logger.Warn("The Microsoft.Win32.RegistryKey is closed when trying to access the Uplay InstallDir registry key (closed keys cannot be accessed).");
+            }
+            catch (IOException ex)
+            {
+                logger.Warn("The Uplay InstallDir registry key has been marked for deletion so we cannot access the value dueing the UplayLibrary check.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.Warn("The user does not have the necessary registry rights to check whether Uplay is installed.");
+            }
         }
         #endregion
 
@@ -91,10 +114,7 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(UplayExe) && File.Exists(UplayExe))
-                    return true;
-
-                return false;
+                return _isUplayInstalled;
             }
 
         }
