@@ -564,25 +564,42 @@ namespace DisplayMagician {
             // Now lets prepare loading all the Steam games we have installed
             Task loadSteamGamesTask = new Task(() =>
             {
-                // Load Steam library games
-                Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Steam Games ");
-                if (!DisplayMagician.GameLibraries.SteamLibrary.LoadInstalledGames())
+                // Check if Steam is installed
+                if (GameLibraries.SteamLibrary.IsSteamInstalled)
                 {
-                    // Somehow return that this profile topology didn't apply
-                    throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Steam Games!");
-                }                
+                    // Load Steam library games
+                    Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Steam Games ");
+                    if (!DisplayMagician.GameLibraries.SteamLibrary.LoadInstalledGames())
+                    {
+                        // Somehow return that this profile topology didn't apply
+                        throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Steam Games!");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Program/LoadGamesInBackground : Steam not installed.");
+                }
             });
 
             // Now lets prepare loading all the Uplay games we have installed
             Task loadUplayGamesTask = new Task(() =>
             {
-                // Load Uplay library games
-                Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Uplay Games ");
-                if (!DisplayMagician.GameLibraries.UplayLibrary.LoadInstalledGames())
+                // Check if Uplay is installed
+                if (GameLibraries.UplayLibrary.IsUplayInstalled)
                 {
-                    // Somehow return that this profile topology didn't apply
-                    throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
+                    // Load Uplay library games
+                    Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Uplay Games ");
+                    if (!DisplayMagician.GameLibraries.UplayLibrary.LoadInstalledGames())
+                    {
+                        // Somehow return that this profile topology didn't apply
+                        throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
+                    }
                 }
+                else
+                {
+                    Console.WriteLine("Program/LoadGamesInBackground : Uplay not installed.");
+                }
+
             });
 
             // Store all the tasks in an array so we can wait on them later

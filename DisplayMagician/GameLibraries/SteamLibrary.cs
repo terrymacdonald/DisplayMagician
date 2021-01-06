@@ -51,7 +51,8 @@ namespace DisplayMagician.GameLibraries
                     _steamPath = (string)key?.GetValue(@"SteamPath", string.Empty) ?? string.Empty;
                     _steamPath = _steamPath.Replace('/', '\\');
                 }
-                _isSteamInstalled = true;
+                if (File.Exists(_steamExe))
+                    _isSteamInstalled = true;
             }
             catch (SecurityException ex)
             {
@@ -322,7 +323,7 @@ namespace DisplayMagician.GameLibraries
                     _steamPath = _steamPath.Replace('/', '\\');
                 }*/
 
-                if (_steamExe == string.Empty || !File.Exists(_steamExe))
+                if (!_isSteamInstalled)
                 {
                     // Steam isn't installed, so we return an empty list.
                     return false;

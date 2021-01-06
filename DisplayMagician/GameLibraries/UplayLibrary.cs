@@ -50,9 +50,12 @@ namespace DisplayMagician.GameLibraries
             {
                 // Find the UplayExe location, and the UplayPath for later
                 RegistryKey uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
+                if (uplayInstallKey == null)
+                    return;
                 _uplayPath = uplayInstallKey.GetValue("InstallDir", "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\").ToString();
                 _uplayExe = $"{_uplayPath}upc.exe";
-                _isUplayInstalled = true;
+                if (File.Exists(_uplayExe))
+                   _isUplayInstalled = true;
             }
             catch (SecurityException ex)
             {
@@ -298,7 +301,7 @@ namespace DisplayMagician.GameLibraries
             try
             {
 
-                if (_uplayExe == string.Empty || !File.Exists(_uplayExe))
+                if (!_isUplayInstalled)
                 {
                     // Uplay isn't installed, so we return an empty list.
                     return false;
