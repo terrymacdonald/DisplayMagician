@@ -103,6 +103,7 @@
             this.lbl_create_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbl_create_profile.ForeColor = System.Drawing.Color.White;
             this.lbl_create_profile.Name = "lbl_create_profile";
+            this.lbl_create_profile.Click += new System.EventHandler(this.lbl_create_profile_Click);
             // 
             // btn_setup_display_profiles
             // 
@@ -128,6 +129,7 @@
             this.lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbl_create_shortcut.ForeColor = System.Drawing.Color.White;
             this.lbl_create_shortcut.Name = "lbl_create_shortcut";
+            this.lbl_create_shortcut.Click += new System.EventHandler(this.lbl_create_shortcut_Click);
             // 
             // cb_minimise_notification_area
             // 

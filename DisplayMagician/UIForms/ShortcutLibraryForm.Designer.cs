@@ -193,7 +193,7 @@
             // 
             // lbl_create_shortcut
             // 
-            this.lbl_create_shortcut.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_create_shortcut.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.lbl_create_shortcut.AutoSize = true;
             this.lbl_create_shortcut.BackColor = System.Drawing.Color.Brown;
             this.lbl_create_shortcut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -214,7 +214,7 @@
             this.tsmi_save_to_desktop,
             this.tsmi_delete});
             this.cms_shortcuts.Name = "cms_shortcuts";
-            this.cms_shortcuts.Size = new System.Drawing.Size(216, 114);
+            this.cms_shortcuts.Size = new System.Drawing.Size(216, 92);
             // 
             // tsmi_edit
             // 

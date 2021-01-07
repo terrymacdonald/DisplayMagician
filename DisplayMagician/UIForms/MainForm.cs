@@ -202,6 +202,7 @@ namespace DisplayMagician.UIForms
                 btn_setup_game_shortcuts.Visible = false;
                 pb_game_shortcut.Enabled = false;
                 lbl_create_profile.Visible = true;
+                lbl_create_shortcut.Visible = false;
             }
 
         }
@@ -461,5 +462,14 @@ namespace DisplayMagician.UIForms
                 cb_minimise_notification_area.Checked = false;
         }
 
+        private void lbl_create_shortcut_Click(object sender, EventArgs e)
+        {
+            btn_setup_game_shortcuts.PerformClick();
+        }
+
+        private void lbl_create_profile_Click(object sender, EventArgs e)
+        {
+            btn_setup_display_profiles.PerformClick();
+        }
     }
 }
