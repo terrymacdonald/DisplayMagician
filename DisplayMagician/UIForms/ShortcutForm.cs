@@ -81,18 +81,15 @@ namespace DisplayMagician.UIForms
         {
             get
             {
-                if (rb_launcher.Checked)
+                if (txt_game_launcher.Text.Contains("Steam"))
                 {
-                    if (txt_game_launcher.Text.Contains("Steam"))
-                    {
-                        return SupportedGameLibrary.Steam;
-                    }
-                    else if (txt_game_launcher.Text.Contains("Uplay"))
-                    {
-                        return SupportedGameLibrary.Uplay;
-                    }
-
+                    return SupportedGameLibrary.Steam;
                 }
+                else if (txt_game_launcher.Text.Contains("Uplay"))
+                {
+                    return SupportedGameLibrary.Uplay;
+                }
+
                 return SupportedGameLibrary.Unknown;
             }
             set
@@ -121,11 +118,7 @@ namespace DisplayMagician.UIForms
         {
             get
             {
-                if (rb_switch_display_temp.Checked && rb_launcher.Checked)
-                {
-                    return (uint)nud_timeout_game.Value;
-                }
-                return 0;
+                return (uint)nud_timeout_game.Value;
             }
             set
             {
@@ -591,85 +584,6 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void rb_standalone_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_standalone.Checked)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                rb_no_game.Checked = false;
-                rb_launcher.Checked = false;
-
-                // Enable the Standalone Panel
-                p_standalone.Enabled = true;
-                // Disable the Game Panel
-                p_game.Enabled = false;
-
-                suggestShortcutName();
-                enableSaveButtonIfValid();
-            }
-           
-        }
-
-        private void rb_launcher_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_launcher.Checked)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                rb_no_game.Checked = false;
-                rb_standalone.Checked = false;
-
-                // Enable the Game Panel
-                p_game.Enabled = true;
-                // Disable the Standalone Panel
-                p_standalone.Enabled = false;
-
-                suggestShortcutName();
-                enableSaveButtonIfValid();
-
-            }
-        }
-
-        private void rb_no_game_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rb_no_game.Checked)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                rb_launcher.Checked = false;
-                rb_standalone.Checked = false;
-
-                // Disable the Standalone Panel
-                p_standalone.Enabled = false;
-                // Disable the Game Panel
-                p_game.Enabled = false;
-
-                suggestShortcutName();
-                enableSaveButtonIfValid();
-
-            }
-        }
-
-
-
-        private void cb_args_executable_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the Process Name Text field
-            if (cb_args_executable.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_args_executable.Enabled = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_args_executable.Enabled = false;
-            }
-
-        }
 
         private void RefreshImageListView(ProfileItem profile)
         {
@@ -1012,6 +926,7 @@ namespace DisplayMagician.UIForms
                 txt_args_game.Text = "";
 
                 // Disable the Game library option, and select the Executable option instead.
+                p_game.Enabled = false;
                 rb_wait_executable.Checked = true;
                 rb_launcher.Enabled = false;
             }
@@ -1120,6 +1035,86 @@ namespace DisplayMagician.UIForms
 
             // Finally enable the save button if it's still valid
             enableSaveButtonIfValid();
+
+        }
+
+        private void rb_standalone_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_standalone.Checked)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                rb_no_game.Checked = false;
+                rb_launcher.Checked = false;
+
+                // Enable the Standalone Panel
+                p_standalone.Enabled = true;
+                // Disable the Game Panel
+                p_game.Enabled = false;
+
+                suggestShortcutName();
+                enableSaveButtonIfValid();
+            }
+
+        }
+
+        private void rb_launcher_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_launcher.Checked)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                rb_no_game.Checked = false;
+                rb_standalone.Checked = false;
+
+                // Enable the Game Panel
+                p_game.Enabled = true;
+                // Disable the Standalone Panel
+                p_standalone.Enabled = false;
+
+                suggestShortcutName();
+                enableSaveButtonIfValid();
+
+            }
+        }
+
+        private void rb_no_game_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rb_no_game.Checked)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                rb_launcher.Checked = false;
+                rb_standalone.Checked = false;
+
+                // Disable the Standalone Panel
+                p_standalone.Enabled = false;
+                // Disable the Game Panel
+                p_game.Enabled = false;
+
+                suggestShortcutName();
+                enableSaveButtonIfValid();
+
+            }
+        }
+
+
+
+        private void cb_args_executable_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            // Disable the Process Name Text field
+            if (cb_args_executable.Checked)
+            {
+                // Enable the Executable Arguments Text field
+                txt_args_executable.Enabled = true;
+            }
+            else
+            {
+                // Disable the Executable Arguments Text field
+                txt_args_executable.Enabled = false;
+            }
 
         }
 
@@ -1296,7 +1291,7 @@ namespace DisplayMagician.UIForms
             if (!radiobutton.Enabled)
             {
                 int x = ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
-                    e.Graphics, CheckBoxState.UncheckedNormal).Width + 1;
+                    e.Graphics, CheckBoxState.UncheckedNormal).Width;
                 int y = ClientRectangle.Y + 2;
 
                 TextRenderer.DrawText(e.Graphics, radiobutton.Text,
@@ -1316,7 +1311,7 @@ namespace DisplayMagician.UIForms
             if (!checkbox.Enabled)
             {
                 int x = ClientRectangle.X + CheckBoxRenderer.GetGlyphSize(
-                    e.Graphics, CheckBoxState.UncheckedNormal).Width + 1;
+                    e.Graphics, CheckBoxState.UncheckedNormal).Width;
                 int y = ClientRectangle.Y + 1;
 
                 TextRenderer.DrawText(e.Graphics, checkbox.Text,
@@ -1335,7 +1330,7 @@ namespace DisplayMagician.UIForms
 
             if (!label.Enabled)
             {
-                int x = ClientRectangle.X - 2;
+                int x = ClientRectangle.X - 3;
                 int y = ClientRectangle.Y;
 
                 TextRenderer.DrawText(e.Graphics, label.Text,
