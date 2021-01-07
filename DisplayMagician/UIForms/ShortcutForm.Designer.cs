@@ -141,6 +141,7 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
+            this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -952,6 +953,7 @@ namespace DisplayMagician.UIForms
             // tabp_game
             // 
             this.tabp_game.BackColor = System.Drawing.Color.Black;
+            this.tabp_game.Controls.Add(this.lbl_no_game_libraries);
             this.tabp_game.Controls.Add(this.p_standalone);
             this.tabp_game.Controls.Add(this.rb_standalone);
             this.tabp_game.Controls.Add(this.rb_no_game);
@@ -980,7 +982,7 @@ namespace DisplayMagician.UIForms
             this.p_standalone.Controls.Add(this.label2);
             this.p_standalone.Controls.Add(this.nud_timeout_executable);
             this.p_standalone.Enabled = false;
-            this.p_standalone.Location = new System.Drawing.Point(35, 415);
+            this.p_standalone.Location = new System.Drawing.Point(35, 86);
             this.p_standalone.Name = "p_standalone";
             this.p_standalone.Size = new System.Drawing.Size(1006, 160);
             this.p_standalone.TabIndex = 10;
@@ -1120,7 +1122,7 @@ namespace DisplayMagician.UIForms
             // 
             this.rb_standalone.AutoSize = true;
             this.rb_standalone.ForeColor = System.Drawing.Color.White;
-            this.rb_standalone.Location = new System.Drawing.Point(16, 389);
+            this.rb_standalone.Location = new System.Drawing.Point(16, 60);
             this.rb_standalone.Name = "rb_standalone";
             this.rb_standalone.Size = new System.Drawing.Size(222, 24);
             this.rb_standalone.TabIndex = 9;
@@ -1153,9 +1155,9 @@ namespace DisplayMagician.UIForms
             this.p_game.Controls.Add(this.lbl_game_timeout);
             this.p_game.Controls.Add(this.nud_timeout_game);
             this.p_game.Controls.Add(this.lv_games);
-            this.p_game.Location = new System.Drawing.Point(34, 98);
+            this.p_game.Location = new System.Drawing.Point(34, 292);
             this.p_game.Name = "p_game";
-            this.p_game.Size = new System.Drawing.Size(1006, 253);
+            this.p_game.Size = new System.Drawing.Size(1006, 278);
             this.p_game.TabIndex = 7;
             // 
             // txt_game_launcher
@@ -1295,7 +1297,7 @@ namespace DisplayMagician.UIForms
             this.rb_launcher.AutoSize = true;
             this.rb_launcher.Checked = true;
             this.rb_launcher.ForeColor = System.Drawing.Color.White;
-            this.rb_launcher.Location = new System.Drawing.Point(15, 68);
+            this.rb_launcher.Location = new System.Drawing.Point(15, 262);
             this.rb_launcher.Name = "rb_launcher";
             this.rb_launcher.Size = new System.Drawing.Size(332, 24);
             this.rb_launcher.TabIndex = 6;
@@ -1483,6 +1485,22 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
+            // lbl_no_game_libraries
+            // 
+            this.lbl_no_game_libraries.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_no_game_libraries.AutoSize = true;
+            this.lbl_no_game_libraries.BackColor = System.Drawing.Color.Brown;
+            this.lbl_no_game_libraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
+            this.lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_no_game_libraries.Location = new System.Drawing.Point(401, 307);
+            this.lbl_no_game_libraries.Name = "lbl_no_game_libraries";
+            this.lbl_no_game_libraries.Size = new System.Drawing.Size(280, 22);
+            this.lbl_no_game_libraries.TabIndex = 34;
+            this.lbl_no_game_libraries.Text = "No supported game libraries detected!";
+            this.lbl_no_game_libraries.Visible = false;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1660,5 +1678,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.RadioButton rb_switch_capture_permanent;
         private System.Windows.Forms.RadioButton rb_switch_capture_temp;
+        private System.Windows.Forms.Label lbl_no_game_libraries;
     }
 }

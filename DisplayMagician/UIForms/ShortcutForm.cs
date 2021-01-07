@@ -927,8 +927,11 @@ namespace DisplayMagician.UIForms
 
                 // Disable the Game library option, and select the Executable option instead.
                 p_game.Enabled = false;
+                p_game.Visible = false;
                 rb_wait_executable.Checked = true;
                 rb_launcher.Enabled = false;
+                rb_launcher.Visible = false;
+                lbl_no_game_libraries.Visible = true;
             }
 
             else
@@ -1989,5 +1992,6 @@ namespace DisplayMagician.UIForms
         {
             _captureVolume = Convert.ToDecimal(nud_capture_volume.Value);
         }
+
     }
 }
