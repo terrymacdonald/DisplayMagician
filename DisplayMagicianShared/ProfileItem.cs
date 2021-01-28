@@ -283,7 +283,7 @@ namespace DisplayMagicianShared
         {
 
             if (Paths != null &&
-                ProfileIcon is Bitmap &&
+                ProfileIcon is ProfileIcon &&
                 File.Exists(SavedProfileIconCacheFilename) &&
                 ProfileBitmap is Bitmap &&
                 ProfileTightestBitmap is Bitmap &&

@@ -269,19 +269,6 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsUplayGame(uint uplayGameId)
-        {
-            foreach (UplayGame testUplayGame in _allUplayGames)
-            {
-                if (uplayGameId == testUplayGame.Id)
-                    return true;
-            }
-
-           
-            return false;
-
-        }
-
 
         public static UplayGame GetUplayGame(string uplayGameNameOrUuid)
         {
@@ -312,7 +299,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static UplayGame GetUplayGame(uint uplayGameId)
+        public static UplayGame GetUplayGame(int uplayGameId)
         {
             foreach (UplayGame testUplayGame in _allUplayGames)
             {

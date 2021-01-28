@@ -95,11 +95,13 @@ namespace DisplayMagician
         private bool _autoName = true;
         private bool _isPossible;
         private List<StartProgram> _startPrograms;
-        [JsonIgnore]
-        public string _originalIconPath;
         private Bitmap _shortcutBitmap, _originalLargeBitmap, _originalSmallBitmap;
         [JsonIgnore]
+#pragma warning disable CS3008 // Identifier is not CLS-compliant
+        public string _originalIconPath;
+        [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
+#pragma warning restore CS3008 // Identifier is not CLS-compliant
 
         public ShortcutItem()
         {
@@ -129,7 +131,9 @@ namespace DisplayMagician
 
         public ShortcutItem(
             string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile,
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             ShortcutPermanence capturePermanence,
@@ -250,7 +254,9 @@ namespace DisplayMagician
 
         public ShortcutItem(
             string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             int gameAppId,
             string gameName,
             SupportedGameLibrary gameLibrary,
@@ -316,7 +322,9 @@ namespace DisplayMagician
 
         public ShortcutItem(
             string name, 
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             GameStruct game, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
@@ -451,7 +459,9 @@ namespace DisplayMagician
 
         public ShortcutItem(
             string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile,
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             string differentExecutableToMonitor,
             string executableNameAndPath,
             int executableTimeout,
@@ -517,7 +527,9 @@ namespace DisplayMagician
 
         public ShortcutItem(
             string name, 
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             Executable executable, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
@@ -706,7 +718,9 @@ namespace DisplayMagician
 
 
         [JsonIgnore]
+#pragma warning disable CS3003 // Type is not CLS-compliant
         public ProfileItem ProfileToUse {
+#pragma warning restore CS3003 // Type is not CLS-compliant
             get
             {
                 return _profileToUse;
@@ -1136,7 +1150,9 @@ namespace DisplayMagician
 
         public void UpdateNoGameShortcut(
             string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile,
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             ShortcutPermanence capturePermanence,
@@ -1260,7 +1276,9 @@ namespace DisplayMagician
 
         public void UpdateGameShortcut(
             string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile,
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             int gameAppId,
             string gameName,
             SupportedGameLibrary gameLibrary,
@@ -1327,7 +1345,9 @@ namespace DisplayMagician
 
         public void UpdateGameShortcut(
             string name, 
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             GameStruct game, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
@@ -1465,7 +1485,9 @@ namespace DisplayMagician
 
         public void UpdateExecutableShortcut(
             string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile,
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             string differentExecutableToMonitor,
             string executableNameAndPath,
             int executableTimeout,
@@ -1532,7 +1554,9 @@ namespace DisplayMagician
 
         public void UpdateExecutableShortcut(
             string name, 
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
             Executable executable, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
@@ -1872,9 +1896,11 @@ namespace DisplayMagician
             return combinedBitmap;
         }
 
+#pragma warning disable CS3002 // Return type is not CLS-compliant
         public MultiIcon ToIconOverlay()
+#pragma warning restore CS3002 // Return type is not CLS-compliant
         {
-            var iconSizes = new[]
+            Size[] iconSizes = new[]
             {
                 new Size(256, 256),
                 new Size(64, 64),
@@ -1883,10 +1909,10 @@ namespace DisplayMagician
                 new Size(24, 24),
                 new Size(16, 16)
             };
-            var multiIcon = new MultiIcon();
-            var icon = multiIcon.Add("Icon1");
+            MultiIcon multiIcon = new MultiIcon();
+            SingleIcon icon = multiIcon.Add("Icon1");
 
-            foreach (var size in iconSizes)
+            foreach (Size size in iconSizes)
             {
                 Bitmap bitmapOverlay = ToBitmapOverlay(_originalLargeBitmap, ProfileToUse.ProfileTightestBitmap, size.Width, size.Height);
                 icon.Add(bitmapOverlay);

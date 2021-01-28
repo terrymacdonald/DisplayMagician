@@ -114,11 +114,11 @@ namespace DisplayMagician.UIForms
         }
 
 
-        public uint GameTimeout
+        public int GameTimeout
         {
             get
             {
-                return (uint)nud_timeout_game.Value;
+                return (int)nud_timeout_game.Value;
             }
             set
             {
@@ -597,7 +597,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private async void ShortcutForm_Load(object sender, EventArgs e)
+        private void ShortcutForm_Load(object sender, EventArgs e)
         {
 
             // Load all the profiles to prepare things

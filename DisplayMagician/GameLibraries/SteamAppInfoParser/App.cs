@@ -8,9 +8,11 @@ using ValveKeyValue;
 
 namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 {
+#pragma warning disable CS3003 // Type is not CLS-compliant
     public class App
     {
         public uint AppID { get; set; }
+
 
         public uint Size { get; set; }
 
@@ -26,4 +28,6 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
         public KVObject Data { get; set; }
     }
+#pragma warning restore CS3003 // Type is not CLS-compliant
+
 }

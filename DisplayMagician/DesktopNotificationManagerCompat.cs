@@ -52,7 +52,7 @@ namespace DesktopNotifications
 {
     public class DesktopNotificationManagerCompat
     {
-        public const string TOAST_ACTIVATED_LAUNCH_ARG = "-ToastActivated";
+        private const string TOAST_ACTIVATED_LAUNCH_ARG = "-ToastActivated";
 
         private static bool _registeredAumidAndComServer;
         private static string _aumid;
@@ -198,7 +198,9 @@ namespace DesktopNotifications
         /// Creates a toast notifier. You must have called <see cref="RegisterActivator{T}"/> first (and also <see cref="RegisterAumidAndComServer(string)"/> if you're a classic Win32 app), or this will throw an exception.
         /// </summary>
         /// <returns></returns>
+#pragma warning disable CS3002 // Return type is not CLS-compliant
         public static ToastNotifier CreateToastNotifier()
+#pragma warning restore CS3002 // Return type is not CLS-compliant
         {
             EnsureRegistered();
 
@@ -353,8 +355,9 @@ namespace DesktopNotifications
         /// Gets all notifications sent by this app that are currently still in Action Center.
         /// </summary>
         /// <returns>A collection of toasts.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
+#pragma warning disable CS3002 // Return type is not CLS-compliant
         public IReadOnlyList<ToastNotification> GetHistory()
+#pragma warning restore CS3002 // Return type is not CLS-compliant
         {
             return _aumid != null ? _history.GetHistory(_aumid) : _history.GetHistory();
         }
