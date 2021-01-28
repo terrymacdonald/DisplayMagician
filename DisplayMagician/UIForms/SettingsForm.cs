@@ -15,7 +15,7 @@ namespace DisplayMagician.UIForms
     public partial class SettingsForm : Form
     {
 
-        ProgramSettings mySettings = null;
+        //ProgramSettings mySettings = null;
         private Dictionary<string, string> logLevelText = new Dictionary<string, string>();
 
         public SettingsForm()

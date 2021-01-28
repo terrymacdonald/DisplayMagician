@@ -18,7 +18,7 @@ namespace DisplayMagician.GameLibraries
         private string _uplayGameExe;
         private string _uplayGameProcessName;
         private string _uplayGameIconPath;
-        private static List<UplayGame> _allInstalledUplayGames = null;
+        //private static List<UplayGame> _allInstalledUplayGames = null;
 
         static UplayGame()
         {

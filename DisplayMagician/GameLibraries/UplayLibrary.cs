@@ -24,7 +24,7 @@ namespace DisplayMagician.GameLibraries
         private static bool _isUplayInstalled = false;
         private static string _uplayExe;
         private static string _uplayPath;
-        private static string _uplayConfigVdfFile;
+        //private static string _uplayConfigVdfFile;
         internal static string registryUplayLauncherKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher";
         internal static string registryUplayInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
         internal static string registryUplayOpenCmdKey = @"SOFTWARE\Classes\uplay\Shell\Open\Command";

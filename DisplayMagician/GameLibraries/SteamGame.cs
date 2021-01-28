@@ -20,7 +20,7 @@ namespace DisplayMagician.GameLibraries
         private string _steamGameExe;
         private string _steamGameProcessName;
         private string _steamGameIconPath;
-        private static List<SteamGame> _allInstalledSteamGames = null;
+        //private static List<SteamGame> _allInstalledSteamGames = null;
 
         static SteamGame()
         {

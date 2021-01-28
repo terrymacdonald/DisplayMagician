@@ -85,6 +85,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\DisplayMagician.ico" />
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="key.snk" />
     <None Include="Resources\DisplayMagicianMenuImage.png" />
   </ItemGroup>

@@ -126,7 +126,7 @@ namespace DisplayMagicianShared.NVIDIA
 
 
         /// <inheritdoc />
-        public string ToString()
+        public override string ToString()
         {
             return $"SurroundTopology[{Rows}, {Columns}] ({Resolution.Width}, {Resolution.Height}) @ {Frequency}";
         }
