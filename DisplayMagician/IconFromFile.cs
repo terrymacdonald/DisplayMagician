@@ -280,10 +280,10 @@ namespace DisplayMagician
         [DllImport("user32")]
         public static extern int DestroyIcon(IntPtr hIcon);
 
-        public struct pair
+        public struct Pair
         {
-            public System.Drawing.Icon icon { get; set; }
-            public IntPtr iconHandleToDestroy { set; get; }
+            public System.Drawing.Icon Icon { get; set; }
+            public IntPtr IconHandleToDestroy { set; get; }
 
         }
 

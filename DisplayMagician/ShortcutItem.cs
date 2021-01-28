@@ -1753,7 +1753,7 @@ namespace DisplayMagician
 
         public void ReplaceShortcutIconInCache()
         {
-            string newShortcutIconFilename = "";
+            string newShortcutIconFilename;
             if (_category == ShortcutCategory.Application)
             {
                 // Work out the name of the shortcut we'll save.
@@ -1852,8 +1852,6 @@ namespace DisplayMagician
             return bm;
         }
 
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
 
@@ -2040,7 +2038,7 @@ namespace DisplayMagician
         {
             string programName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
             string shortcutDescription = string.Empty;
-            string shortcutIconFileName = string.Empty;
+            string shortcutIconFileName;
 
             var shortcutArgs = new List<string>
             {

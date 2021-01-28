@@ -29,8 +29,8 @@ namespace DisplayMagicianShared
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
-        private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_version.ToString(2)}.json");
+        private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_version.ToString(2)}.json");
 
 
         #endregion
@@ -614,10 +614,10 @@ namespace DisplayMagicianShared
                     Debug.WriteLine($"ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
                     Debug.WriteLine($"ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
                     Debug.WriteLine($"ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
-                    Debug.WriteLine($"ADCSO : {attachedDisplay.CurrentSetting.Orientation.ToString()}");
-                    Debug.WriteLine($"ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode.ToString()}");
-                    Debug.WriteLine($"ADCSP : {attachedDisplay.CurrentSetting.Position.ToString()}");
-                    Debug.WriteLine($"ADCSR : {attachedDisplay.CurrentSetting.Resolution.ToString()}");
+                    Debug.WriteLine($"ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
+                    Debug.WriteLine($"ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
+                    Debug.WriteLine($"ADCSP : {attachedDisplay.CurrentSetting.Position}");
+                    Debug.WriteLine($"ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
                     Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
                     Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
@@ -749,10 +749,10 @@ namespace DisplayMagicianShared
                     Debug.WriteLine($"ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
                     Debug.WriteLine($"ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
                     Debug.WriteLine($"ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
-                    Debug.WriteLine($"ADCSO : {attachedDisplay.CurrentSetting.Orientation.ToString()}");
-                    Debug.WriteLine($"ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode.ToString()}");
-                    Debug.WriteLine($"ADCSP : {attachedDisplay.CurrentSetting.Position.ToString()}");
-                    Debug.WriteLine($"ADCSR : {attachedDisplay.CurrentSetting.Resolution.ToString()}");
+                    Debug.WriteLine($"ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
+                    Debug.WriteLine($"ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
+                    Debug.WriteLine($"ADCSP : {attachedDisplay.CurrentSetting.Position}");
+                    Debug.WriteLine($"ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
                     Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
                     Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
                     Debug.WriteLine($"DN : {displayAdapter.DeviceName}");

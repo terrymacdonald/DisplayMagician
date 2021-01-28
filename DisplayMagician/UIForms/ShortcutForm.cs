@@ -548,11 +548,11 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            suggestShortcutName();
-            enableSaveButtonIfValid();
+            SuggestShortcutName();
+            EnableSaveButtonIfValid();
         }
 
-        private bool canEnableSaveButton()
+        private bool CanEnableSaveButton()
         {
             if ((txt_shortcut_save_name.Text.Length > 0) &&
                 _profileToUse is ProfileItem &&
@@ -564,16 +564,16 @@ namespace DisplayMagician.UIForms
                 return false;
         }
 
-        private void enableSaveButtonIfValid()
+        private void EnableSaveButtonIfValid()
         {
-            if (canEnableSaveButton())
+            if (CanEnableSaveButton())
                 btn_save.Enabled = true;
             else
                 btn_save.Enabled = false;
 
         }
 
-        private void suggestShortcutName()
+        private void SuggestShortcutName()
         {
             if (_autoName && _profileToUse is ProfileItem)
             {
@@ -1047,7 +1047,7 @@ namespace DisplayMagician.UIForms
             _isUnsaved = false;
 
             // Finally enable the save button if it's still valid
-            enableSaveButtonIfValid();
+            EnableSaveButtonIfValid();
 
         }
 
@@ -1065,8 +1065,8 @@ namespace DisplayMagician.UIForms
                 // Disable the Game Panel
                 p_game.Enabled = false;
 
-                suggestShortcutName();
-                enableSaveButtonIfValid();
+                SuggestShortcutName();
+                EnableSaveButtonIfValid();
             }
 
         }
@@ -1085,8 +1085,8 @@ namespace DisplayMagician.UIForms
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
 
-                suggestShortcutName();
-                enableSaveButtonIfValid();
+                SuggestShortcutName();
+                EnableSaveButtonIfValid();
 
             }
         }
@@ -1105,8 +1105,8 @@ namespace DisplayMagician.UIForms
                 // Disable the Game Panel
                 p_game.Enabled = false;
 
-                suggestShortcutName();
-                enableSaveButtonIfValid();
+                SuggestShortcutName();
+                EnableSaveButtonIfValid();
 
             }
         }
@@ -1208,8 +1208,8 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            suggestShortcutName();
-            enableSaveButtonIfValid();
+            SuggestShortcutName();
+            EnableSaveButtonIfValid();
 
         }
 
@@ -1224,8 +1224,8 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            suggestShortcutName();
-            enableSaveButtonIfValid();
+            SuggestShortcutName();
+            EnableSaveButtonIfValid();
 
         }
 
@@ -1286,7 +1286,7 @@ namespace DisplayMagician.UIForms
                 ilv_saved_profiles.ResumeLayout();
             }
                 
-            enableSaveButtonIfValid();
+            EnableSaveButtonIfValid();
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -1361,7 +1361,7 @@ namespace DisplayMagician.UIForms
                     _isUnsaved = true;
                 rb_switch_display_permanent.Checked = false;
 
-                suggestShortcutName();
+                SuggestShortcutName();
             }
         }
 
@@ -1372,7 +1372,7 @@ namespace DisplayMagician.UIForms
                 if (_loadedShortcut)
                     _isUnsaved = true;
                 rb_switch_display_temp.Checked = false;
-                suggestShortcutName();
+                SuggestShortcutName();
             }
         }
 
@@ -1380,7 +1380,7 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            enableSaveButtonIfValid();
+            EnableSaveButtonIfValid();
         }
 
         private void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -1406,7 +1406,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_exe_to_start_Click(object sender, EventArgs e)
         {
-            txt_executable.Text = get_exe_file();
+            txt_executable.Text = getExeFile();
         }
 
         private void txt_shortcut_save_name_Click(object sender, EventArgs e)
@@ -1424,13 +1424,13 @@ namespace DisplayMagician.UIForms
             if (cb_autosuggest.Checked)
             {
                 _autoName = true;
-                suggestShortcutName();
+                SuggestShortcutName();
             }
             else
                 _autoName = false;
         }
 
-        private string get_exe_file()
+        private string getExeFile()
         {
             string textToReturn = "";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
@@ -1453,22 +1453,22 @@ namespace DisplayMagician.UIForms
         }
         private void btn_start_program1_Click(object sender, EventArgs e)
         {
-            txt_start_program1.Text = get_exe_file();
+            txt_start_program1.Text = getExeFile();
         }
 
         private void btn_start_program2_Click(object sender, EventArgs e)
         {
-            txt_start_program2.Text = get_exe_file();
+            txt_start_program2.Text = getExeFile();
         }
 
         private void btn_start_program3_Click(object sender, EventArgs e)
         {
-            txt_start_program3.Text = get_exe_file();
+            txt_start_program3.Text = getExeFile();
         }
 
         private void btn_start_program4_Click(object sender, EventArgs e)
         {
-            txt_start_program4.Text = get_exe_file();
+            txt_start_program4.Text = getExeFile();
         }
 
         private void cb_start_program1_CheckedChanged(object sender, EventArgs e)

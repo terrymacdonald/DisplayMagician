@@ -322,7 +322,9 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
                     List<ShortcutItem> shortcuts = new List<ShortcutItem>();
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
                     try
                     {
                         _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, new JsonSerializerSettings

@@ -224,8 +224,6 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public static bool ContainsSteamGame(SteamGame steamGame)
         {
             if (!(steamGame is SteamGame))

@@ -64,7 +64,6 @@ namespace DesktopNotifications
         /// under Desktop Bridge. Call this upon application startup, before calling any other APIs.
         /// </summary>
         /// <param name="aumid">An AUMID that uniquely identifies your application.</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         public static void RegisterAumidAndComServer<T>(string aumid)
             where T : NotificationActivator
         {
@@ -128,15 +127,15 @@ namespace DesktopNotifications
         /// Registers the activator type as a COM server client so that Windows can launch your activator.
         /// </summary>
         /// <typeparam name="T">Your implementation of NotificationActivator. Must have GUID and ComVisible attributes on class.</typeparam>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         public static void RegisterActivator<T>()
             where T : NotificationActivator, new()
         {
             // Big thanks to FrecherxDachs for figuring out the following code which works in .NET Core 3: https://github.com/FrecherxDachs/UwpNotificationNetCoreTest
             var uuid = typeof(T).GUID;
-            //uint _cookie;
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
             CoRegisterClassObject(uuid, new NotificationActivatorClassFactory<T>(), CLSCTX_LOCAL_SERVER,
                 REGCLS_MULTIPLEUSE, out uint _cookie);
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
 
             _registeredActivator = true;
         }
@@ -229,7 +228,6 @@ namespace DesktopNotifications
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "RegisterAumidAndComServer")]
         private static void EnsureRegistered()
         {
             // If not registered AUMID yet

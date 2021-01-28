@@ -137,7 +137,6 @@ namespace DisplayMagician.GameLibraries
             }
         }*/
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public bool CopyTo(UplayGame uplayGame)
         {
             if (!(uplayGame is UplayGame))

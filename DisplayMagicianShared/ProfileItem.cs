@@ -30,7 +30,7 @@ namespace DisplayMagicianShared
         //private static List<WindowsDisplayAPI.UnAttachedDisplay> _unavailableDisplays;
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
-        private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
+        private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
         //private Version _version;
@@ -378,16 +378,6 @@ namespace DisplayMagicianShared
         public override string ToString()
         {
             return (Name ?? Language.UN_TITLED_PROFILE);
-        }
-
-        private static string GetValidFilename(string uncheckedFilename)
-        {
-            string invalid = new string(System.IO.Path.GetInvalidFileNameChars()) + new string(System.IO.Path.GetInvalidPathChars());
-            foreach (char c in invalid)
-            {
-                uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
-            }
-            return uncheckedFilename;
         }
 
         public int CompareTo(object obj)
