@@ -42,7 +42,7 @@ namespace DisplayMagician.UIForms
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
-        private uint _gameId = 0;
+        private int _gameId = 0;
         private string  _uuid = "";
         private CoreAudioController audioController = new CoreAudioController();
         private List<CoreAudioDevice> audioDevices = null;
@@ -396,7 +396,7 @@ namespace DisplayMagician.UIForms
                     // Find the SteamGame
                     _gameToUse = new GameStruct();
                     _gameToUse.GameToPlay = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.Id == _gameId select steamGame).First();
-                    _gameToUse.StartTimeout = Convert.ToUInt32(nud_timeout_game.Value);
+                    _gameToUse.StartTimeout = Convert.ToInt32(nud_timeout_game.Value);
                     _gameToUse.GameArguments = txt_args_game.Text;
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
@@ -428,7 +428,7 @@ namespace DisplayMagician.UIForms
                     // Find the UplayGame
                     _gameToUse = new GameStruct();
                     _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
-                    _gameToUse.StartTimeout = Convert.ToUInt32(nud_timeout_game.Value);
+                    _gameToUse.StartTimeout = Convert.ToInt32(nud_timeout_game.Value);
                     _gameToUse.GameArguments = txt_args_game.Text;
                     _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
 
@@ -461,7 +461,7 @@ namespace DisplayMagician.UIForms
                 _executableToUse.ExecutableArguments = txt_args_executable.Text;
                 _executableToUse.ExecutableArgumentsRequired = cb_args_executable.Checked;
                 _executableToUse.ExecutableNameAndPath = txt_executable.Text;
-                _executableToUse.ExecutableTimeout = Convert.ToUInt32(nud_timeout_executable.Value);
+                _executableToUse.ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value);
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
                 {

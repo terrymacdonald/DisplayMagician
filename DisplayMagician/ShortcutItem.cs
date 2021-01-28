@@ -44,7 +44,7 @@ namespace DisplayMagician
     {
         public string DifferentExecutableToMonitor;
         public string ExecutableNameAndPath;
-        public uint ExecutableTimeout;
+        public int ExecutableTimeout;
         public string ExecutableArguments;
         public bool ExecutableArgumentsRequired;
         public bool ProcessNameToMonitorUsesExecutable;
@@ -53,7 +53,7 @@ namespace DisplayMagician
     public struct GameStruct
     {
         public Game GameToPlay;
-        public uint StartTimeout;
+        public int StartTimeout;
         public string GameArguments;
         public bool GameArgumentsRequired;
     }
@@ -75,10 +75,10 @@ namespace DisplayMagician
         private string _executableArguments;
         private bool _executableArgumentsRequired = false;
         private bool _processNameToMonitorUsesExecutable = true;
-        private uint _gameAppId;
+        private int _gameAppId;
         private string _gameName;
         private SupportedGameLibrary _gameLibrary;
-        private uint _startTimeout = 20;
+        private int _startTimeout = 20;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
         private string _audioDevice;
@@ -251,10 +251,10 @@ namespace DisplayMagician
         public ShortcutItem(
             string name,
             ProfileItem profile, 
-            uint gameAppId,
+            int gameAppId,
             string gameName,
             SupportedGameLibrary gameLibrary,
-            uint gameTimeout,
+            int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
             ShortcutPermanence displayPermanence,
@@ -454,7 +454,7 @@ namespace DisplayMagician
             ProfileItem profile,
             string differentExecutableToMonitor,
             string executableNameAndPath,
-            uint executableTimeout,
+            int executableTimeout,
             string executableArguments,
             bool executableArgumentsRequired,
             bool processNameToMonitorUsesExecutable,
@@ -866,7 +866,7 @@ namespace DisplayMagician
             }
         }
 
-        public uint GameAppId
+        public int GameAppId
         {
             get
             {
@@ -905,7 +905,7 @@ namespace DisplayMagician
             }
         }
 
-        public uint StartTimeout
+        public int StartTimeout
         {
             get
             {
@@ -1261,10 +1261,10 @@ namespace DisplayMagician
         public void UpdateGameShortcut(
             string name,
             ProfileItem profile,
-            uint gameAppId,
+            int gameAppId,
             string gameName,
             SupportedGameLibrary gameLibrary,
-            uint gameTimeout,
+            int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
             ShortcutPermanence displayPermanence,
@@ -1468,7 +1468,7 @@ namespace DisplayMagician
             ProfileItem profile,
             string differentExecutableToMonitor,
             string executableNameAndPath,
-            uint executableTimeout,
+            int executableTimeout,
             string executableArguments,
             bool executableArgumentsRequired,
             bool processNameToMonitorUsesExecutable,
@@ -1833,10 +1833,10 @@ namespace DisplayMagician
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
 
-            if (!(width is int) || width <= 0)
+            if (width <= 0)
                 return null;
 
-            if (!(height is int) || height <= 0)
+            if (height <= 0)
                 return null;
 
             // Figure out sizes and positions

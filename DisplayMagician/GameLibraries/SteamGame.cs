@@ -13,7 +13,7 @@ namespace DisplayMagician.GameLibraries
     public class SteamGame : Game
     {
         private string _gameRegistryKey;
-        private uint _steamGameId;
+        private int _steamGameId;
         private string _steamGameName;
         private string _steamGameExePath;
         private string _steamGameDir;
@@ -29,7 +29,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public SteamGame(uint steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
+        public SteamGame(int steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
         {
 
             _gameRegistryKey = $@"{SteamLibrary.SteamAppsRegistryKey}\\{steamGameId}";
@@ -43,7 +43,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override uint Id { 
+        public override int Id { 
             get => _steamGameId;
             set => _steamGameId = value;
         }

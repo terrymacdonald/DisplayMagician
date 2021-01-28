@@ -72,8 +72,6 @@ namespace DisplayMagician.UIForms
                 return null;
             }
 
-
-            return null;
         }
 
         /// <summary>

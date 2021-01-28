@@ -36,7 +36,7 @@ namespace DisplayMagician.GameLibraries
 
         private struct UplayAppInfo
         {
-            public uint GameID;
+            public int GameID;
             public string GameName;
             public string GameExe;
             public string GameInstallDir;
@@ -173,6 +173,23 @@ namespace DisplayMagician.GameLibraries
                 throw new UplayLibraryException();
         }
 
+        public static bool RemoveUplayGame(int uplayGameId)
+        {
+            if (uplayGameId<=0)
+                return false;
+
+            // Remove the uplayGame from the list.
+            int numRemoved = _allUplayGames.RemoveAll(item => item.Id.Equals(uplayGameId));
+
+            if (numRemoved == 1)
+            {
+                return true;
+            }
+            else if (numRemoved == 0)
+                return false;
+            else
+                throw new UplayLibraryException();
+        }
 
         public static bool RemoveUplayGame(string uplayGameNameOrUuid)
         {
@@ -195,8 +212,6 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
         public static bool ContainsUplayGame(UplayGame uplayGame)
         {
             if (!(uplayGame is UplayGame))
@@ -211,6 +226,19 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
+        public static bool ContainsUplayGame(int uplayGameId)
+        {
+            foreach (UplayGame testUplayGame in _allUplayGames)
+            {
+                if (uplayGameId == testUplayGame.Id)
+                    return true;
+            }
+
+
+            return false;
+
+        }
+
         public static bool ContainsUplayGame(string uplayGameNameOrUuid)
         {
             if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
@@ -222,7 +250,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (UplayGame testUplayGame in _allUplayGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(Convert.ToUInt32(testUplayGame.Id)))
+                    if (uplayGameNameOrUuid.Equals(Convert.ToInt32(testUplayGame.Id)))
                         return true;
                 }
 
@@ -265,7 +293,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (UplayGame testUplayGame in _allUplayGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(Convert.ToUInt32(testUplayGame.Id)))
+                    if (uplayGameNameOrUuid.Equals(Convert.ToInt32(testUplayGame.Id)))
                         return testUplayGame;
                 }
 
@@ -474,7 +502,7 @@ namespace DisplayMagician.GameLibraries
                     // From that  we lookup the actual game path
                     uplayGameAppInfo.GameInstallDir = Path.GetFullPath(uplayGameInstallKey.GetValue("InstallDir", "").ToString()).TrimEnd('\\');
                     uplayGameAppInfo.GameExe = Path.Combine(uplayGameAppInfo.GameInstallDir,gameFileName);
-                    uplayGameAppInfo.GameID = uint.Parse(gameId);
+                    uplayGameAppInfo.GameID = int.Parse(gameId);
 
                     // Then we have the gameID, the thumbimage, the icon, the name, the exe path
                     // And we add the Game to the list of games we have!

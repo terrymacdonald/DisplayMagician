@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-//using Microsoft.Toolkit.Uwp.Notifications;
 using DesktopNotifications;
-using static DesktopNotifications.NotificationActivator;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows.Threading;
+//using static DesktopNotifications.NotificationActivator;
 using Microsoft.QueryStringDotNET;
 using System.Windows.Forms;
 using DisplayMagician.UIForms;

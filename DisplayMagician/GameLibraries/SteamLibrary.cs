@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
 using DisplayMagician.GameLibraries.SteamAppInfoParser;
 using Microsoft.Win32;
 using System.IO;
-using System.Drawing.IconLib;
 using System.Security;
 using System.Diagnostics;
 
@@ -31,7 +29,7 @@ namespace DisplayMagician.GameLibraries
 
         private struct SteamAppInfo
         {
-            public uint GameID;
+            public int GameID;
             public string GameName;
             public List<string> GameExes;
             public string GameInstallDir;
@@ -186,6 +184,24 @@ namespace DisplayMagician.GameLibraries
                 throw new SteamLibraryException();
         }
 
+        public static bool RemoveSteamGame(int steamGameId)
+        {
+            if (steamGameId<=0)
+                return false;
+
+            // Remove the steamGame from the list.
+            int numRemoved = _allSteamGames.RemoveAll(item => item.Id.Equals(steamGameId));
+
+            if (numRemoved == 1)
+            {
+                return true;
+            }
+            else if (numRemoved == 0)
+                return false;
+            else
+                throw new SteamLibraryException();
+        }
+
 
         public static bool RemoveSteamGame(string steamGameNameOrUuid)
         {
@@ -235,7 +251,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToUInt32(testSteamGame.Id)))
+                    if (steamGameNameOrUuid.Equals(Convert.ToInt32(testSteamGame.Id)))
                         return true;
                 }
 
@@ -254,7 +270,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsSteamGame(uint steamGameId)
+        public static bool ContainsSteamGame(int steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -278,7 +294,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (SteamGame testSteamGame in _allSteamGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToUInt32(testSteamGame.Id)))
+                    if (steamGameNameOrUuid.Equals(Convert.ToInt32(testSteamGame.Id)))
                         return testSteamGame;
                 }
 
@@ -297,7 +313,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static SteamGame GetSteamGame(uint steamGameId)
+        public static SteamGame GetSteamGame(int steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -335,7 +351,7 @@ namespace DisplayMagician.GameLibraries
                 //MultiIcon _steamIcon = new MultiIcon();
                 //_steamIcon.Load(_steamExe);
 
-                List<uint> steamAppIdsInstalled = new List<uint>();
+                List<int> steamAppIdsInstalled = new List<int>();
                 // Now look for what games app id's are actually installed on this computer
                 using (RegistryKey steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
@@ -344,8 +360,8 @@ namespace DisplayMagician.GameLibraries
                         // Loop through the subKeys as they are the Steam Game IDs
                         foreach (string steamGameKeyName in steamAppsKey.GetSubKeyNames())
                         {
-                            uint steamAppId = 0;
-                            if (uint.TryParse(steamGameKeyName, out steamAppId))
+                            int steamAppId = 0;
+                            if (int.TryParse(steamGameKeyName, out steamAppId))
                             {
                                 string steamGameKeyFullName = $"{_registryAppsKey}\\{steamGameKeyName}";
                                 using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
@@ -370,7 +386,7 @@ namespace DisplayMagician.GameLibraries
                 // - THe game installation dir
                 // - Sometimes the game icon
                 // - Sometimes the game executable name (from which we can get the icon)
-                Dictionary<uint, SteamAppInfo> steamAppInfo = new Dictionary<uint, SteamAppInfo>();
+                Dictionary<int, SteamAppInfo> steamAppInfo = new Dictionary<int, SteamAppInfo>();
 
                 string appInfoVdfFile = Path.Combine(_steamPath, "appcache", "appinfo.vdf");
                 var newAppInfo = new AppInfo();
@@ -383,14 +399,15 @@ namespace DisplayMagician.GameLibraries
                 {
                     // We only care about the appIDs we have listed as actual games
                     // (The AppIds include all other DLC and Steam specific stuff too)
-                    if (steamAppIdsInstalled.Contains(app.AppID))
+                    int detectedAppID = Convert.ToInt32(app.AppID);
+                    if (steamAppIdsInstalled.Contains(detectedAppID))
                     {
 
                         try
                         {
 
                             SteamAppInfo steamGameAppInfo = new SteamAppInfo();
-                            steamGameAppInfo.GameID = app.AppID;
+                            steamGameAppInfo.GameID = detectedAppID;
                             steamGameAppInfo.GameExes = new List<string>();
 
                             foreach (KVObject data in app.Data)
@@ -428,7 +445,7 @@ namespace DisplayMagician.GameLibraries
 
                                         if (config.Name == "installdir")
                                         {
-                                            Debug.WriteLine($"App: {app.AppID} - Config {config.Name}: {config.Value}");
+                                            Debug.WriteLine($"App: {detectedAppID} - Config {config.Name}: {config.Value}");
                                             steamGameAppInfo.GameInstallDir = config.Value.ToString();
                                         }
                                         else if (config.Name == "launch")
@@ -439,7 +456,7 @@ namespace DisplayMagician.GameLibraries
                                                 {
                                                     if (launch_num.Name == "executable")
                                                     {
-                                                        Debug.WriteLine($"App: {app.AppID} - Config - Launch {launch.Name} - {launch_num.Name}: {launch_num.Value}");
+                                                        Debug.WriteLine($"App: {detectedAppID} - Config - Launch {launch.Name} - {launch_num.Name}: {launch_num.Value}");
                                                         steamGameAppInfo.GameExes.Add(launch_num.Value.ToString());
                                                     }
 
@@ -450,7 +467,7 @@ namespace DisplayMagician.GameLibraries
                                 }
 
                             }
-                            steamAppInfo.Add(app.AppID, steamGameAppInfo);
+                            steamAppInfo.Add(detectedAppID, steamGameAppInfo);
                         }
                         catch (ArgumentException ex)
                         {
@@ -458,7 +475,7 @@ namespace DisplayMagician.GameLibraries
                             //we just want to ignore it if we try to add it twice....
                         }
 
-                        Debug.WriteLine($"App: {app.AppID} - Token: {app.Token}");
+                        Debug.WriteLine($"App: {detectedAppID} - Token: {app.Token}");
                     }
                 }
 
@@ -504,8 +521,8 @@ namespace DisplayMagician.GameLibraries
                         if (appidMatches.Success)
                         {
 
-                            uint steamGameId = 0;
-                            if (uint.TryParse(appidMatches.Groups[1].Value, out steamGameId))
+                            int steamGameId = 0;
+                            if (int.TryParse(appidMatches.Groups[1].Value, out steamGameId))
                             {
                                 // Check if this game is one that was installed
                                 if (steamAppInfo.ContainsKey(steamGameId))

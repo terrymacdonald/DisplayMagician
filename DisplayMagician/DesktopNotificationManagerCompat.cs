@@ -414,7 +414,9 @@ namespace DesktopNotifications
     /// </summary>
     public abstract class NotificationActivator : NotificationActivator.INotificationActivationCallback
     {
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
         public void Activate(string appUserModelId, string invokedArgs, NOTIFICATION_USER_INPUT_DATA[] data, uint dataCount)
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             OnActivated(invokedArgs, new NotificationUserInput(data), appUserModelId);
         }
@@ -452,7 +454,9 @@ namespace DesktopNotifications
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)]
             NOTIFICATION_USER_INPUT_DATA[] data,
                 [In, MarshalAs(UnmanagedType.U4)]
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
             uint dataCount);
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         }
         #endregion
     }

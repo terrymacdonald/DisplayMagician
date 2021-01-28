@@ -352,12 +352,6 @@ namespace DisplayMagician.UIForms
         {
             const int WM_DISPLAYCHANGE = 0x007E;
 
-            const int x_bitshift = 0;
-            const int y_bitshift = 16;
-            const int xy_mask = 0xFFFF;
-
-            bool displayChange = false;
-
             switch (m.Msg)
             {
                 case WM_DISPLAYCHANGE:

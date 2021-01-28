@@ -10,7 +10,7 @@ namespace DisplayMagician.GameLibraries
     {
 
         #region Properties
-        public virtual uint Id { get; set; }
+        public virtual int Id { get; set; }
 
         public virtual SupportedGameLibrary GameLibrary { get; }
 

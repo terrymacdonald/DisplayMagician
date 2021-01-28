@@ -11,7 +11,7 @@ namespace DisplayMagician.GameLibraries
     public class UplayGame : Game
     {
         private string _gameRegistryKey;
-        private uint _uplayGameId;
+        private int _uplayGameId;
         private string _uplayGameName;
         private string _uplayGameExePath;
         private string _uplayGameDir;
@@ -27,7 +27,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public UplayGame(uint uplayGameId, string uplayGameName, string uplayGameExePath, string uplayGameIconPath)
+        public UplayGame(int uplayGameId, string uplayGameName, string uplayGameExePath, string uplayGameIconPath)
         {
 
             _gameRegistryKey = $@"{UplayLibrary.registryUplayInstallsKey}\\{uplayGameId}";
@@ -41,7 +41,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override uint Id
+        public override int Id
         {
             get => _uplayGameId;
             set => _uplayGameId = value;
