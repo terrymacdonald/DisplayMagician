@@ -272,8 +272,10 @@ namespace DisplayMagician.UIForms
 
                 // Load the currentProfile image into the imagelistview
                 //ImageListViewItem newItem = new ImageListViewItem(_selectedProfile.SavedProfileCacheFilename, _selectedProfile.Name);
-                ImageListViewItem newItem = new ImageListViewItem(_selectedProfile, _selectedProfile.Name);
-                newItem.Selected = true;
+                ImageListViewItem newItem = new ImageListViewItem(_selectedProfile, _selectedProfile.Name)
+                {
+                    Selected = true
+                };
                 //ilv_saved_profiles.Items.Add(newItem);
                 ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
             }

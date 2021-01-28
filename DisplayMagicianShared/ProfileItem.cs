@@ -53,8 +53,10 @@ namespace DisplayMagicianShared
                 string image = (string)reader.Value;
 
                 byte[] byteBuffer = Convert.FromBase64String(image);
-                MemoryStream memoryStream = new MemoryStream(byteBuffer);
-                memoryStream.Position = 0;
+                MemoryStream memoryStream = new MemoryStream(byteBuffer)
+                {
+                    Position = 0
+                };
 
                 return (Bitmap)Bitmap.FromStream(memoryStream);
             }
@@ -338,7 +340,7 @@ namespace DisplayMagicianShared
         {
 
             // If parameter is null, return false.
-            if (Object.ReferenceEquals(other, null))
+            if (other is null)
                 return false;
 
             // Optimization for a common success case.
@@ -390,13 +392,10 @@ namespace DisplayMagicianShared
 
         public int CompareTo(object obj)
         {
-            if (obj == null) return 1;
+            if (!(obj is ProfileItem)) throw new ArgumentException("Object to CompareTo is not a Shortcut"); ;
 
-            ProfileItem otherProfile = obj as ProfileItem;
-            if (otherProfile != null)
-                return this.Name.CompareTo(otherProfile.Name);
-            else
-                throw new ArgumentException("Object to CompareTo is not a Shortcut");
+            ProfileItem otherProfile = (ProfileItem)obj;
+            return this.Name.CompareTo(otherProfile.Name);
         }
 
     }
@@ -413,7 +412,7 @@ namespace DisplayMagicianShared
             if (Object.ReferenceEquals(x, y)) return true;
 
             //Check whether any of the compared objects is null.
-            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+            if (x is null || y is null)
                 return false;
 
             // Check whether the profiles' properties are equal
@@ -432,7 +431,7 @@ namespace DisplayMagicianShared
         {
 
             // Check whether the object is null
-            if (Object.ReferenceEquals(profile, null)) return 0;
+            if (profile is null) return 0;
 
             // Get hash code for the Viewports field if it is not null.
             int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();

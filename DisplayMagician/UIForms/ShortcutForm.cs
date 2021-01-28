@@ -47,10 +47,8 @@ namespace DisplayMagician.UIForms
         private CoreAudioController audioController = new CoreAudioController();
         private List<CoreAudioDevice> audioDevices = null;
         private CoreAudioDevice selectedAudioDevice = null;
-        private bool audioVolumeSetToDefault = true;
         private List<CoreAudioDevice> captureDevices = null;
         private CoreAudioDevice selectedCaptureDevice = null;
-        private bool captureVolumeSetToDefault = true;
 
         public ShortcutForm(ShortcutItem shortcutToEdit)
         {
@@ -350,40 +348,48 @@ namespace DisplayMagician.UIForms
                 _capturePermanence = ShortcutPermanence.Permanent;
 
             // Save the start program 1
-            StartProgram myStartProgram = new StartProgram();
-            myStartProgram.Priority = 1;
-            myStartProgram.Enabled = cb_start_program1.Checked;
-            myStartProgram.Executable = txt_start_program1.Text;
-            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked;
-            myStartProgram.Arguments = txt_start_program_args1.Text;
-            myStartProgram.CloseOnFinish = cb_start_program_close1.Checked;
+            StartProgram myStartProgram = new StartProgram
+            {
+                Priority = 1,
+                Enabled = cb_start_program1.Checked,
+                Executable = txt_start_program1.Text,
+                ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked,
+                Arguments = txt_start_program_args1.Text,
+                CloseOnFinish = cb_start_program_close1.Checked
+            };
             _startPrograms.Add(myStartProgram);
 
-            myStartProgram = new StartProgram();
-            myStartProgram.Priority = 2;
-            myStartProgram.Executable = txt_start_program2.Text;
-            myStartProgram.Enabled = cb_start_program2.Checked;
-            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked;
-            myStartProgram.Arguments = txt_start_program_args2.Text;
-            myStartProgram.CloseOnFinish = cb_start_program_close2.Checked;
+            myStartProgram = new StartProgram
+            {
+                Priority = 2,
+                Executable = txt_start_program2.Text,
+                Enabled = cb_start_program2.Checked,
+                ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked,
+                Arguments = txt_start_program_args2.Text,
+                CloseOnFinish = cb_start_program_close2.Checked
+            };
             _startPrograms.Add(myStartProgram);
 
-            myStartProgram = new StartProgram();
-            myStartProgram.Priority = 3;
-            myStartProgram.Executable = txt_start_program3.Text;
-            myStartProgram.Enabled = cb_start_program3.Checked;
-            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked;
-            myStartProgram.Arguments = txt_start_program_args3.Text;
-            myStartProgram.CloseOnFinish = cb_start_program_close3.Checked;
+            myStartProgram = new StartProgram
+            {
+                Priority = 3,
+                Executable = txt_start_program3.Text,
+                Enabled = cb_start_program3.Checked,
+                ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked,
+                Arguments = txt_start_program_args3.Text,
+                CloseOnFinish = cb_start_program_close3.Checked
+            };
             _startPrograms.Add(myStartProgram);
 
-            myStartProgram = new StartProgram();
-            myStartProgram.Priority = 4;
-            myStartProgram.Executable = txt_start_program4.Text;
-            myStartProgram.Enabled = cb_start_program4.Checked;
-            myStartProgram.ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked;
-            myStartProgram.Arguments = txt_start_program_args4.Text;
-            myStartProgram.CloseOnFinish = cb_start_program_close4.Checked;
+            myStartProgram = new StartProgram
+            {
+                Priority = 4,
+                Executable = txt_start_program4.Text,
+                Enabled = cb_start_program4.Checked,
+                ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked,
+                Arguments = txt_start_program_args4.Text,
+                CloseOnFinish = cb_start_program_close4.Checked
+            };
             _startPrograms.Add(myStartProgram);
 
             // Now we create the Shortcut Object ready to save
@@ -394,11 +400,13 @@ namespace DisplayMagician.UIForms
                 if(txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
                 {
                     // Find the SteamGame
-                    _gameToUse = new GameStruct();
-                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.Id == _gameId select steamGame).First();
-                    _gameToUse.StartTimeout = Convert.ToInt32(nud_timeout_game.Value);
-                    _gameToUse.GameArguments = txt_args_game.Text;
-                    _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
+                    _gameToUse = new GameStruct
+                    {
+                        GameToPlay = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.Id == _gameId select steamGame).First(),
+                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
+                        GameArguments = txt_args_game.Text,
+                        GameArgumentsRequired = cb_args_game.Checked
+                    };
 
                     _shortcutToEdit.UpdateGameShortcut(
                         txt_shortcut_save_name.Text,
@@ -426,11 +434,13 @@ namespace DisplayMagician.UIForms
                 else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
                 {
                     // Find the UplayGame
-                    _gameToUse = new GameStruct();
-                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
-                    _gameToUse.StartTimeout = Convert.ToInt32(nud_timeout_game.Value);
-                    _gameToUse.GameArguments = txt_args_game.Text;
-                    _gameToUse.GameArgumentsRequired = cb_args_game.Checked;
+                    _gameToUse = new GameStruct
+                    {
+                        GameToPlay = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First(),
+                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
+                        GameArguments = txt_args_game.Text,
+                        GameArgumentsRequired = cb_args_game.Checked
+                    };
 
                     _shortcutToEdit.UpdateGameShortcut(
                         txt_shortcut_save_name.Text,
@@ -457,11 +467,13 @@ namespace DisplayMagician.UIForms
             }
             else if (rb_standalone.Checked)
             {
-                _executableToUse = new Executable();
-                _executableToUse.ExecutableArguments = txt_args_executable.Text;
-                _executableToUse.ExecutableArgumentsRequired = cb_args_executable.Checked;
-                _executableToUse.ExecutableNameAndPath = txt_executable.Text;
-                _executableToUse.ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value);
+                _executableToUse = new Executable
+                {
+                    ExecutableArguments = txt_args_executable.Text,
+                    ExecutableArgumentsRequired = cb_args_executable.Checked,
+                    ExecutableNameAndPath = txt_executable.Text,
+                    ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value)
+                };
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
                 {
@@ -666,7 +678,6 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                audioVolumeSetToDefault = true;
                 // Then we need to populate the list 
                 foreach (CoreAudioDevice audioDevice in audioDevices)
                 {
@@ -748,7 +759,6 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                captureVolumeSetToDefault = true;
                 // Then we need to populate the list 
                 foreach (CoreAudioDevice captureDevice in captureDevices)
                 {
@@ -1719,7 +1729,7 @@ namespace DisplayMagician.UIForms
             // If the shortcut is to change the audio device
             if (_shortcutToEdit.ChangeAudioDevice)
             {
-                // Then we need to populate the list 
+                // Then we need to populate thev list 
                 bool foundAudioDevice = false;
                 foreach (CoreAudioDevice audioDevice in audioDevices)
                 {
@@ -1766,7 +1776,6 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                audioVolumeSetToDefault = true;
                 // Then we need to populate the list 
                 foreach (CoreAudioDevice audioDevice in audioDevices)
                 {
@@ -1863,7 +1872,6 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                captureVolumeSetToDefault = true;
                 // Then we need to populate the list 
                 foreach (CoreAudioDevice captureDevice in captureDevices)
                 {

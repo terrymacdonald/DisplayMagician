@@ -134,9 +134,9 @@ namespace DesktopNotifications
         {
             // Big thanks to FrecherxDachs for figuring out the following code which works in .NET Core 3: https://github.com/FrecherxDachs/UwpNotificationNetCoreTest
             var uuid = typeof(T).GUID;
-            uint _cookie;
+            //uint _cookie;
             CoRegisterClassObject(uuid, new NotificationActivatorClassFactory<T>(), CLSCTX_LOCAL_SERVER,
-                REGCLS_MULTIPLEUSE, out _cookie);
+                REGCLS_MULTIPLEUSE, out uint _cookie);
 
             _registeredActivator = true;
         }

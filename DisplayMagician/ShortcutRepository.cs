@@ -90,7 +90,9 @@ namespace DisplayMagician
             }
         }
 
+#pragma warning disable CS3003 // Type is not CLS-compliant
         public static CoreAudioController AudioController
+#pragma warning restore CS3003 // Type is not CLS-compliant
         {
             get
             {
@@ -290,7 +292,9 @@ namespace DisplayMagician
 
         }
 
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
         public static bool RenameShortcutProfile(ProfileItem newProfile)
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             if (!(newProfile is ProfileItem))
                 return false;
@@ -1030,8 +1034,10 @@ namespace DisplayMagician
                 doc.LoadXml(toastContent.GetContent());
 
                 // And create the toast notification
-                var toast = new ToastNotification(doc);
-                toast.SuppressPopup = true;
+                var toast = new ToastNotification(doc)
+                {
+                    SuppressPopup = true
+                };
 
                 // And then show it
                 DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);

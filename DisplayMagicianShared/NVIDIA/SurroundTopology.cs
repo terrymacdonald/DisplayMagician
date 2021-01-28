@@ -197,7 +197,7 @@ namespace DisplayMagicianShared.NVIDIA
         {
 
             // If parameter is null, return false.
-            if (Object.ReferenceEquals(other, null))
+            if (other is null)
                 return false;
 
             // Optimization for a common success case.
@@ -293,7 +293,7 @@ namespace DisplayMagicianShared.NVIDIA
             if (Object.ReferenceEquals(x, y)) return true;
 
             //Check whether any of the compared objects is null.
-            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+            if (x is null || y is null)
                 return false;
 
             // Check whether the Profile Viewport properties are equal
@@ -332,7 +332,7 @@ namespace DisplayMagicianShared.NVIDIA
         public int GetHashCode(SurroundTopology surroundTopology)
         {
             // Check whether the object is null
-            if (Object.ReferenceEquals(surroundTopology, null)) return 0;
+            if (surroundTopology is null) return 0;
 
             // Get hash code for the AcceleratePrimaryDisplay field if it is not null.
             int hashAcceleratePrimaryDisplay = surroundTopology.AcceleratePrimaryDisplay.GetHashCode();

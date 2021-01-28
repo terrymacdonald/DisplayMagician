@@ -81,11 +81,12 @@ namespace DisplayMagician.UIForms
         private void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
 
-            var bootMeUp = new BootMeUp();
-
-            bootMeUp.UseAlternativeOnFail = true;
-            bootMeUp.BootArea = BootMeUp.BootAreas.Registry;
-            bootMeUp.TargetUser = BootMeUp.TargetUsers.CurrentUser;
+            var bootMeUp = new BootMeUp
+            {
+                UseAlternativeOnFail = true,
+                BootArea = BootMeUp.BootAreas.Registry,
+                TargetUser = BootMeUp.TargetUsers.CurrentUser
+            };
 
             // save start on Boot up
             if (cb_start_on_boot.Checked)

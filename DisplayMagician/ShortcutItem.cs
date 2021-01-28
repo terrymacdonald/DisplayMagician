@@ -2154,13 +2154,10 @@ namespace DisplayMagician
 
         public int CompareTo(object obj)
         {
-            if (obj == null) return 1;
+            if (!(obj is ShortcutItem)) throw new ArgumentException("Object to CompareTo is not a Shortcut"); ;
 
-            ShortcutItem otherShortcut = obj as ShortcutItem;
-            if (otherShortcut != null)
-                return this.Name.CompareTo(otherShortcut.Name);
-            else
-                throw new ArgumentException("Object to CompareTo is not a Shortcut");
+            ShortcutItem otherShortcut = (ShortcutItem) obj;
+            return this.Name.CompareTo(otherShortcut.Name);                
         }
 
     }
@@ -2181,8 +2178,10 @@ namespace DisplayMagician
             string image = (string)reader.Value;
 
             byte[] byteBuffer = Convert.FromBase64String(image);
-            MemoryStream memoryStream = new MemoryStream(byteBuffer);
-            memoryStream.Position = 0;
+            MemoryStream memoryStream = new MemoryStream(byteBuffer)
+            {
+                Position = 0
+            };
 
             return (Bitmap)Bitmap.FromStream(memoryStream);
         }

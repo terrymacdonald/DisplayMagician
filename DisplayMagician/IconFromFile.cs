@@ -526,9 +526,8 @@ namespace DisplayMagician
             // Get the System IImageList object from the Shell:
             Guid iidImageList = new Guid("46EB5926-582E-4017-9FDF-E8998DAA0950");
 
-            IImageList iml;
             int size = jumbo ? SHIL_JUMBO : SHIL_EXTRALARGE;
-            var hres = SHGetImageList(size, ref iidImageList, out iml); // writes iml
+            var hres = SHGetImageList(size, ref iidImageList, out IImageList iml); // writes iml
             //if (hres == 0)
             //{
             //    throw (new System.Exception("Error SHGetImageList"));
@@ -577,9 +576,8 @@ namespace DisplayMagician
             // Get the System IImageList object from the Shell:
             Guid iidImageList = new Guid("46EB5926-582E-4017-9FDF-E8998DAA0950");
 
-            IImageList iml;
             int size = jumbo ? SHIL_JUMBO : SHIL_EXTRALARGE;
-            var hres = SHGetImageList(size, ref iidImageList, out iml); // writes iml
+            var hres = SHGetImageList(size, ref iidImageList, out IImageList iml); // writes iml
             //if (hres == 0)
             //{
             //    throw (new System.Exception("Error SHGetImageList"));

@@ -8,8 +8,10 @@ using ValveKeyValue;
 
 namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 {
+#pragma warning disable CS3003 // Type is not CLS-compliant
     public class Package
     {
+
         public uint SubID { get; set; }
 
         public ReadOnlyCollection<byte> Hash { get; set; }
@@ -20,4 +22,6 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
         public KVObject Data { get; set; }
     }
+#pragma warning restore CS3003 // Type is not CLS-compliant
+
 }

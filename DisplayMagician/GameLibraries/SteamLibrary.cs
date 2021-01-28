@@ -360,8 +360,7 @@ namespace DisplayMagician.GameLibraries
                         // Loop through the subKeys as they are the Steam Game IDs
                         foreach (string steamGameKeyName in steamAppsKey.GetSubKeyNames())
                         {
-                            int steamAppId = 0;
-                            if (int.TryParse(steamGameKeyName, out steamAppId))
+                            if (int.TryParse(steamGameKeyName, out int steamAppId))
                             {
                                 string steamGameKeyFullName = $"{_registryAppsKey}\\{steamGameKeyName}";
                                 using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
@@ -406,9 +405,11 @@ namespace DisplayMagician.GameLibraries
                         try
                         {
 
-                            SteamAppInfo steamGameAppInfo = new SteamAppInfo();
-                            steamGameAppInfo.GameID = detectedAppID;
-                            steamGameAppInfo.GameExes = new List<string>();
+                            SteamAppInfo steamGameAppInfo = new SteamAppInfo
+                            {
+                                GameID = detectedAppID,
+                                GameExes = new List<string>()
+                            };
 
                             foreach (KVObject data in app.Data)
                             {
@@ -521,8 +522,7 @@ namespace DisplayMagician.GameLibraries
                         if (appidMatches.Success)
                         {
 
-                            int steamGameId = 0;
-                            if (int.TryParse(appidMatches.Groups[1].Value, out steamGameId))
+                            if (int.TryParse(appidMatches.Groups[1].Value, out int steamGameId))
                             {
                                 // Check if this game is one that was installed
                                 if (steamAppInfo.ContainsKey(steamGameId))
