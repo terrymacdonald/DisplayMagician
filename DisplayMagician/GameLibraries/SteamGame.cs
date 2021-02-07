@@ -20,7 +20,7 @@ namespace DisplayMagician.GameLibraries
         private string _steamGameExe;
         private string _steamGameProcessName;
         private string _steamGameIconPath;
-        //private static List<SteamGame> _allInstalledSteamGames = null;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static SteamGame()
         {
@@ -90,6 +90,7 @@ namespace DisplayMagician.GameLibraries
                     }
                     catch (Exception ex)
                     {
+                        logger.Debug(ex, $"SteamGame/IsRunning: Accessing Process.MainModule caused exception. Trying GameUtils.GetMainModuleFilepath instead");
                         if (GameUtils.GetMainModuleFilepath(gameProcess.Id).StartsWith(_steamGameExePath))
                             numGameProcesses++;
                     }

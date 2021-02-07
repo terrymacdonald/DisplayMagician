@@ -59,19 +59,19 @@ namespace DisplayMagician.GameLibraries
             }
             catch (SecurityException ex)
             {
-                logger.Warn("The user does not have the permissions required to read the Uplay InstallDir registry key.");
+                logger.Warn(ex, "UplayLibrary/UplayLibrary: The user does not have the permissions required to read the Uplay InstallDir registry key.");
             }
             catch(ObjectDisposedException ex)
             {
-                logger.Warn("The Microsoft.Win32.RegistryKey is closed when trying to access the Uplay InstallDir registry key (closed keys cannot be accessed).");
+                logger.Warn(ex, "UplayLibrary/UplayLibrary: The Microsoft.Win32.RegistryKey is closed when trying to access the Uplay InstallDir registry key (closed keys cannot be accessed).");
             }
             catch (IOException ex)
             {
-                logger.Warn("The Uplay InstallDir registry key has been marked for deletion so we cannot access the value dueing the UplayLibrary check.");
+                logger.Warn(ex, "UplayLibrary/UplayLibrary: The Uplay InstallDir registry key has been marked for deletion so we cannot access the value dueing the UplayLibrary check.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.Warn("The user does not have the necessary registry rights to check whether Uplay is installed.");
+                logger.Warn(ex, "UplayLibrary/UplayLibrary: The user does not have the necessary registry rights to check whether Uplay is installed.");
             }
         }
         #endregion

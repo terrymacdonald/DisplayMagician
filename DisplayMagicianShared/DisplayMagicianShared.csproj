@@ -7,7 +7,7 @@
     <ProjectGuid>{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DisplayMagician.Shared</RootNamespace>
+    <RootNamespace>DisplayMagicianShared</RootNamespace>
     <AssemblyName>DisplayMagician.Shared</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -111,6 +112,9 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="NLog">
+      <Version>4.7.7</Version>
     </PackageReference>
     <PackageReference Include="NvAPIWrapper.Net">
       <Version>0.7.2.63</Version>

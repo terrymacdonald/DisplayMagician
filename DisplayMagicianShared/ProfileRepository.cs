@@ -549,10 +549,13 @@ namespace DisplayMagicianShared
                 isNvidia = true;
             }
             catch (Exception ex)
-            { }
+            {
+                Logger.logger.Debug(ex, "ProfileRepository/GenerateProfileDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
+            }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             {
+                Logger.logger.Debug("ProfileRepository/GenerateProfileDisplayIdentifiers: Was able to GetPhysicalCPUs through NvAPIWrapper library.");
 
                 foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
                 {
@@ -683,7 +686,9 @@ namespace DisplayMagicianShared
                 isNvidia = true;
             }
             catch (Exception ex)
-            { }
+            {
+                Logger.logger.Debug(ex, "ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
+            }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             {

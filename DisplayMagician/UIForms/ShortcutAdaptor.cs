@@ -17,6 +17,7 @@ namespace DisplayMagician.UIForms
     {
 
         private bool disposed;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ShortcutAdaptor"/> class.
@@ -145,7 +146,7 @@ namespace DisplayMagician.UIForms
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
-                            mySize = new Size(256, 256);
+                            logger.Debug(ex, "ShortcutAdaptor/GetDetails: System.Drawing.Image exception caused while trying to get the ProfileBitmap Size as an Integer.");
                         }
                     }
 
@@ -163,7 +164,7 @@ namespace DisplayMagician.UIForms
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
-                            mySizeF = new SizeF(256, 256);
+                            logger.Debug(ex, "ShortcutAdaptor/GetDetails: System.Drawing.Image exception caused while trying to get the ProfileBitmap Size as a Float.");
                         }
                     }
 

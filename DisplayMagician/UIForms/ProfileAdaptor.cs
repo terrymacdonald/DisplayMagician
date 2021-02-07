@@ -19,6 +19,7 @@ namespace DisplayMagician.UIForms
     {
 
         private bool disposed;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileSystemAdaptor"/> class.
@@ -170,6 +171,7 @@ namespace DisplayMagician.UIForms
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
+                            logger.Debug(ex, "ProfileAdaptor/GetDetails: System.Drawing.Image exception caused while trying to get the ProfileBitmap Size as an Integer.");
                         }
                     }
 
@@ -187,6 +189,7 @@ namespace DisplayMagician.UIForms
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
+                            logger.Debug(ex, "ProfileAdaptor/GetDetails: System.Drawing.Image exception caused while trying to get the ProfileBitmap Size as a Float.");
                         }
                     }
                     string name = profileToUse.Name;

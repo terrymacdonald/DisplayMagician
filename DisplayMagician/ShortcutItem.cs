@@ -62,9 +62,6 @@ namespace DisplayMagician
     public class ShortcutItem : IComparable
     {
         
-        //private static List<ShortcutItem> _allSavedShortcuts = new List<ShortcutItem>();
-        //private MultiIcon _shortcutIcon, _originalIcon = null;
-        //private string _savedShortcutIconCacheFilename = "";
         private string _profileUuid = "";
         private ProfileItem _profileToUse;
         private string _uuid = "";
@@ -102,6 +99,7 @@ namespace DisplayMagician
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
 #pragma warning restore CS3008 // Identifier is not CLS-compliant
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutItem()
         {
@@ -2109,8 +2107,8 @@ namespace DisplayMagician
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutItem/CreateShortcut exception (deleting old shortcut)");
-                   
+                    logger.Warn(ex, $"ShortcutItem/CreateShortcut: Execption while creating desktop shortcut!");
+
                     // Clean up a failed attempt
                     if (System.IO.File.Exists(shortcutFileName))
                     {

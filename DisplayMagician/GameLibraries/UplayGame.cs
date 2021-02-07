@@ -18,7 +18,7 @@ namespace DisplayMagician.GameLibraries
         private string _uplayGameExe;
         private string _uplayGameProcessName;
         private string _uplayGameIconPath;
-        //private static List<UplayGame> _allInstalledUplayGames = null;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static UplayGame()
         {
@@ -91,6 +91,9 @@ namespace DisplayMagician.GameLibraries
                     }
                     catch (Exception ex)
                     {
+                        logger.Debug(ex, $"UplayGame/IsRunning: Accessing Process.MainModule caused exception. Trying GameUtils.GetMainModuleFilepath instead");
+                        // If there is a race condition where MainModule isn't available, then we 
+                        // instead try the much slower GetMainModuleFilepath (which does the same thing)
                         if (GameUtils.GetMainModuleFilepath(gameProcess.Id).StartsWith(_uplayGameExePath))
                             numGameProcesses++;
                     }

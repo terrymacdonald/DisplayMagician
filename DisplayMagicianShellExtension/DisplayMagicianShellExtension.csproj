@@ -23,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>true</UseVSHostingProcess>
     <RegisterForComInterop>false</RegisterForComInterop>
+    <CodeAnalysisRuleSet>DisplayMagicianShellExtension.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,6 +32,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>DisplayMagicianShellExtension.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisIgnoreGeneratedCode>true</CodeAnalysisIgnoreGeneratedCode>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Resources\DisplayMagician.ico</ApplicationIcon>
@@ -88,6 +91,7 @@
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </None>
+    <None Include="DisplayMagicianShellExtension.ruleset" />
     <None Include="key.snk" />
     <None Include="Resources\DisplayMagicianMenuImage.png" />
   </ItemGroup>

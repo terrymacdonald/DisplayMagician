@@ -54,19 +54,19 @@ namespace DisplayMagician.GameLibraries
             }
             catch (SecurityException ex)
             {
-                logger.Warn("The user does not have the permissions required to read the Steam registry key.");
+                logger.Warn(ex,"The user does not have the permissions required to read the Steam registry key.");
             }
             catch (ObjectDisposedException ex)
             {
-                logger.Warn("The Microsoft.Win32.RegistryKey is closed when trying to access theSteam registry key (closed keys cannot be accessed).");
+                logger.Warn(ex, "The Microsoft.Win32.RegistryKey is closed when trying to access theSteam registry key (closed keys cannot be accessed).");
             }
             catch (IOException ex)
             {
-                logger.Warn("The Steam registry key has been marked for deletion so we cannot access the value during the SteamLibrary check.");
+                logger.Warn(ex, "The Steam registry key has been marked for deletion so we cannot access the value during the SteamLibrary check.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.Warn("The user does not have the necessary registry rights to check whether Steam is installed.");
+                logger.Warn(ex, "The user does not have the necessary registry rights to check whether Steam is installed.");
             }
         }
         #endregion
