@@ -44,6 +44,7 @@ namespace DisplayMagician {
         public static MainForm AppMainForm;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static SharedLogger sharedLogger;
 
         /// <summary>
         ///     The main entry point for the application.
@@ -76,14 +77,16 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    Console.WriteLine($"Program/StartUpNormally exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
             }
 
             var logfile = new NLog.Targets.FileTarget("logfile") { 
-                FileName = AppLogFilename 
+                FileName = AppLogFilename,
+                DeleteOldFileOnStartup = true
             };
-            var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
+
+            //var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
 
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
@@ -111,12 +114,18 @@ namespace DisplayMagician {
                     logLevel = NLog.LogLevel.Warn;
                     break;
             }
-            config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole);
+            //config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole);
             config.AddRule(logLevel, NLog.LogLevel.Fatal, logfile);
 
             // Apply config           
             NLog.LogManager.Configuration = config;
+            
+            // Make DisplayMagicianShared use the same log file by sending it the 
+            // details of the existing NLog logger
+            sharedLogger = new SharedLogger(logger);
 
+            // Start the Log file
+            logger.Info($"Starting {Application.ProductName} v{Application.ProductVersion}");
 
             // Write the Application Name
             Console.WriteLine($"{Application.ProductName} v{Application.ProductVersion}");
@@ -132,8 +141,8 @@ namespace DisplayMagician {
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            
 
+            logger.Debug($"Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {
                 AllowArgumentSeparator = true,
@@ -165,6 +174,8 @@ namespace DisplayMagician {
 
                 runShortcutCmd.OnExecute(() =>
                 {
+                    logger.Debug($"RunShortcut commandline command was invoked!");
+
                     // 
                     RunShortcut(argumentShortcut.Value);
                     return 0;
@@ -182,6 +193,8 @@ namespace DisplayMagician {
 
                 runProfileCmd.OnExecute(() =>
                 {
+                    logger.Debug($"ChangeProfile commandline command was invoked!");
+
                     try
                     {
                         // Lookup the profile
@@ -206,15 +219,16 @@ namespace DisplayMagician {
 
                 createProfileCmd.OnExecute(() =>
                 {
+                    logger.Debug($"CreateProfile commandline command was invoked!");
                     Console.WriteLine("Starting up and creating a new Display Profile...");
-                    StartUpApplication(DisplayMagicianStartupAction.CreateProfile);
+                    CreateProfile();
                     return 0;
                 });
             });
 
             app.OnExecute(() =>
             {
-
+                logger.Debug($"No commandline command was invoked, so starting up normally");
                 // Add a workaround to handle the weird way that Windows tell us that DisplayMagician 
                 // was started from a Notification Toast when closed (Windows 10)
                 // Due to the way that CommandLineUtils library works we need to handle this as
@@ -225,6 +239,7 @@ namespace DisplayMagician {
                     {
                         if (myArg.Equals("-ToastActivated"))
                         {
+                            logger.Debug($"We were started by the user clicking on a Windows Toast");
                             Program.AppToastActivated = true;
                             break;
                         }
@@ -236,11 +251,14 @@ namespace DisplayMagician {
                 return 0;
             });
 
+            logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
+
             // Try to load all the games in parallel to this process
             Task.Run(() => LoadGamesInBackground());
 
             try
             {
+                logger.Debug($"Starting commandline processing");
                 // This begins the actual execution of the application
                 app.Execute(args);
             }
@@ -259,17 +277,56 @@ namespace DisplayMagician {
                 Console.WriteLine($"Program/Main exception: Unable to execute application - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
+            logger.Debug($"Beginning to shutdown");
+
+            logger.Debug($"Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
             DesktopNotificationManagerCompat.History.Clear();
 
             // Shutdown NLog
+            logger.Debug($"Stopping logging processes");
             NLog.LogManager.Shutdown();
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
             return 0;
         }
 
-        private static void StartUpApplication(DisplayMagicianStartupAction startupAction = DisplayMagicianStartupAction.StartUpNormally)
+        private static void CreateProfile()
+        {
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            try
+            {
+                // Start the IPC Service to 
+                if (!IPCService.StartService())
+                {
+                    throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
+                }
+
+            
+                IPCService.GetInstance().Status = InstanceStatus.User;
+
+                // Run the program with directly showing CreateProfile form
+                Application.Run(new DisplayProfileForm());
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Program/CreateProfile exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"Program/CreateProfile top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                MessageBox.Show(
+                    ex.Message,
+                    Language.Fatal_Error,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+
+        }
+
+        private static void StartUpApplication()
         {
             
 
@@ -350,13 +407,8 @@ namespace DisplayMagician {
                 IPCService.GetInstance().Status = InstanceStatus.User;
 
                 // Run the program with normal startup
-                if (startupAction == DisplayMagicianStartupAction.StartUpNormally)
-                {
-                    AppMainForm = new MainForm();
-                    Application.Run(AppMainForm);
-                }
-                else if (startupAction == DisplayMagicianStartupAction.CreateProfile) 
-                    Application.Run(new DisplayProfileForm());
+                AppMainForm = new MainForm();
+                Application.Run(AppMainForm);                
 
             }
             catch (Exception ex)
@@ -560,24 +612,29 @@ namespace DisplayMagician {
         public static bool LoadGamesInBackground()
         {
 
-            Debug.WriteLine("Program/LoadGamesInBackground : Starting");
+            logger.Debug($"Program/LoadGamesInBackground: Starting");
             // Now lets prepare loading all the Steam games we have installed
+            
             Task loadSteamGamesTask = new Task(() =>
             {
                 // Check if Steam is installed
                 if (GameLibraries.SteamLibrary.IsSteamInstalled)
                 {
                     // Load Steam library games
-                    Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Steam Games ");
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Steam Games");
+                    Console.Write("Loading Installed Steam Games...");
                     if (!DisplayMagician.GameLibraries.SteamLibrary.LoadInstalledGames())
                     {
-                        // Somehow return that this profile topology didn't apply
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
                         throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Steam Games!");
                     }
+                    Console.WriteLine("Done.");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {GameLibraries.SteamLibrary.InstalledSteamGameCount})");
                 }
                 else
                 {
-                    Console.WriteLine("Program/LoadGamesInBackground : Steam not installed.");
+                    logger.Info($"Program/LoadGamesInBackground: Steam not installed.");
+                    Console.WriteLine("Steam not installed.");
                 }
             });
 
@@ -588,16 +645,20 @@ namespace DisplayMagician {
                 if (GameLibraries.UplayLibrary.IsUplayInstalled)
                 {
                     // Load Uplay library games
-                    Console.WriteLine("Program/LoadGamesInBackground : Loading Installed Uplay Games ");
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Uplay Games");
+                    Console.Write("Loading Installed Uplay Games...");
                     if (!DisplayMagician.GameLibraries.UplayLibrary.LoadInstalledGames())
                     {
-                        // Somehow return that this profile topology didn't apply
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                         throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                     }
+                    Console.WriteLine("Done.");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {GameLibraries.UplayLibrary.InstalledUplayGameCount})");
                 }
                 else
                 {
-                    Console.WriteLine("Program/LoadGamesInBackground : Uplay not installed.");
+                    logger.Info($"Program/LoadGamesInBackground: Uplay not installed.");
+                    Console.WriteLine("Uplay not installed.");
                 }
 
             });
@@ -607,16 +668,16 @@ namespace DisplayMagician {
             loadGamesTasks[0] = loadSteamGamesTask;
             loadGamesTasks[1] = loadUplayGamesTask;
 
-            Console.WriteLine("Program/LoadGamesInBackground : Running tasks");
+            logger.Debug($"Program/LoadGamesInBackground: Running game loading tasks.");
             // Go through and start all the tasks
             foreach (Task loadGameTask in loadGamesTasks)
                 loadGameTask.Start();
 
             try
             {
-                Console.WriteLine("Program/LoadGamesInBackground : Waiting for tasks to finish");
+                logger.Debug($"Program/LoadGamesInBackground: Waiting for all game loading tasks to finish");
                 Task.WaitAll(loadGamesTasks);
-                Console.WriteLine("Program/LoadGamesInBackground : All tasks completed!");
+                logger.Debug($"Program/LoadGamesInBackground: All game loading tasks finished");
             }
             catch (AggregateException ae)
             {

@@ -36,7 +36,7 @@ namespace DisplayMagicianShared.NVIDIA
             catch (NVIDIAApiException ex)
             {
                 //Debug.WriteLine($"SurroundTopologyDisplay/NVIDIAApiException exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                Logger.logger.Debug(ex, $"SurroundTopologyDisplay/NVIDIAApiException: Accessing NvAPIWRapper ReadEDDIDData caused exception. Setting generic DisplayID instead");
+                SharedLogger.logger.Debug(ex, $"SurroundTopologyDisplay/NVIDIAApiException: Accessing NvAPIWRapper ReadEDDIDData caused exception. Setting generic DisplayID instead");
                 // If we hit here then we cannot find the DisplayName from the EDID Data from the GPU
                 // So we just make one up using the DisplayID
                 DisplayName = $"Display #{DisplayId}";

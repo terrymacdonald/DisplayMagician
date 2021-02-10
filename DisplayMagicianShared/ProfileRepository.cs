@@ -42,20 +42,36 @@ namespace DisplayMagicianShared
             // Initialise the the NVIDIA NvAPIWrapper
             try
             {
+                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NvAPIWrapper.NVIDIA library.");
                 NvAPIWrapper.NVIDIA.Initialize();
 
+                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Creating the Profiles storage folder {AppProfileStoragePath}.");
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppProfileStoragePath))
                 {
                     Directory.CreateDirectory(AppProfileStoragePath);
                 }
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                SharedLogger.logger.Fatal(ex, $"ProfileRepository/ProfileRepository: DisplayMagician doesn't have permissions to create the Profiles storage folder {AppProfileStoragePath}.");
+            }
+            catch (ArgumentException ex)
+            {
+                SharedLogger.logger.Fatal(ex, $"ProfileRepository/ProfileRepository: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} due to an invalid argument.");
+            }
+            catch (PathTooLongException ex)
+            {
+                SharedLogger.logger.Fatal(ex, $"ProfileRepository/ProfileRepository: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the path is too long.");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                SharedLogger.logger.Fatal(ex, $"ProfileRepository/ProfileRepository: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the parent folder isn't there.");
+            }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                // ignored
+                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NvAPIWrapper caused an exception.");
             }
-
             // Load the Profiles from storage
             LoadProfiles();
         }
@@ -154,11 +170,23 @@ namespace DisplayMagicianShared
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
                 }
-                catch (Exception ex)
+                catch (UnauthorizedAccessException ex)
                 {
-                    Console.WriteLine($"ProfileRepository/RemoveProfile exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    // TODO check and report
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
                 }
+                catch (ArgumentException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
+                }
+
             }
 
             // Remove the Profile from the list.
@@ -189,10 +217,21 @@ namespace DisplayMagicianShared
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
                 }
-                catch (Exception ex)
+                catch (UnauthorizedAccessException ex)
                 {
-                    Console.WriteLine($"ProfileRepository/RemoveProfile exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    // TODO check and report
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
+                }
+                catch (ArgumentException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
             }
 
@@ -224,10 +263,21 @@ namespace DisplayMagicianShared
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
                 }
-                catch (Exception ex)
+                catch (UnauthorizedAccessException ex)
                 {
-                    Console.WriteLine($"ProfileRepository/RemoveProfile exception 3: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    // TODO check and report
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
+                }
+                catch (ArgumentException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
             }
 
@@ -448,7 +498,8 @@ namespace DisplayMagicianShared
                     _allProfiles.Sort();
 
                 }
-            } else
+            } 
+            else
             {
                 // If we get here, then we don't have any profiles saved!
                 // So we gotta start from scratch
@@ -478,11 +529,21 @@ namespace DisplayMagicianShared
                 {
                     Directory.CreateDirectory(AppProfileStoragePath);
                 }
-                catch (Exception ex)
+                catch (UnauthorizedAccessException ex)
                 {
-                    Console.WriteLine($"ProfileRepository/SaveProfiles exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    Console.WriteLine($"Unable to create Profile folder {AppProfileStoragePath}: " + ex.Message);
-
+                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician doesn't have permissions to create the Profiles storage folder {AppProfileStoragePath}.");
+                }
+                catch (ArgumentException ex)
+                {
+                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the parent folder isn't there.");
                 }
             }
 
@@ -550,12 +611,12 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                Logger.logger.Debug(ex, "ProfileRepository/GenerateProfileDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
+                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateProfileDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
             }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             {
-                Logger.logger.Debug("ProfileRepository/GenerateProfileDisplayIdentifiers: Was able to GetPhysicalCPUs through NvAPIWrapper library.");
+                SharedLogger.logger.Debug("ProfileRepository/GenerateProfileDisplayIdentifiers: Was able to GetPhysicalCPUs through NvAPIWrapper library.");
 
                 foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
                 {
@@ -687,7 +748,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                Logger.logger.Debug(ex, "ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
+                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
             }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
