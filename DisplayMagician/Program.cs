@@ -293,6 +293,7 @@ namespace DisplayMagician {
 
         private static void CreateProfile()
         {
+            logger.Debug($"Program/CreateProfile: Starting");
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -328,7 +329,7 @@ namespace DisplayMagician {
 
         private static void StartUpApplication()
         {
-            
+            logger.Debug($"Program/StartUpApplication: Starting");
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -428,6 +429,8 @@ namespace DisplayMagician {
         // ReSharper disable once CyclomaticComplexity
         private static void RunShortcut(string shortcutUUID)
         {
+            logger.Debug($"Program/RunShortcut: Starting");
+
             ShortcutItem shortcutToRun = null;
 
             // Check there is only one version of this application so we won't
@@ -479,14 +482,22 @@ namespace DisplayMagician {
         // ApplyProfile lives here so that the UI works.
         public static bool ApplyProfile(ProfileItem profile)
         {
+            logger.Debug($"Program/ApplyProfile: Starting");
 
             // We need to check if the profile is valid
             if (!profile.IsPossible)
+            {
+                logger.Debug($"Program/ApplyProfile: The supplied profile {profile.Name} isn't currently possible to use, so we can't apply it. This means a display that existed before has been removed, or moved.");
                 return false;
+            }
+
 
             // We need to check if the profile is the same one that we're on
             if (profile.IsActive)
+            {
+                logger.Debug($"Program/ApplyProfile: The supplied profile {profile.Name} is currently in use, so we don't need to apply it.");
                 return false;
+            }
 
             try
             {
@@ -529,15 +540,25 @@ namespace DisplayMagician {
                         .Where(topology => topology != null)
                         .Select(topology => topology.ToGridTopology())
                         .Count();
+                if (toProfileSurroundTopologyCount > 0)
+                    logger.Debug($"Program/ApplyProfile: {profile.Name} profile we want to use is a NVIDIA Surround profile, so we need to change the NVIDIA GRID topology.");
+                else
+                    logger.Debug($"Program/ApplyProfile: {profile.Name} profile we want to use does not use NVIDIA Surround.");
+
                 int fromProfileSurroundTopologyCount =
                     ProfileRepository.CurrentProfile.Paths.SelectMany(paths => paths.TargetDisplays)
                         .Select(target => target.SurroundTopology)
                         .Where(topology => topology != null)
                         .Select(topology => topology.ToGridTopology())
                         .Count();
+                if (fromProfileSurroundTopologyCount > 0)
+                    logger.Debug($"Program/ApplyProfile: {ProfileRepository.CurrentProfile} profile currently in use is a NVIDIA Surround profile, so we need to change the NVIDIA GRID topology.");
+                else
+                    logger.Debug($"Program/ApplyProfile: {ProfileRepository.CurrentProfile} profile currently in use does not use NVIDIA Surround.");
 
                 if (toProfileSurroundTopologyCount > 0 || fromProfileSurroundTopologyCount > 0)
                 {
+                    logger.Debug($"Program/ApplyProfile: Changing the NVIDIA GRID topology to apply or remove a NVIDIA Surround profile");
                     topologyForm.ShowDialog();
 
                     try
@@ -566,10 +587,14 @@ namespace DisplayMagician {
                         Console.WriteLine("Program/ApplyProfile : Applying Profile Topology stage failed to complete");
 
                     if (!applyTopologyTask.IsCompleted)
+                    {
+                        logger.Debug($"Program/ApplyProfile: Failed to complete applying or removing the NVIDIA Surround profile");
                         return false;
+                    }
                 }
 
                 // We always want to do the WindowsDisplayAPI PathInfo part
+                logger.Debug($"Program/ApplyProfile: Changing the Windows Display Path Info to change the Windows Display layout");
                 pathInfoForm.ShowDialog();
                 try
                 {
@@ -594,7 +619,7 @@ namespace DisplayMagician {
                 }
 
                 if (applyPathInfoTask.IsFaulted)
-                    Console.WriteLine("Program/ApplyProfile : Applying Profile PathInfo stage failed to complete");
+                    logger.Debug($"Program/ApplyProfile: Applying Profile PathInfo stage failed to complete");
 
                 if (!applyPathInfoTask.IsCompleted)
                     return false;
@@ -603,7 +628,10 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                return false;
+                {
+                    logger.Debug($"Program/ApplyProfile: Failed to complete changing the Windows Display layout");
+                    return false;
+                }
             }
 
             return true;
@@ -701,13 +729,11 @@ namespace DisplayMagician {
             bool failedTask = false;
             foreach (var loadGameTask in loadGamesTasks)
             {
-                Console.WriteLine($"Program/LoadGamesInBackground: LoadGameTask #{loadGameTask.Id}: {loadGameTask.Status}");
                 if (loadGameTask.Exception != null)
                 {
                     failedTask = true;
                     foreach (var ex in loadGameTask.Exception.InnerExceptions)
-                        Console.WriteLine("      {0}: {1}", ex.GetType().Name,
-                                          ex.Message);
+                        logger.Error(ex, $"Program/LoadGamesInBackground exception during loadGamesTasks");
                 }
             }
 
