@@ -50,13 +50,26 @@ namespace DisplayMagician
                     Directory.CreateDirectory(AppShortcutStoragePath);
                 }
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician doesn't have permissions to create the Shortcut storage folder {AppShortcutStoragePath}.");
+            }
+            catch (ArgumentException ex)
+            {
+                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} due to an invalid argument.");
+            }
+            catch (PathTooLongException ex)
+            {
+                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} as the path is too long.");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} as the parent folder isn't there.");
+            }
             catch (Exception ex)
             {
-                //Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                logger.Error(ex, $"ShortcutRepository/Instansiation exception during class construction");
-                // ignored
+                logger.Warn(ex, $"ShortcutRepository/ShortcutRepository: Initialising NVIDIA NvAPIWrapper or CoreAudioController caused an exception.");
             }
-
 
             // Load the Shortcuts from storage
             LoadShortcuts();
@@ -110,6 +123,8 @@ namespace DisplayMagician
         #region Class Methods
         public static bool AddShortcut(ShortcutItem shortcut)
         {
+            logger.Debug($"ShortcutRepository/AddShortcut: Adding shortcut {shortcut.Name} to our shortcut repository");
+
             if (!(shortcut is ShortcutItem))
                 return false;
 
@@ -119,9 +134,6 @@ namespace DisplayMagician
             //Doublecheck it's been added
             if (ContainsShortcut(shortcut))
             {
-                // Generate the Shortcut Icon ready to be used
-                //shortcut.SaveShortcutIconToCache();
-
                 // Save the shortcuts JSON as it's different
                 SaveShortcuts();
 
@@ -134,6 +146,8 @@ namespace DisplayMagician
 
         public static bool RemoveShortcut(ShortcutItem shortcut)
         {
+            logger.Debug($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcut.Name} if it exists in our shortcut repository");
+
             if (!(shortcut is ShortcutItem))
                 return false;
 
@@ -143,13 +157,12 @@ namespace DisplayMagician
             {
                 try
                 {
+                    logger.Info($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcutToRemove.Name}");
                     File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-
-                    // TODO check and report
+                    logger.Error(ex, $"ShortcutRepository/RemoveShortcut: Exception removing shortcut {shortcutToRemove.Name}");
                 }
             }
 
@@ -170,13 +183,17 @@ namespace DisplayMagician
 
         public static bool RemoveShortcut(string shortcutNameOrUuid)
         {
-            if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
-                return false;
 
+            logger.Debug($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutNameOrUuid} if it exists in our shortcut repository");
+
+            if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
+            {
+                logger.Error($"ShortcutRepository/RemoveShortcut2: Shortcut to look for was empty or only whitespace");
+                return false;
+            }
             List<ShortcutItem> shortcutsToRemove;
             int numRemoved;
 
-            //string uuidV4Regex = @"/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
             Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
@@ -193,13 +210,12 @@ namespace DisplayMagician
             {
                 try
                 {
+                    logger.Info($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutToRemove.Name}");
                     File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutRepository/RemoveShortcut exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-
-                    // TODO check and report
+                    logger.Error(ex, $"ShortcutRepository/RemoveShortcut2: Exception removing shortcut {shortcutToRemove.Name}");
                 }
             }
 
@@ -218,13 +234,19 @@ namespace DisplayMagician
 
         public static bool ContainsShortcut(ShortcutItem shortcut)
         {
+
+            logger.Debug($"ShortcutRepository/ContainsShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
+
             if (!(shortcut is ShortcutItem))
                 return false;
 
             foreach (ShortcutItem testShortcut in _allShortcuts)
             {
-                if (testShortcut.UUID.Equals(shortcut.UUID,StringComparison.OrdinalIgnoreCase))
+                if (testShortcut.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.Debug($"ShortcutRepository/ContainsShortcut: {shortcut.Name} does exist in our shortcut repository");
                     return true;
+                }
             }
 
             return false;
@@ -232,18 +254,25 @@ namespace DisplayMagician
 
         public static bool ContainsShortcut(string shortcutNameOrUuid)
         {
+
+            logger.Debug($"ShortcutRepository/ContainsShortcut2: Checking whether {shortcutNameOrUuid} exists in our shortcut repository");
+
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
+            {
+                logger.Error($"ShortcutRepository/ContainsShortcut2: Shortcut to look for was empty or only whitespace");
                 return false;
+            }
 
-
-            //string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
             Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with UUID {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
+                    }
                 }
 
             }
@@ -252,7 +281,10 @@ namespace DisplayMagician
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
+                    }
                 }
 
             }
@@ -264,17 +296,24 @@ namespace DisplayMagician
 
         public static ShortcutItem GetShortcut(string shortcutNameOrUuid)
         {
-            if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
-                return null;
+            logger.Debug($"ShortcutRepository/GetShortcut: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
 
-            //string uuidV4Regex = @"/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
+            if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
+            {
+                logger.Error($"ShortcutRepository/GetShortcut: Shortcut to get was empty or only whitespace");
+                return null;
+            }
+
             Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.Debug($"ShortcutRepository/GetShortcut: Returning shortcut with UUID {shortcutNameOrUuid}");
                         return testShortcut;
+                    }
                 }
 
             }
@@ -283,7 +322,10 @@ namespace DisplayMagician
                 foreach (ShortcutItem testShortcut in _allShortcuts)
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.Debug($"ShortcutRepository/GetShortcut: Returning shortcut with Name {shortcutNameOrUuid}");
                         return testShortcut;
+                    }
                 }
 
             }
@@ -296,6 +338,8 @@ namespace DisplayMagician
         public static bool RenameShortcutProfile(ProfileItem newProfile)
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
+            logger.Debug($"ShortcutRepository/RenameShortcutProfile: Renaming the profile in any shortcuts containing the old profile name");
+
             if (!(newProfile is ProfileItem))
                 return false;
 
@@ -303,6 +347,7 @@ namespace DisplayMagician
             {
                 if (testShortcut.ProfileUUID.Equals(newProfile.UUID, StringComparison.OrdinalIgnoreCase) && testShortcut.AutoName)
                 {
+                    logger.Debug($"ShortcutRepository/RenameShortcutProfile: Renaming {testShortcut.Name} shortcut's profile to {newProfile.Name} since the original profile has just been renamed.");
                     testShortcut.ProfileToUse = newProfile;
                     testShortcut.AutoSuggestShortcutName();
                 }
@@ -315,6 +360,8 @@ namespace DisplayMagician
 
         private static bool LoadShortcuts()
         {
+
+            logger.Debug($"ShortcutRepository/LoadShortcut: Loading shortcuts from {_shortcutStorageJsonFileName} into the Shortcut Repository");
 
             if (File.Exists(_shortcutStorageJsonFileName))
             {
@@ -337,11 +384,14 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        // ignored
-                        Console.WriteLine($"Unable to load Shortcuts from JSON file {_shortcutStorageJsonFileName}: " + ex.Message);
+                        logger.Error(ex, $"ShortcutRepository/LoadShortcut: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
 
                     // Lookup all the Profile Names in the Saved Profiles
+                    // and link the profiles to the Shortcuts as we only 
+                    // store the profile names to allow users to uodate profiles
+                    // separately from the shortcuts
+                    logger.Debug($"ShortcutRepository/LoadShortcut: Connecting Shortcut profile names to the real profile objects");
                     foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
                         foreach (ProfileItem profile in ProfileRepository.AllProfiles)
@@ -355,11 +405,24 @@ namespace DisplayMagician
                                 break;
                             }
                         }
+
+                        // We should only get here if there isn't a profile to match to.
+                        logger.Debug($"ShortcutRepository/LoadShortcut: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
+                        updatedShortcut.ProfileToUse = null;
+                        updatedShortcut.IsPossible = false;
                     }
 
                     // Sort the shortcuts alphabetically
                     _allShortcuts.Sort();
                 }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/LoadShortcut: The {_shortcutStorageJsonFileName} shortcut JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
+                }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/LoadShortcut: Couldn't find the {_shortcutStorageJsonFileName} shortcut JSON file that contains the Shortcuts");
             }
             _shortcutsLoaded = true;
             return true;
@@ -367,25 +430,30 @@ namespace DisplayMagician
 
         public static bool SaveShortcuts()
         {
+            logger.Debug($"ShortcutRepository/SaveShortcuts: Attempting to save the shortcut repository to the {_shortcutStorageJsonFileName}.");
 
             if (!Directory.Exists(AppShortcutStoragePath))
             {
+                logger.Debug($"ShortcutRepository/SaveShortcuts: Creating the shortcut folder {AppShortcutStoragePath} as it doesn't currently exist.");
                 try
                 {
                     Directory.CreateDirectory(AppShortcutStoragePath);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ShortcutRepository/SaveShortcuts exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-
-                    Console.WriteLine($"Unable to create Shortcut folder {AppShortcutStoragePath}: " + ex.Message);
-
+                    logger.Error(ex, $"ShortcutRepository/SaveShortcuts: Unable to create Shortcut folder {AppShortcutStoragePath}.");
                 }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/SaveShortcuts: Shortcut folder {AppShortcutStoragePath} exists.");
             }
 
 
             try
             {
+                logger.Debug($"ShortcutRepository/SaveShortcuts: Creating the shortcut folder {AppShortcutStoragePath} as it doesn't currently exist.");
+
                 var json = JsonConvert.SerializeObject(_allShortcuts, Formatting.Indented, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
@@ -397,15 +465,15 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
+                    logger.Debug($"ShortcutRepository/SaveShortcuts: Saving the shortcut repository to the {_shortcutStorageJsonFileName}.");
+
                     File.WriteAllText(_shortcutStorageJsonFileName, json, Encoding.Unicode);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/SaveShortcuts exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-
-                Console.WriteLine($"Unable to save Shortcut JSON file {_shortcutStorageJsonFileName}: " + ex.Message);
+                logger.Error(ex, $"ShortcutRepository/SaveShortcuts: Unable to save the shortcut repository to the {_shortcutStorageJsonFileName}.");
             }
 
             return false;
@@ -414,6 +482,8 @@ namespace DisplayMagician
         // ReSharper disable once CyclomaticComplexity
         public static void RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         {
+            logger.Debug($"ShortcutRepository/RunShortcut: Running the shortcut {shortcutToUse.Name}.");
+
             // Do some validation to make sure the shortcut is sensible
             // And that we have enough to try and action within the shortcut
             // including checking the Profile in the shortcut is possible
@@ -424,25 +494,27 @@ namespace DisplayMagician
             (bool valid, string reason) = shortcutToUse.IsValid();
             if (!valid)
             {
-                logger.Error($"ShortcutRepository/RunShortcut error. shortcutToUse isn't valid");
+                logger.Error($"ShortcutRepository/RunShortcut: Cannot run the shortcut {shortcutToUse.Name} as it isn't valid");
                 MessageBox.Show(
                     $"Unable to run the shortcut '{shortcutToUse.Name}': {reason}",
                     @"Cannot run the Shortcut",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
                 return;
-                //throw new Exception(string.Format("ShortcutRepository/SaveShortcutIconToCache exception: Unable to run the shortcut '{0}': {1}", shortcutToUse.Name, reason));
-
             }
 
             // Remember the profile we are on now
             bool needToChangeProfiles = false;
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
             if (!rollbackProfile.Equals(shortcutToUse.ProfileToUse))
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.ProfileToUse} profile.");
                 needToChangeProfiles = true;
-
-
-
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We're already on the {rollbackProfile.Name} profile so no need to change profiles.");
+            }
             // Tell the IPC Service we are busy right now, and keep the previous status for later
             InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;
             IPCService.GetInstance().Status = InstanceStatus.Busy;
@@ -450,12 +522,12 @@ namespace DisplayMagician
             // Only change profiles if we have to
             if (needToChangeProfiles)
             {
+                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {rollbackProfile.Name} profile.");
                 // Apply the Profile!
-                Console.WriteLine($"Changing to '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                 if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
                 {
                     Console.WriteLine($"ERROR - Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
-                    logger.Error($"ShortcutRepository/RunShortcut cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                 }
             }
 
@@ -464,12 +536,20 @@ namespace DisplayMagician
             CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
             double rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
             if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
                 needToChangeAudio = true;
-
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
+            }
 
             // Change Audio Device (if one specified)
             if (shortcutToUse.ChangeAudioDevice)
             {
+                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
+
                 IEnumerable<CoreAudioDevice> audioDevices = _audioController.GetPlaybackDevices();
                 foreach (CoreAudioDevice audioDevice in audioDevices)
                 {
@@ -480,6 +560,7 @@ namespace DisplayMagician
 
                         if (shortcutToUse.SetAudioVolume)
                         {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} audio level to {shortcutToUse.AudioVolume}%.");
                             Task myTask = new Task(() =>
                             {
                                 audioDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
@@ -497,11 +578,19 @@ namespace DisplayMagician
             CoreAudioDevice rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
             double rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
             if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
                 needToChangeCaptureDevice = true;
-
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
+            }
             // Change capture Device (if one specified)
             if (shortcutToUse.ChangeCaptureDevice)
             {
+                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+
                 IEnumerable<CoreAudioDevice> captureDevices = _audioController.GetCaptureDevices();
                 foreach (CoreAudioDevice captureDevice in captureDevices)
                 {
@@ -512,6 +601,7 @@ namespace DisplayMagician
 
                         if (shortcutToUse.SetCaptureVolume)
                         {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} audio level to {shortcutToUse.CaptureVolume}%.");
                             Task myTask = new Task(() =>
                             {
                                 captureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
@@ -532,21 +622,51 @@ namespace DisplayMagician
             List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Enabled == true).OrderBy(program => program.Priority).ToList();
             if (startProgramsToStart.Count > 0)
             {
+                logger.Info($"ShortcutRepository/RunShortcut: Starting {startProgramsToStart.Count} programs before the main game or executable");
                 foreach (StartProgram processToStart in startProgramsToStart)
                 {
                     // Start the executable
-                    Console.WriteLine("Starting programs before main game/executable:");
-
-                    Console.WriteLine($" - Starting process {processToStart.Executable}");
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting process {processToStart.Executable}");
                     Process process = null;
-                    if (processToStart.ExecutableArgumentsRequired)
-                        process = System.Diagnostics.Process.Start(processToStart.Executable, processToStart.Arguments);
-                    else
-                        process = System.Diagnostics.Process.Start(processToStart.Executable);
-                    // Record t
-                    if (processToStart.CloseOnFinish)
-                        startProgramsToStop.Add(process);
+                    try
+                    {
+                        if (processToStart.ExecutableArgumentsRequired)
+                            process = System.Diagnostics.Process.Start(processToStart.Executable, processToStart.Arguments);
+                        else
+                            process = System.Diagnostics.Process.Start(processToStart.Executable);
+                        // Record t
+                        if (processToStart.CloseOnFinish)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {processToStart.Executable} after the main game or executable is closed.");
+                            startProgramsToStop.Add(process);
+                        }
+                        else
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {processToStart.Executable} after the main game or executable is closed, so we'll just leave it running");
+                        }
+                    }
+                    catch (Win32Exception ex)
+                    {
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting process {processToStart.Executable}. Windows complained about something while trying to create a new process.");
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting process {processToStart.Executable}. The object was disposed before we could start the process.");
+                    }
+                    catch (FileNotFoundException ex)
+                    {
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting process {processToStart.Executable}. The file wasn't found by DisplayMagician and so we couldn't start it");
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting process {processToStart.Executable}. Method call is invalid for the current state.");
+                    }
+
                 }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
             }
 
             // Add a status notification icon in the status area
@@ -564,10 +684,15 @@ namespace DisplayMagician
             // to create a NotifyIncon as MainForm isn't running to create
             // one for us already!
             if (notifyIcon == null)
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We need to create a temporary system tray icon as we're running from a shortcut");
                 temporaryNotifyIcon = true;
+            }
 
             if (temporaryNotifyIcon)
             {
+                logger.Debug($"ShortcutRepository/RunShortcut: Create a temporary system tray icon (user clicked a desktop shortcut)");
+
                 if (!shortcutToUse.Category.Equals(ShortcutCategory.NoGame))
                 {
 
@@ -590,6 +715,8 @@ namespace DisplayMagician
             }
             else
             {
+
+                logger.Debug($"ShortcutRepository/RunShortcut: Updating existing system tray icon (we're running a shortcut from within the main application window)");
                 // If we reach here then we're running the shortcut
                 // from the ShortcutLibrary window, so we need to 
                 // remember what the text was so we can return it to
@@ -604,12 +731,33 @@ namespace DisplayMagician
             // Now start the main game, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
             {
+                logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
                 // Start the executable
-                Process process = null;
-                if (shortcutToUse.ExecutableArgumentsRequired)
-                    process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
-                else
-                    process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
+
+                try
+                {
+                    Process process = null;
+                    if (shortcutToUse.ExecutableArgumentsRequired)
+                        process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
+                    else
+                        process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
+                }
+                catch (Win32Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. Windows complained about something while trying to create a new process.");
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. The object was disposed before we could start the process.");
+                }
+                catch (FileNotFoundException ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Win32Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. The file wasn't found by DisplayMagician and so we couldn't start it");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception starting main executable process {shortcutToUse.ExecutableNameAndPath}. Method call is invalid for the current state.");
+                }
 
                 // Figure out what we want to look for
                 string processNameToLookFor;                
@@ -623,6 +771,7 @@ namespace DisplayMagician
                     // If we are monitoring a different executable, then lets do get that name ready instead
                     processNameToLookFor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.DifferentExecutableToMonitor);
                 }
+                logger.Debug($"ShortcutRepository/RunShortcut: Looking for processes with the name {processNameToLookFor} so that we can monitor them and know when they are closed.");
 
                 // Now look for the thing we're supposed to monitor
                 // and wait until it starts up
@@ -636,7 +785,7 @@ namespace DisplayMagician
                     // so let's break
                     if (processesToMonitor.Count > 0)
                     {
-                        logger.Debug($"Found {processesToMonitor.Count} '{processNameToLookFor}' processes have started");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Found {processesToMonitor.Count} '{processNameToLookFor}' processes to monitor");
                         break;
                     }
 
@@ -647,7 +796,7 @@ namespace DisplayMagician
                 //  make sure we have things to monitor and alert if not
                 if (processesToMonitor.Count == 0)
                 {
-                    logger.Error($"No '{processNameToLookFor}' processes found before waiting timeout");
+                    logger.Error($"No '{processNameToLookFor}' processes found before waiting timeout. DisplayMagician was unable to find any processes before the {shortcutToUse.StartTimeout} second timeout");
                 }
 
                 // Store the process to monitor for later
@@ -663,6 +812,7 @@ namespace DisplayMagician
                 }
                 Application.DoEvents();
 
+                logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the executable {shortcutToUse.ExecutableNameAndPath} to close.");
                 // Now we want to tell the user we're running an application!
                 // Construct the Windows toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
@@ -686,10 +836,10 @@ namespace DisplayMagician
 
                 // if we have things to monitor, then we should start to wait for them
                 Console.WriteLine($"Waiting for all {processNameToLookFor} windows to exit.");
-                logger.Debug($"ShortcutRepository/RunShortcut - waiting for application {processNameToLookFor} to exit.");
+                logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {processNameToLookFor} to exit.");
                 if (processesToMonitor.Count > 0)
                 {
-                    logger.Debug($"{processesToMonitor.Count} '{processNameToLookFor}' processes are still running");
+                    logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{processNameToLookFor}' processes are still running");
                     while (true)
                     {
                         processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
@@ -697,14 +847,16 @@ namespace DisplayMagician
                         // If we have no more processes left then we're done!
                         if (processesToMonitor.Count == 0)
                         {
-                            logger.Debug($"No more '{processNameToLookFor}' processes are still running");
+                            logger.Debug($"ShortcutRepository/RunShortcut: No more '{processNameToLookFor}' processes are still running");
                             break;
                         }
                     }
                 }
                 Console.WriteLine($"{processNameToLookFor} has exited.");
-                logger.Debug($"ShortcutRepository/RunShortcut - Application {processNameToLookFor} has exited.");
+                logger.Debug($"ShortcutRepository/RunShortcut: Executable {processNameToLookFor} has exited.");
 
+
+                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} has closed.");
                 // Tell the user that the application has closed
                 // Construct the toast content
                 tcBuilder = new ToastContentBuilder()
@@ -729,9 +881,10 @@ namespace DisplayMagician
                 // If the game is a Steam Game we check for that
                 if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Steam))
                 {
-
                     // We now need to get the SteamGame info
                     SteamGame steamGameToRun = SteamLibrary.GetSteamGame(shortcutToUse.GameAppId);
+
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {steamGameToRun.Name} Steam Game, and then we're going to monitor it to wait for it to close.");
 
                     // If the GameAppID matches a Steam game, then lets run it
                     if (steamGameToRun is SteamGame)
@@ -846,6 +999,8 @@ namespace DisplayMagician
                 {
                     // We now need to get the Uplay Game  info
                     UplayGame uplayGameToRun = UplayLibrary.GetUplayGame(shortcutToUse.GameAppId);
+
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {uplayGameToRun.Name} Uplay Game, and then we're going to monitor it to wait for it to close.");
 
                     // If the GameAppID matches a Uplay game, then lets run it
                     if (uplayGameToRun is UplayGame)

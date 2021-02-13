@@ -16,6 +16,9 @@ namespace DisplayMagician
 {
     class ProfileMustExistValidator : IArgumentValidator
     {
+
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public ValidationResult GetValidationResult(CommandArgument argumentProfileName, ValidationContext context)
         {
             // This validator only runs if there is a value
@@ -25,6 +28,7 @@ namespace DisplayMagician
             // Try to find the Profile Name
             if (!ProfileRepository.ContainsProfile(profileName))
             {
+                logger.Error($"ProfileMustExistValidator/GetValidationResult: Couldn't find Profile Name or ID supplied via command line: '{profileName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
                 return new ValidationResult($"Couldn't find Profile Name or ID supplied via command line: '{profileName}'. Please check the Profile Name or ID you supplied on the command line is correct.");
             }
 
@@ -36,6 +40,8 @@ namespace DisplayMagician
 
     class ShortcutMustExistValidator : IArgumentValidator
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public ValidationResult GetValidationResult(CommandArgument argumentShortcutName, ValidationContext context)
         {
             // This validator only runs if there is a string provided
@@ -45,6 +51,7 @@ namespace DisplayMagician
             // Check if the UUID or ShortcutName are provided
             if (!ShortcutRepository.ContainsShortcut(shortcutName))
             {
+                logger.Error($"ProfileMustExistValidator/GetValidationResult: Couldn't find Shortcut Name supplied via command line: '{shortcutName}'. Please check the Shortcut Name you supplied on the command line is correct.");
                 return new ValidationResult($"Couldn't find Shortcut Name supplied via command line: '{shortcutName}'. Please check the Shortcut Name you supplied on the command line is correct.");
             }
 
@@ -57,6 +64,8 @@ namespace DisplayMagician
 
     class FileOptionMustExistValidator : IOptionValidator
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public ValidationResult GetValidationResult(CommandOption optionFullFileName, ValidationContext context)
         {
             // This validator only runs if there is a string provided
@@ -66,6 +75,7 @@ namespace DisplayMagician
             // Check that the file exists
             if (!File.Exists(fileNameAndPath))
             {
+                logger.Error($"ProfileMustExistValidator/GetValidationResult: Couldn't find the file '{optionFullFileName.Value()}' supplied to '{optionFullFileName.LongName}'. Please check you specified the full path to the file on the command line.");
                 return new ValidationResult($"Couldn't find the file '{optionFullFileName.Value()}' supplied to '{optionFullFileName.LongName}'. Please check you specified the full path to the file on the command line.");
             }
 
@@ -75,6 +85,8 @@ namespace DisplayMagician
 
     class FileArgumentMustExistValidator : IArgumentValidator
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public ValidationResult GetValidationResult(CommandArgument argumentFullFileName, ValidationContext context)
         {
             // This validator only runs if there is a string provided
@@ -84,6 +96,7 @@ namespace DisplayMagician
             // Check that the file exists
             if (!File.Exists(fileNameAndPath))
             {
+                logger.Error($"ProfileMustExistValidator/GetValidationResult: Couldn't find the file '{argumentFullFileName.Value}' supplied to '{argumentFullFileName.Name}'. Please check you specified the full path to the file on the command line.");
                 return new ValidationResult($"Couldn't find the file '{argumentFullFileName.Value}' supplied to '{argumentFullFileName.Name}'. Please check you specified the full path to the file on the command line.");
             }
 

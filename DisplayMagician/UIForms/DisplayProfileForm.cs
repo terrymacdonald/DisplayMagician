@@ -305,7 +305,7 @@ namespace DisplayMagician.UIForms
                 // Lets update the rest of the profile screen too
                 lbl_profile_shown.Text = txt_profile_save_name.Text;
 
-                // And we also need to go through the Shortcuts in the library and rename them!
+                // And we also need to go through the any Shortcuts that use the profile and rename them too!
                 ShortcutRepository.RenameShortcutProfile(_selectedProfile);
                 
 
