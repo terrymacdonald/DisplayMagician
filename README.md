@@ -55,7 +55,8 @@ DisplayMagician lets you set up the following information for each game or appli
 * Support of AMD Eyefinity (Needs a C# wrapper for AMD ADL)
 
 ## Donation
-I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. That said, I'd appreciate a donation to help buy a coffee or two! If you're so inclined, you can [sponsor me on GitHub Sponsors](https://github.com/sponsors/terrymacdonald). 
+I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. That said, I'd appreciate a donation to help buy a coffee or two! <a href="https://www.buymeacoffee.com/displaymagician" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+ If you're so inclined, you can [sponsor me on GitHub Sponsors](https://github.com/sponsors/terrymacdonald). 
 
 ## Usage
 
