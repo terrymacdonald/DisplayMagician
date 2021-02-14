@@ -172,10 +172,15 @@ namespace DisplayMagician
             if (numRemoved == 1)
             {
                 SaveShortcuts();
+                logger.Debug($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
                 return true;
             }
             else if (numRemoved == 0)
+            {
+                logger.Debug($"ShortcutRepository/RemoveShortcut: Our shortcut repository doesn't contain a shortcut we were looking for");
                 return false;
+            }
+                
             else
                 throw new ShortcutRepositoryException();
         }
@@ -222,10 +227,14 @@ namespace DisplayMagician
             if (numRemoved == 1)
             {
                 SaveShortcuts();
+                logger.Debug($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return true;
             }
             else if (numRemoved == 0)
+            {
+                logger.Debug($"ShortcutRepository/RemoveShortcut2: Our shortcut repository doesn't contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return false;
+            }
             else
                 throw new ShortcutRepositoryException();
 
@@ -289,6 +298,7 @@ namespace DisplayMagician
 
             }
 
+            logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} doesn't exist in our shortcut repository");
             return false;
 
         }
@@ -330,6 +340,7 @@ namespace DisplayMagician
 
             }
 
+            logger.Debug($"ShortcutRepository/GetShortcut: No shortcut was found to return with UUI or Name {shortcutNameOrUuid}");
             return null;
 
         }
@@ -897,7 +908,6 @@ namespace DisplayMagician
                             address += "/" + shortcutToUse.GameArguments;
                         }
                         logger.Debug($"ShortcutRepository/RunShortcut Steam launch address is {address}");
-
                         // Start the URI Handler to run Steam
                         Console.WriteLine($"Starting Steam Game: {steamGameToRun.Name}");
                         var steamProcess = Process.Start(address);
@@ -959,19 +969,19 @@ namespace DisplayMagician
                         Thread.Sleep(5000);
                         // Wait for the game to exit
                         Console.WriteLine($"Waiting for {steamGameToRun.Name} to exit.");
-                        logger.Debug($"ShortcutRepository/RunShortcut - waiting for Steam Game {steamGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Waiting for Steam Game {steamGameToRun.Name} to exit.");
                         while (true)
                         {
                             if (!steamGameToRun.IsRunning)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} is no longer running (IsRunning is false).");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Steam Game {steamGameToRun.Name} is no longer running (IsRunning is false).");
                                 break;
                             }
 
                             Thread.Sleep(300);
                         }
                         Console.WriteLine($"{steamGameToRun.Name} has exited.");
-                        logger.Debug($"ShortcutRepository/RunShortcut - Steam Game {steamGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Steam Game {steamGameToRun.Name} has exited.");
 
                         // Tell the user that the Steam Game has closed
                         // Construct the toast content
@@ -1008,7 +1018,7 @@ namespace DisplayMagician
                         // Prepare to start the Uplay game using the URI interface 
                         // as used by Uplay for it's own desktop shortcuts.
                         var address = $"uplay://launch/{uplayGameToRun.Id}";
-                        logger.Debug($"ShortcutRepository/RunShortcut Uplay launch address is {address}");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Uplay launch address is {address}");
                         if (shortcutToUse.GameArgumentsRequired)
                         {
                             address += "/" + shortcutToUse.GameArguments;
@@ -1039,6 +1049,7 @@ namespace DisplayMagician
 
                         // Start the URI Handler to run Uplay
                         Console.WriteLine($"Starting Uplay Game: {uplayGameToRun.Name}");
+                        logger.Info($"ShortcutRepository/RunShortcut: Starting Uplay Game: {uplayGameToRun.Name}");
                         Process uplayStartProcess = Process.Start(address);
 
                         // Wait for Uplay to start
@@ -1053,7 +1064,7 @@ namespace DisplayMagician
                             // so let's break
                             if (uplayProcesses.Count > 0)
                             {
-                                logger.Debug($"Found {uplayProcesses.Count} 'upc' processes have started");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found {uplayProcesses.Count} 'upc' processes have started");
                                 break;
                             }
 
@@ -1065,6 +1076,7 @@ namespace DisplayMagician
 
                         // Delay 5secs
                         Thread.Sleep(5000);
+                        logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Uplay process start the game.");
 
                         // Now we know the Uplay app is running then 
                         // we wait until the Uplay game is running (*allows for uplay update)
@@ -1073,7 +1085,7 @@ namespace DisplayMagician
 
                             if (uplayGameToRun.IsRunning)
                             {
-                                logger.Debug($"Found the '{uplayGameToRun.Name}' process has started");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found the '{uplayGameToRun.Name}' process has started");
                                 break;
                             }
 
@@ -1116,19 +1128,19 @@ namespace DisplayMagician
 
                         // Wait for the game to exit
                         Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
-                        logger.Debug($"ShortcutRepository/RunShortcut - waiting for Uplay Game {uplayGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: waiting for Uplay Game {uplayGameToRun.Name} to exit.");
                         while (true)
                         {
                             if (!uplayGameToRun.IsRunning)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} is no longer running (IsRunning is false).");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} is no longer running (IsRunning is false).");
                                 break;
                             }
 
                             Thread.Sleep(300);
                         }
                         Console.WriteLine($"{uplayGameToRun.Name} has exited.");
-                        logger.Debug($"ShortcutRepository/RunShortcut - Uplay Game {uplayGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} has exited.");
 
                         // Tell the user that the Uplay Game has closed
                         // Construct the toast content
@@ -1154,8 +1166,10 @@ namespace DisplayMagician
 
             // Remove the status notification icon from the status area
             // once we've exited the game, but only if its a game or app
+            logger.Debug($"ShortcutRepository/RunShortcut: Changing the system tray icon message back to what it was.");
             if (temporaryNotifyIcon)
-            { 
+            {
+                
                 if (!shortcutToUse.Category.Equals(ShortcutCategory.NoGame))
                 {
                     if (notifyIcon != null)
@@ -1177,8 +1191,8 @@ namespace DisplayMagician
 
             // Only replace the notification if we're minimised
             if (Program.AppProgramSettings.MinimiseOnStart)
-            { 
-
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: We're minimised, so we also need to update the Windows notification content");
                 // Remind the user that DisplayMagician is running the in background
                 // Construct the toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
@@ -1204,10 +1218,13 @@ namespace DisplayMagician
             // Stop the pre-started startPrograms that we'd started earlier
             if (startProgramsToStop.Count > 0)
             {
+                logger.Debug($"ShortcutRepository/RunShortcut: We started {startProgramsToStart.Count} programs before the main executable or game, and now we want to stop {startProgramsToStop.Count } of them");
+
                 // Stop the programs in the reverse order we started them
                 foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
                 {
                     Console.WriteLine($"Stopping process {processToStop.StartInfo.FileName}");
+                    logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName}");
                     try
                     {
                         // Stop the program
@@ -1216,24 +1233,25 @@ namespace DisplayMagician
                         if (!processToStop.HasExited)
                         {
                             Console.WriteLine($"- Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
+                            logger.Warn($"ShortcutRepository/RunShortcut: Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
                             processToStop.Kill();
                             processToStop.WaitForExit(5000);
                         }
                         processToStop.Close();
                     }
                     catch (Win32Exception ex) {
-                        logger.Error(ex, $"RunShortcut - Couldn't access the wait status for a process we're trying to stop.");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't access the wait status for a process we're trying to stop.");
                     }
                     catch (InvalidOperationException ex) {
-                        logger.Error(ex, $"RunShortcut - Couldn't kill the process as there is no process associated with the Process object.");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't kill the process as there is no process associated with the Process object.");
                     }
                     catch (SystemException ex)
                     {
-                        logger.Error(ex, $"RunShortcut - Couldn't WaitForExit the process as there is no process associated with the Process object (or cannot get the ID from the process handle).");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't WaitForExit the process as there is no process associated with the Process object (or cannot get the ID from the process handle).");
                     }
 
                     catch (AggregateException ae) {
-                        logger.Error(ae, $"RunShortcut - Got an AggregateException.");
+                        logger.Error(ae, $"ShortcutRepository/RunShortcut: Got an AggregateException.");
                     }
 
                 }
@@ -1242,11 +1260,13 @@ namespace DisplayMagician
             // Change Audio Device back (if one specified)
             if (needToChangeAudio)
             {
+                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio back to {rollbackAudioDevice.Name} audio device");
                 // use the Audio Device
                 rollbackAudioDevice.SetAsDefault();
 
                 if (shortcutToUse.SetAudioVolume)
                 {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to {shortcutToUse.SetAudioVolume}% volume");
                     Task myTask = new Task(() =>
                     {
                         rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
@@ -1260,11 +1280,13 @@ namespace DisplayMagician
             // Change Capture Device back (if one specified)
             if (needToChangeCaptureDevice)
             {
+                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackAudioDevice.Name} capture device");
                 // use the Audio Device
                 rollbackCaptureDevice.SetAsDefault();
 
                 if (shortcutToUse.SetCaptureVolume)
                 {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to {shortcutToUse.SetAudioVolume}% volume");
                     Task myTask = new Task(() =>
                     {
                         rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
@@ -1278,10 +1300,13 @@ namespace DisplayMagician
             // Change back to the original profile only if it is different
             if (needToChangeProfiles)
             {
+                logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
+
                 //if (!ProfileRepository.ApplyProfile(rollbackProfile))
                 if (!Program.ApplyProfile(rollbackProfile))
                 {
                     Console.WriteLine($"ERROR - Cannot revert back to '{rollbackProfile.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
                 }
             }
 

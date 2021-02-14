@@ -130,6 +130,8 @@ namespace DisplayMagicianShared
             if (!(profile is ProfileItem))
                 return false;
 
+            SharedLogger.logger.Debug($"ProfileRepository/AddProfile: Adding profile {profile.Name} to our profile repository");
+
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
             if (!ContainsProfile(profile))
@@ -157,13 +159,15 @@ namespace DisplayMagicianShared
         }
 
 
-        public static bool RemoveProfile(ProfileItem Profile)
+        public static bool RemoveProfile(ProfileItem profile)
         {
-            if (!(Profile is ProfileItem))
+            if (!(profile is ProfileItem))
                 return false;
 
+            SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile: Removing profile {profile.Name} if it exists in our profile repository");
+
             // Remove the Profile Icons from the Cache
-            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(Profile.UUID));
+            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profile.UUID));
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
                 try
@@ -190,7 +194,7 @@ namespace DisplayMagicianShared
             }
 
             // Remove the Profile from the list.
-            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(Profile.UUID));
+            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profile.UUID));
 
             if (numRemoved == 1)
             {
@@ -204,13 +208,16 @@ namespace DisplayMagicianShared
         }
 
 
-        public static bool RemoveProfile(string ProfileName)
+        public static bool RemoveProfile(string profileName)
         {
-            if (String.IsNullOrWhiteSpace(ProfileName))
+            
+            if (String.IsNullOrWhiteSpace(profileName))
                 return false;
 
+            SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile2: Removing profile {profileName} if it exists in our profile repository");
+
             // Remove the Profile Icons from the Cache
-            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.Name.Equals(ProfileName));
+            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.Name.Equals(profileName));
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
                 try
@@ -236,7 +243,7 @@ namespace DisplayMagicianShared
             }
 
             // Remove the Profile from the list.
-            int numRemoved = _allProfiles.RemoveAll(item => item.Name.Equals(ProfileName));
+            int numRemoved = _allProfiles.RemoveAll(item => item.Name.Equals(profileName));
 
             if (numRemoved == 1)
             {
@@ -250,13 +257,15 @@ namespace DisplayMagicianShared
 
         }
 
-        public static bool RemoveProfile(uint ProfileId)
+        public static bool RemoveProfile(uint profileId)
         {
-            if (ProfileId == 0)
+            if (profileId == 0)
                 return false;
 
+            SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile3: Removing profile wih profileId {profileId} if it exists in our profile repository");
+
             // Remove the Profile Icons from the Cache
-            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(ProfileId));
+            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profileId));
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
                 try
@@ -282,7 +291,7 @@ namespace DisplayMagicianShared
             }
 
             // Remove the Profile from the list.
-            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(ProfileId));
+            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profileId));
 
             if (numRemoved == 1)
             {
@@ -301,12 +310,18 @@ namespace DisplayMagicianShared
             if (!(Profile is ProfileItem))
                 return false;
 
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Checking if our profile repository contains a profile called {Profile.Name}");
+
             foreach (ProfileItem testProfile in _allProfiles)
             {
                 if (testProfile.UUID.Equals(Profile.UUID))
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {Profile.Name}");
                     return true;
+                }
+                    
             }
-
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository doesn't contain a profile called {Profile.Name}");
             return false;
         }
 
@@ -315,19 +330,30 @@ namespace DisplayMagicianShared
             if (String.IsNullOrWhiteSpace(ProfileNameOrId))
                 return false;
 
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile2: Checking if our profile repository contains a profile with UUID or Name {ProfileNameOrId}");
+
             if (ProfileItem.IsValidUUID(ProfileNameOrId))
                 foreach (ProfileItem testProfile in _allProfiles)
                 {
                     if (testProfile.UUID.Equals(ProfileNameOrId))
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile2: Our profile repository does contain a profile with UUID {ProfileNameOrId}");
                         return true;
+                    }
+                        
                 }
             else
                 foreach (ProfileItem testProfile in _allProfiles)
                 {
                     if (testProfile.Name.Equals(ProfileNameOrId))
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile2: Our profile repository does contain a profile with Name {ProfileNameOrId}");
                         return true;
+                    }
+                        
                 }
 
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile2: Our profile repository doesn't contain a profile with a UUID or Name {ProfileNameOrId}");
             return false;
 
         }
@@ -337,44 +363,76 @@ namespace DisplayMagicianShared
             if (!(_currentProfile is ProfileItem))
                 return false;
 
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Checking if our profile repository contains the display profile currently in use");
+
             foreach (ProfileItem testProfile in _allProfiles)
             {
                 if (testProfile.Paths.SequenceEqual(_currentProfile.Paths))
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Our profile repository does contain the display profile currently in use");
                     return true;
+                }
+                    
             }
 
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Our profile repository doesn't contain the display profile currently in use");
             return false;
         }
 
         public static ProfileItem GetProfile(string ProfileNameOrId)
         {
+
+            SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Finding and returning {ProfileNameOrId} if it exists in our profile repository");
+
             if (String.IsNullOrWhiteSpace(ProfileNameOrId))
+            {
+                SharedLogger.logger.Error($"ProfileRepository/GetProfile: Profile to get was empty or only whitespace");
                 return null;
+            }
+                
 
             if (ProfileItem.IsValidUUID(ProfileNameOrId))
                 foreach (ProfileItem testProfile in _allProfiles)
                 {
                     if (testProfile.UUID.Equals(ProfileNameOrId))
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Returning profile with UUID {ProfileNameOrId}");
                         return testProfile;
+                    }
+                        
                 }
             else
                 foreach (ProfileItem testProfile in _allProfiles)
                 {
                     if (testProfile.Name.Equals(ProfileNameOrId))
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Returning profile with Name {ProfileNameOrId}");
                         return testProfile;
+                    }
+                        
                 }
 
+            SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Didn't match any profiles with UUD or Name {ProfileNameOrId}");
             return null;
         }
 
         public static bool RenameProfile(ProfileItem profile, string renamedName)
         {
             if (!(profile is ProfileItem))
+            {
+                SharedLogger.logger.Error($"ProfileRepository/RenameProfile: Profile to rename was empty or only whitespace");
                 return false;
+            }
+                
+
+            SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: Attempting to rename profile {profile.Name} to {renamedName}");
 
             if (!IsValidFilename(renamedName))
+            {
+                SharedLogger.logger.Error($"ProfileRepository/RenameProfile: The name the user wanted to renamed to profile to is not a valid filename");
                 return false;
-
+            }
+                
             profile.Name = GetValidFilename(renamedName);
 
             // If it's been added to the list of AllProfiles
@@ -383,17 +441,23 @@ namespace DisplayMagicianShared
             {
                 // Save the Profiles JSON as it's different now
                 SaveProfiles();
-
+                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was successfully renamed from {profile.Name} to {renamedName}");
                 return true;
             }
             else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {profile.Name} to {renamedName}");
                 return false;
+            }
+                
 
         }
 
 
         public static void UpdateActiveProfile()
         {
+
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
             ProfileItem activeProfile = new ProfileItem
             {
@@ -411,10 +475,12 @@ namespace DisplayMagicianShared
                     if (activeProfile.Paths.SequenceEqual(loadedProfile.Paths))
                     {
                         _currentProfile = loadedProfile;
+                        SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The profile {loadedProfile.Name} is currently active (in use now).");
                         return;
                     }
                 }
             }
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
             _currentProfile = activeProfile;
 
         }
@@ -422,32 +488,38 @@ namespace DisplayMagicianShared
 
         public static ProfileItem GetActiveProfile()
         {
-            //UpdateActiveProfile();
-
             if (!(_currentProfile is ProfileItem))
                 return null;
+
+            SharedLogger.logger.Debug($"ProfileRepository/GetActiveProfile: Retrieving the currently active profile.");
+
             return _currentProfile;
         }
 
         public static bool IsActiveProfile(ProfileItem profile)
         {
-            //UpdateActiveProfile();
-
             if (!(_currentProfile is ProfileItem))
                 return false;
 
             if (!(profile is ProfileItem))
                 return false;
 
-            if (profile.Paths.SequenceEqual(_currentProfile.Paths))
-                return true;
+            SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
 
+            if (profile.Paths.SequenceEqual(_currentProfile.Paths))
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is the currently active profile.");
+                return true;
+            }
+
+            SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is not the currently active profile.");
             return false;
         }
 
         
         private static bool LoadProfiles()
         {
+            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFileName} into the Profile Repository");
 
             if (File.Exists(_profileStorageJsonFileName))
             {
@@ -455,8 +527,7 @@ namespace DisplayMagicianShared
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    //List<ProfileItem> profiles = new List<ProfileItem>();
-                    try
+                     try
                     {
                         _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, new JsonSerializerSettings
                         {
@@ -467,11 +538,9 @@ namespace DisplayMagicianShared
                             ObjectCreationHandling = ObjectCreationHandling.Replace
                         });
                     }
-                    catch (Exception ex)
-                    {
-                        // ignored
-                        Console.WriteLine($"ProfileRepository/LoadProfiles exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        Console.WriteLine($"Unable to load Profiles from JSON file {_profileStorageJsonFileName}: " + ex.Message);
+                    catch (Exception ex) 
+                    { 
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
 
                     ProfileItem myCurrentProfile = new ProfileItem
