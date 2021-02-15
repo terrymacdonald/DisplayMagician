@@ -372,7 +372,7 @@ namespace DisplayMagician
         private static bool LoadShortcuts()
         {
 
-            logger.Debug($"ShortcutRepository/LoadShortcut: Loading shortcuts from {_shortcutStorageJsonFileName} into the Shortcut Repository");
+            logger.Debug($"ShortcutRepository/LoadShortcuts: Loading shortcuts from {_shortcutStorageJsonFileName} into the Shortcut Repository");
 
             if (File.Exists(_shortcutStorageJsonFileName))
             {
@@ -395,14 +395,14 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Error(ex, $"ShortcutRepository/LoadShortcut: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception.");
+                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
 
                     // Lookup all the Profile Names in the Saved Profiles
                     // and link the profiles to the Shortcuts as we only 
                     // store the profile names to allow users to uodate profiles
                     // separately from the shortcuts
-                    logger.Debug($"ShortcutRepository/LoadShortcut: Connecting Shortcut profile names to the real profile objects");
+                    logger.Debug($"ShortcutRepository/LoadShortcuts: Connecting Shortcut profile names to the real profile objects");
                     foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
                         foreach (ProfileItem profile in ProfileRepository.AllProfiles)
@@ -418,7 +418,7 @@ namespace DisplayMagician
                         }
 
                         // We should only get here if there isn't a profile to match to.
-                        logger.Debug($"ShortcutRepository/LoadShortcut: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
+                        logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
                         updatedShortcut.ProfileToUse = null;
                         updatedShortcut.IsPossible = false;
                     }
@@ -428,12 +428,12 @@ namespace DisplayMagician
                 }
                 else
                 {
-                    logger.Debug($"ShortcutRepository/LoadShortcut: The {_shortcutStorageJsonFileName} shortcut JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
+                    logger.Debug($"ShortcutRepository/LoadShortcuts: The {_shortcutStorageJsonFileName} shortcut JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
                 }
             }
             else
             {
-                logger.Debug($"ShortcutRepository/LoadShortcut: Couldn't find the {_shortcutStorageJsonFileName} shortcut JSON file that contains the Shortcuts");
+                logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the {_shortcutStorageJsonFileName} shortcut JSON file that contains the Shortcuts");
             }
             _shortcutsLoaded = true;
             return true;
@@ -450,9 +450,21 @@ namespace DisplayMagician
                 {
                     Directory.CreateDirectory(AppShortcutStoragePath);
                 }
-                catch (Exception ex)
+                catch (UnauthorizedAccessException ex)
                 {
-                    logger.Error(ex, $"ShortcutRepository/SaveShortcuts: Unable to create Shortcut folder {AppShortcutStoragePath}.");
+                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician doesn't have permissions to create the Shortcuts storage folder {AppShortcutStoragePath}.");
+                }
+                catch (ArgumentException ex)
+                {
+                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician can't create the Shortcuts storage folder {AppShortcutStoragePath} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician can't create the Shortcuts storage folder {AppShortcutStoragePath} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    logger.Fatal(ex, $"ShortcutRepository/SaveShortcuts: DisplayMagician can't create the Shortcuts storage folder {AppShortcutStoragePath} as the parent folder isn't there.");
                 }
             }
             else
@@ -463,7 +475,7 @@ namespace DisplayMagician
 
             try
             {
-                logger.Debug($"ShortcutRepository/SaveShortcuts: Creating the shortcut folder {AppShortcutStoragePath} as it doesn't currently exist.");
+                logger.Debug($"ShortcutRepository/SaveShortcuts: Converting the objects to JSON format.");
 
                 var json = JsonConvert.SerializeObject(_allShortcuts, Formatting.Indented, new JsonSerializerSettings
                 {

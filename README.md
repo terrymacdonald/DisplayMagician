@@ -40,7 +40,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
-* Supports NVIDIA Surround and NVIDIA Mosaic settings
+* Supports NVIDIA Surround setups (but doesn't support AMD Eyefinity yet... maybe someone wants to donate an AMD videocard?)
 
 ## Planned features
 
@@ -52,10 +52,12 @@ DisplayMagician lets you set up the following information for each game or appli
 * Add Galaxy of Games Game Launcher (maybe?)
 * Add Unit Tests!
 * Change UI from Winforms to better looking WPF
-* Support of AMD Eyefinity (Needs a C# wrapper for AMD ADL)
+* Support of AMD Eyefinity if someone donates an AMD video card to me (Needs a C# wrapper for AMD ADL)
 
 ## Donation
-I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. That said, I'd appreciate a donation to help buy a coffee or two! If you're so inclined, you can [sponsor me on GitHub Sponsors](https://github.com/sponsors/terrymacdonald). 
+I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. That said, I'd appreciate a donation to help buy a coffee or two! 
+
+<a href="https://www.buymeacoffee.com/displaymagician" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a><a href="https://github.com/sponsors/terrymacdonald" target="_blank">  <img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-sponsor.png" alt="Github Sponsor" height="41" width="122"></a>
 
 ## Usage
 

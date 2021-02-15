@@ -543,6 +543,7 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
 
+
                     ProfileItem myCurrentProfile = new ProfileItem
                     {
                         Name = "Current Display Profile",
@@ -551,13 +552,11 @@ namespace DisplayMagicianShared
 
                     _currentProfile = myCurrentProfile;
 
+                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
+
                     // Lookup all the Profile Names in the Saved Profiles
                     foreach (ProfileItem loadedProfile in _allProfiles)
                     {
-                        // Save a profile Icon to the profile
-/*                        loadedProfile.ProfileIcon = new ProfileIcon(loadedProfile);
-                        loadedProfile.ProfileBitmap = loadedProfile.ProfileIcon.ToBitmap(256, 256);
-*/
                         if (ProfileRepository.IsActiveProfile(loadedProfile))
                             _currentProfile = loadedProfile;
 
@@ -567,12 +566,20 @@ namespace DisplayMagicianShared
                     _allProfiles.Sort();
 
                 }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
+                    UpdateActiveProfile();
+                }
             } 
             else
             {
                 // If we get here, then we don't have any profiles saved!
                 // So we gotta start from scratch
-                // Create a new profile based on our current display settings
+                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles");
+                UpdateActiveProfile();
+
+                /* // Create a new profile based on our current display settings
                 ProfileItem myCurrentProfile = new ProfileItem
                 {
                     Name = "Current Display Profile",
@@ -583,7 +590,7 @@ namespace DisplayMagicianShared
 
                 // Save a profile Icon to the profile
                 _currentProfile.ProfileIcon = new ProfileIcon(_currentProfile);
-                _currentProfile.ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256);
+                _currentProfile.ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256);*/
             }
             _profilesLoaded = true;
             return true;
@@ -591,6 +598,7 @@ namespace DisplayMagicianShared
 
         public static bool SaveProfiles()
         {
+            SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Attempting to save the profiles repository to the {AppProfileStoragePath}.");
 
             if (!Directory.Exists(AppProfileStoragePath))
             {
@@ -615,9 +623,14 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the parent folder isn't there.");
                 }
             }
-
+            else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Profiles folder {AppProfileStoragePath} exists.");
+            }
             try
             {
+                SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Converting the objects to JSON format.");
+
                 var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
@@ -629,14 +642,15 @@ namespace DisplayMagicianShared
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
+                    SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFileName}.");
+
                     File.WriteAllText(_profileStorageJsonFileName, json, Encoding.Unicode);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileRepository/SaveProfiles exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                Console.WriteLine($"Unable to save Profile JSON file {_profileStorageJsonFileName}: " + ex.Message);
+                SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFileName}.");
             }
 
             return false;
@@ -644,9 +658,10 @@ namespace DisplayMagicianShared
 
         private static void SaveProfileIconToCache(ProfileItem profile)
         {
-
             // Work out the name of the Profile we'll save.
             profile.SavedProfileIconCacheFilename = System.IO.Path.Combine(AppProfileStoragePath, string.Concat(@"profile-", profile.UUID, @".ico"));
+
+            SharedLogger.logger.Debug($"ProfileRepository/SaveProfileIconToCache: Attempting to save the profile icon {profile.SavedProfileIconCacheFilename} to the {AppProfileStoragePath} folder");
 
             MultiIcon ProfileIcon;
             try
@@ -656,11 +671,10 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileRepository/SaveProfileIconToCache exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                SharedLogger.logger.Warn(ex,$"ProfileRepository/SaveProfileIconToCache: Exception saving the profile icon {profile.SavedProfileIconCacheFilename} to the {AppProfileStoragePath} folder. Using the default DisplayMagician icon instead");
                 // If we fail to create an icon based on the Profile, then we use the standard DisplayMagician profile one.
                 // Which is created on program startup.
                 File.Copy(AppDisplayMagicianIconFilename, profile.SavedProfileIconCacheFilename);
-
             }
         }
 
@@ -668,6 +682,8 @@ namespace DisplayMagicianShared
 
         public static List<string> GenerateProfileDisplayIdentifiers()
         {
+            SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: Generating the unique Display Identifiers for the currently active profile");
+
             List<string> displayIdentifiers = new List<string>();
 
             // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
@@ -677,15 +693,16 @@ namespace DisplayMagicianShared
             {
                 myPhysicalGPUs = NvAPIWrapper.GPU.PhysicalGPU.GetPhysicalGPUs();
                 isNvidia = true;
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: The video card is a NVIDIA video card.");
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateProfileDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
+                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateProfileDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception. This means the video card isn't compatible with the NvAPIWrapper library we use. It is unlikely to be an NVIDIA video card.");
             }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             {
-                SharedLogger.logger.Debug("ProfileRepository/GenerateProfileDisplayIdentifiers: Was able to GetPhysicalCPUs through NvAPIWrapper library.");
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: We were able to GetPhysicalCPUs through NvAPIWrapper library. There are {myPhysicalGPUs.Length} Physical GPUs detected");
 
                 foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
                 {
@@ -693,6 +710,7 @@ namespace DisplayMagicianShared
                     NvAPIWrapper.GPU.GPUOutput[] myGPUOutputs = myPhysicalGPU.ActiveOutputs;
                     foreach (NvAPIWrapper.GPU.GPUOutput aGPUOutput in myGPUOutputs)
                     {
+                        SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: We were able to detect {myGPUOutputs.Length} outputs");
                         // Figure out the displaydevice attached to the output
                         NvAPIWrapper.Display.DisplayDevice aConnectedDisplayDevice = myPhysicalGPU.GetDisplayDeviceByOutput(aGPUOutput);
 
@@ -716,6 +734,8 @@ namespace DisplayMagicianShared
                         string displayIdentifier = String.Join("|", displayInfo);
                         // Add it to the list of display identifiers so we can return it
                         displayIdentifiers.Add(displayIdentifier);
+
+                        SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                     }
 
                 }
@@ -726,9 +746,10 @@ namespace DisplayMagicianShared
             //       so that we can match valid AMD Eyefinity profiles with valid AMD standard profiles.
             else
             {
-
                 // Then go through the adapters we have running using the WindowsDisplayAPI
                 List<Display> attachedDisplayDevices = Display.GetDisplays().ToList();
+
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: We are using the standard Windows Display API to figure out what display devices are attached and available. There are {attachedDisplayDevices.Count} display devices detected.");
 
                 foreach (Display attachedDisplay in attachedDisplayDevices)
                 {
@@ -795,7 +816,7 @@ namespace DisplayMagicianShared
                     string displayIdentifier = String.Join("|", displayInfo);
                     // Add it to the list of display identifiers so we can return it
                     displayIdentifiers.Add(displayIdentifier);
-
+                    SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                 }
 
             }
@@ -805,6 +826,8 @@ namespace DisplayMagicianShared
 
         public static List<string> GenerateAllAvailableDisplayIdentifiers()
         {
+            SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Generating all the Display Identifiers currently active now");
+
             List<string> displayIdentifiers = new List<string>();
 
             // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
@@ -814,19 +837,23 @@ namespace DisplayMagicianShared
             {
                 myPhysicalGPUs = NvAPIWrapper.GPU.PhysicalGPU.GetPhysicalGPUs();
                 isNvidia = true;
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: The video card is a NVIDIA video card.");
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception.");
+                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception. This means the video card isn't compatible with the NvAPIWrapper library we use. It is unlikely to be an NVIDIA video card.");
             }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             {
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: We were able to GetPhysicalCPUs through NvAPIWrapper library. There are {myPhysicalGPUs.Length} Physical GPUs detected");
 
                 foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
                 {
                     // get a list of all physical outputs attached to the GPUs
                     NvAPIWrapper.Display.DisplayDevice[] allDisplayDevices = myPhysicalGPU.GetConnectedDisplayDevices(ConnectedIdsFlag.None);
+
+                    SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: We were able to detect {allDisplayDevices.Length} connected devices");
                     foreach (NvAPIWrapper.Display.DisplayDevice aDisplayDevice in allDisplayDevices)
                     {
 
@@ -852,6 +879,7 @@ namespace DisplayMagicianShared
                             string displayIdentifier = String.Join("|", displayInfo);
                             // Add it to the list of display identifiers so we can return it
                             displayIdentifiers.Add(displayIdentifier);
+                            SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                         }
                     }
                 }
@@ -862,10 +890,13 @@ namespace DisplayMagicianShared
             //       so that we can match valid AMD Eyefinity profiles with valid AMD standard profiles.
             else
             {
-
+                
                 // Then go through the adapters we have running using the WindowsDisplayAPI
                 List<Display> attachedDisplayDevices = Display.GetDisplays().ToList();
                 List<UnAttachedDisplay> unattachedDisplayDevices = UnAttachedDisplay.GetUnAttachedDisplays().ToList();
+
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: We are using the standard Windows Display API to figure out what display devices are attached and available. There are {attachedDisplayDevices.Count} display devices attached and {unattachedDisplayDevices.Count} devices unattached.");
+
 
                 foreach (Display attachedDisplay in attachedDisplayDevices)
                 {
@@ -932,7 +963,7 @@ namespace DisplayMagicianShared
                     string displayIdentifier = String.Join("|", displayInfo);
                     // Add it to the list of display identifiers so we can return it
                     displayIdentifiers.Add(displayIdentifier);
-
+                    SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attached DisplayIdentifier: {displayIdentifier}");
                 }
 
                 foreach (UnAttachedDisplay unattachedDisplay in unattachedDisplayDevices)
@@ -990,7 +1021,7 @@ namespace DisplayMagicianShared
                     string displayIdentifier = String.Join("|", displayInfo);
                     // Add it to the list of display identifiers so we can return it
                     displayIdentifiers.Add(displayIdentifier);
-
+                    SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Unattached DisplayIdentifier: {displayIdentifier}");
                 }
 
             }
@@ -1000,7 +1031,7 @@ namespace DisplayMagicianShared
 
         public static bool ApplyNVIDIAGridTopology(ProfileItem profile)
         {
-            Debug.Print("ProfileRepository.ApplyTopology()");
+            SharedLogger.logger.Debug($"ProfileRepository/ApplyNVIDIAGridTopology: Attempting to apply NVIDIA Grid Topology");
 
             if (!(profile is ProfileItem))
                 return false;
@@ -1019,6 +1050,7 @@ namespace DisplayMagicianShared
                     // The profile we're changing to does not use NVIDIA Surround
                     // So we need to set the Grid Topologies to individual screens
                     // in preparation for the PathInfo step later
+                    SharedLogger.logger.Debug($"ProfileRepository/ApplyNVIDIAGridTopology: Changing NVIDIA Grid Topology to individual screens so that we can move them to their final positions in a subsequent step");
                     var currentTopologies = GridTopology.GetGridTopologies();
 
                     if (currentTopologies.Any(topology => topology.Rows * topology.Columns > 1))
@@ -1033,22 +1065,23 @@ namespace DisplayMagicianShared
                     }
                 } else if (surroundTopologies.Length > 0)
                 {
+                    SharedLogger.logger.Debug($"ProfileRepository/ApplyNVIDIAGridTopology: Changing NVIDIA Grid Topology to a surround screen so that we can move it to its final positions in a subsequent step");
                     // This profile is an NVIDIA Surround profile 
                     GridTopology.SetGridTopologies(surroundTopologies, SetDisplayTopologyFlag.MaximizePerformance);
                 }
-
+                SharedLogger.logger.Debug($"ProfileRepository/ApplyNVIDIAGridTopology: NVIDIA Grid Topology successfully changed");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/ApplyNVIDIAGridTopology: Exception attempting to apply a change to the NVIDIA Grid Topology.");
                 return false;
             }
         }
 
         public static bool ApplyWindowsDisplayPathInfo(ProfileItem profile)
         {
-            Debug.Print("ProfileRepository.ApplyPathInfo()");
+            SharedLogger.logger.Debug($"ProfileRepository/ApplyWindowsDisplayPathInfo: Moving display screens to where they are supposed to be with this display profile");
             if (!(profile is ProfileItem))
                 return false;
 
@@ -1056,11 +1089,12 @@ namespace DisplayMagicianShared
             {
                 var pathInfos = profile.Paths.Select(paths => paths.ToPathInfo()).Where(info => info != null).ToArray();
                 PathInfo.ApplyPathInfos(pathInfos, true, true, true);
+                SharedLogger.logger.Debug($"ProfileRepository/ApplyWindowsDisplayPathInfo: Successfully moved display screens to where they are supposed to be");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileRepository/ApplyPathInfo exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/ApplyWindowsDisplayPathInfo: Exception attempting to move the display screens to where they are supposed to be in this display profile.");
                 return false;
             }
 
@@ -1068,21 +1102,30 @@ namespace DisplayMagicianShared
 
         public static bool IsValidFilename(string testName)
         {
+            SharedLogger.logger.Trace($"ProfileRepository/IsValidFilename: Checking whether {testName} is a valid filename");
             string strTheseAreInvalidFileNameChars = new string(System.IO.Path.GetInvalidFileNameChars());
             Regex regInvalidFileName = new Regex("[" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
 
-            if (regInvalidFileName.IsMatch(testName)) { return false; };
-
-            return true;
+            if (regInvalidFileName.IsMatch(testName)) {
+                SharedLogger.logger.Trace($"ProfileRepository/IsValidFilename: {testName} is a valid filename");
+                return false;
+            }
+            else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsValidFilename: {testName} isn't a valid filename as it contains one of these characters [" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
+                return true;
+            }            
         }
 
         public static string GetValidFilename(string uncheckedFilename)
         {
+            SharedLogger.logger.Trace($"ProfileRepository/GetValidFilename: Modifying filename {uncheckedFilename} to be a valid filename for this filesystem");
             string invalid = new string(System.IO.Path.GetInvalidFileNameChars()) + new string(System.IO.Path.GetInvalidPathChars());
             foreach (char c in invalid)
             {
                 uncheckedFilename = uncheckedFilename.Replace(c.ToString(), "");
             }
+            SharedLogger.logger.Trace($"ProfileRepository/GetValidFilename: Modified filename {uncheckedFilename} so it is a valid filename for this filesystem");
             return uncheckedFilename;
         }
 
