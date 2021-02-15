@@ -1,17 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using ValveKeyValue;
-//using DisplayMagician.GameLibraries.UplayAppInfoParser;
 using Microsoft.Win32;
 using System.IO;
-using System.Drawing.IconLib;
 using System.Security;
-using System.Diagnostics;
-using EDIDParser;
-using System.ComponentModel;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -130,17 +123,19 @@ namespace DisplayMagician.GameLibraries
         {
             if (!(uplayGame is UplayGame))
                 return false;
-
+            
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
             if (ContainsUplayGame(uplayGame))
             {
+                logger.Debug($"UplayLibrary/AddUplayGame: Updating Uplay game {uplayGame.Name} in our Uplay library");
                 // We update the existing Shortcut with the data over
                 UplayGame uplayGameToUpdate = GetUplayGame(uplayGame.Id.ToString());
                 uplayGame.CopyTo(uplayGameToUpdate);
             }
             else
             {
+                logger.Debug($"UplayLibrary/AddUplayGame: Adding Uplay game {uplayGame.Name} to our Uplay library");
                 // Add the uplayGame to the list of uplayGames
                 _allUplayGames.Add(uplayGame);
             }
@@ -160,15 +155,22 @@ namespace DisplayMagician.GameLibraries
             if (!(uplayGame is UplayGame))
                 return false;
 
+            logger.Debug($"UplayLibrary/RemoveUplayGame: Removing Uplay game {uplayGame.Name} from our Uplay library");
+
             // Remove the uplayGame from the list.
             int numRemoved = _allUplayGames.RemoveAll(item => item.Id.Equals(uplayGame.Id));
 
             if (numRemoved == 1)
             {
+                logger.Debug($"UplayLibrary/RemoveUplayGame: Removed Uplay game with name {uplayGame.Name}");
                 return true;
             }
             else if (numRemoved == 0)
+            {
+                logger.Debug($"UplayLibrary/RemoveUplayGame: Didn't remove Uplay game with ID {uplayGame.Name} from the Uplay Library");
                 return false;
+            }
+                
             else
                 throw new UplayLibraryException();
         }
@@ -178,15 +180,21 @@ namespace DisplayMagician.GameLibraries
             if (uplayGameId<=0)
                 return false;
 
+            logger.Debug($"UplayLibrary/RemoveUplayGame2: Removing Uplay game with ID {uplayGameId} from the Uplay library");
+
             // Remove the uplayGame from the list.
             int numRemoved = _allUplayGames.RemoveAll(item => item.Id.Equals(uplayGameId));
 
             if (numRemoved == 1)
             {
+                logger.Debug($"UplayLibrary/RemoveUplayGame2: Removed Uplay game with ID {uplayGameId}");
                 return true;
             }
             else if (numRemoved == 0)
+            {
+                logger.Debug($"UplayLibrary/RemoveUplayGame2: Didn't remove Uplay game with ID {uplayGameId} from the Uplay Library");
                 return false;
+            }
             else
                 throw new UplayLibraryException();
         }
@@ -196,6 +204,8 @@ namespace DisplayMagician.GameLibraries
             if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
                 return false;
 
+            logger.Debug($"UplayLibrary/RemoveUplayGame3: Removing Uplay game with Name or UUID {uplayGameNameOrUuid} from the Uplay library");
+
             int numRemoved;
             Match match = Regex.Match(uplayGameNameOrUuid, uplayAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
@@ -204,9 +214,15 @@ namespace DisplayMagician.GameLibraries
                 numRemoved = _allUplayGames.RemoveAll(item => uplayGameNameOrUuid.Equals(item.Name));
 
             if (numRemoved == 1)
+            {
+                logger.Debug($"UplayLibrary/RemoveUplayGame3: Removed Uplay game with Name or UUID {uplayGameNameOrUuid} ");
                 return true;
+            }
             else if (numRemoved == 0)
+            {
+                logger.Debug($"UplayLibrary/RemoveUplayGame3: Didn't remove Uplay game with Name or UUID {uplayGameNameOrUuid} from the Uplay Library");
                 return false;
+            }
             else
                 throw new UplayLibraryException();
 
