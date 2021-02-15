@@ -86,6 +86,16 @@ namespace DisplayMagician.UIForms
             if (_selectedShortcut != null)
             {
 
+                // if shortcut is not valid then ask if the user
+                // really wants to save it to desktop
+                (bool result, string validityMessage) = _selectedShortcut.IsValid();
+                if (!result)
+                { 
+                    // We ask the user of they still want to save the desktop shortcut
+                    if (MessageBox.Show($"The shortcut '{_selectedShortcut.Name}' isn't valid for some reason so a desktop shortcut wouldn't work until the shortcut is fixed. Has your hardware or screen layout changed from when the shortcut was made? We recommend that you edit the shortcut to make it valid again, or reverse the hardware changes you made. Do you still want to save the desktop shortcut?", $"Still save the '{_selectedShortcut.Name}' Desktop Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+                        return;
+                }
+
                 try
                 {
                     // Set the Shortcut save folder to the Desktop as that's where people will want it most likely
@@ -153,12 +163,6 @@ namespace DisplayMagician.UIForms
 
             if (e.Buttons == MouseButtons.Right)
             {
-                /* MessageBox.Show(
-                                 "Right button was clicked!",
-                                 "Mouse Button detected",
-                                 MessageBoxButtons.OK,
-                                 MessageBoxIcon.Exclamation);*/
-
                 cms_shortcuts.Show(ilv_saved_shortcuts,e.Location);
             }
         }
@@ -170,20 +174,8 @@ namespace DisplayMagician.UIForms
             if (_selectedShortcut == null)
                 return;
 
-            // Edit the Shortcut (now changed to RunShortcut)
-            /*var shortcutForm = new ShortcutForm(_selectedShortcut);
-            shortcutForm.ShowDialog(this);
-            if (shortcutForm.DialogResult == DialogResult.OK)
-            {
-                RefreshShortcutLibraryUI();
-                // As this is an edit, we need to manually force saving the shortcut library
-                ShortcutRepository.SaveShortcuts();
-            }
-            */
-
-            // Run the shortcut when doubleclicked
+            // Run the selected shortcut
             btn_run.PerformClick();
-
         }
 
         private void btn_new_Click(object sender, EventArgs e)
@@ -243,6 +235,20 @@ namespace DisplayMagician.UIForms
         {
             if (_selectedShortcut == null)
                 return;
+
+            // Only run the if shortcut is valid
+            (bool result, string validityMessage) = _selectedShortcut.IsValid();
+            if (result)
+                // Run the selected shortcut
+                btn_run.PerformClick();
+            else
+            {
+                // We tell the user the reason that we couldnt run the shortcut
+                if (MessageBox.Show($"The shortcut '{_selectedShortcut.Name}' isn't valid for some reason so we cannot run the application or game. Has your hardware or screen layout changed from when the shortcut was made? We recommend that you edit the shortcut to make it valid again, or reverse the hardware changes you made. Do you want to do that now?", $"Edit the '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+                    return;
+                else
+                    btn_edit.PerformClick();
+            }
 
             // Figure out the string we're going to use as the MaskedForm message
             string message = "";
