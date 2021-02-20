@@ -111,10 +111,9 @@ namespace DisplayMagician {
                     logLevel = NLog.LogLevel.Debug;
                     break;
                 default:
-                    logLevel = NLog.LogLevel.Warn;
+                    logLevel = NLog.LogLevel.Info;
                     break;
             }
-            //config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole);
             config.AddRule(logLevel, NLog.LogLevel.Fatal, logfile);
 
             // Apply config           

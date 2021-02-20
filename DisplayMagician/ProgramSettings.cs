@@ -22,7 +22,7 @@ namespace DisplayMagician
         #region Instance Variables
         private bool _startOnBootUp = false;
         private bool _minimiseOnStart = false;
-        private string _logLevel = NLog.LogLevel.Warn.ToString();
+        private string _logLevel = NLog.LogLevel.Info.ToString();
         #endregion
 
         #region Class Properties
@@ -88,7 +88,7 @@ namespace DisplayMagician
                         _logLevel = NLog.LogLevel.Fatal.ToString();
                         break;
                     default:
-                        _logLevel = NLog.LogLevel.Warn.ToString();
+                        _logLevel = NLog.LogLevel.Info.ToString();
                         break;
 
                 }
