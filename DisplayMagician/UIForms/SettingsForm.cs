@@ -146,40 +146,40 @@ namespace DisplayMagician.UIForms
             if (cmb_loglevel.SelectedItem.Equals(logLevelText["Trace"]))
             {
                 Program.AppProgramSettings.LogLevel = "Trace";
-                config.FindRuleByName("LogToFile").EnableLoggingForLevel(NLog.LogLevel.Trace);
+                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
             }
                 
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Debug"]))
             {
                 Program.AppProgramSettings.LogLevel = "Debug";
-                config.FindRuleByName("LogToFile").EnableLoggingForLevel(NLog.LogLevel.Debug);
+                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
             }
                 
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Info"]))
             {
                 Program.AppProgramSettings.LogLevel = "Info";
-                config.FindRuleByName("LogToFile").EnableLoggingForLevel(NLog.LogLevel.Info);
+                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
             }
                 
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Warn"]))
             {
                 Program.AppProgramSettings.LogLevel = "Warn";
-                config.FindRuleByName("LogToFile").EnableLoggingForLevel(NLog.LogLevel.Warn);
+                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Warn, NLog.LogLevel.Fatal);
             }
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Error"]))
             {
                 Program.AppProgramSettings.LogLevel = "Error";
-                config.FindRuleByName("LogToFile").EnableLoggingForLevel(NLog.LogLevel.Error);
+                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Error, NLog.LogLevel.Fatal);
             }
             else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Fatal"]))
             {
                 Program.AppProgramSettings.LogLevel = "Fatal";
-                config.FindRuleByName("LogToFile").EnableLoggingForLevel(NLog.LogLevel.Fatal);
+                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Fatal, NLog.LogLevel.Fatal);
             }
             else
             {
                 Program.AppProgramSettings.LogLevel = "Info";
-                config.FindRuleByName("LogToFile").EnableLoggingForLevel(NLog.LogLevel.Info);
+                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
             }
             // Use the NLog configuration with the LogLevel we just changed.
             NLog.LogManager.Configuration = config;

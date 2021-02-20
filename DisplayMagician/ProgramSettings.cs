@@ -108,20 +108,21 @@ namespace DisplayMagician
         #region Class Methods
         public static ProgramSettings LoadSettings()
         {
+            // NOTE: This function gets called before NLog has setup the logger, meaning
+            // that we can't log to the log file yet. This is because we need to load the
+            // loglevel settings so we know what level to configure the logger to write!
+            // This means we have to only use console.write in this function....
             ProgramSettings programSettings = null;
-
-            logger.Debug($"ProgramSettings/LoadSettings: Attempting to load ProgramSettings");
 
             if (File.Exists(_programSettingsStorageJsonFileName))
             {
                 string json = "";
                 try {
-                    logger.Debug($"ProgramSettings/LoadSettings: Found existing ProgramSettings file at {_programSettingsStorageJsonFileName} so loading text from it");
                     json = File.ReadAllText(_programSettingsStorageJsonFileName, Encoding.Unicode);
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ProgramSettings/LoadSettings: Tried to read the JSON file {_programSettingsStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
+                    Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {_programSettingsStorageJsonFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
                 }
 
                 if (!string.IsNullOrWhiteSpace(json))
@@ -138,13 +139,13 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Error(ex,$"ProgramSettings/LoadSettings: Tried to parse the JSON in the {_programSettingsStorageJsonFileName} but the JsonConvert threw an exception.");
+                        Console.WriteLine($"ProgramSettings/LoadSettings: Tried to parse the JSON file {_programSettingsStorageJsonFileName} but the JsonConvert threw an exception. {ex}");
                     }
                 }
             }
             else
             {
-                logger.Info($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
+                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
                 programSettings = new ProgramSettings();
                 programSettings.SaveSettings();
             }

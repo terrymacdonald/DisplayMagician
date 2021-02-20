@@ -62,6 +62,11 @@ namespace DisplayMagician {
             DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
 
             // Prepare NLog for logging
+
+            NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
+            NLog.Common.InternalLogger.LogToConsole = true;
+            NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
+
             var config = new NLog.Config.LoggingConfiguration();
 
             // Targets where to log to: File and Console
@@ -120,19 +125,21 @@ namespace DisplayMagician {
             var loggingRule = new LoggingRule("LogToFile");
             loggingRule.EnableLoggingForLevels(logLevel, NLog.LogLevel.Fatal);
             loggingRule.Targets.Add(logfile);
+            loggingRule.LoggerNamePattern = "*";
             config.LoggingRules.Add(loggingRule);
 
             // Create the log console target
-            var logconsole = new NLog.Targets.ConsoleTarget()
+            var logconsole = new NLog.Targets.ColoredConsoleTarget("logconsole")
             {
                 Layout = "${date:format=HH\\:MM\\:ss} ${logger} ${message}",
             };
 
             // Create a logging rule to use the log console target
-            loggingRule = new LoggingRule("LogToConsole");
-            loggingRule.EnableLoggingForLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
-            loggingRule.Targets.Add(logconsole);
-            config.LoggingRules.Add(loggingRule);
+            var loggingRule2 = new LoggingRule("LogToConsole");
+            loggingRule2.EnableLoggingForLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
+            loggingRule2.Targets.Add(logconsole);
+            loggingRule.LoggerNamePattern = "*";
+            config.LoggingRules.Add(loggingRule2);
 
             // Apply config           
             NLog.LogManager.Configuration = config;
