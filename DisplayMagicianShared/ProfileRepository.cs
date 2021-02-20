@@ -523,7 +523,15 @@ namespace DisplayMagicianShared
 
             if (File.Exists(_profileStorageJsonFileName))
             {
-                var json = File.ReadAllText(_profileStorageJsonFileName, Encoding.Unicode);
+                string json = "";
+                try
+                {
+                    json = File.ReadAllText(_profileStorageJsonFileName, Encoding.Unicode);
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
+                }
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
@@ -578,19 +586,6 @@ namespace DisplayMagicianShared
                 // So we gotta start from scratch
                 SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles");
                 UpdateActiveProfile();
-
-                /* // Create a new profile based on our current display settings
-                ProfileItem myCurrentProfile = new ProfileItem
-                {
-                    Name = "Current Display Profile",
-                    Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
-                };
-
-                _currentProfile = myCurrentProfile;
-
-                // Save a profile Icon to the profile
-                _currentProfile.ProfileIcon = new ProfileIcon(_currentProfile);
-                _currentProfile.ProfileBitmap = _currentProfile.ProfileIcon.ToBitmap(256, 256);*/
             }
             _profilesLoaded = true;
             return true;

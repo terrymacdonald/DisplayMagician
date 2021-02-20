@@ -1,10 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using NLog;
 
 namespace DisplayMagician
@@ -17,6 +14,7 @@ namespace DisplayMagician
         private static bool _programSettingsLoaded = false;
         // Other constants that are useful
         private static string _programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_{FileVersion.ToString(2)}.json");
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
         #region Instance Variables
@@ -112,9 +110,19 @@ namespace DisplayMagician
         {
             ProgramSettings programSettings = null;
 
+            logger.Debug($"ProgramSettings/LoadSettings: Attempting to load ProgramSettings");
+
             if (File.Exists(_programSettingsStorageJsonFileName))
             {
-                var json = File.ReadAllText(_programSettingsStorageJsonFileName, Encoding.Unicode);
+                string json = "";
+                try {
+                    logger.Debug($"ProgramSettings/LoadSettings: Found existing ProgramSettings file at {_programSettingsStorageJsonFileName} so loading text from it");
+                    json = File.ReadAllText(_programSettingsStorageJsonFileName, Encoding.Unicode);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ProgramSettings/LoadSettings: Tried to read the JSON file {_programSettingsStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
+                }
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
@@ -128,18 +136,15 @@ namespace DisplayMagician
                             TypeNameHandling = TypeNameHandling.Auto
                         });
                     }
-                    catch (FileNotFoundException ex)
-                    {
-                        Console.WriteLine($"ProgramSettings/LoadSettings exception 1: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Unable to load Program Settings JSON file {_programSettingsStorageJsonFileName}: " + ex.Message);
+                        logger.Error(ex,$"ProgramSettings/LoadSettings: Tried to parse the JSON in the {_programSettingsStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
                 }
             }
             else
             {
+                logger.Info($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
                 programSettings = new ProgramSettings();
                 programSettings.SaveSettings();
             }
@@ -153,6 +158,8 @@ namespace DisplayMagician
 
         public bool SaveSettings()
         {
+
+            logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {_programSettingsStorageJsonFileName}.");
 
             try
             {
@@ -171,13 +178,9 @@ namespace DisplayMagician
                     return true;
                 }
             }
-            catch (FileNotFoundException ex)
-            {
-                Console.WriteLine($"ProgramSettings/SaveSettings exception 1: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-            }
             catch (Exception ex)
             {
-                Console.WriteLine($"Unable to save Program Settings JSON file {_programSettingsStorageJsonFileName}: " + ex.Message);
+                logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {_programSettingsStorageJsonFileName}.");
             }
 
             return false;

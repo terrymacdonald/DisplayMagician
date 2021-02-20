@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using System.Drawing;
 using DesktopNotifications;
 using System.Runtime.Serialization;
+using NLog.Config;
 
 namespace DisplayMagician {
  
@@ -80,14 +81,7 @@ namespace DisplayMagician {
                     Console.WriteLine($"Program/StartUpNormally exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
             }
-
-            var logfile = new NLog.Targets.FileTarget("logfile") { 
-                FileName = AppLogFilename,
-                DeleteOldFileOnStartup = true
-            };
-
-            //var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
-
+            
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
 
@@ -114,7 +108,31 @@ namespace DisplayMagician {
                     logLevel = NLog.LogLevel.Info;
                     break;
             }
-            config.AddRule(logLevel, NLog.LogLevel.Fatal, logfile);
+           
+            // Create the log file target
+            var logfile = new NLog.Targets.FileTarget("logfile")
+            {
+                FileName = AppLogFilename,
+                DeleteOldFileOnStartup = true
+            };
+
+            // Create a logging rule to use the log file target
+            var loggingRule = new LoggingRule("LogToFile");
+            loggingRule.EnableLoggingForLevels(logLevel, NLog.LogLevel.Fatal);
+            loggingRule.Targets.Add(logfile);
+            config.LoggingRules.Add(loggingRule);
+
+            // Create the log console target
+            var logconsole = new NLog.Targets.ConsoleTarget()
+            {
+                Layout = "${date:format=HH\\:MM\\:ss} ${logger} ${message}",
+            };
+
+            // Create a logging rule to use the log console target
+            loggingRule = new LoggingRule("LogToConsole");
+            loggingRule.EnableLoggingForLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
+            loggingRule.Targets.Add(logconsole);
+            config.LoggingRules.Add(loggingRule);
 
             // Apply config           
             NLog.LogManager.Configuration = config;

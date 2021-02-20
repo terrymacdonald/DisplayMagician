@@ -376,7 +376,15 @@ namespace DisplayMagician
 
             if (File.Exists(_shortcutStorageJsonFileName))
             {
-                var json = File.ReadAllText(_shortcutStorageJsonFileName, Encoding.Unicode);
+                string json = "";
+                try
+                {
+                    json = File.ReadAllText(_shortcutStorageJsonFileName, Encoding.Unicode);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to read the JSON file {_shortcutStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
+                }
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
