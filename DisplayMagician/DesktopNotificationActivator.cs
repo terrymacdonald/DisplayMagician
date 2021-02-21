@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using DesktopNotifications;
-//using static DesktopNotifications.NotificationActivator;
 using Microsoft.QueryStringDotNET;
 using System.Windows.Forms;
 using DisplayMagician.UIForms;
@@ -21,7 +20,6 @@ namespace DisplayMagician
             Program.AppMainForm.Invoke((MethodInvoker)delegate
             {
                 // This code is running on the main UI thread!
-
                 // Parse the query string (using NuGet package QueryString.NET)
                 QueryString args = QueryString.Parse(arguments);
 
@@ -36,10 +34,7 @@ namespace DisplayMagician
                             case "open":
 
                                 // Open the Main DisplayMagician Window
-                                //OpenWindowIfNeeded();
                                 Program.AppMainForm.openApplicationWindow();
-
-
                                 break;
 
                             // Background: Quick reply to the conversation
@@ -47,24 +42,11 @@ namespace DisplayMagician
 
                                 // Exit the application (overriding the close restriction)
                                 Program.AppMainForm.exitApplication();
-
                                 break;
 
                             case "stop":
 
                                 MessageBox.Show("User just asked DisplayMagician to stop monitoring the game");
-                                /*// Get the response the user typed
-                                string msg = userInput["tbReply"];
-
-                                // And send this message
-                                SendMessage(msg);
-
-                                // If there's no windows open, exit the app
-                                if (App.Current.Windows.Count == 0)
-                                {
-                                    Application.Current.Shutdown();
-                                }*/
-
                                 break;
 
                             default:
@@ -85,12 +67,6 @@ namespace DisplayMagician
 
             // Activate the window, bringing it to focus
             Program.AppMainForm.openApplicationWindow();
-            //Program.AppMainForm.openApplicationWindow();
-
-            //Program.AppMainForm.Activate();
-
-            // And make sure to maximize the window too, in case it was currently minimized
-            //Program.AppMainForm.WindowState = FormWindowState.Normal;
         }
     }
 }

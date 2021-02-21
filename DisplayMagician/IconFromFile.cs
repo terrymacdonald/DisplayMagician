@@ -1,13 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Runtime.InteropServices;
-//using System.Windows;
-using System.Drawing.Imaging;
-//using System.Windows.Media.Imaging;
-
-using System.Diagnostics;
 using System.Drawing;
 using System.Windows;
 

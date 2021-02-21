@@ -1,6 +1,5 @@
 using System;
 using McMaster.Extensions.CommandLineUtils;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -173,8 +172,6 @@ namespace DisplayMagician {
                 UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.StopParsingAndCollect,
             }; 
 
-            //app.Name = "HeliosDM+";
-            //app.Name = Assembly.GetEntryAssembly().GetName().Name;
             app.Description = "This application helps configure your NVIDIA Videocard for multiple displays.";
             app.ExtendedHelpText = "This application helps configure your NVIDIA Videocard for multiple displays. It has some nifty features such as the "
                 + Environment.NewLine + " ability to temporarily change your screen settings while you are playing a game, and then change them back once finished.";

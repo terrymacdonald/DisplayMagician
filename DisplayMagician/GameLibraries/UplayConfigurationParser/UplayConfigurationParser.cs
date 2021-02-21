@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+// This configuration parses logic is kept here for possible future use
+// It was really difficult to find this logic in some obscure webpage
+// so I'm keeping it in case I need it later.
 namespace DisplayMagician.GameLibraries.UplayConfigurationParser
 {
     class UplayConfigurationParser

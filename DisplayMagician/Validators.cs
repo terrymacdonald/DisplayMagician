@@ -8,9 +8,6 @@ using McMaster.Extensions.CommandLineUtils;
 using McMaster.Extensions.CommandLineUtils.Validation;
 using System.ComponentModel.DataAnnotations;
 using DisplayMagicianShared;
-using DisplayMagician.GameLibraries;
-using System.Text.RegularExpressions;
-using System.ServiceModel.Dispatcher;
 
 namespace DisplayMagician
 {
