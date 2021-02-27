@@ -125,6 +125,7 @@
     <Compile Include="UIForms\ApplyingProfileForm.Designer.cs">
       <DependentUpon>ApplyingProfileForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="UIForms\ImageListViewRenderers.cs" />
     <Compile Include="UIForms\MaskedForm.cs">
       <SubType>Form</SubType>
     </Compile>
