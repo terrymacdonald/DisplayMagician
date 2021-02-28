@@ -75,10 +75,11 @@ namespace DisplayMagician.UIForms
             /*if ((ImageListView.Focused && ((state & ItemState.Selected) != ItemState.None)) ||
                 (!ImageListView.Focused && ((state & ItemState.Selected) != ItemState.None) && ((state & ItemState.Hovered) != ItemState.None)))*/
             if ((state & ItemState.Selected) != ItemState.None)
+            {
+                //using (Brush bSelected = new LinearGradientBrush(bounds, ImageListView.Colors.SelectedColor1, ImageListView.Colors.SelectedColor2, LinearGradientMode.Vertical))
+                using (Brush bSelected = new LinearGradientBrush(bounds, Color.WhiteSmoke, Color.LightGray, LinearGradientMode.Vertical))
                 {
-                using (Brush bSelected = new LinearGradientBrush(bounds, ImageListView.Colors.SelectedColor1, ImageListView.Colors.SelectedColor2, LinearGradientMode.Vertical))
-                {
-                    Utility.FillRoundedRectangle(g, bSelected, bounds, 10);
+                    Utility.FillRoundedRectangle(g, bSelected, bounds, 12);
                 }
             }
 
@@ -169,6 +170,18 @@ namespace DisplayMagician.UIForms
                     Utility.DrawRoundedRectangle(g, pGray128, bounds.Left, bounds.Top, bounds.Width - 1, bounds.Height - 1, 4);
                 }
             }*/
+            if ((state & ItemState.Selected) != ItemState.None)
+            {
+                /*using (Pen pGray128 = new Pen(ImageListView.Colors.UnFocusedBorderColor))
+                {
+                    Utility.DrawRoundedRectangle(g, pGray128, bounds.Left, bounds.Top, bounds.Width - 1, bounds.Height - 1, 4);
+                }*/
+                using (Pen pSelectedBorder = new Pen(Color.Brown,4))
+                {
+                    //DrawRoundedRectangle(g, pSelectedBorder, bounds, 9);
+                    Utility.DrawRoundedRectangle(g, pSelectedBorder, bounds.Left+3, bounds.Top+3, bounds.Width - 5, bounds.Height - 5, 10);
+                }
+            }
             /*else if (ImageListView.View != View.Details && (state & ItemState.Selected) == ItemState.None)
             {
                 using (Pen pGray64 = new Pen(ImageListView.Colors.BorderColor))

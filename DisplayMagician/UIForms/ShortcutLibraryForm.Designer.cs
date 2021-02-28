@@ -59,7 +59,6 @@
             this.ilv_saved_shortcuts.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.ilv_saved_shortcuts.Colors = new Manina.Windows.Forms.ImageListViewColor(resources.GetString("ilv_saved_shortcuts.Colors"));
             this.ilv_saved_shortcuts.Location = new System.Drawing.Point(0, 98);
             this.ilv_saved_shortcuts.MultiSelect = false;
             this.ilv_saved_shortcuts.Name = "ilv_saved_shortcuts";
