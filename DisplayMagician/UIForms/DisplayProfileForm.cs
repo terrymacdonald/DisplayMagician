@@ -1,14 +1,12 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
+using System.Drawing;
+using System.Collections.Generic;
 
 namespace DisplayMagician.UIForms
 {
@@ -20,11 +18,17 @@ namespace DisplayMagician.UIForms
         //private static bool _inDialog = false;
         private static ProfileItem _profileToLoad = null;
         private ProfileAdaptor _profileAdaptor = new ProfileAdaptor();
+        public static Dictionary<string, bool> profileValidity = new Dictionary<string, bool>();
 
         public DisplayProfileForm()
         {
             InitializeComponent();
             this.AcceptButton = this.btn_save_or_rename;
+            ilv_saved_profiles.MultiSelect = false;
+            ilv_saved_profiles.ThumbnailSize = new Size(100, 100);
+            ilv_saved_profiles.AllowDrag = false;
+            ilv_saved_profiles.AllowDrop = false;
+            ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
         }
 
         public DisplayProfileForm(ProfileItem profileToLoad) : this()
@@ -119,6 +123,8 @@ namespace DisplayMagician.UIForms
             // Empty the imageListView
             ilv_saved_profiles.Items.Clear();
 
+            profileValidity.Clear();
+
             // Fill it back up with the Profiles we have
             foreach (ProfileItem profile in ProfileRepository.AllProfiles.OrderBy(p=>p.Name))
             {
@@ -128,6 +134,8 @@ namespace DisplayMagician.UIForms
                 // Select it if its the selectedProfile
                 if (_selectedProfile is ProfileItem && _selectedProfile.Equals(profile))
                     newItem.Selected = true;
+
+                profileValidity[profile.Name] = profile.IsPossible;
 
                 // Add it to the list!
                 ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);

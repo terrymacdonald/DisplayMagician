@@ -28,6 +28,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.ThumbnailSize = new Size(100,100);
             ilv_saved_shortcuts.AllowDrag = false;
             ilv_saved_shortcuts.AllowDrop = false;
+            ilv_saved_shortcuts.SetRenderer(new ShortcutILVRenderer());
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -53,9 +54,7 @@ namespace DisplayMagician.UIForms
 
 
             // Temporarily stop updating the saved_profiles listview
-            ilv_saved_shortcuts.SuspendLayout();
-
-            ilv_saved_shortcuts.SetRenderer(new ShortcutILVRenderer());
+            ilv_saved_shortcuts.SuspendLayout();            
 
             ImageListViewItem newItem = null;
             ilv_saved_shortcuts.Items.Clear();

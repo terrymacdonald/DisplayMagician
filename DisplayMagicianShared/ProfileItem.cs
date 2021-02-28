@@ -26,17 +26,12 @@ namespace DisplayMagicianShared
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
-        //private static List<WindowsDisplayAPI.Display> _availableDisplays;
-        //private static List<WindowsDisplayAPI.UnAttachedDisplay> _unavailableDisplays;
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
-        //private Version _version;
-        //private bool _isActive = false;
         private bool _isPossible = false;
-        private bool _isPossibleRenewalDue = true;
 
 
         #region JsonConverterBitmap
