@@ -49,6 +49,9 @@ namespace DisplayMagician.UIForms
             if (ShortcutRepository.ShortcutCount == 0)
                 return;
 
+            ProfileRepository.IsPossibleRefresh();
+
+
             // Temporarily stop updating the saved_profiles listview
             ilv_saved_shortcuts.SuspendLayout();
 

@@ -35,7 +35,8 @@ namespace DisplayMagicianShared
         private string _uuid = "";
         //private Version _version;
         //private bool _isActive = false;
-        //private bool _isPossible = false;
+        private bool _isPossible = false;
+        private bool _isPossibleRenewalDue = true;
 
 
         #region JsonConverterBitmap
@@ -139,24 +140,12 @@ namespace DisplayMagicianShared
         {
             get
             {
-
-                // Get the list of connected devices
-                List<string> connectedDisplayIdentifiers = ProfileRepository.GenerateAllAvailableDisplayIdentifiers();
-
-                // Check each display in this profile and make sure it's currently available
-                int validDisplayCount = 0;
-                foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
-                {
-                    // If this profile has a display that isn't currently available then we need to say it's a no!
-                    if (connectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
-                        validDisplayCount++;
-                }
-
-                if (validDisplayCount == ProfileDisplayIdentifiers.Count)
-                    return true;
-                else
-                    return false;
-
+                // Return the cached answer
+                return _isPossible;
+            }
+            set
+            {
+                _isPossible = value;
             }
         }
 

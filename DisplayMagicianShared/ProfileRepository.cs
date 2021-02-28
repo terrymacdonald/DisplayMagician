@@ -673,6 +673,40 @@ namespace DisplayMagicianShared
             }
         }
 
+        public static void IsPossibleRefresh ()
+        {
+            // We need to refresh the cached answer
+            // Get the list of connected devices
+            List<string> connectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
+
+            if (_profilesLoaded && _allProfiles.Count > 0)
+            {
+                foreach (ProfileItem loadedProfile in AllProfiles)
+                {
+
+                    // Check each display in this profile and make sure it's currently available
+                    int validDisplayCount = 0;
+                    foreach (string profileDisplayIdentifier in loadedProfile.ProfileDisplayIdentifiers)
+                    {
+                        // If this profile has a display that isn't currently available then we need to say it's a no!
+                        if (connectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                            validDisplayCount++;
+                    }
+                    if (validDisplayCount == loadedProfile.ProfileDisplayIdentifiers.Count)
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is possible!"); 
+                        loadedProfile.IsPossible = true;
+                    }
+                        
+                    else
+                    {
+                        SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is NOT possible!");
+                        loadedProfile.IsPossible = false;
+                    }
+                    
+                }
+            }
+        }
 
 
         public static List<string> GenerateProfileDisplayIdentifiers()
