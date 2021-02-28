@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,10 +10,14 @@ using Manina.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
+#pragma warning disable CS3009 // Base type is not CLS-compliant
     public class ShortcutILVRenderer : ImageListView.ImageListViewRenderer
+#pragma warning restore CS3009 // Base type is not CLS-compliant
     {
         // Returns item size for the given view mode.
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
         public override Size MeasureItem(View view)
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             Size itemPadding = new Size(4, 4);
             Size sz = ImageListView.ThumbnailSize +
@@ -39,9 +44,20 @@ namespace DisplayMagician.UIForms
                 base.DrawBackground(g, bounds);
         }
         // Draws the specified item on the given graphics.
-        public override void DrawItem(Graphics g, ImageListViewItem item,
-            ItemState state, Rectangle bounds)
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
+        public override void DrawItem(Graphics g, ImageListViewItem item, ItemState state, Rectangle bounds)
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
+            if (g is null)
+            {
+                throw new ArgumentNullException(nameof(g));
+            }
+
+            if (item is null)
+            {
+                throw new ArgumentNullException(nameof(item));
+            }
+
             Size itemPadding = new Size(4, 4);
             bool alternate = (item.Index % 2 == 1);
 
@@ -106,7 +122,24 @@ namespace DisplayMagician.UIForms
             if (img != null)
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
-                g.DrawImage(img, pos);
+
+                if (ShortcutLibraryForm.shortcutValidity[item.Text])
+                {
+                    // Draw the full color image as the shortcuts is not invalid
+                    g.DrawImage(img, pos);
+                }
+                else
+                {
+                    // THe shortcut is invalid
+                    // so we make the image grayscale
+                    Image grayImg = MakeGrayscale(img);
+                    g.DrawImage(grayImg, pos);
+
+                    // Draw a warning triangle over it
+                    // right in the centre
+                    g.DrawImage(Properties.Resources.Warning, pos.X + 30, pos.Y + 30, 40, 40);
+                }
+
                 // Draw image border
                 if (Math.Min(pos.Width, pos.Height) > 32)
                 {
@@ -297,6 +330,42 @@ namespace DisplayMagician.UIForms
 
             path.CloseFigure();
             return path;
+        }
+
+        public static Image MakeGrayscale(Image original)
+        {
+            //create a blank bitmap the same size as original
+            Image newBitmap = new Bitmap(original.Width, original.Height);
+
+            //get a graphics object from the new image
+            using (Graphics g = Graphics.FromImage(newBitmap))
+            {
+
+                //create the grayscale ColorMatrix
+                ColorMatrix colorMatrix = new ColorMatrix(
+                   new float[][]
+                   {
+             new float[] {.3f, .3f, .3f, 0, 0},
+             new float[] {.59f, .59f, .59f, 0, 0},
+             new float[] {.11f, .11f, .11f, 0, 0},
+             new float[] {0, 0, 0, 1, 0},
+             new float[] {0, 0, 0, 0, 1}
+                   });
+
+                //create some image attributes
+                using (ImageAttributes attributes = new ImageAttributes())
+                {
+
+                    //set the color matrix attribute
+                    attributes.SetColorMatrix(colorMatrix);
+
+                    //draw the original image on the new image
+                    //using the grayscale color matrix
+                    g.DrawImage(original, new Rectangle(0, 0, original.Width, original.Height),
+                                0, 0, original.Width, original.Height, GraphicsUnit.Pixel, attributes);
+                }
+            }
+            return newBitmap;
         }
     }
 }

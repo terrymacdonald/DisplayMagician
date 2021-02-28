@@ -19,6 +19,7 @@ namespace DisplayMagician.UIForms
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ShortcutItem _selectedShortcut = null;
+        public static Dictionary<string, bool> shortcutValidity = new Dictionary<string, bool>();
 
         public ShortcutLibraryForm()
         {
@@ -55,8 +56,8 @@ namespace DisplayMagician.UIForms
 
             ImageListViewItem newItem = null;
             ilv_saved_shortcuts.Items.Clear();
+            shortcutValidity.Clear();
 
-            
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
                 newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
@@ -64,6 +65,9 @@ namespace DisplayMagician.UIForms
                 // Select it if its the selectedProfile
                 if (_selectedShortcut is ShortcutItem && _selectedShortcut.Equals(loadedShortcut))
                     newItem.Selected = true;
+
+                (bool result, string thing) = loadedShortcut.IsValid();
+                shortcutValidity[loadedShortcut.Name] = result;
 
                 //ilv_saved_profiles.Items.Add(newItem);
                 ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
@@ -240,10 +244,7 @@ namespace DisplayMagician.UIForms
 
             // Only run the if shortcut is valid
             (bool result, string validityMessage) = _selectedShortcut.IsValid();
-            if (result)
-                // Run the selected shortcut
-                btn_run.PerformClick();
-            else
+            if (!result)
             {
                 // We tell the user the reason that we couldnt run the shortcut
                 if (MessageBox.Show($"The shortcut '{_selectedShortcut.Name}' isn't valid for some reason so we cannot run the application or game. Has your hardware or screen layout changed from when the shortcut was made? We recommend that you edit the shortcut to make it valid again, or reverse the hardware changes you made. Do you want to do that now?", $"Edit the '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
