@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Manina.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -16,29 +17,22 @@ namespace DisplayMagician.UIForms
     {
         // Returns item size for the given view mode.
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
-        public override Size MeasureItem(View view)
+        public override Size MeasureItem(Manina.Windows.Forms.View view)
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
-            Size itemPadding = new Size(4, 4);
-            Size sz = ImageListView.ThumbnailSize +
-                      itemPadding + itemPadding;
-            return sz;
+            // Reference text height
+            int textHeight = ImageListView.Font.Height;
 
-            /*if (view == View.Thumbnails)
-             {
-                 //Size itemPadding = new Size(4, 4);
-                 //Size sz = ImageListView.ThumbnailSize +
-                 //          itemPadding + itemPadding;
-                 Size sz = ImageListView.ThumbnailSize;
-                 return sz;
-             }
-             else
-                 return base.MeasureItem(view);*/
+            Size itemSize = new Size();
+
+            itemSize.Height = ImageListView.ThumbnailSize.Height + 2 * textHeight + 4 * 3;
+            itemSize.Width = ImageListView.ThumbnailSize.Width + 4 * 3;
+            return itemSize;
         }
         // Draws the background of the control.
         public override void DrawBackground(Graphics g, Rectangle bounds)
         {
-            if (ImageListView.View == View.Thumbnails)
+            if (ImageListView.View == Manina.Windows.Forms.View.Thumbnails)
                 g.Clear(Color.FromArgb(255, 255, 255));
             else
                 base.DrawBackground(g, bounds);
@@ -60,13 +54,19 @@ namespace DisplayMagician.UIForms
 
             Size itemPadding = new Size(4, 4);
             bool alternate = (item.Index % 2 == 1);
+            Point imagePoint = new Point(bounds.X+3, bounds.Y+3);
+            Size imageSize = new Size();
+            imageSize.Height = ImageListView.ThumbnailSize.Height;
+            imageSize.Width = ImageListView.ThumbnailSize.Width;
+            Rectangle imageBounds = new Rectangle(imagePoint, imageSize);
 
             // Paint background
             if (ImageListView.Enabled)
             {
-                using (Brush bItemBack = new SolidBrush(alternate && ImageListView.View == View.Details ?
+                using (Brush bItemBack = new SolidBrush(alternate && ImageListView.View == Manina.Windows.Forms.View.Details ?
                     ImageListView.Colors.AlternateBackColor : ImageListView.Colors.BackColor))
                 {
+                    //g.FillRectangle(bItemBack, bounds);
                     g.FillRectangle(bItemBack, bounds);
                 }
             }
@@ -74,16 +74,18 @@ namespace DisplayMagician.UIForms
             {
                 using (Brush bItemBack = new SolidBrush(ImageListView.Colors.DisabledBackColor))
                 {
+                    //g.FillRectangle(bItemBack, bounds);
                     g.FillRectangle(bItemBack, bounds);
                 }
             }
 
             if ((state & ItemState.Selected) != ItemState.None)
             {
-                //using (Brush bSelected = new LinearGradientBrush(bounds, ImageListView.Colors.SelectedColor1, ImageListView.Colors.SelectedColor2, LinearGradientMode.Vertical))
+                //using (Brush bSelected = new LinearGradientBrush(bounds, Color.WhiteSmoke, Color.LightGray, LinearGradientMode.Vertical))
                 using (Brush bSelected = new LinearGradientBrush(bounds, Color.WhiteSmoke, Color.LightGray, LinearGradientMode.Vertical))
                 {
-                    Utility.FillRoundedRectangle(g, bSelected, bounds, 12);
+                    //Utility.FillRoundedRectangle(g, bSelected, bounds, 12);
+                    Utility.FillRoundedRectangle(g, bSelected, imageBounds, 12);
                 }
             }
 
@@ -134,13 +136,19 @@ namespace DisplayMagician.UIForms
                 else
                     foreColor = ImageListView.Colors.UnFocusedForeColor;
             }
+            Size szt = TextRenderer.MeasureText(item.Text, ImageListView.Font);
+            Rectangle rt = new Rectangle(bounds.Left + itemPadding.Width, bounds.Top + itemPadding.Height + ImageListView.ThumbnailSize.Height, ImageListView.ThumbnailSize.Width, 3 * szt.Height);
+            TextFormatFlags flags = TextFormatFlags.EndEllipsis | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
+            TextRenderer.DrawText(g, item.Text, ImageListView.Font, rt, foreColor, flags);
+
 
             if ((state & ItemState.Selected) != ItemState.None)
             {
                 using (Pen pSelectedBorder = new Pen(Color.Brown,4))
                 {
                     //DrawRoundedRectangle(g, pSelectedBorder, bounds, 9);
-                    Utility.DrawRoundedRectangle(g, pSelectedBorder, bounds.Left+3, bounds.Top+3, bounds.Width - 5, bounds.Height - 5, 10);
+                    //Utility.DrawRoundedRectangle(g, pSelectedBorder, bounds.Left+3, bounds.Top+3, bounds.Width - 5, bounds.Height - 5, 10);
+                    Utility.DrawRoundedRectangle(g, pSelectedBorder, imageBounds.Left, imageBounds.Top, imageBounds.Width, imageBounds.Height, 10);
                 }
             }
         }
@@ -170,29 +178,22 @@ namespace DisplayMagician.UIForms
     {
         // Returns item size for the given view mode.
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
-        public override Size MeasureItem(View view)
+        public override Size MeasureItem(Manina.Windows.Forms.View view)
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
-            Size itemPadding = new Size(4, 4);
-            Size sz = ImageListView.ThumbnailSize +
-                      itemPadding + itemPadding;
-            return sz;
+            // Reference text height
+            int textHeight = ImageListView.Font.Height;
 
-            /*if (view == View.Thumbnails)
-             {
-                 //Size itemPadding = new Size(4, 4);
-                 //Size sz = ImageListView.ThumbnailSize +
-                 //          itemPadding + itemPadding;
-                 Size sz = ImageListView.ThumbnailSize;
-                 return sz;
-             }
-             else
-                 return base.MeasureItem(view);*/
+            Size itemSize = new Size();
+
+            itemSize.Height = ImageListView.ThumbnailSize.Height + 2 * textHeight + 4 * 3;
+            itemSize.Width = ImageListView.ThumbnailSize.Width + 4 * 3;
+            return itemSize;
         }
         // Draws the background of the control.
         public override void DrawBackground(Graphics g, Rectangle bounds)
         {
-            if (ImageListView.View == View.Thumbnails)
+            if (ImageListView.View == Manina.Windows.Forms.View.Thumbnails)
                 g.Clear(Color.FromArgb(255, 255, 255));
             else
                 base.DrawBackground(g, bounds);
@@ -214,11 +215,16 @@ namespace DisplayMagician.UIForms
 
             Size itemPadding = new Size(4, 4);
             bool alternate = (item.Index % 2 == 1);
+            Point imagePoint = new Point(bounds.X + 3, bounds.Y + 3);
+            Size imageSize = new Size();
+            imageSize.Height = ImageListView.ThumbnailSize.Height;
+            imageSize.Width = ImageListView.ThumbnailSize.Width;
+            Rectangle imageBounds = new Rectangle(imagePoint, imageSize);
 
             // Paint background
             if (ImageListView.Enabled)
             {
-                using (Brush bItemBack = new SolidBrush(alternate && ImageListView.View == View.Details ?
+                using (Brush bItemBack = new SolidBrush(alternate && ImageListView.View == Manina.Windows.Forms.View.Details ?
                     ImageListView.Colors.AlternateBackColor : ImageListView.Colors.BackColor))
                 {
                     g.FillRectangle(bItemBack, bounds);
@@ -237,7 +243,7 @@ namespace DisplayMagician.UIForms
                 //using (Brush bSelected = new LinearGradientBrush(bounds, ImageListView.Colors.SelectedColor1, ImageListView.Colors.SelectedColor2, LinearGradientMode.Vertical))
                 using (Brush bSelected = new LinearGradientBrush(bounds, Color.WhiteSmoke, Color.LightGray, LinearGradientMode.Vertical))
                 {
-                    Utility.FillRoundedRectangle(g, bSelected, bounds, 12);
+                    Utility.FillRoundedRectangle(g, bSelected, imageBounds, 12);
                 }
             }
 
@@ -288,13 +294,17 @@ namespace DisplayMagician.UIForms
                 else
                     foreColor = ImageListView.Colors.UnFocusedForeColor;
             }
+            Size szt = TextRenderer.MeasureText(item.Text, ImageListView.Font);
+            Rectangle rt = new Rectangle(bounds.Left + itemPadding.Width, bounds.Top + itemPadding.Height + ImageListView.ThumbnailSize.Height + 4, ImageListView.ThumbnailSize.Width, 3 * szt.Height);
+            TextFormatFlags flags = TextFormatFlags.EndEllipsis | TextFormatFlags.HorizontalCenter | TextFormatFlags.Top | TextFormatFlags.WordBreak;
+            TextRenderer.DrawText(g, item.Text, ImageListView.Font, rt, foreColor, flags);
 
             if ((state & ItemState.Selected) != ItemState.None)
             {
                 using (Pen pSelectedBorder = new Pen(Color.Brown, 4))
                 {
                     //DrawRoundedRectangle(g, pSelectedBorder, bounds, 9);
-                    Utility.DrawRoundedRectangle(g, pSelectedBorder, bounds.Left + 3, bounds.Top + 3, bounds.Width - 5, bounds.Height - 5, 10);
+                    Utility.DrawRoundedRectangle(g, pSelectedBorder, imageBounds.Left + 3, imageBounds.Top + 3, imageBounds.Width - 5, imageBounds.Height - 5, 10);
                 }
             }
         }

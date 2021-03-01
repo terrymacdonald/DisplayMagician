@@ -264,7 +264,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(1150, 755);
-            this.MinimumSize = new System.Drawing.Size(756, 375);
+            this.MinimumSize = new System.Drawing.Size(848, 390);
             this.Name = "ShortcutLibraryForm";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
