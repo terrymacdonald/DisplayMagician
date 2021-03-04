@@ -169,6 +169,8 @@ namespace DisplayMagician.UIForms
         {
             _selectedShortcut = GetShortcutFromName(e.Item.Text);
 
+            SetRunOption();
+
             if (e.Buttons == MouseButtons.Right)
             {
                 cms_shortcuts.Show(ilv_saved_shortcuts,e.Location);
@@ -179,11 +181,29 @@ namespace DisplayMagician.UIForms
         {
             _selectedShortcut = GetShortcutFromName(e.Item.Text);
 
+            SetRunOption();
+
             if (_selectedShortcut == null)
                 return;
 
             // Run the selected shortcut
             btn_run.PerformClick();
+        }
+
+        private void SetRunOption()
+        {
+            if (shortcutValidity[_selectedShortcut.Name])
+            {
+                btn_run.Visible = true;
+                cms_shortcuts.Items[1].Enabled = true;
+            }
+
+            else
+            {
+                btn_run.Visible = false;
+                cms_shortcuts.Items[1].Enabled = false;
+            }
+                
         }
 
         private void btn_new_Click(object sender, EventArgs e)
