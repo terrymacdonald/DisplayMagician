@@ -186,6 +186,9 @@ namespace DisplayMagician.UIForms
             if (_selectedShortcut == null)
                 return;
 
+            if (!shortcutValidity[_selectedShortcut.Name])
+                return;
+
             // Run the selected shortcut
             btn_run.PerformClick();
         }

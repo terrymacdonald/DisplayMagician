@@ -786,7 +786,7 @@ namespace DisplayMagician.UIForms
             allGames.AddRange(UplayLibrary.AllInstalledGames);
 
 
-            // Load the Steam Games into the Games ListView
+            // Load all the Games into the Games ListView
             foreach (var game in allGames.OrderBy(game => game.Name))
             {
                 // Get the bitmap out of the IconPath 
@@ -805,10 +805,10 @@ namespace DisplayMagician.UIForms
                 // Add the images to the images array
                 il_games.Images.Add(bm);
 
-                if (!Visible)
+                /*if (!Visible)
                 {
-                    return;
-                }
+                    //return;
+                }*/
 
                 // ADd the game to the game array
                 lv_games.Items.Add(new ListViewItem
@@ -930,18 +930,22 @@ namespace DisplayMagician.UIForms
             // Set the launcher items if we have them
             if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibrary.Unknown))
             {
-                // Fill in the game library information to highliught there isn't one detected.
-                txt_game_launcher.Text = "None detected";
-                txt_game_name.Text = "No supported game libraries detected";
-                txt_args_game.Text = "";
+                if (allGames.Count <= 0)
+                {
+                    // Fill in the game library information to highliught there isn't one detected.
+                    txt_game_launcher.Text = "None detected";
+                    txt_game_name.Text = "No supported game libraries detected";
+                    txt_args_game.Text = "";
 
-                // Disable the Game library option, and select the Executable option instead.
-                p_game.Enabled = false;
-                p_game.Visible = false;
-                rb_wait_executable.Checked = true;
-                rb_launcher.Enabled = false;
-                rb_launcher.Visible = false;
-                lbl_no_game_libraries.Visible = true;
+                    // Disable the Game library option, and select the Executable option instead.
+                    p_game.Enabled = false;
+                    p_game.Visible = false;
+                    rb_wait_executable.Checked = true;
+                    rb_launcher.Enabled = false;
+                    rb_launcher.Visible = false;
+                    lbl_no_game_libraries.Visible = true;
+
+                }
             }
 
             else

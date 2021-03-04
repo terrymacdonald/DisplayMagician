@@ -1935,9 +1935,13 @@ namespace DisplayMagician
 
             // Does the profile we want to Use still exist?
             // Is the profile still valid right now? i.e. are all the screens available?
+            if (ProfileToUse == null)
+            {
+                return (false,string.Format("The profile is not valid right now and cannot be used."));
+            }
             if (!ProfileToUse.IsPossible)
             {
-                return (false,string.Format("The profile '{0}' is not valid right now and cannot be used.",ProfileToUse.Name));
+                return (false, string.Format("The profile '{0}' is not valid right now and cannot be used.", ProfileToUse.Name));
             }
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Application))

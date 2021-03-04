@@ -151,6 +151,7 @@ namespace DisplayMagicianShared
             //Doublecheck it's been added
             if (ContainsProfile(profile))
             {
+                IsPossibleRefresh();
                 return true;
             }
             else
@@ -199,6 +200,7 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveProfiles();
+                IsPossibleRefresh();
                 return true;
             }
             else if (numRemoved == 0)
@@ -248,6 +250,7 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveProfiles();
+                IsPossibleRefresh();
                 return true;
             }
             else if (numRemoved == 0)
@@ -296,6 +299,7 @@ namespace DisplayMagicianShared
             if (numRemoved == 1)
             {
                 SaveProfiles();
+                IsPossibleRefresh();
                 return true;
             }    
             else if (numRemoved == 0)
@@ -449,7 +453,8 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {profile.Name} to {renamedName}");
                 return false;
             }
-                
+
+            IsPossibleRefresh();
 
         }
 
