@@ -673,7 +673,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static void IsPossibleRefresh ()
+        public static void IsPossibleRefresh()
         {
             // We need to refresh the cached answer
             // Get the list of connected devices

@@ -268,7 +268,7 @@
             this.Name = "ShortcutLibraryForm";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "DisplayMagician - Setup Game Shortcuts";
+            this.Text = "DisplayMagician - Game Shortcuts";
             this.Activated += new System.EventHandler(this.ShortcutLibraryForm_Activated);
             this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);
             this.cms_shortcuts.ResumeLayout(false);

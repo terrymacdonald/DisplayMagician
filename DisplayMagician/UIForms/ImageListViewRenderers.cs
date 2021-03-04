@@ -304,7 +304,7 @@ namespace DisplayMagician.UIForms
                 using (Pen pSelectedBorder = new Pen(Color.Brown, 4))
                 {
                     //DrawRoundedRectangle(g, pSelectedBorder, bounds, 9);
-                    Utility.DrawRoundedRectangle(g, pSelectedBorder, imageBounds.Left + 3, imageBounds.Top + 3, imageBounds.Width - 5, imageBounds.Height - 5, 10);
+                    Utility.DrawRoundedRectangle(g, pSelectedBorder, imageBounds.Left + 1, imageBounds.Top + 1, imageBounds.Width, imageBounds.Height, 10);
                 }
             }
         }

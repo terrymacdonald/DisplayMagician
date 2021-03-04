@@ -166,11 +166,11 @@ namespace DisplayMagician.UIForms
             this.btn_view_current.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_view_current.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_view_current.ForeColor = System.Drawing.Color.White;
-            this.btn_view_current.Location = new System.Drawing.Point(796, 12);
+            this.btn_view_current.Location = new System.Drawing.Point(712, 12);
             this.btn_view_current.Name = "btn_view_current";
-            this.btn_view_current.Size = new System.Drawing.Size(168, 39);
+            this.btn_view_current.Size = new System.Drawing.Size(252, 39);
             this.btn_view_current.TabIndex = 6;
-            this.btn_view_current.Text = "View &Current";
+            this.btn_view_current.Text = "View &Current Display";
             this.btn_view_current.UseVisualStyleBackColor = true;
             this.btn_view_current.Click += new System.EventHandler(this.btn_view_current_Click);
             // 
@@ -328,8 +328,7 @@ namespace DisplayMagician.UIForms
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "DisplayMagician - Setup Display Profiles";
-            this.Activated += new System.EventHandler(this.DisplayProfileForm_Activated);
+            this.Text = "DisplayMagician - Display Profiles";
             this.Load += new System.EventHandler(this.DisplayProfileForm_Load);
             this.menu_profiles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();

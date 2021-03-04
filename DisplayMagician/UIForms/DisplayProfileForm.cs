@@ -51,7 +51,6 @@ namespace DisplayMagician.UIForms
             }
 
             // Apply the Profile
-            //ProfileRepository.ApplyProfile(_selectedProfile);
             Program.ApplyProfile(_selectedProfile);
 
         }
@@ -120,21 +119,36 @@ namespace DisplayMagician.UIForms
             // To stop the display showing all sorts of changes happening
             ilv_saved_profiles.SuspendLayout();
 
+            // Figure out if anything is selected at the moment
+            // and if it is save it to reselect it after the refresh
+            // We only take the first as there is only one thing selected at a time
+            /*string lastSelectedItemName = "";
+            if (ilv_saved_profiles.SelectedItems.Count > 0)
+                lastSelectedItemName = ilv_saved_profiles.SelectedItems[0].Text;
+*/
             // Empty the imageListView
             ilv_saved_profiles.Items.Clear();
 
             profileValidity.Clear();
 
+            //IOrderedEnumerable<ProfileItem> orderedProfiles = ProfileRepository.AllProfiles.OrderBy(p => p.Name);
+
+            // Check if the last selected profile is still in the list of profiles
+            //bool lastSelectedItemStillThere = (from profile in orderedProfiles select profile.Name).Contains(lastSelectedItemName);
+
             // Fill it back up with the Profiles we have
-            foreach (ProfileItem profile in ProfileRepository.AllProfiles.OrderBy(p=>p.Name))
+            foreach (ProfileItem profile in ProfileRepository.AllProfiles.OrderBy(p => p.Name))
             {
                 // Create a new ImageListViewItem from the profile
                 newItem = new ImageListViewItem(profile, profile.Name);
 
-                // Select it if its the selectedProfile
+                // if the item was removed from the list during this 
+                // list refresh, then we select this profile only if it 
+                // is the currently used Profile
                 if (_selectedProfile is ProfileItem && _selectedProfile.Equals(profile))
                     newItem.Selected = true;
 
+ 
                 profileValidity[profile.Name] = profile.IsPossible;
 
                 // Add it to the list!
@@ -147,7 +161,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void DisplayProfileForm_Activated(object sender, EventArgs e)
+        /*private void DisplayProfileForm_Activated(object sender, EventArgs e)
         {
             // We handle the UI updating in DisplayProfileForm_Activated so that
             // the app will check for changes to the current profile when the
@@ -159,11 +173,14 @@ namespace DisplayMagician.UIForms
             ChangeSelectedProfile(ProfileRepository.CurrentProfile);
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
-        }
+        }*/
 
         private void DisplayProfileForm_Load(object sender, EventArgs e)
         {
-            
+
+            // Refresh the profiles to see whats valid
+            ProfileRepository.IsPossibleRefresh();
+
             // Update the Current Profile
             ProfileRepository.UpdateActiveProfile();
 
@@ -341,8 +358,9 @@ namespace DisplayMagician.UIForms
         private void btn_view_current_Click(object sender, EventArgs e)
         {
             // Reload the profiles in case we swapped to another program to change it
-            //ProfileRepository.UpdateCurrentProfile();
             ProfileRepository.GetActiveProfile();
+            // Refresh the profiles to see whats valid
+            ProfileRepository.IsPossibleRefresh();
             // Change to the current selected Profile
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
