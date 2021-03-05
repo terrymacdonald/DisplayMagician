@@ -59,14 +59,13 @@ namespace DisplayMagician.UIForms
             _profileAdaptor = new ProfileAdaptor();
 
             _shortcutToEdit = shortcutToEdit;
-            // Create a new SHortcut if we are creating a new one
-            // And set up the page (otherwise this is all set when we load an
-            // existing Shortcut)
-            /*if (_shortcutToEdit == null)
-            {
-                shortcutToEdit = new ShortcutItem();
-                isNewShortcut = true;
-            }*/
+
+            // Style the Saved Profiles list
+            ilv_saved_profiles.MultiSelect = false;
+            ilv_saved_profiles.ThumbnailSize = new Size(100, 100);
+            ilv_saved_profiles.AllowDrag = false;
+            ilv_saved_profiles.AllowDrop = false;
+            ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
         }
 
         public ShortcutItem Shortcut

@@ -98,6 +98,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_pass_args1 = new System.Windows.Forms.CheckBox();
             this.lbl_start_program1 = new System.Windows.Forms.Label();
             this.tabp_game = new System.Windows.Forms.TabPage();
+            this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.p_standalone = new System.Windows.Forms.Panel();
             this.btn_exe_to_start = new System.Windows.Forms.Button();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
@@ -141,7 +142,6 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -169,13 +169,15 @@ namespace DisplayMagician.UIForms
             // 
             // btn_save
             // 
+            this.btn_save.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.btn_save.Enabled = false;
             this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(517, 754);
+            this.btn_save.Location = new System.Drawing.Point(517, 778);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(120, 40);
             this.btn_save.TabIndex = 6;
@@ -185,12 +187,13 @@ namespace DisplayMagician.UIForms
             // 
             // btn_cancel
             // 
+            this.btn_cancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btn_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btn_cancel.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_cancel.ForeColor = System.Drawing.Color.White;
-            this.btn_cancel.Location = new System.Drawing.Point(1008, 769);
+            this.btn_cancel.Location = new System.Drawing.Point(1008, 793);
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(94, 25);
             this.btn_cancel.TabIndex = 5;
@@ -229,7 +232,7 @@ namespace DisplayMagician.UIForms
             this.tabc_shortcut.Name = "tabc_shortcut";
             this.tabc_shortcut.SelectedIndex = 0;
             this.tabc_shortcut.ShowToolTips = true;
-            this.tabc_shortcut.Size = new System.Drawing.Size(1090, 630);
+            this.tabc_shortcut.Size = new System.Drawing.Size(1090, 654);
             this.tabc_shortcut.TabIndex = 28;
             // 
             // tabp_display
@@ -244,7 +247,7 @@ namespace DisplayMagician.UIForms
             this.tabp_display.Location = new System.Drawing.Point(4, 32);
             this.tabp_display.Name = "tabp_display";
             this.tabp_display.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_display.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_display.Size = new System.Drawing.Size(1082, 618);
             this.tabp_display.TabIndex = 0;
             this.tabp_display.Text = "1. Choose Display Profile";
             this.tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
@@ -281,13 +284,15 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.AllowColumnResize = false;
             this.ilv_saved_profiles.AllowItemReorder = false;
             this.ilv_saved_profiles.AllowPaneResize = false;
+            this.ilv_saved_profiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.ilv_saved_profiles.Colors = new Manina.Windows.Forms.ImageListViewColor(resources.GetString("ilv_saved_profiles.Colors"));
             this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 466);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(1086, 128);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(1086, 156);
             this.ilv_saved_profiles.TabIndex = 24;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -295,6 +300,8 @@ namespace DisplayMagician.UIForms
             // 
             // dv_profile
             // 
+            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dv_profile.BackColor = System.Drawing.Color.DimGray;
             this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -968,6 +975,22 @@ namespace DisplayMagician.UIForms
             this.tabp_game.TabIndex = 2;
             this.tabp_game.Text = "4. Choose Game to start";
             // 
+            // lbl_no_game_libraries
+            // 
+            this.lbl_no_game_libraries.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_no_game_libraries.AutoSize = true;
+            this.lbl_no_game_libraries.BackColor = System.Drawing.Color.Brown;
+            this.lbl_no_game_libraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
+            this.lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_no_game_libraries.Location = new System.Drawing.Point(401, 307);
+            this.lbl_no_game_libraries.Name = "lbl_no_game_libraries";
+            this.lbl_no_game_libraries.Size = new System.Drawing.Size(280, 22);
+            this.lbl_no_game_libraries.TabIndex = 34;
+            this.lbl_no_game_libraries.Text = "No supported game libraries detected!";
+            this.lbl_no_game_libraries.Visible = false;
+            // 
             // p_standalone
             // 
             this.p_standalone.Controls.Add(this.btn_exe_to_start);
@@ -1440,8 +1463,10 @@ namespace DisplayMagician.UIForms
             // 
             // txt_shortcut_save_name
             // 
+            this.txt_shortcut_save_name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_shortcut_save_name.Location = new System.Drawing.Point(326, 707);
+            this.txt_shortcut_save_name.Location = new System.Drawing.Point(326, 731);
             this.txt_shortcut_save_name.MaxLength = 200;
             this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
             this.txt_shortcut_save_name.Size = new System.Drawing.Size(511, 35);
@@ -1462,10 +1487,12 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_shortcut_name
             // 
+            this.lbl_shortcut_name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.lbl_shortcut_name.AutoSize = true;
             this.lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
-            this.lbl_shortcut_name.Location = new System.Drawing.Point(142, 710);
+            this.lbl_shortcut_name.Location = new System.Drawing.Point(142, 734);
             this.lbl_shortcut_name.Name = "lbl_shortcut_name";
             this.lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
             this.lbl_shortcut_name.TabIndex = 31;
@@ -1473,33 +1500,19 @@ namespace DisplayMagician.UIForms
             // 
             // cb_autosuggest
             // 
+            this.cb_autosuggest.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cb_autosuggest.AutoSize = true;
             this.cb_autosuggest.Checked = true;
             this.cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_autosuggest.ForeColor = System.Drawing.Color.White;
-            this.cb_autosuggest.Location = new System.Drawing.Point(856, 716);
+            this.cb_autosuggest.Location = new System.Drawing.Point(856, 740);
             this.cb_autosuggest.Name = "cb_autosuggest";
             this.cb_autosuggest.Size = new System.Drawing.Size(117, 17);
             this.cb_autosuggest.TabIndex = 32;
             this.cb_autosuggest.Text = "Auto-suggest name";
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
-            // 
-            // lbl_no_game_libraries
-            // 
-            this.lbl_no_game_libraries.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_no_game_libraries.AutoSize = true;
-            this.lbl_no_game_libraries.BackColor = System.Drawing.Color.Brown;
-            this.lbl_no_game_libraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
-            this.lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_game_libraries.Location = new System.Drawing.Point(401, 307);
-            this.lbl_no_game_libraries.Name = "lbl_no_game_libraries";
-            this.lbl_no_game_libraries.Size = new System.Drawing.Size(280, 22);
-            this.lbl_no_game_libraries.TabIndex = 34;
-            this.lbl_no_game_libraries.Text = "No supported game libraries detected!";
-            this.lbl_no_game_libraries.Visible = false;
             // 
             // ShortcutForm
             // 
@@ -1508,7 +1521,7 @@ namespace DisplayMagician.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
-            this.ClientSize = new System.Drawing.Size(1114, 806);
+            this.ClientSize = new System.Drawing.Size(1114, 830);
             this.Controls.Add(this.cb_autosuggest);
             this.Controls.Add(this.txt_shortcut_save_name);
             this.Controls.Add(this.lbl_shortcut_name);
