@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DisplayMagicianShared;
 using Manina.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -95,7 +96,7 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                if (ShortcutLibraryForm.shortcutValidity[item.Text])
+                if (ShortcutRepository.ShortcutValidityLookup[item.Text])
                 {
                     // Draw the full color image as the shortcuts is not invalid
                     g.DrawImage(img, pos);
@@ -253,7 +254,7 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                if (DisplayProfileForm.profileValidity[item.Text])
+                if (ProfileRepository.ProfileValidityLookup[item.Text])
                 {
                     // Draw the full color image as the shortcuts is not invalid
                     g.DrawImage(img, pos);

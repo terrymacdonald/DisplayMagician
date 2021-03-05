@@ -19,7 +19,7 @@ namespace DisplayMagician.UIForms
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ShortcutItem _selectedShortcut = null;
-        public static Dictionary<string, bool> shortcutValidity = new Dictionary<string, bool>();
+        //public static Dictionary<string, bool> shortcutValidity = new Dictionary<string, bool>();
 
         public ShortcutLibraryForm()
         {
@@ -44,6 +44,8 @@ namespace DisplayMagician.UIForms
             RemoveWarningIfShortcuts();
         }
 
+
+
         private void RefreshShortcutLibraryUI()
         {
 
@@ -58,7 +60,7 @@ namespace DisplayMagician.UIForms
 
             ImageListViewItem newItem = null;
             ilv_saved_shortcuts.Items.Clear();
-            shortcutValidity.Clear();
+            ShortcutRepository.ShortcutValidityLookup.Clear();
 
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
@@ -69,7 +71,7 @@ namespace DisplayMagician.UIForms
                     newItem.Selected = true;
 
                 (bool result, string thing) = loadedShortcut.IsValid();
-                shortcutValidity[loadedShortcut.Name] = result;
+                ShortcutRepository.ShortcutValidityLookup[loadedShortcut.Name] = result;
 
                 //ilv_saved_profiles.Items.Add(newItem);
                 ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
@@ -186,7 +188,7 @@ namespace DisplayMagician.UIForms
             if (_selectedShortcut == null)
                 return;
 
-            if (!shortcutValidity[_selectedShortcut.Name])
+            if (!ShortcutRepository.ShortcutValidityLookup[_selectedShortcut.Name])
                 return;
 
             // Run the selected shortcut
@@ -195,7 +197,7 @@ namespace DisplayMagician.UIForms
 
         private void SetRunOption()
         {
-            if (shortcutValidity[_selectedShortcut.Name])
+            if (ShortcutRepository.ShortcutValidityLookup[_selectedShortcut.Name])
             {
                 btn_run.Visible = true;
                 cms_shortcuts.Items[1].Enabled = true;
@@ -211,6 +213,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_new_Click(object sender, EventArgs e)
         {
+            this.Cursor = Cursors.WaitCursor;
             var shortcutForm = new ShortcutForm(new ShortcutItem());
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
@@ -219,7 +222,9 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = shortcutForm.Shortcut;
                 RefreshShortcutLibraryUI();
             }
+            this.Cursor = Cursors.Default;
             RemoveWarningIfShortcuts();
+
         }
 
         private void btn_edit_Click(object sender, EventArgs e)
@@ -231,6 +236,8 @@ namespace DisplayMagician.UIForms
             if (_selectedShortcut == null)
                 return;
 
+            this.Cursor = Cursors.WaitCursor;
+
             var shortcutForm = new ShortcutForm(_selectedShortcut);
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
@@ -240,6 +247,7 @@ namespace DisplayMagician.UIForms
                 ShortcutRepository.SaveShortcuts();
             }
 
+            this.Cursor = Cursors.Default;
         }
 
         private void btn_delete_Click(object sender, EventArgs e)
@@ -313,6 +321,9 @@ namespace DisplayMagician.UIForms
 
         private void ShortcutLibraryForm_Activated(object sender, EventArgs e)
         {
+            // Refresh the Shortcut Library UI
+            RefreshShortcutLibraryUI();
+
             RemoveWarningIfShortcuts();
         }
 

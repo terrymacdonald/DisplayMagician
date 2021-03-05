@@ -18,7 +18,7 @@ namespace DisplayMagician.UIForms
         //private static bool _inDialog = false;
         private static ProfileItem _profileToLoad = null;
         private ProfileAdaptor _profileAdaptor = new ProfileAdaptor();
-        public static Dictionary<string, bool> profileValidity = new Dictionary<string, bool>();
+        //public static Dictionary<string, bool> profileValidity = new Dictionary<string, bool>();
 
         public DisplayProfileForm()
         {
@@ -129,8 +129,6 @@ namespace DisplayMagician.UIForms
             // Empty the imageListView
             ilv_saved_profiles.Items.Clear();
 
-            profileValidity.Clear();
-
             //IOrderedEnumerable<ProfileItem> orderedProfiles = ProfileRepository.AllProfiles.OrderBy(p => p.Name);
 
             // Check if the last selected profile is still in the list of profiles
@@ -149,7 +147,7 @@ namespace DisplayMagician.UIForms
                     newItem.Selected = true;
 
  
-                profileValidity[profile.Name] = profile.IsPossible;
+                //ProfileRepository.ProfileValidityLookup[profile.Name] = profile.IsPossible;
 
                 // Add it to the list!
                 ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
@@ -316,6 +314,9 @@ namespace DisplayMagician.UIForms
                 // Lets save the old names for usage next
                 string oldProfileName = _selectedProfile.Name;
 
+                // Lets rename the selectedProfile to the new name
+                ProfileRepository.RenameProfile(_selectedProfile, txt_profile_save_name.Text);
+
                 // Lets rename the entry in the imagelistview to the new name
                 foreach (ImageListViewItem myItem in ilv_saved_profiles.Items)
                 {
@@ -324,9 +325,7 @@ namespace DisplayMagician.UIForms
                         myItem.Text = txt_profile_save_name.Text;
                     }
                 }
-                // Lets rename the selectedProfile to the new name
-                ProfileRepository.RenameProfile(_selectedProfile, txt_profile_save_name.Text);
-                
+
                 // Lets update the rest of the profile screen too
                 lbl_profile_shown.Text = txt_profile_save_name.Text;
 
@@ -339,7 +338,7 @@ namespace DisplayMagician.UIForms
             ChangeSelectedProfile(_selectedProfile);
 
             // now update the profiles image listview
-            //ilv_saved_profiles.Refresh();
+            RefreshDisplayProfileUI();
 
         }
 

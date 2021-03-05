@@ -21,6 +21,7 @@ namespace DisplayMagicianShared
         #region Class Variables
         // Common items to the class
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
+        public static Dictionary<string, bool> _profileValidityLookup = new Dictionary<string, bool>();
         private static bool _profilesLoaded = false;
         public static Version _version = new Version(1, 0, 0);
         private static ProfileItem _currentProfile;
@@ -89,6 +90,18 @@ namespace DisplayMagicianShared
             }
         }
 
+        public static Dictionary<string, bool> ProfileValidityLookup
+        {
+            get
+            {
+                if (!_profilesLoaded)
+                    // Load the Profiles from storage if they need to be
+                    LoadProfiles();
+
+                return _profileValidityLookup;
+            }
+        }
+
         public static ProfileItem CurrentProfile
         {
             get 
@@ -148,10 +161,12 @@ namespace DisplayMagicianShared
                 SaveProfiles();
             }
 
+            // Refresh the profiles to see whats valid
+            IsPossibleRefresh();
+
             //Doublecheck it's been added
             if (ContainsProfile(profile))
             {
-                IsPossibleRefresh();
                 return true;
             }
             else
@@ -439,6 +454,8 @@ namespace DisplayMagicianShared
                 
             profile.Name = GetValidFilename(renamedName);
 
+            IsPossibleRefresh();
+
             // If it's been added to the list of AllProfiles
             // then we also need to reproduce the Icons
             if (ContainsProfile(profile))
@@ -454,7 +471,6 @@ namespace DisplayMagicianShared
                 return false;
             }
 
-            IsPossibleRefresh();
 
         }
 
@@ -487,6 +503,8 @@ namespace DisplayMagicianShared
             }
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
             _currentProfile = activeProfile;
+
+            //IsPossibleRefresh();
 
         }
 
@@ -686,6 +704,9 @@ namespace DisplayMagicianShared
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
+
+                _profileValidityLookup.Clear();
+
                 foreach (ProfileItem loadedProfile in AllProfiles)
                 {
 
@@ -701,12 +722,14 @@ namespace DisplayMagicianShared
                     {
                         SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is possible!"); 
                         loadedProfile.IsPossible = true;
+                        _profileValidityLookup[loadedProfile.Name] = true;
                     }
                         
                     else
                     {
                         SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is NOT possible!");
                         loadedProfile.IsPossible = false;
+                        _profileValidityLookup[loadedProfile.Name] = false;
                     }
                     
                 }

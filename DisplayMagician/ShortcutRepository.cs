@@ -26,6 +26,7 @@ namespace DisplayMagician
         #region Class Variables
         // Common items to the class
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
+        public static Dictionary<string, bool> _shortcutValidityLookup = new Dictionary<string, bool>();
         private static bool _shortcutsLoaded = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
@@ -87,6 +88,18 @@ namespace DisplayMagician
                     LoadShortcuts();
 
                 return _allShortcuts;
+            }
+        }
+
+        public static Dictionary<string, bool> ShortcutValidityLookup
+        {
+            get
+            {
+                if (!_shortcutsLoaded)
+                    // Load the Shortcuts from storage if they need to be
+                    LoadShortcuts();
+
+                return _shortcutValidityLookup;
             }
         }
 

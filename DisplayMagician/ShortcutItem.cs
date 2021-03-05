@@ -1937,7 +1937,7 @@ namespace DisplayMagician
             // Is the profile still valid right now? i.e. are all the screens available?
             if (ProfileToUse == null)
             {
-                return (false,string.Format("The profile is not valid right now and cannot be used."));
+                return (false,string.Format("The profile does not exist (probably deleted) and cannot be used."));
             }
             if (!ProfileToUse.IsPossible)
             {
