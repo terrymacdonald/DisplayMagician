@@ -311,6 +311,7 @@
   <ItemGroup>
     <None Include="Resources\warning.png" />
     <None Include="Resources\DisplayMagician.ico" />
+    <None Include="Resources\error.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
