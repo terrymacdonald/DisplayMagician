@@ -848,6 +848,16 @@ namespace DisplayMagician.UIForms
                 }
             }
 
+            if (!foundChosenProfileInLoadedProfiles &&  !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
+            {
+                MessageBox.Show(
+                    @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut.",
+                    @"Display Profile no longer exists",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Exclamation);
+
+            }
+
             // If we get to the end of the loaded profiles and haven't
             // found a matching profile, then we need to show the current profile
             // that we're running now
@@ -878,12 +888,8 @@ namespace DisplayMagician.UIForms
 
                 }
 
-                MessageBox.Show(
-                    @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut. We have selected the current Display Profile, but you can choose another profile if you wish.",
-                    @"Display Profile no longer exists",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Exclamation);
             }
+
 
             // Now start populating the other fields if they need it
             _uuid = _shortcutToEdit.UUID;

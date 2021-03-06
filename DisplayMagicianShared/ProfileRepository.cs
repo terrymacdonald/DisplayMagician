@@ -21,7 +21,7 @@ namespace DisplayMagicianShared
         #region Class Variables
         // Common items to the class
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
-        public static Dictionary<string, bool> _profileValidityLookup = new Dictionary<string, bool>();
+        public static Dictionary<string, bool> _profileWarningLookup = new Dictionary<string, bool>();
         private static bool _profilesLoaded = false;
         public static Version _version = new Version(1, 0, 0);
         private static ProfileItem _currentProfile;
@@ -90,7 +90,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static Dictionary<string, bool> ProfileValidityLookup
+        public static Dictionary<string, bool> ProfileWarningLookup
         {
             get
             {
@@ -98,7 +98,7 @@ namespace DisplayMagicianShared
                     // Load the Profiles from storage if they need to be
                     LoadProfiles();
 
-                return _profileValidityLookup;
+                return _profileWarningLookup;
             }
         }
 
@@ -705,7 +705,7 @@ namespace DisplayMagicianShared
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
 
-                _profileValidityLookup.Clear();
+                _profileWarningLookup.Clear();
 
                 foreach (ProfileItem loadedProfile in AllProfiles)
                 {
@@ -722,14 +722,14 @@ namespace DisplayMagicianShared
                     {
                         SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is possible!"); 
                         loadedProfile.IsPossible = true;
-                        _profileValidityLookup[loadedProfile.Name] = true;
+                        _profileWarningLookup[loadedProfile.Name] = false;
                     }
                         
                     else
                     {
                         SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is NOT possible!");
                         loadedProfile.IsPossible = false;
-                        _profileValidityLookup[loadedProfile.Name] = false;
+                        _profileWarningLookup[loadedProfile.Name] = true;
                     }
                     
                 }

@@ -26,7 +26,8 @@ namespace DisplayMagician
         #region Class Variables
         // Common items to the class
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
-        public static Dictionary<string, bool> _shortcutValidityLookup = new Dictionary<string, bool>();
+        public static Dictionary<string, bool> _shortcutWarningLookup = new Dictionary<string, bool>();
+        public static Dictionary<string, bool> _shortcutErrorLookup = new Dictionary<string, bool>();
         private static bool _shortcutsLoaded = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
@@ -74,6 +75,8 @@ namespace DisplayMagician
 
             // Load the Shortcuts from storage
             LoadShortcuts();
+
+            IsValidRefresh();
         }
 
         #endregion
@@ -91,7 +94,7 @@ namespace DisplayMagician
             }
         }
 
-        public static Dictionary<string, bool> ShortcutValidityLookup
+        public static Dictionary<string, bool> ShortcutWarningLookup
         {
             get
             {
@@ -99,10 +102,21 @@ namespace DisplayMagician
                     // Load the Shortcuts from storage if they need to be
                     LoadShortcuts();
 
-                return _shortcutValidityLookup;
+                return _shortcutWarningLookup;
             }
         }
 
+        public static Dictionary<string, bool> ShortcutErrorLookup
+        {
+            get
+            {
+                if (!_shortcutsLoaded)
+                    // Load the Shortcuts from storage if they need to be
+                    LoadShortcuts();
+
+                return _shortcutErrorLookup;
+            }
+        }
 
         public static int ShortcutCount
         {
@@ -457,6 +471,8 @@ namespace DisplayMagician
                 logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the {_shortcutStorageJsonFileName} shortcut JSON file that contains the Shortcuts");
             }
             _shortcutsLoaded = true;
+
+            IsValidRefresh();
             return true;
         }
 
@@ -523,6 +539,28 @@ namespace DisplayMagician
             return false;
         }
 
+        public static void IsValidRefresh()
+        {
+            // We need to refresh the cached answer
+            // Get the list of connected devices
+
+            _shortcutWarningLookup.Clear();
+            _shortcutErrorLookup.Clear();
+
+            foreach (ShortcutItem loadedShortcut in AllShortcuts)
+            {
+                _shortcutWarningLookup[loadedShortcut.Name] = false; 
+                _shortcutErrorLookup[loadedShortcut.Name] = false;
+
+                (ShortcutValidity result, string thing) = (loadedShortcut.IsValid());
+                if (result == ShortcutValidity.Warning)
+                    ShortcutWarningLookup[loadedShortcut.Name] = true;
+                if (result == ShortcutValidity.Error)
+                    ShortcutErrorLookup[loadedShortcut.Name] = true;
+            }
+        }
+
+
         // ReSharper disable once CyclomaticComplexity
         public static void RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         {
@@ -535,8 +573,8 @@ namespace DisplayMagician
             if (!(shortcutToUse is ShortcutItem))
                 return;
 
-            (bool valid, string reason) = shortcutToUse.IsValid();
-            if (!valid)
+            (ShortcutValidity valid, string reason) = shortcutToUse.IsValid();
+            if (valid == ShortcutValidity.Error || valid == ShortcutValidity.Warning)
             {
                 logger.Error($"ShortcutRepository/RunShortcut: Cannot run the shortcut {shortcutToUse.Name} as it isn't valid");
                 MessageBox.Show(

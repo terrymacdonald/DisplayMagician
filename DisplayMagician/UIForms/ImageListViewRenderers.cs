@@ -96,14 +96,20 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                if (ShortcutRepository.ShortcutValidityLookup[item.Text])
+                if (ShortcutRepository.ShortcutErrorLookup[item.Text])
                 {
-                    // Draw the full color image as the shortcuts is not invalid
-                    g.DrawImage(img, pos);
+                    // The shortcut is permanently invalid (game removed or profile deleted)
+                    // so we make the image grayscale
+                    Image grayImg = ImageUtils.MakeGrayscale(img);
+                    g.DrawImage(grayImg, pos);
+
+                    // Draw a warning triangle over it
+                    // right in the centre
+                    g.DrawImage(Properties.Resources.Error, pos.X + 30, pos.Y + 30, 40, 40);
                 }
-                else
+                else if (ShortcutRepository.ShortcutWarningLookup[item.Text])
                 {
-                    // THe shortcut is invalid
+                    // The shortcut is temporaily invalid (e.g. screens aren't right at the moment)
                     // so we make the image grayscale
                     Image grayImg = ImageUtils.MakeGrayscale(img);
                     g.DrawImage(grayImg, pos);
@@ -112,6 +118,12 @@ namespace DisplayMagician.UIForms
                     // right in the centre
                     g.DrawImage(Properties.Resources.Warning, pos.X + 30, pos.Y + 30, 40, 40);
                 }
+                else
+                {
+                    // Draw the full color image as the shortcut is fine!
+                    g.DrawImage(img, pos);
+                }
+                
 
                 // Draw image border
                 if (Math.Min(pos.Width, pos.Height) > 32)
@@ -254,12 +266,7 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                if (ProfileRepository.ProfileValidityLookup[item.Text])
-                {
-                    // Draw the full color image as the shortcuts is not invalid
-                    g.DrawImage(img, pos);
-                }
-                else
+                if (ProfileRepository.ProfileWarningLookup[item.Text])
                 {
                     // THe shortcut is invalid
                     // so we make the image grayscale
@@ -269,6 +276,11 @@ namespace DisplayMagician.UIForms
                     // Draw a warning triangle over it
                     // right in the centre
                     g.DrawImage(Properties.Resources.Warning, pos.X + 30, pos.Y + 30, 40, 40);
+                }
+                else
+                {
+                    // Draw the full color image as the shortcuts is not invalid
+                    g.DrawImage(img, pos);
                 }
 
                 // Draw image border

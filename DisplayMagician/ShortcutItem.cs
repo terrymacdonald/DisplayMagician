@@ -30,6 +30,15 @@ namespace DisplayMagician
         NoGame,
     }
 
+    public enum ShortcutValidity
+    {
+        Valid,
+        Warning,
+        Error,
+    }
+
+
+
     public struct StartProgram
     {
         public int Priority;
@@ -1926,8 +1935,7 @@ namespace DisplayMagician
             return multiIcon;
         }
 
-
-        public (bool,string) IsValid()
+        public (ShortcutValidity, string) IsValid()
         {
             // Do some validation checks to make sure the shortcut is sensible
             // And that we have enough to try and action within the shortcut
@@ -1937,11 +1945,11 @@ namespace DisplayMagician
             // Is the profile still valid right now? i.e. are all the screens available?
             if (ProfileToUse == null)
             {
-                return (false,string.Format("The profile does not exist (probably deleted) and cannot be used."));
+                return (ShortcutValidity.Error, string.Format("The profile does not exist (probably deleted) and cannot be used."));
             }
             if (!ProfileToUse.IsPossible)
             {
-                return (false, string.Format("The profile '{0}' is not valid right now and cannot be used.", ProfileToUse.Name));
+                return (ShortcutValidity.Warning, string.Format("The profile '{0}' is not valid right now and cannot be used.", ProfileToUse.Name));
             }
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Application))
@@ -1949,10 +1957,11 @@ namespace DisplayMagician
                 // We need to check if the Application still exists
                 if (!System.IO.File.Exists(ExecutableNameAndPath))
                 {
-                    return (false, string.Format("The application executable '{0}' does not exist, or cannot be accessed by DisplayMagician.", ExecutableNameAndPath));
+                    return (ShortcutValidity.Warning, string.Format("The application executable '{0}' does not exist, or cannot be accessed by DisplayMagician.", ExecutableNameAndPath));
                 }
 
-            } else if (Category.Equals(ShortcutCategory.Game))
+            }
+            else if (Category.Equals(ShortcutCategory.Game))
             {
                 // If the game is a Steam Game we check for that
                 if (GameLibrary.Equals(SupportedGameLibrary.Steam))
@@ -1962,13 +1971,13 @@ namespace DisplayMagician
                     // Check if Steam is installed and error if it isn't
                     if (!SteamLibrary.IsSteamInstalled)
                     {
-                        return (false, Language.Steam_executable_file_not_found);
+                        return (ShortcutValidity.Error, Language.Steam_executable_file_not_found);
                     }
 
                     // We need to look up details about the game
                     if (!SteamLibrary.ContainsSteamGame(GameAppId))
                     {
-                        return (false, string.Format("The Steam Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                        return (ShortcutValidity.Error, string.Format("The Steam Game with AppID '{0}' is not installed on this computer.", GameAppId));
                     }
                 }
                 // If the game is a Uplay Game we check for that
@@ -1978,13 +1987,13 @@ namespace DisplayMagician
                     // Check if Steam is installed and error if it isn't
                     if (!UplayLibrary.IsUplayInstalled)
                     {
-                        return (false, "Cannot find the Uplay executable! Uplay doesn't appear to be installed");
+                        return (ShortcutValidity.Error, "Cannot find the Uplay executable! Uplay doesn't appear to be installed");
                     }
 
                     // We need to look up details about the game
                     if (!UplayLibrary.ContainsUplayGame(GameAppId))
                     {
-                        return (false, string.Format("The Uplay Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                        return (ShortcutValidity.Error, string.Format("The Uplay Game with AppID '{0}' is not installed on this computer.", GameAppId));
                     }
 
                 }
@@ -2001,11 +2010,11 @@ namespace DisplayMagician
                     if (audioDevice.FullName.Equals(AudioDevice))
                     {
                         if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
-                            return (false, $"The Audio Device {AudioDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.");
+                            return (ShortcutValidity.Warning, $"The Audio Device {AudioDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.");
                         if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
-                            return (false, $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.");
+                            return (ShortcutValidity.Warning, $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.");
                         if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
-                            return (false, $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.");
+                            return (ShortcutValidity.Warning, $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.");
                     }
                 }
             }
@@ -2019,20 +2028,21 @@ namespace DisplayMagician
                     if (captureDevice.FullName.Equals(CaptureDevice))
                     {
                         if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
-                            return (false, $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.");
+                            return (ShortcutValidity.Warning, $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.");
                         if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
-                            return (false, $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.");
+                            return (ShortcutValidity.Warning, $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.");
                         if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
-                            return (false, $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.");
+                            return (ShortcutValidity.Warning, $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.");
                     }
                 }
             }
 
             // TODO Do all the specified pre-start apps still exist?
 
-            return (true, "Shortcut is valid");
+            return (ShortcutValidity.Valid, "Shortcut is valid");
 
         }
+
 
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
