@@ -62,9 +62,9 @@ namespace DisplayMagician {
 
             // Prepare NLog for logging
 
-            NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
-            NLog.Common.InternalLogger.LogToConsole = true;
-            NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
+            //NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
+            //NLog.Common.InternalLogger.LogToConsole = true;
+            //NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
 
             var config = new NLog.Config.LoggingConfiguration();
 
