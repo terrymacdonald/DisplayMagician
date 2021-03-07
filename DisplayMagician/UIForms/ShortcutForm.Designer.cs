@@ -260,10 +260,9 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
             this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(18, 49);
             this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
-            this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(943, 20);
+            this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(397, 20);
             this.lbl_profile_shown_subtitle.TabIndex = 26;
-            this.lbl_profile_shown_subtitle.Text = "Please go back to the startup window, click on the \'Setup Display Profile\' button" +
-    ", save a new Display Profile and then come back here.";
+            this.lbl_profile_shown_subtitle.Text = "Please select a Display Profile to use with this Shortcut.";
             // 
             // lbl_profile_shown
             // 
@@ -273,9 +272,9 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
             this.lbl_profile_shown.Location = new System.Drawing.Point(18, 20);
             this.lbl_profile_shown.Name = "lbl_profile_shown";
-            this.lbl_profile_shown.Size = new System.Drawing.Size(396, 29);
+            this.lbl_profile_shown.Size = new System.Drawing.Size(308, 29);
             this.lbl_profile_shown.TabIndex = 25;
-            this.lbl_profile_shown.Text = "No Saved Display Profiles Available";
+            this.lbl_profile_shown.Text = "No Display Profile Selected";
             // 
             // ilv_saved_profiles
             // 
@@ -323,7 +322,7 @@ namespace DisplayMagician.UIForms
             this.tabp_audio.Location = new System.Drawing.Point(4, 32);
             this.tabp_audio.Name = "tabp_audio";
             this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_audio.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_audio.Size = new System.Drawing.Size(1082, 618);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
             // 
@@ -601,7 +600,7 @@ namespace DisplayMagician.UIForms
             this.tabp_before.Location = new System.Drawing.Point(4, 32);
             this.tabp_before.Name = "tabp_before";
             this.tabp_before.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_before.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_before.Size = new System.Drawing.Size(1082, 618);
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
             // 
@@ -971,7 +970,7 @@ namespace DisplayMagician.UIForms
             this.tabp_game.Location = new System.Drawing.Point(4, 32);
             this.tabp_game.Name = "tabp_game";
             this.tabp_game.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_game.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_game.Size = new System.Drawing.Size(1082, 618);
             this.tabp_game.TabIndex = 2;
             this.tabp_game.Text = "4. Choose Game to start";
             // 
@@ -1340,7 +1339,7 @@ namespace DisplayMagician.UIForms
             this.tabp_after.Location = new System.Drawing.Point(4, 32);
             this.tabp_after.Name = "tabp_after";
             this.tabp_after.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_after.Size = new System.Drawing.Size(1082, 594);
+            this.tabp_after.Size = new System.Drawing.Size(1082, 618);
             this.tabp_after.TabIndex = 3;
             this.tabp_after.Text = "5. Choose what happens afterwards";
             // 

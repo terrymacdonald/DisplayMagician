@@ -608,7 +608,9 @@ namespace DisplayMagician
             // record the old audio device
             bool needToChangeAudio = false;
             CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
-            double rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
+            double rollbackAudioVolume = 50;
+            if (rollbackAudioDevice != null)
+                rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
             if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
@@ -650,7 +652,9 @@ namespace DisplayMagician
             // record the old microphone device
             bool needToChangeCaptureDevice = false;
             CoreAudioDevice rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
-            double rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
+            double rollbackCaptureVolume = 50;
+            if (rollbackCaptureDevice != null)
+                rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
             if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");

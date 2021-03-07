@@ -66,6 +66,9 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.AllowDrag = false;
             ilv_saved_profiles.AllowDrop = false;
             ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
+
+            lbl_profile_shown.Text = "No Display Profiles available";
+            lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
         }
 
         public ShortcutItem Shortcut
@@ -818,34 +821,32 @@ namespace DisplayMagician.UIForms
                 });
             }
 
-            // We only get down here if the form has loaded a shortcut to edit
-            if (_shortcutToEdit is ShortcutItem && _shortcutToEdit.ProfileToUse is ProfileItem)
+            
+            if (_shortcutToEdit != null)
             {
-                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+                if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
                 {
-                    if (_shortcutToEdit.ProfileToUse.Equals(loadedProfile))
+                    // We have loaded the profile used last time
+                    // so we need to show the selected profile in the UI
+                    chosenProfile = ProfileRepository.GetProfile(_shortcutToEdit.ProfileUUID);
+                    foundChosenProfileInLoadedProfiles = true;
+
+                    // If the profile is the same, but the user has renamed the profile
+                    // since the shortcut was last created, then we need to tell the user
+                    if (!chosenProfile.IsPossible)
                     {
-                        // We have loaded the profile used last time
-                        // so we need to show the selected profile in the UI
-                        chosenProfile = loadedProfile;
-                        foundChosenProfileInLoadedProfiles = true;
 
-                        // If the profile is the same, but the user has renamed the profile
-                        // since the shortcut was last created, then we need to tell the user
-                        if (!loadedProfile.Name.Equals(_shortcutToEdit.ProfileToUse.Name))
-                        {
-
-                            MessageBox.Show(
-                            @"The Display Profile used by this Shortcut still exists, but it's changed it's name. We've updated the shortcut's name to reflect this change.",
-                            @"Display Profile name changed",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
+                        MessageBox.Show(
+                        $"The '{chosenProfile.Name}' Display Profile used by this Shortcut still exists, but it isn't possible to use it right now. You can either change the Display Profile this Shortcut uses, or you can change your Displays to make the Display Profile valid again.",
+                        @"Display Profile isn't possible now",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
                             
-                        }
-                        break;
                     }
 
                 }
+
+
             }
 
             if (!foundChosenProfileInLoadedProfiles &&  !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
@@ -855,39 +856,13 @@ namespace DisplayMagician.UIForms
                     @"Display Profile no longer exists",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
-
             }
-
             // If we get to the end of the loaded profiles and haven't
             // found a matching profile, then we need to show the current profile
             // that we're running now
-            if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
+            else if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
             {
-                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
-                {
-                    if (ProfileRepository.CurrentProfile.Equals(loadedProfile))
-                    {
-                        // We have loaded the profile used last time
-                        // so we need to show the selected profile in the UI
-                        chosenProfile = loadedProfile;
-                        foundChosenProfileInLoadedProfiles = true;
-
-                        // If the profile is the same, but the user has renamed the profile
-                        // since the shortcut was last created, then we need to tell the user
-                        if (!loadedProfile.Name.Equals(ProfileRepository.CurrentProfile.Name))
-                        {
-
-                            MessageBox.Show(
-                            @"The Display Profile used by this Shortcut still exists, but it's changed it's name. We've updated the shortcut's name to reflect this change.",
-                            @"Display Profile name changed",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                        }
-
-                    }
-
-                }
-
+                chosenProfile = ProfileRepository.GetActiveProfile(); ;
             }
 
 
