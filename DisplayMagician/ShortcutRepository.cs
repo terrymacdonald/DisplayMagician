@@ -26,8 +26,8 @@ namespace DisplayMagician
         #region Class Variables
         // Common items to the class
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
-        public static Dictionary<string, bool> _shortcutWarningLookup = new Dictionary<string, bool>();
-        public static Dictionary<string, bool> _shortcutErrorLookup = new Dictionary<string, bool>();
+        //public static Dictionary<string, bool> _shortcutWarningLookup = new Dictionary<string, bool>();
+        //public static Dictionary<string, bool> _shortcutErrorLookup = new Dictionary<string, bool>();
         private static bool _shortcutsLoaded = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
@@ -76,7 +76,6 @@ namespace DisplayMagician
             // Load the Shortcuts from storage
             LoadShortcuts();
 
-            IsValidRefresh();
         }
 
         #endregion
@@ -94,7 +93,7 @@ namespace DisplayMagician
             }
         }
 
-        public static Dictionary<string, bool> ShortcutWarningLookup
+        /*public static Dictionary<string, bool> ShortcutWarningLookup
         {
             get
             {
@@ -116,7 +115,7 @@ namespace DisplayMagician
 
                 return _shortcutErrorLookup;
             }
-        }
+        }*/
 
         public static int ShortcutCount
         {
@@ -163,7 +162,7 @@ namespace DisplayMagician
             {
                 // Save the shortcuts JSON as it's different
                 SaveShortcuts();
-
+                IsValidRefresh();
                 return true;
             }
             else
@@ -199,6 +198,7 @@ namespace DisplayMagician
             if (numRemoved == 1)
             {
                 SaveShortcuts();
+                IsValidRefresh();
                 logger.Debug($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
                 return true;
             }
@@ -254,6 +254,7 @@ namespace DisplayMagician
             if (numRemoved == 1)
             {
                 SaveShortcuts();
+                IsValidRefresh();
                 logger.Debug($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return true;
             }
@@ -392,7 +393,7 @@ namespace DisplayMagician
             }
 
             SaveShortcuts();
-
+            IsValidRefresh();
             return true;
         }
 
@@ -447,7 +448,6 @@ namespace DisplayMagician
                             {
                                 // And assign the matching Profile if we find it.
                                 updatedShortcut.ProfileToUse = profile;
-                                updatedShortcut.IsPossible = true;
                                 break;
                             }
                         }
@@ -455,7 +455,6 @@ namespace DisplayMagician
                         // We should only get here if there isn't a profile to match to.
                         logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
                         updatedShortcut.ProfileToUse = null;
-                        updatedShortcut.IsPossible = false;
                     }
 
                     // Sort the shortcuts alphabetically
@@ -544,19 +543,9 @@ namespace DisplayMagician
             // We need to refresh the cached answer
             // Get the list of connected devices
 
-            _shortcutWarningLookup.Clear();
-            _shortcutErrorLookup.Clear();
-
             foreach (ShortcutItem loadedShortcut in AllShortcuts)
             {
-                _shortcutWarningLookup[loadedShortcut.Name] = false; 
-                _shortcutErrorLookup[loadedShortcut.Name] = false;
-
-                (ShortcutValidity result, string thing) = (loadedShortcut.IsValid());
-                if (result == ShortcutValidity.Warning)
-                    ShortcutWarningLookup[loadedShortcut.Name] = true;
-                if (result == ShortcutValidity.Error)
-                    ShortcutErrorLookup[loadedShortcut.Name] = true;
+                loadedShortcut.RefreshValidity();
             }
         }
 
@@ -573,12 +562,15 @@ namespace DisplayMagician
             if (!(shortcutToUse is ShortcutItem))
                 return;
 
-            (ShortcutValidity valid, string reason) = shortcutToUse.IsValid();
-            if (valid == ShortcutValidity.Error || valid == ShortcutValidity.Warning)
+            // Check the shortcut is still valid.
+            shortcutToUse.RefreshValidity();
+
+            if (shortcutToUse.IsValid == ShortcutValidity.Error || shortcutToUse.IsValid == ShortcutValidity.Warning)
             {
                 logger.Error($"ShortcutRepository/RunShortcut: Cannot run the shortcut {shortcutToUse.Name} as it isn't valid");
+                string errorReasons = String.Join(", ", (from error in shortcutToUse.Errors select error.Message));
                 MessageBox.Show(
-                    $"Unable to run the shortcut '{shortcutToUse.Name}': {reason}",
+                    $"Unable to run the shortcut '{shortcutToUse.Name}': {errorReasons}",
                     @"Cannot run the Shortcut",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);

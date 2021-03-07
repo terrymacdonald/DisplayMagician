@@ -67,6 +67,12 @@ namespace DisplayMagician
         public bool GameArgumentsRequired;
     }
 
+    public struct ShortcutError
+    {
+        public string Name;
+        public ShortcutValidity Validity;
+        public string Message;
+    }
 
     public class ShortcutItem : IComparable
     {
@@ -99,7 +105,8 @@ namespace DisplayMagician
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
         private bool _autoName = true;
-        private bool _isPossible;
+        private ShortcutValidity _isValid;
+        private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
         private List<StartProgram> _startPrograms;
         private Bitmap _shortcutBitmap, _originalLargeBitmap, _originalSmallBitmap;
         [JsonIgnore]
@@ -1142,16 +1149,30 @@ namespace DisplayMagician
             }
         }
 
+
         [JsonIgnore]
-        public bool IsPossible
+        public ShortcutValidity IsValid
         {
             get
             {
-                return _isPossible;
+                return _isValid;
             }
             set
             {
-                _isPossible = value;
+                _isValid = value;
+            }
+        }
+
+        [JsonIgnore]
+        public List<ShortcutError> Errors
+        {
+            get
+            {
+                return _shortcutErrors;
+            }
+            set
+            {
+                _shortcutErrors = value;
             }
         }
 
@@ -1741,7 +1762,8 @@ namespace DisplayMagician
             shortcut.OriginalLargeBitmap = OriginalLargeBitmap;
             shortcut.ShortcutBitmap = ShortcutBitmap;
             shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
-            shortcut.IsPossible = IsPossible;
+            shortcut.IsValid = IsValid;
+            shortcut.Errors.AddRange(Errors);
             shortcut.StartPrograms = StartPrograms;
             shortcut.ChangeAudioDevice = ChangeAudioDevice;
             shortcut.AudioDevice = AudioDevice;
@@ -1935,21 +1957,35 @@ namespace DisplayMagician
             return multiIcon;
         }
 
-        public (ShortcutValidity, string) IsValid()
+        public void RefreshValidity()
         {
             // Do some validation checks to make sure the shortcut is sensible
             // And that we have enough to try and action within the shortcut
             // (in other words check everything in the shortcut is still valid)
 
+            ShortcutValidity worstError = ShortcutValidity.Valid;
+
             // Does the profile we want to Use still exist?
-            // Is the profile still valid right now? i.e. are all the screens available?
-            if (ProfileToUse == null)
+            if (!ProfileRepository.ContainsProfile(ProfileUUID))
             {
-                return (ShortcutValidity.Error, string.Format("The profile does not exist (probably deleted) and cannot be used."));
+                ShortcutError error = new ShortcutError();
+                error.Name = "ProfileNotExist";
+                error.Validity = ShortcutValidity.Error;
+                error.Message = $"The profile does not exist (probably deleted) and cannot be used.";
+                _shortcutErrors.Add(error);
+                if (worstError != ShortcutValidity.Error)
+                    worstError = ShortcutValidity.Error;
             }
-            if (!ProfileToUse.IsPossible)
+            // Is the profile still valid right now? i.e. are all the screens available?
+            if (ProfileToUse != null && !ProfileToUse.IsPossible)
             {
-                return (ShortcutValidity.Warning, string.Format("The profile '{0}' is not valid right now and cannot be used.", ProfileToUse.Name));
+                ShortcutError error = new ShortcutError();
+                error.Name = "InvalidProfile";
+                error.Validity = ShortcutValidity.Warning;
+                error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
+                _shortcutErrors.Add(error);
+                if (worstError != ShortcutValidity.Error)
+                    worstError = ShortcutValidity.Warning;
             }
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Application))
@@ -1957,7 +1993,13 @@ namespace DisplayMagician
                 // We need to check if the Application still exists
                 if (!System.IO.File.Exists(ExecutableNameAndPath))
                 {
-                    return (ShortcutValidity.Warning, string.Format("The application executable '{0}' does not exist, or cannot be accessed by DisplayMagician.", ExecutableNameAndPath));
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "InvalidExecutableNameAndPath";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The application executable '{ExecutableNameAndPath}' does not exist, or cannot be accessed by DisplayMagician.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Error;
                 }
 
             }
@@ -1971,34 +2013,55 @@ namespace DisplayMagician
                     // Check if Steam is installed and error if it isn't
                     if (!SteamLibrary.IsSteamInstalled)
                     {
-                        return (ShortcutValidity.Error, Language.Steam_executable_file_not_found);
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "SteamNotInstalled";
+                        error.Validity = ShortcutValidity.Error;
+                        error.Message = $"Steam is not installed on this computer.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Error;
                     }
 
                     // We need to look up details about the game
                     if (!SteamLibrary.ContainsSteamGame(GameAppId))
                     {
-                        return (ShortcutValidity.Error, string.Format("The Steam Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "SteamGameNotInstalled";
+                        error.Validity = ShortcutValidity.Error;
+                        error.Message = $"The Steam Game with AppID '{GameAppId}' is not installed on this computer.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Error;
                     }
                 }
                 // If the game is a Uplay Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
                 {
-                    // First check if Steam is installed
-                    // Check if Steam is installed and error if it isn't
+                    // First check if Uplay is installed
+                    // Check if Uplay is installed and error if it isn't
                     if (!UplayLibrary.IsUplayInstalled)
                     {
-                        return (ShortcutValidity.Error, "Cannot find the Uplay executable! Uplay doesn't appear to be installed");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "UplayNotInstalled";
+                        error.Validity = ShortcutValidity.Error;
+                        error.Message = $"Uplay is not installed on this computer.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Error;
                     }
 
                     // We need to look up details about the game
                     if (!UplayLibrary.ContainsUplayGame(GameAppId))
                     {
-                        return (ShortcutValidity.Error, string.Format("The Uplay Game with AppID '{0}' is not installed on this computer.", GameAppId));
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "UplayGameNotInstalled";
+                        error.Validity = ShortcutValidity.Error;
+                        error.Message = $"The Uplay Game with AppID '{GameAppId}' is not installed on this computer.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Error;
                     }
-
                 }
-
-
             }
             // Check the Audio Device is still valid (if one is specified)
             if (ChangeAudioDevice)
@@ -2010,11 +2073,35 @@ namespace DisplayMagician
                     if (audioDevice.FullName.Equals(AudioDevice))
                     {
                         if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
-                            return (ShortcutValidity.Warning, $"The Audio Device {AudioDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.");
+                        {
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "AudioDeviceDisabled";
+                            error.Validity = ShortcutValidity.Warning;
+                            error.Message = $"The Audio Device { AudioDevice} is disabled, so the shortcut '{Name}' cannot be used.You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Warning;
+                        }
                         if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
-                            return (ShortcutValidity.Warning, $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.");
+                        {
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "AudioDeviceNotPresent";
+                            error.Validity = ShortcutValidity.Error;
+                            error.Message = $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Error;
+                        }
                         if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
-                            return (ShortcutValidity.Warning, $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.");
+                        {
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "AudioDeviceUnplugged";
+                            error.Validity = ShortcutValidity.Warning;
+                            error.Message = $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Warning;
+                        }
                     }
                 }
             }
@@ -2028,18 +2115,43 @@ namespace DisplayMagician
                     if (captureDevice.FullName.Equals(CaptureDevice))
                     {
                         if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
-                            return (ShortcutValidity.Warning, $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.");
+                        {
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "CaptureDeviceDisabled";
+                            error.Validity = ShortcutValidity.Warning;
+                            error.Message = $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Warning;
+                        }
                         if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
-                            return (ShortcutValidity.Warning, $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.");
+                        {
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "CaptureDeviceNotPresent";
+                            error.Validity = ShortcutValidity.Error;
+                            error.Message = $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Error;
+                        }
                         if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
-                            return (ShortcutValidity.Warning, $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.");
+                        {
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "CaptureDeviceUnplugged";
+                            error.Validity = ShortcutValidity.Warning;
+                            error.Message = $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Warning;
+                        }
                     }
                 }
             }
 
             // TODO Do all the specified pre-start apps still exist?
 
-            return (ShortcutValidity.Valid, "Shortcut is valid");
+            // Save the worst error level to IsValid property
+            IsValid = worstError;
 
         }
 

@@ -38,6 +38,12 @@ namespace DisplayMagician.UIForms
 
         private void ShortcutLibraryForm_Load(object sender, EventArgs e)
         {
+            // Refresh the profiles and the shortcut validity to start
+            // The rest of the refreshing happens as the shortcuts are added
+            // and deleted.
+            ProfileRepository.IsPossibleRefresh();
+            ShortcutRepository.IsValidRefresh();
+
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
 
@@ -52,15 +58,11 @@ namespace DisplayMagician.UIForms
             if (ShortcutRepository.ShortcutCount == 0)
                 return;
 
-            ProfileRepository.IsPossibleRefresh();
-
-
             // Temporarily stop updating the saved_profiles listview
             ilv_saved_shortcuts.SuspendLayout();            
 
             ImageListViewItem newItem = null;
             ilv_saved_shortcuts.Items.Clear();
-            ShortcutRepository.IsValidRefresh();
 
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
@@ -68,7 +70,21 @@ namespace DisplayMagician.UIForms
 
                 // Select it if its the selectedProfile
                 if (_selectedShortcut is ShortcutItem && _selectedShortcut.Equals(loadedShortcut))
+                {
                     newItem.Selected = true;
+                    // Hide the run button if the shortcut isn't valid
+                    if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
+                    {
+                        btn_run.Visible = false;
+                        cms_shortcuts.Items[1].Enabled = false;
+                    }
+
+                    else
+                    {
+                        btn_run.Visible = true;
+                        cms_shortcuts.Items[1].Enabled = true;
+                    }
+                }
 
                 //ilv_saved_profiles.Items.Add(newItem);
                 ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
@@ -95,8 +111,7 @@ namespace DisplayMagician.UIForms
 
                 // if shortcut is not valid then ask if the user
                 // really wants to save it to desktop
-                (ShortcutValidity valid, string reason) = _selectedShortcut.IsValid();
-                if (valid == ShortcutValidity.Error || valid == ShortcutValidity.Warning)
+                if (_selectedShortcut.IsValid == ShortcutValidity.Error || _selectedShortcut.IsValid == ShortcutValidity.Warning)
                 {
                     // We ask the user of they still want to save the desktop shortcut
                     if (MessageBox.Show($"The shortcut '{_selectedShortcut.Name}' isn't valid for some reason so a desktop shortcut wouldn't work until the shortcut is fixed. Has your hardware or screen layout changed from when the shortcut was made? We recommend that you edit the shortcut to make it valid again, or reverse the hardware changes you made. Do you still want to save the desktop shortcut?", $"Still save the '{_selectedShortcut.Name}' Desktop Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
@@ -166,35 +181,11 @@ namespace DisplayMagician.UIForms
 
         private void ilv_saved_shortcuts_ItemClick(object sender, ItemClickEventArgs e)
         {
+            // This is the single click to select
             _selectedShortcut = GetShortcutFromName(e.Item.Text);
 
-            SetRunOption();
-
-            if (e.Buttons == MouseButtons.Right)
-            {
-                cms_shortcuts.Show(ilv_saved_shortcuts,e.Location);
-            }
-        }
-
-        private void ilv_saved_shortcuts_ItemDoubleClick(object sender, ItemClickEventArgs e)
-        {
-            _selectedShortcut = GetShortcutFromName(e.Item.Text);
-
-            SetRunOption();
-
-            if (_selectedShortcut == null)
-                return;
-
-            if (!ShortcutRepository.ShortcutWarningLookup[_selectedShortcut.Name])
-                return;
-
-            // Run the selected shortcut
-            btn_run.PerformClick();
-        }
-
-        private void SetRunOption()
-        {
-            if (ShortcutRepository.ShortcutWarningLookup[_selectedShortcut.Name] || ShortcutRepository.ShortcutErrorLookup[_selectedShortcut.Name])
+            // Hide the run button if the shortcut isn't valid
+            if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
             {
                 btn_run.Visible = false;
                 cms_shortcuts.Items[1].Enabled = false;
@@ -205,7 +196,33 @@ namespace DisplayMagician.UIForms
                 btn_run.Visible = true;
                 cms_shortcuts.Items[1].Enabled = true;
             }
-                
+
+            if (e.Buttons == MouseButtons.Right)
+            {
+                cms_shortcuts.Show(ilv_saved_shortcuts,e.Location);
+            }
+        }
+
+        private void ilv_saved_shortcuts_ItemDoubleClick(object sender, ItemClickEventArgs e)
+        {
+            // This is the double click to run
+            _selectedShortcut = GetShortcutFromName(e.Item.Text);
+            
+            // Hide the run button if the shortcut isn't valid
+            if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
+            {
+                btn_run.Visible = false;
+                cms_shortcuts.Items[1].Enabled = false;
+            }
+
+            else
+            {
+                btn_run.Visible = true;
+                cms_shortcuts.Items[1].Enabled = true;
+            }
+
+            // Run the selected shortcut
+            btn_run.PerformClick();
         }
 
         private void btn_new_Click(object sender, EventArgs e)
@@ -273,8 +290,7 @@ namespace DisplayMagician.UIForms
                 return;
 
             // Only run the if shortcut is valid
-            (ShortcutValidity valid, string reason) = _selectedShortcut.IsValid();
-            if (valid == ShortcutValidity.Error || valid == ShortcutValidity.Warning)
+            if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
             {
                 // We tell the user the reason that we couldnt run the shortcut
                 if (MessageBox.Show($"The shortcut '{_selectedShortcut.Name}' isn't valid for some reason so we cannot run the application or game. Has your hardware or screen layout changed from when the shortcut was made? We recommend that you edit the shortcut to make it valid again, or reverse the hardware changes you made. Do you want to do that now?", $"Edit the '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)

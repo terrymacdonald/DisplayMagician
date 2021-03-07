@@ -96,7 +96,8 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                if (ShortcutRepository.ShortcutErrorLookup[item.Text])
+                ShortcutItem shortcutToRender = ShortcutRepository.GetShortcut(item.Text);
+                if (shortcutToRender.IsValid == ShortcutValidity.Error)
                 {
                     // The shortcut is permanently invalid (game removed or profile deleted)
                     // so we make the image grayscale
@@ -107,7 +108,7 @@ namespace DisplayMagician.UIForms
                     // right in the centre
                     g.DrawImage(Properties.Resources.Error, pos.X + 30, pos.Y + 30, 40, 40);
                 }
-                else if (ShortcutRepository.ShortcutWarningLookup[item.Text])
+                else if (shortcutToRender.IsValid == ShortcutValidity.Warning)
                 {
                     // The shortcut is temporaily invalid (e.g. screens aren't right at the moment)
                     // so we make the image grayscale
@@ -266,7 +267,13 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                if (ProfileRepository.ProfileWarningLookup[item.Text])
+                ProfileItem profileToRender = ProfileRepository.GetProfile(item.Text);
+                if (profileToRender.IsPossible)
+                {
+                    // Draw the full color image as the shortcuts is not invalid
+                    g.DrawImage(img, pos);
+                }
+                else
                 {
                     // THe shortcut is invalid
                     // so we make the image grayscale
@@ -277,11 +284,7 @@ namespace DisplayMagician.UIForms
                     // right in the centre
                     g.DrawImage(Properties.Resources.Warning, pos.X + 30, pos.Y + 30, 40, 40);
                 }
-                else
-                {
-                    // Draw the full color image as the shortcuts is not invalid
-                    g.DrawImage(img, pos);
-                }
+
 
                 // Draw image border
                 if (Math.Min(pos.Width, pos.Height) > 32)
