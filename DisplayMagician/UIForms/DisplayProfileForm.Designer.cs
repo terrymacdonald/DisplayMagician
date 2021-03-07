@@ -55,6 +55,8 @@ namespace DisplayMagician.UIForms
             this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
             this.lbl_save_profile = new System.Windows.Forms.Label();
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
+            this.btn_save = new System.Windows.Forms.Button();
+            this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -68,7 +70,7 @@ namespace DisplayMagician.UIForms
             this.btn_apply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_apply.ForeColor = System.Drawing.Color.White;
-            this.btn_apply.Location = new System.Drawing.Point(359, 750);
+            this.btn_apply.Location = new System.Drawing.Point(245, 752);
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(120, 40);
             this.btn_apply.TabIndex = 2;
@@ -100,7 +102,7 @@ namespace DisplayMagician.UIForms
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(498, 750);
+            this.btn_delete.Location = new System.Drawing.Point(384, 752);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 4;
@@ -298,6 +300,30 @@ namespace DisplayMagician.UIForms
             this.dv_profile.Size = new System.Drawing.Size(976, 517);
             this.dv_profile.TabIndex = 4;
             // 
+            // btn_save
+            // 
+            this.btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_save.BackColor = System.Drawing.Color.Black;
+            this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_save.ForeColor = System.Drawing.Color.White;
+            this.btn_save.Location = new System.Drawing.Point(521, 752);
+            this.btn_save.Name = "btn_save";
+            this.btn_save.Size = new System.Drawing.Size(211, 40);
+            this.btn_save.TabIndex = 34;
+            this.btn_save.Text = "&Save to Desktop";
+            this.btn_save.UseVisualStyleBackColor = false;
+            this.btn_save.Click += new System.EventHandler(this.Save_Click);
+            // 
+            // dialog_save
+            // 
+            this.dialog_save.DefaultExt = "lnk";
+            this.dialog_save.DereferenceLinks = false;
+            this.dialog_save.Filter = global::DisplayMagician.Resources.Language.Shortcuts_Filter;
+            this.dialog_save.RestoreDirectory = true;
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -307,6 +333,7 @@ namespace DisplayMagician.UIForms
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 812);
+            this.Controls.Add(this.btn_save);
             this.Controls.Add(this.lbl_save_profile);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lbl_profile_shown_subtitle);
@@ -360,6 +387,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolTip tt_selected;
         private System.Windows.Forms.Label lbl_save_profile;
+        private System.Windows.Forms.Button btn_save;
+        private System.Windows.Forms.SaveFileDialog dialog_save;
     }
 }
 

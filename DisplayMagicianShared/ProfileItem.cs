@@ -2,21 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Windows.Forms;
-using System.Diagnostics;
-using WindowsDisplayAPI.DisplayConfig;
 using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
-using NvAPIWrapper.Mosaic;
-using NvAPIWrapper.Native.Mosaic;
-using DisplayMagicianShared.Topology;
 using System.Drawing;
 using System.Drawing.Imaging;
-using WindowsDisplayAPI;
 using System.Text.RegularExpressions;
-using NvAPIWrapper.Display;
+using IWshRuntimeLibrary;
 
 namespace DisplayMagicianShared
 {
@@ -270,7 +262,7 @@ namespace DisplayMagicianShared
 
             if (Paths != null &&
                 ProfileIcon is ProfileIcon &&
-                File.Exists(SavedProfileIconCacheFilename) &&
+                System.IO.File.Exists(SavedProfileIconCacheFilename) &&
                 ProfileBitmap is Bitmap &&
                 ProfileTightestBitmap is Bitmap &&
                 ProfileDisplayIdentifiers.Count > 0)
@@ -371,6 +363,76 @@ namespace DisplayMagicianShared
             ProfileItem otherProfile = (ProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
         }
+
+
+        // ReSharper disable once FunctionComplexityOverflow
+        // ReSharper disable once CyclomaticComplexity
+        public bool CreateShortcut(string shortcutFileName)
+        {
+            string shortcutDescription = string.Empty;
+            string shortcutIconFileName;
+
+            var shortcutArgs = new List<string>
+            {
+                // Add the SwitchProfile command as the first argument to start to switch to another profile
+                $"{DisplayMagicianStartupAction.ChangeProfile}",
+                $"\"{UUID}\""
+            };
+
+            // Prepare text for the shortcut description field
+            shortcutDescription = $"Change to the '{Name}' DisplayMagician Display Profile.";
+
+            // Now we are ready to create a shortcut based on the filename the user gave us
+            shortcutFileName = System.IO.Path.ChangeExtension(shortcutFileName, @"lnk");
+
+            // And we use the Icon from the shortcutIconCache
+            shortcutIconFileName = SavedProfileIconCacheFilename;
+
+            // If the user supplied a file
+            if (shortcutFileName != null)
+            {
+                try
+                {
+                    // Remove the old file if it exists to replace it
+                    if (System.IO.File.Exists(shortcutFileName))
+                    {
+                        System.IO.File.Delete(shortcutFileName);
+                    }
+
+                    // Actually create the shortcut!
+                    //var wshShellType = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
+                    //dynamic wshShell = Activator.CreateInstance(wshShellType);
+
+
+                    WshShell shell = new WshShell();
+                    IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
+
+                    shortcut.TargetPath = Application.ExecutablePath;
+                    shortcut.Arguments = string.Join(" ", shortcutArgs);
+                    shortcut.Description = shortcutDescription;
+                    shortcut.WorkingDirectory = System.IO.Path.GetDirectoryName(Application.ExecutablePath) ??
+                                                string.Empty;
+
+                    shortcut.IconLocation = shortcutIconFileName;
+                    shortcut.Save();
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"ShortcutItem/CreateShortcut: Execption while creating desktop shortcut!");
+
+                    // Clean up a failed attempt
+                    if (System.IO.File.Exists(shortcutFileName))
+                    {
+                        System.IO.File.Delete(shortcutFileName);
+                    }
+                }
+            }
+
+            // Return a status on how it went
+            // true if it was a success or false if it was not
+            return shortcutFileName != null && System.IO.File.Exists(shortcutFileName);
+        }
+
 
     }
 

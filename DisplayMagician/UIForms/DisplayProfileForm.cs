@@ -38,7 +38,7 @@ namespace DisplayMagician.UIForms
 
         private void Apply_Click(object sender, EventArgs e)
         {
-            if (!(_selectedProfile is ProfileItem))
+            if (_selectedProfile == null)
                 return;
 
             if (!_selectedProfile.IsPossible)
@@ -65,7 +65,7 @@ namespace DisplayMagician.UIForms
 
         private void Delete_Click(object sender, EventArgs e)
         {
-            if (!(_selectedProfile is ProfileItem))
+            if (_selectedProfile == null)
                 return;
 
             if (MessageBox.Show($"Are you sure you want to delete the '{_selectedProfile.Name}' Display Profile?", $"Delete '{_selectedProfile.Name}' Display Profile?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
@@ -109,6 +109,62 @@ namespace DisplayMagician.UIForms
             }
 
         }
+
+        private void Save_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.None;
+
+            // Only do something if there is a shortcut selected
+            if (_selectedProfile != null)
+            {
+
+                // if shortcut is not valid then ask if the user
+                // really wants to save it to desktop
+                if (!_selectedProfile.IsPossible)
+                {
+                    // We ask the user of they still want to save the desktop shortcut
+                    if (MessageBox.Show($"The '{_selectedProfile.Name}' Desktop Profile isn't possible to use right now so a desktop shortcut wouldn't work until your Displays are changed to match the profile. Has your hardware or screen layout changed from when the Display Profile was made? Do you still want to save the desktop shortcut?", $"Still save the '{_selectedProfile.Name}' Display Profile?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+                        return;
+                }
+
+                try
+                {
+                    // Set the profile save folder to the Desktop as that's where people will want it most likely
+                    dialog_save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                    // Try to set up some sensible suggestions for the profile name
+                    dialog_save.FileName = _selectedProfile.Name;
+
+                    // Show the Save Profile window
+                    if (dialog_save.ShowDialog(this) == DialogResult.OK)
+                    {
+                        if (_selectedProfile.CreateShortcut(dialog_save.FileName))
+                        {
+                            MessageBox.Show(
+                                String.Format(Language.Shortcut_placed_successfully, dialog_save.FileName),
+                                Language.Shortcut,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                Language.Failed_to_create_the_shortcut_Unexpected_exception_occurred,
+                                Language.Shortcut,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Exclamation);
+                        }
+
+                        dialog_save.FileName = string.Empty;
+                        DialogResult = DialogResult.OK;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+        }
+
 
         private void RefreshDisplayProfileUI()
         {
