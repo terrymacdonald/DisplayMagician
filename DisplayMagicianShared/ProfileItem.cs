@@ -433,7 +433,28 @@ namespace DisplayMagicianShared
             return shortcutFileName != null && System.IO.File.Exists(shortcutFileName);
         }
 
+        public void RefreshPossbility()
+        {
+            // Check each display in this profile and make sure it's currently available
+            int validDisplayCount = 0;
+            foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
+            {
+                // If this profile has a display that isn't currently available then we need to say it's a no!
+                if (ProfileRepository.ConnectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                    validDisplayCount++;
+            }
+            if (validDisplayCount == ProfileDisplayIdentifiers.Count)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
+                _isPossible = true;
+            }
+            else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is NOT possible!");
+                _isPossible = false;
+            }
 
+        }
     }
 
     // Custom Equality comparer for the Profile class

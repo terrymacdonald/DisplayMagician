@@ -505,6 +505,8 @@ namespace DisplayMagician {
         {
             logger.Debug($"Program/ApplyProfile: Starting");
 
+            profile.RefreshPossbility();          
+
             // We need to check if the profile is valid
             if (!profile.IsPossible)
             {
@@ -514,7 +516,7 @@ namespace DisplayMagician {
 
 
             // We need to check if the profile is the same one that we're on
-            if (profile.IsActive)
+            if (profile.UUID == ProfileRepository.GetActiveProfile().UUID)
             {
                 logger.Debug($"Program/ApplyProfile: The supplied profile {profile.Name} is currently in use, so we don't need to apply it.");
                 return false;
@@ -654,6 +656,8 @@ namespace DisplayMagician {
                     return false;
                 }
             }
+
+            ProfileRepository.UpdateActiveProfile();
 
             return true;
         }

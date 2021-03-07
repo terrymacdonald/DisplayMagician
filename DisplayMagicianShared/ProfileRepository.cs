@@ -25,6 +25,7 @@ namespace DisplayMagicianShared
         private static bool _profilesLoaded = false;
         public static Version _version = new Version(1, 0, 0);
         private static ProfileItem _currentProfile;
+        private static List<string> _connectedDisplayIdentifiers = new List<string>();
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -135,8 +136,27 @@ namespace DisplayMagicianShared
             }
         }
 
+        
+        public static List<string> ConnectedDisplayIdentifiers
+        {
+            get
+            {
+                if (_connectedDisplayIdentifiers.Count == 0)
+                    // Load the Profiles from storage if they need to be
+                    _connectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
+
+
+                return _connectedDisplayIdentifiers;
+            }
+            set
+            {
+                _connectedDisplayIdentifiers = value;
+            }
+        }
+
+
         #endregion
-    
+
         #region Class Methods
         public static bool AddProfile(ProfileItem profile)
         {
@@ -611,6 +631,9 @@ namespace DisplayMagicianShared
                 UpdateActiveProfile();
             }
             _profilesLoaded = true;
+
+            IsPossibleRefresh();
+
             return true;
         }
 
@@ -700,39 +723,15 @@ namespace DisplayMagicianShared
         {
             // We need to refresh the cached answer
             // Get the list of connected devices
-            List<string> connectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
+            ConnectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
+
+            
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
 
-                _profileWarningLookup.Clear();
-
                 foreach (ProfileItem loadedProfile in AllProfiles)
-                {
-
-                    // Check each display in this profile and make sure it's currently available
-                    int validDisplayCount = 0;
-                    foreach (string profileDisplayIdentifier in loadedProfile.ProfileDisplayIdentifiers)
-                    {
-                        // If this profile has a display that isn't currently available then we need to say it's a no!
-                        if (connectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
-                            validDisplayCount++;
-                    }
-                    if (validDisplayCount == loadedProfile.ProfileDisplayIdentifiers.Count)
-                    {
-                        SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is possible!"); 
-                        loadedProfile.IsPossible = true;
-                        _profileWarningLookup[loadedProfile.Name] = false;
-                    }
-                        
-                    else
-                    {
-                        SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {loadedProfile.Name} is NOT possible!");
-                        loadedProfile.IsPossible = false;
-                        _profileWarningLookup[loadedProfile.Name] = true;
-                    }
-                    
-                }
+                    loadedProfile.RefreshPossbility();
             }
         }
 

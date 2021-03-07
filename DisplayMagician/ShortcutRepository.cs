@@ -606,20 +606,22 @@ namespace DisplayMagician
             }
 
             // record the old audio device
-            bool needToChangeAudio = false;
+            bool needToChangeAudioDevice = false;
             CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
             double rollbackAudioVolume = 50;
             if (rollbackAudioDevice != null)
+            {
                 rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
-            if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
-                needToChangeAudio = true;
-            }
-            else
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
-            }
+                if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
+                    needToChangeAudioDevice = true;
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
+                }
+            }             
 
             // Change Audio Device (if one specified)
             if (shortcutToUse.ChangeAudioDevice)
@@ -654,16 +656,19 @@ namespace DisplayMagician
             CoreAudioDevice rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
             double rollbackCaptureVolume = 50;
             if (rollbackCaptureDevice != null)
+            {
                 rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
-            if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
-                needToChangeCaptureDevice = true;
+                if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+                    needToChangeCaptureDevice = true;
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
+                }
             }
-            else
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
-            }
+                
             // Change capture Device (if one specified)
             if (shortcutToUse.ChangeCaptureDevice)
             {
@@ -1325,7 +1330,7 @@ namespace DisplayMagician
             }
 
             // Change Audio Device back (if one specified)
-            if (needToChangeAudio)
+            if (needToChangeAudioDevice)
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio back to {rollbackAudioDevice.Name} audio device");
                 // use the Audio Device
@@ -1347,7 +1352,7 @@ namespace DisplayMagician
             // Change Capture Device back (if one specified)
             if (needToChangeCaptureDevice)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackAudioDevice.Name} capture device");
+                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackCaptureDevice.Name} capture device");
                 // use the Audio Device
                 rollbackCaptureDevice.SetAsDefault();
 
