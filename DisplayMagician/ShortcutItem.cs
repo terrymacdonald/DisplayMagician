@@ -1978,7 +1978,7 @@ namespace DisplayMagician
                     worstError = ShortcutValidity.Error;
             }
             // Is the profile still valid right now? i.e. are all the screens available?
-            if (ProfileToUse != null && !ProfileToUse.IsValid())
+            if (ProfileToUse != null && !ProfileToUse.IsPossible)
             {
                 ShortcutError error = new ShortcutError();
                 error.Name = "InvalidProfile";
