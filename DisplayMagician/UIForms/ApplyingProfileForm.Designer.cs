@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ApplyingProfileForm));
             this.progressPanel = new System.Windows.Forms.Panel();
             this.lbl_sub_message = new System.Windows.Forms.Label();
             this.progressBar = new CircularProgressBar.CircularProgressBar();
@@ -114,6 +115,7 @@
             this.Controls.Add(this.progressPanel);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
             this.Name = "ApplyingProfileForm";
             this.Opacity = 0D;
@@ -121,6 +123,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DisplayMagician - Please Wait";
+            this.TopMost = true;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ApplyingProfileForm_FormClosing);
             this.Load += new System.EventHandler(this.ApplyingProfileForm_Reposition);
             this.Shown += new System.EventHandler(this.ApplyingProfileForm_Shown);
