@@ -114,23 +114,23 @@ namespace DisplayMagicianLogReporter
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create logging directory as unauthorised: {LoggingDirPath}");
+                Console.WriteLine($"ERROR - Cannot create logging directory as unauthorised: {LoggingDirPath} due to exception {ex.ToString()}");
             }
             catch (ArgumentException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create logging directory as LoggingDirPath argument caused an ArgumentException: {LoggingDirPath}");
+                Console.WriteLine($"ERROR - Cannot create logging directory as LoggingDirPath argument caused an ArgumentException: {LoggingDirPath} due to exception {ex.ToString()}");
             }
             catch (PathTooLongException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create logging directory as the path is too long for Windows to create: {LoggingDirPath}");
+                Console.WriteLine($"ERROR - Cannot create logging directory as the path is too long for Windows to create: {LoggingDirPath} due to exception {ex.ToString()}");
             }
             catch (DirectoryNotFoundException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create logging directory as the DisplayMagician Local Application Data directory doesn't exist: {LoggingDirPath}");
+                Console.WriteLine($"ERROR - Cannot create logging directory as the DisplayMagician Local Application Data directory doesn't exist: {LoggingDirPath} due to exception {ex.ToString()}");
             }
             catch (NotSupportedException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create logging directory as the Directory.CreateDirectory function isn't supported: {LoggingDirPath}");
+                Console.WriteLine($"ERROR - Cannot create logging directory as the Directory.CreateDirectory function isn't supported: {LoggingDirPath} due to exception {ex.ToString()}");
             }
 
             string date = DateTime.Now.ToString("yyyyMMdd.HHmmss");
@@ -143,23 +143,23 @@ namespace DisplayMagicianLogReporter
             }
             catch (System.Security.SecurityException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create log file due to a security exception: {logFile}");
+                Console.WriteLine($"ERROR - Cannot create log file due to a security exception: {logFile} due to exception {ex.ToString()}");
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create log file as unauthorised: {logFile}");
+                Console.WriteLine($"ERROR - Cannot create log file as unauthorised: {logFile} due to exception {ex.ToString()}");
             }
             catch (ArgumentException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create log file as LogFile argument caused an ArgumentException while creating Filestream or StreamWriter: {logFile}");
+                Console.WriteLine($"ERROR - Cannot create log file as LogFile argument caused an ArgumentException while creating Filestream or StreamWriter: {logFile} due to exception {ex.ToString()}");
             }
             catch (PathTooLongException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create log file as the path is too long for Windows to create: {logFile}");
+                Console.WriteLine($"ERROR - Cannot create log file as the path is too long for Windows to create: {logFile} due to exception {ex.ToString()}");
             }
             catch (DirectoryNotFoundException ex)
             {
-                Console.WriteLine($"ERROR - Cannot create log file as the DisplayMagician\\Logs Local Application Data directory doesn't exist: {logFile}");
+                Console.WriteLine($"ERROR - Cannot create log file as the DisplayMagician\\Logs Local Application Data directory doesn't exist: {logFile} due to exception {ex.ToString()}");
             }
 
             try
