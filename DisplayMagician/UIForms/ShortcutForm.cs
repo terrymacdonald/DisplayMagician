@@ -264,7 +264,11 @@ namespace DisplayMagician.UIForms
                 foreach (ListViewItem gameItem in lv_games.Items)
                 {
                     if (gameItem.Text.Equals(txt_game_name.Text))
+                    {
                         gameStillInstalled = true;
+                        break;
+                    }
+                        
                 }
                 if (!gameStillInstalled)
                 {
@@ -531,6 +535,8 @@ namespace DisplayMagician.UIForms
                 );
 
             }
+
+            _shortcutToEdit.RefreshValidity();
 
             // We've saved, so mark it as so
             _isUnsaved = false;

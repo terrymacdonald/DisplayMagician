@@ -140,6 +140,8 @@ namespace DisplayMagician
                 AutoSuggestShortcutName();
             }
 
+            RefreshValidity();
+
         }
 
 
@@ -197,6 +199,7 @@ namespace DisplayMagician
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            RefreshValidity();
         }
 
         public ShortcutItem(
@@ -262,6 +265,8 @@ namespace DisplayMagician
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            RefreshValidity();
         }
 
 
@@ -332,6 +337,7 @@ namespace DisplayMagician
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            RefreshValidity();
         }
 
         public ShortcutItem(
@@ -394,6 +400,8 @@ namespace DisplayMagician
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            RefreshValidity();
         }
 
 
@@ -469,6 +477,8 @@ namespace DisplayMagician
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            RefreshValidity();
         }
 
         public ShortcutItem(
@@ -537,6 +547,7 @@ namespace DisplayMagician
             //     _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            RefreshValidity();
         }
 
         public ShortcutItem(
@@ -599,6 +610,8 @@ namespace DisplayMagician
             //if (_profileToUse is ProfileItem)
             //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            RefreshValidity();
         }
 
         public ShortcutItem(
@@ -683,6 +696,8 @@ namespace DisplayMagician
             //if (_profileToUse is ProfileItem)
             //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            RefreshValidity();
         }
 
 
@@ -1231,6 +1246,7 @@ namespace DisplayMagician
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
         public void UpdateNoGameShortcut(
@@ -1298,6 +1314,7 @@ namespace DisplayMagician
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
 
@@ -1369,6 +1386,7 @@ namespace DisplayMagician
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
         public void UpdateGameShortcut(
@@ -1432,6 +1450,7 @@ namespace DisplayMagician
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
 
@@ -1509,6 +1528,7 @@ namespace DisplayMagician
                 _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
         public void UpdateExecutableShortcut(
@@ -1578,6 +1598,7 @@ namespace DisplayMagician
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
         public void UpdateExecutableShortcut(
@@ -1642,6 +1663,7 @@ namespace DisplayMagician
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
         public void UpdateExecutableShortcut(
@@ -1728,6 +1750,7 @@ namespace DisplayMagician
             _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
+            RefreshValidity();
         }
 
 
@@ -1776,6 +1799,7 @@ namespace DisplayMagician
 
             // Save the shortcut incon to the icon cache
             shortcut.ReplaceShortcutIconInCache();
+            shortcut.RefreshValidity();
 
             return true;
         }

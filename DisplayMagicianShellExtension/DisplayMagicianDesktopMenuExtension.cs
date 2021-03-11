@@ -161,9 +161,7 @@ namespace DisplayMagicianShellExtension
                     extensionMenu.DropDownItems.Add(new ToolStripMenuItem(profile.Name, profile.Bitmap,
                         (sender, args) =>
                         {
-                            //Logging.Log(DisplayMagicianFullname + $" ChangeProfile \"{pair.Value}\"");
                             DisplayMagicianProcess = Process.Start(DisplayMagicianFullname,$"ChangeProfile \"{profile.UUID}\"");
-                            //Logging.Log(DisplayMagicianProcess.ToString());
                         }
                     ));
                 }

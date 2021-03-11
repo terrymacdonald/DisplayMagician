@@ -51,7 +51,6 @@ namespace DisplayMagician.UIForms
         }
 
 
-
         private void RefreshShortcutLibraryUI()
         {
 
@@ -229,11 +228,13 @@ namespace DisplayMagician.UIForms
         {
             this.Cursor = Cursors.WaitCursor;
             var shortcutForm = new ShortcutForm(new ShortcutItem());
+            //ShortcutRepository.IsValidRefresh();
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
                 ShortcutRepository.AddShortcut(shortcutForm.Shortcut);
                 _selectedShortcut = shortcutForm.Shortcut;
+                //ShortcutRepository.IsValidRefresh();
                 RefreshShortcutLibraryUI();
             }
             this.Cursor = Cursors.Default;
@@ -252,7 +253,11 @@ namespace DisplayMagician.UIForms
 
             this.Cursor = Cursors.WaitCursor;
 
-            var shortcutForm = new ShortcutForm(_selectedShortcut);
+            // We need to stop ImageListView redrawing things before we're ready
+            // This stops an exception when ILV is just too keen!
+            ilv_saved_shortcuts.SuspendLayout();
+
+            var shortcutForm = new ShortcutForm(_selectedShortcut);            
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {
@@ -280,6 +285,7 @@ namespace DisplayMagician.UIForms
             ShortcutRepository.RemoveShortcut(_selectedShortcut);
             _selectedShortcut = null;
 
+            ShortcutRepository.IsValidRefresh();
             RefreshShortcutLibraryUI();
             RemoveWarningIfShortcuts();
         }
