@@ -14,6 +14,9 @@
             <Component Id="cmp357CADF4E916AADB1DD6BD7938986798" Guid="{02FA1010-E6D4-4976-8B7F-1B7A29C032CD}">
                 <File Id="fil900464E773972F43219693B12A52EDE2" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\AutoUpdater.NET.pdb" />
             </Component>
+			<Component Id="cmp357CADF3E913AADB2DD6BD3938986798" Guid="{12FF1010-E6D4-4972-8B1F-1B7A29C032DF}">
+				<File Id="fil900464F733D72F43219693B12A52EDE2" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\BootMeUp.dll" />
+			</Component>
             <Component Id="cmp78B9C7C9D51B2878B72DCBACE49DE398" Guid="{7C47A814-6D6C-4FCD-8667-57AB408D657C}">
                 <File Id="filDE7F24A649EB60701DC0EC41FE83CBBE" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\CircularProgressBar.dll" />
             </Component>
@@ -250,6 +253,7 @@
             <ComponentRef Id="cmp7311ACB3A3BB0005E1BD421A03BAC70D" />
             <ComponentRef Id="cmp0E8893641CCC97E160269D736795633C" />
             <ComponentRef Id="cmp1D85EF433AB8DDB383D91C1C33BAA91A" />
-        </ComponentGroup>
+			<ComponentRef Id="cmp357CADF3E913AADB2DD6BD3938986798" />
+		</ComponentGroup>
     </Fragment>
 </Wix>
