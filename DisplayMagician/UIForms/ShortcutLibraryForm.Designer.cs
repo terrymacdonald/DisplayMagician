@@ -79,7 +79,7 @@
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(462, 630);
+            this.btn_delete.Location = new System.Drawing.Point(462, 643);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 26;
@@ -112,7 +112,7 @@
             this.btn_run.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_run.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_run.ForeColor = System.Drawing.Color.White;
-            this.btn_run.Location = new System.Drawing.Point(588, 630);
+            this.btn_run.Location = new System.Drawing.Point(588, 643);
             this.btn_run.Name = "btn_run";
             this.btn_run.Size = new System.Drawing.Size(120, 40);
             this.btn_run.TabIndex = 25;
@@ -129,7 +129,7 @@
             this.btn_edit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_edit.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_edit.ForeColor = System.Drawing.Color.White;
-            this.btn_edit.Location = new System.Drawing.Point(336, 630);
+            this.btn_edit.Location = new System.Drawing.Point(336, 643);
             this.btn_edit.Name = "btn_edit";
             this.btn_edit.Size = new System.Drawing.Size(120, 40);
             this.btn_edit.TabIndex = 28;
@@ -146,7 +146,7 @@
             this.btn_new.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_new.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_new.ForeColor = System.Drawing.Color.White;
-            this.btn_new.Location = new System.Drawing.Point(210, 630);
+            this.btn_new.Location = new System.Drawing.Point(210, 643);
             this.btn_new.Name = "btn_new";
             this.btn_new.Size = new System.Drawing.Size(120, 40);
             this.btn_new.TabIndex = 29;
@@ -163,7 +163,7 @@
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(714, 630);
+            this.btn_save.Location = new System.Drawing.Point(714, 643);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(211, 40);
             this.btn_save.TabIndex = 30;

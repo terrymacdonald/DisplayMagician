@@ -5,8 +5,6 @@
 
 DisplayMagician is an open source tool for automatically configuring your displays and sound for a game or application from a single Windows Shortcut. DisplayMagician is designed to change your display profile, change audio devices, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
 
-**This program is based on the original HeliosDisplayManagement software created by Soroush Falahati!**
-
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianMainScreen.png"/></div>
 
 ## Download
@@ -71,6 +69,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/HeliosPlusShellExtension.png"/></div>
+
 
 ### Initial Setup:
 

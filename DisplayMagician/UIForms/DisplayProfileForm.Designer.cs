@@ -63,14 +63,14 @@ namespace DisplayMagician.UIForms
             // 
             // btn_apply
             // 
-            this.btn_apply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_apply.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btn_apply.BackColor = System.Drawing.Color.Black;
             this.btn_apply.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_apply.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_apply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_apply.ForeColor = System.Drawing.Color.White;
-            this.btn_apply.Location = new System.Drawing.Point(245, 752);
+            this.btn_apply.Location = new System.Drawing.Point(245, 769);
             this.btn_apply.Name = "btn_apply";
             this.btn_apply.Size = new System.Drawing.Size(120, 40);
             this.btn_apply.TabIndex = 2;
@@ -80,13 +80,13 @@ namespace DisplayMagician.UIForms
             // 
             // btn_back
             // 
-            this.btn_back.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_back.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btn_back.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btn_back.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(889, 777);
+            this.btn_back.Location = new System.Drawing.Point(889, 794);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 5;
@@ -96,13 +96,13 @@ namespace DisplayMagician.UIForms
             // 
             // btn_delete
             // 
-            this.btn_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_delete.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btn_delete.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_delete.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(384, 752);
+            this.btn_delete.Location = new System.Drawing.Point(384, 769);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 4;
@@ -162,7 +162,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_view_current
             // 
-            this.btn_view_current.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_view_current.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btn_view_current.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_view_current.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_view_current.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -178,7 +178,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_save_or_rename
             // 
-            this.btn_save_or_rename.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_save_or_rename.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btn_save_or_rename.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_save_or_rename.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_save_or_rename.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -194,6 +194,7 @@ namespace DisplayMagician.UIForms
             // 
             // pb_down_arrow
             // 
+            this.pb_down_arrow.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pb_down_arrow.BackColor = System.Drawing.Color.DimGray;
             this.pb_down_arrow.Image = ((System.Drawing.Image)(resources.GetObject("pb_down_arrow.Image")));
             this.pb_down_arrow.Location = new System.Drawing.Point(461, 551);
@@ -217,6 +218,7 @@ namespace DisplayMagician.UIForms
             // 
             // txt_profile_save_name
             // 
+            this.txt_profile_save_name.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txt_profile_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_profile_save_name.Location = new System.Drawing.Point(372, 519);
             this.txt_profile_save_name.MaxLength = 200;
@@ -232,13 +234,15 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.AllowColumnResize = false;
             this.ilv_saved_profiles.AllowItemReorder = false;
             this.ilv_saved_profiles.AllowPaneResize = false;
+            this.ilv_saved_profiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.ilv_saved_profiles.Colors = new Manina.Windows.Forms.ImageListViewColor(resources.GetString("ilv_saved_profiles.Colors"));
             this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 601);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(976, 128);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(976, 144);
             this.ilv_saved_profiles.TabIndex = 21;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -259,6 +263,7 @@ namespace DisplayMagician.UIForms
             // 
             // label1
             // 
+            this.label1.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.White;
@@ -270,13 +275,13 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_save_profile
             // 
-            this.lbl_save_profile.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_save_profile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lbl_save_profile.BackColor = System.Drawing.Color.Brown;
             this.lbl_save_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
             this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_save_profile.Location = new System.Drawing.Point(703, 80);
+            this.lbl_save_profile.Location = new System.Drawing.Point(703, 88);
             this.lbl_save_profile.Name = "lbl_save_profile";
             this.lbl_save_profile.Size = new System.Drawing.Size(261, 102);
             this.lbl_save_profile.TabIndex = 33;
@@ -302,14 +307,14 @@ namespace DisplayMagician.UIForms
             // 
             // btn_save
             // 
-            this.btn_save.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_save.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btn_save.BackColor = System.Drawing.Color.Black;
             this.btn_save.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_save.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(521, 752);
+            this.btn_save.Location = new System.Drawing.Point(521, 769);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(211, 40);
             this.btn_save.TabIndex = 34;
@@ -332,7 +337,7 @@ namespace DisplayMagician.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
-            this.ClientSize = new System.Drawing.Size(976, 812);
+            this.ClientSize = new System.Drawing.Size(976, 829);
             this.Controls.Add(this.btn_save);
             this.Controls.Add(this.lbl_save_profile);
             this.Controls.Add(this.label1);
