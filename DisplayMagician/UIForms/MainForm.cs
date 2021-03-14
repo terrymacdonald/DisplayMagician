@@ -469,5 +469,11 @@ namespace DisplayMagician.UIForms
         {
             btn_setup_display_profiles.PerformClick();
         }
+
+        private void btn_donate_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/sponsors/terrymacdonald";
+            System.Diagnostics.Process.Start(targetURL);
+        }
     }
 }

@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btn_donate = new System.Windows.Forms.Button();
             this.btn_settings = new System.Windows.Forms.Button();
             this.lbl_create_profile = new System.Windows.Forms.Label();
             this.btn_setup_display_profiles = new System.Windows.Forms.Button();
@@ -71,6 +72,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btn_donate);
             this.splitContainer1.Panel1.Controls.Add(this.btn_settings);
             this.splitContainer1.Panel1.Controls.Add(this.lbl_create_profile);
             this.splitContainer1.Panel1.Controls.Add(this.btn_setup_display_profiles);
@@ -85,6 +87,16 @@
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
             this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
             this.splitContainer1.TabStop = false;
+            // 
+            // btn_donate
+            // 
+            resources.ApplyResources(this.btn_donate, "btn_donate");
+            this.btn_donate.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_donate.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_donate.ForeColor = System.Drawing.Color.White;
+            this.btn_donate.Name = "btn_donate";
+            this.btn_donate.UseVisualStyleBackColor = true;
+            this.btn_donate.Click += new System.EventHandler(this.btn_donate_Click);
             // 
             // btn_settings
             // 
@@ -305,5 +317,6 @@
         private System.Windows.Forms.Label lbl_create_profile;
         private System.Windows.Forms.Label lbl_create_shortcut;
         private System.Windows.Forms.Button btn_settings;
+        private System.Windows.Forms.Button btn_donate;
     }
 }
