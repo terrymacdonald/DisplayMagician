@@ -102,7 +102,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_save_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.None;
+            //DialogResult = DialogResult.None;
 
             // Only do something if there is a shortcut selected
             if (_selectedShortcut != null)
@@ -160,7 +160,7 @@ namespace DisplayMagician.UIForms
                         }
 
                         dialog_save.FileName = string.Empty;
-                        DialogResult = DialogResult.OK;
+                        //DialogResult = DialogResult.OK;
                     }
                 }
                 catch (Exception ex)

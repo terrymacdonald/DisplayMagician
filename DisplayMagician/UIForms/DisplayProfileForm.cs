@@ -112,7 +112,7 @@ namespace DisplayMagician.UIForms
 
         private void Save_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.None;
+            //DialogResult = DialogResult.None;
 
             // Only do something if there is a shortcut selected
             if (_selectedProfile != null)
@@ -155,7 +155,7 @@ namespace DisplayMagician.UIForms
                         }
 
                         dialog_save.FileName = string.Empty;
-                        DialogResult = DialogResult.OK;
+                        //DialogResult = DialogResult.OK;
                     }
                 }
                 catch (Exception ex)
