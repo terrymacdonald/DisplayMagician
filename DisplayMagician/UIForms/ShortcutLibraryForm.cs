@@ -319,19 +319,25 @@ namespace DisplayMagician.UIForms
             else if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
                 message = $"Running the {_selectedShortcut.GameName} game and waiting until you close it.";
 
-            // Create a MaskForm that will cover the ShortcutLibrary Window to lock
-            // the controls and inform the user that the game is running....
-            MaskedForm maskedForm = MaskedForm.Show(this, message);
-
-            // Get the MainForm so we can access the NotifyIcon on it.
-            MainForm mainForm = (MainForm)this.Owner;
-
-            // Run the shortcut
-            ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
-
-            // Only do this if we are NOT minimised
             if (!Program.AppProgramSettings.MinimiseOnStart)
+            {
+                // Create a MaskForm that will cover the ShortcutLibrary Window to lock
+                // the controls and inform the user that the game is running....
+                MaskedForm maskedForm = MaskedForm.Show(this, message);
+
+                // Get the MainForm so we can access the NotifyIcon on it.
+                MainForm mainForm = (MainForm)this.Owner;
+
+                // Run the shortcut
+                ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
+
                 maskedForm.Close();
+            }
+            else
+            {
+                // Run the shortcut
+                ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
+            }
         }
 
         private void ilv_saved_shortcuts_ItemHover(object sender, ItemHoverEventArgs e)
