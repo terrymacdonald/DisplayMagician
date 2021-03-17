@@ -1997,5 +1997,36 @@ namespace DisplayMagician.UIForms
             _captureVolume = Convert.ToDecimal(nud_capture_volume.Value);
         }
 
+        private void lbl_start_program1_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program1.Checked)
+                cb_start_program1.CheckState = CheckState.Checked;
+            else
+                cb_start_program1.CheckState = CheckState.Unchecked;
+        }
+
+        private void lbl_start_program2_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program2.Checked)
+                cb_start_program2.CheckState = CheckState.Checked;
+            else
+                cb_start_program2.CheckState = CheckState.Unchecked;
+        }
+
+        private void lbl_start_program3_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program3.Checked)
+                cb_start_program3.CheckState = CheckState.Checked;
+            else
+                cb_start_program3.CheckState = CheckState.Unchecked;
+        }
+
+        private void lbl_start_program4_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program4.Checked)
+                cb_start_program4.CheckState = CheckState.Checked;
+            else
+                cb_start_program4.CheckState = CheckState.Unchecked;
+        }
     }
 }

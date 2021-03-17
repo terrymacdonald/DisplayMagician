@@ -319,11 +319,12 @@ namespace DisplayMagician.UIForms
             // Get the MainForm so we can access the NotifyIcon on it.
             MainForm mainForm = (MainForm)this.Owner;
 
-
             // Run the shortcut
             ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
 
-            maskedForm.Close();
+            // Only do this if we are NOT minimised
+            if (!Program.AppProgramSettings.MinimiseOnStart)
+                maskedForm.Close();
         }
 
         private void ilv_saved_shortcuts_ItemHover(object sender, ItemHoverEventArgs e)

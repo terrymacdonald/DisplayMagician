@@ -691,6 +691,7 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program4.Size = new System.Drawing.Size(244, 20);
             this.lbl_start_program4.TabIndex = 0;
             this.lbl_start_program4.Text = "Choose a program to start fourth:";
+            this.lbl_start_program4.Click += new System.EventHandler(this.lbl_start_program4_Click);
             // 
             // pnl_start_program3
             // 
@@ -779,6 +780,7 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program3.Size = new System.Drawing.Size(233, 20);
             this.lbl_start_program3.TabIndex = 0;
             this.lbl_start_program3.Text = "Choose a program to start third:";
+            this.lbl_start_program3.Click += new System.EventHandler(this.lbl_start_program3_Click);
             // 
             // pnl_start_program2
             // 
@@ -867,6 +869,7 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program2.Size = new System.Drawing.Size(254, 20);
             this.lbl_start_program2.TabIndex = 0;
             this.lbl_start_program2.Text = "Choose a program to start second:";
+            this.lbl_start_program2.Click += new System.EventHandler(this.lbl_start_program2_Click);
             // 
             // pnl_start_program1
             // 
@@ -955,6 +958,7 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program1.Size = new System.Drawing.Size(228, 20);
             this.lbl_start_program1.TabIndex = 0;
             this.lbl_start_program1.Text = "Choose a program to start first:";
+            this.lbl_start_program1.Click += new System.EventHandler(this.lbl_start_program1_Click);
             // 
             // tabp_game
             // 
