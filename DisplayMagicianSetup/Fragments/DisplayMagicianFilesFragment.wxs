@@ -56,7 +56,10 @@
             <Component Id="cmp5069692C1912B298A026EA30A39A2F36" Guid="{D4058D15-E089-4DAB-8CF7-4AA14F094703}">
                 <File Id="fil15BCAD6A05EB985A23A6B9DE3EFEB933" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\ImageListView.dll" />
             </Component>
-            <Component Id="cmp6B91543EC1EAFC09F3C7747C1333F99A" Guid="{C7189742-5B1D-4323-89D6-E91FD58A5F99}">
+			<Component Id="cmp5069692C1912B298A026EA30A3823321" Guid="{5796A8D9-7991-4C6E-9782-C9736A5927FB}">
+				<File Id="fil15BCAD6A05EB985A23A6B9DE3E823321" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\Interop.IWshRuntimeLibrary.dll" />
+			</Component>
+			<Component Id="cmp6B91543EC1EAFC09F3C7747C1333F99A" Guid="{C7189742-5B1D-4323-89D6-E91FD58A5F99}">
                 <File Id="fil34AC49C1FA6CC0335FB4F16BCD03AA7B" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\McMaster.Extensions.CommandLineUtils.dll" />
             </Component>
             <Component Id="cmp8A11CDCDF04C29EC9CA9A0C1D0D78B04" Guid="{5ECD1594-F851-4CE4-996C-6892EF8EA05A}">
@@ -231,7 +234,8 @@
             <!-- <ComponentRef Id="cmpB76F273FDED5EA841158E966B403CFC8" />
             <ComponentRef Id="cmp7DD29D6442A6E450B2316729EA2C0F1D" />-->
             <ComponentRef Id="cmpA8825A49786C04320E75BCFC8E961667" />
-            <ComponentRef Id="cmp650327FC006E09EDFC7039D6E7A6F340" />
+			<ComponentRef Id="cmp5069692C1912B298A026EA30A3823321" />
+			<ComponentRef Id="cmp650327FC006E09EDFC7039D6E7A6F340" />
             <ComponentRef Id="cmp27AC6F10258FA1C97C54F3C1D153D122" />
             <ComponentRef Id="cmp1D8A437520B8A88B5329BA85AF49F972" />
             <ComponentRef Id="cmp1B983AD82D33902E3869C2CD3E625557" />
