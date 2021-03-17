@@ -122,21 +122,28 @@ namespace DisplayMagician.UIForms
                     // Set the Shortcut save folder to the Desktop as that's where people will want it most likely
                     dialog_save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                     // Try to set up some sensible suggestions for the Shortcut name
-                    if (_selectedShortcut.DisplayPermanence == ShortcutPermanence.Permanent)
+                    if (_selectedShortcut.AutoName)
                     {
-
-                        dialog_save.FileName = _selectedShortcut.Name;
-                    }
-                    else
-                    {
-                        if (_selectedShortcut.Category == ShortcutCategory.Application)
+                        if (_selectedShortcut.DisplayPermanence == ShortcutPermanence.Permanent)
                         {
-                            dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(_selectedShortcut.ExecutableNameAndPath), @" (", _selectedShortcut.Name.ToLower(CultureInfo.InvariantCulture), @")");
+
+                            dialog_save.FileName = _selectedShortcut.Name;
                         }
                         else
                         {
-                            dialog_save.FileName = _selectedShortcut.Name;
+                            if (_selectedShortcut.Category == ShortcutCategory.Application)
+                            {
+                                dialog_save.FileName = String.Concat(Path.GetFileNameWithoutExtension(_selectedShortcut.ExecutableNameAndPath), @" (", _selectedShortcut.Name.ToLower(CultureInfo.InvariantCulture), @")");
+                            }
+                            else
+                            {
+                                dialog_save.FileName = _selectedShortcut.Name;
+                            }
                         }
+                    }
+                    else
+                    {
+                        dialog_save.FileName = _selectedShortcut.Name;
                     }
 
                     // Show the Save Shortcut window

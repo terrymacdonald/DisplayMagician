@@ -708,6 +708,19 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: Starting {startProgramsToStart.Count} programs before the main game or executable");
                 foreach (StartProgram processToStart in startProgramsToStart)
                 {
+                    // If required, check whether a process is started already
+                    if (processToStart.DontStartIfAlreadyRunning)
+                    {
+                        logger.Info($"ShortcutRepository/RunShortcut: Checking if process {processToStart.Executable} is already running");
+                        Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
+                        if (alreadyRunningProcesses.Length > 0)
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Process {processToStart.Executable} is already running, so we won't start another one");
+                            break;
+                        }
+                            
+                    }
+
                     // Start the executable
                     logger.Info($"ShortcutRepository/RunShortcut: Starting process {processToStart.Executable}");
                     Process process = null;
