@@ -47,6 +47,7 @@ namespace DisplayMagician
         public string Arguments;
         public bool ExecutableArgumentsRequired;
         public bool CloseOnFinish;
+        public bool DontStartIfAlreadyRunning;
     }
 
     public struct Executable
@@ -2237,12 +2238,7 @@ namespace DisplayMagician
                     if (System.IO.File.Exists(shortcutFileName))
                     {
                         System.IO.File.Delete(shortcutFileName);
-                    }
-
-                    // Actually create the shortcut!
-                    //var wshShellType = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
-                    //dynamic wshShell = Activator.CreateInstance(wshShellType);
-                    
+                    }                   
 
                     WshShell shell = new WshShell();
                     IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);

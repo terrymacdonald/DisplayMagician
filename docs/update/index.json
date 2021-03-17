@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0.0",
-  "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v1.0.0/DisplayMagicianSetup-v1.0.0.msi",
+  "version": "1.0.1.0",
+  "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v1.0.1/DisplayMagicianSetup-v1.0.1.msi",
   "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases",
   "mandatory": {
     "value": false,
@@ -8,7 +8,7 @@
     "mode": 0
   },
   "checksum": {
-    "value": "01F596F7D096285E32C48EC2B71019360732DF56D6A0CA784D4653F75A9B2CCF",
+    "value": "78067AE8F7F28101CB530110CFBF2AD9C47B809DC5D7365D4BD413D63D314FAC",
     "hashingAlgorithm": "SHA256"
   }
 }

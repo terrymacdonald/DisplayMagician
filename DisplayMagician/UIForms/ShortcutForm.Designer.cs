@@ -142,6 +142,10 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
+            this.cb_dont_start_if_running1 = new System.Windows.Forms.CheckBox();
+            this.cb_dont_start_if_running2 = new System.Windows.Forms.CheckBox();
+            this.cb_dont_start_if_running3 = new System.Windows.Forms.CheckBox();
+            this.cb_dont_start_if_running4 = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -606,6 +610,7 @@ namespace DisplayMagician.UIForms
             // 
             // pnl_start_program4
             // 
+            this.pnl_start_program4.Controls.Add(this.cb_dont_start_if_running4);
             this.pnl_start_program4.Controls.Add(this.cb_start_program4);
             this.pnl_start_program4.Controls.Add(this.txt_start_program4);
             this.pnl_start_program4.Controls.Add(this.cb_start_program_close4);
@@ -639,11 +644,11 @@ namespace DisplayMagician.UIForms
             // 
             this.cb_start_program_close4.AutoSize = true;
             this.cb_start_program_close4.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_close4.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close4.Location = new System.Drawing.Point(547, 82);
             this.cb_start_program_close4.Name = "cb_start_program_close4";
-            this.cb_start_program_close4.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close4.Size = new System.Drawing.Size(398, 24);
             this.cb_start_program_close4.TabIndex = 16;
-            this.cb_start_program_close4.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close4.Text = "Close started program when you finish playing Game";
             this.cb_start_program_close4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close4.UseVisualStyleBackColor = true;
             this.cb_start_program_close4.Visible = false;
@@ -691,9 +696,11 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program4.Size = new System.Drawing.Size(244, 20);
             this.lbl_start_program4.TabIndex = 0;
             this.lbl_start_program4.Text = "Choose a program to start fourth:";
+            this.lbl_start_program4.Click += new System.EventHandler(this.lbl_start_program4_Click);
             // 
             // pnl_start_program3
             // 
+            this.pnl_start_program3.Controls.Add(this.cb_dont_start_if_running3);
             this.pnl_start_program3.Controls.Add(this.cb_start_program3);
             this.pnl_start_program3.Controls.Add(this.txt_start_program3);
             this.pnl_start_program3.Controls.Add(this.cb_start_program_close3);
@@ -727,11 +734,11 @@ namespace DisplayMagician.UIForms
             // 
             this.cb_start_program_close3.AutoSize = true;
             this.cb_start_program_close3.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_close3.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close3.Location = new System.Drawing.Point(547, 82);
             this.cb_start_program_close3.Name = "cb_start_program_close3";
-            this.cb_start_program_close3.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close3.Size = new System.Drawing.Size(398, 24);
             this.cb_start_program_close3.TabIndex = 16;
-            this.cb_start_program_close3.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close3.Text = "Close started program when you finish playing Game";
             this.cb_start_program_close3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close3.UseVisualStyleBackColor = true;
             this.cb_start_program_close3.Visible = false;
@@ -779,9 +786,11 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program3.Size = new System.Drawing.Size(233, 20);
             this.lbl_start_program3.TabIndex = 0;
             this.lbl_start_program3.Text = "Choose a program to start third:";
+            this.lbl_start_program3.Click += new System.EventHandler(this.lbl_start_program3_Click);
             // 
             // pnl_start_program2
             // 
+            this.pnl_start_program2.Controls.Add(this.cb_dont_start_if_running2);
             this.pnl_start_program2.Controls.Add(this.cb_start_program2);
             this.pnl_start_program2.Controls.Add(this.txt_start_program2);
             this.pnl_start_program2.Controls.Add(this.cb_start_program_close2);
@@ -815,11 +824,11 @@ namespace DisplayMagician.UIForms
             // 
             this.cb_start_program_close2.AutoSize = true;
             this.cb_start_program_close2.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_close2.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close2.Location = new System.Drawing.Point(547, 82);
             this.cb_start_program_close2.Name = "cb_start_program_close2";
-            this.cb_start_program_close2.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close2.Size = new System.Drawing.Size(398, 24);
             this.cb_start_program_close2.TabIndex = 16;
-            this.cb_start_program_close2.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close2.Text = "Close started program when you finish playing Game";
             this.cb_start_program_close2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close2.UseVisualStyleBackColor = true;
             this.cb_start_program_close2.Visible = false;
@@ -867,9 +876,11 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program2.Size = new System.Drawing.Size(254, 20);
             this.lbl_start_program2.TabIndex = 0;
             this.lbl_start_program2.Text = "Choose a program to start second:";
+            this.lbl_start_program2.Click += new System.EventHandler(this.lbl_start_program2_Click);
             // 
             // pnl_start_program1
             // 
+            this.pnl_start_program1.Controls.Add(this.cb_dont_start_if_running1);
             this.pnl_start_program1.Controls.Add(this.cb_start_program1);
             this.pnl_start_program1.Controls.Add(this.txt_start_program1);
             this.pnl_start_program1.Controls.Add(this.cb_start_program_close1);
@@ -903,11 +914,11 @@ namespace DisplayMagician.UIForms
             // 
             this.cb_start_program_close1.AutoSize = true;
             this.cb_start_program_close1.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_close1.Location = new System.Drawing.Point(167, 87);
+            this.cb_start_program_close1.Location = new System.Drawing.Point(547, 82);
             this.cb_start_program_close1.Name = "cb_start_program_close1";
-            this.cb_start_program_close1.Size = new System.Drawing.Size(344, 24);
+            this.cb_start_program_close1.Size = new System.Drawing.Size(398, 24);
             this.cb_start_program_close1.TabIndex = 16;
-            this.cb_start_program_close1.Text = "Close program when you finish playing Game";
+            this.cb_start_program_close1.Text = "Close started program when you finish playing Game";
             this.cb_start_program_close1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close1.UseVisualStyleBackColor = true;
             this.cb_start_program_close1.Visible = false;
@@ -955,6 +966,7 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program1.Size = new System.Drawing.Size(228, 20);
             this.lbl_start_program1.TabIndex = 0;
             this.lbl_start_program1.Text = "Choose a program to start first:";
+            this.lbl_start_program1.Click += new System.EventHandler(this.lbl_start_program1_Click);
             // 
             // tabp_game
             // 
@@ -1513,6 +1525,58 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
+            // cb_dont_start_if_running1
+            // 
+            this.cb_dont_start_if_running1.AutoSize = true;
+            this.cb_dont_start_if_running1.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running1.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running1.Name = "cb_dont_start_if_running1";
+            this.cb_dont_start_if_running1.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running1.TabIndex = 18;
+            this.cb_dont_start_if_running1.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running1.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running1.Visible = false;
+            // 
+            // cb_dont_start_if_running2
+            // 
+            this.cb_dont_start_if_running2.AutoSize = true;
+            this.cb_dont_start_if_running2.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running2.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running2.Name = "cb_dont_start_if_running2";
+            this.cb_dont_start_if_running2.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running2.TabIndex = 19;
+            this.cb_dont_start_if_running2.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running2.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running2.Visible = false;
+            // 
+            // cb_dont_start_if_running3
+            // 
+            this.cb_dont_start_if_running3.AutoSize = true;
+            this.cb_dont_start_if_running3.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running3.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running3.Name = "cb_dont_start_if_running3";
+            this.cb_dont_start_if_running3.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running3.TabIndex = 20;
+            this.cb_dont_start_if_running3.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running3.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running3.Visible = false;
+            // 
+            // cb_dont_start_if_running4
+            // 
+            this.cb_dont_start_if_running4.AutoSize = true;
+            this.cb_dont_start_if_running4.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running4.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running4.Name = "cb_dont_start_if_running4";
+            this.cb_dont_start_if_running4.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running4.TabIndex = 20;
+            this.cb_dont_start_if_running4.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running4.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running4.Visible = false;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1691,5 +1755,9 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.RadioButton rb_switch_capture_permanent;
         private System.Windows.Forms.RadioButton rb_switch_capture_temp;
         private System.Windows.Forms.Label lbl_no_game_libraries;
+        private System.Windows.Forms.CheckBox cb_dont_start_if_running4;
+        private System.Windows.Forms.CheckBox cb_dont_start_if_running3;
+        private System.Windows.Forms.CheckBox cb_dont_start_if_running2;
+        private System.Windows.Forms.CheckBox cb_dont_start_if_running1;
     }
 }

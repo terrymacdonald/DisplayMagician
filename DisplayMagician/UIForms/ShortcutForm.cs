@@ -361,7 +361,8 @@ namespace DisplayMagician.UIForms
                 Executable = txt_start_program1.Text,
                 ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked,
                 Arguments = txt_start_program_args1.Text,
-                CloseOnFinish = cb_start_program_close1.Checked
+                CloseOnFinish = cb_start_program_close1.Checked,
+                DontStartIfAlreadyRunning = cb_dont_start_if_running1.Checked
             };
             _startPrograms.Add(myStartProgram);
 
@@ -372,7 +373,8 @@ namespace DisplayMagician.UIForms
                 Enabled = cb_start_program2.Checked,
                 ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked,
                 Arguments = txt_start_program_args2.Text,
-                CloseOnFinish = cb_start_program_close2.Checked
+                CloseOnFinish = cb_start_program_close2.Checked,
+                DontStartIfAlreadyRunning = cb_dont_start_if_running2.Checked
             };
             _startPrograms.Add(myStartProgram);
 
@@ -383,7 +385,8 @@ namespace DisplayMagician.UIForms
                 Enabled = cb_start_program3.Checked,
                 ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked,
                 Arguments = txt_start_program_args3.Text,
-                CloseOnFinish = cb_start_program_close3.Checked
+                CloseOnFinish = cb_start_program_close3.Checked,
+                DontStartIfAlreadyRunning = cb_dont_start_if_running3.Checked
             };
             _startPrograms.Add(myStartProgram);
 
@@ -394,7 +397,8 @@ namespace DisplayMagician.UIForms
                 Enabled = cb_start_program4.Checked,
                 ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked,
                 Arguments = txt_start_program_args4.Text,
-                CloseOnFinish = cb_start_program_close4.Checked
+                CloseOnFinish = cb_start_program_close4.Checked,
+                DontStartIfAlreadyRunning = cb_dont_start_if_running4.Checked
             };
             _startPrograms.Add(myStartProgram);
 
@@ -1007,6 +1011,7 @@ namespace DisplayMagician.UIForms
                             cb_start_program_pass_args1.Checked = myStartProgram.ExecutableArgumentsRequired;
                             txt_start_program_args1.Text = myStartProgram.Arguments;
                             cb_start_program_close1.Checked = myStartProgram.CloseOnFinish;
+                            cb_dont_start_if_running1.Checked = myStartProgram.DontStartIfAlreadyRunning;
                             break;
                         case 2:
                             txt_start_program2.Text = myStartProgram.Executable;
@@ -1014,6 +1019,7 @@ namespace DisplayMagician.UIForms
                             cb_start_program_pass_args2.Checked = myStartProgram.ExecutableArgumentsRequired;
                             txt_start_program_args2.Text = myStartProgram.Arguments;
                             cb_start_program_close2.Checked = myStartProgram.CloseOnFinish;
+                            cb_dont_start_if_running2.Checked = myStartProgram.DontStartIfAlreadyRunning;
                             break;
                         case 3:
                             txt_start_program3.Text = myStartProgram.Executable;
@@ -1021,6 +1027,7 @@ namespace DisplayMagician.UIForms
                             cb_start_program_pass_args3.Checked = myStartProgram.ExecutableArgumentsRequired;
                             txt_start_program_args3.Text = myStartProgram.Arguments;
                             cb_start_program_close3.Checked = myStartProgram.CloseOnFinish;
+                            cb_dont_start_if_running3.Checked = myStartProgram.DontStartIfAlreadyRunning;
                             break;
                         case 4:
                             txt_start_program4.Text = myStartProgram.Executable;
@@ -1028,6 +1035,7 @@ namespace DisplayMagician.UIForms
                             cb_start_program_pass_args4.Checked = myStartProgram.ExecutableArgumentsRequired;
                             txt_start_program_args4.Text = myStartProgram.Arguments;
                             cb_start_program_close4.Checked = myStartProgram.CloseOnFinish;
+                            cb_dont_start_if_running4.Checked = myStartProgram.DontStartIfAlreadyRunning;
                             break;
 
                     }
@@ -1479,6 +1487,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program1.Visible = true;
                 cb_start_program_pass_args1.Visible = true;
                 cb_start_program_close1.Visible = true;
+                cb_dont_start_if_running1.Visible = true;
             }
             else
             {
@@ -1487,6 +1496,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program1.Visible = false;
                 cb_start_program_pass_args1.Visible = false;
                 cb_start_program_close1.Visible = false;
+                cb_dont_start_if_running1.Visible = false;
             }
         }
 
@@ -1502,6 +1512,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program2.Visible = true;
                 cb_start_program_pass_args2.Visible = true;
                 cb_start_program_close2.Visible = true;
+                cb_dont_start_if_running2.Visible = true;
             }
             else
             {
@@ -1510,6 +1521,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program2.Visible = false;
                 cb_start_program_pass_args2.Visible = false;
                 cb_start_program_close2.Visible = false;
+                cb_dont_start_if_running2.Visible = false;
             }
         }
 
@@ -1525,6 +1537,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program3.Visible = true;
                 cb_start_program_pass_args3.Visible = true;
                 cb_start_program_close3.Visible = true;
+                cb_dont_start_if_running3.Visible = true;
             }
             else
             {
@@ -1533,6 +1546,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program3.Visible = false;
                 cb_start_program_pass_args3.Visible = false;
                 cb_start_program_close3.Visible = false;
+                cb_dont_start_if_running3.Visible = false;
             }
         }
 
@@ -1548,6 +1562,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program4.Visible = true;
                 cb_start_program_pass_args4.Visible = true;
                 cb_start_program_close4.Visible = true;
+                cb_dont_start_if_running4.Visible = true;
             }
             else
             {
@@ -1556,6 +1571,7 @@ namespace DisplayMagician.UIForms
                 btn_start_program4.Visible = false;
                 cb_start_program_pass_args4.Visible = false;
                 cb_start_program_close4.Visible = false;
+                cb_dont_start_if_running4.Visible = false;
             }
         }
 
@@ -1997,5 +2013,36 @@ namespace DisplayMagician.UIForms
             _captureVolume = Convert.ToDecimal(nud_capture_volume.Value);
         }
 
+        private void lbl_start_program1_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program1.Checked)
+                cb_start_program1.CheckState = CheckState.Checked;
+            else
+                cb_start_program1.CheckState = CheckState.Unchecked;
+        }
+
+        private void lbl_start_program2_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program2.Checked)
+                cb_start_program2.CheckState = CheckState.Checked;
+            else
+                cb_start_program2.CheckState = CheckState.Unchecked;
+        }
+
+        private void lbl_start_program3_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program3.Checked)
+                cb_start_program3.CheckState = CheckState.Checked;
+            else
+                cb_start_program3.CheckState = CheckState.Unchecked;
+        }
+
+        private void lbl_start_program4_Click(object sender, EventArgs e)
+        {
+            if (!cb_start_program4.Checked)
+                cb_start_program4.CheckState = CheckState.Checked;
+            else
+                cb_start_program4.CheckState = CheckState.Unchecked;
+        }
     }
 }
