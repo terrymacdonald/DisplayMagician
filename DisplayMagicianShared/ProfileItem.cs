@@ -328,14 +328,35 @@ namespace DisplayMagicianShared
                 return false;
 
             // Check if the profile identifiers are not the same, then return false
-            if (!ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
+            int foundDICount = 0;
+            foreach (string profileDI in ProfileDisplayIdentifiers)
+            {
+                foreach (string otherDI in other.ProfileDisplayIdentifiers)
+                {
+                    if (profileDI.Equals(otherDI))
+                        foundDICount++;
+                }
+            }
+
+            if (foundDICount != ProfileDisplayIdentifiers.Count)
                 return false;
 
             // Check whether the profiles' properties are equal
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (Paths.SequenceEqual(other.Paths))
+            // The data may be in different orders each run, so we need to compare them one by one
+            int foundPathsCount = 0;            
+            foreach (Topology.Path profilePath in Paths)
+            {
+                foreach (Topology.Path otherPath in other.Paths)
+                {
+                    if (profilePath.Equals(otherPath))
+                        foundPathsCount++;
+                }                    
+            }
+
+            if (foundPathsCount == Paths.Length)
                 return true;
             else
                 return false;
@@ -357,10 +378,13 @@ namespace DisplayMagicianShared
         {
 
             // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
-            int hashPaths = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
+            int hashIds = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
 
-            //Calculate the hash code for the product.
-            return hashPaths;
+            // Get Paths too
+            int hashPaths = Paths == null ? 0 : Paths.GetHashCode();
+
+            // Calculate the hash code for the product.
+            return (hashIds, hashPaths).GetHashCode();
 
         }
         
@@ -506,11 +530,35 @@ namespace DisplayMagicianShared
             if (x is null || y is null)
                 return false;
 
+            // Check if the profile identifiers are not the same, then return false
+            int foundDICount = 0;
+            foreach (string profileDI in x.ProfileDisplayIdentifiers)
+            {
+                foreach (string otherDI in y.ProfileDisplayIdentifiers)
+                {
+                    if (profileDI.Equals(otherDI))
+                        foundDICount++;
+                }
+            }
+
+            if (foundDICount != x.ProfileDisplayIdentifiers.Count)
+                return false;
+
             // Check whether the profiles' properties are equal
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (x.ProfileDisplayIdentifiers.SequenceEqual(y.ProfileDisplayIdentifiers))
+            int foundPathsCount = 0;
+            foreach (Topology.Path profilePath in x.Paths)
+            {
+                foreach (Topology.Path otherPath in y.Paths)
+                {
+                    if (profilePath.Equals(otherPath))
+                        foundPathsCount++;
+                }
+            }
+
+            if (foundPathsCount == x.Paths.Length)
                 return true;
             else
                 return false;
@@ -539,10 +587,13 @@ namespace DisplayMagicianShared
             if (profile is null) return 0;
 
             // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
-            int hashPaths = profile.ProfileDisplayIdentifiers == null ? 0 : profile.ProfileDisplayIdentifiers.GetHashCode();
+            int hashIds = profile.ProfileDisplayIdentifiers == null ? 0 : profile.ProfileDisplayIdentifiers.GetHashCode();
+
+            // Get hash code for the Paths
+            int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
 
             //Calculate the hash code for the product.
-            return hashPaths;
+            return (hashIds,hashPaths).GetHashCode();
 
         }
     }

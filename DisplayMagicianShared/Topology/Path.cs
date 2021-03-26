@@ -82,11 +82,17 @@ namespace DisplayMagicianShared.Topology
                 Resolution.Equals(other.Resolution) &&
                 SourceId == other.SourceId)
             {
-                // If the above all match, then we need to check the DisplayTargets
+                /*// If the above all match, then we need to check the DisplayTargets
                 if (other.TargetDisplays.SequenceEqual(TargetDisplays))
                     return true;
                 else
-                    return false;
+                    return false;*/
+                foreach (PathTarget myTargetDisplay in TargetDisplays)
+                {
+                    if (!other.TargetDisplays.Contains(myTargetDisplay))
+                        return false;
+                }
+                return true;
             }
             else
                 return false;
@@ -139,16 +145,16 @@ namespace DisplayMagicianShared.Topology
             {
                 // If the above all match, then we need to check the DisplayTargets
                 // If they aren't equal then we need to return false;
-                if (!x.TargetDisplays.SequenceEqual(y.TargetDisplays))
+                /*if (!x.TargetDisplays.SequenceEqual(y.TargetDisplays))
                     return false;
                 else
-                    return true;
-                /*                foreach (ProfileViewportTargetDisplay xTargetDisplay in x.TargetDisplays)
-                                {
-                                    if (!y.TargetDisplays.Contains(xTargetDisplay))
-                                        return false;
-                                }*/
-                //return true;
+                    return true;*/
+                foreach (PathTarget xTargetDisplay in x.TargetDisplays)
+                {
+                    if (!y.TargetDisplays.Contains(xTargetDisplay))
+                        return false;
+                }
+                return true;
             }
             else 
                 return false;

@@ -537,7 +537,8 @@ namespace DisplayMagicianShared
             ProfileItem activeProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
-                Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
+                Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),
+                ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
             };
 
             activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
@@ -911,6 +912,9 @@ namespace DisplayMagicianShared
 
             }
 
+            // Sort the display identifiers
+            displayIdentifiers.Sort();
+
             return displayIdentifiers;
         }
 
@@ -1115,6 +1119,9 @@ namespace DisplayMagicianShared
                 }
 
             }
+
+            // Sort the display identifiers
+            displayIdentifiers.Sort();
 
             return displayIdentifiers;
         }
