@@ -47,10 +47,10 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NvAPIWrapper.NVIDIA library.");
                 NvAPIWrapper.NVIDIA.Initialize();
 
-                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Creating the Profiles storage folder {AppProfileStoragePath}.");
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppProfileStoragePath))
                 {
+                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Creating the Profiles storage folder {AppProfileStoragePath}.");
                     Directory.CreateDirectory(AppProfileStoragePath);
                 }
             }
@@ -495,7 +495,7 @@ namespace DisplayMagicianShared
         }
 
 
-        public static void UpdateActiveProfile()
+        /*public static void UpdateActiveProfile()
         {
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
@@ -526,8 +526,41 @@ namespace DisplayMagicianShared
 
             //IsPossibleRefresh();
 
-        }
+        }*/
 
+
+        public static void UpdateActiveProfile()
+        {
+
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
+
+            ProfileItem activeProfile = new ProfileItem
+            {
+                Name = "Current Display Profile",
+                Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
+            };
+
+            activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
+            activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
+
+            if (_profilesLoaded && _allProfiles.Count > 0)
+            {
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+                {
+                    if (activeProfile.Equals(loadedProfile))
+                    {
+                        _currentProfile = loadedProfile;
+                        SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The profile {loadedProfile.Name} is currently active (in use now).");
+                        return;
+                    }
+                }
+            }
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
+            _currentProfile = activeProfile;
+
+            //IsPossibleRefresh();
+
+        }
 
         public static ProfileItem GetActiveProfile()
         {
@@ -549,7 +582,8 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
 
-            if (profile.Paths.SequenceEqual(_currentProfile.Paths))
+            //if (profile.Paths.SequenceEqual(_currentProfile.Paths))
+            if (profile.Equals(_currentProfile))
             {
                 SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is the currently active profile.");
                 return true;

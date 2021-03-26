@@ -441,20 +441,26 @@ namespace DisplayMagician
                     logger.Debug($"ShortcutRepository/LoadShortcuts: Connecting Shortcut profile names to the real profile objects");
                     foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
+                        bool foundProfile = false;
                         foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                         {
 
-                            if (profile.Equals(updatedShortcut.ProfileToUse))
+                            if (profile.UUID.Equals(updatedShortcut.ProfileUUID))
                             {
                                 // And assign the matching Profile if we find it.
                                 updatedShortcut.ProfileToUse = profile;
+                                foundProfile = true;
+                                logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile!");
                                 break;
                             }
                         }
 
-                        // We should only get here if there isn't a profile to match to.
-                        logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
-                        updatedShortcut.ProfileToUse = null;
+                        if (!foundProfile)
+                        {
+                            // We should only get here if there isn't a profile to match to.
+                            logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
+                            updatedShortcut.ProfileToUse = null;
+                        }                            
                     }
 
                     // Sort the shortcuts alphabetically

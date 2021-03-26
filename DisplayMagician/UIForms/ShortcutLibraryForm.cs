@@ -100,6 +100,11 @@ namespace DisplayMagician.UIForms
             return (from item in ShortcutRepository.AllShortcuts where item.Name == shortcutName select item).First();
         }
 
+        private ShortcutItem GetShortcutFromUUID(string shortcutUUID)
+        {
+            return (from item in ShortcutRepository.AllShortcuts where item.UUID == shortcutUUID select item).First();
+        }
+
         private void btn_save_Click(object sender, EventArgs e)
         {
             //DialogResult = DialogResult.None;
@@ -252,8 +257,8 @@ namespace DisplayMagician.UIForms
         private void btn_edit_Click(object sender, EventArgs e)
         {
             int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
-            string shortcutName = ilv_saved_shortcuts.Items[currentIlvIndex].Text;
-            _selectedShortcut = GetShortcutFromName(shortcutName);
+            string shortcutUUID = ilv_saved_shortcuts.Items[currentIlvIndex].EquipmentModel;
+            _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
 
             if (_selectedShortcut == null)
                 return;
@@ -262,9 +267,10 @@ namespace DisplayMagician.UIForms
 
             // We need to stop ImageListView redrawing things before we're ready
             // This stops an exception when ILV is just too keen!
-            ilv_saved_shortcuts.SuspendLayout();
+            
 
-            var shortcutForm = new ShortcutForm(_selectedShortcut);            
+            var shortcutForm = new ShortcutForm(_selectedShortcut);
+            //ilv_saved_shortcuts.SuspendLayout();
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
             {

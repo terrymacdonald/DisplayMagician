@@ -331,7 +331,8 @@ namespace DisplayMagicianShared
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (Paths.SequenceEqual(other.Paths))
+            //if (Paths.SequenceEqual(other.Paths))
+            if (ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
                 return true;
             else
                 return false;
@@ -339,7 +340,7 @@ namespace DisplayMagicianShared
 
         // If Equals() returns true for this object compared to  another
         // then GetHashCode() must return the same value for these objects.
-        public override int GetHashCode()
+        /*public override int GetHashCode()
         {
 
             // Get hash code for the Viewports field if it is not null.
@@ -348,8 +349,18 @@ namespace DisplayMagicianShared
             //Calculate the hash code for the product.
             return hashPaths;
 
-        }
+        }*/
+        public override int GetHashCode()
+        {
 
+            // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
+            int hashPaths = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashPaths;
+
+        }
+        
 
         public override string ToString()
         {
@@ -462,7 +473,7 @@ namespace DisplayMagicianShared
     class ProfileComparer : IEqualityComparer<ProfileItem>
     {
         // Products are equal if their names and product numbers are equal.
-        public bool Equals(ProfileItem x, ProfileItem y)
+        /*public bool Equals(ProfileItem x, ProfileItem y)
         {
 
             //Check whether the compared objects reference the same data.
@@ -480,11 +491,31 @@ namespace DisplayMagicianShared
                 return true;
             else
                 return false;
+        }*/
+
+        public bool Equals(ProfileItem x, ProfileItem y)
+        {
+
+            //Check whether the compared objects reference the same data.
+            if (Object.ReferenceEquals(x, y)) return true;
+
+            //Check whether any of the compared objects is null.
+            if (x is null || y is null)
+                return false;
+
+            // Check whether the profiles' properties are equal
+            // We need to exclude the name as the name is solely for saving to disk
+            // and displaying to the user. 
+            // Two profiles are equal only when they have the same viewport data
+            if (x.ProfileDisplayIdentifiers.SequenceEqual(y.ProfileDisplayIdentifiers))
+                return true;
+            else
+                return false;
         }
 
         // If Equals() returns true for a pair of objects
         // then GetHashCode() must return the same value for these objects.
-        public int GetHashCode(ProfileItem profile)
+        /*public int GetHashCode(ProfileItem profile)
         {
 
             // Check whether the object is null
@@ -496,7 +527,20 @@ namespace DisplayMagicianShared
             //Calculate the hash code for the product.
             return hashPaths;
 
-        }
+        }*/
+        // Modified the GetHashCode to compare the displayidentifier
+        public int GetHashCode(ProfileItem profile)
+        {
 
+            // Check whether the object is null
+            if (profile is null) return 0;
+
+            // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
+            int hashPaths = profile.ProfileDisplayIdentifiers == null ? 0 : profile.ProfileDisplayIdentifiers.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return hashPaths;
+
+        }
     }
 }

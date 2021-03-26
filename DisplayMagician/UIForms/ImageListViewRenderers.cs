@@ -96,7 +96,7 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                ShortcutItem shortcutToRender = ShortcutRepository.GetShortcut(item.Text);
+                ShortcutItem shortcutToRender = ShortcutRepository.GetShortcut(item.EquipmentModel);
                 if (shortcutToRender.IsValid == ShortcutValidity.Error)
                 {
                     // The shortcut is permanently invalid (game removed or profile deleted)
