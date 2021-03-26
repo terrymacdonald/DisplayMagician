@@ -267,7 +267,7 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                ProfileItem profileToRender = ProfileRepository.GetProfile(item.Text);
+                ProfileItem profileToRender = ProfileRepository.GetProfile(item.EquipmentModel);
                 if (profileToRender.IsPossible)
                 {
                     // Draw the full color image as the shortcuts is not invalid

@@ -326,13 +326,16 @@ namespace DisplayMagicianShared
             // If run-time types are not exactly the same, return false.
             if (this.GetType() != other.GetType())
                 return false;
-            
+
+            // Check if the profile identifiers are not the same, then return false
+            if (!ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
+                return false;
+
             // Check whether the profiles' properties are equal
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            //if (Paths.SequenceEqual(other.Paths))
-            if (ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
+            if (Paths.SequenceEqual(other.Paths))
                 return true;
             else
                 return false;
