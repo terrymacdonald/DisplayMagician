@@ -327,15 +327,35 @@ namespace DisplayMagicianShared
             if (this.GetType() != other.GetType())
                 return false;
 
+            if (Paths.Length != other.Paths.Length)
+                return false;
+
             // Check if the profile identifiers are not the same, then return false
             int foundDICount = 0;
             foreach (string profileDI in ProfileDisplayIdentifiers)
             {
-                foreach (string otherDI in other.ProfileDisplayIdentifiers)
+
+                if (other.ProfileDisplayIdentifiers.Contains(profileDI))
                 {
-                    if (profileDI.Equals(otherDI))
-                        foundDICount++;
+                    foundDICount++;
+                    continue;
                 }
+
+            }
+
+            if (foundDICount != other.ProfileDisplayIdentifiers.Count)
+                return false;
+
+            foundDICount = 0;
+            foreach (string profileDI in other.ProfileDisplayIdentifiers)
+            {
+
+                if (ProfileDisplayIdentifiers.Contains(profileDI))
+                {
+                    foundDICount++;
+                    continue;
+                }
+
             }
 
             if (foundDICount != ProfileDisplayIdentifiers.Count)
@@ -346,17 +366,29 @@ namespace DisplayMagicianShared
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
             // The data may be in different orders each run, so we need to compare them one by one
-            int foundPathsCount = 0;            
+
+            int foundPathsCount = 0;
+            int foundOtherPathsCount = 0;
             foreach (Topology.Path profilePath in Paths)
             {
-                foreach (Topology.Path otherPath in other.Paths)
+                if (other.Paths.Contains(profilePath))
                 {
-                    if (profilePath.Equals(otherPath))
-                        foundPathsCount++;
-                }                    
+                    foundPathsCount++;
+                    continue;
+                }
+                
+            }
+            foreach (Topology.Path otherPath in other.Paths)
+            {
+                if (Paths.Contains(otherPath))
+                {
+                    foundOtherPathsCount++;
+                    continue;
+                }
             }
 
-            if (foundPathsCount == Paths.Length)
+
+            if (foundPathsCount == foundOtherPathsCount)
                 return true;
             else
                 return false;
@@ -483,8 +515,10 @@ namespace DisplayMagicianShared
             }
             if (validDisplayCount == ProfileDisplayIdentifiers.Count)
             {
+                
                 SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
                 _isPossible = true;
+
             }
             else
             {
@@ -530,35 +564,63 @@ namespace DisplayMagicianShared
             if (x is null || y is null)
                 return false;
 
+            if (x.Paths.Length != y.Paths.Length)
+                return false;
+
             // Check if the profile identifiers are not the same, then return false
             int foundDICount = 0;
             foreach (string profileDI in x.ProfileDisplayIdentifiers)
             {
-                foreach (string otherDI in y.ProfileDisplayIdentifiers)
+                if (y.ProfileDisplayIdentifiers.Contains(profileDI))
                 {
-                    if (profileDI.Equals(otherDI))
-                        foundDICount++;
+                    foundDICount++;
+                    continue;
                 }
-            }
 
+            }
             if (foundDICount != x.ProfileDisplayIdentifiers.Count)
                 return false;
+
+            foundDICount = 0;
+            foreach (string profileDI in y.ProfileDisplayIdentifiers)
+            {
+                if (x.ProfileDisplayIdentifiers.Contains(profileDI))
+                {
+                    foundDICount++;
+                    continue;
+                }
+
+            }
+            if (foundDICount != y.ProfileDisplayIdentifiers.Count)
+                return false;
+
 
             // Check whether the profiles' properties are equal
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
             int foundPathsCount = 0;
+            int foundOtherPathsCount = 0;
             foreach (Topology.Path profilePath in x.Paths)
             {
-                foreach (Topology.Path otherPath in y.Paths)
+                if (y.Paths.Contains(profilePath))
                 {
-                    if (profilePath.Equals(otherPath))
-                        foundPathsCount++;
+                    foundPathsCount++;
+                    continue;
+                }
+
+            }
+            foreach (Topology.Path otherPath in y.Paths)
+            {
+                if (x.Paths.Contains(otherPath))
+                {
+                    foundOtherPathsCount++;
+                    continue;
                 }
             }
 
-            if (foundPathsCount == x.Paths.Length)
+
+            if (foundPathsCount == foundOtherPathsCount)
                 return true;
             else
                 return false;

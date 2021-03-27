@@ -77,6 +77,12 @@ namespace DisplayMagicianShared.Topology
 
             // Check whether the Profile Viewport properties are equal
             // Two profiles are equal only when they have the same viewport data exactly
+            /*if (PixelFormat == other.PixelFormat &&
+                Position.Equals(other.Position) &&
+                Resolution.Equals(other.Resolution) &&
+                SourceId == other.SourceId)*/
+            // Note: Removed the source ID as it changes on boot sometimes!
+            // It can change and the profiles can still be the same
             if (PixelFormat == other.PixelFormat &&
                 Position.Equals(other.Position) &&
                 Resolution.Equals(other.Resolution) &&
@@ -92,6 +98,11 @@ namespace DisplayMagicianShared.Topology
                     if (!other.TargetDisplays.Contains(myTargetDisplay))
                         return false;
                 }
+                /*foreach (PathTarget theirTargetDisplay in other.TargetDisplays)
+                {
+                    if (!TargetDisplays.Contains(theirTargetDisplay))
+                        return false;
+                }*/
                 return true;
             }
             else
@@ -120,10 +131,52 @@ namespace DisplayMagicianShared.Topology
             //Calculate the hash code for the product.
             return hashPixelFormat ^ hashPosition ^ hashResolution ^ hashSourceId ^ hashTargetDisplays;
         }
+
+        public bool IsPossible(Path other)
+        {
+
+            // If parameter is null, return false.
+            if (Object.ReferenceEquals(other, null))
+                return false;
+
+            // Optimization for a common success case.
+            if (Object.ReferenceEquals(this, other))
+                return true;
+
+            // If run-time types are not exactly the same, return false.
+            if (this.GetType() != other.GetType())
+                return false;
+
+            // Check whether the Profile Viewport properties are equal
+            // Two profiles are equal only when they have the same viewport data exactly
+            /*if (PixelFormat == other.PixelFormat &&
+                Position.Equals(other.Position) &&
+                Resolution.Equals(other.Resolution) &&
+                SourceId == other.SourceId)*/
+            // Note: Removed the source ID as it changes on boot sometimes!
+            // It can change and the profiles can still be the same
+            if (PixelFormat == other.PixelFormat &&
+                Position.Equals(other.Position) &&
+                Resolution.Equals(other.Resolution))
+                return true;
+            else
+                return false;
+        }
+
+        public bool ContainsSurround()
+        {
+            foreach (PathTarget pathTarget in TargetDisplays)
+            {
+                if (pathTarget.SurroundTopology == null)
+                    return false;
+            }
+            return true;
+        }
     }
 
-    // Custom comparer for the ProfileViewport class
-    class PathComparer : IEqualityComparer<Path>
+
+// Custom comparer for the ProfileViewport class
+class PathComparer : IEqualityComparer<Path>
     {
         // Products are equal if their names and product numbers are equal.
         public bool Equals(Path x, Path y)
@@ -138,6 +191,12 @@ namespace DisplayMagicianShared.Topology
 
             // Check whether the Profile Viewport properties are equal
             // Two profiles are equal only when they have the same viewport data exactly
+            /*if (x.PixelFormat == y.PixelFormat &&
+                x.Position.Equals(y.Position) &&
+                x.Resolution.Equals(y.Resolution) &&
+                x.SourceId == y.SourceId)*/
+            // Note: Removed the source ID as it changes on boot sometimes!
+            // It can change and the profiles can still be the same
             if (x.PixelFormat == y.PixelFormat &&
                 x.Position.Equals(y.Position) &&
                 x.Resolution.Equals(y.Resolution) &&
@@ -154,6 +213,11 @@ namespace DisplayMagicianShared.Topology
                     if (!y.TargetDisplays.Contains(xTargetDisplay))
                         return false;
                 }
+                /*foreach (PathTarget yTargetDisplay in y.TargetDisplays)
+                {
+                    if (!x.TargetDisplays.Contains(yTargetDisplay))
+                        return false;
+                }*/
                 return true;
             }
             else 

@@ -406,7 +406,8 @@ namespace DisplayMagicianShared
 
             foreach (ProfileItem testProfile in _allProfiles)
             {
-                if (testProfile.Paths.SequenceEqual(_currentProfile.Paths))
+                // TODO - change for Equals
+                if (testProfile.Equals(_currentProfile))
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Our profile repository does contain the display profile currently in use");
                     return true;
@@ -538,7 +539,7 @@ namespace DisplayMagicianShared
             {
                 Name = "Current Display Profile",
                 Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),
-                ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
+                //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
             };
 
             activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
