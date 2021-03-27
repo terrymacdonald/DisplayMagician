@@ -51,8 +51,10 @@ namespace DisplayMagician.UIForms
             }
 
             // Apply the Profile
-            Program.ApplyProfile(_selectedProfile);
-
+            if (Program.ApplyProfile(_selectedProfile))
+            {
+                ChangeSelectedProfile(_selectedProfile);
+            }
         }
 
 
