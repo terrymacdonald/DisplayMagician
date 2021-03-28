@@ -32,6 +32,11 @@
 		<Condition Message="!(loc.DotNetFrameworkNeeded)">
 			<![CDATA[Installed OR (WIXNETFX4RELEASEINSTALLED >= "#528040")]]>
 		</Condition>
+
+		<Property Id="MSIRESTARTMANAGERCONTROL" Value="0" />
+		<Property Id="MSIRMSHUTDOWN" Value="2" />
+		<Property Id="MSIDISABLERMRESTART" Value="0" />
+
 		<!-- 
     Startup conditions that checks if .Net Framework 4.8 is installed or if 
     we're running Windows 8.1 or higher as the OS.
