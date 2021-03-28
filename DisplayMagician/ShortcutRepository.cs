@@ -961,6 +961,11 @@ namespace DisplayMagician
                             logger.Debug($"ShortcutRepository/RunShortcut: No more '{processNameToLookFor}' processes are still running");
                             break;
                         }
+
+                        // Send a message to windows so that it doesn't think
+                        // we're locked and try to kill us
+                        System.Threading.Thread.CurrentThread.Join(0);
+                        Thread.Sleep(1000);
                     }
                 }
                 Console.WriteLine($"{processNameToLookFor} has exited.");
@@ -1078,7 +1083,10 @@ namespace DisplayMagician
                                 break;
                             }
 
-                            Thread.Sleep(300);
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
                         }
                         Console.WriteLine($"{steamGameToRun.Name} has exited.");
                         logger.Debug($"ShortcutRepository/RunShortcut: Steam Game {steamGameToRun.Name} has exited.");
@@ -1237,7 +1245,10 @@ namespace DisplayMagician
                                 break;
                             }
 
-                            Thread.Sleep(300);
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
                         }
                         Console.WriteLine($"{uplayGameToRun.Name} has exited.");
                         logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} has exited.");
