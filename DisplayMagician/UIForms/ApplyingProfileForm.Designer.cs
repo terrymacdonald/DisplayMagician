@@ -35,6 +35,7 @@
             this.progressBar = new CircularProgressBar.CircularProgressBar();
             this.lbl_message = new System.Windows.Forms.Label();
             this.t_countdown = new System.Windows.Forms.Timer(this.components);
+            this.btn_close = new System.Windows.Forms.Button();
             this.progressPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -106,12 +107,28 @@
             this.t_countdown.Interval = 1000;
             this.t_countdown.Tick += new System.EventHandler(this.t_countdown_Tick);
             // 
+            // btn_close
+            // 
+            this.btn_close.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_close.FlatAppearance.BorderSize = 0;
+            this.btn_close.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_close.ForeColor = System.Drawing.Color.White;
+            this.btn_close.Location = new System.Drawing.Point(759, 12);
+            this.btn_close.Name = "btn_close";
+            this.btn_close.Size = new System.Drawing.Size(29, 32);
+            this.btn_close.TabIndex = 2;
+            this.btn_close.Text = "X";
+            this.btn_close.UseVisualStyleBackColor = true;
+            this.btn_close.Click += new System.EventHandler(this.btn_close_Click);
+            // 
             // ApplyingProfileForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btn_close);
             this.Controls.Add(this.progressPanel);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -142,5 +159,6 @@
         private System.Windows.Forms.Label lbl_sub_message;
         private System.Windows.Forms.Label lbl_message;
         private System.Windows.Forms.Timer t_countdown;
+        private System.Windows.Forms.Button btn_close;
     }
 }

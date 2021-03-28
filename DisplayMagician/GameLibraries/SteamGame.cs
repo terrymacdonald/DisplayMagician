@@ -91,8 +91,21 @@ namespace DisplayMagician.GameLibraries
                     catch (Exception ex)
                     {
                         logger.Debug(ex, $"SteamGame/IsRunning: Accessing Process.MainModule caused exception. Trying GameUtils.GetMainModuleFilepath instead");
-                        if (GameUtils.GetMainModuleFilepath(gameProcess.Id).StartsWith(_steamGameExePath))
-                            numGameProcesses++;
+
+                        // If there is a race condition where MainModule isn't available, then we 
+                        // instead try the much slower GetMainModuleFilepath (which does the same thing)
+                        string filePath = GameUtils.GetMainModuleFilepath(gameProcess.Id);
+                        if (filePath == null)
+                        {
+                            // if we hit this bit then GameUtils.GetMainModuleFilepath failed,
+                            // so we just skip that process
+                            continue;
+                        }
+                        else
+                        {
+                            if (filePath.StartsWith(_steamGameExePath))
+                                numGameProcesses++;
+                        }
                     }
                 }
                 if (numGameProcesses > 0)

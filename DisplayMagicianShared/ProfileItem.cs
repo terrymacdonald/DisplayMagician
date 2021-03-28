@@ -326,12 +326,69 @@ namespace DisplayMagicianShared
             // If run-time types are not exactly the same, return false.
             if (this.GetType() != other.GetType())
                 return false;
-            
+
+            if (Paths.Length != other.Paths.Length)
+                return false;
+
+            // Check if the profile identifiers are not the same, then return false
+            int foundDICount = 0;
+            foreach (string profileDI in ProfileDisplayIdentifiers)
+            {
+
+                if (other.ProfileDisplayIdentifiers.Contains(profileDI))
+                {
+                    foundDICount++;
+                    continue;
+                }
+
+            }
+
+            if (foundDICount != other.ProfileDisplayIdentifiers.Count)
+                return false;
+
+            foundDICount = 0;
+            foreach (string profileDI in other.ProfileDisplayIdentifiers)
+            {
+
+                if (ProfileDisplayIdentifiers.Contains(profileDI))
+                {
+                    foundDICount++;
+                    continue;
+                }
+
+            }
+
+            if (foundDICount != ProfileDisplayIdentifiers.Count)
+                return false;
+
             // Check whether the profiles' properties are equal
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            if (Paths.SequenceEqual(other.Paths))
+            // The data may be in different orders each run, so we need to compare them one by one
+
+            int foundPathsCount = 0;
+            int foundOtherPathsCount = 0;
+            foreach (Topology.Path profilePath in Paths)
+            {
+                if (other.Paths.Contains(profilePath))
+                {
+                    foundPathsCount++;
+                    continue;
+                }
+                
+            }
+            foreach (Topology.Path otherPath in other.Paths)
+            {
+                if (Paths.Contains(otherPath))
+                {
+                    foundOtherPathsCount++;
+                    continue;
+                }
+            }
+
+
+            if (foundPathsCount == foundOtherPathsCount)
                 return true;
             else
                 return false;
@@ -339,7 +396,7 @@ namespace DisplayMagicianShared
 
         // If Equals() returns true for this object compared to  another
         // then GetHashCode() must return the same value for these objects.
-        public override int GetHashCode()
+        /*public override int GetHashCode()
         {
 
             // Get hash code for the Viewports field if it is not null.
@@ -348,8 +405,21 @@ namespace DisplayMagicianShared
             //Calculate the hash code for the product.
             return hashPaths;
 
-        }
+        }*/
+        public override int GetHashCode()
+        {
 
+            // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
+            int hashIds = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
+
+            // Get Paths too
+            int hashPaths = Paths == null ? 0 : Paths.GetHashCode();
+
+            // Calculate the hash code for the product.
+            return (hashIds, hashPaths).GetHashCode();
+
+        }
+        
 
         public override string ToString()
         {
@@ -445,8 +515,10 @@ namespace DisplayMagicianShared
             }
             if (validDisplayCount == ProfileDisplayIdentifiers.Count)
             {
+                
                 SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
                 _isPossible = true;
+
             }
             else
             {
@@ -462,7 +534,7 @@ namespace DisplayMagicianShared
     class ProfileComparer : IEqualityComparer<ProfileItem>
     {
         // Products are equal if their names and product numbers are equal.
-        public bool Equals(ProfileItem x, ProfileItem y)
+        /*public bool Equals(ProfileItem x, ProfileItem y)
         {
 
             //Check whether the compared objects reference the same data.
@@ -480,11 +552,83 @@ namespace DisplayMagicianShared
                 return true;
             else
                 return false;
+        }*/
+
+        public bool Equals(ProfileItem x, ProfileItem y)
+        {
+
+            //Check whether the compared objects reference the same data.
+            if (Object.ReferenceEquals(x, y)) return true;
+
+            //Check whether any of the compared objects is null.
+            if (x is null || y is null)
+                return false;
+
+            if (x.Paths.Length != y.Paths.Length)
+                return false;
+
+            // Check if the profile identifiers are not the same, then return false
+            int foundDICount = 0;
+            foreach (string profileDI in x.ProfileDisplayIdentifiers)
+            {
+                if (y.ProfileDisplayIdentifiers.Contains(profileDI))
+                {
+                    foundDICount++;
+                    continue;
+                }
+
+            }
+            if (foundDICount != x.ProfileDisplayIdentifiers.Count)
+                return false;
+
+            foundDICount = 0;
+            foreach (string profileDI in y.ProfileDisplayIdentifiers)
+            {
+                if (x.ProfileDisplayIdentifiers.Contains(profileDI))
+                {
+                    foundDICount++;
+                    continue;
+                }
+
+            }
+            if (foundDICount != y.ProfileDisplayIdentifiers.Count)
+                return false;
+
+
+            // Check whether the profiles' properties are equal
+            // We need to exclude the name as the name is solely for saving to disk
+            // and displaying to the user. 
+            // Two profiles are equal only when they have the same viewport data
+            int foundPathsCount = 0;
+            int foundOtherPathsCount = 0;
+            foreach (Topology.Path profilePath in x.Paths)
+            {
+                if (y.Paths.Contains(profilePath))
+                {
+                    foundPathsCount++;
+                    continue;
+                }
+
+            }
+            foreach (Topology.Path otherPath in y.Paths)
+            {
+                if (x.Paths.Contains(otherPath))
+                {
+                    foundOtherPathsCount++;
+                    continue;
+                }
+            }
+
+
+            if (foundPathsCount == foundOtherPathsCount)
+                return true;
+            else
+                return false;
         }
 
         // If Equals() returns true for a pair of objects
         // then GetHashCode() must return the same value for these objects.
-        public int GetHashCode(ProfileItem profile)
+        /*public int GetHashCode(ProfileItem profile)
         {
 
             // Check whether the object is null
@@ -496,7 +640,23 @@ namespace DisplayMagicianShared
             //Calculate the hash code for the product.
             return hashPaths;
 
-        }
+        }*/
+        // Modified the GetHashCode to compare the displayidentifier
+        public int GetHashCode(ProfileItem profile)
+        {
 
+            // Check whether the object is null
+            if (profile is null) return 0;
+
+            // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
+            int hashIds = profile.ProfileDisplayIdentifiers == null ? 0 : profile.ProfileDisplayIdentifiers.GetHashCode();
+
+            // Get hash code for the Paths
+            int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
+
+            //Calculate the hash code for the product.
+            return (hashIds,hashPaths).GetHashCode();
+
+        }
     }
 }

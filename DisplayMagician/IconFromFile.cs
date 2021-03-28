@@ -52,6 +52,7 @@ namespace DisplayMagician
         [System.Runtime.InteropServices.DllImport("Kernel32.dll")]
         public static extern Boolean CloseHandle(IntPtr handle);
 
+#pragma warning disable 0649
         private struct IMAGELISTDRAWPARAMS
         {
             public int cbSize;
@@ -72,6 +73,7 @@ namespace DisplayMagician
             public int Frame;
             public int crEffect;
         }
+#pragma warning restore 0649
 
         [StructLayout(LayoutKind.Sequential)]
         private struct IMAGEINFO
@@ -125,7 +127,7 @@ namespace DisplayMagician
 
             [PreserveSig]
             int Remove(
-            int i);
+                int i);
 
             [PreserveSig]
             int GetIcon(

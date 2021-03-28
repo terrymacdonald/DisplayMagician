@@ -274,6 +274,10 @@ namespace DisplayMagician.UIForms
             base.WndProc(ref m);
         }
 
+        private void btn_close_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
     }
 }
 

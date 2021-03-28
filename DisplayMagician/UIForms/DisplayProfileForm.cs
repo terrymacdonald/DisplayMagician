@@ -51,8 +51,10 @@ namespace DisplayMagician.UIForms
             }
 
             // Apply the Profile
-            Program.ApplyProfile(_selectedProfile);
-
+            if (Program.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
+            {
+                ChangeSelectedProfile(_selectedProfile);
+            }
         }
 
 
@@ -94,7 +96,7 @@ namespace DisplayMagician.UIForms
                 // select the 
                 foreach (ProfileItem newSelectedProfile in ProfileRepository.AllProfiles)
                 {
-                    if (newSelectedProfile.Name.Equals(ilv_saved_profiles.Items[ilvItemToSelect].Text))
+                    if (newSelectedProfile.UUID.Equals(ilv_saved_profiles.Items[ilvItemToSelect].EquipmentModel))
                     {
                         ChangeSelectedProfile(newSelectedProfile);
                     }

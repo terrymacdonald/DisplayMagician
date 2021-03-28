@@ -65,7 +65,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 <div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut3.png"/></div>
 <div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut4.png"/></div>
 <div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianConfigureShortcut5.png"/></div>
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/HeliosPlusShellExtension.png"/></div>
+<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianShellExtension.png"/></div>
 
 ### Initial Setup:
 

@@ -441,20 +441,26 @@ namespace DisplayMagician
                     logger.Debug($"ShortcutRepository/LoadShortcuts: Connecting Shortcut profile names to the real profile objects");
                     foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
+                        bool foundProfile = false;
                         foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                         {
 
-                            if (profile.Equals(updatedShortcut.ProfileToUse))
+                            if (profile.UUID.Equals(updatedShortcut.ProfileUUID))
                             {
                                 // And assign the matching Profile if we find it.
                                 updatedShortcut.ProfileToUse = profile;
+                                foundProfile = true;
+                                logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile!");
                                 break;
                             }
                         }
 
-                        // We should only get here if there isn't a profile to match to.
-                        logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
-                        updatedShortcut.ProfileToUse = null;
+                        if (!foundProfile)
+                        {
+                            // We should only get here if there isn't a profile to match to.
+                            logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
+                            updatedShortcut.ProfileToUse = null;
+                        }                            
                     }
 
                     // Sort the shortcuts alphabetically
@@ -598,11 +604,20 @@ namespace DisplayMagician
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {rollbackProfile.Name} profile.");
                 // Apply the Profile!
-                if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
+                ApplyProfileResult result = Program.ApplyProfile(shortcutToUse.ProfileToUse);
+                if (result == ApplyProfileResult.Error)
                 {
                     Console.WriteLine($"ERROR - Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                     logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    return;
                 }
+                else if (result == ApplyProfileResult.Cancelled)
+                {
+                    Console.WriteLine($"ERROR - User cancelled applying '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut: User cancelled applying '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    return;
+                }
+                
             }
 
             // record the old audio device
@@ -946,6 +961,11 @@ namespace DisplayMagician
                             logger.Debug($"ShortcutRepository/RunShortcut: No more '{processNameToLookFor}' processes are still running");
                             break;
                         }
+
+                        // Send a message to windows so that it doesn't think
+                        // we're locked and try to kill us
+                        System.Threading.Thread.CurrentThread.Join(0);
+                        Thread.Sleep(1000);
                     }
                 }
                 Console.WriteLine($"{processNameToLookFor} has exited.");
@@ -1063,7 +1083,10 @@ namespace DisplayMagician
                                 break;
                             }
 
-                            Thread.Sleep(300);
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
                         }
                         Console.WriteLine($"{steamGameToRun.Name} has exited.");
                         logger.Debug($"ShortcutRepository/RunShortcut: Steam Game {steamGameToRun.Name} has exited.");
@@ -1222,7 +1245,10 @@ namespace DisplayMagician
                                 break;
                             }
 
-                            Thread.Sleep(300);
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
                         }
                         Console.WriteLine($"{uplayGameToRun.Name} has exited.");
                         logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} has exited.");
@@ -1387,12 +1413,21 @@ namespace DisplayMagician
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 
-                //if (!ProfileRepository.ApplyProfile(rollbackProfile))
-                if (!Program.ApplyProfile(rollbackProfile))
+                ApplyProfileResult result = Program.ApplyProfile(rollbackProfile);
+                                
+                if (result == ApplyProfileResult.Error)
                 {
                     Console.WriteLine($"ERROR - Cannot revert back to '{rollbackProfile.Name}' Display Profile");
-                    logger.Error($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
+                    logger.Error($"ShortcutRepository/RunShortcut: Error rolling back display profile to {rollbackProfile.Name}");
+                    return;
                 }
+                else if (result == ApplyProfileResult.Cancelled)
+                {
+                    Console.WriteLine($"ERROR - User cancelled revert back to '{rollbackProfile.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut: User cancelled rolling back display profile to {rollbackProfile.Name}");
+                    return;
+                }
+
             }
 
         }
