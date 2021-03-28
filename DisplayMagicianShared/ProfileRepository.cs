@@ -16,6 +16,7 @@ using NvAPIWrapper.Native.GPU;
 namespace DisplayMagicianShared
 {
 
+
     public static class ProfileRepository
     {
         #region Class Variables

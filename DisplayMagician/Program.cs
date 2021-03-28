@@ -25,6 +25,13 @@ namespace DisplayMagician {
         Uplay
     }
 
+    public enum ApplyProfileResult
+    {
+        Successful,
+        Cancelled,
+        Error
+    }
+
     internal static class Program
     {
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -501,7 +508,7 @@ namespace DisplayMagician {
         }
 
         // ApplyProfile lives here so that the UI works.
-        public static bool ApplyProfile(ProfileItem profile)
+        public static ApplyProfileResult ApplyProfile(ProfileItem profile)
         {
             logger.Debug($"Program/ApplyProfile: Starting");
 
@@ -511,7 +518,7 @@ namespace DisplayMagician {
             if (!profile.IsPossible)
             {
                 logger.Debug($"Program/ApplyProfile: The supplied profile {profile.Name} isn't currently possible to use, so we can't apply it. This means a display that existed before has been removed, or moved.");
-                return false;
+                return ApplyProfileResult.Error;
             }
 
 
@@ -519,7 +526,7 @@ namespace DisplayMagician {
             if (profile.UUID == ProfileRepository.GetActiveProfile().UUID)
             {
                 logger.Debug($"Program/ApplyProfile: The supplied profile {profile.Name} is currently in use, so we don't need to apply it.");
-                return false;
+                return ApplyProfileResult.Successful;
             }
 
             try
@@ -552,7 +559,7 @@ namespace DisplayMagician {
 
                 if (timeoutForm.ShowDialog() == DialogResult.Cancel)
                 {
-                    return false;
+                    return ApplyProfileResult.Cancelled;
                 }
 
                 // We only want to do the topology change if the profile we're on now
@@ -612,7 +619,7 @@ namespace DisplayMagician {
                     if (!applyTopologyTask.IsCompleted)
                     {
                         logger.Debug($"Program/ApplyProfile: Failed to complete applying or removing the NVIDIA Surround profile");
-                        return false;
+                        return ApplyProfileResult.Error;
                     }
                 }
 
@@ -645,7 +652,7 @@ namespace DisplayMagician {
                     logger.Debug($"Program/ApplyProfile: Applying Profile PathInfo stage failed to complete");
 
                 if (!applyPathInfoTask.IsCompleted)
-                    return false;
+                    return ApplyProfileResult.Error;
 
             }
             catch (Exception ex)
@@ -653,13 +660,13 @@ namespace DisplayMagician {
                 Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 {
                     logger.Debug($"Program/ApplyProfile: Failed to complete changing the Windows Display layout");
-                    return false;
+                    return ApplyProfileResult.Error;
                 }
             }
 
             ProfileRepository.UpdateActiveProfile();
 
-            return true;
+            return ApplyProfileResult.Successful;
         }
 
         public static bool LoadGamesInBackground()

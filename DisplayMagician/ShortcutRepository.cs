@@ -604,11 +604,20 @@ namespace DisplayMagician
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {rollbackProfile.Name} profile.");
                 // Apply the Profile!
-                if (!Program.ApplyProfile(shortcutToUse.ProfileToUse))
+                ApplyProfileResult result = Program.ApplyProfile(shortcutToUse.ProfileToUse);
+                if (result == ApplyProfileResult.Error)
                 {
                     Console.WriteLine($"ERROR - Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
                     logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    return;
                 }
+                else if (result == ApplyProfileResult.Cancelled)
+                {
+                    Console.WriteLine($"ERROR - User cancelled applying '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut: User cancelled applying '{shortcutToUse.ProfileToUse.Name}' Display Profile");
+                    return;
+                }
+                
             }
 
             // record the old audio device
@@ -1393,12 +1402,21 @@ namespace DisplayMagician
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 
-                //if (!ProfileRepository.ApplyProfile(rollbackProfile))
-                if (!Program.ApplyProfile(rollbackProfile))
+                ApplyProfileResult result = Program.ApplyProfile(rollbackProfile);
+                                
+                if (result == ApplyProfileResult.Error)
                 {
                     Console.WriteLine($"ERROR - Cannot revert back to '{rollbackProfile.Name}' Display Profile");
-                    logger.Error($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
+                    logger.Error($"ShortcutRepository/RunShortcut: Error rolling back display profile to {rollbackProfile.Name}");
+                    return;
                 }
+                else if (result == ApplyProfileResult.Cancelled)
+                {
+                    Console.WriteLine($"ERROR - User cancelled revert back to '{rollbackProfile.Name}' Display Profile");
+                    logger.Error($"ShortcutRepository/RunShortcut: User cancelled rolling back display profile to {rollbackProfile.Name}");
+                    return;
+                }
+
             }
 
         }
