@@ -68,7 +68,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png"/></div>
 <div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/HeliosPlusShellExtension.png"/></div>
+<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShellExtension.png"/></div>
 
 
 ### Initial Setup:
