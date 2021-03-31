@@ -1270,10 +1270,168 @@ namespace DisplayMagician
                         // And then show it
                         DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
                     }
+                }
+                // If the game is an Origin Game we check for that
+                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Origin))
+                {
+                    // We now need to get the Origin Game info
+                    OriginGame originGameToRun = UplayLibrary.GetOriginGame(shortcutToUse.GameAppId);
+
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {originGameToRun.Name} Uplay Game, and then we're going to monitor it to wait for it to close.");
+
+                    // If the GameAppID matches a Uplay game, then lets run it
+                    if (originGameToRun is OriginGame)
+                    {
+                        // Prepare to start the Uplay game using the URI interface 
+                        // as used by Uplay for it's own desktop shortcuts.
+                        var address = $"origin2://game/launch?offerIds={originGameToRun.Id}";
+                        logger.Debug($"ShortcutRepository/RunShortcut: Uplay launch address is {address}");
+                        if (shortcutToUse.GameArgumentsRequired)
+                        {
+                            address += "/" + shortcutToUse.GameArguments;
+                        }
+                        else
+                        {
+                            address += "/0";
+                        }
+
+                        // Now we want to tell the user we're starting upc.exe
+                        // Construct the Windows toast content
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=startingUplay", ToastActivationType.Foreground)
+                            .AddText($"Starting Uplay", hintMaxLines: 1)
+                            .AddText($"Waiting for Uplay to start (and update if needed)...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        ToastContent toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        var doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        var toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
 
+                        // Start the URI Handler to run Uplay
+                        Console.WriteLine($"Starting Uplay Game: {uplayGameToRun.Name}");
+                        logger.Info($"ShortcutRepository/RunShortcut: Starting Uplay Game: {uplayGameToRun.Name}");
+                        Process uplayStartProcess = Process.Start(address);
+
+                        // Wait for Uplay to start
+                        List<Process> uplayProcesses = null;
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+
+                            // Look for the processes with the ProcessName we sorted out earlier
+                            uplayProcesses = Process.GetProcessesByName("upc").ToList();
+
+                            // If we have found one or more processes then we should be good to go
+                            // so let's break
+                            if (uplayProcesses.Count > 0)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found {uplayProcesses.Count} 'upc' processes have started");
+                                break;
+                            }
+
+                            // Let's wait a little while if we couldn't find
+                            // any processes yet
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Delay 5secs
+                        Thread.Sleep(5000);
+                        logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Uplay process start the game.");
+
+                        // Now we know the Uplay app is running then 
+                        // we wait until the Uplay game is running (*allows for uplay update)
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+
+                            if (uplayGameToRun.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found the '{uplayGameToRun.Name}' process has started");
+                                break;
+                            }
+
+                            // Delay 500ms
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Store the Uplay Process ID for later
+                        IPCService.GetInstance().HoldProcessId = uplayStartProcess?.Id ?? 0;
+                        IPCService.GetInstance().Status = InstanceStatus.OnHold;
+
+                        // Add a status notification icon in the status area
+                        if (uplayGameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name}...";
+                        else
+                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0, 41)}...";
+                        Application.DoEvents();
+
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=runningUplayGame", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
+                            .AddText($"Waiting for the Uplay Game {shortcutToUse.GameName} to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        // Wait 5 seconds for the game process to spawn	
+                        Thread.Sleep(5000);
+
+                        // Wait for the game to exit
+                        Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: waiting for Uplay Game {uplayGameToRun.Name} to exit.");
+                        while (true)
+                        {
+                            if (!uplayGameToRun.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} is no longer running (IsRunning is false).");
+                                break;
+                            }
+
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
+                        }
+                        Console.WriteLine($"{uplayGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} has exited.");
+
+                        // Tell the user that the Uplay Game has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                            .AddText($"{shortcutToUse.GameName} game was shutdown and changes were reverted.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    }
                 }
             }
+
 
             // Remove the status notification icon from the status area
             // once we've exited the game, but only if its a game or app

@@ -29,13 +29,13 @@ namespace DisplayMagician.GameLibraries
 
         private struct UplayAppInfo
         {
-            public int GameID;
+            public string GameID;
             public string GameName;
             public string GameExe;
             public string GameInstallDir;
             public string GameUplayIconPath;
         }
-
+         
         #region Class Constructors
         static UplayLibrary()
         {
@@ -242,7 +242,7 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
-        public static bool ContainsUplayGame(int uplayGameId)
+        public static bool ContainsUplayGameId(string uplayGameId)
         {
             foreach (UplayGame testUplayGame in _allUplayGames)
             {
@@ -315,7 +315,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static UplayGame GetUplayGame(int uplayGameId)
+        public static UplayGame GetUplayGameId(string uplayGameId)
         {
             foreach (UplayGame testUplayGame in _allUplayGames)
             {
@@ -505,7 +505,7 @@ namespace DisplayMagician.GameLibraries
                     // From that  we lookup the actual game path
                     uplayGameAppInfo.GameInstallDir = Path.GetFullPath(uplayGameInstallKey.GetValue("InstallDir", "").ToString()).TrimEnd('\\');
                     uplayGameAppInfo.GameExe = Path.Combine(uplayGameAppInfo.GameInstallDir,gameFileName);
-                    uplayGameAppInfo.GameID = int.Parse(gameId);
+                    uplayGameAppInfo.GameID = gameId;
 
                     // Then we have the gameID, the thumbimage, the icon, the name, the exe path
                     // And we add the Game to the list of games we have!

@@ -100,6 +100,8 @@
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\PackageInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\App.cs" />
+    <Compile Include="GameLibraries\OriginGame.cs" />
+    <Compile Include="GameLibraries\OriginLibrary.cs" />
     <Compile Include="GameLibraries\UplayConfigurationParser\UplayConfigurationParser.cs" />
     <Compile Include="GameLibraries\UplayLibrary.cs" />
     <Compile Include="GameLibraries\SteamLibrary.cs" />

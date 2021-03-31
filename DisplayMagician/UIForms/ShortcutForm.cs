@@ -42,7 +42,7 @@ namespace DisplayMagician.UIForms
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
-        private int _gameId = 0;
+        private string _gameId = "0";
         private string  _uuid = "";
         private CoreAudioController audioController = new CoreAudioController();
         private List<CoreAudioDevice> audioDevices = null;
@@ -250,7 +250,7 @@ namespace DisplayMagician.UIForms
                     return;
                 }
 
-                if (_gameId == 0)
+                if (_gameId.Equals("0"))
                 {
                     MessageBox.Show(
                         @"Please choose a Game by scrolling through the list, selecting the Game that you want, and then clicking the '>>' button to fill the Game fields.",
@@ -569,7 +569,7 @@ namespace DisplayMagician.UIForms
             if ((txt_shortcut_save_name.Text.Length > 0) &&
                 _profileToUse is ProfileItem &&
                 (rb_no_game.Checked ||
-                rb_launcher.Checked && _gameId > 0 ||
+                rb_launcher.Checked && !_gameId.Equals("0") ||
                 rb_standalone.Checked && txt_executable.Text.Length > 0))
                 return true;
             else

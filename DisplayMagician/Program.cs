@@ -21,6 +21,7 @@ namespace DisplayMagician {
     public enum SupportedGameLibrary
     {
         Unknown,
+        Origin,
         Steam,
         Uplay
     }

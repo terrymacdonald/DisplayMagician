@@ -29,7 +29,7 @@ namespace DisplayMagician.GameLibraries
 
         private struct SteamAppInfo
         {
-            public int GameID;
+            public string GameID;
             public string GameName;
             public List<string> GameExes;
             public string GameInstallDir;
@@ -268,7 +268,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsSteamGame(int steamGameId)
+        public static bool ContainsSteamGameId(string steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -311,7 +311,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static SteamGame GetSteamGame(int steamGameId)
+        public static SteamGame GetSteamGameId(string steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -349,31 +349,28 @@ namespace DisplayMagician.GameLibraries
                 //MultiIcon _steamIcon = new MultiIcon();
                 //_steamIcon.Load(_steamExe);
 
-                List<int> steamAppIdsInstalled = new List<int>();
+                List<string> steamAppIdsInstalled = new List<string>();
                 // Now look for what games app id's are actually installed on this computer
                 using (RegistryKey steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     if (steamAppsKey != null)
                     {
                         // Loop through the subKeys as they are the Steam Game IDs
-                        foreach (string steamGameKeyName in steamAppsKey.GetSubKeyNames())
+                        foreach (string steamAppId in steamAppsKey.GetSubKeyNames())
                         {
-                            if (int.TryParse(steamGameKeyName, out int steamAppId))
+                            string steamGameKeyFullName = $"{_registryAppsKey}\\{steamAppId}";
+                            using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                             {
-                                string steamGameKeyFullName = $"{_registryAppsKey}\\{steamGameKeyName}";
-                                using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
+                                // If the Installed Value is set to 1, then the game is installed
+                                // We want to keep track of that for later
+                                if ((int)steamGameKey.GetValue(@"Installed", 0) == 1)
                                 {
-                                    // If the Installed Value is set to 1, then the game is installed
-                                    // We want to keep track of that for later
-                                    if ((int)steamGameKey.GetValue(@"Installed", 0) == 1)
-                                    {
-                                        // Add this Steam App ID to the list we're keeping for later
-                                        steamAppIdsInstalled.Add(steamAppId);
-                                    }
-
+                                    // Add this Steam App ID to the list we're keeping for later
+                                    steamAppIdsInstalled.Add(steamAppId);
                                 }
 
                             }
+
                         }
                     }
                 }
@@ -383,7 +380,7 @@ namespace DisplayMagician.GameLibraries
                 // - THe game installation dir
                 // - Sometimes the game icon
                 // - Sometimes the game executable name (from which we can get the icon)
-                Dictionary<int, SteamAppInfo> steamAppInfo = new Dictionary<int, SteamAppInfo>();
+                Dictionary<string, SteamAppInfo> steamAppInfo = new Dictionary<string, SteamAppInfo>();
 
                 string appInfoVdfFile = Path.Combine(_steamPath, "appcache", "appinfo.vdf");
                 var newAppInfo = new AppInfo();
@@ -396,7 +393,7 @@ namespace DisplayMagician.GameLibraries
                 {
                     // We only care about the appIDs we have listed as actual games
                     // (The AppIds include all other DLC and Steam specific stuff too)
-                    int detectedAppID = Convert.ToInt32(app.AppID);
+                    string detectedAppID = app.AppID.ToString();
                     if (steamAppIdsInstalled.Contains(detectedAppID))
                     {
 
@@ -519,59 +516,56 @@ namespace DisplayMagician.GameLibraries
                         Match appidMatches = appidRegex.Match(steamLibraryAppManifestText);
                         if (appidMatches.Success)
                         {
-
-                            if (int.TryParse(appidMatches.Groups[1].Value, out int steamGameId))
+                            string steamGameId = appidMatches.Groups[1].Value;
+                            // Check if this game is one that was installed
+                            if (steamAppInfo.ContainsKey(steamGameId))
                             {
-                                // Check if this game is one that was installed
-                                if (steamAppInfo.ContainsKey(steamGameId))
+                                // This game is an installed game! so we start to populate it with data!
+                                string steamGameExe = "";
+
+                                string steamGameName = steamAppInfo[steamGameId].GameName;
+
+                                // Construct the full path to the game dir from the appInfo and libraryAppManifest data
+                                string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
+
+                                // And finally we try to populate the 'where', to see what gets run
+                                // And so we can extract the process name
+                                if (steamAppInfo[steamGameId].GameExes.Count > 0)
                                 {
-                                    // This game is an installed game! so we start to populate it with data!
-                                    string steamGameExe = "";
-
-                                    string steamGameName = steamAppInfo[steamGameId].GameName;
-
-                                    // Construct the full path to the game dir from the appInfo and libraryAppManifest data
-                                    string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
-
-                                    // And finally we try to populate the 'where', to see what gets run
-                                    // And so we can extract the process name
-                                    if (steamAppInfo[steamGameId].GameExes.Count > 0)
+                                    foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
                                     {
-                                        foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
+                                        steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
+                                        // If the game executable exists, then we can proceed
+                                        if (File.Exists(steamGameExe))
                                         {
-                                            steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
-                                            // If the game executable exists, then we can proceed
-                                            if (File.Exists(steamGameExe))
-                                            {
-                                                break;
-                                            }
+                                            break;
                                         }
-
                                     }
-
-                                    // Next, we need to get the Icons we want to use, and make sure it's the latest one.
-                                    string steamGameIconPath = "";
-                                    // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
-                                    if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath) && steamAppInfo[steamGameId].GameSteamIconPath.EndsWith(".ico"))
-                                    {
-                                        steamGameIconPath = steamAppInfo[steamGameId].GameSteamIconPath;
-                                    }
-                                    // If there isn't an icon for us to use, then we need to extract one from the Game Executables
-                                    else if (!String.IsNullOrEmpty(steamGameExe))
-                                    {
-                                        steamGameIconPath = steamGameExe;
-                                    }
-                                    // The absolute worst case means we don't have an icon to use. SO we use the Steam one.
-                                    else
-                                    {
-                                        // And we have to make do with a Steam Icon
-                                        steamGameIconPath = _steamPath;
-                                    }
-
-                                    // And we add the Game to the list of games we have!
-                                    _allSteamGames.Add(new SteamGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath));
 
                                 }
+
+                                // Next, we need to get the Icons we want to use, and make sure it's the latest one.
+                                string steamGameIconPath = "";
+                                // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
+                                if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath) && steamAppInfo[steamGameId].GameSteamIconPath.EndsWith(".ico"))
+                                {
+                                    steamGameIconPath = steamAppInfo[steamGameId].GameSteamIconPath;
+                                }
+                                // If there isn't an icon for us to use, then we need to extract one from the Game Executables
+                                else if (!String.IsNullOrEmpty(steamGameExe))
+                                {
+                                    steamGameIconPath = steamGameExe;
+                                }
+                                // The absolute worst case means we don't have an icon to use. SO we use the Steam one.
+                                else
+                                {
+                                    // And we have to make do with a Steam Icon
+                                    steamGameIconPath = _steamPath;
+                                }
+
+                                // And we add the Game to the list of games we have!
+                                _allSteamGames.Add(new SteamGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath));
+
                             }
                         }
                     }

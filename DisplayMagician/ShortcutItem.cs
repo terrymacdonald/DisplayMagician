@@ -88,7 +88,7 @@ namespace DisplayMagician
         private string _executableArguments;
         private bool _executableArgumentsRequired = false;
         private bool _processNameToMonitorUsesExecutable = true;
-        private int _gameAppId;
+        private string _gameAppId;
         private string _gameName;
         private SupportedGameLibrary _gameLibrary;
         private int _startTimeout = 20;
@@ -277,7 +277,7 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            int gameAppId,
+            string gameAppId,
             string gameName,
             SupportedGameLibrary gameLibrary,
             int gameTimeout,
@@ -910,7 +910,7 @@ namespace DisplayMagician
             }
         }
 
-        public int GameAppId
+        public string GameAppId
         {
             get
             {
@@ -1325,7 +1325,7 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile,
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            int gameAppId,
+            string gameAppId,
             string gameName,
             SupportedGameLibrary gameLibrary,
             int gameTimeout,
@@ -2049,7 +2049,7 @@ namespace DisplayMagician
                     }
 
                     // We need to look up details about the game
-                    if (!SteamLibrary.ContainsSteamGame(GameAppId))
+                    if (!SteamLibrary.ContainsSteamGameId(GameAppId))
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "SteamGameNotInstalled";

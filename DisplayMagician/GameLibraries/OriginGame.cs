@@ -3,77 +3,76 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security;
 using DisplayMagician.Resources;
+using Microsoft.Win32;
 using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
-    public class UplayGame : Game
+    public class OriginGame : Game
     {
         private string _gameRegistryKey;
-        private string _uplayGameId;
-        private string _uplayGameName;
-        private string _uplayGameExePath;
-        private string _uplayGameDir;
-        private string _uplayGameExe;
-        private string _uplayGameProcessName;
-        private string _uplayGameIconPath;
+        private string _originGameId;
+        private string _originGameName;
+        private string _originGameExePath;
+        private string _originGameDir;
+        private string _originGameExe;
+        private string _originGameProcessName;
+        private string _originGameIconPath;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static UplayGame()
+        static OriginGame()
         {
             ServicePointManager.ServerCertificateValidationCallback +=
                 (send, certificate, chain, sslPolicyErrors) => true;
         }
 
 
-        public UplayGame(string uplayGameId, string uplayGameName, string uplayGameExePath, string uplayGameIconPath)
+        public OriginGame(string originGameId, string originGameName, string originGameExePath, string originGameIconPath)
         {
 
-            _gameRegistryKey = $@"{UplayLibrary.registryUplayInstallsKey}\\{uplayGameId}";
-            _uplayGameId = uplayGameId;
-            _uplayGameName = uplayGameName;
-            _uplayGameExePath = uplayGameExePath;
-            _uplayGameDir = Path.GetDirectoryName(uplayGameExePath);
-            _uplayGameExe = Path.GetFileName(_uplayGameExePath);
-            _uplayGameProcessName = Path.GetFileNameWithoutExtension(_uplayGameExePath);
-            _uplayGameIconPath = uplayGameIconPath;
+            _gameRegistryKey = $@"{OriginLibrary.SteamAppsRegistryKey}\\{originGameId}";
+            _originGameId = originGameId;
+            _originGameName = originGameName;
+            _originGameExePath = originGameExePath;
+            _originGameDir = Path.GetDirectoryName(originGameExePath);
+            _originGameExe = Path.GetFileName(_originGameExePath);
+            _originGameProcessName = Path.GetFileNameWithoutExtension(_originGameExePath);
+            _originGameIconPath = originGameIconPath;
 
         }
 
-        public override string Id
-        {
-            get => _uplayGameId;
-            set => _uplayGameId = value;
+        public override string Id { 
+            get => _originGameId;
+            set => _originGameId = value;
         }
 
         public override string Name
         {
-            get => _uplayGameName;
-            set => _uplayGameName = value;
+            get => _originGameName;
+            set => _originGameName = value;
         }
 
-        public override SupportedGameLibrary GameLibrary
-        {
-            get => SupportedGameLibrary.Uplay;
+        public override SupportedGameLibrary GameLibrary { 
+            get => SupportedGameLibrary.Origin; 
         }
 
-        public override string IconPath
-        {
-            get => _uplayGameIconPath;
-            set => _uplayGameIconPath = value;
+        public override string IconPath { 
+            get => _originGameIconPath; 
+            set => _originGameIconPath = value;
         }
 
         public override string ExePath
         {
-            get => _uplayGameExePath;
-            set => _uplayGameExePath = value;
+            get => _originGameExePath;
+            set => _originGameExePath = value;
         }
 
         public override string Directory
         {
-            get => _uplayGameDir;
-            set => _uplayGameDir = value;
+            get => _originGameDir;
+            set => _originGameDir = value;
         }
 
         public override bool IsRunning
@@ -81,17 +80,18 @@ namespace DisplayMagician.GameLibraries
             get
             {
                 int numGameProcesses = 0;
-                List<Process> gameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
+                List<Process> gameProcesses = Process.GetProcessesByName(_originGameProcessName).ToList();
                 foreach (Process gameProcess in gameProcesses)
                 {
                     try
                     {
-                        if (gameProcess.MainModule.FileName.StartsWith(_uplayGameExePath))
+                        if (gameProcess.MainModule.FileName.StartsWith(_originGameExePath))
                             numGameProcesses++;
                     }
                     catch (Exception ex)
                     {
-                        logger.Debug(ex, $"UplayGame/IsRunning: Accessing Process.MainModule caused exception. Trying GameUtils.GetMainModuleFilepath instead");
+                        logger.Debug(ex, $"OriginGame/IsRunning: Accessing Process.MainModule caused exception. Trying GameUtils.GetMainModuleFilepath instead");
+
                         // If there is a race condition where MainModule isn't available, then we 
                         // instead try the much slower GetMainModuleFilepath (which does the same thing)
                         string filePath = GameUtils.GetMainModuleFilepath(gameProcess.Id);
@@ -103,10 +103,9 @@ namespace DisplayMagician.GameLibraries
                         }
                         else
                         {
-                            if (filePath.StartsWith(_uplayGameExePath))
+                            if (filePath.StartsWith(_originGameExePath))
                                 numGameProcesses++;
                         }
-                            
                     }
                 }
                 if (numGameProcesses > 0)
@@ -116,7 +115,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        /*public override bool IsUpdating
+        public override bool IsUpdating
         {
             get
             {
@@ -134,7 +133,7 @@ namespace DisplayMagician.GameLibraries
                 }
                 catch (SecurityException ex)
                 {
-                    Console.WriteLine($"UplayGame/IsUpdating securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    Console.WriteLine($"OriginGame/IsUpdating securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     if (ex.Source != null)
                         Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
@@ -143,31 +142,31 @@ namespace DisplayMagician.GameLibraries
                 {
                     // Extract some information from this exception, and then
                     // throw it to the parent method.
-                    Console.WriteLine($"UplayGame/IsUpdating ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    Console.WriteLine($"OriginGame/IsUpdating ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                     if (ex.Source != null)
                         Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
                     throw;
                 }
             }
-        }*/
+        }
 
-        public bool CopyTo(UplayGame uplayGame)
+        public bool CopyInto(OriginGame originGame)
         {
-            if (!(uplayGame is UplayGame))
+            if (!(originGame is OriginGame))
                 return false;
 
             // Copy all the game data over to the other game
-            uplayGame.IconPath = IconPath;
-            uplayGame.Id = Id;
-            uplayGame.Name = Name;
-            uplayGame.ExePath = ExePath;
-            uplayGame.Directory = Directory;
+            originGame.IconPath = IconPath;
+            originGame.Id = Id;
+            originGame.Name = Name;
+            originGame.ExePath = ExePath;
+            originGame.Directory = Directory;
             return true;
         }
 
         public override string ToString()
         {
-            var name = _uplayGameName;
+            var name = _originGameName;
 
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -179,10 +178,10 @@ namespace DisplayMagician.GameLibraries
                 return name + " " + Language.Running;
             }
 
-            /*if (IsUpdating)
+            if (IsUpdating)
             {
                 return name + " " + Language.Updating;
-            }*/
+            }
 
             return name;
         }
