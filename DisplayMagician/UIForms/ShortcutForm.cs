@@ -440,13 +440,47 @@ namespace DisplayMagician.UIForms
                     );
 
                 }
-                // If the game is a SteamGame
+                // If the game is a UplayGame
                 else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
                 {
                     // Find the UplayGame
                     _gameToUse = new GameStruct
                     {
                         GameToPlay = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First(),
+                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
+                        GameArguments = txt_args_game.Text,
+                        GameArgumentsRequired = cb_args_game.Checked
+                    };
+
+                    _shortcutToEdit.UpdateGameShortcut(
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _gameToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _gameToUse.GameToPlay.IconPath,
+                         _changeAudioDevice,
+                        _audioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _autoName,
+                        _uuid
+                    );
+
+                }
+                // If the game is an Origin Game
+                else if (txt_game_launcher.Text == SupportedGameLibrary.Origin.ToString())
+                {
+                    // Find the OriginGame
+                    _gameToUse = new GameStruct
+                    {
+                        GameToPlay = (from originGame in OriginLibrary.AllInstalledGames where originGame.Id == _gameId select originGame).First(),
                         StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                         GameArguments = txt_args_game.Text,
                         GameArgumentsRequired = cb_args_game.Checked
@@ -816,11 +850,6 @@ namespace DisplayMagician.UIForms
 
                 // Add the images to the images array
                 il_games.Images.Add(bm);
-
-                /*if (!Visible)
-                {
-                    //return;
-                }*/
 
                 // ADd the game to the game array
                 lv_games.Items.Add(new ListViewItem

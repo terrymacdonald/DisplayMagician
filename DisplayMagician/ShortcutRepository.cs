@@ -998,7 +998,7 @@ namespace DisplayMagician
                 if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Steam))
                 {
                     // We now need to get the SteamGame info
-                    SteamGame steamGameToRun = SteamLibrary.GetSteamGame(shortcutToUse.GameAppId);
+                    SteamGame steamGameToRun = SteamLibrary.GetSteamGameById(shortcutToUse.GameAppId);
 
                     logger.Info($"ShortcutRepository/RunShortcut: Starting the {steamGameToRun.Name} Steam Game, and then we're going to monitor it to wait for it to close.");
 
@@ -1116,7 +1116,7 @@ namespace DisplayMagician
                 else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Uplay))
                 {
                     // We now need to get the Uplay Game  info
-                    UplayGame uplayGameToRun = UplayLibrary.GetUplayGame(shortcutToUse.GameAppId);
+                    UplayGame uplayGameToRun = UplayLibrary.GetUplayGameById(shortcutToUse.GameAppId);
 
                     logger.Info($"ShortcutRepository/RunShortcut: Starting the {uplayGameToRun.Name} Uplay Game, and then we're going to monitor it to wait for it to close.");
 
@@ -1275,17 +1275,17 @@ namespace DisplayMagician
                 else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Origin))
                 {
                     // We now need to get the Origin Game info
-                    OriginGame originGameToRun = UplayLibrary.GetOriginGame(shortcutToUse.GameAppId);
+                    OriginGame originGameToRun = OriginLibrary.GetOriginGameById(shortcutToUse.GameAppId);
 
-                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {originGameToRun.Name} Uplay Game, and then we're going to monitor it to wait for it to close.");
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {originGameToRun.Name} Origin Game, and then we're going to monitor it to wait for it to close.");
 
-                    // If the GameAppID matches a Uplay game, then lets run it
+                    // If the GameAppID matches a Origin game, then lets run it
                     if (originGameToRun is OriginGame)
                     {
-                        // Prepare to start the Uplay game using the URI interface 
+                        // Prepare to start the Origin game using the URI interface 
                         // as used by Uplay for it's own desktop shortcuts.
                         var address = $"origin2://game/launch?offerIds={originGameToRun.Id}";
-                        logger.Debug($"ShortcutRepository/RunShortcut: Uplay launch address is {address}");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Origin launch address is {address}");
                         if (shortcutToUse.GameArgumentsRequired)
                         {
                             address += "/" + shortcutToUse.GameArguments;
@@ -1295,12 +1295,12 @@ namespace DisplayMagician
                             address += "/0";
                         }
 
-                        // Now we want to tell the user we're starting upc.exe
+                        // Now we want to tell the user we're starting Origin
                         // Construct the Windows toast content
                         ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                            .AddToastActivationInfo("notify=startingUplay", ToastActivationType.Foreground)
-                            .AddText($"Starting Uplay", hintMaxLines: 1)
-                            .AddText($"Waiting for Uplay to start (and update if needed)...");
+                            .AddToastActivationInfo("notify=startingOrigin", ToastActivationType.Foreground)
+                            .AddText($"Starting Origin", hintMaxLines: 1)
+                            .AddText($"Waiting for Origin to start (and update if needed)...");
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                         ToastContent toastContent = tcBuilder.Content;
                         // Make sure to use Windows.Data.Xml.Dom
@@ -1314,24 +1314,24 @@ namespace DisplayMagician
                         DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
 
-                        // Start the URI Handler to run Uplay
-                        Console.WriteLine($"Starting Uplay Game: {uplayGameToRun.Name}");
-                        logger.Info($"ShortcutRepository/RunShortcut: Starting Uplay Game: {uplayGameToRun.Name}");
-                        Process uplayStartProcess = Process.Start(address);
+                        // Start the URI Handler to run Origin
+                        Console.WriteLine($"Starting Origin Game: {originGameToRun.Name}");
+                        logger.Info($"ShortcutRepository/RunShortcut: Starting Origin Game: {originGameToRun.Name}");
+                        Process originStartProcess = Process.Start(address);
 
-                        // Wait for Uplay to start
-                        List<Process> uplayProcesses = null;
+                        // Wait for Origin to start
+                        List<Process> originProcesses = null;
                         for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
                             // Look for the processes with the ProcessName we sorted out earlier
-                            uplayProcesses = Process.GetProcessesByName("upc").ToList();
+                            originProcesses = Process.GetProcessesByName("origin").ToList();
 
                             // If we have found one or more processes then we should be good to go
                             // so let's break
-                            if (uplayProcesses.Count > 0)
+                            if (originProcesses.Count > 0)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut: Found {uplayProcesses.Count} 'upc' processes have started");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found {originProcesses.Count} 'origin' processes have started");
                                 break;
                             }
 
@@ -1343,16 +1343,16 @@ namespace DisplayMagician
 
                         // Delay 5secs
                         Thread.Sleep(5000);
-                        logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Uplay process start the game.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Origin process start the game.");
 
-                        // Now we know the Uplay app is running then 
-                        // we wait until the Uplay game is running (*allows for uplay update)
+                        // Now we know the Origin app is running then 
+                        // we wait until the Origin game is running (*allows for origin update)
                         for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
-                            if (uplayGameToRun.IsRunning)
+                            if (originGameToRun.IsRunning)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut: Found the '{uplayGameToRun.Name}' process has started");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found the '{originGameToRun.Name}' process has started");
                                 break;
                             }
 
@@ -1361,23 +1361,23 @@ namespace DisplayMagician
 
                         }
 
-                        // Store the Uplay Process ID for later
-                        IPCService.GetInstance().HoldProcessId = uplayStartProcess?.Id ?? 0;
+                        // Store the Origin Process ID for later
+                        IPCService.GetInstance().HoldProcessId = originStartProcess?.Id ?? 0;
                         IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                         // Add a status notification icon in the status area
-                        if (uplayGameToRun.Name.Length <= 41)
-                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name}...";
+                        if (originGameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {originGameToRun.Name}...";
                         else
-                            notifyIcon.Text = $"DisplayMagician: Running {uplayGameToRun.Name.Substring(0, 41)}...";
+                            notifyIcon.Text = $"DisplayMagician: Running {originGameToRun.Name.Substring(0, 41)}...";
                         Application.DoEvents();
 
                         // Now we want to tell the user we're running a game!
                         // Construct the Windows toast content
                         tcBuilder = new ToastContentBuilder()
-                            .AddToastActivationInfo("notify=runningUplayGame", ToastActivationType.Foreground)
+                            .AddToastActivationInfo("notify=runningOriginGame", ToastActivationType.Foreground)
                             .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
-                            .AddText($"Waiting for the Uplay Game {shortcutToUse.GameName} to exit...");
+                            .AddText($"Waiting for the Origin Game {shortcutToUse.GameName} to exit...");
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                         toastContent = tcBuilder.Content;
                         // Make sure to use Windows.Data.Xml.Dom
@@ -1394,13 +1394,13 @@ namespace DisplayMagician
                         Thread.Sleep(5000);
 
                         // Wait for the game to exit
-                        Console.WriteLine($"Waiting for {uplayGameToRun.Name} to exit.");
-                        logger.Debug($"ShortcutRepository/RunShortcut: waiting for Uplay Game {uplayGameToRun.Name} to exit.");
+                        Console.WriteLine($"Waiting for {originGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: waiting for Origin Game {originGameToRun.Name} to exit.");
                         while (true)
                         {
-                            if (!uplayGameToRun.IsRunning)
+                            if (!originGameToRun.IsRunning)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} is no longer running (IsRunning is false).");
+                                logger.Debug($"ShortcutRepository/RunShortcut: Origin Game {originGameToRun.Name} is no longer running (IsRunning is false).");
                                 break;
                             }
 
@@ -1409,8 +1409,8 @@ namespace DisplayMagician
                             System.Threading.Thread.CurrentThread.Join(0);
                             Thread.Sleep(1000);
                         }
-                        Console.WriteLine($"{uplayGameToRun.Name} has exited.");
-                        logger.Debug($"ShortcutRepository/RunShortcut: Uplay Game {uplayGameToRun.Name} has exited.");
+                        Console.WriteLine($"{originGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Origin Game {originGameToRun.Name} has exited.");
 
                         // Tell the user that the Uplay Game has closed
                         // Construct the toast content

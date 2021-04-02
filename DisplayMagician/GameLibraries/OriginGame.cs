@@ -32,7 +32,7 @@ namespace DisplayMagician.GameLibraries
         public OriginGame(string originGameId, string originGameName, string originGameExePath, string originGameIconPath)
         {
 
-            _gameRegistryKey = $@"{OriginLibrary.SteamAppsRegistryKey}\\{originGameId}";
+            _gameRegistryKey = $@"{OriginLibrary.OriginAppsRegistryKey}\\{originGameId}";
             _originGameId = originGameId;
             _originGameName = originGameName;
             _originGameExePath = originGameExePath;

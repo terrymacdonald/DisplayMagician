@@ -175,9 +175,9 @@ namespace DisplayMagician.GameLibraries
                 throw new UplayLibraryException();
         }
 
-        public static bool RemoveUplayGame(int uplayGameId)
+        public static bool RemoveUplayGameById(string uplayGameId)
         {
-            if (uplayGameId<=0)
+            if (uplayGameId.Equals(0))
                 return false;
 
             logger.Debug($"UplayLibrary/RemoveUplayGame2: Removing Uplay game with ID {uplayGameId} from the Uplay library");
@@ -199,28 +199,28 @@ namespace DisplayMagician.GameLibraries
                 throw new UplayLibraryException();
         }
 
-        public static bool RemoveUplayGame(string uplayGameNameOrUuid)
+        public static bool RemoveUplayGame(string uplayGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return false;
 
-            logger.Debug($"UplayLibrary/RemoveUplayGame3: Removing Uplay game with Name or UUID {uplayGameNameOrUuid} from the Uplay library");
+            logger.Debug($"UplayLibrary/RemoveUplayGame3: Removing Uplay game with Name or ID {uplayGameNameOrId} from the Uplay library");
 
             int numRemoved;
-            Match match = Regex.Match(uplayGameNameOrUuid, uplayAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(uplayGameNameOrId, uplayAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
-                numRemoved = _allUplayGames.RemoveAll(item => uplayGameNameOrUuid.Equals(Convert.ToUInt32(item.Id)));
+                numRemoved = _allUplayGames.RemoveAll(item => uplayGameNameOrId.Equals(item.Id));
             else
-                numRemoved = _allUplayGames.RemoveAll(item => uplayGameNameOrUuid.Equals(item.Name));
+                numRemoved = _allUplayGames.RemoveAll(item => uplayGameNameOrId.Equals(item.Name));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame3: Removed Uplay game with Name or UUID {uplayGameNameOrUuid} ");
+                logger.Debug($"UplayLibrary/RemoveUplayGame3: Removed Uplay game with Name or UUID {uplayGameNameOrId} ");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame3: Didn't remove Uplay game with Name or UUID {uplayGameNameOrUuid} from the Uplay Library");
+                logger.Debug($"UplayLibrary/RemoveUplayGame3: Didn't remove Uplay game with Name or UUID {uplayGameNameOrId} from the Uplay Library");
                 return false;
             }
             else
@@ -242,7 +242,7 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
-        public static bool ContainsUplayGameId(string uplayGameId)
+        public static bool ContainsUplayGameById(string uplayGameId)
         {
             foreach (UplayGame testUplayGame in _allUplayGames)
             {
@@ -255,18 +255,18 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsUplayGame(string uplayGameNameOrUuid)
+        public static bool ContainsUplayGame(string uplayGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return false;
 
 
-            Match match = Regex.Match(uplayGameNameOrUuid, uplayAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(uplayGameNameOrId, uplayAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (UplayGame testUplayGame in _allUplayGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(Convert.ToInt32(testUplayGame.Id)))
+                    if (uplayGameNameOrId.Equals(Convert.ToInt32(testUplayGame.Id)))
                         return true;
                 }
 
@@ -275,7 +275,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (UplayGame testUplayGame in _allUplayGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(testUplayGame.Name))
+                    if (uplayGameNameOrId.Equals(testUplayGame.Name))
                         return true;
                 }
 
@@ -286,17 +286,17 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static UplayGame GetUplayGame(string uplayGameNameOrUuid)
+        public static UplayGame GetUplayGame(string uplayGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return null;
 
-            Match match = Regex.Match(uplayGameNameOrUuid, uplayAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(uplayGameNameOrId, uplayAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (UplayGame testUplayGame in _allUplayGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(Convert.ToInt32(testUplayGame.Id)))
+                    if (uplayGameNameOrId.Equals(Convert.ToInt32(testUplayGame.Id)))
                         return testUplayGame;
                 }
 
@@ -305,7 +305,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (UplayGame testUplayGame in _allUplayGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(testUplayGame.Name))
+                    if (uplayGameNameOrId.Equals(testUplayGame.Name))
                         return testUplayGame;
                 }
 
@@ -315,7 +315,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static UplayGame GetUplayGameId(string uplayGameId)
+        public static UplayGame GetUplayGameById(string uplayGameId)
         {
             foreach (UplayGame testUplayGame in _allUplayGames)
             {
@@ -400,46 +400,6 @@ namespace DisplayMagician.GameLibraries
 
                     // for each game record grab:
                     UplayAppInfo uplayGameAppInfo = new UplayAppInfo();
-
-/*                    // name: (lookup the id in lookup table to find the name if needed)
-                    if (uplayEntryLines.Exists(a => a.StartsWith("  name:", StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        mc = Regex.Matches(uplayEntry, @"  name\: (.*)");
-                        uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
-                        // if the name contains a localization reference, then dereference it
-                        if (localizations.ContainsKey(uplayGameAppInfo.GameName))
-                        {
-                            uplayGameAppInfo.GameName = localizations[uplayGameAppInfo.GameName];
-                        }
-                    }
-                    else
-                        continue;
-*/
-                    // icon_image: (lookup the id in lookup table to find the ICON)
-                    /*if (uplayEntryLines.Exists(a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        mc = Regex.Matches(uplayEntry, @"icon_image: (.*)");
-                        string iconImageFileName = mc[0].Groups[1].ToString();
-                        // if the icon_image contains a localization reference, then dereference it
-                        if (localizations.ContainsKey(iconImageFileName))
-                        {
-                            iconImageFileName = localizations[iconImageFileName];
-                        }
-                        //61fdd16f06ae08158d0a6d476f1c6bd5.ico
-                        string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
-                        if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
-                        {
-                            uplayGameAppInfo.GameUplayIconPath = uplayGameIconPath;
-                        }
-                    }*/
-
-                    // find the exe name looking at root: -> start_game: -> online: -> executables: -> path: -> relative: (get ACU.exe)
-                    // Lookup the Game registry key from looking at root: -> start_game: -> online: -> executables: -> working_directory: -> register: (get HKEY_LOCAL_MACHINE\SOFTWARE\Ubisoft\Launcher\Installs\720\InstallDir)
-                    // Extract the GameAppID from the number in the working directory (e.g. 720)
-                    // Lookup the Game install path by reading the game registry key: D:/Ubisoft Game Launcher/Assassin's Creed Unity/
-                    // join the Game install path and the exe name to get the full game exe path: D:/Ubisoft Game Launcher/Assassin's Creed Unity/ACU.exe
-
-                    //if (uplayEntryLines.Find (a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
 
                     bool gotGameIconPath = false;
                     bool gotGameName = false;

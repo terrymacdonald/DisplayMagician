@@ -184,9 +184,9 @@ namespace DisplayMagician.GameLibraries
                 throw new SteamLibraryException();
         }
 
-        public static bool RemoveSteamGame(int steamGameId)
+        public static bool RemoveSteamGameById(string steamGameId)
         {
-            if (steamGameId<=0)
+            if (steamGameId.Equals("0"))
                 return false;
 
             // Remove the steamGame from the list.
@@ -203,17 +203,17 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static bool RemoveSteamGame(string steamGameNameOrUuid)
+        public static bool RemoveSteamGame(string steamGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(steamGameNameOrId))
                 return false;
 
             int numRemoved;
-            Match match = Regex.Match(steamGameNameOrUuid, steamAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(steamGameNameOrId, steamAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
-                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(Convert.ToUInt32(item.Id)));
+                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrId.Equals(item.Id));
             else
-                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(item.Name));
+                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrId.Equals(item.Name));
 
             if (numRemoved == 1)
                 return true;
@@ -268,7 +268,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsSteamGameId(string steamGameId)
+        public static bool ContainsSteamGameById(string steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -311,7 +311,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static SteamGame GetSteamGameId(string steamGameId)
+        public static SteamGame GetSteamGameById(string steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {

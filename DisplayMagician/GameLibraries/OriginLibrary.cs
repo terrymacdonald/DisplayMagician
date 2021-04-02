@@ -18,7 +18,7 @@ namespace DisplayMagician.GameLibraries
         #region Class Variables
         // Common items to the class
         private static List<Game> _allOriginGames = new List<Game>();
-        //private static string steamAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private static string originAppIdRegex = @"/^[0-9A-F]{1,10}$";
         private static string _originExe;
         private static string _originPath;
         private static string _originLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),"Origin");
@@ -92,7 +92,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string OriginRegistryKey
+       /* public static string OriginRegistryKey
         {
             get
             {
@@ -107,7 +107,7 @@ namespace DisplayMagician.GameLibraries
                 return _registryAppsKey;
             }
         }
-
+*/
         public static string OriginExe
         {
             get
@@ -137,27 +137,27 @@ namespace DisplayMagician.GameLibraries
         #endregion
 
         #region Class Methods
-        public static bool AddOriginGame(OriginGame steamGame)
+        public static bool AddOriginGame(OriginGame originGame)
         {
-            if (!(steamGame is OriginGame))
+            if (!(originGame is OriginGame))
                 return false;
 
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
-            if (ContainsOriginGame(steamGame))
+            if (ContainsOriginGame(originGame))
             {
                 // We update the existing Shortcut with the data over
-                OriginGame steamGameToUpdate = GetOriginGame(steamGame.Id.ToString());
-                steamGame.CopyInto(steamGameToUpdate);
+                OriginGame originGameToUpdate = GetOriginGame(originGame.Id.ToString());
+                originGame.CopyInto(originGameToUpdate);
             }
             else
             {
-                // Add the steamGame to the list of steamGames
-                _allOriginGames.Add(steamGame);
+                // Add the originGame to the list of originGames
+                _allOriginGames.Add(originGame);
             }
 
             //Doublecheck it's been added
-            if (ContainsOriginGame(steamGame))
+            if (ContainsOriginGame(originGame))
             {
                 return true;
             }
@@ -166,13 +166,13 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool RemoveOriginGame(OriginGame steamGame)
+        public static bool RemoveOriginGame(OriginGame originGame)
         {
-            if (!(steamGame is OriginGame))
+            if (!(originGame is OriginGame))
                 return false;
 
-            // Remove the steamGame from the list.
-            int numRemoved = _allOriginGames.RemoveAll(item => item.Id.Equals(steamGame.Id));
+            // Remove the originGame from the list.
+            int numRemoved = _allOriginGames.RemoveAll(item => item.Id.Equals(originGame.Id));
 
             if (numRemoved == 1)
             {
@@ -184,13 +184,13 @@ namespace DisplayMagician.GameLibraries
                 throw new OriginLibraryException();
         }
 
-        public static bool RemoveOriginGameId(string steamGameId)
+        public static bool RemoveOriginGameById(string originGameId)
         {
-            if (steamGameId<=0)
+            if (originGameId.Equals("0"))
                 return false;
 
-            // Remove the steamGame from the list.
-            int numRemoved = _allOriginGames.RemoveAll(item => item.Id.Equals(steamGameId));
+            // Remove the originGame from the list.
+            int numRemoved = _allOriginGames.RemoveAll(item => item.Id.Equals(originGameId));
 
             if (numRemoved == 1)
             {
@@ -203,17 +203,17 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static bool RemoveOriginGame(string steamGameNameOrUuid)
+        public static bool RemoveOriginGame(string originGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return false;
 
             int numRemoved;
-            Match match = Regex.Match(steamGameNameOrUuid, steamAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(originGameNameOrId, originAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
-                numRemoved = _allOriginGames.RemoveAll(item => steamGameNameOrUuid.Equals(Convert.ToUInt32(item.Id)));
+                numRemoved = _allOriginGames.RemoveAll(item => originGameNameOrId.Equals(item.Id));
             else
-                numRemoved = _allOriginGames.RemoveAll(item => steamGameNameOrUuid.Equals(item.Name));
+                numRemoved = _allOriginGames.RemoveAll(item => originGameNameOrId.Equals(item.Name));
 
             if (numRemoved == 1)
                 return true;
@@ -224,32 +224,32 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsOriginGame(OriginGame steamGame)
+        public static bool ContainsOriginGame(OriginGame originGame)
         {
-            if (!(steamGame is OriginGame))
+            if (!(originGame is OriginGame))
                 return false;
 
             foreach (OriginGame testOriginGame in _allOriginGames)
             {
-                if (testOriginGame.Id.Equals(steamGame.Id))
+                if (testOriginGame.Id.Equals(originGame.Id))
                     return true;
             }
 
             return false;
         }
 
-        public static bool ContainsOriginGame(string steamGameNameOrUuid)
+        public static bool ContainsOriginGame(string originGameNameOrUuid)
         {
-            if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(originGameNameOrUuid))
                 return false;
 
 
-            Match match = Regex.Match(steamGameNameOrUuid, steamAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(originGameNameOrUuid, originAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (OriginGame testOriginGame in _allOriginGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToInt32(testOriginGame.Id)))
+                    if (originGameNameOrUuid.Equals(Convert.ToInt32(testOriginGame.Id)))
                         return true;
                 }
 
@@ -258,7 +258,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (OriginGame testOriginGame in _allOriginGames)
                 {
-                    if (steamGameNameOrUuid.Equals(testOriginGame.Name))
+                    if (originGameNameOrUuid.Equals(testOriginGame.Name))
                         return true;
                 }
 
@@ -268,11 +268,11 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsOriginGameId(string steamGameId)
+        public static bool ContainsOriginGameById(string originGameId)
         {
             foreach (OriginGame testOriginGame in _allOriginGames)
             {
-                if (steamGameId == testOriginGame.Id)
+                if (originGameId == testOriginGame.Id)
                     return true;
             }
 
@@ -282,17 +282,17 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static OriginGame GetOriginGame(string steamGameNameOrUuid)
+        public static OriginGame GetOriginGame(string originGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return null;
 
-            Match match = Regex.Match(steamGameNameOrUuid, steamAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(originGameNameOrId, originAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (OriginGame testOriginGame in _allOriginGames)
                 {
-                    if (steamGameNameOrUuid.Equals(Convert.ToInt32(testOriginGame.Id)))
+                    if (originGameNameOrId.Equals(Convert.ToInt32(testOriginGame.Id)))
                         return testOriginGame;
                 }
 
@@ -301,7 +301,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (OriginGame testOriginGame in _allOriginGames)
                 {
-                    if (steamGameNameOrUuid.Equals(testOriginGame.Name))
+                    if (originGameNameOrId.Equals(testOriginGame.Name))
                         return testOriginGame;
                 }
 
@@ -311,11 +311,11 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static OriginGame GetOriginGame(int steamGameId)
+        public static OriginGame GetOriginGameById(string originGameId)
         {
             foreach (OriginGame testOriginGame in _allOriginGames)
             {
-                if (steamGameId == testOriginGame.Id)
+                if (originGameId == testOriginGame.Id)
                     return testOriginGame;
             }
 
@@ -351,8 +351,8 @@ namespace DisplayMagician.GameLibraries
                 }
 
                 //Icon _originIcon = Icon.ExtractAssociatedIcon(_originExe);
-                //IconExtractor steamIconExtractor = new IconExtractor(_originExe);
-                //Icon _originIcon = steamIconExtractor.GetIcon(0);
+                //IconExtractor originIconExtractor = new IconExtractor(_originExe);
+                //Icon _originIcon = originIconExtractor.GetIcon(0);
                 //MultiIcon _originIcon = new MultiIcon();
                 //_originIcon.Load(_originExe);
 
@@ -475,26 +475,26 @@ namespace DisplayMagician.GameLibraries
 
 
 
-                    List<int> steamAppIdsInstalled = new List<int>();
+                    List<int> originAppIdsInstalled = new List<int>();
                 // Now look for what games app id's are actually installed on this computer
-                using (RegistryKey steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
+                using (RegistryKey originAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
-                    if (steamAppsKey != null)
+                    if (originAppsKey != null)
                     {
                         // Loop through the subKeys as they are the Origin Game IDs
-                        foreach (string steamGameKeyName in steamAppsKey.GetSubKeyNames())
+                        foreach (string originGameKeyName in originAppsKey.GetSubKeyNames())
                         {
-                            if (int.TryParse(steamGameKeyName, out int steamAppId))
+                            if (int.TryParse(originGameKeyName, out int originAppId))
                             {
-                                string steamGameKeyFullName = $"{_registryAppsKey}\\{steamGameKeyName}";
-                                using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
+                                string originGameKeyFullName = $"{_registryAppsKey}\\{originGameKeyName}";
+                                using (RegistryKey originGameKey = Registry.CurrentUser.OpenSubKey(originGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
                                     // If the Installed Value is set to 1, then the game is installed
                                     // We want to keep track of that for later
-                                    if ((int)steamGameKey.GetValue(@"Installed", 0) == 1)
+                                    if ((int)originGameKey.GetValue(@"Installed", 0) == 1)
                                     {
                                         // Add this Origin App ID to the list we're keeping for later
-                                        steamAppIdsInstalled.Add(steamAppId);
+                                        originAppIdsInstalled.Add(originAppId);
                                     }
 
                                 }
@@ -504,12 +504,12 @@ namespace DisplayMagician.GameLibraries
                     }
                 }
 
-                // Now we parse the steam appinfo.vdf to get access to things like:
+                // Now we parse the origin appinfo.vdf to get access to things like:
                 // - The game name
                 // - THe game installation dir
                 // - Sometimes the game icon
                 // - Sometimes the game executable name (from which we can get the icon)
-                Dictionary<int, OriginAppInfo> steamAppInfo = new Dictionary<int, OriginAppInfo>();
+                Dictionary<int, OriginAppInfo> originAppInfo = new Dictionary<int, OriginAppInfo>();
 
                 string appInfoVdfFile = Path.Combine(_originPath, "appcache", "appinfo.vdf");
                 var newAppInfo = new AppInfo();
@@ -523,13 +523,13 @@ namespace DisplayMagician.GameLibraries
                     // We only care about the appIDs we have listed as actual games
                     // (The AppIds include all other DLC and Origin specific stuff too)
                     int detectedAppID = Convert.ToInt32(app.AppID);
-                    if (steamAppIdsInstalled.Contains(detectedAppID))
+                    if (originAppIdsInstalled.Contains(detectedAppID))
                     {
 
                         try
                         {
 
-                            OriginAppInfo steamGameAppInfo = new OriginAppInfo
+                            OriginAppInfo originGameAppInfo = new OriginAppInfo
                             {
                                 GameID = detectedAppID,
                                 GameExes = new List<string>()
@@ -549,12 +549,12 @@ namespace DisplayMagician.GameLibraries
                                         if (common.Name == "name")
                                         {
                                             Debug.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
-                                            steamGameAppInfo.GameName = common.Value.ToString();
+                                            originGameAppInfo.GameName = common.Value.ToString();
                                         }
                                         else if (common.Name == "clienticon")
                                         {
                                             Debug.WriteLine($"App: {app.AppID} - Common {common.Name}: {common.Value}");
-                                            steamGameAppInfo.GameOriginIconPath = Path.Combine(_originPath, @"steam", @"games", String.Concat(common.Value, @".ico"));
+                                            originGameAppInfo.GameOriginIconPath = Path.Combine(_originPath, @"origin", @"games", String.Concat(common.Value, @".ico"));
                                         }
                                         else if (common.Name == "type")
                                         {
@@ -571,7 +571,7 @@ namespace DisplayMagician.GameLibraries
                                         if (config.Name == "installdir")
                                         {
                                             Debug.WriteLine($"App: {detectedAppID} - Config {config.Name}: {config.Value}");
-                                            steamGameAppInfo.GameInstallDir = config.Value.ToString();
+                                            originGameAppInfo.GameInstallDir = config.Value.ToString();
                                         }
                                         else if (config.Name == "launch")
                                         {
@@ -582,7 +582,7 @@ namespace DisplayMagician.GameLibraries
                                                     if (launch_num.Name == "executable")
                                                     {
                                                         Debug.WriteLine($"App: {detectedAppID} - Config - Launch {launch.Name} - {launch_num.Name}: {launch_num.Value}");
-                                                        steamGameAppInfo.GameExes.Add(launch_num.Value.ToString());
+                                                        originGameAppInfo.GameExes.Add(launch_num.Value.ToString());
                                                     }
 
                                                 }
@@ -592,7 +592,7 @@ namespace DisplayMagician.GameLibraries
                                 }
 
                             }
-                            steamAppInfo.Add(detectedAppID, steamGameAppInfo);
+                            originAppInfo.Add(detectedAppID, originGameAppInfo);
                         }
                         catch (ArgumentException ex)
                         {
@@ -609,65 +609,65 @@ namespace DisplayMagician.GameLibraries
                 // Now we access the config.vdf that lives in the Origin Config file, as that lists all 
                 // the OriginLibraries. We need to find out where they areso we can interrogate them
                 _originConfigVdfFile = Path.Combine(_originPath, "config", "config.vdf");
-                string steamConfigVdfText = File.ReadAllText(_originConfigVdfFile, Encoding.UTF8);
+                string originConfigVdfText = File.ReadAllText(_originConfigVdfFile, Encoding.UTF8);
 
-                List<string> steamLibrariesPaths = new List<string>();
+                List<string> originLibrariesPaths = new List<string>();
                 // Now we have to parse the config.vdf looking for the location of the OriginLibraries
                 // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\OriginLibrary"
                 // There may be multiple so we need to check the whole file
-                Regex steamLibrariesRegex = new Regex(@"""BaseInstallFolder_\d+""\s+""(.*)""", RegexOptions.IgnoreCase);
+                Regex originLibrariesRegex = new Regex(@"""BaseInstallFolder_\d+""\s+""(.*)""", RegexOptions.IgnoreCase);
                 // Try to match all lines against the Regex.
-                MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamConfigVdfText);
+                MatchCollection originLibrariesMatches = originLibrariesRegex.Matches(originConfigVdfText);
                 // If at least one of them matched!
-                foreach (Match steamLibraryMatch in steamLibrariesMatches)
+                foreach (Match originLibraryMatch in originLibrariesMatches)
                 {
-                    if (steamLibraryMatch.Success)
+                    if (originLibraryMatch.Success)
                     { 
-                        string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                        Debug.WriteLine($"Found steam library: {steamLibraryPath}");
-                        steamLibrariesPaths.Add(steamLibraryPath);
+                        string originLibraryPath = Regex.Unescape(originLibraryMatch.Groups[1].Value);
+                        Debug.WriteLine($"Found origin library: {originLibraryPath}");
+                        originLibrariesPaths.Add(originLibraryPath);
                     }
                 }
                 // Now we go off and find the details for the games in each Origin Library
-                foreach (string steamLibraryPath in steamLibrariesPaths)
+                foreach (string originLibraryPath in originLibrariesPaths)
                 {
-                    // Work out the path to the appmanifests for this steamLibrary
-                    string steamLibraryAppManifestPath = Path.Combine(steamLibraryPath, @"steamapps");
+                    // Work out the path to the appmanifests for this originLibrary
+                    string originLibraryAppManifestPath = Path.Combine(originLibraryPath, @"originapps");
                     // Get the names of the App Manifests for the games installed in this OriginLibrary
-                    string[] steamLibraryAppManifestFilenames = Directory.GetFiles(steamLibraryAppManifestPath, "appmanifest_*.acf");
+                    string[] originLibraryAppManifestFilenames = Directory.GetFiles(originLibraryAppManifestPath, "appmanifest_*.acf");
                     // Go through each app and extract it's details
-                    foreach (string steamLibraryAppManifestFilename in steamLibraryAppManifestFilenames)
+                    foreach (string originLibraryAppManifestFilename in originLibraryAppManifestFilenames)
                     {
                         // Read in the contents of the file
-                        string steamLibraryAppManifestText = File.ReadAllText(steamLibraryAppManifestFilename);
+                        string originLibraryAppManifestText = File.ReadAllText(originLibraryAppManifestFilename);
                         // Grab the appid from the file
                         Regex appidRegex = new Regex(@"""appid""\s+""(\d+)""", RegexOptions.IgnoreCase);
-                        Match appidMatches = appidRegex.Match(steamLibraryAppManifestText);
+                        Match appidMatches = appidRegex.Match(originLibraryAppManifestText);
                         if (appidMatches.Success)
                         {
 
-                            if (int.TryParse(appidMatches.Groups[1].Value, out int steamGameId))
+                            if (int.TryParse(appidMatches.Groups[1].Value, out int originGameId))
                             {
                                 // Check if this game is one that was installed
-                                if (steamAppInfo.ContainsKey(steamGameId))
+                                if (originAppInfo.ContainsKey(originGameId))
                                 {
                                     // This game is an installed game! so we start to populate it with data!
-                                    string steamGameExe = "";
+                                    string originGameExe = "";
 
-                                    string steamGameName = steamAppInfo[steamGameId].GameName;
+                                    string originGameName = originAppInfo[originGameId].GameName;
 
                                     // Construct the full path to the game dir from the appInfo and libraryAppManifest data
-                                    string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
+                                    string originGameInstallDir = Path.Combine(originLibraryPath, @"originapps", @"common", originAppInfo[originGameId].GameInstallDir);
 
                                     // And finally we try to populate the 'where', to see what gets run
                                     // And so we can extract the process name
-                                    if (steamAppInfo[steamGameId].GameExes.Count > 0)
+                                    if (originAppInfo[originGameId].GameExes.Count > 0)
                                     {
-                                        foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
+                                        foreach (string gameExe in originAppInfo[originGameId].GameExes)
                                         {
-                                            steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
+                                            originGameExe = Path.Combine(originGameInstallDir, gameExe);
                                             // If the game executable exists, then we can proceed
-                                            if (File.Exists(steamGameExe))
+                                            if (File.Exists(originGameExe))
                                             {
                                                 break;
                                             }
@@ -676,26 +676,26 @@ namespace DisplayMagician.GameLibraries
                                     }
 
                                     // Next, we need to get the Icons we want to use, and make sure it's the latest one.
-                                    string steamGameIconPath = "";
+                                    string originGameIconPath = "";
                                     // First of all, we attempt to use the Icon that Origin has cached, if it's available, as that will be updated to the latest
-                                    if (File.Exists(steamAppInfo[steamGameId].GameOriginIconPath) && steamAppInfo[steamGameId].GameOriginIconPath.EndsWith(".ico"))
+                                    if (File.Exists(originAppInfo[originGameId].GameOriginIconPath) && originAppInfo[originGameId].GameOriginIconPath.EndsWith(".ico"))
                                     {
-                                        steamGameIconPath = steamAppInfo[steamGameId].GameOriginIconPath;
+                                        originGameIconPath = originAppInfo[originGameId].GameOriginIconPath;
                                     }
                                     // If there isn't an icon for us to use, then we need to extract one from the Game Executables
-                                    else if (!String.IsNullOrEmpty(steamGameExe))
+                                    else if (!String.IsNullOrEmpty(originGameExe))
                                     {
-                                        steamGameIconPath = steamGameExe;
+                                        originGameIconPath = originGameExe;
                                     }
                                     // The absolute worst case means we don't have an icon to use. SO we use the Origin one.
                                     else
                                     {
                                         // And we have to make do with a Origin Icon
-                                        steamGameIconPath = _originPath;
+                                        originGameIconPath = _originPath;
                                     }
 
                                     // And we add the Game to the list of games we have!
-                                    _allOriginGames.Add(new OriginGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath));
+                                    _allOriginGames.Add(new OriginGame(originGameId, originGameName, originGameExe, originGameIconPath));
 
                                 }
                             }
