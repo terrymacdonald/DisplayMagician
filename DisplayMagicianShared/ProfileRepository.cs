@@ -762,8 +762,6 @@ namespace DisplayMagicianShared
             // Get the list of connected devices
             ConnectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
 
-            
-
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
 
@@ -810,8 +808,6 @@ namespace DisplayMagicianShared
                         // Create an array of all the important display info we need to record
                         string[] displayInfo = {
                             "NVIDIA",
-                            myPhysicalGPU.CorrespondingLogicalGPU.ToString(),
-                            myPhysicalGPU.ToString(),
                             myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
                             myPhysicalGPU.ArchitectInformation.Revision.ToString(),
                             myPhysicalGPU.Board.ToString(),
@@ -958,8 +954,6 @@ namespace DisplayMagicianShared
                             // Create an array of all the important display info we need to record
                             string[] displayInfo = {
                                 "NVIDIA",
-                                myPhysicalGPU.CorrespondingLogicalGPU.ToString(),
-                                myPhysicalGPU.ToString(),
                                 myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
                                 myPhysicalGPU.ArchitectInformation.Revision.ToString(),
                                 myPhysicalGPU.Board.ToString(),
