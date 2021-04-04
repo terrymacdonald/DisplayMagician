@@ -48,7 +48,15 @@ namespace DisplayMagician.GameLibraries
                 _uplayPath = uplayInstallKey.GetValue("InstallDir", "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\").ToString();
                 _uplayExe = $"{_uplayPath}upc.exe";
                 if (File.Exists(_uplayExe))
-                   _isUplayInstalled = true;
+                {
+                    logger.Info($"UplayLibrary/UplayLibrary: Uplay library is installed in {_uplayPath}. Found {_uplayExe}");
+                    _isUplayInstalled = true;
+                }
+                else
+                {
+                    logger.Info($"UplayLibrary/UplayLibrary: Uplay library is not installed!");
+                }
+                   
             }
             catch (SecurityException ex)
             {
@@ -335,6 +343,7 @@ namespace DisplayMagician.GameLibraries
                 if (!_isUplayInstalled)
                 {
                     // Uplay isn't installed, so we return an empty list.
+                    logger.Debug($"UplayLibrary/LoadInstalledGames: Uplay library is not installed, so returning false");
                     return false;
                 }
 
@@ -347,6 +356,7 @@ namespace DisplayMagician.GameLibraries
 
                 // Access {installdir}\\cache\\configuration\\configurations file
                 string uplayConfigFilePath = _uplayPath + @"cache\configuration\configurations";
+                logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Config File Path = {uplayConfigFilePath }");
                 string uplayConfigFileString = File.ReadAllText(uplayConfigFilePath);
                 uplayConfigFileString = uplayConfigFileString.Remove(0, 12);
                 // Split the file into records at the SOH unicode character
@@ -357,6 +367,8 @@ namespace DisplayMagician.GameLibraries
                     // Skip any Uplay entry records that don't start with 'version:' 
                     if (!uplayEntry.StartsWith("version:",StringComparison.OrdinalIgnoreCase))
                         continue;
+
+                    logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Entry (that don't start with version) = {uplayEntry}");
 
                     //Split the record into entrylines
                     string[] delimeters = { "\r\n" };
@@ -400,38 +412,6 @@ namespace DisplayMagician.GameLibraries
 
                     // for each game record grab:
                     UplayAppInfo uplayGameAppInfo = new UplayAppInfo();
-
-/*                    // name: (lookup the id in lookup table to find the name if needed)
-                    if (uplayEntryLines.Exists(a => a.StartsWith("  name:", StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        mc = Regex.Matches(uplayEntry, @"  name\: (.*)");
-                        uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
-                        // if the name contains a localization reference, then dereference it
-                        if (localizations.ContainsKey(uplayGameAppInfo.GameName))
-                        {
-                            uplayGameAppInfo.GameName = localizations[uplayGameAppInfo.GameName];
-                        }
-                    }
-                    else
-                        continue;
-*/
-                    // icon_image: (lookup the id in lookup table to find the ICON)
-                    /*if (uplayEntryLines.Exists(a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        mc = Regex.Matches(uplayEntry, @"icon_image: (.*)");
-                        string iconImageFileName = mc[0].Groups[1].ToString();
-                        // if the icon_image contains a localization reference, then dereference it
-                        if (localizations.ContainsKey(iconImageFileName))
-                        {
-                            iconImageFileName = localizations[iconImageFileName];
-                        }
-                        //61fdd16f06ae08158d0a6d476f1c6bd5.ico
-                        string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
-                        if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
-                        {
-                            uplayGameAppInfo.GameUplayIconPath = uplayGameIconPath;
-                        }
-                    }*/
 
                     // find the exe name looking at root: -> start_game: -> online: -> executables: -> path: -> relative: (get ACU.exe)
                     // Lookup the Game registry key from looking at root: -> start_game: -> online: -> executables: -> working_directory: -> register: (get HKEY_LOCAL_MACHINE\SOFTWARE\Ubisoft\Launcher\Installs\720\InstallDir)
@@ -498,14 +478,34 @@ namespace DisplayMagician.GameLibraries
                         }
                     }
 
+                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameId = {gameId}");
+                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameFileName = {gameFileName}");
+                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameGameIconPath = {uplayGameAppInfo.GameUplayIconPath}");
+
                     // Now we need to lookup the game install path in registry using the gameId
                     string registryUplayGameInstallsKey = registryUplayInstallsKey + "\\" + gameId;
+                    logger.Trace($"UplayLibrary/LoadInstalledGames: registryUplayGameInstallsKey = {registryUplayGameInstallsKey}");
                     RegistryKey uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayGameInstallsKey, RegistryKeyPermissionCheck.ReadSubTree);
+                    foreach (string regKeyName in uplayGameInstallKey.GetValueNames())
+                    {
+                        logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameInstallKey[{regKeyName}] = {uplayGameInstallKey.GetValue(regKeyName)}");
+                    }
 
-                    // From that  we lookup the actual game path
-                    uplayGameAppInfo.GameInstallDir = Path.GetFullPath(uplayGameInstallKey.GetValue("InstallDir", "").ToString()).TrimEnd('\\');
-                    uplayGameAppInfo.GameExe = Path.Combine(uplayGameAppInfo.GameInstallDir,gameFileName);
-                    uplayGameAppInfo.GameID = int.Parse(gameId);
+                    // From that we lookup the actual game path
+                    string gameInstallDir = uplayGameInstallKey.GetValue("InstallDir", "").ToString();
+                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameInstallDir found through first method (forward slashes) = {gameInstallDir}");
+                    if (!String.IsNullOrWhiteSpace(gameInstallDir))
+                    {
+                        uplayGameAppInfo.GameInstallDir = Path.GetFullPath(gameInstallDir).TrimEnd('\\');
+                        logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameInstallDir = {uplayGameAppInfo.GameInstallDir }");
+                        uplayGameAppInfo.GameExe = Path.Combine(uplayGameAppInfo.GameInstallDir, gameFileName);
+                        logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameExe = {uplayGameAppInfo.GameExe }");
+                        uplayGameAppInfo.GameID = int.Parse(gameId);
+                        logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameID = {uplayGameAppInfo.GameID }");
+                    }
+                    else {
+                        logger.Warn($"UplayLibrary/LoadInstalledGames: gameInstallDir is null or all whitespace!");
+                    }
 
                     // Then we have the gameID, the thumbimage, the icon, the name, the exe path
                     // And we add the Game to the list of games we have!
@@ -513,35 +513,34 @@ namespace DisplayMagician.GameLibraries
                 }
 
             }
+
+            catch (ArgumentNullException ex)
+            {
+                logger.Warn(ex, "UplayLibrary/GetAllInstalledGames: An argument supplied to the function is null.");
+            }
+            catch (NotSupportedException ex)
+            {
+                logger.Warn(ex, "UplayLibrary/GetAllInstalledGames: The invoked method is not supported or reading, seeking or writing tp a stream that isn't supported.");
+            }
+            catch (PathTooLongException ex)
+            {
+                logger.Warn(ex, "UplayLibrary/GetAllInstalledGames: The path is longer than the maximum allowed by the operating system.");
+            }
             catch (SecurityException ex)
             {
-                Console.WriteLine($"UplayGame/GetAllInstalledGames securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                if (ex.Source != null)
-                    Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
-                throw;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine($"UplayGame/GetAllInstalledGames unauthorizedaccessexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                if (ex.Source != null)
-                    Console.WriteLine("UnauthorizedAccessException  source: {0} - Message: {1}", ex.Source, ex.Message);
-                throw;
+                logger.Warn(ex, "UplayLibrary/GetAllInstalledGames: The user does not have the permissions required to read the Uplay InstallDir registry key.");
             }
             catch (ObjectDisposedException ex)
             {
-                Console.WriteLine($"UplayGame/GetAllInstalledGames objectdisposedexceptions: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                if (ex.Source != null)
-                    Console.WriteLine("ObjectDisposedException  source: {0} - Message: {1}", ex.Source, ex.Message);
-                throw;
+                logger.Warn(ex, "UplayLibrary/GetAllInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Uplay InstallDir registry key (closed keys cannot be accessed).");
             }
             catch (IOException ex)
             {
-                Console.WriteLine($"UplayGame/GetAllInstalledGames ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                // Extract some information from this exception, and then
-                // throw it to the parent method.
-                if (ex.Source != null)
-                    Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
-                throw;
+                logger.Warn(ex, "UplayLibrary/GetAllInstalledGames: The Uplay InstallDir registry key has been marked for deletion so we cannot access the value dueing the UplayLibrary check.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.Warn(ex, "UplayLibrary/GetAllInstalledGames: The user does not have the necessary registry rights to check whether Uplay is installed.");
             }
 
             return true;
