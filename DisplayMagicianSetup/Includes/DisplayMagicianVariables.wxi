@@ -10,6 +10,14 @@
 	<!-- Revision is NOT used by WiX in the upgrade procedure -->
 	<!-- Full version number to display -->
 	<?define VersionNumber="$(var.MajorVersion).$(var.MinorVersion).$(var.BuildVersion)" ?>
+
+	<?define PreviousMajorVersion="1" ?>
+	<?define PreviousMinorVersion="0" ?>
+	<?define PreviousBuildVersion="2" ?>
+	<!-- Revision is NOT used by WiX in the upgrade procedure -->
+	<!-- Full version number to display -->
+	<?define PreviousVersionNumber="$(var.PreviousMajorVersion).$(var.PreviousMinorVersion).$(var.PreviousBuildVersion)" ?>
+
 	<!--
   Upgrade code HAS to be the same for all updates.
   Once you've chosen it don't change it.

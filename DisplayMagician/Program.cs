@@ -722,7 +722,6 @@ namespace DisplayMagician {
                     if (!DisplayMagician.GameLibraries.SteamLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
-                        throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Steam Games!");
                     }
                     Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {GameLibraries.SteamLibrary.InstalledSteamGameCount})");
@@ -746,7 +745,6 @@ namespace DisplayMagician {
                     if (!DisplayMagician.GameLibraries.UplayLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
-                        throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                     }
                     Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {GameLibraries.UplayLibrary.InstalledUplayGameCount})");
