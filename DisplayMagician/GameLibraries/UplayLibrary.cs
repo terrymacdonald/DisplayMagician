@@ -574,6 +574,8 @@ namespace DisplayMagician.GameLibraries
                     logger.Debug($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {uplayGameAppInfo.GameID}, name {uplayGameAppInfo.GameName}, game exe {uplayGameAppInfo.GameExe} and icon path {uplayGameAppInfo.GameUplayIconPath}");
                 }
 
+                logger.Info($"UplayLibrary/LoadInstalledGames: Found {_allUplayGames.Count} installed Uplay games");
+
             }
 
             catch (ArgumentNullException ex)

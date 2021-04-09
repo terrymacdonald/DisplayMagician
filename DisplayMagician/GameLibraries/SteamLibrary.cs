@@ -381,7 +381,7 @@ namespace DisplayMagician.GameLibraries
                             logger.Trace($"SteamLibrary/LoadInstalledGames: Found SteamGameKeyName = {steamGameKeyName}");
                             if (int.TryParse(steamGameKeyName, out int steamAppId))
                             {
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: SteamGameKeyName is an int, so trying to see if it is a game");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: SteamGameKeyName is an int, so trying to see if it is an installed app");
                                 string steamGameKeyFullName = $"{_registryAppsKey}\\{steamGameKeyName}";
                                 using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
@@ -389,13 +389,13 @@ namespace DisplayMagician.GameLibraries
                                     // We want to keep track of that for later
                                     if ((int)steamGameKey.GetValue(@"Installed", 0) == 1)
                                     {
-                                        logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} contains an 'Installed' value so is an installed Steam Game.");
+                                        logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} contains an 'Installed' value so is an installed Steam App.");
                                         // Add this Steam App ID to the list we're keeping for later
                                         steamAppIdsInstalled.Add(steamAppId);
                                     }
                                     else
                                     {
-                                        logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} does not contain an 'Installed' value so can't be a Steam Game.");
+                                        logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} does not contain an 'Installed' value so can't be a Steam App.");
                                     }
 
                                 }
@@ -409,10 +409,7 @@ namespace DisplayMagician.GameLibraries
                             logger.Warn($"SteamLibrary/LoadInstalledGames: No Steam games installed in the Steam library");
                             return false;
                         }
-                        else
-                        {
-                            logger.Info($"SteamLibrary/LoadInstalledGames: Found {steamAppIdsInstalled.Count} installed games in the Steam library");
-                        }
+                        
                     }
                     else
                     {
@@ -452,6 +449,7 @@ namespace DisplayMagician.GameLibraries
                                 GameID = detectedAppID,
                                 GameExes = new List<string>()
                             };
+                            string steamAppType = "";
 
                             foreach (KVObject data in app.Data)
                             {
@@ -475,6 +473,7 @@ namespace DisplayMagician.GameLibraries
                                         else if (common.Name == "type")
                                         {
                                             logger.Trace($"SteamLibrary/LoadInstalledGames: type: App: {app.AppID} - Common {common.Name}: {common.Value}");
+                                            steamAppType = common.Value.ToString();
                                         }
                                         else
                                         {
@@ -512,7 +511,13 @@ namespace DisplayMagician.GameLibraries
                                 }
 
                             }
-                            steamAppInfo.Add(detectedAppID, steamGameAppInfo);
+                            // Only store the app if it's a game!
+                            if (steamAppType.Equals("Game",StringComparison.OrdinalIgnoreCase))
+                            {
+                                steamAppInfo.Add(detectedAppID, steamGameAppInfo);
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Adding Game with ID {detectedAppID} to the list of games");
+                            }
+                                
                         }
                         catch (ArgumentException ex)
                         {
@@ -526,6 +531,7 @@ namespace DisplayMagician.GameLibraries
 
 
 
+
                 // Now we access the config.vdf that lives in the Steam Config file, as that lists all 
                 // the SteamLibraries. We need to find out where they areso we can interrogate them
                 _steamConfigVdfFile = Path.Combine(_steamPath, "config", "config.vdf");
@@ -534,7 +540,11 @@ namespace DisplayMagician.GameLibraries
                 logger.Trace($"SteamLibrary/LoadInstalledGames: Processing the {_steamConfigVdfFile} VDF file");
 
                 List<string> steamLibrariesPaths = new List<string>();
-                // Now we have to parse the config.vdf looking for the location of the SteamLibraries
+                // We add the default library which is based on where Steam was installed
+                logger.Info($"SteamLibrary/LoadInstalledGames: Found original steam library {_steamPath}");
+                steamLibrariesPaths.Add(_steamPath);
+
+                // Now we have to parse the config.vdf looking for the location of any additional SteamLibraries
                 // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
                 // There may be multiple so we need to check the whole file
                 Regex steamLibrariesRegex = new Regex(@"""BaseInstallFolder_\d+""\s+""(.*)""", RegexOptions.IgnoreCase);
@@ -546,7 +556,7 @@ namespace DisplayMagician.GameLibraries
                     if (steamLibraryMatch.Success)
                     { 
                         string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                        logger.Info($"SteamLibrary/LoadInstalledGames: Found steam library {steamLibraryPath}");
+                        logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath}");
                         steamLibrariesPaths.Add(steamLibraryPath);
                     }
                 }
@@ -632,8 +642,9 @@ namespace DisplayMagician.GameLibraries
                                 }
                             }
                         }
-                    }
+                    }                    
                 }
+                logger.Info($"SteamLibrary/LoadInstalledGames: Found {_allSteamGames.Count} installed Steam games");
             }
             catch (ArgumentNullException ex)
             {
