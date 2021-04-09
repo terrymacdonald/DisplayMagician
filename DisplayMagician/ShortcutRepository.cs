@@ -1,4 +1,5 @@
-﻿using AudioSwitcher.AudioApi.CoreAudio;
+﻿using AudioSwitcher.AudioApi;
+using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.InterProcess;
 using DisplayMagicianShared;
@@ -44,34 +45,23 @@ namespace DisplayMagician
             try
             {
                 NvAPIWrapper.NVIDIA.Initialize();
-                _audioController = new CoreAudioController();
-
-                // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
-                if (!Directory.Exists(AppShortcutStoragePath))
-                {
-                    Directory.CreateDirectory(AppShortcutStoragePath);
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician doesn't have permissions to create the Shortcut storage folder {AppShortcutStoragePath}.");
-            }
-            catch (ArgumentException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} due to an invalid argument.");
-            }
-            catch (PathTooLongException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} as the path is too long.");
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} as the parent folder isn't there.");
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, $"ShortcutRepository/ShortcutRepository: Initialising NVIDIA NvAPIWrapper or CoreAudioController caused an exception.");
             }
+
+            try
+            {
+                _audioController = new CoreAudioController();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ShortcutRepository/ShortcutRepository: Exception while trying to initialise CoreAudioController. Audio Chipset on your computer is not supported. You will be unable to set audio settings.");
+            }
+
+            //_audioController.DefaultPlaybackDevice.SetAsDefault();
+            //_audioController.DefaultCaptureDevice.SetAsDefault();
 
             // Load the Shortcuts from storage
             LoadShortcuts();
@@ -620,96 +610,148 @@ namespace DisplayMagician
                 
             }
 
-            // record the old audio device
+            // Get the list of Audio Devices currently connected and active
             bool needToChangeAudioDevice = false;
-            CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
+            CoreAudioDevice rollbackAudioDevice = null;
             double rollbackAudioVolume = 50;
-            if (rollbackAudioDevice != null)
-            {
-                rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
-                if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
-                    needToChangeAudioDevice = true;
-                }
-                else
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
-                }
-            }             
-
-            // Change Audio Device (if one specified)
-            if (shortcutToUse.ChangeAudioDevice)
-            {
-                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
-
-                IEnumerable<CoreAudioDevice> audioDevices = _audioController.GetPlaybackDevices();
-                foreach (CoreAudioDevice audioDevice in audioDevices)
-                {
-                    if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
-                    {
-                        // use the Audio Device
-                        audioDevice.SetAsDefault();
-
-                        if (shortcutToUse.SetAudioVolume)
-                        {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} audio level to {shortcutToUse.AudioVolume}%.");
-                            Task myTask = new Task(() =>
-                            {
-                                audioDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
-                            });
-                            myTask.Start();
-                            myTask.Wait(2000);
-                        }
-
-                    }
-                }
-            }
-
-            // record the old microphone device
+            List<CoreAudioDevice> activeAudioDevices = new List<CoreAudioDevice>();
             bool needToChangeCaptureDevice = false;
-            CoreAudioDevice rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
+            CoreAudioDevice rollbackCaptureDevice = null;
             double rollbackCaptureVolume = 50;
-            if (rollbackCaptureDevice != null)
-            {
-                rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
-                if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
-                    needToChangeCaptureDevice = true;
-                }
-                else
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
-                }
-            }
-                
-            // Change capture Device (if one specified)
-            if (shortcutToUse.ChangeCaptureDevice)
-            {
-                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+            List<CoreAudioDevice> activeCaptureDevices = new List<CoreAudioDevice>();
 
-                IEnumerable<CoreAudioDevice> captureDevices = _audioController.GetCaptureDevices();
-                foreach (CoreAudioDevice captureDevice in captureDevices)
-                {
-                    if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+            if (_audioController != null)
+            {
+                try {
+                    activeAudioDevices = _audioController.GetPlaybackDevices(DeviceState.Active).ToList();
+                    if (activeAudioDevices.Count > 0)
                     {
-                        // use the Audio Device
-                        captureDevice.SetAsDefault();
-
-                        if (shortcutToUse.SetCaptureVolume)
+                        // Change Audio Device (if one specified)
+                        if (shortcutToUse.ChangeAudioDevice && !shortcutToUse.AudioDevice.Equals(""))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} audio level to {shortcutToUse.CaptureVolume}%.");
-                            Task myTask = new Task(() =>
-                            {
-                                captureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
-                            });
-                            myTask.Start();
-                            myTask.Wait(2000);
-                        }
 
+                            // record the old audio device
+                            rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
+                            if (rollbackAudioDevice != null)
+                            {
+                                rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
+                                if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
+                                    needToChangeAudioDevice = true;
+                                }
+                                else
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
+                                }
+                            }
+
+                            logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
+
+                            foreach (CoreAudioDevice audioDevice in activeAudioDevices)
+                            {
+                                if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                                {
+                                    // use the Audio Device
+                                    audioDevice.SetAsDefault();
+
+                                    if (shortcutToUse.SetAudioVolume)
+                                    {
+                                        logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} audio level to {shortcutToUse.AudioVolume}%.");
+                                        Task myTask = new Task(() =>
+                                        {
+                                            audioDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                        });
+                                        myTask.Start();
+                                        myTask.Wait(2000);
+                                    }
+
+                                }
+                            }
+                        }
+                        else
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Shortcut does not require changing Audio Device.");
+                        }
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RunShortcut: No active Audio Devices to use so skipping audio device checks!");
                     }
                 }
+                catch(Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Audio Devices!");
+                }
+
+
+                try
+                {
+                    // Get the list of Audio Devices currently connected
+                    activeCaptureDevices = _audioController.GetCaptureDevices(DeviceState.Active).ToList();
+                    if (activeCaptureDevices.Count > 0)
+                    {
+
+                        // Change capture Device (if one specified)
+                        if (shortcutToUse.ChangeCaptureDevice && !shortcutToUse.CaptureDevice.Equals(""))
+                        {
+                            // record the old microphone device
+                            rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
+                            if (rollbackCaptureDevice != null)
+                            {
+                                rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
+                                if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+                                    needToChangeCaptureDevice = true;
+                                }
+                                else
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
+                                }
+                            }
+
+                            logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+
+                            foreach (CoreAudioDevice captureDevice in activeCaptureDevices)
+                            {
+                                if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                                {
+                                    // use the Audio Device
+                                    captureDevice.SetAsDefault();
+
+                                    if (shortcutToUse.SetCaptureVolume)
+                                    {
+                                        logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} audio level to {shortcutToUse.CaptureVolume}%.");
+                                        Task myTask = new Task(() =>
+                                        {
+                                            captureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
+                                        });
+                                        myTask.Start();
+                                        myTask.Wait(2000);
+                                    }
+
+                                }
+                            }
+                        }
+                        else
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Shortcut does not require changing Capture Device.");
+                        }
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RunShortcut: No active Capture Devices to use so skipping capture device checks!");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Capture Devices!");
+                }
+            }
+            else
+            {
+                logger.Warn($"ShortcutRepository/RunShortcut: CoreAudio Controller is null, so we can't set Audio or Capture Devices!");
             }
 
             // Set the IP Service status back to what it was
@@ -1369,43 +1411,65 @@ namespace DisplayMagician
             }
 
             // Change Audio Device back (if one specified)
-            if (needToChangeAudioDevice)
+            if (activeAudioDevices.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio back to {rollbackAudioDevice.Name} audio device");
-                // use the Audio Device
-                rollbackAudioDevice.SetAsDefault();
-
-                if (shortcutToUse.SetAudioVolume)
+                if (needToChangeAudioDevice)
                 {
-                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to {shortcutToUse.SetAudioVolume}% volume");
-                    Task myTask = new Task(() =>
-                    {
-                        rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
-                    });
-                    myTask.Start();
-                    myTask.Wait(2000);
-                }
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio back to {rollbackAudioDevice.Name} audio device");
+                    // use the Audio Device
+                    rollbackAudioDevice.SetAsDefault();
 
+                    if (shortcutToUse.SetAudioVolume)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to {shortcutToUse.SetAudioVolume}% volume");
+                        Task myTask = new Task(() =>
+                        {
+                            rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
+                        });
+                        myTask.Start();
+                        myTask.Wait(2000);
+                    }
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Audio Device, so no need to change it back.");
+                }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: No Audio Devices active, so no need to change them back.");
             }
 
+
             // Change Capture Device back (if one specified)
-            if (needToChangeCaptureDevice)
+            if (activeCaptureDevices.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackCaptureDevice.Name} capture device");
-                // use the Audio Device
-                rollbackCaptureDevice.SetAsDefault();
-
-                if (shortcutToUse.SetCaptureVolume)
+                if (needToChangeCaptureDevice)
                 {
-                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to {shortcutToUse.SetAudioVolume}% volume");
-                    Task myTask = new Task(() =>
-                    {
-                        rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
-                    });
-                    myTask.Start();
-                    myTask.Wait(2000);
-                }
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackCaptureDevice.Name} capture device");
+                    // use the Audio Device
+                    rollbackCaptureDevice.SetAsDefault();
 
+                    if (shortcutToUse.SetCaptureVolume)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to {shortcutToUse.SetAudioVolume}% volume");
+                        Task myTask = new Task(() =>
+                        {
+                            rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
+                        });
+                        myTask.Start();
+                        myTask.Wait(2000);
+                    }
+
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Capture Device, so no need to change it back.");
+                }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: No Capture Devices active, so no need to change them back.");
             }
 
             // Change back to the original profile only if it is different
@@ -1428,6 +1492,10 @@ namespace DisplayMagician
                     return;
                 }
 
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Display Profile, so no need to change it back.");
             }
 
         }
