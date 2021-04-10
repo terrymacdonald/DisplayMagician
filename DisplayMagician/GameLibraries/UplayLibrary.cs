@@ -403,9 +403,6 @@ namespace DisplayMagician.GameLibraries
                 // Look in HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher and check the InstallDir key
                 // That returns the location of the install dir : E:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\
 
-                //RegistryKey uplayInstallKey = Registry.CurrentUser.OpenSubKey(registryUplayInstallsKey, RegistryKeyPermissionCheck.ReadSubTree);
-                //string uplayInstallDir = uplayInstallKey.GetValue("InstallDir", "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\").ToString();
-
                 // Access {installdir}\\cache\\configuration\\configurations file
                 string uplayConfigFilePath = _uplayPath + @"cache\configuration\configurations";
                 logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Config File Path = {uplayConfigFilePath }");
@@ -539,9 +536,9 @@ namespace DisplayMagician.GameLibraries
                             mc = Regex.Matches(uplayEntryLines[i], @"Installs\\(\d+)\\InstallDir");
                             gameId = mc[0].Groups[1].ToString();
                             gotGameId = true;
-                            //mc = Regex.Matches(uplayEntryLines[i], @"(HKEY_LOCAL_MACHINE.*?\\InstallDir)");
-                            mc = Regex.Matches(uplayEntryLines[i], @"(HKEY_LOCAL_MACHINE.*?)\\InstallDir");
-                            gameRegistryKey = mc[0].Groups[1].ToString();                            
+                            mc = Regex.Matches(uplayEntryLines[i], @"HKEY_LOCAL_MACHINE\\(.*?)\\InstallDir");
+                            gameRegistryKey = mc[0].Groups[1].ToString();
+                            gameRegistryKey = gameRegistryKey.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
                             gotGameRegistryKey = true;
                             logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameId = {gameId} and gameRegistryKey = {gameRegistryKey}");
                         }
@@ -554,25 +551,18 @@ namespace DisplayMagician.GameLibraries
 
                     if (gotGameRegistryKey)
                     {
-                        // Now we need to lookup the game install path in registry using the gameId
-                        using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-                        using (RegistryKey uplayGameInstallKey = hklm.OpenSubKey(gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
+                        // Now we need to lookup the game install path in registry using the game reg we got above
+                        // We assume its 64-bit OS too (not 32bit)
+                        using (RegistryKey uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
                         {
+                            // If the key doesn't exist we skip it as the game isn't installed any longer!
                             if (uplayGameInstallKey == null)
+                            {
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Skipping Uplay Game {uplayGameAppInfo.GameName} as it isn't installed at the moment (it was uninstalled at some point)");
                                 continue;
+                            }
 
-                            // check if null (means the game isn't installed any more!)
-                            // if it's null then skip!
-                            /*                        if (uplayGameInstallKey == null)
-                                                    {
-                                                        // if we can't find it in the default location, then we try within WOW6432Node instead
-                                                        gameRegistryKey = gameRegistryKey.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
-                                                        uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree);
-                                                        if (uplayGameInstallKey == null)
-                                                            continue;
-                                                    }
-
-                            */
+                            // If we get here, then we have a real game.
                             foreach (string regKeyName in uplayGameInstallKey.GetValueNames())
                             {
                                 logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameInstallKey[{regKeyName}] = {uplayGameInstallKey.GetValue(regKeyName)}");
@@ -580,7 +570,7 @@ namespace DisplayMagician.GameLibraries
 
                             // From that we lookup the actual game path
                             string gameInstallDir = uplayGameInstallKey.GetValue("InstallDir", "").ToString();
-                            logger.Trace($"UplayLibrary/LoadInstalledGames: gameInstallDir found through first method (forward slashes) = {gameInstallDir}");
+                            logger.Trace($"UplayLibrary/LoadInstalledGames: gameInstallDir found  = {gameInstallDir}");
                             if (!String.IsNullOrWhiteSpace(gameInstallDir))
                             {
                                 uplayGameAppInfo.GameInstallDir = Path.GetFullPath(gameInstallDir).TrimEnd('\\');
