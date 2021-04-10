@@ -2031,7 +2031,7 @@ namespace DisplayMagician
                     }
 
                     // We need to look up details about the game
-                    if (!SteamLibrary.ContainsSteamGameId(GameAppId))
+                    if (!SteamLibrary.ContainsSteamGameById(GameAppId))
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "SteamGameNotInstalled";

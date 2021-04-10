@@ -230,7 +230,7 @@ namespace DisplayMagician.GameLibraries
             if (String.IsNullOrWhiteSpace(steamGameNameOrId))
                 return false;
 
-            logger.Debug($"SteamLibrary/RemoveSteamGame3: Removing Steam game with Name or UUID {steamGameNameOrUuid} from the Steam library");
+            logger.Debug($"SteamLibrary/RemoveSteamGame3: Removing Steam game with Name or UUID {steamGameNameOrId} from the Steam library");
 
             int numRemoved;
             Match match = Regex.Match(steamGameNameOrId, steamAppIdRegex, RegexOptions.IgnoreCase);
@@ -241,12 +241,12 @@ namespace DisplayMagician.GameLibraries
 
             if (numRemoved == 1)
             {
-                logger.Debug($"SteamLibrary/RemoveSteamGame3: Removed Steam game with Name or UUID {steamGameNameOrUuid} ");
+                logger.Debug($"SteamLibrary/RemoveSteamGame3: Removed Steam game with Name or UUID {steamGameNameOrId} ");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"SteamLibrary/RemoveSteamGame3: Didn't remove Steam game with Name or UUID {steamGameNameOrUuid} from the Steam Library");
+                logger.Debug($"SteamLibrary/RemoveSteamGame3: Didn't remove Steam game with Name or UUID {steamGameNameOrId} from the Steam Library");
                 return false;
             }
             else
@@ -376,13 +376,13 @@ namespace DisplayMagician.GameLibraries
                     {
                         //
                         // Loop through the subKeys as they are the Steam Game IDs
-                        foreach (string steamGameKeyName in steamAppsKey.GetSubKeyNames())
+                        foreach (string steamAppId in steamAppsKey.GetSubKeyNames())
                         {
-                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found SteamGameKeyName = {steamGameKeyName}");
-                            if (int.TryParse(steamGameKeyName, out int steamAppId))
+                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found SteamGameKeyName = {steamAppId}");
+                            if (!String.IsNullOrWhiteSpace(steamAppId))
                             {
                                 logger.Trace($"SteamLibrary/LoadInstalledGames: SteamGameKeyName is an int, so trying to see if it is an installed app");
-                                string steamGameKeyFullName = $"{_registryAppsKey}\\{steamGameKeyName}";
+                                string steamGameKeyFullName = $"{_registryAppsKey}\\{steamAppId}";
                                 using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
                                     // If the Installed Value is set to 1, then the game is installed
@@ -578,8 +578,9 @@ namespace DisplayMagician.GameLibraries
                         Match appidMatches = appidRegex.Match(steamLibraryAppManifestText);
                         if (appidMatches.Success)
                         {
-                            if (int.TryParse(appidMatches.Groups[1].Value, out int steamGameId))
+                            if (!String.IsNullOrWhiteSpace(appidMatches.Groups[1].Value))
                             {
+                                string steamGameId = appidMatches.Groups[1].Value;
                                 logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam Game ID {steamGameId} within {steamLibraryAppManifestFilename} steam app manifest within steam library {steamLibraryPath}");
                                 // Check if this game is one that was installed
                                 if (steamAppInfo.ContainsKey(steamGameId))

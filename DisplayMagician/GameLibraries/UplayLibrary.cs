@@ -577,7 +577,7 @@ namespace DisplayMagician.GameLibraries
                                 logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameInstallDir = {uplayGameAppInfo.GameInstallDir }");
                                 uplayGameAppInfo.GameExe = Path.Combine(uplayGameAppInfo.GameInstallDir, gameFileName);
                                 logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameExe = {uplayGameAppInfo.GameExe }");
-                                uplayGameAppInfo.GameID = int.Parse(gameId);
+                                uplayGameAppInfo.GameID = gameId;
                                 logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameID = {uplayGameAppInfo.GameID }");
                             }
                             else
