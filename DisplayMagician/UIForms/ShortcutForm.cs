@@ -58,16 +58,24 @@ namespace DisplayMagician.UIForms
 
             // Set the profileAdaptor we need to load images from Profiles
             // into the Profiles ImageListView
-            _profileAdaptor = new ProfileAdaptor();
+            try
+            {
+                _profileAdaptor = new ProfileAdaptor();
 
-            _shortcutToEdit = shortcutToEdit;
+                _shortcutToEdit = shortcutToEdit;
 
-            // Style the Saved Profiles list
-            ilv_saved_profiles.MultiSelect = false;
-            ilv_saved_profiles.ThumbnailSize = new Size(100, 100);
-            ilv_saved_profiles.AllowDrag = false;
-            ilv_saved_profiles.AllowDrop = false;
-            ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
+                // Style the Saved Profiles list
+                ilv_saved_profiles.MultiSelect = false;
+                ilv_saved_profiles.ThumbnailSize = new Size(100, 100);
+                ilv_saved_profiles.AllowDrag = false;
+                ilv_saved_profiles.AllowDrop = false;
+                ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
+
+            }
+            catch(Exception ex)
+            {
+                logger.Error(ex, $"ShortcutForm/ShortcutForm: Exception while trying to setup the game ImageListView and set the render.");
+            }
 
             lbl_profile_shown.Text = "No Display Profiles available";
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
@@ -302,7 +310,6 @@ namespace DisplayMagician.UIForms
             if (rb_switch_display_permanent.Checked)
                 _displayPermanence = ShortcutPermanence.Permanent;
 
-
             // If we can get access to the audio chipset then
             // we try to get the settings
             if (audioController != null)
@@ -467,9 +474,11 @@ namespace DisplayMagician.UIForms
             // If we're launching a game
             if (rb_launcher.Checked)
             {
+                logger.Trace($"ShortcutForm/btn_save_Click: We're saving a game!");
                 // If the game is a SteamGame
-                if(txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
+                if (txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
                 {
+                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
                     // Find the SteamGame
                     _gameToUse = new GameStruct
                     {
@@ -504,6 +513,7 @@ namespace DisplayMagician.UIForms
                 // If the game is a SteamGame
                 else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
                 {
+                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
                     // Find the UplayGame
                     _gameToUse = new GameStruct
                     {
@@ -538,6 +548,7 @@ namespace DisplayMagician.UIForms
             }
             else if (rb_standalone.Checked)
             {
+                logger.Trace($"ShortcutForm/btn_save_Click: We're saving a standalone executable!");
                 _executableToUse = new Executable
                 {
                     ExecutableArguments = txt_args_executable.Text,
@@ -579,7 +590,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-
+                logger.Trace($"ShortcutForm/btn_save_Click: We're not saving any game or executable to start!");
                 _shortcutToEdit.UpdateNoGameShortcut(
                     txt_shortcut_save_name.Text,
                     _profileToUse,
