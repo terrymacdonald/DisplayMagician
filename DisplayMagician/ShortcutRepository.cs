@@ -139,7 +139,7 @@ namespace DisplayMagician
         #region Class Methods
         public static bool AddShortcut(ShortcutItem shortcut)
         {
-            logger.Debug($"ShortcutRepository/AddShortcut: Adding shortcut {shortcut.Name} to our shortcut repository");
+            logger.Trace($"ShortcutRepository/AddShortcut: Adding shortcut {shortcut.Name} to our shortcut repository");
 
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -162,7 +162,7 @@ namespace DisplayMagician
 
         public static bool RemoveShortcut(ShortcutItem shortcut)
         {
-            logger.Debug($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcut.Name} if it exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcut.Name} if it exists in our shortcut repository");
 
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -189,12 +189,12 @@ namespace DisplayMagician
             {
                 SaveShortcuts();
                 IsValidRefresh();
-                logger.Debug($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
+                logger.Trace($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"ShortcutRepository/RemoveShortcut: Our shortcut repository doesn't contain a shortcut we were looking for");
+                logger.Trace($"ShortcutRepository/RemoveShortcut: Our shortcut repository doesn't contain a shortcut we were looking for");
                 return false;
             }
                 
@@ -206,7 +206,7 @@ namespace DisplayMagician
         public static bool RemoveShortcut(string shortcutNameOrUuid)
         {
 
-            logger.Debug($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutNameOrUuid} if it exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutNameOrUuid} if it exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -245,12 +245,12 @@ namespace DisplayMagician
             {
                 SaveShortcuts();
                 IsValidRefresh();
-                logger.Debug($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
+                logger.Trace($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"ShortcutRepository/RemoveShortcut2: Our shortcut repository doesn't contain a shortcut with Name or UUID {shortcutNameOrUuid}");
+                logger.Trace($"ShortcutRepository/RemoveShortcut2: Our shortcut repository doesn't contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return false;
             }
             else
@@ -262,7 +262,7 @@ namespace DisplayMagician
         public static bool ContainsShortcut(ShortcutItem shortcut)
         {
 
-            logger.Debug($"ShortcutRepository/ContainsShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/ContainsShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
 
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -271,7 +271,7 @@ namespace DisplayMagician
             {
                 if (testShortcut.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase))
                 {
-                    logger.Debug($"ShortcutRepository/ContainsShortcut: {shortcut.Name} does exist in our shortcut repository");
+                    logger.Trace($"ShortcutRepository/ContainsShortcut: {shortcut.Name} does exist in our shortcut repository");
                     return true;
                 }
             }
@@ -282,7 +282,7 @@ namespace DisplayMagician
         public static bool ContainsShortcut(string shortcutNameOrUuid)
         {
 
-            logger.Debug($"ShortcutRepository/ContainsShortcut2: Checking whether {shortcutNameOrUuid} exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/ContainsShortcut2: Checking whether {shortcutNameOrUuid} exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -297,7 +297,7 @@ namespace DisplayMagician
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with UUID {shortcutNameOrUuid} does exist in our shortcut repository");
+                        logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with UUID {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
                     }
                 }
@@ -309,14 +309,14 @@ namespace DisplayMagician
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} does exist in our shortcut repository");
+                        logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
                     }
                 }
 
             }
 
-            logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} doesn't exist in our shortcut repository");
+            logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} doesn't exist in our shortcut repository");
             return false;
 
         }
@@ -324,7 +324,7 @@ namespace DisplayMagician
 
         public static ShortcutItem GetShortcut(string shortcutNameOrUuid)
         {
-            logger.Debug($"ShortcutRepository/GetShortcut: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/GetShortcut: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -339,7 +339,7 @@ namespace DisplayMagician
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/GetShortcut: Returning shortcut with UUID {shortcutNameOrUuid}");
+                        logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with UUID {shortcutNameOrUuid}");
                         return testShortcut;
                     }
                 }
@@ -351,14 +351,14 @@ namespace DisplayMagician
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/GetShortcut: Returning shortcut with Name {shortcutNameOrUuid}");
+                        logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with Name {shortcutNameOrUuid}");
                         return testShortcut;
                     }
                 }
 
             }
 
-            logger.Debug($"ShortcutRepository/GetShortcut: No shortcut was found to return with UUI or Name {shortcutNameOrUuid}");
+            logger.Trace($"ShortcutRepository/GetShortcut: No shortcut was found to return with UUID or Name {shortcutNameOrUuid}");
             return null;
 
         }
@@ -943,7 +943,7 @@ namespace DisplayMagician
                 // Now look for the thing we're supposed to monitor
                 // and wait until it starts up
                 List<Process> processesToMonitor = new List<Process>();
-                for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                 {
                     // Look for the processes with the ProcessName we sorted out earlier
                     processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
@@ -1077,7 +1077,7 @@ namespace DisplayMagician
                         Thread.Sleep(500);
 
                         // Wait for Steam game to update if needed
-                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
                             if (!steamGameToRun.IsUpdating)
@@ -1218,17 +1218,21 @@ namespace DisplayMagician
 
                         // Wait for Uplay to start
                         List<Process> uplayProcesses = null;
-                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
-                            // Look for the processes with the ProcessName we sorted out earlier
-                            uplayProcesses = Process.GetProcessesByName("upc").ToList();
+                            // Look for the processes with the UplayGameLauncher name as those are the ones that launch the game
+                            // Look for the 32 bit games processes
+                            uplayProcesses = Process.GetProcessesByName("UbisoftGameLauncher").ToList();
+                            // Look for the 64 bit games processes
+                            uplayProcesses.AddRange(Process.GetProcessesByName("UbisoftGameLauncher64").ToList());
 
                             // If we have found one or more processes then we should be good to go
                             // so let's break
                             if (uplayProcesses.Count > 0)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut: Found {uplayProcesses.Count} 'upc' processes have started");
+                                Thread.Sleep(500);
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found {uplayProcesses.Count} 'UplayGameLauncher' processes have started");
                                 break;
                             }
 
@@ -1238,13 +1242,11 @@ namespace DisplayMagician
 
                         }
 
-                        // Delay 5secs
-                        Thread.Sleep(5000);
-                        logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Uplay process start the game.");
+                        //logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Uplay process start the game, and update it if necessary.");
 
                         // Now we know the Uplay app is running then 
                         // we wait until the Uplay game is running (*allows for uplay update)
-                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
                             if (uplayGameToRun.IsRunning)

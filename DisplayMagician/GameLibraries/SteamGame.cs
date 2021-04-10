@@ -85,7 +85,9 @@ namespace DisplayMagician.GameLibraries
                 {
                     try
                     {
-                        if (gameProcess.MainModule.FileName.StartsWith(_steamGameExePath))
+                        //if (gameProcess.MainModule.FileName.StartsWith(_steamGameExePath))
+                        //    numGameProcesses++;
+                        if (gameProcess.ProcessName.Equals(_steamGameProcessName))
                             numGameProcesses++;
                     }
                     catch (Exception ex)
@@ -98,7 +100,9 @@ namespace DisplayMagician.GameLibraries
                         if (filePath == null)
                         {
                             // if we hit this bit then GameUtils.GetMainModuleFilepath failed,
-                            // so we just skip that process
+                            // so we just assume that the process is a game process
+                            // as it matched the original process search
+                            numGameProcesses++;
                             continue;
                         }
                         else
