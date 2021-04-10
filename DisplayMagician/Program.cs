@@ -157,6 +157,42 @@ namespace DisplayMagician {
             // Start the Log file
             logger.Info($"Starting {Application.ProductName} v{Application.ProductVersion}");
 
+            // Create the other DM Dir if it doesn't exist so that it's avilable for all 
+            // parts of the program to use
+            if (!Directory.Exists(AppIconPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppIconPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Icon Folder {AppLogPath}");
+                }
+            }
+            if (!Directory.Exists(AppProfilePath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppProfilePath);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Profile Folder {AppProfilePath}");
+                }
+            }
+            if (!Directory.Exists(AppShortcutPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppShortcutPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
+                }
+            }
+
             // Write the Application Name
             Console.WriteLine($"{Application.ProductName} v{Application.ProductVersion}");
             for (int i = 0; i <= Application.ProductName.Length + Application.ProductVersion .Length; i++)
@@ -686,7 +722,6 @@ namespace DisplayMagician {
                     if (!DisplayMagician.GameLibraries.SteamLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
-                        throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Steam Games!");
                     }
                     Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {GameLibraries.SteamLibrary.InstalledSteamGameCount})");
@@ -710,7 +745,6 @@ namespace DisplayMagician {
                     if (!DisplayMagician.GameLibraries.UplayLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
-                        throw new LoadingInstalledGamesException("Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                     }
                     Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {GameLibraries.UplayLibrary.InstalledUplayGameCount})");

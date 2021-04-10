@@ -762,8 +762,6 @@ namespace DisplayMagicianShared
             // Get the list of connected devices
             ConnectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
 
-            
-
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
 
@@ -794,6 +792,7 @@ namespace DisplayMagicianShared
             }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
+            //if (false)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: We were able to GetPhysicalCPUs through NvAPIWrapper library. There are {myPhysicalGPUs.Length} Physical GPUs detected");
 
@@ -810,8 +809,6 @@ namespace DisplayMagicianShared
                         // Create an array of all the important display info we need to record
                         string[] displayInfo = {
                             "NVIDIA",
-                            myPhysicalGPU.CorrespondingLogicalGPU.ToString(),
-                            myPhysicalGPU.ToString(),
                             myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
                             myPhysicalGPU.ArchitectInformation.Revision.ToString(),
                             myPhysicalGPU.Board.ToString(),
@@ -851,46 +848,46 @@ namespace DisplayMagicianShared
                     PathDisplaySource pathDisplaySource = attachedDisplay.ToPathDisplaySource();
                     PathDisplayTarget pathDisplayTarget = attachedDisplay.ToPathDisplayTarget();
 
-                    Debug.WriteLine($"ADDN : {attachedDisplay.DeviceName}");
-                    Debug.WriteLine($"ADDFN : {attachedDisplay.DisplayFullName}");
-                    Debug.WriteLine($"ADDIN : {attachedDisplay.DisplayName}");
-                    Debug.WriteLine($"ADDIN : {attachedDisplay.IsAvailable}");
-                    Debug.WriteLine($"ADDIGP : {attachedDisplay.IsGDIPrimary}");
-                    Debug.WriteLine($"ADDIV : {attachedDisplay.IsValid}");
-                    Debug.WriteLine($"ADCSCD : {attachedDisplay.CurrentSetting.ColorDepth}");
-                    Debug.WriteLine($"ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
-                    Debug.WriteLine($"ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
-                    Debug.WriteLine($"ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
-                    Debug.WriteLine($"ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
-                    Debug.WriteLine($"ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
-                    Debug.WriteLine($"ADCSP : {attachedDisplay.CurrentSetting.Position}");
-                    Debug.WriteLine($"ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
-                    Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
-                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
-                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Debug.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
-                    Debug.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
-                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
-                    Debug.WriteLine($"DDA : {displayAdapter.DeviceName}");
-                    Debug.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
-                    Debug.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                    Debug.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
-                    Debug.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                    Debug.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                    Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
-                    Debug.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
-                    Debug.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                    Debug.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
-                    Debug.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                    Debug.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                    Debug.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                    Debug.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
-                    Debug.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
-                    Debug.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
-                    Debug.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                    Debug.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
-                    Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDN : {attachedDisplay.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDFN : {attachedDisplay.DisplayFullName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {attachedDisplay.DisplayName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {attachedDisplay.IsAvailable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIGP : {attachedDisplay.IsGDIPrimary}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIV : {attachedDisplay.IsValid}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSCD : {attachedDisplay.CurrentSetting.ColorDepth}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSP : {attachedDisplay.CurrentSetting.Position}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DP : {displayAdapter.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DN : {displayAdapter.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AI : {pathDisplayAdapter.AdapterId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIDP : {pathDisplayAdapter.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIII : {pathDisplayAdapter.IsInvalid}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DDA : {displayAdapter.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSA : {pathDisplaySource.Adapter}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSCDS : {pathDisplaySource.CurrentDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSDN : {pathDisplaySource.DisplayName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSMDS : {pathDisplaySource.MaximumDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSSI : {pathDisplaySource.SourceId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTA : {pathDisplayTarget.Adapter}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTCI : {pathDisplayTarget.ConnectorInstance}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTDP : {pathDisplayTarget.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEPC : {pathDisplayTarget.EDIDProductCode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTFN : {pathDisplayTarget.FriendlyName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTIA : {pathDisplayTarget.IsAvailable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPR : {pathDisplayTarget.PreferredResolution}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTTI : {pathDisplayTarget.TargetId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
 
                     // Create an array of all the important display info we need to record
                     string[] displayInfo = {
@@ -941,6 +938,7 @@ namespace DisplayMagicianShared
             }
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
+            //if (false)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: We were able to GetPhysicalCPUs through NvAPIWrapper library. There are {myPhysicalGPUs.Length} Physical GPUs detected");
 
@@ -958,8 +956,6 @@ namespace DisplayMagicianShared
                             // Create an array of all the important display info we need to record
                             string[] displayInfo = {
                                 "NVIDIA",
-                                myPhysicalGPU.CorrespondingLogicalGPU.ToString(),
-                                myPhysicalGPU.ToString(),
                                 myPhysicalGPU.ArchitectInformation.ShortName.ToString(),
                                 myPhysicalGPU.ArchitectInformation.Revision.ToString(),
                                 myPhysicalGPU.Board.ToString(),
@@ -1001,46 +997,46 @@ namespace DisplayMagicianShared
                     PathDisplaySource pathDisplaySource = attachedDisplay.ToPathDisplaySource();
                     PathDisplayTarget pathDisplayTarget = attachedDisplay.ToPathDisplayTarget();
 
-                    Debug.WriteLine($"ADDN : {attachedDisplay.DeviceName}");
-                    Debug.WriteLine($"ADDFN : {attachedDisplay.DisplayFullName}");
-                    Debug.WriteLine($"ADDIN : {attachedDisplay.DisplayName}");
-                    Debug.WriteLine($"ADDIN : {attachedDisplay.IsAvailable}");
-                    Debug.WriteLine($"ADDIGP : {attachedDisplay.IsGDIPrimary}");
-                    Debug.WriteLine($"ADDIV : {attachedDisplay.IsValid}");
-                    Debug.WriteLine($"ADCSCD : {attachedDisplay.CurrentSetting.ColorDepth}");
-                    Debug.WriteLine($"ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
-                    Debug.WriteLine($"ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
-                    Debug.WriteLine($"ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
-                    Debug.WriteLine($"ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
-                    Debug.WriteLine($"ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
-                    Debug.WriteLine($"ADCSP : {attachedDisplay.CurrentSetting.Position}");
-                    Debug.WriteLine($"ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
-                    Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
-                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
-                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Debug.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
-                    Debug.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
-                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
-                    Debug.WriteLine($"DDA : {displayAdapter.DeviceName}");
-                    Debug.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
-                    Debug.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                    Debug.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
-                    Debug.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                    Debug.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                    Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
-                    Debug.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
-                    Debug.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                    Debug.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
-                    Debug.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                    Debug.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                    Debug.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                    Debug.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
-                    Debug.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
-                    Debug.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
-                    Debug.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                    Debug.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
-                    Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDN : {attachedDisplay.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDFN : {attachedDisplay.DisplayFullName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {attachedDisplay.DisplayName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {attachedDisplay.IsAvailable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIGP : {attachedDisplay.IsGDIPrimary}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIV : {attachedDisplay.IsValid}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSCD : {attachedDisplay.CurrentSetting.ColorDepth}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSP : {attachedDisplay.CurrentSetting.Position}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DP : {displayAdapter.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DN : {displayAdapter.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AI : {pathDisplayAdapter.AdapterId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIDP : {pathDisplayAdapter.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIII : {pathDisplayAdapter.IsInvalid}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DDA : {displayAdapter.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSA : {pathDisplaySource.Adapter}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSCDS : {pathDisplaySource.CurrentDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSDN : {pathDisplaySource.DisplayName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSMDS : {pathDisplaySource.MaximumDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSSI : {pathDisplaySource.SourceId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTA : {pathDisplayTarget.Adapter}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTCI : {pathDisplayTarget.ConnectorInstance}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTDP : {pathDisplayTarget.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEPC : {pathDisplayTarget.EDIDProductCode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTFN : {pathDisplayTarget.FriendlyName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTIA : {pathDisplayTarget.IsAvailable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPR : {pathDisplayTarget.PreferredResolution}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTTI : {pathDisplayTarget.TargetId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
 
                     // Create an array of all the important display info we need to record
                     string[] displayInfo = {
@@ -1069,36 +1065,36 @@ namespace DisplayMagicianShared
                     PathDisplaySource pathDisplaySource = unattachedDisplay.ToPathDisplaySource();
                     PathDisplayTarget pathDisplayTarget = unattachedDisplay.ToPathDisplayTarget();
 
-                    Debug.WriteLine($"ADDN : {unattachedDisplay.DeviceName}");
-                    Debug.WriteLine($"ADDFN : {unattachedDisplay.DisplayFullName}");
-                    Debug.WriteLine($"ADDIN : {unattachedDisplay.DisplayName}");
-                    Debug.WriteLine($"ADDIN : {unattachedDisplay.IsAvailable}");
-                    Debug.WriteLine($"ADDIV : {unattachedDisplay.IsValid}");
-                    Debug.WriteLine($"DP : {displayAdapter.DevicePath}");
-                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Debug.WriteLine($"DN : {displayAdapter.DeviceName}");
-                    Debug.WriteLine($"DK : {displayAdapter.DeviceKey}");
-                    Debug.WriteLine($"AI : {pathDisplayAdapter.AdapterId}");
-                    Debug.WriteLine($"AIDP : {pathDisplayAdapter.DevicePath}");
-                    Debug.WriteLine($"AIII : {pathDisplayAdapter.IsInvalid}");
-                    Debug.WriteLine($"PDSA : {pathDisplaySource.Adapter}");
-                    Debug.WriteLine($"PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                    Debug.WriteLine($"PDSDN : {pathDisplaySource.DisplayName}");
-                    Debug.WriteLine($"PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                    Debug.WriteLine($"PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                    Debug.WriteLine($"PDSSI : {pathDisplaySource.SourceId}");
-                    Debug.WriteLine($"PDTA : {pathDisplayTarget.Adapter}");
-                    Debug.WriteLine($"PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                    Debug.WriteLine($"PDTDP : {pathDisplayTarget.DevicePath}");
-                    Debug.WriteLine($"PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                    Debug.WriteLine($"PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                    Debug.WriteLine($"PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                    Debug.WriteLine($"PDTFN : {pathDisplayTarget.FriendlyName}");
-                    Debug.WriteLine($"PDTIA : {pathDisplayTarget.IsAvailable}");
-                    Debug.WriteLine($"PDTPR : {pathDisplayTarget.PreferredResolution}");
-                    Debug.WriteLine($"PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                    Debug.WriteLine($"PDTTI : {pathDisplayTarget.TargetId}");
-                    Debug.WriteLine($"PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDN : {unattachedDisplay.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDFN : {unattachedDisplay.DisplayFullName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {unattachedDisplay.DisplayName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {unattachedDisplay.IsAvailable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIV : {unattachedDisplay.IsValid}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DP : {displayAdapter.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DN : {displayAdapter.DeviceName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AI : {pathDisplayAdapter.AdapterId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIDP : {pathDisplayAdapter.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIII : {pathDisplayAdapter.IsInvalid}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSA : {pathDisplaySource.Adapter}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSCDS : {pathDisplaySource.CurrentDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSDN : {pathDisplaySource.DisplayName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSMDS : {pathDisplaySource.MaximumDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSSI : {pathDisplaySource.SourceId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTA : {pathDisplayTarget.Adapter}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTCI : {pathDisplayTarget.ConnectorInstance}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTDP : {pathDisplayTarget.DevicePath}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEPC : {pathDisplayTarget.EDIDProductCode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTFN : {pathDisplayTarget.FriendlyName}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTIA : {pathDisplayTarget.IsAvailable}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPR : {pathDisplayTarget.PreferredResolution}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTTI : {pathDisplayTarget.TargetId}");
+                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
 
                     // Create an array of all the important display info we need to record
                     string[] displayInfo = {

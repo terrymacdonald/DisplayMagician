@@ -1,4 +1,5 @@
-﻿using AudioSwitcher.AudioApi.CoreAudio;
+﻿using AudioSwitcher.AudioApi;
+using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.InterProcess;
 using DisplayMagicianShared;
@@ -44,34 +45,23 @@ namespace DisplayMagician
             try
             {
                 NvAPIWrapper.NVIDIA.Initialize();
-                _audioController = new CoreAudioController();
-
-                // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
-                if (!Directory.Exists(AppShortcutStoragePath))
-                {
-                    Directory.CreateDirectory(AppShortcutStoragePath);
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician doesn't have permissions to create the Shortcut storage folder {AppShortcutStoragePath}.");
-            }
-            catch (ArgumentException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} due to an invalid argument.");
-            }
-            catch (PathTooLongException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} as the path is too long.");
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: DisplayMagician can't create the Shortcut storage folder {AppShortcutStoragePath} as the parent folder isn't there.");
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, $"ShortcutRepository/ShortcutRepository: Initialising NVIDIA NvAPIWrapper or CoreAudioController caused an exception.");
             }
+
+            try
+            {
+                _audioController = new CoreAudioController();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ShortcutRepository/ShortcutRepository: Exception while trying to initialise CoreAudioController. Audio Chipset on your computer is not supported. You will be unable to set audio settings.");
+            }
+
+            //_audioController.DefaultPlaybackDevice.SetAsDefault();
+            //_audioController.DefaultCaptureDevice.SetAsDefault();
 
             // Load the Shortcuts from storage
             LoadShortcuts();
@@ -149,7 +139,7 @@ namespace DisplayMagician
         #region Class Methods
         public static bool AddShortcut(ShortcutItem shortcut)
         {
-            logger.Debug($"ShortcutRepository/AddShortcut: Adding shortcut {shortcut.Name} to our shortcut repository");
+            logger.Trace($"ShortcutRepository/AddShortcut: Adding shortcut {shortcut.Name} to our shortcut repository");
 
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -172,7 +162,7 @@ namespace DisplayMagician
 
         public static bool RemoveShortcut(ShortcutItem shortcut)
         {
-            logger.Debug($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcut.Name} if it exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcut.Name} if it exists in our shortcut repository");
 
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -199,12 +189,12 @@ namespace DisplayMagician
             {
                 SaveShortcuts();
                 IsValidRefresh();
-                logger.Debug($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
+                logger.Trace($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"ShortcutRepository/RemoveShortcut: Our shortcut repository doesn't contain a shortcut we were looking for");
+                logger.Trace($"ShortcutRepository/RemoveShortcut: Our shortcut repository doesn't contain a shortcut we were looking for");
                 return false;
             }
                 
@@ -216,7 +206,7 @@ namespace DisplayMagician
         public static bool RemoveShortcut(string shortcutNameOrUuid)
         {
 
-            logger.Debug($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutNameOrUuid} if it exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutNameOrUuid} if it exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -255,12 +245,12 @@ namespace DisplayMagician
             {
                 SaveShortcuts();
                 IsValidRefresh();
-                logger.Debug($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
+                logger.Trace($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"ShortcutRepository/RemoveShortcut2: Our shortcut repository doesn't contain a shortcut with Name or UUID {shortcutNameOrUuid}");
+                logger.Trace($"ShortcutRepository/RemoveShortcut2: Our shortcut repository doesn't contain a shortcut with Name or UUID {shortcutNameOrUuid}");
                 return false;
             }
             else
@@ -272,7 +262,7 @@ namespace DisplayMagician
         public static bool ContainsShortcut(ShortcutItem shortcut)
         {
 
-            logger.Debug($"ShortcutRepository/ContainsShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/ContainsShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
 
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -281,7 +271,7 @@ namespace DisplayMagician
             {
                 if (testShortcut.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase))
                 {
-                    logger.Debug($"ShortcutRepository/ContainsShortcut: {shortcut.Name} does exist in our shortcut repository");
+                    logger.Trace($"ShortcutRepository/ContainsShortcut: {shortcut.Name} does exist in our shortcut repository");
                     return true;
                 }
             }
@@ -292,7 +282,7 @@ namespace DisplayMagician
         public static bool ContainsShortcut(string shortcutNameOrUuid)
         {
 
-            logger.Debug($"ShortcutRepository/ContainsShortcut2: Checking whether {shortcutNameOrUuid} exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/ContainsShortcut2: Checking whether {shortcutNameOrUuid} exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -307,7 +297,7 @@ namespace DisplayMagician
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with UUID {shortcutNameOrUuid} does exist in our shortcut repository");
+                        logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with UUID {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
                     }
                 }
@@ -319,14 +309,14 @@ namespace DisplayMagician
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} does exist in our shortcut repository");
+                        logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
                     }
                 }
 
             }
 
-            logger.Debug($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} doesn't exist in our shortcut repository");
+            logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} doesn't exist in our shortcut repository");
             return false;
 
         }
@@ -334,7 +324,7 @@ namespace DisplayMagician
 
         public static ShortcutItem GetShortcut(string shortcutNameOrUuid)
         {
-            logger.Debug($"ShortcutRepository/GetShortcut: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
+            logger.Trace($"ShortcutRepository/GetShortcut: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -349,7 +339,7 @@ namespace DisplayMagician
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/GetShortcut: Returning shortcut with UUID {shortcutNameOrUuid}");
+                        logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with UUID {shortcutNameOrUuid}");
                         return testShortcut;
                     }
                 }
@@ -361,14 +351,14 @@ namespace DisplayMagician
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Debug($"ShortcutRepository/GetShortcut: Returning shortcut with Name {shortcutNameOrUuid}");
+                        logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with Name {shortcutNameOrUuid}");
                         return testShortcut;
                     }
                 }
 
             }
 
-            logger.Debug($"ShortcutRepository/GetShortcut: No shortcut was found to return with UUI or Name {shortcutNameOrUuid}");
+            logger.Trace($"ShortcutRepository/GetShortcut: No shortcut was found to return with UUID or Name {shortcutNameOrUuid}");
             return null;
 
         }
@@ -620,96 +610,162 @@ namespace DisplayMagician
                 
             }
 
-            // record the old audio device
+            // Get the list of Audio Devices currently connected and active
             bool needToChangeAudioDevice = false;
-            CoreAudioDevice rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
+            CoreAudioDevice rollbackAudioDevice = null;
             double rollbackAudioVolume = 50;
-            if (rollbackAudioDevice != null)
-            {
-                rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
-                if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
-                    needToChangeAudioDevice = true;
-                }
-                else
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
-                }
-            }             
-
-            // Change Audio Device (if one specified)
-            if (shortcutToUse.ChangeAudioDevice)
-            {
-                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
-
-                IEnumerable<CoreAudioDevice> audioDevices = _audioController.GetPlaybackDevices();
-                foreach (CoreAudioDevice audioDevice in audioDevices)
-                {
-                    if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
-                    {
-                        // use the Audio Device
-                        audioDevice.SetAsDefault();
-
-                        if (shortcutToUse.SetAudioVolume)
-                        {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} audio level to {shortcutToUse.AudioVolume}%.");
-                            Task myTask = new Task(() =>
-                            {
-                                audioDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
-                            });
-                            myTask.Start();
-                            myTask.Wait(2000);
-                        }
-
-                    }
-                }
-            }
-
-            // record the old microphone device
+            List<CoreAudioDevice> activeAudioDevices = new List<CoreAudioDevice>();
             bool needToChangeCaptureDevice = false;
-            CoreAudioDevice rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
+            CoreAudioDevice rollbackCaptureDevice = null;
             double rollbackCaptureVolume = 50;
-            if (rollbackCaptureDevice != null)
-            {
-                rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
-                if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
-                    needToChangeCaptureDevice = true;
-                }
-                else
-                {
-                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
-                }
-            }
-                
-            // Change capture Device (if one specified)
-            if (shortcutToUse.ChangeCaptureDevice)
-            {
-                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+            List<CoreAudioDevice> activeCaptureDevices = new List<CoreAudioDevice>();
 
-                IEnumerable<CoreAudioDevice> captureDevices = _audioController.GetCaptureDevices();
-                foreach (CoreAudioDevice captureDevice in captureDevices)
-                {
-                    if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+            if (_audioController != null)
+            {
+                try {
+                    activeAudioDevices = _audioController.GetPlaybackDevices(DeviceState.Active).ToList();
+                    if (activeAudioDevices.Count > 0)
                     {
-                        // use the Audio Device
-                        captureDevice.SetAsDefault();
-
-                        if (shortcutToUse.SetCaptureVolume)
+                        // Change Audio Device (if one specified)
+                        if (shortcutToUse.ChangeAudioDevice && !shortcutToUse.AudioDevice.Equals(""))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} audio level to {shortcutToUse.CaptureVolume}%.");
-                            Task myTask = new Task(() =>
-                            {
-                                captureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
-                            });
-                            myTask.Start();
-                            myTask.Wait(2000);
-                        }
 
+                            // record the old audio device
+                            rollbackAudioDevice = _audioController.DefaultPlaybackDevice;
+                            if (rollbackAudioDevice != null)
+                            {
+                                rollbackAudioVolume = _audioController.DefaultPlaybackDevice.Volume;
+                                if (!rollbackAudioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
+                                    needToChangeAudioDevice = true;
+                                }
+                                
+                            }
+
+                            if (needToChangeAudioDevice)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
+
+                                foreach (CoreAudioDevice audioDevice in activeAudioDevices)
+                                {
+                                    if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                                    {
+                                        // use the Audio Device
+                                        audioDevice.SetAsDefault();
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
+                            }
+
+                            if (shortcutToUse.SetAudioVolume)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} volume level to {shortcutToUse.AudioVolume}%.");
+                                Task myTask = new Task(() =>
+                                {
+                                    _audioController.DefaultPlaybackDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                });
+                                myTask.Start();
+                                myTask.Wait(2000);
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.AudioDevice} volume level.");
+                            }
+                        }
+                        else
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Shortcut does not require changing Audio Device.");
+                        }
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RunShortcut: No active Audio Devices to use so skipping audio device checks!");
                     }
                 }
+                catch(Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Audio Devices!");
+                }
+
+
+                try
+                {
+                    // Get the list of Audio Devices currently connected
+                    activeCaptureDevices = _audioController.GetCaptureDevices(DeviceState.Active).ToList();
+                    if (activeCaptureDevices.Count > 0)
+                    {
+
+                        // Change capture Device (if one specified)
+                        if (shortcutToUse.ChangeCaptureDevice && !shortcutToUse.CaptureDevice.Equals(""))
+                        {
+                            // record the old microphone device
+                            rollbackCaptureDevice = _audioController.DefaultCaptureDevice;
+                            if (rollbackCaptureDevice != null)
+                            {
+                                rollbackCaptureVolume = _audioController.DefaultCaptureDevice.Volume;
+                                if (!rollbackCaptureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+                                    needToChangeCaptureDevice = true;
+                                }
+                            }
+
+                            if (needToChangeCaptureDevice) 
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+
+                                foreach (CoreAudioDevice captureDevice in activeCaptureDevices)
+                                {
+                                    if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                                    {
+                                        // use the Audio Device
+                                        captureDevice.SetAsDefault();
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
+                            }
+
+                            if (shortcutToUse.SetCaptureVolume)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
+                                Task myTask = new Task(() =>
+                                {
+                                    _audioController.DefaultCaptureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
+                                });
+                                myTask.Start();
+                                myTask.Wait(2000);
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.CaptureDevice} capture (microphone) volume level.");
+                            }
+
+                        }
+                        else
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Shortcut does not require changing capture (microphone) device.");
+                        }
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RunShortcut: No active Capture Devices to use so skipping capture device checks!");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Capture Devices!");
+                }
+            }
+            else
+            {
+                logger.Warn($"ShortcutRepository/RunShortcut: CoreAudio Controller is null, so we can't set Audio or Capture Devices!");
             }
 
             // Set the IP Service status back to what it was
@@ -777,7 +833,7 @@ namespace DisplayMagician
             }
             else
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
+                logger.Info($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
             }
 
             // Add a status notification icon in the status area
@@ -887,7 +943,7 @@ namespace DisplayMagician
                 // Now look for the thing we're supposed to monitor
                 // and wait until it starts up
                 List<Process> processesToMonitor = new List<Process>();
-                for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                 {
                     // Look for the processes with the ProcessName we sorted out earlier
                     processesToMonitor = Process.GetProcessesByName(processNameToLookFor).ToList();
@@ -1021,7 +1077,7 @@ namespace DisplayMagician
                         Thread.Sleep(500);
 
                         // Wait for Steam game to update if needed
-                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
                             if (!steamGameToRun.IsUpdating)
@@ -1162,17 +1218,21 @@ namespace DisplayMagician
 
                         // Wait for Uplay to start
                         List<Process> uplayProcesses = null;
-                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
-                            // Look for the processes with the ProcessName we sorted out earlier
-                            uplayProcesses = Process.GetProcessesByName("upc").ToList();
+                            // Look for the processes with the UplayGameLauncher name as those are the ones that launch the game
+                            // Look for the 32 bit games processes
+                            uplayProcesses = Process.GetProcessesByName("UbisoftGameLauncher").ToList();
+                            // Look for the 64 bit games processes
+                            uplayProcesses.AddRange(Process.GetProcessesByName("UbisoftGameLauncher64").ToList());
 
                             // If we have found one or more processes then we should be good to go
                             // so let's break
                             if (uplayProcesses.Count > 0)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut: Found {uplayProcesses.Count} 'upc' processes have started");
+                                Thread.Sleep(500);
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found {uplayProcesses.Count} 'UplayGameLauncher' processes have started");
                                 break;
                             }
 
@@ -1182,13 +1242,11 @@ namespace DisplayMagician
 
                         }
 
-                        // Delay 5secs
-                        Thread.Sleep(5000);
-                        logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Uplay process start the game.");
+                        //logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Uplay process start the game, and update it if necessary.");
 
                         // Now we know the Uplay app is running then 
                         // we wait until the Uplay game is running (*allows for uplay update)
-                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
                             if (uplayGameToRun.IsRunning)
@@ -1369,43 +1427,65 @@ namespace DisplayMagician
             }
 
             // Change Audio Device back (if one specified)
-            if (needToChangeAudioDevice)
+            if (activeAudioDevices.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio back to {rollbackAudioDevice.Name} audio device");
-                // use the Audio Device
-                rollbackAudioDevice.SetAsDefault();
-
-                if (shortcutToUse.SetAudioVolume)
+                if (needToChangeAudioDevice)
                 {
-                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to {shortcutToUse.SetAudioVolume}% volume");
-                    Task myTask = new Task(() =>
-                    {
-                        rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
-                    });
-                    myTask.Start();
-                    myTask.Wait(2000);
-                }
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio back to {rollbackAudioDevice.Name} audio device");
+                    // use the Audio Device
+                    rollbackAudioDevice.SetAsDefault();
 
+                    if (shortcutToUse.SetAudioVolume)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to {shortcutToUse.SetAudioVolume}% volume");
+                        Task myTask = new Task(() =>
+                        {
+                            rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
+                        });
+                        myTask.Start();
+                        myTask.Wait(2000);
+                    }
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Audio Device, so no need to change it back.");
+                }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: No Audio Devices active, so no need to change them back.");
             }
 
+
             // Change Capture Device back (if one specified)
-            if (needToChangeCaptureDevice)
+            if (activeCaptureDevices.Count > 0)
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackCaptureDevice.Name} capture device");
-                // use the Audio Device
-                rollbackCaptureDevice.SetAsDefault();
-
-                if (shortcutToUse.SetCaptureVolume)
+                if (needToChangeCaptureDevice)
                 {
-                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to {shortcutToUse.SetAudioVolume}% volume");
-                    Task myTask = new Task(() =>
-                    {
-                        rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
-                    });
-                    myTask.Start();
-                    myTask.Wait(2000);
-                }
+                    logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackCaptureDevice.Name} capture device");
+                    // use the Audio Device
+                    rollbackCaptureDevice.SetAsDefault();
 
+                    if (shortcutToUse.SetCaptureVolume)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to {shortcutToUse.SetAudioVolume}% volume");
+                        Task myTask = new Task(() =>
+                        {
+                            rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
+                        });
+                        myTask.Start();
+                        myTask.Wait(2000);
+                    }
+
+                }
+                else
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Capture Device, so no need to change it back.");
+                }
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: No Capture Devices active, so no need to change them back.");
             }
 
             // Change back to the original profile only if it is different
@@ -1428,6 +1508,10 @@ namespace DisplayMagician
                     return;
                 }
 
+            }
+            else
+            {
+                logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Display Profile, so no need to change it back.");
             }
 
         }

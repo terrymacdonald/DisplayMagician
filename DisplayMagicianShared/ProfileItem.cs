@@ -507,10 +507,15 @@ namespace DisplayMagicianShared
         {
             // Check each display in this profile and make sure it's currently available
             int validDisplayCount = 0;
+
+            //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
+            
             foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
             {
                 // If this profile has a display that isn't currently available then we need to say it's a no!
-                if (ProfileRepository.ConnectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                //if (ProfileRepository.ConnectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
+                //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
+                if (ProfileRepository.ConnectedDisplayIdentifiers.Any(s => profileDisplayIdentifier.Equals(s)))
                     validDisplayCount++;
             }
             if (validDisplayCount == ProfileDisplayIdentifiers.Count)
