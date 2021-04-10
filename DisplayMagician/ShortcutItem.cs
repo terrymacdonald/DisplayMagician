@@ -1809,17 +1809,8 @@ namespace DisplayMagician
         public void ReplaceShortcutIconInCache()
         {
             string newShortcutIconFilename;
-            if (_category == ShortcutCategory.Application)
-            {
-                // Work out the name of the shortcut we'll save.
-                newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, String.Concat(@"executable-", _profileToUse.UUID, "-", Path.GetFileNameWithoutExtension(_executableNameAndPath), @".ico"));
-
-            }
-            else
-            {
-                // Work out the name of the shortcut we'll save.
-                newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, String.Concat(_gameLibrary.ToString().ToLower(CultureInfo.InvariantCulture), @"-", _profileToUse.UUID, "-", _gameAppId.ToString(), @".ico"));
-            }
+            // Work out the name of the shortcut we'll save.
+            newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
 
             // If the new shortcut icon should be named differently
             // then change the name of it
@@ -1837,18 +1828,8 @@ namespace DisplayMagician
         public void SaveShortcutIconToCache()
         {
 
-            // Only add this set of options if the shortcut is to an standalone application
-            if (_category == ShortcutCategory.Application)
-            {
-                // Work out the name of the shortcut we'll save.
-                _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, String.Concat(@"executable-", _profileToUse.UUID, "-", Path.GetFileNameWithoutExtension(_executableNameAndPath), @".ico"));
-
-            }
-            else 
-            {
-                // Work out the name of the shortcut we'll save.
-                _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, String.Concat(_gameLibrary.ToString().ToLower(CultureInfo.InvariantCulture),@"-", _profileToUse.UUID, "-", _gameAppId.ToString(), @".ico"));
-            }
+            // Work out the name of the shortcut we'll save.
+            _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
 
             MultiIcon shortcutIcon;
             try
@@ -1859,7 +1840,7 @@ namespace DisplayMagician
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/SaveShortcutIconToCache exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"ShortcutRepository/SaveShortcutIconToCache: Exception while trying to save the Shortcut ivon.");
 
                 // If we fail to create an icon based on the original executable or game
                 // Then we use the standard DisplayMagician profile one.
@@ -2276,6 +2257,7 @@ namespace DisplayMagician
             shortcutFileName = Path.ChangeExtension(shortcutFileName, @"lnk");
 
             // And we use the Icon from the shortcutIconCache
+            SaveShortcutIconToCache();
             shortcutIconFileName = SavedShortcutIconCacheFilename;
 
             // If the user supplied a file
