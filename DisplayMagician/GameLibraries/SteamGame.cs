@@ -121,32 +121,32 @@ namespace DisplayMagician.GameLibraries
             {
                 try
                 {
-                    using (
-                        var key = Registry.CurrentUser.OpenSubKey(_gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
+                    using (var key = Registry.CurrentUser.OpenSubKey(_gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
                     {
-                        if ((int)key?.GetValue(@"Updating", 0) == 1)
+                        if (key != null)
                         {
-                            return true;
-                        }
-                        return false;
+                            int updateValue;
+                            int.TryParse(key.GetValue(@"Updating", 0).ToString(),out updateValue);
+                            if (updateValue == 1)
+                            {
+                                return true;
+                            }
+                        }                        
                     }
                 }
                 catch (SecurityException ex)
                 {
-                    Console.WriteLine($"SteamGame/IsUpdating securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
+                    logger.Warn(ex, $"SteamGame/IsUpdating: SecurityException when trying to open {_gameRegistryKey} registry key");
                 }
                 catch (IOException ex)
                 {
-                    // Extract some information from this exception, and then
-                    // throw it to the parent method.
-                    Console.WriteLine($"SteamGame/IsUpdating ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
+                    logger.Warn(ex, $"SteamGame/IsUpdating: IOException when trying to open {_gameRegistryKey} registry key");
                 }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"SteamGame/IsUpdating: Exception when trying to open {_gameRegistryKey} registry key");
+                }
+                return false;
             }
         }
 
