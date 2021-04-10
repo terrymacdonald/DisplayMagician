@@ -332,11 +332,16 @@ namespace DisplayMagician.UIForms
                 MaskedForm maskedForm = MaskedForm.Show(this, message);
                 maskedForm.BringToFront();
 
+                ilv_saved_shortcuts.SuspendLayout();
+                ilv_saved_shortcuts.Refresh();
+
                 // Get the MainForm so we can access the NotifyIcon on it.
                 MainForm mainForm = (MainForm)this.Owner;
 
                 // Run the shortcut
                 ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
+
+                ilv_saved_shortcuts.ResumeLayout();
 
                 maskedForm.Close();
             }
