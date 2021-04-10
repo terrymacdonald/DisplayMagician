@@ -640,33 +640,40 @@ namespace DisplayMagician
                                     logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.AudioDevice} audio device.");
                                     needToChangeAudioDevice = true;
                                 }
-                                else
-                                {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
-                                }
+                                
                             }
 
-                            logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
-
-                            foreach (CoreAudioDevice audioDevice in activeAudioDevices)
+                            if (needToChangeAudioDevice)
                             {
-                                if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
+                                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
+
+                                foreach (CoreAudioDevice audioDevice in activeAudioDevices)
                                 {
-                                    // use the Audio Device
-                                    audioDevice.SetAsDefault();
-
-                                    if (shortcutToUse.SetAudioVolume)
+                                    if (audioDevice.FullName.Equals(shortcutToUse.AudioDevice))
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} audio level to {shortcutToUse.AudioVolume}%.");
-                                        Task myTask = new Task(() =>
-                                        {
-                                            audioDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
-                                        });
-                                        myTask.Start();
-                                        myTask.Wait(2000);
+                                        // use the Audio Device
+                                        audioDevice.SetAsDefault();
                                     }
-
                                 }
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
+                            }
+
+                            if (shortcutToUse.SetAudioVolume)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} volume level to {shortcutToUse.AudioVolume}%.");
+                                Task myTask = new Task(() =>
+                                {
+                                    _audioController.DefaultPlaybackDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                });
+                                myTask.Start();
+                                myTask.Wait(2000);
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.AudioDevice} volume level.");
                             }
                         }
                         else
@@ -705,38 +712,45 @@ namespace DisplayMagician
                                     logger.Debug($"ShortcutRepository/RunShortcut: We need to change to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
                                     needToChangeCaptureDevice = true;
                                 }
-                                else
-                                {
-                                    logger.Debug($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
-                                }
                             }
 
-                            logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
-
-                            foreach (CoreAudioDevice captureDevice in activeCaptureDevices)
+                            if (needToChangeCaptureDevice) 
                             {
-                                if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
+                                logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
+
+                                foreach (CoreAudioDevice captureDevice in activeCaptureDevices)
                                 {
-                                    // use the Audio Device
-                                    captureDevice.SetAsDefault();
-
-                                    if (shortcutToUse.SetCaptureVolume)
+                                    if (captureDevice.FullName.Equals(shortcutToUse.CaptureDevice))
                                     {
-                                        logger.Debug($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} audio level to {shortcutToUse.CaptureVolume}%.");
-                                        Task myTask = new Task(() =>
-                                        {
-                                            captureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
-                                        });
-                                        myTask.Start();
-                                        myTask.Wait(2000);
+                                        // use the Audio Device
+                                        captureDevice.SetAsDefault();
                                     }
-
                                 }
                             }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
+                            }
+
+                            if (shortcutToUse.SetCaptureVolume)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
+                                Task myTask = new Task(() =>
+                                {
+                                    _audioController.DefaultCaptureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
+                                });
+                                myTask.Start();
+                                myTask.Wait(2000);
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.CaptureDevice} capture (microphone) volume level.");
+                            }
+
                         }
                         else
                         {
-                            logger.Info($"ShortcutRepository/RunShortcut: Shortcut does not require changing Capture Device.");
+                            logger.Info($"ShortcutRepository/RunShortcut: Shortcut does not require changing capture (microphone) device.");
                         }
                     }
                     else
@@ -819,7 +833,7 @@ namespace DisplayMagician
             }
             else
             {
-                logger.Debug($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
+                logger.Info($"ShortcutRepository/RunShortcut: No programs to start before the main game or executable");
             }
 
             // Add a status notification icon in the status area
