@@ -6,10 +6,11 @@
   -->
 	<?define MajorVersion="1" ?>
 	<?define MinorVersion="0" ?>
-	<?define BuildVersion="3" ?>
+	<?define BuildVersion="4" ?>
 	<!-- Revision is NOT used by WiX in the upgrade procedure -->
 	<!-- Full version number to display -->
 	<?define VersionNumber="$(var.MajorVersion).$(var.MinorVersion).$(var.BuildVersion)" ?>
+
 	<!--
   Upgrade code HAS to be the same for all updates.
   Once you've chosen it don't change it.

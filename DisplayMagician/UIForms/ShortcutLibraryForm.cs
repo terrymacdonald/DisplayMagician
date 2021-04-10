@@ -330,12 +330,18 @@ namespace DisplayMagician.UIForms
                 // Create a MaskForm that will cover the ShortcutLibrary Window to lock
                 // the controls and inform the user that the game is running....
                 MaskedForm maskedForm = MaskedForm.Show(this, message);
+                maskedForm.BringToFront();
+
+                ilv_saved_shortcuts.SuspendLayout();
+                ilv_saved_shortcuts.Refresh();
 
                 // Get the MainForm so we can access the NotifyIcon on it.
                 MainForm mainForm = (MainForm)this.Owner;
 
                 // Run the shortcut
                 ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
+
+                ilv_saved_shortcuts.ResumeLayout();
 
                 maskedForm.Close();
             }

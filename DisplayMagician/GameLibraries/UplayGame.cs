@@ -85,20 +85,22 @@ namespace DisplayMagician.GameLibraries
                 foreach (Process gameProcess in gameProcesses)
                 {
                     try
-                    {
-                        if (gameProcess.MainModule.FileName.StartsWith(_uplayGameExePath))
+                    {                       
+                        if (gameProcess.ProcessName.Equals(_uplayGameProcessName))
                             numGameProcesses++;
                     }
                     catch (Exception ex)
                     {
-                        logger.Debug(ex, $"UplayGame/IsRunning: Accessing Process.MainModule caused exception. Trying GameUtils.GetMainModuleFilepath instead");
+                        logger.Debug(ex, $"UplayGame/IsRunning: Accessing Process.ProcessName caused exception. Trying GameUtils.GetMainModuleFilepath instead");
                         // If there is a race condition where MainModule isn't available, then we 
                         // instead try the much slower GetMainModuleFilepath (which does the same thing)
                         string filePath = GameUtils.GetMainModuleFilepath(gameProcess.Id);
                         if (filePath == null)
                         {
                             // if we hit this bit then GameUtils.GetMainModuleFilepath failed,
-                            // so we just skip that process
+                            // so we just assume that the process is a game process
+                            // as it matched the original process search
+                            numGameProcesses++;
                             continue;
                         }
                         else
@@ -116,6 +118,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
+        // Have to do much more research to figure out how to detect when Uplay is updating a game
         /*public override bool IsUpdating
         {
             get

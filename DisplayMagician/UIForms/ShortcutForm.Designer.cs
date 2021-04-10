@@ -66,6 +66,7 @@ namespace DisplayMagician.UIForms
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
             this.pnl_start_program4 = new System.Windows.Forms.Panel();
+            this.cb_dont_start_if_running4 = new System.Windows.Forms.CheckBox();
             this.cb_start_program4 = new System.Windows.Forms.CheckBox();
             this.txt_start_program4 = new System.Windows.Forms.TextBox();
             this.cb_start_program_close4 = new System.Windows.Forms.CheckBox();
@@ -74,6 +75,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_pass_args4 = new System.Windows.Forms.CheckBox();
             this.lbl_start_program4 = new System.Windows.Forms.Label();
             this.pnl_start_program3 = new System.Windows.Forms.Panel();
+            this.cb_dont_start_if_running3 = new System.Windows.Forms.CheckBox();
             this.cb_start_program3 = new System.Windows.Forms.CheckBox();
             this.txt_start_program3 = new System.Windows.Forms.TextBox();
             this.cb_start_program_close3 = new System.Windows.Forms.CheckBox();
@@ -82,6 +84,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_pass_args3 = new System.Windows.Forms.CheckBox();
             this.lbl_start_program3 = new System.Windows.Forms.Label();
             this.pnl_start_program2 = new System.Windows.Forms.Panel();
+            this.cb_dont_start_if_running2 = new System.Windows.Forms.CheckBox();
             this.cb_start_program2 = new System.Windows.Forms.CheckBox();
             this.txt_start_program2 = new System.Windows.Forms.TextBox();
             this.cb_start_program_close2 = new System.Windows.Forms.CheckBox();
@@ -90,6 +93,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_pass_args2 = new System.Windows.Forms.CheckBox();
             this.lbl_start_program2 = new System.Windows.Forms.Label();
             this.pnl_start_program1 = new System.Windows.Forms.Panel();
+            this.cb_dont_start_if_running1 = new System.Windows.Forms.CheckBox();
             this.cb_start_program1 = new System.Windows.Forms.CheckBox();
             this.txt_start_program1 = new System.Windows.Forms.TextBox();
             this.cb_start_program_close1 = new System.Windows.Forms.CheckBox();
@@ -142,10 +146,9 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.cb_dont_start_if_running1 = new System.Windows.Forms.CheckBox();
-            this.cb_dont_start_if_running2 = new System.Windows.Forms.CheckBox();
-            this.cb_dont_start_if_running3 = new System.Windows.Forms.CheckBox();
-            this.cb_dont_start_if_running4 = new System.Windows.Forms.CheckBox();
+            this.lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
+            this.lbl_no_active_audio_devices = new System.Windows.Forms.Label();
+            this.lbl_no_active_capture_devices = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -321,6 +324,9 @@ namespace DisplayMagician.UIForms
             // tabp_audio
             // 
             this.tabp_audio.BackColor = System.Drawing.Color.Black;
+            this.tabp_audio.Controls.Add(this.lbl_no_active_capture_devices);
+            this.tabp_audio.Controls.Add(this.lbl_no_active_audio_devices);
+            this.tabp_audio.Controls.Add(this.lbl_disabled_shortcut_audio_chipset);
             this.tabp_audio.Controls.Add(this.gb_capture_settings);
             this.tabp_audio.Controls.Add(this.gb_audio_settings);
             this.tabp_audio.Location = new System.Drawing.Point(4, 32);
@@ -623,6 +629,19 @@ namespace DisplayMagician.UIForms
             this.pnl_start_program4.Size = new System.Drawing.Size(959, 124);
             this.pnl_start_program4.TabIndex = 19;
             // 
+            // cb_dont_start_if_running4
+            // 
+            this.cb_dont_start_if_running4.AutoSize = true;
+            this.cb_dont_start_if_running4.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running4.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running4.Name = "cb_dont_start_if_running4";
+            this.cb_dont_start_if_running4.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running4.TabIndex = 20;
+            this.cb_dont_start_if_running4.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running4.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running4.Visible = false;
+            // 
             // cb_start_program4
             // 
             this.cb_start_program4.Location = new System.Drawing.Point(21, 18);
@@ -712,6 +731,19 @@ namespace DisplayMagician.UIForms
             this.pnl_start_program3.Name = "pnl_start_program3";
             this.pnl_start_program3.Size = new System.Drawing.Size(959, 124);
             this.pnl_start_program3.TabIndex = 18;
+            // 
+            // cb_dont_start_if_running3
+            // 
+            this.cb_dont_start_if_running3.AutoSize = true;
+            this.cb_dont_start_if_running3.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running3.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running3.Name = "cb_dont_start_if_running3";
+            this.cb_dont_start_if_running3.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running3.TabIndex = 20;
+            this.cb_dont_start_if_running3.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running3.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running3.Visible = false;
             // 
             // cb_start_program3
             // 
@@ -803,6 +835,19 @@ namespace DisplayMagician.UIForms
             this.pnl_start_program2.Size = new System.Drawing.Size(959, 124);
             this.pnl_start_program2.TabIndex = 18;
             // 
+            // cb_dont_start_if_running2
+            // 
+            this.cb_dont_start_if_running2.AutoSize = true;
+            this.cb_dont_start_if_running2.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running2.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running2.Name = "cb_dont_start_if_running2";
+            this.cb_dont_start_if_running2.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running2.TabIndex = 19;
+            this.cb_dont_start_if_running2.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running2.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running2.Visible = false;
+            // 
             // cb_start_program2
             // 
             this.cb_start_program2.Location = new System.Drawing.Point(21, 18);
@@ -892,6 +937,19 @@ namespace DisplayMagician.UIForms
             this.pnl_start_program1.Name = "pnl_start_program1";
             this.pnl_start_program1.Size = new System.Drawing.Size(959, 124);
             this.pnl_start_program1.TabIndex = 0;
+            // 
+            // cb_dont_start_if_running1
+            // 
+            this.cb_dont_start_if_running1.AutoSize = true;
+            this.cb_dont_start_if_running1.ForeColor = System.Drawing.Color.White;
+            this.cb_dont_start_if_running1.Location = new System.Drawing.Point(167, 82);
+            this.cb_dont_start_if_running1.Name = "cb_dont_start_if_running1";
+            this.cb_dont_start_if_running1.Size = new System.Drawing.Size(289, 24);
+            this.cb_dont_start_if_running1.TabIndex = 18;
+            this.cb_dont_start_if_running1.Text = "Don\'t start if program already running";
+            this.cb_dont_start_if_running1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_dont_start_if_running1.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running1.Visible = false;
             // 
             // cb_start_program1
             // 
@@ -1525,57 +1583,55 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
-            // cb_dont_start_if_running1
+            // lbl_disabled_shortcut_audio_chipset
             // 
-            this.cb_dont_start_if_running1.AutoSize = true;
-            this.cb_dont_start_if_running1.ForeColor = System.Drawing.Color.White;
-            this.cb_dont_start_if_running1.Location = new System.Drawing.Point(167, 82);
-            this.cb_dont_start_if_running1.Name = "cb_dont_start_if_running1";
-            this.cb_dont_start_if_running1.Size = new System.Drawing.Size(289, 24);
-            this.cb_dont_start_if_running1.TabIndex = 18;
-            this.cb_dont_start_if_running1.Text = "Don\'t start if program already running";
-            this.cb_dont_start_if_running1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_dont_start_if_running1.UseVisualStyleBackColor = true;
-            this.cb_dont_start_if_running1.Visible = false;
+            this.lbl_disabled_shortcut_audio_chipset.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.lbl_disabled_shortcut_audio_chipset.AutoSize = true;
+            this.lbl_disabled_shortcut_audio_chipset.BackColor = System.Drawing.Color.Brown;
+            this.lbl_disabled_shortcut_audio_chipset.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
+            this.lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(326, 298);
+            this.lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
+            this.lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(430, 22);
+            this.lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
+            this.lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn\'t supported :(";
+            this.lbl_disabled_shortcut_audio_chipset.Visible = false;
             // 
-            // cb_dont_start_if_running2
+            // lbl_no_active_audio_devices
             // 
-            this.cb_dont_start_if_running2.AutoSize = true;
-            this.cb_dont_start_if_running2.ForeColor = System.Drawing.Color.White;
-            this.cb_dont_start_if_running2.Location = new System.Drawing.Point(167, 82);
-            this.cb_dont_start_if_running2.Name = "cb_dont_start_if_running2";
-            this.cb_dont_start_if_running2.Size = new System.Drawing.Size(289, 24);
-            this.cb_dont_start_if_running2.TabIndex = 19;
-            this.cb_dont_start_if_running2.Text = "Don\'t start if program already running";
-            this.cb_dont_start_if_running2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_dont_start_if_running2.UseVisualStyleBackColor = true;
-            this.cb_dont_start_if_running2.Visible = false;
+            this.lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_no_active_audio_devices.AutoSize = true;
+            this.lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
+            this.lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
+            this.lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_no_active_audio_devices.Location = new System.Drawing.Point(131, 151);
+            this.lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
+            this.lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
+            this.lbl_no_active_audio_devices.TabIndex = 35;
+            this.lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output" +
+    " if you want to use this feature.";
+            this.lbl_no_active_audio_devices.Visible = false;
             // 
-            // cb_dont_start_if_running3
+            // lbl_no_active_capture_devices
             // 
-            this.cb_dont_start_if_running3.AutoSize = true;
-            this.cb_dont_start_if_running3.ForeColor = System.Drawing.Color.White;
-            this.cb_dont_start_if_running3.Location = new System.Drawing.Point(167, 82);
-            this.cb_dont_start_if_running3.Name = "cb_dont_start_if_running3";
-            this.cb_dont_start_if_running3.Size = new System.Drawing.Size(289, 24);
-            this.cb_dont_start_if_running3.TabIndex = 20;
-            this.cb_dont_start_if_running3.Text = "Don\'t start if program already running";
-            this.cb_dont_start_if_running3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_dont_start_if_running3.UseVisualStyleBackColor = true;
-            this.cb_dont_start_if_running3.Visible = false;
-            // 
-            // cb_dont_start_if_running4
-            // 
-            this.cb_dont_start_if_running4.AutoSize = true;
-            this.cb_dont_start_if_running4.ForeColor = System.Drawing.Color.White;
-            this.cb_dont_start_if_running4.Location = new System.Drawing.Point(167, 82);
-            this.cb_dont_start_if_running4.Name = "cb_dont_start_if_running4";
-            this.cb_dont_start_if_running4.Size = new System.Drawing.Size(289, 24);
-            this.cb_dont_start_if_running4.TabIndex = 20;
-            this.cb_dont_start_if_running4.Text = "Don\'t start if program already running";
-            this.cb_dont_start_if_running4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_dont_start_if_running4.UseVisualStyleBackColor = true;
-            this.cb_dont_start_if_running4.Visible = false;
+            this.lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.lbl_no_active_capture_devices.AutoSize = true;
+            this.lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
+            this.lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
+            this.lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_no_active_capture_devices.Location = new System.Drawing.Point(126, 433);
+            this.lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
+            this.lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
+            this.lbl_no_active_capture_devices.TabIndex = 36;
+            this.lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one micropho" +
+    "ne if you want to use this feature.";
+            this.lbl_no_active_capture_devices.Visible = false;
             // 
             // ShortcutForm
             // 
@@ -1606,6 +1662,7 @@ namespace DisplayMagician.UIForms
             this.tabp_display.ResumeLayout(false);
             this.tabp_display.PerformLayout();
             this.tabp_audio.ResumeLayout(false);
+            this.tabp_audio.PerformLayout();
             this.gb_capture_settings.ResumeLayout(false);
             this.gb_capture_settings.PerformLayout();
             this.gb_capture_volume.ResumeLayout(false);
@@ -1759,5 +1816,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_dont_start_if_running3;
         private System.Windows.Forms.CheckBox cb_dont_start_if_running2;
         private System.Windows.Forms.CheckBox cb_dont_start_if_running1;
+        private System.Windows.Forms.Label lbl_disabled_shortcut_audio_chipset;
+        private System.Windows.Forms.Label lbl_no_active_audio_devices;
+        private System.Windows.Forms.Label lbl_no_active_capture_devices;
     }
 }

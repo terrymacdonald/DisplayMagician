@@ -15,12 +15,20 @@
 		<Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 		<!-- Upgrade settings. This will be explained in more detail in a future post -->
 		<Upgrade Id="$(var.UpgradeCode)">
-			<UpgradeVersion OnlyDetect="yes" Minimum="$(var.VersionNumber)" IncludeMinimum="no" Property="NEWER_VERSION_FOUND" />
-			<UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="yes" Maximum="$(var.VersionNumber)" IncludeMaximum="no" Property="OLDER_VERSION_FOUND" IgnoreRemoveFailure="yes" />
+			<UpgradeVersion OnlyDetect="yes" Minimum="$(var.VersionNumber)" IncludeMinimum="no" Property="NEWERFOUND" />
+			<UpgradeVersion OnlyDetect="yes" Minimum="$(var.VersionNumber)" Maximum="$(var.VersionNumber)" IncludeMinimum="yes" IncludeMaximum="yes" Property="SELFFOUND" />
+			<UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="no" Maximum="$(var.VersionNumber)" IncludeMaximum="no" Property="OLDER_VERSION_FOUND" IgnoreRemoveFailure="yes" />
 		</Upgrade>
-		<Condition Message="A newer version of [ProductName] is already installed.">
-			NOT NEWER_VERSION_FOUND
+
+		<CustomAction Id='AlreadyUpdated' Error='!(loc.ProductName) has already been updated to $(var.VersionNumber) or newer. If you want to reinstall this version then uninstall !(loc.ProductName) first.' />
+		<CustomAction Id='NoDowngrade' Error='A later version of [ProductName] is already installed.' />
+
+		<!--<Condition Message="A newer version of [ProductName] is already installed.">
+			NEWER_FOUND
 		</Condition>
+		<Condition Message="You are trying to upgrade to the same version of [ProductName].">
+			SELF_FOUND
+		</Condition>-->
 		<!--<MajorUpgrade IgnoreRemoveFailure="yes" AllowDowngrades="no" AllowSameVersionUpgrades="no"  DowngradeErrorMessage="!(loc.DowngradeErrorMessage)" />-->
 		<!-- Reference the global WIXNETFX4RELEASEINSTALLED property so that will automatically pull in the .Net 4.8 variables (WiX 3.14 and higher only supported) -->
 		<!--<PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED"/>
@@ -143,6 +151,8 @@
 			<RemoveExistingProducts After="InstallInitialize"/>
 			<Custom Action="InstallShell" After="InstallFiles">NOT Installed</Custom>
 			<Custom Action="UninstallShell" Before="RemoveFiles">(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+			<Custom Action='AlreadyUpdated' After='FindRelatedProducts'>SELFFOUND</Custom>
+			<Custom Action='NoDowngrade' After='FindRelatedProducts'>NEWERFOUND</Custom>
 		</InstallExecuteSequence>
 
 		<!-- Set the components defined in our fragment files that will be used for our feature  -->

@@ -14,6 +14,7 @@ using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
 using AudioSwitcher.AudioApi.CoreAudio;
+using AudioSwitcher.AudioApi;
 
 namespace DisplayMagician
 {
@@ -1808,17 +1809,8 @@ namespace DisplayMagician
         public void ReplaceShortcutIconInCache()
         {
             string newShortcutIconFilename;
-            if (_category == ShortcutCategory.Application)
-            {
-                // Work out the name of the shortcut we'll save.
-                newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, String.Concat(@"executable-", _profileToUse.UUID, "-", Path.GetFileNameWithoutExtension(_executableNameAndPath), @".ico"));
-
-            }
-            else
-            {
-                // Work out the name of the shortcut we'll save.
-                newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, String.Concat(_gameLibrary.ToString().ToLower(CultureInfo.InvariantCulture), @"-", _profileToUse.UUID, "-", _gameAppId.ToString(), @".ico"));
-            }
+            // Work out the name of the shortcut we'll save.
+            newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
 
             // If the new shortcut icon should be named differently
             // then change the name of it
@@ -1836,18 +1828,8 @@ namespace DisplayMagician
         public void SaveShortcutIconToCache()
         {
 
-            // Only add this set of options if the shortcut is to an standalone application
-            if (_category == ShortcutCategory.Application)
-            {
-                // Work out the name of the shortcut we'll save.
-                _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, String.Concat(@"executable-", _profileToUse.UUID, "-", Path.GetFileNameWithoutExtension(_executableNameAndPath), @".ico"));
-
-            }
-            else 
-            {
-                // Work out the name of the shortcut we'll save.
-                _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, String.Concat(_gameLibrary.ToString().ToLower(CultureInfo.InvariantCulture),@"-", _profileToUse.UUID, "-", _gameAppId.ToString(), @".ico"));
-            }
+            // Work out the name of the shortcut we'll save.
+            _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
 
             MultiIcon shortcutIcon;
             try
@@ -1858,7 +1840,7 @@ namespace DisplayMagician
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutRepository/SaveShortcutIconToCache exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"ShortcutRepository/SaveShortcutIconToCache: Exception while trying to save the Shortcut ivon.");
 
                 // If we fail to create an icon based on the original executable or game
                 // Then we use the standard DisplayMagician profile one.
@@ -2090,87 +2072,135 @@ namespace DisplayMagician
                 }
             }
             // Check the Audio Device is still valid (if one is specified)
+            CoreAudioController audioController = ShortcutRepository.AudioController;
             if (ChangeAudioDevice)
             {
-                CoreAudioController audioController = ShortcutRepository.AudioController;
-                IEnumerable<CoreAudioDevice> audioDevices = audioController.GetPlaybackDevices();
-                foreach (CoreAudioDevice audioDevice in audioDevices)
+                IEnumerable<CoreAudioDevice> audioDevices = null;
+                if (audioController != null)
                 {
-                    if (audioDevice.FullName.Equals(AudioDevice))
+                    try
                     {
-                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
-                        {
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "AudioDeviceDisabled";
-                            error.Validity = ShortcutValidity.Warning;
-                            error.Message = $"The Audio Device { AudioDevice} is disabled, so the shortcut '{Name}' cannot be used.You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Warning;
-                        }
-                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
-                        {
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "AudioDeviceNotPresent";
-                            error.Validity = ShortcutValidity.Error;
-                            error.Message = $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Error;
-                        }
-                        if (audioDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
-                        {
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "AudioDeviceUnplugged";
-                            error.Validity = ShortcutValidity.Warning;
-                            error.Message = $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Warning;
-                        }
+                        audioDevices = audioController.GetPlaybackDevices();
                     }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutRepository/RefreshValidity: Exception trying to get all playback devices!");
+                    }
+                    if (audioDevices != null)
+                    {
+                        foreach (CoreAudioDevice audioDevice in audioDevices)
+                        {
+                            if (audioDevice.FullName.Equals(AudioDevice))
+                            {
+                                if (audioDevice.State == DeviceState.Disabled)
+                                {
+                                    ShortcutError error = new ShortcutError();
+                                    error.Name = "AudioDeviceDisabled";
+                                    error.Validity = ShortcutValidity.Warning;
+                                    error.Message = $"The Audio Device { AudioDevice} is disabled, so the shortcut '{Name}' cannot be used.You need to enable the audio device to use this shortcut, or edit the shortcut to change the audio device.";
+                                    _shortcutErrors.Add(error);
+                                    if (worstError != ShortcutValidity.Error)
+                                        worstError = ShortcutValidity.Warning;
+                                }
+                                if (audioDevice.State == DeviceState.NotPresent)
+                                {
+                                    ShortcutError error = new ShortcutError();
+                                    error.Name = "AudioDeviceNotPresent";
+                                    error.Validity = ShortcutValidity.Error;
+                                    error.Message = $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.";
+                                    _shortcutErrors.Add(error);
+                                    if (worstError != ShortcutValidity.Error)
+                                        worstError = ShortcutValidity.Error;
+                                }
+                                if (audioDevice.State == DeviceState.Unplugged)
+                                {
+                                    ShortcutError error = new ShortcutError();
+                                    error.Name = "AudioDeviceUnplugged";
+                                    error.Validity = ShortcutValidity.Warning;
+                                    error.Message = $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.";
+                                    _shortcutErrors.Add(error);
+                                    if (worstError != ShortcutValidity.Error)
+                                        worstError = ShortcutValidity.Warning;
+                                }
+                            }
+                        }
+                    }                    
+                }
+                else
+                {
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "AudioChipsetNotSupported";
+                    error.Validity = ShortcutValidity.Warning;
+                    error.Message = $"The Audio chipset isn't supported by DisplayMagician. You need to edit the shortcut to not change the audio output settings.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Warning;
                 }
             }
             // Check the Capture Device is still valid (if one is specified)
             if (ChangeCaptureDevice)
             {
-                CoreAudioController audioController = ShortcutRepository.AudioController;
-                IEnumerable<CoreAudioDevice> captureDevices = audioController.GetCaptureDevices();
-                foreach (CoreAudioDevice captureDevice in captureDevices)
+                IEnumerable<CoreAudioDevice> captureDevices = null;
+                if (audioController != null)
                 {
-                    if (captureDevice.FullName.Equals(CaptureDevice))
+                    try
                     {
-                        if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Disabled)
-                        {
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "CaptureDeviceDisabled";
-                            error.Validity = ShortcutValidity.Warning;
-                            error.Message = $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Warning;
-                        }
-                        if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.NotPresent)
-                        {
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "CaptureDeviceNotPresent";
-                            error.Validity = ShortcutValidity.Error;
-                            error.Message = $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Error;
-                        }
-                        if (captureDevice.State == AudioSwitcher.AudioApi.DeviceState.Unplugged)
-                        {
-                            ShortcutError error = new ShortcutError();
-                            error.Name = "CaptureDeviceUnplugged";
-                            error.Validity = ShortcutValidity.Warning;
-                            error.Message = $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.";
-                            _shortcutErrors.Add(error);
-                            if (worstError != ShortcutValidity.Error)
-                                worstError = ShortcutValidity.Warning;
-                        }
+                        captureDevices = audioController.GetCaptureDevices();
                     }
+                    catch(Exception ex)
+                    {
+                        logger.Warn(ex, $"ShortcutRepository/RefreshValidity: Exception trying to get all capture devices!");
+                    }
+
+                    if (captureDevices != null)
+                    {
+                        foreach (CoreAudioDevice captureDevice in captureDevices)
+                        {
+                            if (captureDevice.FullName.Equals(CaptureDevice))
+                            {
+                                if (captureDevice.State == DeviceState.Disabled)
+                                {
+                                    ShortcutError error = new ShortcutError();
+                                    error.Name = "CaptureDeviceDisabled";
+                                    error.Validity = ShortcutValidity.Warning;
+                                    error.Message = $"The Capture Device {CaptureDevice} is disabled, so the shortcut '{Name}' cannot be used. You need to enable the capture device to use this shortcut, or edit the shortcut to change the capture device.";
+                                    _shortcutErrors.Add(error);
+                                    if (worstError != ShortcutValidity.Error)
+                                        worstError = ShortcutValidity.Warning;
+                                }
+                                if (captureDevice.State == DeviceState.NotPresent)
+                                {
+                                    ShortcutError error = new ShortcutError();
+                                    error.Name = "CaptureDeviceNotPresent";
+                                    error.Validity = ShortcutValidity.Error;
+                                    error.Message = $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.";
+                                    _shortcutErrors.Add(error);
+                                    if (worstError != ShortcutValidity.Error)
+                                        worstError = ShortcutValidity.Error;
+                                }
+                                if (captureDevice.State == DeviceState.Unplugged)
+                                {
+                                    ShortcutError error = new ShortcutError();
+                                    error.Name = "CaptureDeviceUnplugged";
+                                    error.Validity = ShortcutValidity.Warning;
+                                    error.Message = $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.";
+                                    _shortcutErrors.Add(error);
+                                    if (worstError != ShortcutValidity.Error)
+                                        worstError = ShortcutValidity.Warning;
+                                }
+                            }
+                        }
+                    }                    
+                } 
+                else
+                {
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "AudioChipsetNotSupported";
+                    error.Validity = ShortcutValidity.Warning;
+                    error.Message = $"The Audio chipset isn't supported by DisplayMagician. You need to edit the shortcut to not change the microphone input settings.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Warning;
                 }
             }
 
@@ -2227,6 +2257,7 @@ namespace DisplayMagician
             shortcutFileName = Path.ChangeExtension(shortcutFileName, @"lnk");
 
             // And we use the Icon from the shortcutIconCache
+            SaveShortcutIconToCache();
             shortcutIconFileName = SavedShortcutIconCacheFilename;
 
             // If the user supplied a file
