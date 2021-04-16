@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security;
 using DisplayMagician.Resources;
-using Microsoft.Win32;
 using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
@@ -29,21 +27,22 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public OriginGame(string originGameId, string originGameName, string originGameExePath, string originGameIconPath)
+        public OriginGame(string OriginGameId, string OriginGameName, string OriginGameExePath, string OriginGameIconPath)
         {
 
-            _gameRegistryKey = $@"{OriginLibrary.OriginAppsRegistryKey}\\{originGameId}";
-            _originGameId = originGameId;
-            _originGameName = originGameName;
-            _originGameExePath = originGameExePath;
-            _originGameDir = Path.GetDirectoryName(originGameExePath);
+            //_gameRegistryKey = $@"{OriginLibrary.registryOriginInstallsKey}\\{OriginGameId}";
+            _originGameId = OriginGameId;
+            _originGameName = OriginGameName;
+            _originGameExePath = OriginGameExePath;
+            _originGameDir = Path.GetDirectoryName(OriginGameExePath);
             _originGameExe = Path.GetFileName(_originGameExePath);
             _originGameProcessName = Path.GetFileNameWithoutExtension(_originGameExePath);
-            _originGameIconPath = originGameIconPath;
+            _originGameIconPath = OriginGameIconPath;
 
         }
 
-        public override string Id { 
+        public override string Id
+        {
             get => _originGameId;
             set => _originGameId = value;
         }
@@ -54,12 +53,14 @@ namespace DisplayMagician.GameLibraries
             set => _originGameName = value;
         }
 
-        public override SupportedGameLibrary GameLibrary { 
-            get => SupportedGameLibrary.Origin; 
+        public override SupportedGameLibrary GameLibrary
+        {
+            get => SupportedGameLibrary.Origin;
         }
 
-        public override string IconPath { 
-            get => _originGameIconPath; 
+        public override string IconPath
+        {
+            get => _originGameIconPath;
             set => _originGameIconPath = value;
         }
 
@@ -84,21 +85,22 @@ namespace DisplayMagician.GameLibraries
                 foreach (Process gameProcess in gameProcesses)
                 {
                     try
-                    {
-                        if (gameProcess.MainModule.FileName.StartsWith(_originGameExePath))
+                    {                       
+                        if (gameProcess.ProcessName.Equals(_originGameProcessName))
                             numGameProcesses++;
                     }
                     catch (Exception ex)
                     {
-                        logger.Debug(ex, $"OriginGame/IsRunning: Accessing Process.MainModule caused exception. Trying GameUtils.GetMainModuleFilepath instead");
-
+                        logger.Debug(ex, $"OriginGame/IsRunning: Accessing Process.ProcessName caused exception. Trying GameUtils.GetMainModuleFilepath instead");
                         // If there is a race condition where MainModule isn't available, then we 
                         // instead try the much slower GetMainModuleFilepath (which does the same thing)
                         string filePath = GameUtils.GetMainModuleFilepath(gameProcess.Id);
                         if (filePath == null)
                         {
                             // if we hit this bit then GameUtils.GetMainModuleFilepath failed,
-                            // so we just skip that process
+                            // so we just assume that the process is a game process
+                            // as it matched the original process search
+                            numGameProcesses++;
                             continue;
                         }
                         else
@@ -106,6 +108,7 @@ namespace DisplayMagician.GameLibraries
                             if (filePath.StartsWith(_originGameExePath))
                                 numGameProcesses++;
                         }
+                            
                     }
                 }
                 if (numGameProcesses > 0)
@@ -115,7 +118,8 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public override bool IsUpdating
+        // Have to do much more research to figure out how to detect when Origin is updating a game
+        /*public override bool IsUpdating
         {
             get
             {
@@ -148,19 +152,19 @@ namespace DisplayMagician.GameLibraries
                     throw;
                 }
             }
-        }
+        }*/
 
-        public bool CopyInto(OriginGame originGame)
+        public bool CopyTo(OriginGame OriginGame)
         {
-            if (!(originGame is OriginGame))
+            if (!(OriginGame is OriginGame))
                 return false;
 
             // Copy all the game data over to the other game
-            originGame.IconPath = IconPath;
-            originGame.Id = Id;
-            originGame.Name = Name;
-            originGame.ExePath = ExePath;
-            originGame.Directory = Directory;
+            OriginGame.IconPath = IconPath;
+            OriginGame.Id = Id;
+            OriginGame.Name = Name;
+            OriginGame.ExePath = ExePath;
+            OriginGame.Directory = Directory;
             return true;
         }
 
@@ -178,10 +182,10 @@ namespace DisplayMagician.GameLibraries
                 return name + " " + Language.Running;
             }
 
-            if (IsUpdating)
+            /*if (IsUpdating)
             {
                 return name + " " + Language.Updating;
-            }
+            }*/
 
             return name;
         }

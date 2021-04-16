@@ -758,10 +758,36 @@ namespace DisplayMagician {
 
             });
 
+            // Now lets prepare loading all the Origin games we have installed
+            Task loadOriginGamesTask = new Task(() =>
+            {
+                // Check if Origin is installed
+                if (GameLibraries.OriginLibrary.IsOriginInstalled)
+                {
+                    // Load Origin library games
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Origin Games");
+                    Console.Write("Loading Installed Origin Games...");
+                    if (!DisplayMagician.GameLibraries.OriginLibrary.LoadInstalledGames())
+                    {
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Origin Games!");
+                    }
+                    Console.WriteLine("Done.");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {GameLibraries.OriginLibrary.InstalledOriginGameCount})");
+                }
+                else
+                {
+                    logger.Info($"Program/LoadGamesInBackground: Origin not installed.");
+                    Console.WriteLine("Origin not installed.");
+                }
+
+            });
+
+
             // Store all the tasks in an array so we can wait on them later
-            Task[] loadGamesTasks = new Task[2];
+            Task[] loadGamesTasks = new Task[3];
             loadGamesTasks[0] = loadSteamGamesTask;
             loadGamesTasks[1] = loadUplayGamesTask;
+            loadGamesTasks[2] = loadOriginGamesTask;
 
             logger.Debug($"Program/LoadGamesInBackground: Running game loading tasks.");
             // Go through and start all the tasks
