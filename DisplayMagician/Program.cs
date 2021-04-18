@@ -17,14 +17,6 @@ using System.Runtime.Serialization;
 using NLog.Config;
 
 namespace DisplayMagician {
- 
-    public enum SupportedGameLibrary
-    {
-        Unknown,
-        Origin,
-        Steam,
-        Uplay
-    }
 
     public enum ApplyProfileResult
     {

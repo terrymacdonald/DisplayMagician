@@ -12,38 +12,35 @@ using System.Web;
 
 namespace DisplayMagician.GameLibraries
 {
-    public static class OriginLibrary
+    public sealed class OriginLibrary : GameLibrary
     {
         #region Class Variables
-        // Common items to the class
-        private static List<Game> _allOriginGames = new List<Game>();
-        private static string OriginAppIdRegex = @"/^[0-9A-F]{1,10}$";
-        private static string _originExe;
-        private static string _originPath;
-        private static string _originLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Origin");
-        private static bool _isOriginInstalled = false;
+        // Static members are 'eagerly initialized', that is, 
+        // immediately when class is loaded for the first time.
+        // .NET guarantees thread safety for static initialization
+        private static readonly OriginLibrary _instance = new OriginLibrary();
 
-        //private static string _originConfigVdfFile;
-        internal static string registryOriginLauncherKey = @"SOFTWARE\WOW6432Node\Origin";
-        //internal static string registryOriginInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
-        //internal static string registryOriginOpenCmdKey = @"SOFTWARE\Classes\Origin\Shell\Open\Command";
-        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        // Common items to the class
+        private List<Game> _allOriginGames = new List<Game>();
+        private string OriginAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string _originExe;
+        private string _originPath;
+        private string _originLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Origin");
+        private bool _isOriginInstalled = false;
+
+        //private  string _originConfigVdfFile;
+        internal  string registryOriginLauncherKey = @"SOFTWARE\WOW6432Node\Origin";
+        //internal  string registryOriginInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
+        //internal  string registryOriginOpenCmdKey = @"SOFTWARE\Classes\Origin\Shell\Open\Command";
+        private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
 
         // Other constants that are useful
-        #endregion
-
-        private struct OriginAppInfo
-        {
-            public string GameID;
-            public string GameName;
-            public string GameExePath;
-            public string GameInstallDir;
-            public string GameOriginIconPath;
-        }
+        #endregion     
          
         #region Class Constructors
-        static OriginLibrary()
+        private OriginLibrary()
         {
             try
             {
@@ -86,7 +83,7 @@ namespace DisplayMagician.GameLibraries
         #endregion
 
         #region Class Properties
-        public static List<Game> AllInstalledGames
+        public override List<Game> AllInstalledGames
         {
             get
             {
@@ -98,7 +95,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static int InstalledOriginGameCount
+        public override int InstalledGameCount
         {
             get
             {
@@ -106,7 +103,23 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string OriginExe
+        public override string GameLibraryName 
+        { 
+            get 
+            {
+                return "Origin";
+            } 
+        }
+
+        public override SupportedGameLibraryType GameLibraryType
+        {
+            get
+            {
+                return SupportedGameLibraryType.Origin;
+            }
+        }
+
+        public override string GameLibraryExe
         {
             get
             {
@@ -114,7 +127,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string OriginPath
+        public override string GameLibraryPath
         {
             get
             {
@@ -122,7 +135,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static bool IsOriginInstalled
+        public override bool IsGameLibraryInstalled
         {
             get
             {
@@ -135,18 +148,24 @@ namespace DisplayMagician.GameLibraries
         #endregion
 
         #region Class Methods
-        public static bool AddOriginGame(OriginGame originGame)
+        public static OriginLibrary GetLibrary()
+        {
+            return _instance;
+        }
+
+
+        public  bool AddGame(OriginGame originGame)
         {
             if (!(originGame is OriginGame))
                 return false;
             
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
-            if (ContainsOriginGame(originGame))
+            if (ContainsGame(originGame))
             {
                 logger.Debug($"OriginLibrary/AddOriginGame: Updating Origin game {originGame.Name} in our Origin library");
                 // We update the existing Shortcut with the data over
-                OriginGame originGameToUpdate = GetOriginGame(originGame.Id.ToString());
+                OriginGame originGameToUpdate = GetGame(originGame.Id.ToString());
                 originGame.CopyTo(originGameToUpdate);
             }
             else
@@ -157,7 +176,7 @@ namespace DisplayMagician.GameLibraries
             }
 
             //Doublecheck it's been added
-            if (ContainsOriginGame(originGame))
+            if (ContainsGame(originGame))
             {
                 return true;
             }
@@ -166,7 +185,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool RemoveOriginGame(OriginGame originGame)
+        public bool RemoveGame(OriginGame originGame)
         {
             if (!(originGame is OriginGame))
                 return false;
@@ -190,7 +209,7 @@ namespace DisplayMagician.GameLibraries
                 throw new OriginLibraryException();
         }
 
-        public static bool RemoveOriginGameById(string originGameId)
+        public override bool RemoveGameById(string originGameId)
         {
             if (originGameId.Equals(0))
                 return false;
@@ -214,7 +233,7 @@ namespace DisplayMagician.GameLibraries
                 throw new OriginLibraryException();
         }
 
-        public static bool RemoveOriginGame(string originGameNameOrId)
+        public override bool RemoveGame(string originGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return false;
@@ -243,7 +262,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsOriginGame(OriginGame originGame)
+        public bool ContainsGame(OriginGame originGame)
         {
             if (!(originGame is OriginGame))
                 return false;
@@ -257,7 +276,7 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
-        public static bool ContainsOriginGameById(string originGameId)
+        public override bool ContainsGameById(string originGameId)
         {
             foreach (OriginGame testOriginGame in _allOriginGames)
             {
@@ -270,7 +289,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsOriginGame(string originGameNameOrId)
+        public override bool ContainsGame(string originGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return false;
@@ -301,7 +320,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static OriginGame GetOriginGame(string originGameNameOrId)
+        public OriginGame GetGame(string originGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return null;
@@ -330,7 +349,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static OriginGame GetOriginGameById(string originGameId)
+        public OriginGame GetGameById(string originGameId)
         {
             foreach (OriginGame testOriginGame in _allOriginGames)
             {
@@ -342,7 +361,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        private static Dictionary<string, string> ParseOriginManifest(string path)
+        private Dictionary<string, string> ParseOriginManifest(string path)
         {
             string encodedContents = File.ReadAllText(path);
             Dictionary<string, string> parameters = Regex.Matches(encodedContents, "([^?=&]+)(=([^&]*))?").Cast<Match>().ToDictionary(x => x.Groups[1].Value, x => x.Groups[3].Value);
@@ -350,7 +369,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static bool LoadInstalledGames()
+        public override bool LoadInstalledGames()
         {
             try
             {
@@ -372,7 +391,7 @@ namespace DisplayMagician.GameLibraries
                     {
                         try
                         {
-                            OriginAppInfo originGame = new OriginAppInfo();
+                            GameAppInfo originGame = new GameAppInfo();
                             originGame.GameID = Path.GetFileNameWithoutExtension(package);
                             if (!originGame.GameID.StartsWith("Origin"))
                             {
@@ -546,10 +565,10 @@ namespace DisplayMagician.GameLibraries
                                 }
 
                                 // TODO check for icon! For now we will just use the exe one
-                                originGame.GameOriginIconPath = originGame.GameExePath;
+                                originGame.GameIconPath = originGame.GameExePath;
 
                                 // If we reach here we add the Game to the list of games we have!
-                                _allOriginGames.Add(new OriginGame(originGame.GameID, originGame.GameName, originGame.GameExePath, originGame.GameOriginIconPath));
+                                _allOriginGames.Add(new OriginGame(originGame.GameID, originGame.GameName, originGame.GameExePath, originGame.GameIconPath));
 
                             }
                             else
@@ -662,7 +681,7 @@ namespace DisplayMagician.GameLibraries
     }
 
     [global::System.Serializable]
-    public class OriginLibraryException : Exception
+    public class OriginLibraryException : GameLibraryException
     {
         public OriginLibraryException() { }
         public OriginLibraryException(string message) : base(message) { }

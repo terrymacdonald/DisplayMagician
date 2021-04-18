@@ -1050,6 +1050,204 @@ namespace DisplayMagician
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Game))
             {
+                Game gameToRun = null;
+                GameLibrary gameLibraryToUse = null;
+
+                // If the game is a Steam Game we check for that
+                if (shortcutToUse.GameLibrary.Equals(GameLibrary.SupportedGameLibraryType.Steam))
+                {
+                    // We now need to get the SteamGame info
+                    gameLibraryToUse = SteamLibrary.GetLibrary();
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} Steam Game, and then we're going to monitor it to wait for it to close.");
+                }
+                // If the game is a Ubiconnect Uplay Game we check for that
+                else if (shortcutToUse.GameLibrary.Equals(GameLibrary.SupportedGameLibraryType.Ubiconnect))
+                {
+                    // We now need to get the Uplay Game  info
+                    gameLibraryToUse = UplayLibrary.GetLibrary();
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} Ubiconnect Game, and then we're going to monitor it to wait for it to close.");
+                }
+                // If the game is a Uplay Game we check for that
+                else if (shortcutToUse.GameLibrary.Equals(GameLibrary.SupportedGameLibraryType.Origin))
+                {
+                    // We now need to get the Uplay Game  info
+                    gameLibraryToUse = UplayLibrary.GetLibrary();
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} Origin Game, and then we're going to monitor it to wait for it to close.");
+                }
+
+                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameLibraryToUse.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
+                gameToRun = gameLibraryToUse.GetGameById(shortcutToUse.GameAppId);
+
+                // If the GameAppID is not null, then we've matched a game! Lets run it.
+                if (gameToRun != null)
+                {
+
+                    Process gameProcess;
+
+                    if (gameToRun.StartMode.Equals(Game.GameStartMode.URI))
+                    {
+
+                        // Now we want to tell the user we're start a game
+                        // Construct the Windows toast content
+                        ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo($"notify=starting{gameToRun.GameLibrary}", ToastActivationType.Foreground)
+                            .AddText($"Starting {gameToRun.GameLibrary}", hintMaxLines: 1)
+                            .AddText($"Waiting for {gameToRun.GameLibrary}to start (and update if needed)...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        ToastContent toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        var doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        var toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        // Prepare to start the game using the URI method
+                        string address = "";
+                        if (shortcutToUse.GameArgumentsRequired)
+                        {
+                            address = gameToRun.GetStartURI(shortcutToUse.GameArguments);
+                            logger.Debug($"ShortcutRepository/RunShortcut: Shortcut has arguments:  {shortcutToUse.GameArguments}");
+                        }
+                        else
+                        {
+                            address = gameToRun.GetStartURI("");
+                            logger.Debug($"ShortcutRepository/RunShortcut: Shortcut has no arguments");
+                        }
+                        logger.Debug($"ShortcutRepository/RunShortcut: Game launch URI is {address}");
+                        logger.Info($"ShortcutRepository/RunShortcut: Starting process with command '{address}'");
+                        gameProcess = Process.Start(address);
+
+                        // Delay 500ms
+                        Thread.Sleep(500);
+
+                        // Wait for Origin to start
+                        List<Process> originProcesses = null;
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+
+                            // Look for the processes with the ProcessName we sorted out earlier
+                            originProcesses = Process.GetProcessesByName("origin").ToList();
+
+                            // If we have found one or more processes then we should be good to go
+                            // so let's break
+                            if (originProcesses.Count > 0)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found {originProcesses.Count} 'origin' processes have started");
+                                break;
+                            }
+
+                            // Let's wait a little while if we couldn't find
+                            // any processes yet
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Delay 5secs
+                        Thread.Sleep(5000);
+                        logger.Debug($"ShortcutRepository/RunShortcut: Pausing for 5 seconds to let the Origin process start the game.");
+
+                        // Now we know the Origin app is running then 
+                        // we wait until the Origin game is running (*allows for origin update)
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+
+                            if (originGameToRun.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found the '{originGameToRun.Name}' process has started");
+                                break;
+                            }
+
+                            // Delay 500ms
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Store the Origin Process ID for later
+                        IPCService.GetInstance().HoldProcessId = originStartProcess?.Id ?? 0;
+                        IPCService.GetInstance().Status = InstanceStatus.OnHold;
+
+                        // Add a status notification icon in the status area
+                        if (originGameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {originGameToRun.Name}...";
+                        else
+                            notifyIcon.Text = $"DisplayMagician: Running {originGameToRun.Name.Substring(0, 41)}...";
+                        Application.DoEvents();
+
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=runningOriginGame", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
+                            .AddText($"Waiting for the Origin Game {shortcutToUse.GameName} to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        // Wait 5 seconds for the game process to spawn	
+                        Thread.Sleep(5000);
+
+                        // Wait for the game to exit
+                        Console.WriteLine($"Waiting for {originGameToRun.Name} to exit.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: waiting for Origin Game {originGameToRun.Name} to exit.");
+                        while (true)
+                        {
+                            if (!originGameToRun.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Origin Game {originGameToRun.Name} is no longer running (IsRunning is false).");
+                                break;
+                            }
+
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
+                        }
+                        Console.WriteLine($"{originGameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Origin Game {originGameToRun.Name} has exited.");
+
+                        // Tell the user that the Uplay Game has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                            .AddText($"{shortcutToUse.GameName} game was shutdown and changes were reverted.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    }
+
+                }
+                else
+                {
+                    logger.Error($"ShortcutRepository/RunShortcut: Error starting the {gameToRun.Name} {gameToRun.GameLibrary} Game as the game wasn't found.");
+                }
+
+
+
+
+
+
+                //-------------------------
+
                 // If the game is a Steam Game we check for that
                 if (shortcutToUse.GameLibrary.Equals(SupportedGameLibrary.Steam))
                 {
@@ -1690,3 +1888,4 @@ namespace DisplayMagician
     }
 
 }
+
