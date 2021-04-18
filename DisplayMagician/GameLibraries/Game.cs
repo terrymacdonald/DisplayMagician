@@ -3,6 +3,13 @@
     public class Game
     {
 
+        public enum GameStartMode
+        {
+            URI
+        }
+
+
+
         #region Properties
         public virtual string Id { get; set; }
 
@@ -24,10 +31,17 @@
 
         public virtual string ProcessName { get; set; }
 
+        public virtual GameStartMode StartMode { get; set; }
+
         #endregion
 
 
         #region Methods
+        public virtual string GetStartURI(string gameArguments = "")
+        {
+            return "";
+        }
+
         public virtual bool CopyTo(SteamGame steamGame)
         {
             return true;

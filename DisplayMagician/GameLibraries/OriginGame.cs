@@ -10,7 +10,6 @@ namespace DisplayMagician.GameLibraries
 {
     public class OriginGame : Game
     {
-        private string _gameRegistryKey;
         private string _originGameId;
         private string _originGameName;
         private string _originGameExePath;
@@ -18,6 +17,7 @@ namespace DisplayMagician.GameLibraries
         private string _originGameExe;
         private string _originGameProcessName;
         private string _originGameIconPath;
+        //private string _originURI;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static OriginGame()
@@ -27,17 +27,17 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public OriginGame(string OriginGameId, string OriginGameName, string OriginGameExePath, string OriginGameIconPath)
+        public OriginGame(string originGameId, string originGameName, string originGameExePath, string originGameIconPath)
         {
 
             //_gameRegistryKey = $@"{OriginLibrary.registryOriginInstallsKey}\\{OriginGameId}";
-            _originGameId = OriginGameId;
-            _originGameName = OriginGameName;
-            _originGameExePath = OriginGameExePath;
-            _originGameDir = Path.GetDirectoryName(OriginGameExePath);
+            _originGameId = originGameId;
+            _originGameName = originGameName;
+            _originGameExePath = originGameExePath;
+            _originGameDir = Path.GetDirectoryName(originGameExePath);
             _originGameExe = Path.GetFileName(_originGameExePath);
             _originGameProcessName = Path.GetFileNameWithoutExtension(_originGameExePath);
-            _originGameIconPath = OriginGameIconPath;
+            _originGameIconPath = originGameIconPath;
 
         }
 
@@ -153,6 +153,21 @@ namespace DisplayMagician.GameLibraries
                 }
             }
         }*/
+
+        public override GameStartMode StartMode
+        {
+            get => GameStartMode.URI;
+        }
+
+        public override string GetStartURI(string gameArguments = "")
+        {
+            string address = $"origin2://game/launch?offerIds={_originGameId}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            return address;
+        }
 
         public bool CopyTo(OriginGame OriginGame)
         {

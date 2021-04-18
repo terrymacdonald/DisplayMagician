@@ -154,6 +154,25 @@ namespace DisplayMagician.GameLibraries
             }
         }*/
 
+        public override GameStartMode StartMode
+        {
+            get => GameStartMode.URI;
+        }
+
+        public override string GetStartURI(string gameArguments = "")
+        {
+            string address = $"uplay://launch/{Id}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            else
+            {
+                address += "/0";
+            }
+            return address;
+        }
+
         public bool CopyTo(UplayGame uplayGame)
         {
             if (!(uplayGame is UplayGame))
