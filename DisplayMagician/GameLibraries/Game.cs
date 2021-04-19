@@ -13,7 +13,7 @@
         #region Properties
         public virtual string Id { get; set; }
 
-        public virtual SupportedGameLibrary GameLibrary { get; }
+        public virtual SupportedGameLibraryType GameLibrary { get; }
 
         public virtual bool IsRunning { get; set; }
 

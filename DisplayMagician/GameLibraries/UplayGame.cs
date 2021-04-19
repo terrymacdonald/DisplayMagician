@@ -10,7 +10,7 @@ namespace DisplayMagician.GameLibraries
 {
     public class UplayGame : Game
     {
-        private string _gameRegistryKey;
+        //private string _gameRegistryKey;
         private string _uplayGameId;
         private string _uplayGameName;
         private string _uplayGameExePath;
@@ -30,7 +30,7 @@ namespace DisplayMagician.GameLibraries
         public UplayGame(string uplayGameId, string uplayGameName, string uplayGameExePath, string uplayGameIconPath)
         {
 
-            _gameRegistryKey = $@"{UplayLibrary.registryUplayInstallsKey}\\{uplayGameId}";
+            //_gameRegistryKey = $@"{UplayLibrary.registryUplayInstallsKey}\\{uplayGameId}";
             _uplayGameId = uplayGameId;
             _uplayGameName = uplayGameName;
             _uplayGameExePath = uplayGameExePath;
@@ -53,9 +53,9 @@ namespace DisplayMagician.GameLibraries
             set => _uplayGameName = value;
         }
 
-        public override SupportedGameLibrary GameLibrary
+        public override SupportedGameLibraryType GameLibrary
         {
-            get => SupportedGameLibrary.Uplay;
+            get => SupportedGameLibraryType.Uplay;
         }
 
         public override string IconPath

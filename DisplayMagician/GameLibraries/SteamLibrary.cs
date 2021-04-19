@@ -35,6 +35,7 @@ namespace DisplayMagician.GameLibraries
         private string _steamExe;
         private string _steamPath;
         private string _steamConfigVdfFile;
+        private List<string> _steamProcessList = new List<string>() { "steam"};
         private string _registrySteamKey = @"SOFTWARE\WOW6432Node\Valve\Steam"; // under LocalMachine
         private string _registryAppsKey = $@"SOFTWARE\Valve\Steam\Apps"; // under CurrentUser
         private bool _isSteamInstalled = false;
@@ -161,6 +162,14 @@ namespace DisplayMagician.GameLibraries
                 return _isSteamInstalled;
             }
 
+        }
+
+        public override List<string> GameLibraryProcesses
+        {
+            get
+            {
+                return _steamProcessList;
+            }
         }
 
 

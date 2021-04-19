@@ -91,7 +91,7 @@ namespace DisplayMagician
         private bool _processNameToMonitorUsesExecutable = true;
         private string _gameAppId;
         private string _gameName;
-        private SupportedGameLibrary _gameLibrary;
+        private SupportedGameLibraryType _gameLibrary;
         private int _startTimeout = 20;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
@@ -126,9 +126,11 @@ namespace DisplayMagician
                 _uuid = Guid.NewGuid().ToString("D");
 
             // If there are no GameLibraries then choose executable instead
-            if (!(UplayLibrary.IsUplayInstalled && SteamLibrary.IsSteamInstalled))
+            if (!(UplayLibrary.GetLibrary().IsGameLibraryInstalled && 
+                SteamLibrary.GetLibrary().IsGameLibraryInstalled &&
+                OriginLibrary.GetLibrary().IsGameLibraryInstalled))
             {
-                _gameLibrary = SupportedGameLibrary.Unknown;
+                _gameLibrary = SupportedGameLibraryType.Unknown;
                 _gameName = "";
                 _gameArguments = "";
                 _category = ShortcutCategory.Application;
@@ -280,7 +282,7 @@ namespace DisplayMagician
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
             string gameAppId,
             string gameName,
-            SupportedGameLibrary gameLibrary,
+            SupportedGameLibraryType gameLibrary,
             int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
@@ -937,7 +939,7 @@ namespace DisplayMagician
             }
         }
 
-        public SupportedGameLibrary GameLibrary
+        public SupportedGameLibraryType GameLibrary
         {
             get
             {
@@ -1328,7 +1330,7 @@ namespace DisplayMagician
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
             string gameAppId,
             string gameName,
-            SupportedGameLibrary gameLibrary,
+            SupportedGameLibraryType gameLibrary,
             int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
@@ -2014,12 +2016,13 @@ namespace DisplayMagician
             else if (Category.Equals(ShortcutCategory.Game))
             {
                 // If the game is a Steam Game we check for that
-                if (GameLibrary.Equals(SupportedGameLibrary.Steam))
+                if (GameLibrary.Equals(SupportedGameLibraryType.Steam))
                 {
 
+                    SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
                     // First check if Steam is installed
                     // Check if Steam is installed and error if it isn't
-                    if (!SteamLibrary.IsSteamInstalled)
+                    if (!steamLibrary.IsGameLibraryInstalled)
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "SteamNotInstalled";
@@ -2031,7 +2034,7 @@ namespace DisplayMagician
                     }
 
                     // We need to look up details about the game
-                    if (!SteamLibrary.ContainsSteamGameById(GameAppId))
+                    if (!steamLibrary.ContainsGameById(GameAppId))
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "SteamGameNotInstalled";
@@ -2043,11 +2046,12 @@ namespace DisplayMagician
                     }
                 }
                 // If the game is a Uplay Game we check for that
-                else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
+                else if (GameLibrary.Equals(SupportedGameLibraryType.Uplay))
                 {
+                    UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
                     // First check if Uplay is installed
                     // Check if Uplay is installed and error if it isn't
-                    if (!UplayLibrary.IsUplayInstalled)
+                    if (!uplayLibrary.IsGameLibraryInstalled)
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "UplayNotInstalled";
@@ -2059,7 +2063,7 @@ namespace DisplayMagician
                     }
 
                     // We need to look up details about the game
-                    if (!UplayLibrary.ContainsUplayGame(GameAppId))
+                    if (!uplayLibrary.ContainsGame(GameAppId))
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "UplayGameNotInstalled";

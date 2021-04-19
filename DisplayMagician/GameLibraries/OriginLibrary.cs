@@ -28,6 +28,7 @@ namespace DisplayMagician.GameLibraries
         private string _originPath;
         private string _originLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Origin");
         private bool _isOriginInstalled = false;
+        private List<string> _originProcessList = new List<string>(){ "origin" };
 
         //private  string _originConfigVdfFile;
         internal  string registryOriginLauncherKey = @"SOFTWARE\WOW6432Node\Origin";
@@ -142,6 +143,14 @@ namespace DisplayMagician.GameLibraries
                 return _isOriginInstalled;
             }
 
+        }
+
+        public override List<string> GameLibraryProcesses
+        {
+            get
+            {
+                return _originProcessList;
+            }
         }
 
 
@@ -320,7 +329,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public OriginGame GetGame(string originGameNameOrId)
+        public new OriginGame GetGame(string originGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return null;
@@ -349,7 +358,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public OriginGame GetGameById(string originGameId)
+        public new OriginGame GetGameById(string originGameId)
         {
             foreach (OriginGame testOriginGame in _allOriginGames)
             {

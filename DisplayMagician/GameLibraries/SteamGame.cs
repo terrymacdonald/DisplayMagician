@@ -32,7 +32,7 @@ namespace DisplayMagician.GameLibraries
         public SteamGame(string steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
         {
 
-            _gameRegistryKey = $@"{SteamLibrary.SteamAppsRegistryKey}\\{steamGameId}";
+            _gameRegistryKey = $@"{SteamLibrary.GetLibrary().SteamAppsRegistryKey}\\{steamGameId}";
             _steamGameId = steamGameId;
             _steamGameName = steamGameName;
             _steamGameExePath = steamGameExePath;
@@ -54,8 +54,8 @@ namespace DisplayMagician.GameLibraries
             set => _steamGameName = value;
         }
 
-        public override SupportedGameLibrary GameLibrary { 
-            get => SupportedGameLibrary.Steam; 
+        public override SupportedGameLibraryType GameLibrary { 
+            get => SupportedGameLibraryType.Steam; 
         }
 
         public override string IconPath { 

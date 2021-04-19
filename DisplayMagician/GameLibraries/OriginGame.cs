@@ -53,9 +53,9 @@ namespace DisplayMagician.GameLibraries
             set => _originGameName = value;
         }
 
-        public override SupportedGameLibrary GameLibrary
+        public override SupportedGameLibraryType GameLibrary
         {
-            get => SupportedGameLibrary.Origin;
+            get => SupportedGameLibraryType.Origin;
         }
 
         public override string IconPath

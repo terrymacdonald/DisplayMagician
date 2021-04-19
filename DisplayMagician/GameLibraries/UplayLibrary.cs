@@ -22,6 +22,7 @@ namespace DisplayMagician.GameLibraries
         private bool _isUplayInstalled = false;
         private string _uplayExe;
         private string _uplayPath;
+        private List<string> _uplayProcessList = new List<string>() { "UbisoftGameLauncher", "UbisoftGameLauncher64" };
         //private string _uplayConfigVdfFile;
         internal string registryUplayLauncherKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher";
         internal string registryUplayInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
@@ -108,7 +109,7 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                return SupportedGameLibraryType.Ubiconnect;
+                return SupportedGameLibraryType.Uplay;
             }
         }
 
@@ -135,6 +136,14 @@ namespace DisplayMagician.GameLibraries
                 return _isUplayInstalled;
             }
 
+        }
+
+        public override List<string> GameLibraryProcesses
+        {
+            get
+            {
+                return _uplayProcessList;
+            }
         }
 
 
@@ -312,7 +321,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public UplayGame GetGame(string uplayGameNameOrId)
+        public new UplayGame GetGame(string uplayGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return null;
@@ -341,7 +350,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public UplayGame GetGameById(string uplayGameId)
+        public new UplayGame GetGameById(string uplayGameId)
         {
             foreach (UplayGame testGame in _allGames)
             {

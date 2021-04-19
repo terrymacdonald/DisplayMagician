@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DisplayMagician.GameLibraries
 {
+    public enum SupportedGameLibraryType
+    {
+        Unknown,
+        Origin,
+        Steam,
+        Uplay
+    }
+
     public class GameLibrary
     {
-
-        public enum SupportedGameLibraryType
-        {
-            Unknown,
-            Origin,
-            Steam,
-            Ubiconnect
-        }
 
         public struct GameAppInfo
         {
@@ -40,6 +37,8 @@ namespace DisplayMagician.GameLibraries
         public virtual string GameLibraryPath { get; set; }
 
         public virtual bool IsGameLibraryInstalled { get; set; }
+
+        public virtual List<string> GameLibraryProcesses { get; set; }
         #endregion
 
         #region Class Methods

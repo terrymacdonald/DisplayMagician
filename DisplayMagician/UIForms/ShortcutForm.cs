@@ -96,34 +96,42 @@ namespace DisplayMagician.UIForms
         }
 
 
-        public SupportedGameLibrary GameLibrary
+        public SupportedGameLibraryType GameLibrary
         {
             get
             {
                 if (txt_game_launcher.Text.Contains("Steam"))
                 {
-                    return SupportedGameLibrary.Steam;
+                    return SupportedGameLibraryType.Steam;
                 }
                 else if (txt_game_launcher.Text.Contains("Uplay"))
                 {
-                    return SupportedGameLibrary.Uplay;
+                    return SupportedGameLibraryType.Uplay;
+                }
+                else if (txt_game_launcher.Text.Contains("Origin"))
+                {
+                    return SupportedGameLibraryType.Origin;
                 }
 
-                return SupportedGameLibrary.Unknown;
+                return SupportedGameLibraryType.Unknown;
             }
             set
             {
                 switch (value)
                 {
-                    case SupportedGameLibrary.Steam:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibrary), SupportedGameLibrary.Steam);
+                    case SupportedGameLibraryType.Steam:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Steam);
                         break;
 
-                    case SupportedGameLibrary.Uplay:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibrary), SupportedGameLibrary.Uplay);
+                    case SupportedGameLibraryType.Uplay:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Uplay);
                         break;
 
-                    case SupportedGameLibrary.Unknown:
+                    case SupportedGameLibraryType.Origin:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Origin);
+                        break;
+
+                    case SupportedGameLibraryType.Unknown:
                         txt_game_launcher.Text = "No supported Game Libraries found";
                         break;
 
@@ -476,13 +484,13 @@ namespace DisplayMagician.UIForms
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're saving a game!");
                 // If the game is a SteamGame
-                if (txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
+                if (txt_game_launcher.Text == SupportedGameLibraryType.Steam.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
                     // Find the SteamGame
                     _gameToUse = new GameStruct
                     {
-                        GameToPlay = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.Id == _gameId select steamGame).First(),
+                        GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).First(),
                         StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                         GameArguments = txt_args_game.Text,
                         GameArgumentsRequired = cb_args_game.Checked
@@ -511,13 +519,13 @@ namespace DisplayMagician.UIForms
 
                 }
                 // If the game is a UplayGame
-                else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
+                else if (txt_game_launcher.Text == SupportedGameLibraryType.Uplay.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
                     // Find the UplayGame
                     _gameToUse = new GameStruct
                     {
-                        GameToPlay = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First(),
+                        GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First(),
                         StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                         GameArguments = txt_args_game.Text,
                         GameArgumentsRequired = cb_args_game.Checked
@@ -546,12 +554,12 @@ namespace DisplayMagician.UIForms
 
                 }
                 // If the game is an Origin Game
-                else if (txt_game_launcher.Text == SupportedGameLibrary.Origin.ToString())
+                else if (txt_game_launcher.Text == SupportedGameLibraryType.Origin.ToString())
                 {
                     // Find the OriginGame
                     _gameToUse = new GameStruct
                     {
-                        GameToPlay = (from originGame in OriginLibrary.AllInstalledGames where originGame.Id == _gameId select originGame).First(),
+                        GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First(),
                         StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                         GameArguments = txt_args_game.Text,
                         GameArgumentsRequired = cb_args_game.Checked
@@ -947,9 +955,11 @@ namespace DisplayMagician.UIForms
             // Populate a full list of games
             // Start with the Steam Games
             allGames = new List<Game>();
-            allGames.AddRange(SteamLibrary.AllInstalledGames);
+            allGames.AddRange(SteamLibrary.GetLibrary().AllInstalledGames);
             // Then add the Uplay Games
-            allGames.AddRange(UplayLibrary.AllInstalledGames);
+            allGames.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
+            // Then add the Origin Games
+            allGames.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
 
 
             // Load all the Games into the Games ListView
@@ -1073,7 +1083,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Set the launcher items if we have them
-            if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibrary.Unknown))
+            if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
             {
                 if (allGames.Count <= 0)
                 {

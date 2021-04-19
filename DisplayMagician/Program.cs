@@ -10,6 +10,7 @@ using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagician.UIForms;
+using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
 using System.Drawing;
 using DesktopNotifications;
@@ -707,17 +708,18 @@ namespace DisplayMagician {
             Task loadSteamGamesTask = new Task(() =>
             {
                 // Check if Steam is installed
-                if (GameLibraries.SteamLibrary.IsSteamInstalled)
+                GameLibrary steamLibrary = SteamLibrary.GetLibrary();
+                if (steamLibrary.IsGameLibraryInstalled)
                 {
                     // Load Steam library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Steam Games");
                     Console.Write("Loading Installed Steam Games...");
-                    if (!DisplayMagician.GameLibraries.SteamLibrary.LoadInstalledGames())
+                    if (!steamLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
                     }
                     Console.WriteLine("Done.");
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {GameLibraries.SteamLibrary.InstalledSteamGameCount})");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {steamLibrary.InstalledGameCount})");
                 }
                 else
                 {
@@ -730,17 +732,18 @@ namespace DisplayMagician {
             Task loadUplayGamesTask = new Task(() =>
             {
                 // Check if Uplay is installed
-                if (GameLibraries.UplayLibrary.IsUplayInstalled)
+                GameLibrary uplayLibrary = SteamLibrary.GetLibrary();
+                if (uplayLibrary.IsGameLibraryInstalled)
                 {
                     // Load Uplay library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Uplay Games");
                     Console.Write("Loading Installed Uplay Games...");
-                    if (!DisplayMagician.GameLibraries.UplayLibrary.LoadInstalledGames())
+                    if (!uplayLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                     }
                     Console.WriteLine("Done.");
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {GameLibraries.UplayLibrary.InstalledUplayGameCount})");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {uplayLibrary.InstalledGameCount})");
                 }
                 else
                 {
@@ -754,17 +757,18 @@ namespace DisplayMagician {
             Task loadOriginGamesTask = new Task(() =>
             {
                 // Check if Origin is installed
-                if (GameLibraries.OriginLibrary.IsOriginInstalled)
+                GameLibrary originLibrary = SteamLibrary.GetLibrary();
+                if (originLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Origin Games");
                     Console.Write("Loading Installed Origin Games...");
-                    if (!DisplayMagician.GameLibraries.OriginLibrary.LoadInstalledGames())
+                    if (!originLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Origin Games!");
                     }
                     Console.WriteLine("Done.");
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {GameLibraries.OriginLibrary.InstalledOriginGameCount})");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {originLibrary.InstalledGameCount})");
                 }
                 else
                 {
