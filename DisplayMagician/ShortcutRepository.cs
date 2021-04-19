@@ -586,8 +586,8 @@ namespace DisplayMagician
                 logger.Debug($"ShortcutRepository/RunShortcut: We're already on the {rollbackProfile.Name} profile so no need to change profiles.");
             }
             // Tell the IPC Service we are busy right now, and keep the previous status for later
-            InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;
-            IPCService.GetInstance().Status = InstanceStatus.Busy;
+            //InstanceStatus rollbackInstanceStatus = IPCService.GetInstance().Status;
+            //IPCService.GetInstance().Status = InstanceStatus.Busy;
 
             // Only change profiles if we have to
             if (needToChangeProfiles)
@@ -769,7 +769,7 @@ namespace DisplayMagician
             }
 
             // Set the IP Service status back to what it was
-            IPCService.GetInstance().Status = rollbackInstanceStatus;
+            //IPCService.GetInstance().Status = rollbackInstanceStatus;
 
             // Now run the pre-start applications
             List<Process> startProgramsToStop = new List<Process>();
@@ -967,8 +967,8 @@ namespace DisplayMagician
                 }
 
                 // Store the process to monitor for later
-                IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
-                IPCService.GetInstance().Status = InstanceStatus.OnHold;
+                //IPCService.GetInstance().HoldProcessId = processesToMonitor.FirstOrDefault()?.Id ?? 0;
+                //IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                 // Add a status notification icon in the status area
                 string notificationText = $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...";
@@ -1124,23 +1124,14 @@ namespace DisplayMagician
                     Thread.Sleep(500);
 
                     // Wait for GameLibrary to start
-                    List<Process> gameLibraryProcesses = null;
                     for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
                     {
 
-                        gameLibraryProcesses = new List<Process>();
-
-                        foreach (string gameLibraryProcessName in gameLibraryToUse.GameLibraryProcesses)
-                        {
-                            // Look for the processes with the ProcessName we sorted out earlier
-                            gameLibraryProcesses.AddRange(Process.GetProcessesByName(gameLibraryProcessName).ToList());
-                        }                        
-
                         // If we have found one or more processes then we should be good to go
                         // so let's break, and get to the next step....
-                        if (gameLibraryProcesses.Count > 0)
+                        if (gameLibraryToUse.IsRunning)
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Found {gameLibraryProcesses.Count} 'origin' processes have started");
+                            logger.Debug($"ShortcutRepository/RunShortcut: Found at least one GameLibrary process has started");
                             break;
                         }
 
@@ -1172,8 +1163,8 @@ namespace DisplayMagician
                     }
 
                     // Store the Origin Process ID for later
-                    IPCService.GetInstance().HoldProcessId = gameLibraryProcesses.FirstOrDefault()?.Id ?? 0;
-                    IPCService.GetInstance().Status = InstanceStatus.OnHold;
+                    //IPCService.GetInstance().HoldProcessId = gameLibraryProcesses.FirstOrDefault()?.Id ?? 0;
+                    //IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                     // Add a status notification icon in the status area
                     if (gameToRun.Name.Length <= 41)

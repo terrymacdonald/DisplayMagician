@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using System.IO;
 using System.Security;
+using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -134,6 +135,28 @@ namespace DisplayMagician.GameLibraries
             get
             {
                 return _isUplayInstalled;
+            }
+
+        }
+
+        public override bool IsRunning
+        {
+            get
+            {
+                List<Process> uplayLibraryProcesses = new List<Process>();
+
+                foreach (string uplayLibraryProcessName in _uplayProcessList)
+                {
+                    // Look for the processes with the ProcessName we sorted out earlier
+                    uplayLibraryProcesses.AddRange(Process.GetProcessesByName(uplayLibraryProcessName));
+                }
+
+                // If we have found one or more processes then we should be good to go
+                // so let's break, and get to the next step....
+                if (uplayLibraryProcesses.Count > 0)
+                    return true;
+                else
+                    return false;
             }
 
         }

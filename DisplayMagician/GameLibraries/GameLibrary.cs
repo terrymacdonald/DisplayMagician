@@ -38,6 +38,8 @@ namespace DisplayMagician.GameLibraries
 
         public virtual bool IsGameLibraryInstalled { get; set; }
 
+        public virtual bool IsRunning { get; set; }
+
         public virtual List<string> GameLibraryProcesses { get; set; }
         #endregion
 

@@ -9,6 +9,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using System.Web;
+using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -141,6 +142,28 @@ namespace DisplayMagician.GameLibraries
             get
             {
                 return _isOriginInstalled;
+            }
+
+        }
+
+        public override bool IsRunning
+        {
+            get
+            {
+                List<Process> originLibraryProcesses = new List<Process>();
+
+                foreach (string originLibraryProcessName in _originProcessList)
+                {
+                    // Look for the processes with the ProcessName we sorted out earlier
+                    originLibraryProcesses.AddRange(Process.GetProcessesByName(originLibraryProcessName));
+                }
+
+                // If we have found one or more processes then we should be good to go
+                // so let's break, and get to the next step....
+                if (originLibraryProcesses.Count > 0)
+                    return true;
+                else
+                    return false;
             }
 
         }
