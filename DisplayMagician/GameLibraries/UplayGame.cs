@@ -18,6 +18,7 @@ namespace DisplayMagician.GameLibraries
         private string _uplayGameExe;
         private string _uplayGameProcessName;
         private string _uplayGameIconPath;
+        private static readonly UplayLibrary _uplayGameLibrary = UplayLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static UplayGame()

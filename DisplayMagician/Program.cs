@@ -16,6 +16,7 @@ using System.Drawing;
 using DesktopNotifications;
 using System.Runtime.Serialization;
 using NLog.Config;
+using System.Collections.Generic;
 
 namespace DisplayMagician {
 
@@ -778,47 +779,106 @@ namespace DisplayMagician {
 
             });
 
+            Action loadSteamGamesAction = new Action(() =>
+            {
+                // Check if Steam is installed
+                GameLibrary steamLibrary = SteamLibrary.GetLibrary();
+                if (steamLibrary.IsGameLibraryInstalled)
+                {
+                    // Load Steam library games
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Steam Games");
+                    Console.Write("Loading Installed Steam Games...");
+                    if (!steamLibrary.LoadInstalledGames())
+                    {
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
+                    }
+                    Console.WriteLine("Done.");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {steamLibrary.InstalledGameCount})");
+                }
+                else
+                {
+                    logger.Info($"Program/LoadGamesInBackground: Steam not installed.");
+                    Console.WriteLine("Steam not installed.");
+                }
+            });
 
-            // Store all the tasks in an array so we can wait on them later
-            Task[] loadGamesTasks = new Task[3];
-            loadGamesTasks[0] = loadSteamGamesTask;
-            loadGamesTasks[1] = loadUplayGamesTask;
-            loadGamesTasks[2] = loadOriginGamesTask;
+            // Now lets prepare loading all the Uplay games we have installed
+            Action loadUplayGamesAction = new Action(() =>
+            {
+                // Check if Uplay is installed
+                GameLibrary uplayLibrary = UplayLibrary.GetLibrary();
+                if (uplayLibrary.IsGameLibraryInstalled)
+                {
+                    // Load Uplay library games
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Uplay Games");
+                    Console.Write("Loading Installed Uplay Games...");
+                    if (!uplayLibrary.LoadInstalledGames())
+                    {
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
+                    }
+                    Console.WriteLine("Done.");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {uplayLibrary.InstalledGameCount})");
+                }
+                else
+                {
+                    logger.Info($"Program/LoadGamesInBackground: Uplay not installed.");
+                    Console.WriteLine("Uplay not installed.");
+                }
 
-            logger.Debug($"Program/LoadGamesInBackground: Running game loading tasks.");
-            // Go through and start all the tasks
-            foreach (Task loadGameTask in loadGamesTasks)
-                loadGameTask.Start();
+            });
+
+            // Now lets prepare loading all the Origin games we have installed
+            Action loadOriginGamesAction = new Action(() =>
+            {
+                // Check if Origin is installed
+                GameLibrary originLibrary = OriginLibrary.GetLibrary();
+                if (originLibrary.IsGameLibraryInstalled)
+                {
+                    // Load Origin library games
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Origin Games");
+                    Console.Write("Loading Installed Origin Games...");
+                    if (!originLibrary.LoadInstalledGames())
+                    {
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Origin Games!");
+                    }
+                    Console.WriteLine("Done.");
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {originLibrary.InstalledGameCount})");
+                }
+                else
+                {
+                    logger.Info($"Program/LoadGamesInBackground: Origin not installed.");
+                    Console.WriteLine("Origin not installed.");
+                }
+
+            });
+
+
+            // Store all the actions in a array so we can wait on them later
+            List<Action> loadGamesActions = new List<Action>();
+            loadGamesActions.Add(loadSteamGamesAction);
+            loadGamesActions.Add(loadUplayGamesAction);
+            loadGamesActions.Add(loadOriginGamesAction);
 
             try
             {
-                logger.Debug($"Program/LoadGamesInBackground: Waiting for all game loading tasks to finish");
-                Task.WaitAll(loadGamesTasks);
+                logger.Debug($"Program/LoadGamesInBackground: Running game loading actions.");
+                // Go through and start all the actions, making sure we only have one threat per action to avoid thread issues
+                int threads = loadGamesActions.Count;
+                ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = threads };
+                Parallel.Invoke(options, loadGamesActions.ToArray());
                 logger.Debug($"Program/LoadGamesInBackground: All game loading tasks finished");
             }
             catch (AggregateException ae)
             {
-                logger.Error(ae, $"Program/LoadGamesInBackground exception during loadGamesTasks");
-                Console.WriteLine("Program/LoadGamesInBackground : Task exception!");
-                foreach (var e in ae.InnerExceptions)
-                {
-                    // Handle the custom exception.
-                    if (e is LoadingInstalledGamesException)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                    // Rethrow any other exception.
-                    else
-                    {
-                        throw;
-                    }
-                }
+                logger.Error(ae, $"Program/LoadGamesInBackground exception during loadGamesActions");
             }
 
-            bool failedTask = false;
-            foreach (var loadGameTask in loadGamesTasks)
+
+            // TODO replicate this failed Task handling in Actions
+            /*bool failedAction = false;
+            foreach (var loadGameAction in loadGamesActions)
             {
-                if (loadGameTask.Exception != null)
+                if (loadGameAction.  .Exception != null)
                 {
                     failedTask = true;
                     foreach (var ex in loadGameTask.Exception.InnerExceptions)
@@ -827,7 +887,7 @@ namespace DisplayMagician {
             }
 
             if (failedTask)
-                return false;
+                return false;*/
 
             return true;
 

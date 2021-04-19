@@ -39,9 +39,11 @@ namespace DisplayMagician.GameLibraries
 
 
         // Other constants that are useful
-        #endregion     
-         
+        #endregion
+
         #region Class Constructors
+        static OriginLibrary() { }
+
         private OriginLibrary()
         {
             try

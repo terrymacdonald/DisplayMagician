@@ -20,6 +20,7 @@ namespace DisplayMagician.GameLibraries
         private string _steamGameExe;
         private string _steamGameProcessName;
         private string _steamGameIconPath;
+        private static readonly SteamLibrary _steamGameLibrary = SteamLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static SteamGame()
@@ -32,7 +33,7 @@ namespace DisplayMagician.GameLibraries
         public SteamGame(string steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
         {
 
-            _gameRegistryKey = $@"{SteamLibrary.GetLibrary().SteamAppsRegistryKey}\\{steamGameId}";
+            _gameRegistryKey = $@"{_steamGameLibrary.SteamAppsRegistryKey}\\{steamGameId}";
             _steamGameId = steamGameId;
             _steamGameName = steamGameName;
             _steamGameExePath = steamGameExePath;

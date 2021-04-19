@@ -18,6 +18,7 @@ namespace DisplayMagician.GameLibraries
         private string _originGameProcessName;
         private string _originGameIconPath;
         //private string _originURI;
+        private static readonly OriginLibrary _originGameLibrary = OriginLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static OriginGame()

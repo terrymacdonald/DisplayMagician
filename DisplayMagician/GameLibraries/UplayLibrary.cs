@@ -11,12 +11,14 @@ namespace DisplayMagician.GameLibraries
 {
     public class UplayLibrary : GameLibrary
     {
+
+
         #region Class Variables
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
         private static readonly UplayLibrary _instance = new UplayLibrary();
-
+       
         // Common items to the class
         private List<Game> _allGames = new List<Game>();
         private string uplayAppIdRegex = @"/^[0-9A-F]{1,10}$";
@@ -34,9 +36,11 @@ namespace DisplayMagician.GameLibraries
         // Other constants that are useful
         #endregion
 
-         
+
         #region Class Constructors
-        UplayLibrary()
+        static UplayLibrary() { }
+
+        private UplayLibrary()
         {
             try
             {
