@@ -205,7 +205,7 @@ namespace DisplayMagician.GameLibraries
             return _instance;
         }
 
-        public bool AddGame(SteamGame steamGame)
+        public override bool AddGame(Game steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
@@ -217,7 +217,7 @@ namespace DisplayMagician.GameLibraries
                 logger.Debug($"SteamLibrary/AddSteamGame: Updating Steam game {steamGame.Name} in our Steam library");
                 // We update the existing Shortcut with the data over
                 SteamGame steamGameToUpdate = (SteamGame)GetGameById(steamGame.Id.ToString());
-                steamGame.CopyInto(steamGameToUpdate);
+                steamGame.CopyTo(steamGameToUpdate);
             }
             else
             {
@@ -236,7 +236,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public bool RemoveGame(SteamGame steamGame)
+        public override bool RemoveGame(Game steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
@@ -314,7 +314,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public bool ContainsGame(SteamGame steamGame)
+        public override bool ContainsGame(Game steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;

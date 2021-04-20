@@ -188,7 +188,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public  bool AddGame(OriginGame originGame)
+        public override bool AddGame(Game originGame)
         {
             if (!(originGame is OriginGame))
                 return false;
@@ -199,7 +199,7 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"OriginLibrary/AddOriginGame: Updating Origin game {originGame.Name} in our Origin library");
                 // We update the existing Shortcut with the data over
-                OriginGame originGameToUpdate = GetGame(originGame.Id.ToString());
+                OriginGame originGameToUpdate = (OriginGame)GetGame(originGame.Id.ToString());
                 originGame.CopyTo(originGameToUpdate);
             }
             else
@@ -219,7 +219,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public bool RemoveGame(OriginGame originGame)
+        public override bool RemoveGame(Game originGame)
         {
             if (!(originGame is OriginGame))
                 return false;
@@ -296,7 +296,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public bool ContainsGame(OriginGame originGame)
+        public override bool ContainsGame(Game originGame)
         {
             if (!(originGame is OriginGame))
                 return false;
@@ -354,7 +354,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public new OriginGame GetGame(string originGameNameOrId)
+        public override Game GetGame(string originGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(originGameNameOrId))
                 return null;
@@ -383,7 +383,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public new OriginGame GetGameById(string originGameId)
+        public override Game GetGameById(string originGameId)
         {
             foreach (OriginGame testOriginGame in _allOriginGames)
             {

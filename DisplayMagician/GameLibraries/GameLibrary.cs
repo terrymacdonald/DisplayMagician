@@ -6,9 +6,9 @@ namespace DisplayMagician.GameLibraries
     public enum SupportedGameLibraryType
     {
         Unknown,
-        Origin,
         Steam,
-        Uplay
+        Uplay,
+        Origin
     }
 
     public class GameLibrary

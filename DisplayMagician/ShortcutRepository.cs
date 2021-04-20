@@ -1058,25 +1058,22 @@ namespace DisplayMagician
                 {
                     // We now need to get the SteamGame info
                     gameLibraryToUse = SteamLibrary.GetLibrary();
-                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} Steam Game, and then we're going to monitor it to wait for it to close.");
                 }
                 // If the game is a Uplay Uplay Game we check for that
                 else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
                 {
                     // We now need to get the Uplay Game  info
                     gameLibraryToUse = UplayLibrary.GetLibrary();
-                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} Uplay Game, and then we're going to monitor it to wait for it to close.");
                 }
                 // If the game is a Uplay Game we check for that
                 else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Origin))
                 {
                     // We now need to get the Uplay Game  info
                     gameLibraryToUse = UplayLibrary.GetLibrary();
-                    logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} Origin Game, and then we're going to monitor it to wait for it to close.");
                 }
 
-                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameLibraryToUse.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
                 gameToRun = gameLibraryToUse.GetGameById(shortcutToUse.GameAppId);
+                logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameLibraryToUse.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
 
                 // If the GameAppID is not null, then we've matched a game! Lets run it.
                 if (gameToRun != null)
@@ -1395,7 +1392,8 @@ namespace DisplayMagician
             }
 
             // Change back to the original profile only if it is different
-            if (needToChangeProfiles)
+            // And if we're temporary
+            if (needToChangeProfiles && shortcutToUse.DisplayPermanence == ShortcutPermanence.Temporary)
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 

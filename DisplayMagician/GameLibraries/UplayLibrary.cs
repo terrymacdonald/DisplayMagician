@@ -182,7 +182,7 @@ namespace DisplayMagician.GameLibraries
             return _instance;
         }
 
-        public bool AddGame(UplayGame uplayGame)
+        public override bool AddGame(Game uplayGame)
         {
             if (!(uplayGame is UplayGame))
                 return false;
@@ -193,7 +193,7 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"UplayLibrary/AddGame: Updating Uplay game {uplayGame.Name} in our Uplay library");
                 // We update the existing Shortcut with the data over
-                UplayGame uplayGameToUpdate = GetGame(uplayGame.Id.ToString());
+                UplayGame uplayGameToUpdate = (UplayGame)GetGame(uplayGame.Id.ToString());
                 uplayGame.CopyTo(uplayGameToUpdate);
             }
             else
@@ -213,9 +213,9 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public bool RemoveGame(UplayGame uplayGame)
+        public override bool RemoveGame(Game uplayGame)
         {
-            if (!(uplayGame is UplayGame))
+            if (!(uplayGame is Game))
                 return false;
 
             logger.Debug($"UplayLibrary/RemoveGame: Removing Uplay game {uplayGame.Name} from our Uplay library");
@@ -290,7 +290,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public bool ContainsGame(UplayGame uplayGame)
+        public override bool ContainsGame(Game uplayGame)
         {
             if (!(uplayGame is UplayGame))
                 return false;
@@ -348,7 +348,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public new UplayGame GetGame(string uplayGameNameOrId)
+        public override Game GetGame(string uplayGameNameOrId)
         {
             if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return null;
@@ -377,7 +377,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public new UplayGame GetGameById(string uplayGameId)
+        public override Game GetGameById(string uplayGameId)
         {
             foreach (UplayGame testGame in _allGames)
             {

@@ -1102,7 +1102,6 @@ namespace DisplayMagician.UIForms
 
                 }
             }
-
             else
             {
                 txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();

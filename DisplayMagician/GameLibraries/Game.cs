@@ -42,7 +42,7 @@
             return "";
         }
 
-        public virtual bool CopyTo(SteamGame steamGame)
+        public virtual bool CopyTo(Game steamGame)
         {
             return true;
         }
