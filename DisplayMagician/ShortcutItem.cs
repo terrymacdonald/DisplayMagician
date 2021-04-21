@@ -67,6 +67,8 @@ namespace DisplayMagician
         public int StartTimeout;
         public string GameArguments;
         public bool GameArgumentsRequired;
+        public string DifferentGameExeToMonitor;
+        public bool MonitorDifferentGameExe;
     }
 
     public struct ShortcutError
@@ -95,6 +97,8 @@ namespace DisplayMagician
         private int _startTimeout = 20;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
+        private string _differentGameExeToMonitor;
+        private bool _monitorDifferentGameExe = false;
         private string _audioDevice;
         private bool _changeAudioDevice;
         private bool _setAudioVolume = false;
@@ -286,6 +290,8 @@ namespace DisplayMagician
             int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
+            string differentGameExeToMonitor,
+            bool monitorDifferentGameExe,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             ShortcutPermanence capturePermanence,
@@ -314,6 +320,8 @@ namespace DisplayMagician
             _startTimeout = gameTimeout;
             _gameArguments = gameArguments;
             _gameArgumentsRequired = gameArgumentsRequired;
+            _differentGameExeToMonitor = differentGameExeToMonitor;
+            _monitorDifferentGameExe = monitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -379,6 +387,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -442,6 +452,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _gameArgumentsRequired = false;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
@@ -990,6 +1002,33 @@ namespace DisplayMagician
                 _gameArgumentsRequired = value;
             }
         }
+
+        public string DifferentGameExeToMonitor
+        {
+            get
+            {
+                return _differentGameExeToMonitor;
+            }
+
+            set
+            {
+                _differentGameExeToMonitor = value;
+            }
+        }
+
+        public bool MonitorDifferentGameExe
+        {
+            get
+            {
+                return _monitorDifferentGameExe;
+            }
+
+            set
+            {
+                _monitorDifferentGameExe = value;
+            }
+        }
+
 
         public string AudioDevice
         {

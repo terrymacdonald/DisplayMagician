@@ -44,6 +44,9 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.tabp_audio = new System.Windows.Forms.TabPage();
+            this.lbl_no_active_capture_devices = new System.Windows.Forms.Label();
+            this.lbl_no_active_audio_devices = new System.Windows.Forms.Label();
+            this.lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
             this.gb_capture_settings = new System.Windows.Forms.GroupBox();
             this.gb_capture_volume = new System.Windows.Forms.GroupBox();
             this.rb_set_capture_volume = new System.Windows.Forms.RadioButton();
@@ -118,6 +121,8 @@ namespace DisplayMagician.UIForms
             this.rb_standalone = new System.Windows.Forms.RadioButton();
             this.rb_no_game = new System.Windows.Forms.RadioButton();
             this.p_game = new System.Windows.Forms.Panel();
+            this.btn_choose_alternative_game = new System.Windows.Forms.Button();
+            this.txt_alternative_game = new System.Windows.Forms.TextBox();
             this.txt_game_launcher = new System.Windows.Forms.TextBox();
             this.txt_game_name = new System.Windows.Forms.TextBox();
             this.lbl_game_library = new System.Windows.Forms.Label();
@@ -146,9 +151,7 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.lbl_disabled_shortcut_audio_chipset = new System.Windows.Forms.Label();
-            this.lbl_no_active_audio_devices = new System.Windows.Forms.Label();
-            this.lbl_no_active_capture_devices = new System.Windows.Forms.Label();
+            this.cb_wait_alternative_game = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -335,6 +338,56 @@ namespace DisplayMagician.UIForms
             this.tabp_audio.Size = new System.Drawing.Size(1082, 618);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
+            // 
+            // lbl_no_active_capture_devices
+            // 
+            this.lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.lbl_no_active_capture_devices.AutoSize = true;
+            this.lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
+            this.lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
+            this.lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_no_active_capture_devices.Location = new System.Drawing.Point(126, 433);
+            this.lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
+            this.lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
+            this.lbl_no_active_capture_devices.TabIndex = 36;
+            this.lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one micropho" +
+    "ne if you want to use this feature.";
+            this.lbl_no_active_capture_devices.Visible = false;
+            // 
+            // lbl_no_active_audio_devices
+            // 
+            this.lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_no_active_audio_devices.AutoSize = true;
+            this.lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
+            this.lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
+            this.lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_no_active_audio_devices.Location = new System.Drawing.Point(131, 151);
+            this.lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
+            this.lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
+            this.lbl_no_active_audio_devices.TabIndex = 35;
+            this.lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output" +
+    " if you want to use this feature.";
+            this.lbl_no_active_audio_devices.Visible = false;
+            // 
+            // lbl_disabled_shortcut_audio_chipset
+            // 
+            this.lbl_disabled_shortcut_audio_chipset.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.lbl_disabled_shortcut_audio_chipset.AutoSize = true;
+            this.lbl_disabled_shortcut_audio_chipset.BackColor = System.Drawing.Color.Brown;
+            this.lbl_disabled_shortcut_audio_chipset.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
+            this.lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(326, 298);
+            this.lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
+            this.lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(430, 22);
+            this.lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
+            this.lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn\'t supported :(";
+            this.lbl_disabled_shortcut_audio_chipset.Visible = false;
             // 
             // gb_capture_settings
             // 
@@ -1236,6 +1289,9 @@ namespace DisplayMagician.UIForms
             // 
             // p_game
             // 
+            this.p_game.Controls.Add(this.cb_wait_alternative_game);
+            this.p_game.Controls.Add(this.btn_choose_alternative_game);
+            this.p_game.Controls.Add(this.txt_alternative_game);
             this.p_game.Controls.Add(this.txt_game_launcher);
             this.p_game.Controls.Add(this.txt_game_name);
             this.p_game.Controls.Add(this.lbl_game_library);
@@ -1251,6 +1307,26 @@ namespace DisplayMagician.UIForms
             this.p_game.Name = "p_game";
             this.p_game.Size = new System.Drawing.Size(1006, 278);
             this.p_game.TabIndex = 7;
+            // 
+            // btn_choose_alternative_game
+            // 
+            this.btn_choose_alternative_game.Enabled = false;
+            this.btn_choose_alternative_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_choose_alternative_game.ForeColor = System.Drawing.Color.White;
+            this.btn_choose_alternative_game.Location = new System.Drawing.Point(878, 224);
+            this.btn_choose_alternative_game.Name = "btn_choose_alternative_game";
+            this.btn_choose_alternative_game.Size = new System.Drawing.Size(85, 27);
+            this.btn_choose_alternative_game.TabIndex = 26;
+            this.btn_choose_alternative_game.Text = "Choose";
+            this.btn_choose_alternative_game.UseVisualStyleBackColor = true;
+            // 
+            // txt_alternative_game
+            // 
+            this.txt_alternative_game.Enabled = false;
+            this.txt_alternative_game.Location = new System.Drawing.Point(667, 225);
+            this.txt_alternative_game.Name = "txt_alternative_game";
+            this.txt_alternative_game.Size = new System.Drawing.Size(205, 26);
+            this.txt_alternative_game.TabIndex = 24;
             // 
             // txt_game_launcher
             // 
@@ -1378,7 +1454,7 @@ namespace DisplayMagician.UIForms
             this.lv_games.LargeImageList = this.il_games;
             this.lv_games.Location = new System.Drawing.Point(23, 30);
             this.lv_games.Name = "lv_games";
-            this.lv_games.Size = new System.Drawing.Size(338, 217);
+            this.lv_games.Size = new System.Drawing.Size(338, 221);
             this.lv_games.SmallImageList = this.il_games;
             this.lv_games.TabIndex = 22;
             this.lv_games.UseCompatibleStateImageBehavior = false;
@@ -1583,55 +1659,16 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
-            // lbl_disabled_shortcut_audio_chipset
+            // cb_wait_alternative_game
             // 
-            this.lbl_disabled_shortcut_audio_chipset.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.lbl_disabled_shortcut_audio_chipset.AutoSize = true;
-            this.lbl_disabled_shortcut_audio_chipset.BackColor = System.Drawing.Color.Brown;
-            this.lbl_disabled_shortcut_audio_chipset.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
-            this.lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(326, 298);
-            this.lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
-            this.lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(430, 22);
-            this.lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
-            this.lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn\'t supported :(";
-            this.lbl_disabled_shortcut_audio_chipset.Visible = false;
-            // 
-            // lbl_no_active_audio_devices
-            // 
-            this.lbl_no_active_audio_devices.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_no_active_audio_devices.AutoSize = true;
-            this.lbl_no_active_audio_devices.BackColor = System.Drawing.Color.Brown;
-            this.lbl_no_active_audio_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
-            this.lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_active_audio_devices.Location = new System.Drawing.Point(131, 151);
-            this.lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
-            this.lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
-            this.lbl_no_active_audio_devices.TabIndex = 35;
-            this.lbl_no_active_audio_devices.Text = "No active audio outputs found. Please connect or enable at least one audio output" +
-    " if you want to use this feature.";
-            this.lbl_no_active_audio_devices.Visible = false;
-            // 
-            // lbl_no_active_capture_devices
-            // 
-            this.lbl_no_active_capture_devices.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.lbl_no_active_capture_devices.AutoSize = true;
-            this.lbl_no_active_capture_devices.BackColor = System.Drawing.Color.Brown;
-            this.lbl_no_active_capture_devices.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
-            this.lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_active_capture_devices.Location = new System.Drawing.Point(126, 433);
-            this.lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
-            this.lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
-            this.lbl_no_active_capture_devices.TabIndex = 36;
-            this.lbl_no_active_capture_devices.Text = "No active microphone inputs found. Please connect or enable at least one micropho" +
-    "ne if you want to use this feature.";
-            this.lbl_no_active_capture_devices.Visible = false;
+            this.cb_wait_alternative_game.AutoSize = true;
+            this.cb_wait_alternative_game.Location = new System.Drawing.Point(451, 214);
+            this.cb_wait_alternative_game.Name = "cb_wait_alternative_game";
+            this.cb_wait_alternative_game.Size = new System.Drawing.Size(220, 44);
+            this.cb_wait_alternative_game.TabIndex = 27;
+            this.cb_wait_alternative_game.Text = "Wait until this executable \r\nis closed before continuing:";
+            this.cb_wait_alternative_game.UseVisualStyleBackColor = true;
+            this.cb_wait_alternative_game.CheckedChanged += new System.EventHandler(this.cb_wait_alternative_game_CheckedChanged);
             // 
             // ShortcutForm
             // 
@@ -1819,5 +1856,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_disabled_shortcut_audio_chipset;
         private System.Windows.Forms.Label lbl_no_active_audio_devices;
         private System.Windows.Forms.Label lbl_no_active_capture_devices;
+        private System.Windows.Forms.Button btn_choose_alternative_game;
+        private System.Windows.Forms.TextBox txt_alternative_game;
+        private System.Windows.Forms.CheckBox cb_wait_alternative_game;
     }
 }

@@ -493,7 +493,9 @@ namespace DisplayMagician.UIForms
                         GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).First(),
                         StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                         GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked
+                        GameArgumentsRequired = cb_args_game.Checked,
+                        DifferentGameExeToMonitor = txt_alternative_game.Text,
+                        MonitorDifferentGameExe = cb_wait_alternative_game.Checked
                     };
 
                     _shortcutToEdit.UpdateGameShortcut(
@@ -528,7 +530,9 @@ namespace DisplayMagician.UIForms
                         GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First(),
                         StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                         GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked
+                        GameArgumentsRequired = cb_args_game.Checked,
+                        DifferentGameExeToMonitor = txt_alternative_game.Text,
+                        MonitorDifferentGameExe = cb_wait_alternative_game.Checked
                     };
 
                     _shortcutToEdit.UpdateGameShortcut(
@@ -562,7 +566,9 @@ namespace DisplayMagician.UIForms
                         GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First(),
                         StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                         GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked
+                        GameArgumentsRequired = cb_args_game.Checked,
+                        DifferentGameExeToMonitor = txt_alternative_game.Text,
+                        MonitorDifferentGameExe = cb_wait_alternative_game.Checked
                     };
 
                     _shortcutToEdit.UpdateGameShortcut(
@@ -1082,6 +1088,21 @@ namespace DisplayMagician.UIForms
                     break;
             }
 
+            // Monitor the alternative game exe if we have it
+            if (_shortcutToEdit.MonitorDifferentGameExe)
+            {
+                cb_wait_alternative_game.Checked = true;
+                if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
+                {
+                    txt_alternative_game.Text = _shortcutToEdit.DifferentGameExeToMonitor;
+                }                    
+            }
+            else
+            {
+                cb_wait_alternative_game.Checked = false;
+            }
+
+            
             // Set the launcher items if we have them
             if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
             {
@@ -2201,6 +2222,22 @@ namespace DisplayMagician.UIForms
                 cb_start_program4.CheckState = CheckState.Checked;
             else
                 cb_start_program4.CheckState = CheckState.Unchecked;
+        }
+
+        private void cb_wait_alternative_game_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            if (cb_wait_alternative_game.Checked)
+            {
+                txt_alternative_game.Enabled = true;
+                btn_choose_alternative_game.Enabled = true;
+            }
+            else
+            {
+                txt_alternative_game.Enabled = false;
+                btn_choose_alternative_game.Enabled = false;
+            }
         }
     }
 }
