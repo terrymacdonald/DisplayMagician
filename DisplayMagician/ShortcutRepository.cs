@@ -1332,7 +1332,7 @@ namespace DisplayMagician
             // Change Audio Device back (if one specified)
             if (activeAudioDevices.Count > 0)
             {
-                if (needToChangeAudioDevice)
+                if (needToChangeAudioDevice && shortcutToUse.AudioPermanence == ShortcutPermanence.Temporary)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio back to {rollbackAudioDevice.Name} audio device");
                     // use the Audio Device
@@ -1363,7 +1363,7 @@ namespace DisplayMagician
             // Change Capture Device back (if one specified)
             if (activeCaptureDevices.Count > 0)
             {
-                if (needToChangeCaptureDevice)
+                if (needToChangeCaptureDevice && shortcutToUse.CapturePermanence == ShortcutPermanence.Temporary)
                 {
                     logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) device back to {rollbackCaptureDevice.Name} capture device");
                     // use the Audio Device
