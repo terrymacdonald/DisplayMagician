@@ -17,6 +17,7 @@ using DesktopNotifications;
 using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
+using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician {
 
@@ -44,6 +45,7 @@ namespace DisplayMagician {
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
+        public static HotkeyListener HotkeyListener;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
@@ -202,6 +204,10 @@ namespace DisplayMagician {
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            // Create a program-wide HotKeyListener
+            HotkeyListener = new HotkeyListener();
 
             logger.Debug($"Setting up commandline processing configuration");
             var app = new CommandLineApplication
@@ -354,10 +360,6 @@ namespace DisplayMagician {
         {
             logger.Debug($"Program/CreateProfile: Starting");
 
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
             try
             {
                 // Start the IPC Service to 
@@ -389,10 +391,6 @@ namespace DisplayMagician {
         private static void StartUpApplication()
         {
             logger.Debug($"Program/StartUpApplication: Starting");
-
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             try
             {

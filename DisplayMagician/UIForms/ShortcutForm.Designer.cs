@@ -121,6 +121,7 @@ namespace DisplayMagician.UIForms
             this.rb_standalone = new System.Windows.Forms.RadioButton();
             this.rb_no_game = new System.Windows.Forms.RadioButton();
             this.p_game = new System.Windows.Forms.Panel();
+            this.cb_wait_alternative_game = new System.Windows.Forms.CheckBox();
             this.btn_choose_alternative_game = new System.Windows.Forms.Button();
             this.txt_alternative_game = new System.Windows.Forms.TextBox();
             this.txt_game_launcher = new System.Windows.Forms.TextBox();
@@ -151,7 +152,7 @@ namespace DisplayMagician.UIForms
             this.lbl_title = new System.Windows.Forms.Label();
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
-            this.cb_wait_alternative_game = new System.Windows.Forms.CheckBox();
+            this.btn_hotkey = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -187,7 +188,7 @@ namespace DisplayMagician.UIForms
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(517, 778);
+            this.btn_save.Location = new System.Drawing.Point(560, 778);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(120, 40);
             this.btn_save.TabIndex = 6;
@@ -295,7 +296,6 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.AllowPaneResize = false;
             this.ilv_saved_profiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.ilv_saved_profiles.Colors = new Manina.Windows.Forms.ImageListViewColor(resources.GetString("ilv_saved_profiles.Colors"));
             this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 466);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
@@ -1308,6 +1308,17 @@ namespace DisplayMagician.UIForms
             this.p_game.Size = new System.Drawing.Size(1006, 278);
             this.p_game.TabIndex = 7;
             // 
+            // cb_wait_alternative_game
+            // 
+            this.cb_wait_alternative_game.AutoSize = true;
+            this.cb_wait_alternative_game.Location = new System.Drawing.Point(451, 214);
+            this.cb_wait_alternative_game.Name = "cb_wait_alternative_game";
+            this.cb_wait_alternative_game.Size = new System.Drawing.Size(220, 44);
+            this.cb_wait_alternative_game.TabIndex = 27;
+            this.cb_wait_alternative_game.Text = "Wait until this executable \r\nis closed before continuing:";
+            this.cb_wait_alternative_game.UseVisualStyleBackColor = true;
+            this.cb_wait_alternative_game.CheckedChanged += new System.EventHandler(this.cb_wait_alternative_game_CheckedChanged);
+            // 
             // btn_choose_alternative_game
             // 
             this.btn_choose_alternative_game.Enabled = false;
@@ -1660,16 +1671,20 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.UseVisualStyleBackColor = true;
             this.cb_autosuggest.CheckedChanged += new System.EventHandler(this.cb_autosuggest_CheckedChanged);
             // 
-            // cb_wait_alternative_game
+            // btn_hotkey
             // 
-            this.cb_wait_alternative_game.AutoSize = true;
-            this.cb_wait_alternative_game.Location = new System.Drawing.Point(451, 214);
-            this.cb_wait_alternative_game.Name = "cb_wait_alternative_game";
-            this.cb_wait_alternative_game.Size = new System.Drawing.Size(220, 44);
-            this.cb_wait_alternative_game.TabIndex = 27;
-            this.cb_wait_alternative_game.Text = "Wait until this executable \r\nis closed before continuing:";
-            this.cb_wait_alternative_game.UseVisualStyleBackColor = true;
-            this.cb_wait_alternative_game.CheckedChanged += new System.EventHandler(this.cb_wait_alternative_game_CheckedChanged);
+            this.btn_hotkey.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btn_hotkey.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_hotkey.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_hotkey.ForeColor = System.Drawing.Color.White;
+            this.btn_hotkey.Location = new System.Drawing.Point(434, 778);
+            this.btn_hotkey.Name = "btn_hotkey";
+            this.btn_hotkey.Size = new System.Drawing.Size(120, 40);
+            this.btn_hotkey.TabIndex = 36;
+            this.btn_hotkey.Text = "&Hotkey";
+            this.btn_hotkey.UseVisualStyleBackColor = true;
             // 
             // ShortcutForm
             // 
@@ -1679,6 +1694,7 @@ namespace DisplayMagician.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
             this.ClientSize = new System.Drawing.Size(1114, 830);
+            this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.cb_autosuggest);
             this.Controls.Add(this.txt_shortcut_save_name);
             this.Controls.Add(this.lbl_shortcut_name);
@@ -1860,5 +1876,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_choose_alternative_game;
         private System.Windows.Forms.TextBox txt_alternative_game;
         private System.Windows.Forms.CheckBox cb_wait_alternative_game;
+        private System.Windows.Forms.Button btn_hotkey;
     }
 }

@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using System.Net;
 using Windows.Data.Xml.Dom;
 using Microsoft.Toolkit.Uwp.Notifications;
+using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -18,6 +19,7 @@ namespace DisplayMagician.UIForms
 
         private bool allowVisible;     // ContextMenu's Show command used
         private bool allowClose;       // ContextMenu's Exit command used
+        private Hotkey hotkeyMainWindow;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -30,6 +32,16 @@ namespace DisplayMagician.UIForms
             notifyIcon.Visible = true;
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
+
+
+            // Define a new hotkey using the Hotkey class. 
+            // Parameters are: [modifiers], [keys].
+            hotkeyMainWindow = new Hotkey(Keys.Control | Keys.Shift, Keys.W);
+            Program.HotkeyListener.Add(hotkeyMainWindow);
+
+            // Register a HotkeyPressed event.
+            Program.HotkeyListener.HotkeyPressed += Hkl_MainWindowHotkeyPressed;
+
 
             if (Program.AppProgramSettings.MinimiseOnStart) 
             {
@@ -489,6 +501,12 @@ namespace DisplayMagician.UIForms
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             openApplicationWindow();
+        }
+        
+        private void Hkl_MainWindowHotkeyPressed(object sender, HotkeyEventArgs e)
+        {
+            if (e.Hotkey == hotkeyMainWindow)
+                openApplicationWindow();
         }
     }
 }

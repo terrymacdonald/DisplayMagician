@@ -57,6 +57,7 @@ namespace DisplayMagician.UIForms
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.btn_save = new System.Windows.Forms.Button();
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
+            this.btn_hotkey = new System.Windows.Forms.Button();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -70,9 +71,9 @@ namespace DisplayMagician.UIForms
             this.btn_apply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_apply.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_apply.ForeColor = System.Drawing.Color.White;
-            this.btn_apply.Location = new System.Drawing.Point(245, 769);
+            this.btn_apply.Location = new System.Drawing.Point(194, 769);
             this.btn_apply.Name = "btn_apply";
-            this.btn_apply.Size = new System.Drawing.Size(120, 40);
+            this.btn_apply.Size = new System.Drawing.Size(118, 40);
             this.btn_apply.TabIndex = 2;
             this.btn_apply.Text = "&Apply";
             this.btn_apply.UseVisualStyleBackColor = false;
@@ -102,7 +103,7 @@ namespace DisplayMagician.UIForms
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(384, 769);
+            this.btn_delete.Location = new System.Drawing.Point(446, 769);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 4;
@@ -236,7 +237,6 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.AllowPaneResize = false;
             this.ilv_saved_profiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.ilv_saved_profiles.Colors = new Manina.Windows.Forms.ImageListViewColor(resources.GetString("ilv_saved_profiles.Colors"));
             this.ilv_saved_profiles.Location = new System.Drawing.Point(0, 601);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
@@ -314,7 +314,7 @@ namespace DisplayMagician.UIForms
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(521, 769);
+            this.btn_save.Location = new System.Drawing.Point(572, 769);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(211, 40);
             this.btn_save.TabIndex = 34;
@@ -329,6 +329,21 @@ namespace DisplayMagician.UIForms
             this.dialog_save.Filter = global::DisplayMagician.Resources.Language.Shortcuts_Filter;
             this.dialog_save.RestoreDirectory = true;
             // 
+            // btn_hotkey
+            // 
+            this.btn_hotkey.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btn_hotkey.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_hotkey.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_hotkey.ForeColor = System.Drawing.Color.White;
+            this.btn_hotkey.Location = new System.Drawing.Point(320, 769);
+            this.btn_hotkey.Name = "btn_hotkey";
+            this.btn_hotkey.Size = new System.Drawing.Size(120, 40);
+            this.btn_hotkey.TabIndex = 35;
+            this.btn_hotkey.Text = "&Hotkey";
+            this.btn_hotkey.UseVisualStyleBackColor = true;
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -338,6 +353,7 @@ namespace DisplayMagician.UIForms
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 829);
+            this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.btn_save);
             this.Controls.Add(this.lbl_save_profile);
             this.Controls.Add(this.label1);
@@ -394,6 +410,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_save_profile;
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.SaveFileDialog dialog_save;
+        private System.Windows.Forms.Button btn_hotkey;
     }
 }
 
