@@ -43,7 +43,7 @@ namespace DisplayMagician.UIForms
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
-        private int _gameId = 0;
+        private string _gameId = "0";
         private string  _uuid = "";
         private CoreAudioController audioController = null;
         private List<CoreAudioDevice> audioDevices = null;
@@ -96,34 +96,42 @@ namespace DisplayMagician.UIForms
         }
 
 
-        public SupportedGameLibrary GameLibrary
+        public SupportedGameLibraryType GameLibrary
         {
             get
             {
                 if (txt_game_launcher.Text.Contains("Steam"))
                 {
-                    return SupportedGameLibrary.Steam;
+                    return SupportedGameLibraryType.Steam;
                 }
                 else if (txt_game_launcher.Text.Contains("Uplay"))
                 {
-                    return SupportedGameLibrary.Uplay;
+                    return SupportedGameLibraryType.Uplay;
+                }
+                else if (txt_game_launcher.Text.Contains("Origin"))
+                {
+                    return SupportedGameLibraryType.Origin;
                 }
 
-                return SupportedGameLibrary.Unknown;
+                return SupportedGameLibraryType.Unknown;
             }
             set
             {
                 switch (value)
                 {
-                    case SupportedGameLibrary.Steam:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibrary), SupportedGameLibrary.Steam);
+                    case SupportedGameLibraryType.Steam:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Steam);
                         break;
 
-                    case SupportedGameLibrary.Uplay:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibrary), SupportedGameLibrary.Uplay);
+                    case SupportedGameLibraryType.Uplay:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Uplay);
                         break;
 
-                    case SupportedGameLibrary.Unknown:
+                    case SupportedGameLibraryType.Origin:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Origin);
+                        break;
+
+                    case SupportedGameLibraryType.Unknown:
                         txt_game_launcher.Text = "No supported Game Libraries found";
                         break;
 
@@ -269,7 +277,7 @@ namespace DisplayMagician.UIForms
                     return;
                 }
 
-                if (_gameId == 0)
+                if (_gameId.Equals("0"))
                 {
                     MessageBox.Show(
                         @"Please choose a Game by scrolling through the list, selecting the Game that you want, and then clicking the '>>' button to fill the Game fields.",
@@ -298,6 +306,26 @@ namespace DisplayMagician.UIForms
                         MessageBoxIcon.Exclamation);
                     if (result == DialogResult.No)
                         return;
+                }
+
+                if (cb_wait_alternative_game.Checked && String.IsNullOrWhiteSpace(txt_alternative_game.Text))
+                {
+                    MessageBox.Show(
+                        $"If you want to wait for an alternative game executable then you need to choose it! Click the 'Choose' button next to the different game executable field.",
+                        @"Need to choose the different game executable",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                if (cb_wait_alternative_game.Checked && !File.Exists(txt_alternative_game.Text))
+                {
+                    MessageBox.Show(
+                        @"The alternative game executable you have chosen does not exist! Please reselect the alternative game executable, or check you have permissions to view it.",
+                        @"Alternative game executable doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
                 }
 
             }
@@ -475,76 +503,58 @@ namespace DisplayMagician.UIForms
             if (rb_launcher.Checked)
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're saving a game!");
+
+                _gameToUse = new GameStruct
+                {                    
+                    StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
+                    GameArguments = txt_args_game.Text,
+                    GameArgumentsRequired = cb_args_game.Checked,
+                    DifferentGameExeToMonitor = txt_alternative_game.Text,
+                    MonitorDifferentGameExe = cb_wait_alternative_game.Checked
+                };
+
                 // If the game is a SteamGame
-                if (txt_game_launcher.Text == SupportedGameLibrary.Steam.ToString())
+                if (txt_game_launcher.Text == SupportedGameLibraryType.Steam.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
                     // Find the SteamGame
-                    _gameToUse = new GameStruct
-                    {
-                        GameToPlay = (from steamGame in SteamLibrary.AllInstalledGames where steamGame.Id == _gameId select steamGame).First(),
-                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
-                        GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked
-                    };
 
-                    _shortcutToEdit.UpdateGameShortcut(
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _gameToUse.GameToPlay.IconPath,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );
-
+                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).First();
                 }
-                // If the game is a SteamGame
-                else if (txt_game_launcher.Text == SupportedGameLibrary.Uplay.ToString())
+                // If the game is a UplayGame
+                else if (txt_game_launcher.Text == SupportedGameLibraryType.Uplay.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
                     // Find the UplayGame
-                    _gameToUse = new GameStruct
-                    {
-                        GameToPlay = (from uplayGame in UplayLibrary.AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First(),
-                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
-                        GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked
-                    };
-
-                    _shortcutToEdit.UpdateGameShortcut(
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _gameToUse.GameToPlay.IconPath,
-                         _changeAudioDevice,
-                        _audioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );
-
+                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
                 }
+                // If the game is an Origin Game
+                else if (txt_game_launcher.Text == SupportedGameLibraryType.Origin.ToString())
+                {
+                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Origin game!");
+                    _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First();
+                }
+
+                _shortcutToEdit.UpdateGameShortcut(
+                    txt_shortcut_save_name.Text,
+                    _profileToUse,
+                    _gameToUse,
+                    _displayPermanence,
+                    _audioPermanence,
+                    _capturePermanence,
+                    _gameToUse.GameToPlay.IconPath,
+                    _changeAudioDevice,
+                    _audioDevice,
+                    _setAudioVolume,
+                    _audioVolume,
+                    _changeCaptureDevice,
+                    _captureDevice,
+                    _setCaptureVolume,
+                    _captureVolume,
+                    _startPrograms,
+                    _autoName,
+                    _uuid
+                );
             }
             else if (rb_standalone.Checked)
             {
@@ -641,7 +651,7 @@ namespace DisplayMagician.UIForms
             if ((txt_shortcut_save_name.Text.Length > 0) &&
                 _profileToUse is ProfileItem &&
                 (rb_no_game.Checked ||
-                rb_launcher.Checked && _gameId > 0 ||
+                rb_launcher.Checked && !_gameId.Equals("0") ||
                 rb_standalone.Checked && txt_executable.Text.Length > 0))
                 return true;
             else
@@ -913,9 +923,11 @@ namespace DisplayMagician.UIForms
             // Populate a full list of games
             // Start with the Steam Games
             allGames = new List<Game>();
-            allGames.AddRange(SteamLibrary.AllInstalledGames);
+            allGames.AddRange(SteamLibrary.GetLibrary().AllInstalledGames);
             // Then add the Uplay Games
-            allGames.AddRange(UplayLibrary.AllInstalledGames);
+            allGames.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
+            // Then add the Origin Games
+            allGames.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
 
 
             // Load all the Games into the Games ListView
@@ -936,11 +948,6 @@ namespace DisplayMagician.UIForms
 
                 // Add the images to the images array
                 il_games.Images.Add(bm);
-
-                /*if (!Visible)
-                {
-                    //return;
-                }*/
 
                 // ADd the game to the game array
                 lv_games.Items.Add(new ListViewItem
@@ -1043,8 +1050,23 @@ namespace DisplayMagician.UIForms
                     break;
             }
 
+            // Monitor the alternative game exe if we have it
+            if (_shortcutToEdit.MonitorDifferentGameExe)
+            {
+                cb_wait_alternative_game.Checked = true;
+                if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
+                {
+                    txt_alternative_game.Text = _shortcutToEdit.DifferentGameExeToMonitor;
+                }                    
+            }
+            else
+            {
+                cb_wait_alternative_game.Checked = false;
+            }
+
+            
             // Set the launcher items if we have them
-            if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibrary.Unknown))
+            if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
             {
                 if (allGames.Count <= 0)
                 {
@@ -1063,7 +1085,6 @@ namespace DisplayMagician.UIForms
 
                 }
             }
-
             else
             {
                 txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
@@ -1286,7 +1307,8 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
+                string fileExt = Path.GetExtension(dialog_open.FileName);
+                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com"))
                 {
                     txt_alternative_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -2163,6 +2185,45 @@ namespace DisplayMagician.UIForms
                 cb_start_program4.CheckState = CheckState.Checked;
             else
                 cb_start_program4.CheckState = CheckState.Unchecked;
+        }
+
+        private void cb_wait_alternative_game_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+            if (cb_wait_alternative_game.Checked)
+            {
+                txt_alternative_game.Enabled = true;
+                btn_choose_alternative_game.Enabled = true;
+            }
+            else
+            {
+                txt_alternative_game.Enabled = false;
+                btn_choose_alternative_game.Enabled = false;
+            }
+        }
+
+        private void btn_choose_alternative_game_Click(object sender, EventArgs e)
+        {
+            if (dialog_open.ShowDialog(this) == DialogResult.OK)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                string fileExt = Path.GetExtension(dialog_open.FileName);
+                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com"))
+                {
+                    txt_alternative_game.Text = dialog_open.FileName;
+                    dialog_open.FileName = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        Language.Selected_file_is_not_a_valid_file,
+                        Language.Executable,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+            }
         }
     }
 }

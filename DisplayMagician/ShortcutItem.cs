@@ -67,6 +67,8 @@ namespace DisplayMagician
         public int StartTimeout;
         public string GameArguments;
         public bool GameArgumentsRequired;
+        public string DifferentGameExeToMonitor;
+        public bool MonitorDifferentGameExe;
     }
 
     public struct ShortcutError
@@ -89,12 +91,14 @@ namespace DisplayMagician
         private string _executableArguments;
         private bool _executableArgumentsRequired = false;
         private bool _processNameToMonitorUsesExecutable = true;
-        private int _gameAppId;
+        private string _gameAppId;
         private string _gameName;
-        private SupportedGameLibrary _gameLibrary;
+        private SupportedGameLibraryType _gameLibrary;
         private int _startTimeout = 20;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
+        private string _differentGameExeToMonitor;
+        private bool _monitorDifferentGameExe = false;
         private string _audioDevice;
         private bool _changeAudioDevice;
         private bool _setAudioVolume = false;
@@ -126,9 +130,11 @@ namespace DisplayMagician
                 _uuid = Guid.NewGuid().ToString("D");
 
             // If there are no GameLibraries then choose executable instead
-            if (!(UplayLibrary.IsUplayInstalled && SteamLibrary.IsSteamInstalled))
+            if (!(UplayLibrary.GetLibrary().IsGameLibraryInstalled && 
+                SteamLibrary.GetLibrary().IsGameLibraryInstalled &&
+                OriginLibrary.GetLibrary().IsGameLibraryInstalled))
             {
-                _gameLibrary = SupportedGameLibrary.Unknown;
+                _gameLibrary = SupportedGameLibraryType.Unknown;
                 _gameName = "";
                 _gameArguments = "";
                 _category = ShortcutCategory.Application;
@@ -278,12 +284,14 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            int gameAppId,
+            string gameAppId,
             string gameName,
-            SupportedGameLibrary gameLibrary,
+            SupportedGameLibraryType gameLibrary,
             int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
+            string differentGameExeToMonitor,
+            bool monitorDifferentGameExe,
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             ShortcutPermanence capturePermanence,
@@ -312,6 +320,8 @@ namespace DisplayMagician
             _startTimeout = gameTimeout;
             _gameArguments = gameArguments;
             _gameArgumentsRequired = gameArgumentsRequired;
+            _differentGameExeToMonitor = differentGameExeToMonitor;
+            _monitorDifferentGameExe = monitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -377,6 +387,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -440,6 +452,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _gameArgumentsRequired = false;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
@@ -911,7 +925,7 @@ namespace DisplayMagician
             }
         }
 
-        public int GameAppId
+        public string GameAppId
         {
             get
             {
@@ -937,7 +951,7 @@ namespace DisplayMagician
             }
         }
 
-        public SupportedGameLibrary GameLibrary
+        public SupportedGameLibraryType GameLibrary
         {
             get
             {
@@ -988,6 +1002,33 @@ namespace DisplayMagician
                 _gameArgumentsRequired = value;
             }
         }
+
+        public string DifferentGameExeToMonitor
+        {
+            get
+            {
+                return _differentGameExeToMonitor;
+            }
+
+            set
+            {
+                _differentGameExeToMonitor = value;
+            }
+        }
+
+        public bool MonitorDifferentGameExe
+        {
+            get
+            {
+                return _monitorDifferentGameExe;
+            }
+
+            set
+            {
+                _monitorDifferentGameExe = value;
+            }
+        }
+
 
         public string AudioDevice
         {
@@ -1326,12 +1367,14 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile,
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            int gameAppId,
+            string gameAppId,
             string gameName,
-            SupportedGameLibrary gameLibrary,
+            SupportedGameLibraryType gameLibrary,
             int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
+            string differentGameExeToMonitor,
+            bool monitorDifferentGameExe,        
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             ShortcutPermanence capturePermanence,
@@ -1360,6 +1403,8 @@ namespace DisplayMagician
             _startTimeout = gameTimeout;
             _gameArguments = gameArguments;
             _gameArgumentsRequired = gameArgumentsRequired;
+            _differentGameExeToMonitor = differentGameExeToMonitor;
+            _monitorDifferentGameExe = monitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -1425,6 +1470,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -1489,7 +1536,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
-            _gameArgumentsRequired = false;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -2014,12 +2062,13 @@ namespace DisplayMagician
             else if (Category.Equals(ShortcutCategory.Game))
             {
                 // If the game is a Steam Game we check for that
-                if (GameLibrary.Equals(SupportedGameLibrary.Steam))
+                if (GameLibrary.Equals(SupportedGameLibraryType.Steam))
                 {
 
+                    SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
                     // First check if Steam is installed
                     // Check if Steam is installed and error if it isn't
-                    if (!SteamLibrary.IsSteamInstalled)
+                    if (!steamLibrary.IsGameLibraryInstalled)
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "SteamNotInstalled";
@@ -2031,7 +2080,7 @@ namespace DisplayMagician
                     }
 
                     // We need to look up details about the game
-                    if (!SteamLibrary.ContainsSteamGame(GameAppId))
+                    if (!steamLibrary.ContainsGameById(GameAppId))
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "SteamGameNotInstalled";
@@ -2043,11 +2092,12 @@ namespace DisplayMagician
                     }
                 }
                 // If the game is a Uplay Game we check for that
-                else if (GameLibrary.Equals(SupportedGameLibrary.Uplay))
+                else if (GameLibrary.Equals(SupportedGameLibraryType.Uplay))
                 {
+                    UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
                     // First check if Uplay is installed
                     // Check if Uplay is installed and error if it isn't
-                    if (!UplayLibrary.IsUplayInstalled)
+                    if (!uplayLibrary.IsGameLibraryInstalled)
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "UplayNotInstalled";
@@ -2059,7 +2109,7 @@ namespace DisplayMagician
                     }
 
                     // We need to look up details about the game
-                    if (!UplayLibrary.ContainsUplayGame(GameAppId))
+                    if (!uplayLibrary.ContainsGame(GameAppId))
                     {
                         ShortcutError error = new ShortcutError();
                         error.Name = "UplayGameNotInstalled";

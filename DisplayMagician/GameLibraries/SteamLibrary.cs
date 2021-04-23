@@ -11,33 +11,42 @@ using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
-    public static class SteamLibrary
+    public sealed class SteamLibrary : GameLibrary
     {
-        #region Class Variables
-        // Common items to the class
-        private static List<Game> _allSteamGames = new List<Game>();
-        private static string steamAppIdRegex = @"/^[0-9A-F]{1,10}$";
-        private static string _steamExe;
-        private static string _steamPath;
-        private static string _steamConfigVdfFile;
-        private static string _registrySteamKey = @"SOFTWARE\WOW6432Node\Valve\Steam"; // under LocalMachine
-        private static string _registryAppsKey = $@"SOFTWARE\Valve\Steam\Apps"; // under CurrentUser
-        private static bool _isSteamInstalled = false;
-        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        // Other constants that are useful
-        #endregion
 
         private struct SteamAppInfo
         {
-            public int GameID;
+            public string GameID;
             public string GameName;
             public List<string> GameExes;
             public string GameInstallDir;
-            public string GameSteamIconPath;
+            public string GameIconPath;
         }
 
+        #region Class Variables
+        // Static members are 'eagerly initialized', that is, 
+        // immediately when class is loaded for the first time.
+        // .NET guarantees thread safety for static initialization
+        private static SteamLibrary _instance = new SteamLibrary();
+
+        // Common items to the class
+        private List<Game> _allSteamGames = new List<Game>();
+        private string steamAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private string _steamExe;
+        private string _steamPath;
+        private string _steamConfigVdfFile;
+        private List<string> _steamProcessList = new List<string>() { "steam"};
+        private string _registrySteamKey = @"SOFTWARE\WOW6432Node\Valve\Steam"; // under LocalMachine
+        private string _registryAppsKey = $@"SOFTWARE\Valve\Steam\Apps"; // under CurrentUser
+        private bool _isSteamInstalled = false;
+        private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        // Other constants that are useful
+        #endregion
+
         #region Class Constructors
-        static SteamLibrary()
+        static SteamLibrary() { }
+
+        private SteamLibrary()
         {
             try
             {
@@ -80,7 +89,7 @@ namespace DisplayMagician.GameLibraries
         #endregion
 
         #region Class Properties
-        public static List<Game> AllInstalledGames
+        public override List<Game> AllInstalledGames
         {
             get
             {
@@ -92,7 +101,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static int InstalledSteamGameCount
+        public override int InstalledGameCount
         {
             get
             {
@@ -100,7 +109,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string SteamRegistryKey
+        public string SteamRegistryKey
         {
             get
             {
@@ -108,7 +117,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string SteamAppsRegistryKey
+        public string SteamAppsRegistryKey
         {
             get
             {
@@ -116,7 +125,23 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string SteamExe
+        public override string GameLibraryName
+        {
+            get
+            {
+                return "Steam";
+            }
+        }
+
+        public override SupportedGameLibraryType GameLibraryType
+        {
+            get
+            {
+                return SupportedGameLibraryType.Steam;
+            }
+        }
+
+        public override string GameLibraryExe
         {
             get
             {
@@ -124,7 +149,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string SteamPath
+        public override string GameLibraryPath
         {
             get
             {
@@ -132,7 +157,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static bool IsSteamInstalled
+        public override bool IsGameLibraryInstalled
         {
             get
             {
@@ -141,23 +166,58 @@ namespace DisplayMagician.GameLibraries
 
         }
 
+        public override bool IsRunning
+        {
+            get
+            {
+                List<Process> steamLibraryProcesses = new List<Process>();
+
+                foreach (string steamLibraryProcessName in _steamProcessList)
+                {
+                    // Look for the processes with the ProcessName we sorted out earlier
+                    steamLibraryProcesses.AddRange(Process.GetProcessesByName(steamLibraryProcessName));
+                }
+
+                // If we have found one or more processes then we should be good to go
+                // so let's break, and get to the next step....
+                if (steamLibraryProcesses.Count > 0)
+                    return true;
+                else
+                    return false;
+            }
+
+        }
+
+        public override List<string> GameLibraryProcesses
+        {
+            get
+            {
+                return _steamProcessList;
+            }
+        }
+
 
         #endregion
 
         #region Class Methods
-        public static bool AddSteamGame(SteamGame steamGame)
+        public static SteamLibrary GetLibrary()
+        {
+            return _instance;
+        }
+
+        public override bool AddGame(Game steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
 
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
-            if (ContainsSteamGame(steamGame))
+            if (ContainsGame(steamGame))
             {
                 logger.Debug($"SteamLibrary/AddSteamGame: Updating Steam game {steamGame.Name} in our Steam library");
                 // We update the existing Shortcut with the data over
-                SteamGame steamGameToUpdate = GetSteamGame(steamGame.Id.ToString());
-                steamGame.CopyInto(steamGameToUpdate);
+                SteamGame steamGameToUpdate = (SteamGame)GetGameById(steamGame.Id.ToString());
+                steamGame.CopyTo(steamGameToUpdate);
             }
             else
             {
@@ -167,7 +227,7 @@ namespace DisplayMagician.GameLibraries
             }
 
             //Doublecheck it's been added
-            if (ContainsSteamGame(steamGame))
+            if (ContainsGame(steamGame))
             {
                 return true;
             }
@@ -176,7 +236,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool RemoveSteamGame(SteamGame steamGame)
+        public override bool RemoveGame(Game steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
@@ -200,9 +260,9 @@ namespace DisplayMagician.GameLibraries
                 throw new SteamLibraryException();
         }
 
-        public static bool RemoveSteamGame(int steamGameId)
+        public override bool RemoveGameById(string steamGameId)
         {
-            if (steamGameId<=0)
+            if (steamGameId.Equals("0"))
                 return false;
 
             logger.Debug($"SteamLibrary/RemoveSteamGame2: Removing Steam game with ID {steamGameId} from the Steam library");
@@ -225,28 +285,28 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static bool RemoveSteamGame(string steamGameNameOrUuid)
+        public override bool RemoveGame(string steamGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(steamGameNameOrId))
                 return false;
 
-            logger.Debug($"SteamLibrary/RemoveSteamGame3: Removing Steam game with Name or UUID {steamGameNameOrUuid} from the Steam library");
+            logger.Debug($"SteamLibrary/RemoveSteamGame3: Removing Steam game with Name or UUID {steamGameNameOrId} from the Steam library");
 
             int numRemoved;
-            Match match = Regex.Match(steamGameNameOrUuid, steamAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(steamGameNameOrId, steamAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
-                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(Convert.ToUInt32(item.Id)));
+                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrId.Equals(item.Id));
             else
-                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrUuid.Equals(item.Name));
+                numRemoved = _allSteamGames.RemoveAll(item => steamGameNameOrId.Equals(item.Name));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"SteamLibrary/RemoveSteamGame3: Removed Steam game with Name or UUID {steamGameNameOrUuid} ");
+                logger.Debug($"SteamLibrary/RemoveSteamGame3: Removed Steam game with Name or UUID {steamGameNameOrId} ");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"SteamLibrary/RemoveSteamGame3: Didn't remove Steam game with Name or UUID {steamGameNameOrUuid} from the Steam Library");
+                logger.Debug($"SteamLibrary/RemoveSteamGame3: Didn't remove Steam game with Name or UUID {steamGameNameOrId} from the Steam Library");
                 return false;
             }
             else
@@ -254,7 +314,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsSteamGame(SteamGame steamGame)
+        public override bool ContainsGame(Game steamGame)
         {
             if (!(steamGame is SteamGame))
                 return false;
@@ -268,7 +328,7 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
-        public static bool ContainsSteamGame(string steamGameNameOrUuid)
+        public override bool ContainsGame(string steamGameNameOrUuid)
         {
             if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
                 return false;
@@ -298,7 +358,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsSteamGame(int steamGameId)
+        public override bool ContainsGameById(string steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -312,7 +372,7 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static SteamGame GetSteamGame(string steamGameNameOrUuid)
+        public override Game GetGame(string steamGameNameOrUuid)
         {
             if (String.IsNullOrWhiteSpace(steamGameNameOrUuid))
                 return null;
@@ -341,7 +401,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static SteamGame GetSteamGame(int steamGameId)
+        public override Game GetGameById(string steamGameId)
         {
             foreach (SteamGame testSteamGame in _allSteamGames)
             {
@@ -353,7 +413,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool LoadInstalledGames()
+        public override bool LoadInstalledGames()
         {
             try
             {
@@ -368,7 +428,7 @@ namespace DisplayMagician.GameLibraries
                 logger.Trace($"SteamLibrary/LoadInstalledGames: Steam Base Registry Key = HKLM\\{_registrySteamKey}");
                 logger.Trace($"SteamLibrary/LoadInstalledGames: Steam Apps Registry Key = HKCU\\{_registryAppsKey}");
 
-                List<int> steamAppIdsInstalled = new List<int>();
+                List<string> steamAppIdsInstalled = new List<string>();
                 // Now look for what games app id's are actually installed on this computer
                 using (RegistryKey steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
@@ -376,13 +436,13 @@ namespace DisplayMagician.GameLibraries
                     {
                         //
                         // Loop through the subKeys as they are the Steam Game IDs
-                        foreach (string steamGameKeyName in steamAppsKey.GetSubKeyNames())
+                        foreach (string steamAppId in steamAppsKey.GetSubKeyNames())
                         {
-                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found SteamGameKeyName = {steamGameKeyName}");
-                            if (int.TryParse(steamGameKeyName, out int steamAppId))
+                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found SteamGameKeyName = {steamAppId}");
+                            if (!String.IsNullOrWhiteSpace(steamAppId))
                             {
                                 logger.Trace($"SteamLibrary/LoadInstalledGames: SteamGameKeyName is an int, so trying to see if it is an installed app");
-                                string steamGameKeyFullName = $"{_registryAppsKey}\\{steamGameKeyName}";
+                                string steamGameKeyFullName = $"{_registryAppsKey}\\{steamAppId}";
                                 using (RegistryKey steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                 {
                                     // If the Installed Value is set to 1, then the game is installed
@@ -398,7 +458,7 @@ namespace DisplayMagician.GameLibraries
                                         logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} does not contain an 'Installed' value so can't be a Steam App.");
                                     }
 
-                                }
+                            }
 
                             }
                         }
@@ -424,7 +484,7 @@ namespace DisplayMagician.GameLibraries
                 // - THe game installation dir
                 // - Sometimes the game icon
                 // - Sometimes the game executable name (from which we can get the icon)
-                Dictionary<int, SteamAppInfo> steamAppInfo = new Dictionary<int, SteamAppInfo>();
+                Dictionary<string, SteamAppInfo> steamAppInfo = new Dictionary<string, SteamAppInfo>();
 
                 string appInfoVdfFile = Path.Combine(_steamPath, "appcache", "appinfo.vdf");
                 var newAppInfo = new AppInfo();
@@ -437,7 +497,7 @@ namespace DisplayMagician.GameLibraries
                 {
                     // We only care about the appIDs we have listed as actual games
                     // (The AppIds include all other DLC and Steam specific stuff too)
-                    int detectedAppID = Convert.ToInt32(app.AppID);
+                    string detectedAppID = app.AppID.ToString();
                     if (steamAppIdsInstalled.Contains(detectedAppID))
                     {
 
@@ -468,7 +528,7 @@ namespace DisplayMagician.GameLibraries
                                         else if (common.Name == "clienticon")
                                         {
                                             logger.Trace($"SteamLibrary/LoadInstalledGames: clienticon: App: {app.AppID} - Common {common.Name}: {common.Value}");
-                                            steamGameAppInfo.GameSteamIconPath = Path.Combine(_steamPath, @"steam", @"games", String.Concat(common.Value, @".ico"));
+                                            steamGameAppInfo.GameIconPath = Path.Combine(_steamPath, @"steam", @"games", String.Concat(common.Value, @".ico"));
                                         }
                                         else if (common.Name == "type")
                                         {
@@ -515,7 +575,7 @@ namespace DisplayMagician.GameLibraries
                             if (steamAppType.Equals("Game",StringComparison.OrdinalIgnoreCase))
                             {
                                 steamAppInfo.Add(detectedAppID, steamGameAppInfo);
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: Adding Game with ID {detectedAppID} to the list of games");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Adding Game with ID {detectedAppID} '{steamGameAppInfo.GameName}' to the list of games");
                             }
                                 
                         }
@@ -578,8 +638,9 @@ namespace DisplayMagician.GameLibraries
                         Match appidMatches = appidRegex.Match(steamLibraryAppManifestText);
                         if (appidMatches.Success)
                         {
-                            if (int.TryParse(appidMatches.Groups[1].Value, out int steamGameId))
+                            if (!String.IsNullOrWhiteSpace(appidMatches.Groups[1].Value))
                             {
+                                string steamGameId = appidMatches.Groups[1].Value;
                                 logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam Game ID {steamGameId} within {steamLibraryAppManifestFilename} steam app manifest within steam library {steamLibraryPath}");
                                 // Check if this game is one that was installed
                                 if (steamAppInfo.ContainsKey(steamGameId))
@@ -593,32 +654,32 @@ namespace DisplayMagician.GameLibraries
                                     // Construct the full path to the game dir from the appInfo and libraryAppManifest data
                                     string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
 
-                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                        logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamGameId} at {steamGameInstallDir }");
 
-                                    // And finally we try to populate the 'where', to see what gets run
-                                    // And so we can extract the process name
-                                    if (steamAppInfo[steamGameId].GameExes.Count > 0)
-                                    {
-                                        foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
+                                        // And finally we try to populate the 'where', to see what gets run
+                                        // And so we can extract the process name
+                                        if (steamAppInfo[steamGameId].GameExes.Count > 0)
                                         {
-                                            steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-                                            // If the game executable exists, then we can proceed
-                                            if (File.Exists(steamGameExe))
+                                            foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
                                             {
-                                                logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-                                                break;
+                                                steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
+                                                logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                                // If the game executable exists, then we can proceed
+                                                if (File.Exists(steamGameExe))
+                                                {
+                                                    logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                                    break;
+                                                }
                                             }
-                                        }
 
                                     }
 
                                     // Next, we need to get the Icons we want to use, and make sure it's the latest one.
                                     string steamGameIconPath = "";
                                     // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
-                                    if (File.Exists(steamAppInfo[steamGameId].GameSteamIconPath) && steamAppInfo[steamGameId].GameSteamIconPath.EndsWith(".ico"))
+                                    if (File.Exists(steamAppInfo[steamGameId].GameIconPath) && steamAppInfo[steamGameId].GameIconPath.EndsWith(".ico"))
                                     {
-                                        steamGameIconPath = steamAppInfo[steamGameId].GameSteamIconPath;
+                                        steamGameIconPath = steamAppInfo[steamGameId].GameIconPath;
                                         logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Icon Path {steamGameIconPath} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
 
                                     }
@@ -683,7 +744,7 @@ namespace DisplayMagician.GameLibraries
     }
 
     [global::System.Serializable]
-    public class SteamLibraryException : Exception
+    public class SteamLibraryException : GameLibraryException
     {
         public SteamLibraryException() { }
         public SteamLibraryException(string message) : base(message) { }

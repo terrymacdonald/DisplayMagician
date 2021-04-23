@@ -10,14 +10,15 @@ namespace DisplayMagician.GameLibraries
 {
     public class UplayGame : Game
     {
-        private string _gameRegistryKey;
-        private int _uplayGameId;
+        //private string _gameRegistryKey;
+        private string _uplayGameId;
         private string _uplayGameName;
         private string _uplayGameExePath;
         private string _uplayGameDir;
         private string _uplayGameExe;
         private string _uplayGameProcessName;
         private string _uplayGameIconPath;
+        private static readonly UplayLibrary _uplayGameLibrary = UplayLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static UplayGame()
@@ -27,10 +28,10 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public UplayGame(int uplayGameId, string uplayGameName, string uplayGameExePath, string uplayGameIconPath)
+        public UplayGame(string uplayGameId, string uplayGameName, string uplayGameExePath, string uplayGameIconPath)
         {
 
-            _gameRegistryKey = $@"{UplayLibrary.registryUplayInstallsKey}\\{uplayGameId}";
+            //_gameRegistryKey = $@"{UplayLibrary.registryUplayInstallsKey}\\{uplayGameId}";
             _uplayGameId = uplayGameId;
             _uplayGameName = uplayGameName;
             _uplayGameExePath = uplayGameExePath;
@@ -41,7 +42,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override int Id
+        public override string Id
         {
             get => _uplayGameId;
             set => _uplayGameId = value;
@@ -53,9 +54,9 @@ namespace DisplayMagician.GameLibraries
             set => _uplayGameName = value;
         }
 
-        public override SupportedGameLibrary GameLibrary
+        public override SupportedGameLibraryType GameLibrary
         {
-            get => SupportedGameLibrary.Uplay;
+            get => SupportedGameLibraryType.Uplay;
         }
 
         public override string IconPath
@@ -153,6 +154,25 @@ namespace DisplayMagician.GameLibraries
                 }
             }
         }*/
+
+        public override GameStartMode StartMode
+        {
+            get => GameStartMode.URI;
+        }
+
+        public override string GetStartURI(string gameArguments = "")
+        {
+            string address = $"uplay://launch/{Id}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            else
+            {
+                address += "/0";
+            }
+            return address;
+        }
 
         public bool CopyTo(UplayGame uplayGame)
         {

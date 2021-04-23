@@ -13,13 +13,14 @@ namespace DisplayMagician.GameLibraries
     public class SteamGame : Game
     {
         private string _gameRegistryKey;
-        private int _steamGameId;
+        private string _steamGameId;
         private string _steamGameName;
         private string _steamGameExePath;
         private string _steamGameDir;
         private string _steamGameExe;
         private string _steamGameProcessName;
         private string _steamGameIconPath;
+        private static readonly SteamLibrary _steamGameLibrary = SteamLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         static SteamGame()
@@ -29,10 +30,10 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public SteamGame(int steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
+        public SteamGame(string steamGameId, string steamGameName, string steamGameExePath, string steamGameIconPath)
         {
 
-            _gameRegistryKey = $@"{SteamLibrary.SteamAppsRegistryKey}\\{steamGameId}";
+            _gameRegistryKey = $@"{_steamGameLibrary.SteamAppsRegistryKey}\\{steamGameId}";
             _steamGameId = steamGameId;
             _steamGameName = steamGameName;
             _steamGameExePath = steamGameExePath;
@@ -43,7 +44,7 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override int Id { 
+        public override string Id { 
             get => _steamGameId;
             set => _steamGameId = value;
         }
@@ -54,8 +55,8 @@ namespace DisplayMagician.GameLibraries
             set => _steamGameName = value;
         }
 
-        public override SupportedGameLibrary GameLibrary { 
-            get => SupportedGameLibrary.Steam; 
+        public override SupportedGameLibraryType GameLibrary { 
+            get => SupportedGameLibraryType.Steam; 
         }
 
         public override string IconPath { 
@@ -152,6 +153,21 @@ namespace DisplayMagician.GameLibraries
                 }
                 return false;
             }
+        }
+
+        public override GameStartMode StartMode
+        {
+            get => GameStartMode.URI;
+        }
+
+        public override string GetStartURI(string gameArguments = "")
+        {
+            string address = $"steam://rungameid/{Id}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            return address;
         }
 
         public bool CopyInto(SteamGame steamGame)

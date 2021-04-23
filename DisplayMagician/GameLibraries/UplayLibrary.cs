@@ -5,39 +5,42 @@ using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using System.IO;
 using System.Security;
+using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
-    public static class UplayLibrary
+    public class UplayLibrary : GameLibrary
     {
+
+
         #region Class Variables
+        // Static members are 'eagerly initialized', that is, 
+        // immediately when class is loaded for the first time.
+        // .NET guarantees thread safety for static initialization
+        private static readonly UplayLibrary _instance = new UplayLibrary();
+       
         // Common items to the class
-        private static List<Game> _allUplayGames = new List<Game>();
-        private static string uplayAppIdRegex = @"/^[0-9A-F]{1,10}$";
-        private static bool _isUplayInstalled = false;
-        private static string _uplayExe;
-        private static string _uplayPath;
-        //private static string _uplayConfigVdfFile;
-        internal static string registryUplayLauncherKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher";
-        internal static string registryUplayInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
-        internal static string registryUplayOpenCmdKey = @"SOFTWARE\Classes\uplay\Shell\Open\Command";
-        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private List<Game> _allGames = new List<Game>();
+        private string uplayAppIdRegex = @"/^[0-9A-F]{1,10}$";
+        private bool _isUplayInstalled = false;
+        private string _uplayExe;
+        private string _uplayPath;
+        private List<string> _uplayProcessList = new List<string>() { "UbisoftGameLauncher", "UbisoftGameLauncher64" };
+        //private string _uplayConfigVdfFile;
+        internal string registryUplayLauncherKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher";
+        internal string registryUplayInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
+        internal string registryUplayOpenCmdKey = @"SOFTWARE\Classes\uplay\Shell\Open\Command";
+        private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
 
         // Other constants that are useful
         #endregion
 
-        private struct UplayAppInfo
-        {
-            public int GameID;
-            public string GameName;
-            public string GameExe;
-            public string GameInstallDir;
-            public string GameUplayIconPath;
-        }
 
         #region Class Constructors
-        static UplayLibrary()
+        static UplayLibrary() { }
+
+        private UplayLibrary()
         {
             try
             {
@@ -79,27 +82,43 @@ namespace DisplayMagician.GameLibraries
         #endregion
 
         #region Class Properties
-        public static List<Game> AllInstalledGames
+        public override List<Game> AllInstalledGames
         {
             get
             {
                 // Load the Uplay Games from Uplay Client if needed
-                if (_allUplayGames.Count == 0)
+                if (_allGames.Count == 0)
                     LoadInstalledGames();
-                return _allUplayGames;
+                return _allGames;
             }
         }
 
 
-        public static int InstalledUplayGameCount
+        public override int InstalledGameCount
         {
             get
             {
-                return _allUplayGames.Count;
+                return _allGames.Count;
             }
         }
 
-        public static string UplayExe
+        public override string GameLibraryName
+        {
+            get
+            {
+                return "Uplay";
+            }
+        }
+
+        public override SupportedGameLibraryType GameLibraryType
+        {
+            get
+            {
+                return SupportedGameLibraryType.Uplay;
+            }
+        }
+
+        public override string GameLibraryExe
         {
             get
             {
@@ -107,7 +126,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static string UplayPath
+        public override string GameLibraryPath
         {
             get
             {
@@ -115,7 +134,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public static bool IsUplayInstalled
+        public override bool IsGameLibraryInstalled
         {
             get
             {
@@ -124,33 +143,68 @@ namespace DisplayMagician.GameLibraries
 
         }
 
+        public override bool IsRunning
+        {
+            get
+            {
+                List<Process> uplayLibraryProcesses = new List<Process>();
+
+                foreach (string uplayLibraryProcessName in _uplayProcessList)
+                {
+                    // Look for the processes with the ProcessName we sorted out earlier
+                    uplayLibraryProcesses.AddRange(Process.GetProcessesByName(uplayLibraryProcessName));
+                }
+
+                // If we have found one or more processes then we should be good to go
+                // so let's break, and get to the next step....
+                if (uplayLibraryProcesses.Count > 0)
+                    return true;
+                else
+                    return false;
+            }
+
+        }
+
+        public override List<string> GameLibraryProcesses
+        {
+            get
+            {
+                return _uplayProcessList;
+            }
+        }
+
 
         #endregion
 
         #region Class Methods
-        public static bool AddUplayGame(UplayGame uplayGame)
+        public static UplayLibrary GetLibrary()
+        {
+            return _instance;
+        }
+
+        public override bool AddGame(Game uplayGame)
         {
             if (!(uplayGame is UplayGame))
                 return false;
             
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
-            if (ContainsUplayGame(uplayGame))
+            if (ContainsGame(uplayGame))
             {
-                logger.Debug($"UplayLibrary/AddUplayGame: Updating Uplay game {uplayGame.Name} in our Uplay library");
+                logger.Debug($"UplayLibrary/AddGame: Updating Uplay game {uplayGame.Name} in our Uplay library");
                 // We update the existing Shortcut with the data over
-                UplayGame uplayGameToUpdate = GetUplayGame(uplayGame.Id.ToString());
+                UplayGame uplayGameToUpdate = (UplayGame)GetGame(uplayGame.Id.ToString());
                 uplayGame.CopyTo(uplayGameToUpdate);
             }
             else
             {
-                logger.Debug($"UplayLibrary/AddUplayGame: Adding Uplay game {uplayGame.Name} to our Uplay library");
+                logger.Debug($"UplayLibrary/AddGame: Adding Uplay game {uplayGame.Name} to our Uplay library");
                 // Add the uplayGame to the list of uplayGames
-                _allUplayGames.Add(uplayGame);
+                _allGames.Add(uplayGame);
             }
 
             //Doublecheck it's been added
-            if (ContainsUplayGame(uplayGame))
+            if (ContainsGame(uplayGame))
             {
                 return true;
             }
@@ -159,76 +213,76 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool RemoveUplayGame(UplayGame uplayGame)
+        public override bool RemoveGame(Game uplayGame)
         {
-            if (!(uplayGame is UplayGame))
+            if (!(uplayGame is Game))
                 return false;
 
-            logger.Debug($"UplayLibrary/RemoveUplayGame: Removing Uplay game {uplayGame.Name} from our Uplay library");
+            logger.Debug($"UplayLibrary/RemoveGame: Removing Uplay game {uplayGame.Name} from our Uplay library");
 
             // Remove the uplayGame from the list.
-            int numRemoved = _allUplayGames.RemoveAll(item => item.Id.Equals(uplayGame.Id));
+            int numRemoved = _allGames.RemoveAll(item => item.Id.Equals(uplayGame.Id));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame: Removed Uplay game with name {uplayGame.Name}");
+                logger.Debug($"UplayLibrary/RemoveGame: Removed Uplay game with name {uplayGame.Name}");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame: Didn't remove Uplay game with ID {uplayGame.Name} from the Uplay Library");
+                logger.Debug($"UplayLibrary/RemoveGame: Didn't remove Uplay game with ID {uplayGame.Name} from the Uplay Library");
                 return false;
             }                
             else
                 throw new UplayLibraryException();
         }
 
-        public static bool RemoveUplayGame(int uplayGameId)
+        public override bool RemoveGameById(string uplayGameId)
         {
-            if (uplayGameId<=0)
+            if (uplayGameId.Equals(0))
                 return false;
 
-            logger.Debug($"UplayLibrary/RemoveUplayGame2: Removing Uplay game with ID {uplayGameId} from the Uplay library");
+            logger.Debug($"UplayLibrary/RemoveGame2: Removing Uplay game with ID {uplayGameId} from the Uplay library");
 
             // Remove the uplayGame from the list.
-            int numRemoved = _allUplayGames.RemoveAll(item => item.Id.Equals(uplayGameId));
+            int numRemoved = _allGames.RemoveAll(item => item.Id.Equals(uplayGameId));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame2: Removed Uplay game with ID {uplayGameId}");
+                logger.Debug($"UplayLibrary/RemoveGame2: Removed Uplay game with ID {uplayGameId}");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame2: Didn't remove Uplay game with ID {uplayGameId} from the Uplay Library");
+                logger.Debug($"UplayLibrary/RemoveGame2: Didn't remove Uplay game with ID {uplayGameId} from the Uplay Library");
                 return false;
             }
             else
                 throw new UplayLibraryException();
         }
 
-        public static bool RemoveUplayGame(string uplayGameNameOrUuid)
+        public override bool RemoveGame(string uplayGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return false;
 
-            logger.Debug($"UplayLibrary/RemoveUplayGame3: Removing Uplay game with Name or UUID {uplayGameNameOrUuid} from the Uplay library");
+            logger.Debug($"UplayLibrary/RemoveGame3: Removing Uplay game with Name or ID {uplayGameNameOrId} from the Uplay library");
 
             int numRemoved;
-            Match match = Regex.Match(uplayGameNameOrUuid, uplayAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(uplayGameNameOrId, uplayAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
-                numRemoved = _allUplayGames.RemoveAll(item => uplayGameNameOrUuid.Equals(Convert.ToUInt32(item.Id)));
+                numRemoved = _allGames.RemoveAll(item => uplayGameNameOrId.Equals(item.Id));
             else
-                numRemoved = _allUplayGames.RemoveAll(item => uplayGameNameOrUuid.Equals(item.Name));
+                numRemoved = _allGames.RemoveAll(item => uplayGameNameOrId.Equals(item.Name));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame3: Removed Uplay game with Name or UUID {uplayGameNameOrUuid} ");
+                logger.Debug($"UplayLibrary/RemoveGame3: Removed Uplay game with Name or UUID {uplayGameNameOrId} ");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"UplayLibrary/RemoveUplayGame3: Didn't remove Uplay game with Name or UUID {uplayGameNameOrUuid} from the Uplay Library");
+                logger.Debug($"UplayLibrary/RemoveGame3: Didn't remove Uplay game with Name or UUID {uplayGameNameOrId} from the Uplay Library");
                 return false;
             }
             else
@@ -236,25 +290,25 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsUplayGame(UplayGame uplayGame)
+        public override bool ContainsGame(Game uplayGame)
         {
             if (!(uplayGame is UplayGame))
                 return false;
 
-            foreach (UplayGame testUplayGame in _allUplayGames)
+            foreach (UplayGame testGame in _allGames)
             {
-                if (testUplayGame.Id.Equals(uplayGame.Id))
+                if (testGame.Id.Equals(uplayGame.Id))
                     return true;
             }
 
             return false;
         }
 
-        public static bool ContainsUplayGame(int uplayGameId)
+        public override bool ContainsGameById(string uplayGameId)
         {
-            foreach (UplayGame testUplayGame in _allUplayGames)
+            foreach (UplayGame testGame in _allGames)
             {
-                if (uplayGameId == testUplayGame.Id)
+                if (uplayGameId == testGame.Id)
                     return true;
             }
 
@@ -263,27 +317,27 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static bool ContainsUplayGame(string uplayGameNameOrUuid)
+        public override bool ContainsGame(string uplayGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return false;
 
 
-            Match match = Regex.Match(uplayGameNameOrUuid, uplayAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(uplayGameNameOrId, uplayAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
-                foreach (UplayGame testUplayGame in _allUplayGames)
+                foreach (UplayGame testGame in _allGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(Convert.ToInt32(testUplayGame.Id)))
+                    if (uplayGameNameOrId.Equals(Convert.ToInt32(testGame.Id)))
                         return true;
                 }
 
             }
             else
             {
-                foreach (UplayGame testUplayGame in _allUplayGames)
+                foreach (UplayGame testGame in _allGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(testUplayGame.Name))
+                    if (uplayGameNameOrId.Equals(testGame.Name))
                         return true;
                 }
 
@@ -294,27 +348,27 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public static UplayGame GetUplayGame(string uplayGameNameOrUuid)
+        public override Game GetGame(string uplayGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(uplayGameNameOrUuid))
+            if (String.IsNullOrWhiteSpace(uplayGameNameOrId))
                 return null;
 
-            Match match = Regex.Match(uplayGameNameOrUuid, uplayAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(uplayGameNameOrId, uplayAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
-                foreach (UplayGame testUplayGame in _allUplayGames)
+                foreach (UplayGame testGame in _allGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(Convert.ToInt32(testUplayGame.Id)))
-                        return testUplayGame;
+                    if (uplayGameNameOrId.Equals(Convert.ToInt32(testGame.Id)))
+                        return testGame;
                 }
 
             }
             else
             {
-                foreach (UplayGame testUplayGame in _allUplayGames)
+                foreach (UplayGame testGame in _allGames)
                 {
-                    if (uplayGameNameOrUuid.Equals(testUplayGame.Name))
-                        return testUplayGame;
+                    if (uplayGameNameOrId.Equals(testGame.Name))
+                        return testGame;
                 }
 
             }
@@ -323,19 +377,19 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public static UplayGame GetUplayGame(int uplayGameId)
+        public override Game GetGameById(string uplayGameId)
         {
-            foreach (UplayGame testUplayGame in _allUplayGames)
+            foreach (UplayGame testGame in _allGames)
             {
-                if (uplayGameId == testUplayGame.Id)
-                    return testUplayGame;
+                if (uplayGameId == testGame.Id)
+                    return testGame;
             }
 
             return null;
 
         }
 
-        public static bool LoadInstalledGames()
+        public override bool LoadInstalledGames()
         {
             try
             {
@@ -462,7 +516,7 @@ namespace DisplayMagician.GameLibraries
                     }
 
                     // for each game record grab:
-                    UplayAppInfo uplayGameAppInfo = new UplayAppInfo();
+                    GameAppInfo uplayGameAppInfo = new GameAppInfo();
 
                     // find the exe name looking at root: -> start_game: -> online: -> executables: -> path: -> relative: (get ACU.exe)
                     // Lookup the Game registry key from looking at root: -> start_game: -> online: -> executables: -> working_directory: -> register: (get HKEY_LOCAL_MACHINE\SOFTWARE\Ubisoft\Launcher\Installs\720\InstallDir)
@@ -485,7 +539,7 @@ namespace DisplayMagician.GameLibraries
                         // Stop this loop once we have both filname and gameid
                         if (gotGameFileName && gotGameId && gotGameIconPath && gotGameName && gotGameRegistryKey)
                         {
-                            logger.Trace($"UplayLibrary/LoadInstalledGames: We got all the entries: gameFileName = {gameFileName } && gameId = {gameId } && gameIconPath = {uplayGameAppInfo.GameUplayIconPath} && gameName = {uplayGameAppInfo.GameName}");
+                            logger.Trace($"UplayLibrary/LoadInstalledGames: We got all the entries: gameFileName = {gameFileName } && gameId = {gameId } && gameIconPath = {uplayGameAppInfo.GameIconPath} && gameName = {uplayGameAppInfo.GameName}");
                             break;
                         }
                             
@@ -516,8 +570,8 @@ namespace DisplayMagician.GameLibraries
                             string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
                             if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
                             {
-                                uplayGameAppInfo.GameUplayIconPath = uplayGameIconPath;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameUplayIconPath = {uplayGameAppInfo.GameUplayIconPath }");
+                                uplayGameAppInfo.GameIconPath = uplayGameIconPath;
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameUplayIconPath = {uplayGameAppInfo.GameIconPath }");
                             }
                             gotGameIconPath = true;
                         }
@@ -546,7 +600,7 @@ namespace DisplayMagician.GameLibraries
 
                     logger.Trace($"UplayLibrary/LoadInstalledGames: gameId = {gameId}");
                     logger.Trace($"UplayLibrary/LoadInstalledGames: gameFileName = {gameFileName}");
-                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameGameIconPath = {uplayGameAppInfo.GameUplayIconPath}");
+                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameGameIconPath = {uplayGameAppInfo.GameIconPath}");
                     logger.Trace($"UplayLibrary/LoadInstalledGames: gameRegistryKey = {gameRegistryKey}");
 
                     if (gotGameRegistryKey)
@@ -575,9 +629,9 @@ namespace DisplayMagician.GameLibraries
                             {
                                 uplayGameAppInfo.GameInstallDir = Path.GetFullPath(gameInstallDir).TrimEnd('\\');
                                 logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameInstallDir = {uplayGameAppInfo.GameInstallDir }");
-                                uplayGameAppInfo.GameExe = Path.Combine(uplayGameAppInfo.GameInstallDir, gameFileName);
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameExe = {uplayGameAppInfo.GameExe }");
-                                uplayGameAppInfo.GameID = int.Parse(gameId);
+                                uplayGameAppInfo.GameExePath = Path.Combine(uplayGameAppInfo.GameInstallDir, gameFileName);
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameExe = {uplayGameAppInfo.GameExePath}");
+                                uplayGameAppInfo.GameID = gameId;
                                 logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameID = {uplayGameAppInfo.GameID }");
                             }
                             else
@@ -587,14 +641,14 @@ namespace DisplayMagician.GameLibraries
 
                             // Then we have the gameID, the thumbimage, the icon, the name, the exe path
                             // And we add the Game to the list of games we have!
-                            _allUplayGames.Add(new UplayGame(uplayGameAppInfo.GameID, uplayGameAppInfo.GameName, uplayGameAppInfo.GameExe, uplayGameAppInfo.GameUplayIconPath));
-                            logger.Debug($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {uplayGameAppInfo.GameID}, name {uplayGameAppInfo.GameName}, game exe {uplayGameAppInfo.GameExe} and icon path {uplayGameAppInfo.GameUplayIconPath}");
+                            _allGames.Add(new UplayGame(uplayGameAppInfo.GameID, uplayGameAppInfo.GameName, uplayGameAppInfo.GameExePath, uplayGameAppInfo.GameIconPath));
+                            logger.Debug($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {uplayGameAppInfo.GameID}, name {uplayGameAppInfo.GameName}, game exe {uplayGameAppInfo.GameExePath} and icon path {uplayGameAppInfo.GameIconPath}");
                         }
                     }
                     
                 }
 
-                logger.Info($"UplayLibrary/LoadInstalledGames: Found {_allUplayGames.Count} installed Uplay games");
+                logger.Info($"UplayLibrary/LoadInstalledGames: Found {_allGames.Count} installed Uplay games");
 
             }
 

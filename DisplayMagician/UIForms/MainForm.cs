@@ -68,6 +68,14 @@ namespace DisplayMagician.UIForms
                 allowVisible = true;
                 // Really close the application when the form is closed
                 allowClose = true;
+            }
+
+            if (Program.AppProgramSettings.MinimiseOnStart && Program.AppProgramSettings.StartOnBootUp)
+            {
+                cb_minimise_notification_area.Checked = true;
+            }
+            else
+            {
                 cb_minimise_notification_area.Checked = false;
             }
 
@@ -320,6 +328,7 @@ namespace DisplayMagician.UIForms
                 allowClose = false;
                 // Enable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = true;
+                Program.AppProgramSettings.StartOnBootUp = true;
                 // Change the exit_button text to say 'Close'
                 btn_exit.Text = "&Close";
             }
@@ -331,6 +340,7 @@ namespace DisplayMagician.UIForms
                 allowClose = true;
                 // Disable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = false;
+                Program.AppProgramSettings.StartOnBootUp = false;
                 // Change the exit_button text to say 'Exit'
                 btn_exit.Text = "&Exit";
 
@@ -474,6 +484,11 @@ namespace DisplayMagician.UIForms
         {
             string targetURL = @"https://github.com/sponsors/terrymacdonald";
             System.Diagnostics.Process.Start(targetURL);
+        }
+
+        private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            openApplicationWindow();
         }
     }
 }
