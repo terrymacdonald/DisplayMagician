@@ -1373,6 +1373,8 @@ namespace DisplayMagician
             int gameTimeout,
             string gameArguments,
             bool gameArgumentsRequired,
+            string differentGameExeToMonitor,
+            bool monitorDifferentGameExe,        
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence,
             ShortcutPermanence capturePermanence,
@@ -1401,6 +1403,8 @@ namespace DisplayMagician
             _startTimeout = gameTimeout;
             _gameArguments = gameArguments;
             _gameArgumentsRequired = gameArgumentsRequired;
+            _differentGameExeToMonitor = differentGameExeToMonitor;
+            _monitorDifferentGameExe = monitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -1466,6 +1470,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -1530,7 +1536,8 @@ namespace DisplayMagician
             _startTimeout = game.StartTimeout;
             _gameArguments = game.GameArguments;
             _gameArgumentsRequired = game.GameArgumentsRequired;
-            _gameArgumentsRequired = false;
+            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
+            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;

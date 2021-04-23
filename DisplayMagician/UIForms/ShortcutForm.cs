@@ -308,6 +308,26 @@ namespace DisplayMagician.UIForms
                         return;
                 }
 
+                if (cb_wait_alternative_game.Checked && String.IsNullOrWhiteSpace(txt_alternative_game.Text))
+                {
+                    MessageBox.Show(
+                        $"If you want to wait for an alternative game executable then you need to choose it! Click the 'Choose' button next to the different game executable field.",
+                        @"Need to choose the different game executable",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                if (cb_wait_alternative_game.Checked && !File.Exists(txt_alternative_game.Text))
+                {
+                    MessageBox.Show(
+                        @"The alternative game executable you have chosen does not exist! Please reselect the alternative game executable, or check you have permissions to view it.",
+                        @"Alternative game executable doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
             }
 
 
@@ -483,116 +503,58 @@ namespace DisplayMagician.UIForms
             if (rb_launcher.Checked)
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're saving a game!");
+
+                _gameToUse = new GameStruct
+                {                    
+                    StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
+                    GameArguments = txt_args_game.Text,
+                    GameArgumentsRequired = cb_args_game.Checked,
+                    DifferentGameExeToMonitor = txt_alternative_game.Text,
+                    MonitorDifferentGameExe = cb_wait_alternative_game.Checked
+                };
+
                 // If the game is a SteamGame
                 if (txt_game_launcher.Text == SupportedGameLibraryType.Steam.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
                     // Find the SteamGame
-                    _gameToUse = new GameStruct
-                    {
-                        GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).First(),
-                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
-                        GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked,
-                        DifferentGameExeToMonitor = txt_alternative_game.Text,
-                        MonitorDifferentGameExe = cb_wait_alternative_game.Checked
-                    };
 
-                    _shortcutToEdit.UpdateGameShortcut(
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _gameToUse.GameToPlay.IconPath,
-                        _changeAudioDevice,
-                        _audioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );
-
+                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).First();
                 }
                 // If the game is a UplayGame
                 else if (txt_game_launcher.Text == SupportedGameLibraryType.Uplay.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
                     // Find the UplayGame
-                    _gameToUse = new GameStruct
-                    {
-                        GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First(),
-                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
-                        GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked,
-                        DifferentGameExeToMonitor = txt_alternative_game.Text,
-                        MonitorDifferentGameExe = cb_wait_alternative_game.Checked
-                    };
-
-                    _shortcutToEdit.UpdateGameShortcut(
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _gameToUse.GameToPlay.IconPath,
-                         _changeAudioDevice,
-                        _audioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );
-
+                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
                 }
                 // If the game is an Origin Game
                 else if (txt_game_launcher.Text == SupportedGameLibraryType.Origin.ToString())
                 {
-                    // Find the OriginGame
-                    _gameToUse = new GameStruct
-                    {
-                        GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First(),
-                        StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
-                        GameArguments = txt_args_game.Text,
-                        GameArgumentsRequired = cb_args_game.Checked,
-                        DifferentGameExeToMonitor = txt_alternative_game.Text,
-                        MonitorDifferentGameExe = cb_wait_alternative_game.Checked
-                    };
-
-                    _shortcutToEdit.UpdateGameShortcut(
-                        txt_shortcut_save_name.Text,
-                        _profileToUse,
-                        _gameToUse,
-                        _displayPermanence,
-                        _audioPermanence,
-                        _capturePermanence,
-                        _gameToUse.GameToPlay.IconPath,
-                         _changeAudioDevice,
-                        _audioDevice,
-                        _setAudioVolume,
-                        _audioVolume,
-                        _changeCaptureDevice,
-                        _captureDevice,
-                        _setCaptureVolume,
-                        _captureVolume,
-                        _startPrograms,
-                        _autoName,
-                        _uuid
-                    );
-
+                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Origin game!");
+                    _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First();
                 }
+
+                _shortcutToEdit.UpdateGameShortcut(
+                    txt_shortcut_save_name.Text,
+                    _profileToUse,
+                    _gameToUse,
+                    _displayPermanence,
+                    _audioPermanence,
+                    _capturePermanence,
+                    _gameToUse.GameToPlay.IconPath,
+                    _changeAudioDevice,
+                    _audioDevice,
+                    _setAudioVolume,
+                    _audioVolume,
+                    _changeCaptureDevice,
+                    _captureDevice,
+                    _setCaptureVolume,
+                    _captureVolume,
+                    _startPrograms,
+                    _autoName,
+                    _uuid
+                );
             }
             else if (rb_standalone.Checked)
             {
@@ -1345,7 +1307,8 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
+                string fileExt = Path.GetExtension(dialog_open.FileName);
+                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com"))
                 {
                     txt_alternative_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -2237,6 +2200,29 @@ namespace DisplayMagician.UIForms
             {
                 txt_alternative_game.Enabled = false;
                 btn_choose_alternative_game.Enabled = false;
+            }
+        }
+
+        private void btn_choose_alternative_game_Click(object sender, EventArgs e)
+        {
+            if (dialog_open.ShowDialog(this) == DialogResult.OK)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                string fileExt = Path.GetExtension(dialog_open.FileName);
+                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com"))
+                {
+                    txt_alternative_game.Text = dialog_open.FileName;
+                    dialog_open.FileName = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        Language.Selected_file_is_not_a_valid_file,
+                        Language.Executable,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
             }
         }
     }

@@ -1319,6 +1319,7 @@ namespace DisplayMagician.UIForms
             this.btn_choose_alternative_game.TabIndex = 26;
             this.btn_choose_alternative_game.Text = "Choose";
             this.btn_choose_alternative_game.UseVisualStyleBackColor = true;
+            this.btn_choose_alternative_game.Click += new System.EventHandler(this.btn_choose_alternative_game_Click);
             // 
             // txt_alternative_game
             // 

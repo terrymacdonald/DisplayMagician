@@ -963,7 +963,7 @@ namespace DisplayMagician
                 //  make sure we have things to monitor and alert if not
                 if (processesToMonitor.Count == 0)
                 {
-                    logger.Error($"No '{processNameToLookFor}' processes found before waiting timeout. DisplayMagician was unable to find any processes before the {shortcutToUse.StartTimeout} second timeout");
+                    logger.Error($"ShortcutRepository/RunShortcut: No '{processNameToLookFor}' processes found before waiting timeout. DisplayMagician was unable to find any processes before the {shortcutToUse.StartTimeout} second timeout");
                 }
 
                 // Store the process to monitor for later
@@ -1002,7 +1002,6 @@ namespace DisplayMagician
                 Thread.Sleep(2000);
 
                 // if we have things to monitor, then we should start to wait for them
-                Console.WriteLine($"Waiting for all {processNameToLookFor} windows to exit.");
                 logger.Debug($"ShortcutRepository/RunShortcut: Waiting for application {processNameToLookFor} to exit.");
                 if (processesToMonitor.Count > 0)
                 {
@@ -1024,7 +1023,6 @@ namespace DisplayMagician
                         Thread.Sleep(1000);
                     }
                 }
-                Console.WriteLine($"{processNameToLookFor} has exited.");
                 logger.Debug($"ShortcutRepository/RunShortcut: Executable {processNameToLookFor} has exited.");
 
 
@@ -1138,95 +1136,202 @@ namespace DisplayMagician
 
                     }
 
-                    // Delay 1secs
-                    Thread.Sleep(1000);
+                    // Delay 5secs
+                    Thread.Sleep(5000);
                     logger.Debug($"ShortcutRepository/RunShortcut: Pausing to let the game library start the game.");
 
-                    // Now we know the game library app is running then 
-                    // we wait until the game has started running (*allows for updates to occur)
-                    for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
-                    {
-
-                        if (gameToRun.IsRunning)
-                        {
-                            // The game is running! So now we restart
-                            logger.Debug($"ShortcutRepository/RunShortcut: Found the '{gameToRun.Name}' process has started");
-                            break;
-                        }
-
-                        // Delay 500ms
-                        Thread.Sleep(500);
-
-                    }
-
-                    // Store the Origin Process ID for later
+                    // Store the Process ID for later
                     //IPCService.GetInstance().HoldProcessId = gameLibraryProcesses.FirstOrDefault()?.Id ?? 0;
                     //IPCService.GetInstance().Status = InstanceStatus.OnHold;
-
-                    // Add a status notification icon in the status area
-                    if (gameToRun.Name.Length <= 41)
-                        notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name}...";
-                    else
-                        notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name.Substring(0, 41)}...";
-                    Application.DoEvents();
-
-                    // Now we want to tell the user we're running a game!
-                    // Construct the Windows toast content
-                    tcBuilder = new ToastContentBuilder()
-                        .AddToastActivationInfo("notify=runningOriginGame", ToastActivationType.Foreground)
-                        .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
-                        .AddText($"Waiting for the Origin Game {gameToRun.Name} to exit...");
-                    //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
-                    toastContent = tcBuilder.Content;
-                    // Make sure to use Windows.Data.Xml.Dom
-                    doc = new XmlDocument();
-                    doc.LoadXml(toastContent.GetContent());
-                    // And create the toast notification
-                    toast = new ToastNotification(doc);
-                    // Remove any other Notifications from us
-                    DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
-                    // And then show this notification
-                    DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
-
-                    // Wait 5 seconds for the game process to spawn	
-                    Thread.Sleep(5000);
-
-                    // This is the main waiting thread!
-                    // Wait for the game to exit
-                    Console.WriteLine($"Waiting for {gameToRun.Name} to exit.");
-                    logger.Debug($"ShortcutRepository/RunShortcut: waiting for Origin Game {gameToRun.Name} to exit.");
-                    while (true)
+                  
+                    // At this point, if the user wants to actually monitor a different process, 
+                    // then we actually need to monitor that instead
+                    if (shortcutToUse.MonitorDifferentGameExe)
                     {
-                        if (!gameToRun.IsRunning)
+                        // If we are monitoring a different executable rather than the game itself, then lets get that name ready instead
+                        string altGameProcessToMonitor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.DifferentGameExeToMonitor);
+
+                        // Add a status notification icon in the status area
+                        if (gameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name}...";
+                        else
+                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name.Substring(0, 41)}...";
+                        Application.DoEvents();
+
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo($"notify=running{gameLibraryToUse.GameLibraryName}Game", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
+                            .AddText($"Waiting for the {altGameProcessToMonitor} alternative game process to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                        // Now look for the thing we're supposed to monitor
+                        // and wait until it starts up
+                        List<Process> processesToMonitor = new List<Process>();
+                        for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Origin Game {gameToRun.Name} is no longer running (IsRunning is false).");
-                            break;
+                            // Look for the processes with the ProcessName we sorted out earlier
+                            processesToMonitor = Process.GetProcessesByName(altGameProcessToMonitor).ToList();
+
+                            // If we have found one or more processes then we should be good to go
+                            // so let's break
+                            if (processesToMonitor.Count > 0)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found {processesToMonitor.Count} '{altGameProcessToMonitor}' processes to monitor");
+                                break;
+                            }
+
+                            // Let's wait a little while if we couldn't find
+                            // any processes yet
+                            Thread.Sleep(500);
+                        }
+                        //  make sure we have things to monitor and alert if not
+                        if (processesToMonitor.Count == 0)
+                        {
+                            logger.Error($"ShortcutRepository/RunShortcut: No Alternative Game Executable '{altGameProcessToMonitor}' processes found before waiting timeout. DisplayMagician was unable to find any processes before the {shortcutToUse.StartTimeout} second timeout");
                         }
 
-                        // Send a message to windows so that it doesn't think
-                        // we're locked and try to kill us
-                        System.Threading.Thread.CurrentThread.Join(0);
-                        Thread.Sleep(1000);
-                    }
-                    Console.WriteLine($"{gameToRun.Name} has exited.");
-                    logger.Debug($"ShortcutRepository/RunShortcut: Origin Game {gameToRun.Name} has exited.");
+                        // if we have things to monitor, then we should start to wait for them
+                        logger.Debug($"ShortcutRepository/RunShortcut: Waiting for alternative game proocess {altGameProcessToMonitor} to exit.");
+                        if (processesToMonitor.Count > 0)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} Alternative Game Executable '{altGameProcessToMonitor}' processes are still running");
+                            while (true)
+                            {
+                                processesToMonitor = Process.GetProcessesByName(altGameProcessToMonitor).ToList();
 
-                    // Tell the user that the Uplay Game has closed
-                    // Construct the toast content
-                    tcBuilder = new ToastContentBuilder()
-                        .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
-                        .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
-                        .AddText($"{shortcutToUse.GameName} game was shutdown and changes were reverted.");
-                    toastContent = tcBuilder.Content;
-                    // Make sure to use Windows.Data.Xml.Dom
-                    doc = new XmlDocument();
-                    doc.LoadXml(toastContent.GetContent());
-                    // And create the toast notification
-                    toast = new ToastNotification(doc);
-                    // Remove any other Notifications from us
-                    DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
-                    // And then show it
-                    DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                // If we have no more processes left then we're done!
+                                if (processesToMonitor.Count == 0)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: No more '{altGameProcessToMonitor}' processes are still running");
+                                    break;
+                                }
+
+                                // Send a message to windows so that it doesn't think
+                                // we're locked and try to kill us
+                                System.Threading.Thread.CurrentThread.Join(0);
+                                Thread.Sleep(1000);
+                            }
+                        }
+                        logger.Debug($"ShortcutRepository/RunShortcut: Alternative Game Executable {altGameProcessToMonitor} has exited.");
+
+                        // Tell the user that the Alt Game Executable has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{altGameProcessToMonitor} was closed", hintMaxLines: 1)
+                            .AddText($"{altGameProcessToMonitor} alternative game executable was exited.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                    }
+                    else
+                    {
+                        // we are monitoring the game thats actually running (the most common scenario)
+
+                        // Add a status notification icon in the status area
+                        if (gameToRun.Name.Length <= 41)
+                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name}...";
+                        else
+                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name.Substring(0, 41)}...";
+                        Application.DoEvents();
+
+                        // Now we want to tell the user we're running a game!
+                        // Construct the Windows toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo($"notify=running{gameLibraryToUse.GameLibraryName}Game", ToastActivationType.Foreground)
+                            .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
+                            .AddText($"Waiting for the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit...");
+                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+
+                        // Now we know the game library app is running then 
+                        // we wait until the game has started running (*allows for updates to occur)
+                        for (int secs = 0; secs >= (shortcutToUse.StartTimeout * 1000); secs += 500)
+                        {
+
+                            if (gameToRun.IsRunning)
+                            {
+                                // The game is running! So now we continue processing
+                                logger.Debug($"ShortcutRepository/RunShortcut: Found the '{gameToRun.Name}' process has started");
+                                break;
+                            }
+
+                            // Delay 500ms
+                            Thread.Sleep(500);
+
+                        }
+
+                        // Wait 5 more seconds for the game process to spawn	
+                        // Thread.Sleep(5000);
+
+                        // This is the main waiting thread!
+                        // Wait for the game to exit
+                        logger.Debug($"ShortcutRepository/RunShortcut: waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit.");
+                        while (true)
+                        {
+                            if (!gameToRun.IsRunning)
+                            {
+                                logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} is no longer running (IsRunning is false).");
+                                break;
+                            }
+
+                            // Send a message to windows so that it doesn't think
+                            // we're locked and try to kill us
+                            System.Threading.Thread.CurrentThread.Join(0);
+                            Thread.Sleep(1000);
+                        }
+                        Console.WriteLine($"{gameToRun.Name} has exited.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
+
+                        // Tell the user that the Game has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
+                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                            .AddText($"{shortcutToUse.GameName} game was exited.");
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                        // And then show it
+                        DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                    }
+
                 }
                 else
                 {
