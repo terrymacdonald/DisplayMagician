@@ -117,4 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="lbl_hotkey_description.Text" xml:space="preserve">
+    <value>Choose a Hotkey (a keyboard shortcut) so that you can apply this 
+Display Profile using your keyboard. This must be a Hotkey that 
+is unique across all your applications otherwise DisplayMagician
+might not see it.</value>
+  </data>
 </root>

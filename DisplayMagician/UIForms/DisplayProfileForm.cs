@@ -7,6 +7,7 @@ using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System.Drawing;
 using System.Collections.Generic;
+using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -459,60 +460,19 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        /*private static void MainWindow_Closed(object sender, EventArgs e)
+        private void btn_hotkey_Click(object sender, EventArgs e)
         {
-            DeviceNotification.UnRegisterUsbDeviceNotification();
-            DeviceNotification.UnRegisterMonitorDeviceNotification();
-        }
-
-        protected override void OnSourceInitialized(EventArgs e)
-        {
-            base.OnSourceInitialized(e);
-
-            if (!(PresentationSource.FromVisual(this) is HwndSource source))
-                return;
-
-            source.AddHook(this.WndProc);
-
-            DeviceNotification.RegisterUsbDeviceNotification(source.Handle);
-            DeviceNotification.RegisterMonitorDeviceNotification(source.Handle);
-        }*/
-
-        // Notification registeration for display detection from here http://codetips.nl/detectmonitor.html
-
-        /*protected override void WndProc(ref Message m)
-        {
-            const int WM_SETTINGCHANGE = 0x001A;
-            const int SPI_SETWORKAREA = 0x02F;
-            const int WM_DISPLAYCHANGE = 0x007E;
-            const int WM_DEVICECHANGE = 0x0219; // WM Device change message ID
-            const int DBT_DEVICEARRIVAL = 0x8000; // WM Device Change Event: System detected a new device        
-            const int DBT_DEVICEREMOVECOMPLETE = 0x8004; // WM Device Change Event: Device is gone      
-
-
-            const int x_bitshift = 0;
-            const int y_bitshift = 16;
-            const int xy_mask = 0xFFFF;
-
-            bool displayChange = false;
-
-            switch (m.Msg)
+            Hotkey testHotkey = new Hotkey();
+            var displayHotkeyForm = new HotkeyForm(testHotkey);
+            //ilv_saved_shortcuts.SuspendLayout();
+            displayHotkeyForm.ShowDialog(this);
+            if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {
-                case WM_DISPLAYCHANGE:
-                case DeviceNotification.DbtDeviceRemoveComplete:
-                case DeviceNotification.DbtDeviceArrival:
-                    {
-                        if (DeviceNotification.IsMonitor(lParam))
-                            Debug.WriteLine($"Monitor {((int)wParam == DeviceNotification.DbtDeviceArrival ? "arrived" : "removed")}");
-
-                        if (DeviceNotification.IsUsbDevice(lParam))
-                            Debug.WriteLine($"Usb device {((int)wParam == DeviceNotification.DbtDeviceArrival ? "arrived" : "removed")}");
-                    }
-                    break;
+                MessageBox.Show($"We got the hotkey {displayHotkeyForm.Hotkey.ToString()}", "results", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // As this is an edit, we need to manually force saving the shortcut library
+                //ShortcutRepository.SaveShortcuts();
             }
-
-            base.WndProc(ref m);
-        }*/
+        }
 
     }
 }

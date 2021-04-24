@@ -343,6 +343,7 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey.TabIndex = 35;
             this.btn_hotkey.Text = "&Hotkey";
             this.btn_hotkey.UseVisualStyleBackColor = true;
+            this.btn_hotkey.Click += new System.EventHandler(this.btn_hotkey_Click);
             // 
             // DisplayProfileForm
             // 
