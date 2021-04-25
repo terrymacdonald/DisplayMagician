@@ -15,6 +15,7 @@ using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
+using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -2224,6 +2225,30 @@ namespace DisplayMagician.UIForms
                         MessageBoxIcon.Exclamation);
                 }
             }
+        }
+
+        private void btn_hotkey_Click(object sender, EventArgs e)
+        {
+            Hotkey testHotkey = new Hotkey();
+            string hotkeyHeading = $"Choose a '{_shortcutToEdit.Name}' Shortcut Hotkey";
+            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can start this" + Environment.NewLine +
+                "game shortcut using your keyboard. This must be a Hotkey that" + Environment.NewLine +
+                "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
+                "might not see it.";
+            HotkeyForm displayHotkeyForm = new HotkeyForm(testHotkey, hotkeyHeading, hotkeyDescription);
+            //ilv_saved_shortcuts.SuspendLayout();
+            displayHotkeyForm.ShowDialog(this);
+            if (displayHotkeyForm.DialogResult == DialogResult.OK)
+            {
+                MessageBox.Show($"We got the hotkey {displayHotkeyForm.Hotkey}", "results", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // As this is an edit, we need to manually force saving the shortcut library
+                //ShortcutRepository.SaveShortcuts();
+            }
+        }
+
+        private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
+        {
+            btn_hotkey.PerformClick();
         }
     }
 }

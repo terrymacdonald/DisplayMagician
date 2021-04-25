@@ -153,6 +153,7 @@ namespace DisplayMagician.UIForms
             this.lbl_shortcut_name = new System.Windows.Forms.Label();
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
+            this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -1685,6 +1686,21 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey.TabIndex = 36;
             this.btn_hotkey.Text = "&Hotkey";
             this.btn_hotkey.UseVisualStyleBackColor = true;
+            this.btn_hotkey.Click += new System.EventHandler(this.btn_hotkey_Click);
+            // 
+            // lbl_hotkey_assigned
+            // 
+            this.lbl_hotkey_assigned.AutoSize = true;
+            this.lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
+            this.lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
+            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(26, 793);
+            this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
+            this.lbl_hotkey_assigned.Size = new System.Drawing.Size(57, 16);
+            this.lbl_hotkey_assigned.TabIndex = 37;
+            this.lbl_hotkey_assigned.Text = "Hotkey: ";
+            this.lbl_hotkey_assigned.Visible = false;
+            this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
             // ShortcutForm
             // 
@@ -1694,6 +1710,7 @@ namespace DisplayMagician.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
             this.ClientSize = new System.Drawing.Size(1114, 830);
+            this.Controls.Add(this.lbl_hotkey_assigned);
             this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.cb_autosuggest);
             this.Controls.Add(this.txt_shortcut_save_name);
@@ -1877,5 +1894,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TextBox txt_alternative_game;
         private System.Windows.Forms.CheckBox cb_wait_alternative_game;
         private System.Windows.Forms.Button btn_hotkey;
+        private System.Windows.Forms.Label lbl_hotkey_assigned;
     }
 }

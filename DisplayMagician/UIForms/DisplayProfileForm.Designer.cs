@@ -58,6 +58,7 @@ namespace DisplayMagician.UIForms
             this.btn_save = new System.Windows.Forms.Button();
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.btn_hotkey = new System.Windows.Forms.Button();
+            this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -345,6 +346,20 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey.UseVisualStyleBackColor = true;
             this.btn_hotkey.Click += new System.EventHandler(this.btn_hotkey_Click);
             // 
+            // lbl_hotkey_assigned
+            // 
+            this.lbl_hotkey_assigned.AutoSize = true;
+            this.lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
+            this.lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
+            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(20, 785);
+            this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
+            this.lbl_hotkey_assigned.Size = new System.Drawing.Size(57, 16);
+            this.lbl_hotkey_assigned.TabIndex = 36;
+            this.lbl_hotkey_assigned.Text = "Hotkey: ";
+            this.lbl_hotkey_assigned.Visible = false;
+            this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -354,6 +369,7 @@ namespace DisplayMagician.UIForms
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 829);
+            this.Controls.Add(this.lbl_hotkey_assigned);
             this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.btn_save);
             this.Controls.Add(this.lbl_save_profile);
@@ -412,6 +428,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.SaveFileDialog dialog_save;
         private System.Windows.Forms.Button btn_hotkey;
+        private System.Windows.Forms.Label lbl_hotkey_assigned;
     }
 }
 

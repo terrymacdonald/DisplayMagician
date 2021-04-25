@@ -16,17 +16,20 @@ namespace DisplayMagician.UIForms
         HotkeySelector hks;
         Hotkey myHotkey = null;
 
-        public Hotkey Hotkey {
-            get
-            {
-                return myHotkey;
+        public Hotkey Hotkey
+        {
+            get 
+            { 
+                return myHotkey; 
             }
-            set 
+            set
             {
                 if (value is Hotkey)
                     myHotkey = value;
             }
+
         }
+               
 
         public HotkeyForm()
         {
@@ -40,7 +43,7 @@ namespace DisplayMagician.UIForms
             this.ActiveControl = txt_hotkey;
         }
 
-        public HotkeyForm(Hotkey hotkeyToEdit = null, string hotkeyName = "")
+        public HotkeyForm(Hotkey hotkeyToEdit = null, string hotkeyHeading = "", string hotkeyDescription = "")
         {
             InitializeComponent();
 
@@ -52,13 +55,34 @@ namespace DisplayMagician.UIForms
             hks = new HotkeySelector();
             hks.EmptyHotkeyText = "";
             hks.Enable(txt_hotkey, hotkeyToEdit);
-            this.ActiveControl = txt_hotkey;            
+            this.ActiveControl = txt_hotkey;
+
+            if (!String.IsNullOrEmpty(hotkeyHeading))
+            {
+                if (hotkeyHeading.Length > 60)
+                    lbl_hotkey_heading.Text = hotkeyHeading.Substring(0,50);
+                else
+                    lbl_hotkey_heading.Text = hotkeyHeading;
+                lbl_hotkey_description.Text = hotkeyDescription;
+            } 
+            else
+            {
+                lbl_hotkey_heading.Text = $"Choose a Hotkey";
+                lbl_hotkey_description.Text = $"Choose a Hotkey (a keyboard shortcut) so that you can apply to this" + Environment.NewLine +
+                    "screen using your keyboard. This must be a Hotkey that" + Environment.NewLine +
+                    "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
+                    "might not see it.";
+            }
+            Point newHeadingPoint = new Point((this.Width - lbl_hotkey_heading.Width) / 2, lbl_hotkey_heading.Location.Y);
+            lbl_hotkey_heading.Location = newHeadingPoint;
         }
 
 
         private void btn_clear_Click(object sender, EventArgs e)
         {
-            hks.Reset(txt_hotkey);
+            this.DialogResult = DialogResult.None;
+            hks.Clear(txt_hotkey);
+            this.ActiveControl = txt_hotkey;
         }
 
         private void btn_save_Click(object sender, EventArgs e)
@@ -75,6 +99,12 @@ namespace DisplayMagician.UIForms
             );
             this.Hotkey = myHotkey;
             this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        private void btn_back_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
     }
