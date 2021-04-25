@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
+using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician
 {
@@ -110,6 +111,7 @@ namespace DisplayMagician
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
+        private Hotkey _hotkey = null;
         private bool _autoName = true;
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
@@ -961,6 +963,19 @@ namespace DisplayMagician
             set
             {
                 _gameLibrary = value;
+            }
+        }
+
+        public Hotkey Hotkey
+        {
+            get
+            {
+                return _hotkey;
+            }
+            set
+            {
+                if (value is Hotkey)
+                    _hotkey = value;
             }
         }
 

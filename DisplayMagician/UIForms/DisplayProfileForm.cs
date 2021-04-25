@@ -294,12 +294,16 @@ namespace DisplayMagician.UIForms
                 lbl_save_profile.Visible = true;
             }
 
+            // Update the Hotkey Label text
+            UpdateHotkeyLabel(_selectedProfile.Hotkey);
+
             // Refresh the image list view
             //RefreshImageListView(profile);
 
             // And finally refresh the profile in the display view
             dv_profile.Profile = profile;
             dv_profile.Refresh();
+
 
         }
 
@@ -462,7 +466,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_Click(object sender, EventArgs e)
         {
-            Hotkey testHotkey = new Hotkey();
+            Hotkey testHotkey = null;
+            if (_selectedProfile.Hotkey is Hotkey)
+                testHotkey = _selectedProfile.Hotkey;
+            else
+                testHotkey = new Hotkey();
             string hotkeyHeading = $"Choose a '{_selectedProfile.Name}' Display Profile Hotkey";
             string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply to this" + Environment.NewLine +
                 "screen using your keyboard. This must be a Hotkey that" + Environment.NewLine +
@@ -473,14 +481,33 @@ namespace DisplayMagician.UIForms
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {
-                MessageBox.Show($"We got the hotkey {displayHotkeyForm.Hotkey}", "results", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                // As this is an edit, we need to manually force saving the shortcut library
-                //ShortcutRepository.SaveShortcuts();
+                // now we save the Hotkey
+                _selectedProfile.Hotkey = displayHotkeyForm.Hotkey;
+                // And cause this has changed within a Profile we need to save all the profiles
+                ProfileRepository.SaveProfiles();
+                // And if we get back and this is a Hotkey with a value, we need to show that in the UI
+                UpdateHotkeyLabel(_selectedProfile.Hotkey);
             }
         }
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
         {
             btn_hotkey.PerformClick();
+        }
+
+        private void UpdateHotkeyLabel (Hotkey myHotkey)
+        {
+            // And if we get back and this is a Hotkey with a value, we need to show that in the UI
+            if (myHotkey is Hotkey && !(myHotkey.KeyCode == Keys.None && myHotkey.Modifiers == Keys.None))
+            {
+                lbl_hotkey_assigned.Text = "Hotkey: " + HotkeyListener.Convert(myHotkey);
+                lbl_hotkey_assigned.Visible = true;
+            }
+            else 
+            {
+                lbl_hotkey_assigned.Text = "Hotkey: None";
+                lbl_hotkey_assigned.Visible = false;
+            }
+            
         }
 
     }

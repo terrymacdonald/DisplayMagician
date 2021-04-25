@@ -352,7 +352,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
             this.lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(20, 785);
+            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(20, 782);
             this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
             this.lbl_hotkey_assigned.Size = new System.Drawing.Size(57, 16);
             this.lbl_hotkey_assigned.TabIndex = 36;

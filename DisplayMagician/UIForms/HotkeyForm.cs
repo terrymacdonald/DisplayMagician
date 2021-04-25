@@ -86,21 +86,33 @@ namespace DisplayMagician.UIForms
         {
             this.DialogResult = DialogResult.None;
             hks.Clear(txt_hotkey);
+            myHotkey.KeyCode = Keys.None;
+            myHotkey.Modifiers = Keys.None;
             this.ActiveControl = txt_hotkey;
         }
 
         private void btn_save_Click(object sender, EventArgs e)
-        {           
-            Program.HotkeyListener.Update
-            (
-                // Reference the current clipping hotkey for directly updating 
-                // the hotkey without a need for restarting your application.
-                ref myHotkey,
+        {
 
-                // Convert the selected hotkey's text representation 
-                // to a Hotkey object and update it.
-                HotkeyListener.Convert(txt_hotkey.Text)
-            );
+            if (!String.IsNullOrWhiteSpace(txt_hotkey.Text))
+            {
+                Program.HotkeyListener.Update
+                (
+                    // Reference the current clipping hotkey for directly updating 
+                    // the hotkey without a need for restarting your application.
+                    ref myHotkey,
+
+                    // Convert the selected hotkey's text representation 
+                    // to a Hotkey object and update it.
+                    HotkeyListener.Convert(txt_hotkey.Text)
+                );
+            }
+            else
+            {
+                myHotkey.KeyCode = Keys.None;
+                myHotkey.Modifiers = Keys.None;
+            }
+            
             this.Hotkey = myHotkey;
             this.DialogResult = DialogResult.OK;
             this.Close();
