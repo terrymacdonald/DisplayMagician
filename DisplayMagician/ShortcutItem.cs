@@ -966,7 +966,9 @@ namespace DisplayMagician
             }
         }
 
+#pragma warning disable CS3003 // Type is not CLS-compliant
         public Hotkey Hotkey
+#pragma warning restore CS3003 // Type is not CLS-compliant
         {
             get
             {
