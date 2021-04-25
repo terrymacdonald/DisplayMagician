@@ -16,7 +16,9 @@ namespace DisplayMagician.UIForms
         HotkeySelector hks;
         Hotkey myHotkey = null;
 
+#pragma warning disable CS3003 // Type is not CLS-compliant
         public Hotkey Hotkey
+#pragma warning restore CS3003 // Type is not CLS-compliant
         {
             get 
             { 
@@ -43,7 +45,9 @@ namespace DisplayMagician.UIForms
             this.ActiveControl = txt_hotkey;
         }
 
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
         public HotkeyForm(Hotkey hotkeyToEdit = null, string hotkeyHeading = "", string hotkeyDescription = "")
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             InitializeComponent();
 
