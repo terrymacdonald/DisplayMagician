@@ -17,7 +17,7 @@ using DesktopNotifications;
 using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
-using WK.Libraries.HotkeyListenerNS;
+using NHotkey.WindowsForms;
 
 namespace DisplayMagician {
 
@@ -45,7 +45,6 @@ namespace DisplayMagician {
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
-        public static HotkeyListener HotkeyListener;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
@@ -206,8 +205,6 @@ namespace DisplayMagician {
             Application.SetCompatibleTextRenderingDefault(false);
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-            // Create a program-wide HotKeyListener
-            HotkeyListener = new HotkeyListener();
 
             logger.Debug($"Setting up commandline processing configuration");
             var app = new CommandLineApplication
