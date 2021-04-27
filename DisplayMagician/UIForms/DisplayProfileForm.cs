@@ -245,6 +245,7 @@ namespace DisplayMagician.UIForms
 
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
+
         }
 
 
@@ -478,6 +479,7 @@ namespace DisplayMagician.UIForms
                 "might not see it.";
             HotkeyForm displayHotkeyForm = new HotkeyForm(testHotkey,hotkeyHeading, hotkeyDescription);
             //ilv_saved_shortcuts.SuspendLayout();
+            //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {

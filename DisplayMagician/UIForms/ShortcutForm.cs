@@ -2241,7 +2241,7 @@ namespace DisplayMagician.UIForms
                 "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
                 "might not see it.";
             HotkeyForm displayHotkeyForm = new HotkeyForm(testHotkey, hotkeyHeading, hotkeyDescription);
-            //ilv_saved_shortcuts.SuspendLayout();
+            //Program.HotkeyListener.SuspendOn(displayHotkeyForm);
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {

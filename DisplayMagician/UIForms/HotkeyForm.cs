@@ -13,6 +13,7 @@ namespace DisplayMagician.UIForms
 {
     public partial class HotkeyForm : Form
     {
+        //HotkeyListener myHotkeyListener = null;
         HotkeySelector hks;
         Hotkey myHotkey = null;
 
@@ -50,6 +51,8 @@ namespace DisplayMagician.UIForms
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             InitializeComponent();
+
+            //myHotkeyListener = hotkeyListener;
 
             if (hotkeyToEdit == null)
                 myHotkey = new Hotkey();
