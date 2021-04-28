@@ -7,7 +7,7 @@ using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System.Drawing;
 using System.Collections.Generic;
-using WK.Libraries.HotkeyListenerNS;
+//using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -467,11 +467,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_Click(object sender, EventArgs e)
         {
-            Hotkey testHotkey = null;
-            if (_selectedProfile.Hotkey is Hotkey)
+            Keys testHotkey;
+            if (_selectedProfile.Hotkey != Keys.None)
                 testHotkey = _selectedProfile.Hotkey;
             else
-                testHotkey = new Hotkey();
+                testHotkey = Keys.None;
             string hotkeyHeading = $"Choose a '{_selectedProfile.Name}' Display Profile Hotkey";
             string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply to this" + Environment.NewLine +
                 "screen using your keyboard. This must be a Hotkey that" + Environment.NewLine +
@@ -496,12 +496,14 @@ namespace DisplayMagician.UIForms
             btn_hotkey.PerformClick();
         }
 
-        private void UpdateHotkeyLabel (Hotkey myHotkey)
+        private void UpdateHotkeyLabel (Keys myHotkey)
         {
             // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-            if (myHotkey is Hotkey && !(myHotkey.KeyCode == Keys.None && myHotkey.Modifiers == Keys.None))
+            if (myHotkey != Keys.None)
             {
-                lbl_hotkey_assigned.Text = "Hotkey: " + HotkeyListener.Convert(myHotkey);
+                KeysConverter kc = new KeysConverter();
+
+                lbl_hotkey_assigned.Text = "Hotkey: " + kc.ConvertToString(myHotkey);
                 lbl_hotkey_assigned.Visible = true;
             }
             else 

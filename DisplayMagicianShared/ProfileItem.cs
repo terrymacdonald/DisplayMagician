@@ -9,7 +9,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
-using WK.Libraries.HotkeyListenerNS;
+//using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagicianShared
 {
@@ -25,7 +25,7 @@ namespace DisplayMagicianShared
 
         private string _uuid = "";
         private bool _isPossible = false;
-        private Hotkey _hotkey = null;
+        private Keys _hotkey = Keys.None;
 
 
         #region JsonConverterBitmap
@@ -152,15 +152,14 @@ namespace DisplayMagicianShared
             }
         }
 
-        public Hotkey Hotkey {
+        public Keys Hotkey {
             get 
             {
                 return _hotkey;
             }
             set 
             {
-                if (value is Hotkey)
-                    _hotkey = value;
+                _hotkey = value;
             }
         }
 

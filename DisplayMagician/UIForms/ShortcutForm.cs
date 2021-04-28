@@ -15,7 +15,7 @@ using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
-using WK.Libraries.HotkeyListenerNS;
+//using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -2230,11 +2230,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_hotkey_Click(object sender, EventArgs e)
         {
-            Hotkey testHotkey = null;
-            if (_shortcutToEdit.Hotkey is Hotkey)
+            Keys testHotkey;
+            if (_shortcutToEdit.Hotkey != Keys.None)
                 testHotkey = _shortcutToEdit.Hotkey;
             else
-                testHotkey = new Hotkey();
+                testHotkey = Keys.None;
             string hotkeyHeading = $"Choose a '{_shortcutToEdit.Name}' Shortcut Hotkey";
             string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can start this" + Environment.NewLine +
                 "game shortcut using your keyboard. This must be a Hotkey that" + Environment.NewLine +
@@ -2257,12 +2257,14 @@ namespace DisplayMagician.UIForms
             btn_hotkey.PerformClick();
         }
 
-        private void UpdateHotkeyLabel(Hotkey myHotkey)
+        private void UpdateHotkeyLabel(Keys myHotkey)
         {
             // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-            if (myHotkey is Hotkey && !(myHotkey.KeyCode == Keys.None && myHotkey.Modifiers == Keys.None))
+            if (myHotkey != Keys.None)
             {
-                lbl_hotkey_assigned.Text = "Hotkey: " + HotkeyListener.Convert(myHotkey);
+                KeysConverter kc = new KeysConverter();
+
+                lbl_hotkey_assigned.Text = "Hotkey: " + kc.ConvertToString(myHotkey);
                 lbl_hotkey_assigned.Visible = true;
             }
             else

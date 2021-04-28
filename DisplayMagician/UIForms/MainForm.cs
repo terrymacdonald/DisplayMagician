@@ -10,8 +10,10 @@ using Newtonsoft.Json;
 using System.Net;
 using Windows.Data.Xml.Dom;
 using Microsoft.Toolkit.Uwp.Notifications;
-using WK.Libraries.HotkeyListenerNS;
+//using WK.Libraries.HotkeyListenerNS;
 using System.Collections.Generic;
+using NHotkey.WindowsForms;
+using NHotkey;
 
 namespace DisplayMagician.UIForms
 {
@@ -20,12 +22,12 @@ namespace DisplayMagician.UIForms
 
         private bool allowVisible;     // ContextMenu's Show command used
         private bool allowClose;       // ContextMenu's Exit command used
-        private HotkeyListener hotkeyListener = new HotkeyListener();
+        /*private HotkeyListener hotkeyListener = new HotkeyListener();
         private Hotkey hotkeyMainWindow;
         private Hotkey hotkeyShortcutLibraryWindow;
-        private Hotkey hotkeyDisplayProfileWindow;
-        private Dictionary<Hotkey, string> hotkeyDisplayProfiles = new Dictionary<Hotkey, string>() { };
-        private Dictionary<Hotkey, string> hotkeyShortcuts = new Dictionary<Hotkey, string>() { };
+        private Hotkey hotkeyDisplayProfileWindow;*/
+        private List<string> hotkeyDisplayProfiles = new List<string>() { };
+        private List<string> hotkeyShortcuts = new List<string>() { };
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -39,39 +41,34 @@ namespace DisplayMagician.UIForms
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
 
-
-            // Define a new hotkey using the Hotkey class. 
-            // Parameters are: [modifiers], [keys].
-            //hotkeyMainWindow = new Hotkey(Keys.Control | Keys.Shift, Keys.W);
-            //Program.HotkeyListener.Add(hotkeyMainWindow);
-
             /*if (Program.AppProgramSettings.MainWindowHotkey)
-                hotkeyMainWindow = new Hotkey(Program.AppProgramSettings.MainWindowHotkey);
+                HotkeyManager.Current.AddOrReplace("MainWindowHotkey", Program.AppProgramSettings.MainWindowHotkey, OnWindowHotkeyPressed);
             if (Program.AppProgramSettings.ShortcutLibraryWindow)
-                hotkeyShortcutLibraryWindow = new Hotkey(Program.AppProgramSettings.ShortcutLibraryWindow);
+                HotkeyManager.Current.AddOrReplace("ShortcutLibraryWindow", Program.AppProgramSettings.ShortcutLibraryWindow, OnWindowHotkeyPressed);
             if (Program.AppProgramSettings.DisplayProfileWindow)
-                hotkeyDisplayProfileWindow = new Hotkey(Program.AppProgramSettings.DisplayProfileWindow);*/
+                HotkeyManager.Current.AddOrReplace("DisplayProfileWindow", Program.AppProgramSettings.DisplayProfileWindow, OnWindowHotkeyPressed);*/
 
             // Add all the Profile Hotkeys that are set
             foreach (ProfileItem myProfile in ProfileRepository.AllProfiles)
             {
-                if (myProfile.Hotkey is Hotkey && myProfile.Hotkey.Modifiers != Keys.None && myProfile.Hotkey.KeyCode != Keys.None)
+                if (myProfile.Hotkey != Keys.None)
                 {
-                    hotkeyDisplayProfiles.Add(myProfile.Hotkey, myProfile.UUID);
+                    hotkeyDisplayProfiles.Add(myProfile.UUID);
+                    HotkeyManager.Current.AddOrReplace(myProfile.UUID, myProfile.Hotkey, OnWindowHotkeyPressed);
                 }
             }
 
             // Add all the Shortcut Hotkeys that are set
             foreach (ShortcutItem myShortcut in ShortcutRepository.AllShortcuts)
             {
-                if (myShortcut.Hotkey is Hotkey && myShortcut.Hotkey.Modifiers != Keys.None && myShortcut.Hotkey.KeyCode != Keys.None)
+                if (myShortcut.Hotkey != Keys.None)
                 {
-                    hotkeyShortcuts.Add(myShortcut.Hotkey, myShortcut.UUID);
+                    hotkeyShortcuts.Add(myShortcut.UUID);
+                    HotkeyManager.Current.AddOrReplace(myShortcut.UUID, myShortcut.Hotkey, OnWindowHotkeyPressed);
                 }
             }
             // And now connect up our processing function
-            Program.HotkeyListener.HotkeyPressed += Hkl_WindowHotkeyPressed;
-
+            
 
 
             if (Program.AppProgramSettings.MinimiseOnStart) 
@@ -536,28 +533,29 @@ namespace DisplayMagician.UIForms
             openApplicationWindow();
         }
         
-        private void Hkl_WindowHotkeyPressed(object sender, HotkeyEventArgs e)
+        private void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
         {
-            if (e.Hotkey == hotkeyMainWindow)
+            if (e.Name == "HotkeyMainWindow")
                 openApplicationWindow();
-            else if (e.Hotkey == hotkeyDisplayProfileWindow)
+            else if (e.Name == "HotkeyDisplayProfileWindow")
                 btn_setup_display_profiles.PerformClick();
-            else if (e.Hotkey == hotkeyDisplayProfileWindow)
+            else if (e.Name == "ShortcutLibraryWindow")
                 btn_setup_game_shortcuts.PerformClick();
-            else if (hotkeyDisplayProfiles.ContainsKey(e.Hotkey))
+            else if (hotkeyDisplayProfiles.Contains(e.Name))
             {
-                string displayProfileUUID = hotkeyDisplayProfiles[e.Hotkey];
+                string displayProfileUUID = e.Name;
                 ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
                 if (chosenProfile is ProfileItem)
                     Program.ApplyProfile(chosenProfile);
             }
-            else if (hotkeyShortcuts.ContainsKey(e.Hotkey))
+            else if (hotkeyShortcuts.Contains(e.Name))
             {
-                string shortcutUUID = hotkeyShortcuts[e.Hotkey];
+                string shortcutUUID = e.Name;
                 ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (chosenShortcut is ShortcutItem)
                     ShortcutRepository.RunShortcut(chosenShortcut);
             }
         }
+
     }
 }
