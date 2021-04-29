@@ -588,13 +588,20 @@ namespace DisplayMagician.GameLibraries
                         {
                             // Lookup the GameId within the registry key
                             mc = Regex.Matches(uplayEntryLines[i], @"Installs\\(\d+)\\InstallDir");
-                            gameId = mc[0].Groups[1].ToString();
-                            gotGameId = true;
-                            mc = Regex.Matches(uplayEntryLines[i], @"HKEY_LOCAL_MACHINE\\(.*?)\\InstallDir");
-                            gameRegistryKey = mc[0].Groups[1].ToString();
-                            gameRegistryKey = gameRegistryKey.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
-                            gotGameRegistryKey = true;
-                            logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameId = {gameId} and gameRegistryKey = {gameRegistryKey}");
+                            if (mc.Count > 0)
+                            {
+                                gameId = mc[0].Groups[1].ToString();
+                                gotGameId = true;
+                                mc = Regex.Matches(uplayEntryLines[i], @"HKEY_LOCAL_MACHINE\\(.*?)\\InstallDir");
+                                gameRegistryKey = mc[0].Groups[1].ToString();
+                                gameRegistryKey = gameRegistryKey.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
+                                gotGameRegistryKey = true;
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameId = {gameId} and gameRegistryKey = {gameRegistryKey}");
+                            }
+                            else
+                            {
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Game with uplayEntryLines[{i}]: '{uplayEntryLines[i]}' not found");
+                            }
                         }
                     }
 
