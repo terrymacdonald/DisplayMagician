@@ -600,6 +600,7 @@ namespace DisplayMagician.GameLibraries
                             }
                             else
                             {
+                                gotGameRegistryKey = false;
                                 logger.Trace($"UplayLibrary/LoadInstalledGames: Game with uplayEntryLines[{i}]: '{uplayEntryLines[i]}' not found");
                             }
                         }
