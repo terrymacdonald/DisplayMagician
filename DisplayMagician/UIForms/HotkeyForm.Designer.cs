@@ -46,6 +46,9 @@ namespace DisplayMagician.UIForms
             this.txt_hotkey.Name = "txt_hotkey";
             this.txt_hotkey.Size = new System.Drawing.Size(270, 26);
             this.txt_hotkey.TabIndex = 1;
+            this.txt_hotkey.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
+            this.txt_hotkey.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.OnKeyPress);
+            this.txt_hotkey.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnKeyUp);
             // 
             // lbl_hotkey_selector
             // 

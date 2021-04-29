@@ -18,9 +18,11 @@ namespace DisplayMagician.UIForms
         //HotkeySelector hks;
         Keys myHotkey = Keys.None;
         string emptyHotkeyText = "";
-        string invalidHotkeyText = "";
-        List<int> _needNonShiftModifier = new List<int>() { };
-        List<int> _needNonAltGrModifier = new List<int>() { };
+        string invalidHotkeyText = " (invalid - try again!)";
+        List<Keys> _invalidKeyCombination = new List<Keys>() { };
+        KeysConverter kc = new KeysConverter() { };
+        //List<int> _needNonShiftModifier = new List<int>() { };
+        //List<int> _needNonAltGrModifier = new List<int>() { };
 
 
 #pragma warning disable CS3003 // Type is not CLS-compliant
@@ -56,9 +58,12 @@ namespace DisplayMagician.UIForms
         {
             InitializeComponent();
 
+            GenerateInvalidModifiers();
             myHotkey = hotkeyToEdit;
+            Refresh(txt_hotkey);
 
             this.ActiveControl = txt_hotkey;
+            txt_hotkey.DeselectAll();
 
             if (!String.IsNullOrEmpty(hotkeyHeading))
             {
@@ -92,15 +97,6 @@ namespace DisplayMagician.UIForms
         private void btn_save_Click(object sender, EventArgs e)
         {
 
-/*            if (!String.IsNullOrWhiteSpace(txt_hotkey.Text))
-            {
-                
-            }
-            else
-            {
-                myHotkey = Keys.None;
-            }
-*/            
             this.Hotkey = myHotkey;
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -119,34 +115,12 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyData == Keys.Delete || e.KeyData == (Keys.Control | Keys.Delete))
+            if (e.Alt || e.Control || e.Shift)
             {
-                myHotkey = Keys.None;
-                Refresh(txt_hotkey, false);
+                myHotkey = e.KeyCode | e.Modifiers;
+                Refresh(txt_hotkey);
             }
-                
-
-            if (e.KeyData == (Keys.Shift | Keys.Insert))
-            {
-                myHotkey = Keys.Shift;
-
-                e.Handled = true;
-            }
-
-            // Clear the current hotkey.
-            if (e.KeyCode == Keys.Back || e.KeyCode == Keys.Delete)
-            {
-                myHotkey = Keys.None;
-                Refresh(txt_hotkey, false);
-
-                return;
-            }
-            else
-            {
-                myHotkey = e.KeyCode;
-
-                Refresh(txt_hotkey, false);
-            }
+            
         }
 
         /// <summary>
@@ -155,10 +129,10 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void OnKeyUp(object sender, KeyEventArgs e)
         {
-            if (myHotkey == Keys.None && Control.ModifierKeys == Keys.None)
+            if (myHotkey == Keys.None)
             {
                 myHotkey = Keys.None;
-                Refresh(txt_hotkey, false);
+                Refresh(txt_hotkey);
 
                 return;
             }
@@ -173,7 +147,7 @@ namespace DisplayMagician.UIForms
             e.Handled = true;
         }
 
-        private void Refresh(Control control, bool internalCall)
+        private void Refresh(Control control)
         {
             try
             {
@@ -182,112 +156,130 @@ namespace DisplayMagician.UIForms
                 // No hotkey set.
                 if (myHotkey == Keys.None)
                 {
+                    // There is nothing selected so just return
                     txt_hotkey.Text = emptyHotkeyText;
-
                     return;
                 }
-
-                // LWin/RWin don't work as hotkeys...
-                // (neither do they work as modifier keys in .NET 2.0).
-                if (myHotkey == Keys.LWin || myHotkey == Keys.RWin)
+                else if (_invalidKeyCombination.Contains(myHotkey))
                 {
-                    txt_hotkey.Text = invalidHotkeyText;
+                    // Tell the user this is an invalid combination
+                    parsedHotkey = kc.ConvertToString(myHotkey);
 
-                    return;
-                }
+                    // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
+                    if (parsedHotkey.Contains("+ControlKey"))
+                        parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
 
-                // Only validate input if it comes from the user.
-                if (internalCall == false)
+                    // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
+                    if (parsedHotkey.Contains("+ShiftKey"))
+                        parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
+
+                    // Alt also shows as Alt+Menu, so we trim the +Menu
+                    if (parsedHotkey.Contains("+Menu"))
+                        parsedHotkey = parsedHotkey.Replace("+Menu", "");
+
+                    txt_hotkey.Text = parsedHotkey + $" {invalidHotkeyText}";
+                } 
+                else
                 {
-                    // No modifier or shift only, and a hotkey that needs another modifier.
-                    if ((myHotkey == Keys.Shift || myHotkey == Keys.None) &&
-                        this._needNonShiftModifier.Contains((int)myHotkey))
-                    {
-                        if (this.myHotkey == Keys.None)
-                        {
-                            // Set Ctrl+Alt as the modifier unless Ctrl+Alt+<key> won't work.
-                            if (_needNonAltGrModifier.Contains((int)myHotkey) == false)
-                            {
-                                this.myHotkey |= Keys.Alt | Keys.Control;
-                            }
-                            else
-                            {
-                                // ...In that case, use Shift+Alt instead.
-                                this.myHotkey |= Keys.Alt | Keys.Shift;
-                            }
-                        }
-                        else
-                        {
-                            // User pressed Shift and an invalid key (e.g. a letter or a number), 
-                            // that needs another set of modifier keys.
-                            this.myHotkey = Keys.None;
+                    // This key combination is ok so lets update the textbox
+                    // and save the Hotkey for later
+                    parsedHotkey = kc.ConvertToString(myHotkey);
 
-                            txt_hotkey.Text = this.myHotkey.ToString() + $" + {invalidHotkeyText}";
+                    // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
+                    if (parsedHotkey.Contains("+ControlKey"))
+                        parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
 
-                            return;
-                        }
-                    }
+                    // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
+                    if (parsedHotkey.Contains("+ShiftKey"))
+                        parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
+
+                    // Alt also shows as Alt+Menu, so we trim the +Menu
+                    if (parsedHotkey.Contains("+Menu"))
+                        parsedHotkey = parsedHotkey.Replace("+Menu", "");
+
+                    txt_hotkey.Text = parsedHotkey;
                 }
-
-                // Without this code, pressing only Ctrl 
-                // will show up as "Control + ControlKey", etc.
-                if (this.myHotkey == Keys.Menu || /* Alt */
-                    this.myHotkey == Keys.ShiftKey ||
-                    this.myHotkey == Keys.ControlKey)
-                {
-                    this.myHotkey = Keys.None;
-                }
-
-                // A final compilation of the processed keys in string format.
-                parsedHotkey = this.myHotkey.ToString();
-
-                txt_hotkey.Text = parsedHotkey;
-
-                return;
             }
             catch (Exception) { }
         }
 
         private void GenerateInvalidModifiers()
         {
-            // Fill the ArrayLists that contain  
-            // all invalid hotkey combinations.
-            _needNonShiftModifier = new List<int>() { };
-            _needNonAltGrModifier = new List<int>() { };
+            // Create a List of all Invalid key combinations
+            _invalidKeyCombination = new List<Keys>() { };
+
+            // Shift by itself
+            _invalidKeyCombination.Add(Keys.Shift);
+            _invalidKeyCombination.Add(Keys.ShiftKey);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.ShiftKey);
+            // Control by itself
+            _invalidKeyCombination.Add(Keys.Control);
+            _invalidKeyCombination.Add(Keys.ControlKey);
+            _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey);
+            // Alt by itself
+            _invalidKeyCombination.Add(Keys.Alt);
+            _invalidKeyCombination.Add(Keys.Menu);
+            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu);
+            // Control + Alt
+            _invalidKeyCombination.Add(Keys.Control | Keys.Alt);
+            _invalidKeyCombination.Add(Keys.Control | Keys.Alt | Keys.Menu);
+            _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey | Keys.Alt | Keys.Menu);
+            // Control + Shift
+            _invalidKeyCombination.Add(Keys.Control | Keys.Shift);
+            _invalidKeyCombination.Add(Keys.Control | Keys.Shift | Keys.ShiftKey);
+            _invalidKeyCombination.Add(Keys.Control | Keys.ControlKey | Keys.Shift | Keys.ShiftKey);
+            // Shift + Alt
+            _invalidKeyCombination.Add(Keys.Alt | Keys.Shift);
+            _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.ShiftKey);
+            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu| Keys.Shift | Keys.ShiftKey);
+            // Ctrl + Shift + Alt
+            _invalidKeyCombination.Add(Keys.Alt | Keys.Shift | Keys.Control);
+            _invalidKeyCombination.Add(Keys.Alt | Keys.Menu | Keys.Shift | Keys.Control);
+
+            // LWin by itself
+            _invalidKeyCombination.Add(Keys.LWin);
+            // RWin by itself
+            _invalidKeyCombination.Add(Keys.RWin);
+
+            // Delete by itself
+            _invalidKeyCombination.Add(Keys.Delete);
 
             // Shift + 0 - 9, A - Z.
             for (Keys k = Keys.D0; k <= Keys.Z; k++)
-                _needNonShiftModifier.Add((int)k);
+                _invalidKeyCombination.Add(Keys.Shift | k);
 
             // Shift + Numpad keys.
             for (Keys k = Keys.NumPad0; k <= Keys.NumPad9; k++)
-                _needNonShiftModifier.Add((int)k);
+                _invalidKeyCombination.Add(Keys.Shift | k);
 
             // Shift + Misc (,;<./ etc).
             for (Keys k = Keys.Oem1; k <= Keys.OemBackslash; k++)
-                _needNonShiftModifier.Add((int)k);
+                _invalidKeyCombination.Add(Keys.Shift | k);
 
             // Shift + Space, PgUp, PgDn, End, Home.
             for (Keys k = Keys.Space; k <= Keys.Home; k++)
-                _needNonShiftModifier.Add((int)k);
+                _invalidKeyCombination.Add(Keys.Shift | k);
 
             // Misc keys that we can't loop through.
-            _needNonShiftModifier.Add((int)Keys.Insert);
-            _needNonShiftModifier.Add((int)Keys.Help);
-            _needNonShiftModifier.Add((int)Keys.Multiply);
-            _needNonShiftModifier.Add((int)Keys.Add);
-            _needNonShiftModifier.Add((int)Keys.Subtract);
-            _needNonShiftModifier.Add((int)Keys.Divide);
-            _needNonShiftModifier.Add((int)Keys.Decimal);
-            _needNonShiftModifier.Add((int)Keys.Return);
-            _needNonShiftModifier.Add((int)Keys.Escape);
-            _needNonShiftModifier.Add((int)Keys.NumLock);
-            _needNonShiftModifier.Add((int)Keys.Scroll);
-            _needNonShiftModifier.Add((int)Keys.Pause);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Insert);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Help);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Multiply);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Add);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Subtract);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Divide);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Decimal);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Return);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Escape);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.NumLock);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Scroll);
+            _invalidKeyCombination.Add(Keys.Shift | Keys.Pause);
 
             // Ctrl+Alt + 0 - 9.
             for (Keys k = Keys.D0; k <= Keys.D9; k++)
-                _needNonAltGrModifier.Add((int)k);
+                _invalidKeyCombination.Add(Keys.Control | Keys.Alt & k);
+
+            // Ctrl + Del
+            _invalidKeyCombination.Add(Keys.Control | Keys.Delete);
         }
 
 
