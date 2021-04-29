@@ -472,6 +472,12 @@ namespace DisplayMagician.GameLibraries
 
                             // Now we want to look in the dinstallpath location for the game info
                             // for the __Installer\installerdata.xml
+                            if (String.IsNullOrEmpty(originGame.GameInstallDir))
+                            {
+                                // then we have a problem and we need to continue and ignore this game
+                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has registry but we can't find install dir!");
+                                continue;
+                            }
 
                             string gameInstallerData = Path.Combine(originGame.GameInstallDir, @"__Installer", @"installerdata.xml");
 
@@ -603,7 +609,6 @@ namespace DisplayMagician.GameLibraries
 
                                 // If we reach here we add the Game to the list of games we have!
                                 _allOriginGames.Add(new OriginGame(originGame.GameID, originGame.GameName, originGame.GameExePath, originGame.GameIconPath));
-
                             }
                             else
                             {
