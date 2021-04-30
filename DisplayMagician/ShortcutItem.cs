@@ -2061,7 +2061,6 @@ namespace DisplayMagician
             }
             else if (Category.Equals(ShortcutCategory.Game))
             {
-                Game gameToRun = null;
                 GameLibrary gameLibraryToUse = null;
 
                 // If the game is a Steam Game we check for that
