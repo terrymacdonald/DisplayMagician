@@ -15,6 +15,7 @@ using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
+using NHotkey.WindowsForms;
 //using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
@@ -51,6 +52,7 @@ namespace DisplayMagician.UIForms
         private CoreAudioDevice selectedAudioDevice = null;
         private List<CoreAudioDevice> captureDevices = null;
         private CoreAudioDevice selectedCaptureDevice = null;
+        private Keys _hotkey = Keys.None;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutForm(ShortcutItem shortcutToEdit)
@@ -497,7 +499,7 @@ namespace DisplayMagician.UIForms
                 CloseOnFinish = cb_start_program_close4.Checked,
                 DontStartIfAlreadyRunning = cb_dont_start_if_running4.Checked
             };
-            _startPrograms.Add(myStartProgram);
+            _startPrograms.Add(myStartProgram);            
 
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
@@ -554,7 +556,8 @@ namespace DisplayMagician.UIForms
                     _captureVolume,
                     _startPrograms,
                     _autoName,
-                    _uuid
+                    _uuid,
+                    _hotkey
                 );
             }
             else if (rb_standalone.Checked)
@@ -595,7 +598,8 @@ namespace DisplayMagician.UIForms
                     _setCaptureVolume,
                     _captureVolume,
                     _startPrograms,
-                    _autoName
+                    _autoName,
+                    _hotkey
                 );
 
             }
@@ -618,7 +622,8 @@ namespace DisplayMagician.UIForms
                     _setCaptureVolume,
                     _captureVolume,
                     _startPrograms,
-                    _autoName
+                    _autoName,
+                    _hotkey
                 );
 
             }
@@ -2245,10 +2250,13 @@ namespace DisplayMagician.UIForms
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {
-                // now we save the Hotkey
-                _shortcutToEdit.Hotkey = displayHotkeyForm.Hotkey;
+                // now we store the Hotkey to be saved later
+                _hotkey = displayHotkeyForm.Hotkey;
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
                 UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
+                // And we apply the hotkey striaght away
+                MainForm mainForm = (MainForm)this.ParentForm;
+                HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _hotkey, mainForm.OnWindowHotkeyPressed);
             }
         }
 

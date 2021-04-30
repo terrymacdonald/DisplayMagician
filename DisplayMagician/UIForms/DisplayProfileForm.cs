@@ -8,6 +8,8 @@ using Manina.Windows.Forms;
 using System.Drawing;
 using System.Collections.Generic;
 //using WK.Libraries.HotkeyListenerNS;
+using NHotkey.WindowsForms;
+using NHotkey;
 
 namespace DisplayMagician.UIForms
 {
@@ -489,6 +491,9 @@ namespace DisplayMagician.UIForms
                 ProfileRepository.SaveProfiles();
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
                 UpdateHotkeyLabel(_selectedProfile.Hotkey);
+                // And then apply the Hotkey now
+                MainForm mainForm = (MainForm)this.ParentForm;
+                HotkeyManager.Current.AddOrReplace(_selectedProfile.UUID, _selectedProfile.Hotkey, mainForm.OnWindowHotkeyPressed);
             }
         }
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)

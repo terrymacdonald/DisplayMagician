@@ -174,7 +174,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -196,6 +197,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -229,7 +231,8 @@ namespace DisplayMagician
             decimal captureVolume = -1, 
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -251,6 +254,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
@@ -308,7 +312,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -338,6 +343,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -374,7 +380,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             // Create a new UUID for the shortcut if one wasn't created already
@@ -405,6 +412,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -440,7 +448,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -471,6 +480,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
@@ -524,7 +534,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -552,6 +563,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -588,7 +600,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -616,6 +629,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -650,7 +664,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             ) : this()
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -678,6 +693,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
@@ -1269,6 +1285,7 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
+            Keys hotkey = Keys.None,
             string uuid = ""
             )
         {
@@ -1291,6 +1308,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -1325,7 +1343,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1347,6 +1366,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
@@ -1405,7 +1425,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1435,6 +1456,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -1472,7 +1494,9 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = "")
+            string uuid = "",
+            Keys hotkey = Keys.None
+            )
         {
             // Create a new UUID for the shortcut if one wasn't created already
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1502,6 +1526,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -1538,7 +1563,8 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
             bool autoName = true, 
-            string uuid = ""
+            string uuid = "",
+            Keys hotkey = Keys.None
             )
         {
             if (!String.IsNullOrWhiteSpace(uuid))
@@ -1568,6 +1594,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
@@ -1622,6 +1649,7 @@ namespace DisplayMagician
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
             bool autoName = true,
+            Keys hotkey = Keys.None,
             string uuid = ""
             )
         {
@@ -1650,6 +1678,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -1686,7 +1715,8 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
+            bool autoName = true,
+            Keys hotkey = Keys.None,
             string uuid = ""
             )
         {
@@ -1715,6 +1745,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
@@ -1749,7 +1780,8 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
+            bool autoName = true,
+            Keys hotkey = Keys.None,
             string uuid = ""
             )
         {
@@ -1778,6 +1810,7 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _hotkey = hotkey;
 
             // Now we need to find and populate the profileToUse
             foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
@@ -1862,6 +1895,7 @@ namespace DisplayMagician
             shortcut.CaptureDevice = CaptureDevice;
             shortcut.SetCaptureVolume = SetCaptureVolume;
             shortcut.CaptureVolume = CaptureVolume;
+            shortcut.Hotkey = Hotkey;
 
             // Save the shortcut incon to the icon cache
             shortcut.ReplaceShortcutIconInCache();
