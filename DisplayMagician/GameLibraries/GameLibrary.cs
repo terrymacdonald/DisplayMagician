@@ -40,6 +40,8 @@ namespace DisplayMagician.GameLibraries
 
         public virtual bool IsRunning { get; set; }
 
+        public virtual bool IsUpdating { get; set; }
+
         public virtual List<string> GameLibraryProcesses { get; set; }
         #endregion
 

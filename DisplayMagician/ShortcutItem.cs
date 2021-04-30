@@ -148,7 +148,7 @@ namespace DisplayMagician
                 AutoSuggestShortcutName();
             }
 
-            RefreshValidity();
+            //RefreshValidity();
 
         }
 
@@ -2061,64 +2061,54 @@ namespace DisplayMagician
             }
             else if (Category.Equals(ShortcutCategory.Game))
             {
+                Game gameToRun = null;
+                GameLibrary gameLibraryToUse = null;
+
                 // If the game is a Steam Game we check for that
                 if (GameLibrary.Equals(SupportedGameLibraryType.Steam))
                 {
-
-                    SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
-                    // First check if Steam is installed
-                    // Check if Steam is installed and error if it isn't
-                    if (!steamLibrary.IsGameLibraryInstalled)
-                    {
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "SteamNotInstalled";
-                        error.Validity = ShortcutValidity.Error;
-                        error.Message = $"Steam is not installed on this computer.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Error;
-                    }
-
-                    // We need to look up details about the game
-                    if (!steamLibrary.ContainsGameById(GameAppId))
-                    {
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "SteamGameNotInstalled";
-                        error.Validity = ShortcutValidity.Error;
-                        error.Message = $"The Steam Game with AppID '{GameAppId}' is not installed on this computer.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Error;
-                    }
+                    // We now need to get the SteamGame info
+                    gameLibraryToUse = SteamLibrary.GetLibrary();
                 }
-                // If the game is a Uplay Game we check for that
+                // If the game is a Uplay Uplay Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Uplay))
                 {
-                    UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
-                    // First check if Uplay is installed
-                    // Check if Uplay is installed and error if it isn't
-                    if (!uplayLibrary.IsGameLibraryInstalled)
-                    {
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "UplayNotInstalled";
-                        error.Validity = ShortcutValidity.Error;
-                        error.Message = $"Uplay is not installed on this computer.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Error;
-                    }
+                    // We now need to get the Uplay Game  info
+                    gameLibraryToUse = UplayLibrary.GetLibrary();
+                }
+                // If the game is a Uplay Game we check for that
+                else if (GameLibrary.Equals(SupportedGameLibraryType.Origin))
+                {
+                    // We now need to get the Uplay Game  info
+                    gameLibraryToUse = UplayLibrary.GetLibrary();
+                }
 
-                    // We need to look up details about the game
-                    if (!uplayLibrary.ContainsGame(GameAppId))
-                    {
-                        ShortcutError error = new ShortcutError();
-                        error.Name = "UplayGameNotInstalled";
-                        error.Validity = ShortcutValidity.Error;
-                        error.Message = $"The Uplay Game with AppID '{GameAppId}' is not installed on this computer.";
-                        _shortcutErrors.Add(error);
-                        if (worstError != ShortcutValidity.Error)
-                            worstError = ShortcutValidity.Error;
-                    }
+                // If the game is a Steam Game we check for that
+
+                SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
+                // First check if Steam is installed
+                // Check if Steam is installed and error if it isn't
+                if (!gameLibraryToUse.IsGameLibraryInstalled)
+                {
+                    ShortcutError error = new ShortcutError();
+                    error.Name = $"{gameLibraryToUse.GameLibraryName}NotInstalled";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"{gameLibraryToUse.GameLibraryName} is not installed on this computer.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Error;
+                }
+
+                // We need to look up details about the game
+                if (!gameLibraryToUse.ContainsGameById(GameAppId))
+                {
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "{gameLibraryToUse.GameLibraryName}GameNotInstalled";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The {gameLibraryToUse.GameLibraryName} Game with AppID '{GameAppId}' is not installed on this computer.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Error;
                 }
             }
             // Check the Audio Device is still valid (if one is specified)

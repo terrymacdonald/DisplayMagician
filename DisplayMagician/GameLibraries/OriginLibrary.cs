@@ -170,6 +170,18 @@ namespace DisplayMagician.GameLibraries
 
         }
 
+        public override bool IsUpdating
+        {
+            get
+            {
+                // Not implemeted at present
+                // so we just return a false
+                // TODO Implement Origin specific detection for updating the game client
+                return false;
+            }
+
+        }
+
         public override List<string> GameLibraryProcesses
         {
             get
@@ -416,17 +428,21 @@ namespace DisplayMagician.GameLibraries
                 }
 
                 var localContentPath = Path.Combine(_originLocalContent, "LocalContent");
-                //var games = new Dictionary<string, GameInfo>();
+                logger.Trace($"OriginLibrary/LoadInstalledGames: Looking for Local Content in {localContentPath}");
 
                 if (Directory.Exists(localContentPath))
                 {
+                    logger.Trace($"OriginLibrary/LoadInstalledGames: Local Content Directory {localContentPath} exists!");
                     string[] packages = Directory.GetFiles(localContentPath, "*.mfst", SearchOption.AllDirectories);
+                    logger.Trace($"OriginLibrary/LoadInstalledGames: Found .mfst files in Local Content Directory {localContentPath}: {packages.ToString()}");
                     foreach (string package in packages)
                     {
+                        logger.Trace($"OriginLibrary/LoadInstalledGames: Parsing {package} name to find GameID");
                         try
                         {
                             GameAppInfo originGame = new GameAppInfo();
                             originGame.GameID = Path.GetFileNameWithoutExtension(package);
+                            logger.Trace($"OriginLibrary/LoadInstalledGames: Got GameID of {originGame.GameID } from file {package}");
                             if (!originGame.GameID.StartsWith("Origin"))
                             {
                                 // If the gameId doesn't start with origin, then we need to find it!
@@ -435,177 +451,229 @@ namespace DisplayMagician.GameLibraries
                                 Match match = Regex.Match(originGame.GameID, @"^(.*?)(\d+)$");
                                 if (!match.Success)
                                 {
-                                    logger.Warn("Failed to get game id from file " + package);
+                                    logger.Warn($"OriginLibrary/LoadInstalledGames: Failed to match game id from file {package} name so ignoring game");
                                     continue;
                                 }
 
                                 originGame.GameID = match.Groups[1].Value + ":" + match.Groups[2].Value;
+                                logger.Trace($"OriginLibrary/LoadInstalledGames: GameID doesn't start with 'Origin' so using different pattern to find {originGame.GameID} GameID");
                             }
 
                             // Now we get the rest of the game information out of the manifest file
                             Dictionary<string, string> manifestInfo = ParseOriginManifest(package);
 
+                            logger.Trace($"OriginLibrary/LoadInstalledGames: Looking whether Origin is still downloading the game to install it");
                             if (manifestInfo.ContainsKey("ddinitialdownload") && manifestInfo["ddinitialdownload"] == "1")
                             {
                                 // Origin is downloading and installing the game so we skip it
+                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin is still downloading the game with Game ID {originGame.GameID} to install it");
                                 continue;
                             }
+                            logger.Trace($"OriginLibrary/LoadInstalledGames: Looking whether Origin is downloading game updates");
                             if (manifestInfo.ContainsKey("downloading") && manifestInfo["downloading"] == "1")
                             {
                                 // Origin is downloading some new content so we can't play it at the moment
-                                // but we can still configure it
+                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin is downloading game updates for the game with Game ID {originGame.GameID}");
                                 continue;
                             }
 
                             originGame.GameInstallDir = null;
+                            logger.Trace($"OriginLibrary/LoadInstalledGames: Looking where the game with Game ID {originGame.GameID} is installed");
                             if (manifestInfo.ContainsKey("dipinstallpath"))
                             {
                                 // This is where Origin has installed this game
                                 originGame.GameInstallDir = HttpUtility.UrlDecode(manifestInfo["dipinstallpath"]);
-                                if (!Directory.Exists(originGame.GameInstallDir))
+                                if (String.IsNullOrEmpty(originGame.GameInstallDir) || !Directory.Exists(originGame.GameInstallDir))
                                 {
-                                    logger.Debug($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} found but no valid directory found at {originGame.GameInstallDir}");
+                                    logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} found but no valid directory found at {originGame.GameInstallDir}");
                                     continue;
                                 }
                             }
-
-
-                            // Now we want to look in the dinstallpath location for the game info
-                            // for the __Installer\installerdata.xml
-                            if (String.IsNullOrEmpty(originGame.GameInstallDir))
+                            else
                             {
-                                // then we have a problem and we need to continue and ignore this game
-                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has registry but we can't find install dir!");
-                                continue;
+                                logger.Warn($"OriginLibrary/LoadInstalledGames: Couldn't figure out where Game ID {originGame.GameID} is installed. Skipping game.");
                             }
 
                             string gameInstallerData = Path.Combine(originGame.GameInstallDir, @"__Installer", @"installerdata.xml");
+                            logger.Trace($"OriginLibrary/LoadInstalledGames: Parsing the Game Installer Data at {gameInstallerData}");
 
                             if (File.Exists(gameInstallerData))
                             {
+                                logger.Trace($"OriginLibrary/LoadInstalledGames: Game Installer Data file was found at {gameInstallerData}");
+                                logger.Trace($"OriginLibrary/LoadInstalledGames: Attempting to parse XML Game Installer Data file at {gameInstallerData}");
                                 // Now we parse the XML
                                 XDocument xdoc = XDocument.Load(gameInstallerData);
                                 originGame.GameName = xdoc.XPathSelectElement("/DiPManifest/gameTitles/gameTitle[@locale='en_US']").Value;
+                                logger.Trace($"OriginLibrary/LoadInstalledGames: Game Name {originGame.GameName} found in Game Installer Data file {gameInstallerData}");
                                 string gameFilePath = xdoc.XPathSelectElement("/DiPManifest/runtime/launcher/filePath").Value;
+                                logger.Trace($"OriginLibrary/LoadInstalledGames: Game File Path is {gameFilePath } found in Game Installer Data file {gameInstallerData}");
+
+                                string originGameInstallLocation = "";
                                 // Check whether gameFilePath contains a registry key! Cause if it does we need to lookup the path there instead
                                 if (gameFilePath.StartsWith("[HKEY_LOCAL_MACHINE"))
                                 {
+                                    logger.Trace($"OriginLibrary/LoadInstalledGames: Game File Path starts with a registery key so needs to be translated");
                                     // The filePath contains a registry key lookup that we need to execute and replace
+                                    string originGameInstallKeyNameAndValue = "";
+                                    string originGameRestOfFile = "";
                                     MatchCollection mc = Regex.Matches(gameFilePath, @"\[HKEY_LOCAL_MACHINE\\(.*)\](.*)");
-                                    string originGameInstallKeyNameAndValue = mc[0].Groups[1].ToString();
-                                    string originGameRestOfFile = mc[0].Groups[2].ToString();
-                                    if (originGameInstallKeyNameAndValue == null)
+                                    if (mc.Count > 0)
                                     {
-                                        // then we have a problem and we need to continue and ignore this game
-                                        logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has registry but we can't match it! gameFilePath is {gameFilePath}.");
+                                        // Split the Reg key bit from the File Path bit
+
+                                        originGameInstallKeyNameAndValue = mc[0].Groups[1].ToString();
+                                        logger.Trace($"OriginLibrary/LoadInstalledGames: originGameInstallKeyNameAndValue = {originGameInstallKeyNameAndValue}");
+                                        originGameRestOfFile = mc[0].Groups[2].ToString();
+                                        logger.Trace($"OriginLibrary/LoadInstalledGames: originGameRestOfFile = {originGameRestOfFile}");
+                                        if (originGameInstallKeyNameAndValue == null || originGameInstallKeyNameAndValue == "")
+                                        {
+                                            // then we have a problem and we need to continue and ignore this game
+                                            logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has registry key but we can't extract it! gameFilePath is {gameFilePath}.");
+                                            continue;
+                                        }
+
+                                        // Split the reg key from the value name 
+
+                                        string originGameInstallKeyName = "";
+                                        string originGameInstallKeyValue = "";
+                                        mc = Regex.Matches(originGameInstallKeyNameAndValue, @"(.*)\\([^\\]*)");
+                                        if (mc.Count > 0)
+                                        {
+                                            originGameInstallKeyName = mc[0].Groups[1].ToString();
+                                            logger.Trace($"OriginLibrary/LoadInstalledGames: originGameInstallKeyName = {originGameInstallKeyName }");
+                                            originGameInstallKeyValue = mc[0].Groups[2].ToString();
+                                            logger.Trace($"OriginLibrary/LoadInstalledGames: originGameInstallKeyValue = {originGameInstallKeyValue }");
+                                        }
+
+                                        // Lookup the reg key to figure out where the game is installed 
+                                        try
+                                        {
+                                            RegistryKey originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
+                                            if (originGameInstallKey == null)
+                                            {
+                                                // then we have a problem as we cannot find the game exe location!
+                                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has a install reg key we cannot find! originGameInstallKey is {gameFilePath} and originGameInstallKeyValue is {originGameInstallKeyValue}.");
+                                                continue;
+                                            }
+                                            originGameInstallLocation = Path.Combine(originGameInstallKey.GetValue(originGameInstallKeyValue).ToString(), originGameRestOfFile);
+                                            if (!File.Exists(originGameInstallLocation))
+                                            {
+                                                // then we have a problem as we cannot locate the game exe file to start!
+                                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has gameexe we cannot find! originGameInstallLocation is {originGameInstallLocation}.");
+                                                continue;
+                                            }
+                                            originGame.GameExePath = originGameInstallLocation;
+                                        }
+                                        catch (SecurityException ex)
+                                        {
+                                            logger.Warn(ex, $"OriginLibrary/LoadInstalledGames: The user does not have the permissions required to read the Origin Game location registry key {originGameInstallKeyName}, so skipping game");
+                                            continue;
+                                        }
+                                        catch (ObjectDisposedException ex)
+                                        {
+                                            logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Origin ClientPath registry key (closed keys cannot be accessed), so skipping game");
+                                            continue;
+                                        }
+                                        catch (IOException ex)
+                                        {
+                                            logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Origin ClientPath registry key has been marked for deletion so we cannot access the value dueing the OriginLibrary check, so skipping game");
+                                            continue;
+                                        }
+                                        catch (UnauthorizedAccessException ex)
+                                        {
+                                            logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The user does not have the necessary registry rights to check whether Origin is installed, so skipping game");
+                                            continue;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        logger.Warn($"OriginLibrary/LoadInstalledGames: Game File Path {gameFilePath} starts with '[HEKY_LOCAL_MACHINE' but didn't match the regex when it should have");
                                         continue;
                                     }
                                     
-                                    mc = Regex.Matches(originGameInstallKeyNameAndValue, @"(.*)\\([^\\]*)");
-                                    string originGameInstallKeyName = mc[0].Groups[1].ToString();
-                                    string originGameInstallKeyValue = mc[0].Groups[2].ToString();
-
-                                    try
-                                    {
-                                        RegistryKey originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
-                                        if (originGameInstallKey == null)
-                                        {
-                                            // then we have a problem as we cannot find the game exe location!
-                                            logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has a install reg key we cannot find! originGameInstallKey is {gameFilePath} and originGameInstallKeyValue is {originGameInstallKeyValue}.");
-                                            continue;
-                                        }
-                                        string originGameInstallLocation = originGameInstallKey.GetValue(originGameInstallKeyValue).ToString();
-                                        originGameInstallLocation = Path.Combine(originGameInstallLocation, originGameRestOfFile);
-                                        if (!File.Exists(originGameInstallLocation))
-                                        {
-                                            // then we have a problem as we cannot locate the game exe file to start!
-                                            logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has gameexe we cannot find! originGameInstallLocation is {originGameInstallLocation}.");
-                                            continue;
-                                        }
-                                        originGame.GameExePath = originGameInstallLocation;
-
-                                    }
-                                    catch (SecurityException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The user does not have the permissions required to read the Origin Game location registry key {}.");
-                                    }
-                                    catch (ObjectDisposedException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Origin ClientPath registry key (closed keys cannot be accessed).");
-                                    }
-                                    catch (IOException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Origin ClientPath registry key has been marked for deletion so we cannot access the value dueing the OriginLibrary check.");
-                                    }
-                                    catch (UnauthorizedAccessException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The user does not have the necessary registry rights to check whether Origin is installed.");
-                                    }
                                 }
                                 else if (gameFilePath.StartsWith("[HKEY_CURRENT_USER"))
                                 {
                                     // The filePath contains a registry key lookup that we need to execute and replace
                                     MatchCollection mc = Regex.Matches(gameFilePath, @"\[HKEY_CURRENT_USER\\(.*)\](.*)");
-                                    string originGameInstallKeyNameAndValue = mc[0].Groups[1].ToString();
-                                    string originGameRestOfFile = mc[0].Groups[2].ToString();
-                                    if (originGameInstallKeyNameAndValue == null)
+                                    if (mc.Count > 0)
                                     {
-                                        // then we have a problem and we need to continue and ignore this game
-                                        logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has registry but we can't match it! gameFilePath is {gameFilePath}.");
+                                        string originGameInstallKeyNameAndValue = mc[0].Groups[1].ToString();
+                                        string originGameRestOfFile = mc[0].Groups[2].ToString();
+                                        if (originGameInstallKeyNameAndValue == null)
+                                        {
+                                            // then we have a problem and we need to continue and ignore this game
+                                            logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has registry but we can't match it! gameFilePath is {gameFilePath}.");
+                                            continue;
+                                        }
+
+                                        mc = Regex.Matches(originGameInstallKeyNameAndValue, @"(.*)\\([^\\]*)");
+                                        string originGameInstallKeyName = mc[0].Groups[1].ToString();
+                                        string originGameInstallKeyValue = mc[0].Groups[2].ToString();
+
+                                        try
+                                        {
+                                            RegistryKey originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
+                                            if (originGameInstallKey == null)
+                                            {
+                                                // then we have a problem as we cannot find the game exe location!
+                                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has a install reg key we cannot find! originGameInstallKey is {gameFilePath} and originGameInstallKeyValue is {originGameInstallKeyValue}.");
+                                                continue;
+                                            }
+                                            originGameInstallLocation = Path.Combine(originGameInstallKey.GetValue(originGameInstallKeyValue).ToString(), originGameRestOfFile);
+                                            if (!File.Exists(originGameInstallLocation))
+                                            {
+                                                // then we have a problem as we cannot locate the game exe file to start!
+                                                logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has gameexe we cannot find! originGameInstallLocation is {originGameInstallLocation}.");
+                                                continue;
+                                            }
+                                            originGame.GameExePath = originGameInstallLocation;
+
+                                        }
+                                        catch (SecurityException ex)
+                                        {
+                                            logger.Warn(ex, $"OriginLibrary/LoadInstalledGames: The user does not have the permissions required to read the Origin Game location registry key {originGameInstallKeyName}, so skipping game");
+                                            continue;
+                                        }
+                                        catch (ObjectDisposedException ex)
+                                        {
+                                            logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Origin ClientPath registry key (closed keys cannot be accessed), so skipping game");
+                                            continue;
+                                        }
+                                        catch (IOException ex)
+                                        {
+                                            logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Origin ClientPath registry key has been marked for deletion so we cannot access the value dueing the OriginLibrary check, so skipping game");
+                                            continue;
+                                        }
+                                        catch (UnauthorizedAccessException ex)
+                                        {
+                                            logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The user does not have the necessary registry rights to check whether Origin is installed, so skipping game");
+                                            continue;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        logger.Warn($"OriginLibrary/LoadInstalledGames: Game File Path {gameFilePath} starts with '[HKEY_CURRENT_USER' but didn't match the regex when it should have, so skipping game");
                                         continue;
                                     }
-
-                                    mc = Regex.Matches(originGameInstallKeyNameAndValue, @"(.*)\\([^\\]*)");
-                                    string originGameInstallKeyName = mc[0].Groups[1].ToString();
-                                    string originGameInstallKeyValue = mc[0].Groups[2].ToString();
-
-                                    try
-                                    {
-                                        RegistryKey originGameInstallKey = Registry.LocalMachine.OpenSubKey(originGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
-                                        if (originGameInstallKey == null)
-                                        {
-                                            // then we have a problem as we cannot find the game exe location!
-                                            logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has a install reg key we cannot find! originGameInstallKey is {gameFilePath} and originGameInstallKeyValue is {originGameInstallKeyValue}.");
-                                            continue;
-                                        }
-                                        string originGameInstallLocation = originGameInstallKey.GetValue(originGameInstallKeyValue).ToString();
-                                        originGameInstallLocation = Path.Combine(originGameInstallLocation, originGameRestOfFile);
-                                        if (!File.Exists(originGameInstallLocation))
-                                        {
-                                            // then we have a problem as we cannot locate the game exe file to start!
-                                            logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} has gameexe we cannot find! originGameInstallLocation is {originGameInstallLocation}.");
-                                            continue;
-                                        }
-                                        originGame.GameExePath = originGameInstallLocation;
-
-                                    }
-                                    catch (SecurityException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The user does not have the permissions required to read the Origin Game location registry key {}.");
-                                    }
-                                    catch (ObjectDisposedException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Origin ClientPath registry key (closed keys cannot be accessed).");
-                                    }
-                                    catch (IOException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The Origin ClientPath registry key has been marked for deletion so we cannot access the value dueing the OriginLibrary check.");
-                                    }
-                                    catch (UnauthorizedAccessException ex)
-                                    {
-                                        logger.Warn(ex, "OriginLibrary/LoadInstalledGames: The user does not have the necessary registry rights to check whether Origin is installed.");
-                                    }
+                                }
+                                else
+                                {
+                                    // If we get here, then the gameFilepath is the actual filepath! So we just copy it.
+                                    logger.Trace($"OriginLibrary/LoadInstalledGames: Game File Path {gameFilePath} doesn't start with '[HKEY_LOCAL_MACHINE' or '[HKEY_CURRENT_USER' so it must be aplain file path");
+                                    originGame.GameExePath = gameFilePath;
                                 }
 
 
                                 if (!File.Exists(originGame.GameExePath))
                                 {
-                                    logger.Debug($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} found but no game exe found at {originGame.GameExePath}");
+                                    logger.Warn($"OriginLibrary/LoadInstalledGames: Origin game with ID {originGame.GameID} found but no game exe found at originGame.GameExePath {originGame.GameExePath} so skipping game");
                                     continue;
                                 }
 
-                                // TODO check for icon! For now we will just use the exe one
+                                // TODO check for icon! For now we will just use the exe one                               
                                 originGame.GameIconPath = originGame.GameExePath;
+                                logger.Trace($"OriginLibrary/LoadInstalledGames: Origin gameIconPath = {originGame.GameIconPath} (currently just taking it from the file exe!");
 
                                 // If we reach here we add the Game to the list of games we have!
                                 _allOriginGames.Add(new OriginGame(originGame.GameID, originGame.GameName, originGame.GameExePath, originGame.GameIconPath));
@@ -613,6 +681,7 @@ namespace DisplayMagician.GameLibraries
                             else
                             {
                                 // If we can't find the __Installer\installerdata.xml file then we ignore this game
+                                logger.Trace($"OriginLibrary/LoadInstalledGames: Couldn't find Game Installer Data file at {gameInstallerData} for game with GameID {originGame.GameID} so skipping this game");
                                 continue;
                             }
                             
@@ -629,55 +698,6 @@ namespace DisplayMagician.GameLibraries
                     logger.Warn($"OriginLibrary/LoadInstalledGames: No Origin games installed in the Origin library");
                     return false;
                 }
-
-                // up to here
-
-                
-
-                /*    if (gotGameRegistryKey)
-                    {
-                        // Now we need to lookup the game install path in registry using the game reg we got above
-                        // We assume its 64-bit OS too (not 32bit)
-                        using (RegistryKey OriginGameInstallKey = Registry.LocalMachine.OpenSubKey(gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
-                        {
-                            // If the key doesn't exist we skip it as the game isn't installed any longer!
-                            if (OriginGameInstallKey == null)
-                            {
-                                logger.Trace($"OriginLibrary/LoadInstalledGames: Skipping Origin Game {OriginGameAppInfo.GameName} as it isn't installed at the moment (it was uninstalled at some point)");
-                                continue;
-                            }
-
-                            // If we get here, then we have a real game.
-                            foreach (string regKeyName in OriginGameInstallKey.GetValueNames())
-                            {
-                                logger.Trace($"OriginLibrary/LoadInstalledGames: OriginGameInstallKey[{regKeyName}] = {OriginGameInstallKey.GetValue(regKeyName)}");
-                            }
-
-                            // From that we lookup the actual game path
-                            string gameInstallDir = OriginGameInstallKey.GetValue("InstallDir", "").ToString();
-                            logger.Trace($"OriginLibrary/LoadInstalledGames: gameInstallDir found  = {gameInstallDir}");
-                            if (!String.IsNullOrWhiteSpace(gameInstallDir))
-                            {
-                                OriginGameAppInfo.GameInstallDir = Path.GetFullPath(gameInstallDir).TrimEnd('\\');
-                                logger.Trace($"OriginLibrary/LoadInstalledGames: OriginGameAppInfo.GameInstallDir = {OriginGameAppInfo.GameInstallDir }");
-                                OriginGameAppInfo.GameExe = Path.Combine(OriginGameAppInfo.GameInstallDir, gameFileName);
-                                logger.Trace($"OriginLibrary/LoadInstalledGames: OriginGameAppInfo.GameExe = {OriginGameAppInfo.GameExePath }");
-                                OriginGameAppInfo.GameID = gameId;
-                                logger.Trace($"OriginLibrary/LoadInstalledGames: OriginGameAppInfo.GameID = {OriginGameAppInfo.GameID }");
-                            }
-                            else
-                            {
-                                logger.Warn($"OriginLibrary/LoadInstalledGames: gameInstallDir is null or all whitespace!");
-                            }
-
-                            // Then we have the gameID, the thumbimage, the icon, the name, the exe path
-                            // And we add the Game to the list of games we have!
-                            _allOriginGames.Add(new OriginGame(OriginGameAppInfo.GameID, OriginGameAppInfo.GameName, OriginGameAppInfo.GameExePath, OriginGameAppInfo.GameOriginIconPath));
-                            logger.Debug($"OriginLibrary/LoadInstalledGames: Adding Origin Game with game id {OriginGameAppInfo.GameID}, name {OriginGameAppInfo.GameName}, game exe {OriginGameAppInfo.GameExePath} and icon path {OriginGameAppInfo.GameOriginIconPath}");
-                        }
-                    }
-                    
-                }*/
 
                 logger.Info($"OriginLibrary/LoadInstalledGames: Found {_allOriginGames.Count} installed Origin games");
 

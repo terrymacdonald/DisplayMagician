@@ -165,6 +165,18 @@ namespace DisplayMagician.GameLibraries
 
         }
 
+        public override bool IsUpdating
+        {
+            get
+            {
+                // Not implemeted at present
+                // so we just return a false
+                // TODO Implement Uplay specific detection for updating the game client
+                return false;
+            }
+
+        }
+
         public override List<string> GameLibraryProcesses
         {
             get
@@ -547,62 +559,72 @@ namespace DisplayMagician.GameLibraries
                         if (uplayEntryLines[i].StartsWith("  name:", StringComparison.OrdinalIgnoreCase) && !gotGameName)
                         {
                             mc = Regex.Matches(uplayEntryLines[i], @"  name\: (.*)");
-                            uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
-                            // if the name contains a localization reference, then dereference it
-                            if (localizations.ContainsKey(uplayGameAppInfo.GameName))
+                            if (mc.Count > 0)
                             {
-                                uplayGameAppInfo.GameName = localizations[uplayGameAppInfo.GameName];
-                            }
-                            logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameName = {uplayGameAppInfo.GameName}");
-                            gotGameName = true;
+                                uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
+                                // if the name contains a localization reference, then dereference it
+                                if (localizations.ContainsKey(uplayGameAppInfo.GameName))
+                                {
+                                    uplayGameAppInfo.GameName = localizations[uplayGameAppInfo.GameName];
+                                }
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameName = {uplayGameAppInfo.GameName}");
+                                gotGameName = true;
+                            }                           
                         }
                         else if (uplayEntryLines[i].StartsWith("  icon_image:", StringComparison.OrdinalIgnoreCase) && !gotGameIconPath)
                         {
                             mc = Regex.Matches(uplayEntryLines[i], @"icon_image: (.*)");
-                            string iconImageFileName = mc[0].Groups[1].ToString();
-                            // if the icon_image contains a localization reference, then dereference it
-                            if (localizations.ContainsKey(iconImageFileName))
+                            if (mc.Count > 0)
                             {
-                                iconImageFileName = localizations[iconImageFileName];
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found iconImageFile = {iconImageFileName }");
-                            }
-                            //61fdd16f06ae08158d0a6d476f1c6bd5.ico
-                            string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
-                            if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
-                            {
-                                uplayGameAppInfo.GameIconPath = uplayGameIconPath;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameUplayIconPath = {uplayGameAppInfo.GameIconPath }");
-                            }
-                            gotGameIconPath = true;
+                                string iconImageFileName = mc[0].Groups[1].ToString();
+                                // if the icon_image contains a localization reference, then dereference it
+                                if (localizations.ContainsKey(iconImageFileName))
+                                {
+                                    iconImageFileName = localizations[iconImageFileName];
+                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Found iconImageFile = {iconImageFileName }");
+                                }
+                                //61fdd16f06ae08158d0a6d476f1c6bd5.ico
+                                string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
+                                if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
+                                {
+                                    uplayGameAppInfo.GameIconPath = uplayGameIconPath;
+                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameUplayIconPath = {uplayGameAppInfo.GameIconPath }");
+                                }
+                                gotGameIconPath = true;
+                            }                            
                         }
                         // This line contains the filename
                         else if (uplayEntryLines[i].StartsWith("          relative:") && !gotGameFileName)
                         {
                             mc = Regex.Matches(uplayEntryLines[i], @"relative: (.*)");
-                            gameFileName = mc[0].Groups[1].ToString();
-                            gotGameFileName = true;
-                            logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameFileName = {gameFileName}");
+                            if (mc.Count > 0)
+                            {
+                                gameFileName = mc[0].Groups[1].ToString();
+                                gotGameFileName = true;
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameFileName = {gameFileName}");
+                            }                            
                         }
                         // This line contains the registryKey 
                         else if (uplayEntryLines[i].StartsWith("          register: HKEY_LOCAL_MACHINE") && !gotGameId)
                         {
+                            
                             // Lookup the GameId within the registry key
                             mc = Regex.Matches(uplayEntryLines[i], @"Installs\\(\d+)\\InstallDir");
                             if (mc.Count > 0)
                             {
                                 gameId = mc[0].Groups[1].ToString();
                                 gotGameId = true;
-                                mc = Regex.Matches(uplayEntryLines[i], @"HKEY_LOCAL_MACHINE\\(.*?)\\InstallDir");
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameId = {gameId}");
+                            }
+                            mc = Regex.Matches(uplayEntryLines[i], @"HKEY_LOCAL_MACHINE\\(.*?)\\InstallDir");
+                            if (mc.Count > 0)
+                            {
                                 gameRegistryKey = mc[0].Groups[1].ToString();
                                 gameRegistryKey = gameRegistryKey.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
                                 gotGameRegistryKey = true;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameId = {gameId} and gameRegistryKey = {gameRegistryKey}");
+                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameRegistryKey = {gameRegistryKey}");
                             }
-                            else
-                            {
-                                gotGameRegistryKey = false;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Game with uplayEntryLines[{i}]: '{uplayEntryLines[i]}' not found");
-                            }
+                            
                         }
                     }
 
