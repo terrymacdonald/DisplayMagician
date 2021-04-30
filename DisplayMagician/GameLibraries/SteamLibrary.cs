@@ -188,6 +188,18 @@ namespace DisplayMagician.GameLibraries
 
         }
 
+        public override bool IsUpdating
+        {
+            get
+            {
+                // Not implemeted at present
+                // so we just return a false
+                // TODO Implement Origin specific detection for updating the game client
+                return false;
+            }
+
+        }
+
         public override List<string> GameLibraryProcesses
         {
             get

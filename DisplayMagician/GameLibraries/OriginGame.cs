@@ -120,40 +120,13 @@ namespace DisplayMagician.GameLibraries
         }
 
         // Have to do much more research to figure out how to detect when Origin is updating a game
-        /*public override bool IsUpdating
+        public override bool IsUpdating
         {
             get
             {
-                try
-                {
-                    using (
-                        var key = Registry.CurrentUser.OpenSubKey(_gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
-                    {
-                        if ((int)key?.GetValue(@"Updating", 0) == 1)
-                        {
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-                catch (SecurityException ex)
-                {
-                    Console.WriteLine($"OriginGame/IsUpdating securityexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("SecurityException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
-                }
-                catch (IOException ex)
-                {
-                    // Extract some information from this exception, and then
-                    // throw it to the parent method.
-                    Console.WriteLine($"OriginGame/IsUpdating ioexception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    if (ex.Source != null)
-                        Console.WriteLine("IOException source: {0} - Message: {1}", ex.Source, ex.Message);
-                    throw;
-                }
+                return false;
             }
-        }*/
+        }
 
         public override GameStartMode StartMode
         {
