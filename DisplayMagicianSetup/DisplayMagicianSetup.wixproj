@@ -31,6 +31,7 @@
     <Pedantic>True</Pedantic>
     <WixVariables>
     </WixVariables>
+    <SuppressPdbOutput>True</SuppressPdbOutput>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
@@ -38,6 +39,7 @@
     <SuppressAllWarnings>False</SuppressAllWarnings>
     <Pedantic>True</Pedantic>
     <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug</DefineConstants>
+    <SuppressPdbOutput>True</SuppressPdbOutput>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CustomDialogs\LicenseAgreementDialogOverwritten.wxs" />
