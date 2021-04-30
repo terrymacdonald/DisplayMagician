@@ -49,7 +49,8 @@ namespace DisplayMagician.UIForms
             //hks = new HotkeySelector();
             //hks.EmptyHotkeyText = "";
             //hks.Enable(txt_hotkey);
-            this.ActiveControl = txt_hotkey;
+            //this.ActiveControl = txt_hotkey;
+            //txt_hotkey.DeselectAll();
         }
 
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
@@ -61,9 +62,6 @@ namespace DisplayMagician.UIForms
             GenerateInvalidModifiers();
             myHotkey = hotkeyToEdit;
             Refresh(txt_hotkey);
-
-            this.ActiveControl = txt_hotkey;
-            txt_hotkey.DeselectAll();
 
             if (!String.IsNullOrEmpty(hotkeyHeading))
             {
@@ -91,7 +89,8 @@ namespace DisplayMagician.UIForms
             this.DialogResult = DialogResult.None;
             txt_hotkey.Text = "";
             myHotkey = Keys.None;
-            this.ActiveControl = txt_hotkey;
+            //this.ActiveControl = txt_hotkey;
+            //txt_hotkey.DeselectAll();
         }
 
         private void btn_save_Click(object sender, EventArgs e)
@@ -282,6 +281,11 @@ namespace DisplayMagician.UIForms
             _invalidKeyCombination.Add(Keys.Control | Keys.Delete);
         }
 
-
+        private void HotkeyForm_Activated(object sender, EventArgs e)
+        {
+            //this.ActiveControl = txt_hotkey;
+            txt_hotkey.Focus();
+            txt_hotkey.DeselectAll();
+        }
     }
 }

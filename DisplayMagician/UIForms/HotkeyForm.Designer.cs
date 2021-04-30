@@ -42,8 +42,10 @@ namespace DisplayMagician.UIForms
             // txt_hotkey
             // 
             this.txt_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_hotkey.HideSelection = false;
             this.txt_hotkey.Location = new System.Drawing.Point(86, 153);
             this.txt_hotkey.Name = "txt_hotkey";
+            this.txt_hotkey.ReadOnly = true;
             this.txt_hotkey.Size = new System.Drawing.Size(270, 26);
             this.txt_hotkey.TabIndex = 1;
             this.txt_hotkey.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
@@ -153,6 +155,7 @@ namespace DisplayMagician.UIForms
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Choose a Hotkey";
+            this.Activated += new System.EventHandler(this.HotkeyForm_Activated);
             this.ResumeLayout(false);
             this.PerformLayout();
 
