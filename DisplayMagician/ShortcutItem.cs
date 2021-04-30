@@ -2080,7 +2080,7 @@ namespace DisplayMagician
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Origin))
                 {
                     // We now need to get the Uplay Game  info
-                    gameLibraryToUse = UplayLibrary.GetLibrary();
+                    gameLibraryToUse = OriginLibrary.GetLibrary();
                 }
 
                 // If the game is a Steam Game we check for that

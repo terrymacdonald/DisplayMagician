@@ -1062,11 +1062,11 @@ namespace DisplayMagician
                     // We now need to get the Uplay Game  info
                     gameLibraryToUse = UplayLibrary.GetLibrary();
                 }
-                // If the game is a Uplay Game we check for that
+                // If the game is an Origin Game we check for that
                 else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Origin))
                 {
-                    // We now need to get the Uplay Game  info
-                    gameLibraryToUse = UplayLibrary.GetLibrary();
+                    // We now need to get the Origin Game  info
+                    gameLibraryToUse = OriginLibrary.GetLibrary();
                 }
 
                 gameToRun = gameLibraryToUse.GetGameById(shortcutToUse.GameAppId);
