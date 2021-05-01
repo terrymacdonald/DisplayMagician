@@ -629,8 +629,12 @@ namespace DisplayMagician.UIForms
 
             }
 
-            // Set the hokey if there is one
-            HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _shortcutToEdit.Hotkey, OnWindowHotkeyPressed);
+            if (_hotkey == Keys.None)
+                // Remove the Hotkey if it needs to be removed
+                HotkeyManager.Current.Remove(_shortcutToEdit.UUID);
+            else
+                // Set the hokey if there is one
+                HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _shortcutToEdit.Hotkey, OnWindowHotkeyPressed);
 
             // Refresh validity after these changes
             _shortcutToEdit.RefreshValidity();

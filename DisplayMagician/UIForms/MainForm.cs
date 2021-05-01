@@ -14,6 +14,7 @@ using Microsoft.Toolkit.Uwp.Notifications;
 using System.Collections.Generic;
 using NHotkey.WindowsForms;
 using NHotkey;
+using System.Linq;
 
 namespace DisplayMagician.UIForms
 {
@@ -41,12 +42,13 @@ namespace DisplayMagician.UIForms
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
 
-            /*if (Program.AppProgramSettings.MainWindowHotkey)
-                HotkeyManager.Current.AddOrReplace("MainWindowHotkey", Program.AppProgramSettings.MainWindowHotkey, OnWindowHotkeyPressed);
-            if (Program.AppProgramSettings.ShortcutLibraryWindow)
-                HotkeyManager.Current.AddOrReplace("ShortcutLibraryWindow", Program.AppProgramSettings.ShortcutLibraryWindow, OnWindowHotkeyPressed);
-            if (Program.AppProgramSettings.DisplayProfileWindow)
-                HotkeyManager.Current.AddOrReplace("DisplayProfileWindow", Program.AppProgramSettings.DisplayProfileWindow, OnWindowHotkeyPressed);*/
+            if (Program.AppProgramSettings.HotkeyMainWindow != Keys.None)
+                HotkeyManager.Current.AddOrReplace("HotkeyMainWindow", Program.AppProgramSettings.HotkeyMainWindow, OnWindowHotkeyPressed);
+            if (Program.AppProgramSettings.HotkeyDisplayProfileWindow != Keys.None)
+                HotkeyManager.Current.AddOrReplace("HotkeyDisplayProfileWindow", Program.AppProgramSettings.HotkeyDisplayProfileWindow, OnWindowHotkeyPressed);
+            if (Program.AppProgramSettings.HotkeyShortcutLibraryWindow != Keys.None)
+                    HotkeyManager.Current.AddOrReplace("HotkeyShortcutLibraryWindow", Program.AppProgramSettings.HotkeyShortcutLibraryWindow, OnWindowHotkeyPressed);
+            
 
             // Add all the Profile Hotkeys that are set
             foreach (ProfileItem myProfile in ProfileRepository.AllProfiles)
@@ -191,8 +193,20 @@ namespace DisplayMagician.UIForms
 
         private void btn_setup_display_profiles_Click(object sender, EventArgs e)
         {
-            var displayProfileForm = new DisplayProfileForm();
-            displayProfileForm.ShowDialog(this);
+            DisplayProfileForm displayProfileForm = null;
+            if (Application.OpenForms.OfType<DisplayProfileForm>().Any())
+            {
+                displayProfileForm = Application.OpenForms.OfType<DisplayProfileForm>().Single();
+                displayProfileForm.Activate(); 
+                displayProfileForm.Show();
+                displayProfileForm.BringToFront();
+
+            }
+            else
+            {
+                displayProfileForm = new DisplayProfileForm();
+                displayProfileForm.ShowDialog(this);
+            }            
         }
 
         private void pb_game_shortcut_Click(object sender, EventArgs e)
@@ -202,8 +216,19 @@ namespace DisplayMagician.UIForms
 
         private void btn_setup_game_shortcuts_Click(object sender, EventArgs e)
         {
-            var shortcutLibraryForm = new ShortcutLibraryForm();
-            shortcutLibraryForm.ShowDialog(this);
+            ShortcutLibraryForm shortcutLibraryForm = null;
+            if (Application.OpenForms.OfType<ShortcutLibraryForm>().Any())
+            {
+                shortcutLibraryForm = Application.OpenForms.OfType<ShortcutLibraryForm>().Single();
+                shortcutLibraryForm.Activate();
+                shortcutLibraryForm.Show();
+                shortcutLibraryForm.BringToFront();
+            }
+            else
+            {
+                shortcutLibraryForm = new ShortcutLibraryForm();
+                shortcutLibraryForm.ShowDialog(this);
+            }            
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -537,7 +562,7 @@ namespace DisplayMagician.UIForms
                 openApplicationWindow();
             else if (e.Name == "HotkeyDisplayProfileWindow")
                 btn_setup_display_profiles.PerformClick();
-            else if (e.Name == "ShortcutLibraryWindow")
+            else if (e.Name == "HotkeyShortcutLibraryWindow")
                 btn_setup_game_shortcuts.PerformClick();
             else if (hotkeyDisplayProfiles.Contains(e.Name))
             {

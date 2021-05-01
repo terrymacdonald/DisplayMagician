@@ -2,6 +2,8 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Windows.Forms;
+
 
 namespace DisplayMagician
 {
@@ -20,6 +22,9 @@ namespace DisplayMagician
         private bool _startOnBootUp = false;
         private bool _minimiseOnStart = false;
         private string _logLevel = NLog.LogLevel.Info.ToString();
+        private Keys _hotkeyMainWindow = Keys.None;
+        private Keys _hotkeyDisplayProfileWindow = Keys.None;
+        private Keys _hotkeyShortcutLibraryWindow = Keys.None;
         #endregion
 
         #region Class Properties
@@ -97,6 +102,64 @@ namespace DisplayMagician
             }
         }
 
+        public Keys HotkeyMainWindow
+        {
+            get
+            {
+                return _hotkeyMainWindow;
+            }
+            set
+            {
+                _hotkeyMainWindow = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                {
+                    SaveSettings();
+                }
+            }
+        }
+
+        public Keys HotkeyDisplayProfileWindow
+        {
+            get
+            {
+                return _hotkeyDisplayProfileWindow;
+            }
+            set
+            {
+                _hotkeyDisplayProfileWindow = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                {
+                    SaveSettings();
+                }
+            }
+        }
+
+        public Keys HotkeyShortcutLibraryWindow
+        {
+            get
+            {
+                return _hotkeyShortcutLibraryWindow;
+            }
+            set
+            {
+                _hotkeyShortcutLibraryWindow = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                {
+                    SaveSettings();
+                }
+            }
+        }
+
+
         public static Version FileVersion
         {
             get => new Version(1, 0, 0);
@@ -153,6 +216,7 @@ namespace DisplayMagician
             if (programSettings == null)
                 programSettings = new ProgramSettings();
             _programSettingsLoaded = true;
+
             return programSettings ;
         }
 

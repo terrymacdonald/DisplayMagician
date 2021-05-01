@@ -491,8 +491,12 @@ namespace DisplayMagician.UIForms
                 ProfileRepository.SaveProfiles();
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
                 UpdateHotkeyLabel(_selectedProfile.Hotkey);
-                // And then apply the Hotkey now
-                HotkeyManager.Current.AddOrReplace(_selectedProfile.UUID, _selectedProfile.Hotkey, OnWindowHotkeyPressed);
+                if (displayHotkeyForm.Hotkey == Keys.None)
+                    // Remove the Hotkey if it needs to be removed
+                    HotkeyManager.Current.Remove(_selectedProfile.UUID);
+                else
+                    // And then apply the Hotkey now
+                    HotkeyManager.Current.AddOrReplace(_selectedProfile.UUID, _selectedProfile.Hotkey, OnWindowHotkeyPressed);
             }
         }
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
