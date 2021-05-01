@@ -556,7 +556,9 @@ namespace DisplayMagician.UIForms
             openApplicationWindow();
         }
         
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
         public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             if (e.Name == "HotkeyMainWindow")
                 openApplicationWindow();
