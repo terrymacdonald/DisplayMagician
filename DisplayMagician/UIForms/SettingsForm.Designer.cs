@@ -29,8 +29,6 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.ListViewGroup listViewGroup15 = new System.Windows.Forms.ListViewGroup("Display Profiles", System.Windows.Forms.HorizontalAlignment.Left);
-            System.Windows.Forms.ListViewGroup listViewGroup16 = new System.Windows.Forms.ListViewGroup("Game Shortcuts", System.Windows.Forms.HorizontalAlignment.Left);
             this.btn_back = new System.Windows.Forms.Button();
             this.gb_general = new System.Windows.Forms.GroupBox();
             this.cb_start_on_boot = new System.Windows.Forms.CheckBox();
@@ -247,13 +245,6 @@ namespace DisplayMagician.UIForms
             // 
             // lv_dynamic_hotkeys
             // 
-            listViewGroup15.Header = "Display Profiles";
-            listViewGroup15.Name = "lvg_display_profiles";
-            listViewGroup16.Header = "Game Shortcuts";
-            listViewGroup16.Name = "lvg_shortcuts";
-            this.lv_dynamic_hotkeys.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup15,
-            listViewGroup16});
             this.lv_dynamic_hotkeys.HideSelection = false;
             this.lv_dynamic_hotkeys.Location = new System.Drawing.Point(27, 177);
             this.lv_dynamic_hotkeys.Name = "lv_dynamic_hotkeys";

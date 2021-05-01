@@ -1,4 +1,5 @@
-﻿using NHotkey;
+﻿using DisplayMagicianShared;
+using NHotkey;
 using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
@@ -102,6 +103,48 @@ namespace DisplayMagician.UIForms
             logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyDisplayProfileWindow}");
             UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyShortcutLibraryWindow, lbl_hotkey_shortcut_library);
             logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings HotkeyMainWindow set to {Program.AppProgramSettings.HotkeyShortcutLibraryWindow}");
+
+            // Setup the ListView
+            lv_dynamic_hotkeys.View = View.Details;
+            lv_dynamic_hotkeys.GridLines = true;
+            lv_dynamic_hotkeys.FullRowSelect = true;
+            lv_dynamic_hotkeys.ShowGroups = true;
+
+            //Add column header
+            lv_dynamic_hotkeys.Columns.Add("Name", 300);
+            lv_dynamic_hotkeys.Columns.Add("Hotkey", 150);
+
+            // Add the ListView Group
+            ListViewGroup displayProfile = new ListViewGroup("Display Profile");
+            ListViewGroup gameShortcut = new ListViewGroup("Game Shortcut");
+
+            lv_dynamic_hotkeys.Groups.Add(displayProfile);
+            lv_dynamic_hotkeys.Groups.Add(gameShortcut);
+
+            // Populate the dynamic hotkey list
+            foreach (ProfileItem myProfile in ProfileRepository.AllProfiles)
+            {
+                if (myProfile.Hotkey != Keys.None)
+                {
+                    string[] itemText = { myProfile.Name, ConvertHotkeyToText(myProfile.Hotkey) };
+                    ListViewItem dynamicHotkey = new ListViewItem(itemText);
+                    dynamicHotkey.Group = displayProfile;
+                    lv_dynamic_hotkeys.Items.Add(dynamicHotkey);
+
+                }
+            }
+
+            foreach (ShortcutItem myShortcut in ShortcutRepository.AllShortcuts)
+            {
+                if (myShortcut.Hotkey != Keys.None)
+                {
+                    string[] itemText = { myShortcut.Name, ConvertHotkeyToText(myShortcut.Hotkey) };
+                    ListViewItem dynamicHotkey = new ListViewItem(itemText);
+                    dynamicHotkey.Group = gameShortcut;
+                    lv_dynamic_hotkeys.Items.Add(dynamicHotkey);
+                }
+                
+            }
 
         }
 
@@ -343,7 +386,67 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.HotkeyShortcutLibraryWindow = Keys.None;
                 HotkeyManager.Current.Remove("HotkeyShortcutLibraryWindow");
                 UpdateHotkeyLabel(Program.AppProgramSettings.HotkeyShortcutLibraryWindow, lbl_hotkey_shortcut_library);
+
+                // Clear the dynamic hotkey list
+                foreach (ProfileItem myProfile in ProfileRepository.AllProfiles)
+                {
+                    if (myProfile.Hotkey != Keys.None)
+                    {
+                        myProfile.Hotkey = Keys.None;
+                        HotkeyManager.Current.Remove(myProfile.UUID);
+                    }
+                }
+
+                foreach (ShortcutItem myShortcut in ShortcutRepository.AllShortcuts)
+                {
+                    if (myShortcut.Hotkey != Keys.None)
+                    {
+                        myShortcut.Hotkey = Keys.None;
+                        HotkeyManager.Current.Remove(myShortcut.UUID);
+                    }
+                }
+                // Then clear the ListView here too!
+                lv_dynamic_hotkeys.Items.Clear();
             }            
+        }
+
+        private string ConvertHotkeyToText(Keys hotkey)
+        {
+            try
+            {
+                string parsedHotkey = string.Empty;
+
+                // No hotkey set.
+                if (hotkey == Keys.None)
+                {
+                    // There is nothing selected so just return
+                    return parsedHotkey;
+                }                
+                else
+                {
+                    // This key combination is ok so lets update the textbox
+                    // and save the Hotkey for later
+                    KeysConverter kc = new KeysConverter() { };
+                    parsedHotkey = kc.ConvertToString(hotkey);
+
+                    // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
+                    if (parsedHotkey.Contains("+ControlKey"))
+                        parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
+
+                    // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
+                    if (parsedHotkey.Contains("+ShiftKey"))
+                        parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
+
+                    // Alt also shows as Alt+Menu, so we trim the +Menu
+                    if (parsedHotkey.Contains("+Menu"))
+                        parsedHotkey = parsedHotkey.Replace("+Menu", "");
+
+                    return parsedHotkey;
+                }
+            }
+            catch (Exception) {
+                return String.Empty;
+            }
         }
     }
 }
