@@ -492,8 +492,7 @@ namespace DisplayMagician.UIForms
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
                 UpdateHotkeyLabel(_selectedProfile.Hotkey);
                 // And then apply the Hotkey now
-                MainForm mainForm = (MainForm)this.ParentForm;
-                HotkeyManager.Current.AddOrReplace(_selectedProfile.UUID, _selectedProfile.Hotkey, mainForm.OnWindowHotkeyPressed);
+                HotkeyManager.Current.AddOrReplace(_selectedProfile.UUID, _selectedProfile.Hotkey, OnWindowHotkeyPressed);
             }
         }
         private void lbl_hotkey_assigned_Click(object sender, EventArgs e)
@@ -515,6 +514,18 @@ namespace DisplayMagician.UIForms
             {
                 lbl_hotkey_assigned.Text = "Hotkey: None";
                 lbl_hotkey_assigned.Visible = false;
+            }
+            
+        }
+
+        public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
+        {
+            if (ProfileRepository.ContainsProfile(e.Name))
+            {
+                string displayProfileUUID = e.Name;
+                ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
+                if (chosenProfile is ProfileItem)
+                    Program.ApplyProfile(chosenProfile);
             }
             
         }

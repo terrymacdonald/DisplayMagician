@@ -16,6 +16,7 @@ using System.Windows.Forms.VisualStyles;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
 using NHotkey.WindowsForms;
+using NHotkey;
 //using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
@@ -628,6 +629,10 @@ namespace DisplayMagician.UIForms
 
             }
 
+            // Set the hokey if there is one
+            HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _shortcutToEdit.Hotkey, OnWindowHotkeyPressed);
+
+            // Refresh validity after these changes
             _shortcutToEdit.RefreshValidity();
 
             // We've saved, so mark it as so
@@ -2254,9 +2259,6 @@ namespace DisplayMagician.UIForms
                 _hotkey = displayHotkeyForm.Hotkey;
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
                 UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
-                // And we apply the hotkey striaght away
-                MainForm mainForm = (MainForm)this.ParentForm;
-                HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _hotkey, mainForm.OnWindowHotkeyPressed);
             }
         }
 
@@ -2281,6 +2283,17 @@ namespace DisplayMagician.UIForms
                 lbl_hotkey_assigned.Visible = false;
             }
 
+        }
+
+        public void OnWindowHotkeyPressed(object sender, HotkeyEventArgs e)
+        {
+            if (ShortcutRepository.ContainsShortcut(e.Name))
+            {
+                string shortcutUUID = e.Name;
+                ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
+                if (chosenShortcut is ShortcutItem)
+                    ShortcutRepository.RunShortcut(chosenShortcut);
+            }
         }
     }
 }

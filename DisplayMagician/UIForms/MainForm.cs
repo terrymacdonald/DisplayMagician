@@ -192,7 +192,6 @@ namespace DisplayMagician.UIForms
         private void btn_setup_display_profiles_Click(object sender, EventArgs e)
         {
             var displayProfileForm = new DisplayProfileForm();
-            displayProfileForm.Parent = this;
             displayProfileForm.ShowDialog(this);
         }
 
@@ -204,7 +203,6 @@ namespace DisplayMagician.UIForms
         private void btn_setup_game_shortcuts_Click(object sender, EventArgs e)
         {
             var shortcutLibraryForm = new ShortcutLibraryForm();
-            shortcutLibraryForm.Parent = this;
             shortcutLibraryForm.ShowDialog(this);
         }
 
@@ -502,7 +500,6 @@ namespace DisplayMagician.UIForms
         private void btn_settings_Click(object sender, EventArgs e)
         {
             var settingsForm = new SettingsForm();
-            settingsForm.Parent = this;
             settingsForm.ShowDialog(this);
             ProgramSettings mySettings = Program.AppProgramSettings;
             // if the MainForm settings are different to the changes made when

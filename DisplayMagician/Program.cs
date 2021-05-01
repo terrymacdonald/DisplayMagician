@@ -17,7 +17,6 @@ using DesktopNotifications;
 using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
-using NHotkey.WindowsForms;
 
 namespace DisplayMagician {
 
