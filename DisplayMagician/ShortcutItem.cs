@@ -15,7 +15,6 @@ using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
-//using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician
 {
@@ -1840,7 +1839,6 @@ namespace DisplayMagician
             {
                 _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
             }
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1909,15 +1907,25 @@ namespace DisplayMagician
             string newShortcutIconFilename;
             // Work out the name of the shortcut we'll save.
             newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
+            logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename is {newShortcutIconFilename}.");
 
             // If the new shortcut icon should be named differently
             // then change the name of it
             if (!newShortcutIconFilename.Equals(_savedShortcutIconCacheFilename))
             {
+                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename {newShortcutIconFilename} is different to the old shortcut Icon filename {_savedShortcutIconCacheFilename}.");
                 if (System.IO.File.Exists(_savedShortcutIconCacheFilename))
+                {
+                    logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Deleting old shortcut Icon filename {_savedShortcutIconCacheFilename}.");
                     System.IO.File.Delete(_savedShortcutIconCacheFilename);
+                }
 
+                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Creating the new shortcut Icon filename {newShortcutIconFilename} (calling SaveShortcutIconToCache).");
                 SaveShortcutIconToCache();
+            }
+            else
+            {
+                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename {newShortcutIconFilename} matches old shortcut Icon filename {_savedShortcutIconCacheFilename} so skipping the rename.");
             }
 
         }
@@ -1928,21 +1936,53 @@ namespace DisplayMagician
 
             // Work out the name of the shortcut we'll save.
             _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
+            logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Planning on saving shortcut icon to cache as {_savedShortcutIconCacheFilename}.");
 
             MultiIcon shortcutIcon;
             try
             {
-                //shortcutIcon = new ProfileIcon(shortcut.ProfileToUse).ToIconOverlay(shortcut.OriginalIconPath);
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Creating IconOverlay.");
                 shortcutIcon = ToIconOverlay();
-                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+                if (shortcutIcon != null)
+                {
+                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving shortcut icon to cache with {_savedShortcutIconCacheFilename} as the name.");
+                    shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+                }
+                else
+                {
+                    // If we fail to create an icon based on the original executable or game
+                    // Then we use the one appropriate for the game library
+                    SingleIcon si = shortcutIcon.Add("icon");
+                    Bitmap bm = null;
+                    if (_gameLibrary == SupportedGameLibraryType.Steam) 
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");                        
+                        bm = ToBitmapOverlay(Properties.Resources.Steam.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(),256,256);                        
+                    }
+                    else if (_gameLibrary == SupportedGameLibraryType.Uplay) 
+                      {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
+                        bm = ToBitmapOverlay(Properties.Resources.Uplay.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                    }
+                    else if (_gameLibrary == SupportedGameLibraryType.Origin)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
+                        bm = ToBitmapOverlay(Properties.Resources.Origin.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                    }
+                    si.Add(bm);
+                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the replacement icon for Shortcut '{Name}' to {_savedShortcutIconCacheFilename}.");
+                    shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+                }
+                    
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"ShortcutRepository/SaveShortcutIconToCache: Exception while trying to save the Shortcut ivon.");
+                logger.Warn(ex, $"ShortcutItem/SaveShortcutIconToCache: Exception while trying to save the Shortcut icon.");
 
-                // If we fail to create an icon based on the original executable or game
-                // Then we use the standard DisplayMagician profile one.
+                // If we fail to create an icon any other way, then we use the default profile icon
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileToUse.Name} as the icon instead.");
                 shortcutIcon = _profileToUse.ProfileIcon.ToIcon();
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
                 shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
 
@@ -1950,116 +1990,236 @@ namespace DisplayMagician
 
         public static Bitmap ToLargeBitmap(string fileNameAndPath)
         {
-            if (String.IsNullOrWhiteSpace(fileNameAndPath))
-                return null;
+            Bitmap bm = null;
 
-            Bitmap bm = null
-;            if (fileNameAndPath.EndsWith(".ico"))
+            try
             {
-                Icon icoIcon = new Icon(fileNameAndPath, 256, 256);
-                bm = icoIcon.ToBitmap();
-                icoIcon.Dispose();
+                if (String.IsNullOrWhiteSpace(fileNameAndPath))
+                {
+                    logger.Warn($"ShortcutItem/ToLargeBitmap: Bitmap fileNameAndPath is empty! Unable to get the large icon from the file (256px x 256px).");
+                    return null;
+                }
+
+                if (fileNameAndPath.EndsWith(".ico"))
+                {
+                    logger.Trace($"ShortcutItem/ToLargeBitmap: The file we want to get the image from is an icon file. Attempting to load the icon file from {fileNameAndPath}.");
+                    Icon icoIcon = new Icon(fileNameAndPath, 256, 256);
+                    logger.Trace($"ShortcutItem/ToLargeBitmap: Attempting to convert the icon file {fileNameAndPath} to a bitmap.");
+                    bm = icoIcon.ToBitmap();
+                    logger.Trace($"ShortcutItem/ToLargeBitmap: Emptying the memory area used but the icon to stop memory leaks.");
+                    icoIcon.Dispose();
+                }
+                else
+                {
+                    logger.Trace($"ShortcutItem/ToLargeBitmap: The file {fileNameAndPath} isn't an Icon file, so trying to use GetLargeBitmapFromFile to extract the image.");
+                    bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, false);
+                }
+                return bm;
             }
-            else
+            catch (Exception ex)
             {
-                bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, false);
-            }           
-            return bm;
+                logger.Warn(ex, $"ShortcutItem/ToLargeBitmap: Exception while trying to save the Shortcut icon initially. Trying again with GetLargeBitmapFromFile.");
+                try
+                {
+                    logger.Trace($"ShortcutItem/ToLargeBitmap: Attempt2. The file {fileNameAndPath} isn't an Icon file, so trying to use GetLargeBitmapFromFile to extract the image.");
+                    bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, false);
+                    return bm;
+                }
+                catch (Exception innerex)
+                {
+                    logger.Warn(innerex, $"ShortcutItem/ToLargeBitmap: Exception while trying to save the Shortcut icon a second time. Giving up.");
+                    return null;
+                }
+            }
         }
 
         public static Bitmap ToSmallBitmap(string fileNameAndPath)
         {
-            if (String.IsNullOrWhiteSpace(fileNameAndPath))
-                return null;
-
-            Bitmap bm = null; 
-            if (fileNameAndPath.EndsWith(".ico"))
+            Bitmap bm = null;
+            try
             {
-                Icon icoIcon = new Icon(fileNameAndPath, 128, 128);
-                bm = icoIcon.ToBitmap();
-                icoIcon.Dispose();
+                
+                if (String.IsNullOrWhiteSpace(fileNameAndPath))
+                {
+                    logger.Warn($"ShortcutItem/ToSmallBitmap: Bitmap fileNameAndPath is empty! Unable to get the small icon from the file (128px x 128px).");
+                    return null;
+                }
+                   
+                
+                if (fileNameAndPath.EndsWith(".ico"))
+                {
+                    logger.Trace($"ShortcutItem/ToSmallBitmap: The file we want to get the image from is an icon file. Attempting to load the icon file from {fileNameAndPath}.");
+                    Icon icoIcon = new Icon(fileNameAndPath, 128, 128);
+                    logger.Trace($"ShortcutItem/ToSmallBitmap: Attempting to convert the icon file {fileNameAndPath} to a bitmap.");
+                    bm = icoIcon.ToBitmap();
+                    logger.Trace($"ShortcutItem/ToSmallBitmap: Emptying the memory area used but the icon to stop memory leaks.");
+                    icoIcon.Dispose();
+                }
+                else
+                {
+                    logger.Trace($"ShortcutItem/ToSmallBitmap: The file {fileNameAndPath} isn't an Icon file, so trying to use GetSmallBitmapFromFile to extract the image.");
+                    bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
+                }
+                return bm;
             }
-            else
+            catch (Exception ex)
             {
-                bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
+                logger.Warn(ex, $"ShortcutItem/ToSmallBitmap: Exception while trying to save the Shortcut icon initially. Trying again with GetSmallBitmapFromFile.");
+                try
+                {
+                    logger.Trace($"ShortcutItem/ToSmallBitmap: Attempt2. The file {fileNameAndPath} isn't an Icon file, so trying to use GetSmallBitmapFromFile to extract the image.");
+                    bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
+                    return bm;
+                }
+                catch (Exception innerex)
+                {
+                    logger.Warn(innerex, $"ShortcutItem/ToSmallBitmap: Exception while trying to save the Shortcut icon a second time. Giving up.");
+                    return null;
+                }
             }
-            return bm;
         }
 
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
+            if (originalBitmap == null)
+            {
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: OriginalBitmap is null, so we'll try to make the BitmapOverlay using GameLibrary Icon.");
+                if (_gameLibrary == SupportedGameLibraryType.Steam)
+                {
+                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");
+                    originalBitmap = Properties.Resources.Steam.ToBitmap();
+                }
+                else if (_gameLibrary == SupportedGameLibraryType.Uplay)
+                {
+                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
+                    originalBitmap = Properties.Resources.Uplay.ToBitmap();
+                }
+                else if (_gameLibrary == SupportedGameLibraryType.Origin)
+                {
+                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
+                    originalBitmap = Properties.Resources.Origin.ToBitmap();
+                }
+            }
 
-            if (width <= 0)
-                return null;
+            if (overlayBitmap == null)
+            {
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: overlayBitmap is null, so we'll just return the original bitmap without a profile overlay.");
+                return originalBitmap;
+            }
 
-            if (height <= 0)
-                return null;
+            if (width <= 0 || width > 256)
+            {
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: Width is out of range so setting to 256.");
+                width = 256;
+            }
+
+            if (height <= 0 || height > 256)
+            {
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: Height is out of range so setting to 256.");
+                height = 256;
+            }
 
             // Figure out sizes and positions
-            Size targetSize = new Size(width,height);
-            Size originalBitmapCurrentSize = new Size(originalBitmap.Width, originalBitmap.Height);
-            Size overlaylBitmapCurrentSize = new Size(overlayBitmap.Width, overlayBitmap.Height);
-
-            // Make a new empty bitmap of the wanted size
-            var combinedBitmap = new Bitmap(targetSize.Width, targetSize.Height, format);
-            combinedBitmap.MakeTransparent();
-
-            using (var g = Graphics.FromImage(combinedBitmap))
+            try
             {
+                Size targetSize = new Size(width, height);
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: TargetSize is {targetSize.Width}px x {targetSize.Height}px.");
+                Size originalBitmapCurrentSize = new Size(originalBitmap.Width, originalBitmap.Height);
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: originalBitmapCurrentSize is {originalBitmapCurrentSize.Width}px x {originalBitmapCurrentSize.Height}px.");
+                Size overlaylBitmapCurrentSize = new Size(overlayBitmap.Width, overlayBitmap.Height);
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: overlaylBitmapCurrentSize is {overlaylBitmapCurrentSize.Width}px x {overlaylBitmapCurrentSize.Height}px.");
 
-                g.SmoothingMode = SmoothingMode.None;
-                g.InterpolationMode = InterpolationMode.NearestNeighbor;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.CompositingQuality = CompositingQuality.AssumeLinear;
+                // Make a new empty bitmap of the wanted size
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: Making a new combined bitmap as the base for the image.");
+                var combinedBitmap = new Bitmap(targetSize.Width, targetSize.Height, format);
+                combinedBitmap.MakeTransparent();
 
-                // Resize the originalBitmap if needed then draw it
-                Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
-                Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
-                g.DrawImage(originalBitmap, originalBitmapNewLocation.X, originalBitmapNewLocation.Y, originalBitmapNewSize.Width, originalBitmapNewSize.Height);
+                using (var g = Graphics.FromImage(combinedBitmap))
+                {
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Setting smoothing mode, Interpolation mode, pixel offset mode and compositing quality.");
+                    g.SmoothingMode = SmoothingMode.None;
+                    g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.CompositingQuality = CompositingQuality.AssumeLinear;
 
-                // Resize the overlayBitmap if needed then draw it in the bottom-right corner
-                Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
-                Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize,70);
-                Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
+                    // Resize the originalBitmap if needed then draw it
+                    Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Resizing the original bitmap to fit in the new combined bitmap. Size is now {originalBitmapNewSize.Width}px x {originalBitmapNewSize.Height}px");
+                    Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the original bitmap into the new combined bitmap at position {originalBitmapNewLocation.X},{originalBitmapNewLocation.Y}..");
+                    g.DrawImage(originalBitmap, originalBitmapNewLocation.X, originalBitmapNewLocation.Y, originalBitmapNewSize.Width, originalBitmapNewSize.Height);
 
-                g.DrawImage(overlayBitmap, overlayBitmapNewLocation.X, overlayBitmapNewLocation.Y, overlayBitmapNewSize.Width, overlayBitmapNewSize.Height);
+                    // Resize the overlayBitmap if needed then draw it in the bottom-right corner                    
+                    Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
+                    Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize, 70);
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Resize the overlay bitmap to fit in the bottom right corner of the new combined bitmap. Size is now {overlayBitmapNewSize.Width}px x {overlayBitmapNewSize.Height}px");
+                    Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the overlay bitmap into the new combined bitmap at position {overlayBitmapNewLocation.X},{overlayBitmapNewLocation.Y}.");
+                    g.DrawImage(overlayBitmap, overlayBitmapNewLocation.X, overlayBitmapNewLocation.Y, overlayBitmapNewSize.Width, overlayBitmapNewSize.Height);
 
+                }
+                return combinedBitmap;
             }
-            return combinedBitmap;
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ShortcutItem/ToBitmapOverlay: Exception while trying to add the overlay to the Bitmap. Returning null");
+                return null;
+            }
+
         }
 
 #pragma warning disable CS3002 // Return type is not CLS-compliant
         public MultiIcon ToIconOverlay()
 #pragma warning restore CS3002 // Return type is not CLS-compliant
         {
-            Size[] iconSizes = new[]
+            try
             {
-                new Size(256, 256),
-                new Size(64, 64),
-                new Size(48, 48),
-                new Size(32, 32),
-                new Size(24, 24),
-                new Size(16, 16)
-            };
-            MultiIcon multiIcon = new MultiIcon();
-            SingleIcon icon = multiIcon.Add("Icon1");
-
-            foreach (Size size in iconSizes)
-            {
-                Bitmap bitmapOverlay = ToBitmapOverlay(_originalLargeBitmap, ProfileToUse.ProfileTightestBitmap, size.Width, size.Height);
-                icon.Add(bitmapOverlay);
-
-                if (size.Width >= 256 && size.Height >= 256)
+                Size[] iconSizes = new[]
                 {
-                    icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
+                    new Size(256, 256),
+                    new Size(64, 64),
+                    new Size(48, 48),
+                    new Size(32, 32),
+                    new Size(24, 24),
+                    new Size(16, 16)
+                };
+                logger.Trace($"ShortcutItem/ToIconOverlay: Creating the new Multi image Icon.");
+                MultiIcon multiIcon = new MultiIcon();
+                logger.Trace($"ShortcutItem/ToIconOverlay: Adding a single icon to the multi image icon.");
+                SingleIcon icon = multiIcon.Add("Icon1");
+
+                foreach (Size size in iconSizes)
+                {
+                    logger.Trace($"ShortcutItem/ToIconOverlay: Creating a new image layer of size {size.Width}px x {size.Height}px.");
+                    Bitmap bitmapOverlay = ToBitmapOverlay(_originalLargeBitmap, ProfileToUse.ProfileTightestBitmap, size.Width, size.Height);
+                    if (bitmapOverlay == null)
+                    {
+                        logger.Warn($"ShortcutItem/ToIconOverlay: bitmapOverlay is null, so we can't turn it into an Icon Overlay. Returning null");
+                        return null;
+                    }
+                    logger.Trace($"ShortcutItem/ToIconOverlay: Adding the new image layer of size {size.Width}px x {size.Height}px to the multi image icon.");
+                    icon.Add(bitmapOverlay);
+
+                    if (size.Width >= 256 && size.Height >= 256)
+                    {
+                        logger.Trace($"ShortcutItem/ToIconOverlay: The image is > 256px x 256px so making it a PNG layer in the icon file.");
+                        icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
+                    }
+
+                    logger.Trace($"ShortcutItem/ToIconOverlay: Disposing of the Bitmap data we just used as the source (stops memory leaks).");
+                    bitmapOverlay.Dispose();
                 }
 
-                bitmapOverlay.Dispose();
+                logger.Trace($"ShortcutItem/ToIconOverlay: Make the top layer image of the Multi image icon the default one.");
+                multiIcon.SelectedIndex = 0;
+
+                return multiIcon;
             }
-
-            multiIcon.SelectedIndex = 0;
-
-            return multiIcon;
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ShortcutItem/ToIconOverlay: Exeception occurred while trying to convert the Shortcut Bitmap to an Icon Overlay to store in the shortcut cache directory. Returning null");
+                return null;
+            }
         }
 
         public void RefreshValidity()
@@ -2074,6 +2234,7 @@ namespace DisplayMagician
             // Does the profile we want to Use still exist?
             if (!ProfileRepository.ContainsProfile(ProfileUUID))
             {
+                logger.Warn($"ShortcutItem/RefreshValidity: The profile UUID {ProfileUUID} isn't in the ProfileRepository");
                 ShortcutError error = new ShortcutError();
                 error.Name = "ProfileNotExist";
                 error.Validity = ShortcutValidity.Error;
@@ -2085,6 +2246,7 @@ namespace DisplayMagician
             // Is the profile still valid right now? i.e. are all the screens available?
             if (ProfileToUse != null && !ProfileToUse.IsPossible)
             {
+                logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
                 ShortcutError error = new ShortcutError();
                 error.Name = "InvalidProfile";
                 error.Validity = ShortcutValidity.Warning;
@@ -2099,6 +2261,7 @@ namespace DisplayMagician
                 // We need to check if the Application still exists
                 if (!System.IO.File.Exists(ExecutableNameAndPath))
                 {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The Application executable {ExecutableNameAndPath} DOES NOT exist");
                     ShortcutError error = new ShortcutError();
                     error.Name = "InvalidExecutableNameAndPath";
                     error.Validity = ShortcutValidity.Error;
@@ -2106,6 +2269,10 @@ namespace DisplayMagician
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
+                }
+                else
+                {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The Application executable {ExecutableNameAndPath} exists");
                 }
 
             }
@@ -2116,29 +2283,29 @@ namespace DisplayMagician
                 // If the game is a Steam Game we check for that
                 if (GameLibrary.Equals(SupportedGameLibraryType.Steam))
                 {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Steam");
                     // We now need to get the SteamGame info
                     gameLibraryToUse = SteamLibrary.GetLibrary();
                 }
                 // If the game is a Uplay Uplay Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Uplay))
                 {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Uplay");
                     // We now need to get the Uplay Game  info
                     gameLibraryToUse = UplayLibrary.GetLibrary();
                 }
                 // If the game is a Uplay Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Origin))
                 {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Origin");
                     // We now need to get the Uplay Game  info
                     gameLibraryToUse = OriginLibrary.GetLibrary();
                 }
 
-                // If the game is a Steam Game we check for that
-
-                SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
-                // First check if Steam is installed
-                // Check if Steam is installed and error if it isn't
+                // Check if Gamelibrary is installed and error if it isn't
                 if (!gameLibraryToUse.IsGameLibraryInstalled)
                 {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The game library is not installed!");
                     ShortcutError error = new ShortcutError();
                     error.Name = $"{gameLibraryToUse.GameLibraryName}NotInstalled";
                     error.Validity = ShortcutValidity.Error;
@@ -2151,6 +2318,7 @@ namespace DisplayMagician
                 // We need to look up details about the game
                 if (!gameLibraryToUse.ContainsGameById(GameAppId))
                 {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The game library does not have Game ID {GameAppId} installed!");
                     ShortcutError error = new ShortcutError();
                     error.Name = "{gameLibraryToUse.GameLibraryName}GameNotInstalled";
                     error.Validity = ShortcutValidity.Error;
@@ -2179,10 +2347,13 @@ namespace DisplayMagician
                     {
                         foreach (CoreAudioDevice audioDevice in audioDevices)
                         {
+                            logger.Trace($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName}");
                             if (audioDevice.FullName.Equals(AudioDevice))
                             {
+                                logger.Trace($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want!");
                                 if (audioDevice.State == DeviceState.Disabled)
                                 {
+                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is disabled!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "AudioDeviceDisabled";
                                     error.Validity = ShortcutValidity.Warning;
@@ -2193,6 +2364,7 @@ namespace DisplayMagician
                                 }
                                 if (audioDevice.State == DeviceState.NotPresent)
                                 {
+                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is not present!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "AudioDeviceNotPresent";
                                     error.Validity = ShortcutValidity.Error;
@@ -2203,6 +2375,7 @@ namespace DisplayMagician
                                 }
                                 if (audioDevice.State == DeviceState.Unplugged)
                                 {
+                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is unplugged!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "AudioDeviceUnplugged";
                                     error.Validity = ShortcutValidity.Warning;
@@ -2217,6 +2390,7 @@ namespace DisplayMagician
                 }
                 else
                 {
+                    logger.Error($"ShortcutRepository/RefreshValidity: The audio device chipset is not supported by DisplayMagician!");
                     ShortcutError error = new ShortcutError();
                     error.Name = "AudioChipsetNotSupported";
                     error.Validity = ShortcutValidity.Warning;
@@ -2245,10 +2419,13 @@ namespace DisplayMagician
                     {
                         foreach (CoreAudioDevice captureDevice in captureDevices)
                         {
+                            logger.Trace($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName}");
                             if (captureDevice.FullName.Equals(CaptureDevice))
                             {
+                                logger.Trace($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want!");
                                 if (captureDevice.State == DeviceState.Disabled)
                                 {
+                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is disabled!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "CaptureDeviceDisabled";
                                     error.Validity = ShortcutValidity.Warning;
@@ -2259,6 +2436,7 @@ namespace DisplayMagician
                                 }
                                 if (captureDevice.State == DeviceState.NotPresent)
                                 {
+                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is not present!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "CaptureDeviceNotPresent";
                                     error.Validity = ShortcutValidity.Error;
@@ -2269,6 +2447,7 @@ namespace DisplayMagician
                                 }
                                 if (captureDevice.State == DeviceState.Unplugged)
                                 {
+                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is unplugged!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "CaptureDeviceUnplugged";
                                     error.Validity = ShortcutValidity.Warning;
@@ -2283,6 +2462,7 @@ namespace DisplayMagician
                 } 
                 else
                 {
+                    logger.Error($"ShortcutRepository/RefreshValidity: The capture device chipset is not supported by DisplayMagician!");
                     ShortcutError error = new ShortcutError();
                     error.Name = "AudioChipsetNotSupported";
                     error.Validity = ShortcutValidity.Warning;

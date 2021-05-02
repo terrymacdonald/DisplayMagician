@@ -91,17 +91,6 @@ namespace DisplayMagicianShared
         #endregion
         public ProfileItem()
         {
-            /*try
-            {
-                // Generate the DeviceIdentifiers ready to be used
-                ProfileDisplayIdentifiers = DisplayIdentifier.GetDisplayIdentification();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ShortcutItem/Instansiation exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                // ignored
-            }*/
-
         }
 
         public static Version Version = new Version(2, 1);

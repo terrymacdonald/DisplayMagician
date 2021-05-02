@@ -7,6 +7,9 @@ namespace DisplayMagician
 {
     class IconFromFile
     {
+
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         // Constants that we need in the function call
 
         private const int SHGFI_ICON = 0x100;
