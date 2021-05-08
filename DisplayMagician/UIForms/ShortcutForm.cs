@@ -454,8 +454,15 @@ namespace DisplayMagician.UIForms
                 _capturePermanence = ShortcutPermanence.Temporary;
             }
 
+            // Scan through the list of 
+            List<StartProgram> newStartPrograms = new List<StartProgram>() { };
+            foreach (StartProgramControl myStartProgramControl in pnl_start_programs.Controls)
+            {
+                newStartPrograms.Add(myStartProgramControl.StartProgram);
+            }
 
-
+            // Replace the old start programs with the ones we've created now
+            _startPrograms = newStartPrograms;
             // Save the start program 1
             /*StartProgram myStartProgram = new StartProgram
             {
@@ -1172,43 +1179,6 @@ namespace DisplayMagician.UIForms
                     startProgramControl.Width = pnl_start_programs.Width;
                     pnl_start_programs.Controls.Add(startProgramControl);
                     y += startProgramControl.Height;
-                    /*// Update the 4 programs to start
-                    switch (myStartProgram.Priority)
-                    {
-                        case 1:
-                            txt_start_program1.Text = myStartProgram.Executable;
-                            cb_start_program1.Checked = myStartProgram.Enabled;
-                            cb_start_program_pass_args1.Checked = myStartProgram.ExecutableArgumentsRequired;
-                            txt_start_program_args1.Text = myStartProgram.Arguments;
-                            cb_start_program_close1.Checked = myStartProgram.CloseOnFinish;
-                            cb_dont_start_if_running1.Checked = myStartProgram.DontStartIfAlreadyRunning;
-                            break;
-                        case 2:
-                            txt_start_program2.Text = myStartProgram.Executable;
-                            cb_start_program2.Checked = myStartProgram.Enabled;
-                            cb_start_program_pass_args2.Checked = myStartProgram.ExecutableArgumentsRequired;
-                            txt_start_program_args2.Text = myStartProgram.Arguments;
-                            cb_start_program_close2.Checked = myStartProgram.CloseOnFinish;
-                            cb_dont_start_if_running2.Checked = myStartProgram.DontStartIfAlreadyRunning;
-                            break;
-                        case 3:
-                            txt_start_program3.Text = myStartProgram.Executable;
-                            cb_start_program3.Checked = myStartProgram.Enabled;
-                            cb_start_program_pass_args3.Checked = myStartProgram.ExecutableArgumentsRequired;
-                            txt_start_program_args3.Text = myStartProgram.Arguments;
-                            cb_start_program_close3.Checked = myStartProgram.CloseOnFinish;
-                            cb_dont_start_if_running3.Checked = myStartProgram.DontStartIfAlreadyRunning;
-                            break;
-                        case 4:
-                            txt_start_program4.Text = myStartProgram.Executable;
-                            cb_start_program4.Checked = myStartProgram.Enabled;
-                            cb_start_program_pass_args4.Checked = myStartProgram.ExecutableArgumentsRequired;
-                            txt_start_program_args4.Text = myStartProgram.Arguments;
-                            cb_start_program_close4.Checked = myStartProgram.CloseOnFinish;
-                            cb_dont_start_if_running4.Checked = myStartProgram.DontStartIfAlreadyRunning;
-                            break;
-
-                    }*/
                 }
             }
 

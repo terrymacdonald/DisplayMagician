@@ -14,6 +14,21 @@ namespace DisplayMagician.UIForms
 {
     public partial class StartProgramControl : UserControl
     {
+
+        private StartProgram myStartProgram = new StartProgram() { };
+
+        public StartProgram StartProgram
+        {
+            get
+            {
+                return myStartProgram;
+            }
+            set
+            {
+                myStartProgram = value;
+                populateUI();
+            }
+        }
         public StartProgramControl()
         {
             InitializeComponent();
@@ -24,18 +39,28 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
 
             // Now initialise the controls 
-            txt_start_program.Text = startProgram.Executable;
             txt_start_program.BackColor = Color.White;
             txt_start_program.ForeColor = Color.Black;
             txt_start_program.Visible= true;
             txt_start_program.BringToFront();
             cb_start_program.Checked = startProgram.Enabled;
             txt_start_program.ForeColor = Color.White;
-            cb_start_program_pass_args.Checked = startProgram.ExecutableArgumentsRequired;
-            txt_start_program_args.Text = startProgram.Arguments;
-            cb_start_program_close.Checked = startProgram.CloseOnFinish;
-            cb_dont_start_if_running.Checked = startProgram.DontStartIfAlreadyRunning;
 
+            // Update the text with the start program info
+            myStartProgram = startProgram;
+            populateUI();
+
+        }
+
+        private void populateUI()
+        {
+            // Now populate the controls with the start program data
+            txt_start_program.Text = myStartProgram.Executable;
+            cb_start_program.Checked = myStartProgram.Enabled;
+            cb_start_program_pass_args.Checked = myStartProgram.ExecutableArgumentsRequired;
+            txt_start_program_args.Text = myStartProgram.Arguments;
+            cb_start_program_close.Checked = myStartProgram.CloseOnFinish;
+            cb_dont_start_if_running.Checked = myStartProgram.DontStartIfAlreadyRunning;
 
         }
 
