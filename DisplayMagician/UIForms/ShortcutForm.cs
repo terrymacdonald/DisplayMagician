@@ -26,7 +26,7 @@ namespace DisplayMagician.UIForms
 
         private ProfileAdaptor _profileAdaptor;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
-        private ProfileItem _profileToUse= null;
+        private ProfileItem _profileToUse = null;
         private GameStruct _gameToUse;
         private Executable _executableToUse;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
@@ -47,7 +47,7 @@ namespace DisplayMagician.UIForms
         private bool _loadedShortcut = false;
         private bool _autoName = true;
         private string _gameId = "0";
-        private string  _uuid = "";
+        private string _uuid = "";
         private CoreAudioController audioController = null;
         private List<CoreAudioDevice> audioDevices = null;
         private CoreAudioDevice selectedAudioDevice = null;
@@ -76,7 +76,7 @@ namespace DisplayMagician.UIForms
                 ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 logger.Error(ex, $"ShortcutForm/ShortcutForm: Exception while trying to setup the game ImageListView and set the render.");
             }
@@ -92,7 +92,8 @@ namespace DisplayMagician.UIForms
             {
                 logger.Warn(ex, $"ShortcutForm/ShortcutForm: Exception while trying to initialise CoreAudioController in ShortcutForm. Audio Chipset on your computer is not supported. You will be unable to set audio settings.");
             }
-        }
+
+        }    
 
         public ShortcutItem Shortcut
         {
@@ -453,8 +454,10 @@ namespace DisplayMagician.UIForms
                 _capturePermanence = ShortcutPermanence.Temporary;
             }
 
+
+
             // Save the start program 1
-            StartProgram myStartProgram = new StartProgram
+            /*StartProgram myStartProgram = new StartProgram
             {
                 Priority = 1,
                 Enabled = cb_start_program1.Checked,
@@ -500,7 +503,7 @@ namespace DisplayMagician.UIForms
                 CloseOnFinish = cb_start_program_close4.Checked,
                 DontStartIfAlreadyRunning = cb_dont_start_if_running4.Checked
             };
-            _startPrograms.Add(myStartProgram);            
+            _startPrograms.Add(myStartProgram);            */
 
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
@@ -1155,10 +1158,21 @@ namespace DisplayMagician.UIForms
 
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
-                foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms)
+                int x = 0;
+                int y = 0;
+
+                // Order the inital list in order of priority
+                foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
                 {
 
-                    // Update the 4 programs to start
+                    StartProgramControl startProgramControl = new StartProgramControl(myStartProgram);
+                    startProgramControl.Location = new Point(x, y);
+                    startProgramControl.BringToFront();
+                    startProgramControl.Margin = DefaultMargin;
+                    startProgramControl.Width = pnl_start_programs.Width;
+                    pnl_start_programs.Controls.Add(startProgramControl);
+                    y += startProgramControl.Height;
+                    /*// Update the 4 programs to start
                     switch (myStartProgram.Priority)
                     {
                         case 1:
@@ -1194,7 +1208,7 @@ namespace DisplayMagician.UIForms
                             cb_dont_start_if_running4.Checked = myStartProgram.DontStartIfAlreadyRunning;
                             break;
 
-                    }
+                    }*/
                 }
             }
 
@@ -1613,194 +1627,7 @@ namespace DisplayMagician.UIForms
             }
             return textToReturn;
         }
-        private void btn_start_program1_Click(object sender, EventArgs e)
-        {
-            txt_start_program1.Text = getExeFile();
-        }
-
-        private void btn_start_program2_Click(object sender, EventArgs e)
-        {
-            txt_start_program2.Text = getExeFile();
-        }
-
-        private void btn_start_program3_Click(object sender, EventArgs e)
-        {
-            txt_start_program3.Text = getExeFile();
-        }
-
-        private void btn_start_program4_Click(object sender, EventArgs e)
-        {
-            txt_start_program4.Text = getExeFile();
-        }
-
-        private void cb_start_program1_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 1 fields
-            if (cb_start_program1.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program1.Visible = true;
-                btn_start_program1.Visible = true;
-                cb_start_program_pass_args1.Visible = true;
-                cb_start_program_close1.Visible = true;
-                cb_dont_start_if_running1.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program1.Visible = false;
-                btn_start_program1.Visible = false;
-                cb_start_program_pass_args1.Visible = false;
-                cb_start_program_close1.Visible = false;
-                cb_dont_start_if_running1.Visible = false;
-            }
-        }
-
-        private void cb_start_program2_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 2 fields
-            if (cb_start_program2.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program2.Visible = true;
-                btn_start_program2.Visible = true;
-                cb_start_program_pass_args2.Visible = true;
-                cb_start_program_close2.Visible = true;
-                cb_dont_start_if_running2.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program2.Visible = false;
-                btn_start_program2.Visible = false;
-                cb_start_program_pass_args2.Visible = false;
-                cb_start_program_close2.Visible = false;
-                cb_dont_start_if_running2.Visible = false;
-            }
-        }
-
-        private void cb_start_program3_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 3 fields
-            if (cb_start_program3.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program3.Visible = true;
-                btn_start_program3.Visible = true;
-                cb_start_program_pass_args3.Visible = true;
-                cb_start_program_close3.Visible = true;
-                cb_dont_start_if_running3.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program3.Visible = false;
-                btn_start_program3.Visible = false;
-                cb_start_program_pass_args3.Visible = false;
-                cb_start_program_close3.Visible = false;
-                cb_dont_start_if_running3.Visible = false;
-            }
-        }
-
-        private void cb_start_program4_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 4 fields
-            if (cb_start_program4.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program4.Visible = true;
-                btn_start_program4.Visible = true;
-                cb_start_program_pass_args4.Visible = true;
-                cb_start_program_close4.Visible = true;
-                cb_dont_start_if_running4.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program4.Visible = false;
-                btn_start_program4.Visible = false;
-                cb_start_program_pass_args4.Visible = false;
-                cb_start_program_close4.Visible = false;
-                cb_dont_start_if_running4.Visible = false;
-            }
-        }
-
-        private void cb_start_program_pass_args1_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 1 fields
-            if (cb_start_program_pass_args1.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program_args1.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program_args1.Visible = false;
-            }
-        }
-
-        private void cb_start_program_pass_args2_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 2 fields
-            if (cb_start_program_pass_args2.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program_args2.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program_args2.Visible = false;
-            }
-        }
-
-        private void cb_start_program_pass_args3_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 3 fields
-            if (cb_start_program_pass_args3.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program_args3.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program_args3.Visible = false;
-            }
-        }
-
-        private void cb_start_program_pass_args4_CheckedChanged(object sender, EventArgs e)
-        {
-            if (_loadedShortcut)
-                _isUnsaved = true;
-            // Disable the start program 4 fields
-            if (cb_start_program_pass_args4.Checked)
-            {
-                // Enable the Executable Arguments Text field
-                txt_start_program_args4.Visible = true;
-            }
-            else
-            {
-                // Disable the Executable Arguments Text field
-                txt_start_program_args4.Visible = false;
-            }
-        }
-
+        
         private void rb_no_change_audio_CheckedChanged(object sender, EventArgs e)
         {
             if (rb_no_change_audio.Checked)
@@ -2171,37 +1998,6 @@ namespace DisplayMagician.UIForms
             _captureVolume = Convert.ToDecimal(nud_capture_volume.Value);
         }
 
-        private void lbl_start_program1_Click(object sender, EventArgs e)
-        {
-            if (!cb_start_program1.Checked)
-                cb_start_program1.CheckState = CheckState.Checked;
-            else
-                cb_start_program1.CheckState = CheckState.Unchecked;
-        }
-
-        private void lbl_start_program2_Click(object sender, EventArgs e)
-        {
-            if (!cb_start_program2.Checked)
-                cb_start_program2.CheckState = CheckState.Checked;
-            else
-                cb_start_program2.CheckState = CheckState.Unchecked;
-        }
-
-        private void lbl_start_program3_Click(object sender, EventArgs e)
-        {
-            if (!cb_start_program3.Checked)
-                cb_start_program3.CheckState = CheckState.Checked;
-            else
-                cb_start_program3.CheckState = CheckState.Unchecked;
-        }
-
-        private void lbl_start_program4_Click(object sender, EventArgs e)
-        {
-            if (!cb_start_program4.Checked)
-                cb_start_program4.CheckState = CheckState.Checked;
-            else
-                cb_start_program4.CheckState = CheckState.Unchecked;
-        }
 
         private void cb_wait_alternative_game_CheckedChanged(object sender, EventArgs e)
         {
@@ -2218,6 +2014,7 @@ namespace DisplayMagician.UIForms
                 btn_choose_alternative_game.Enabled = false;
             }
         }
+
 
         private void btn_choose_alternative_game_Click(object sender, EventArgs e)
         {

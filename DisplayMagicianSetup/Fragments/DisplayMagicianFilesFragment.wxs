@@ -38,9 +38,6 @@
             <Component Id="cmpE8833A8E220525D7707A018B20CEDD87" Guid="{EBC27E33-6C4D-4612-BC5F-AC0A09DDD636}">
                 <File Id="filD4FD53D2FBF78674DBC3A1B446B44FC5" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\EDIDParser.dll" />
             </Component>
-			<Component Id="cmp5590028E220525D7707A018B20CE3822" Guid="{EBC27E33-6C4D-4612-BD5F-DC0A09DDD559}">
-				<File Id="filD45593D2FBF78674DBC3A1B446B44559" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\HotkeyListener.dll" />
-			</Component>
 			<Component Id="cmp8C52E948AAB2D43DF696BB7D003A8E4B" Guid="{3C8F90C4-CFD5-4B8C-9929-44239BAECE94}">
                 <File Id="fil1965347683EC48A269FE672473CD04C2" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\HtmlAgilityPack.dll" />
             </Component>
@@ -77,7 +74,13 @@
             <Component Id="cmpA7927FF61A499CF81EE0A562CDFEDEC7" Guid="{6D08FDFC-F2BA-462E-A678-6DAABBE3A2C8}">
                 <File Id="filD7DC5F43B3964ACECD7725F05E664960" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\Newtonsoft.Json.dll" />
             </Component>
-            <Component Id="cmpC64ECA245317593760E42F3996F3A079" Guid="{AF290F63-703E-441F-86C8-2F00DADDEF9B}">
+			<Component Id="cmp5590028E220525D7707A018B20CE3822" Guid="{EBC27E33-6C4D-4612-BD5F-DC0A09DDD559}">
+				<File Id="filD45593D2FBF78674DBC3A1B446B44559" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\NHotkey.dll" />
+			</Component>
+			<Component Id="cmpFF90028E220525D7707A018B20CE3822" Guid="{EBC27E33-6C4D-4612-BD5F-FF0A09DDD559}">
+				<File Id="filDFF593D2FBF78674DBC3A1B446B44559" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\NHotkey.WindowsForms.dll" />
+			</Component>
+			<Component Id="cmpC64ECA245317593760E42F3996F3A079" Guid="{AF290F63-703E-441F-86C8-2F00DADDEF9B}">
                 <File Id="fil5299F0448E950048C778AA65A04FB498" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\NLog.dll" />
             </Component>
             <Component Id="cmp5CFF8A0C9C138424DA47E04F4B0986EB" Guid="{F5FC1F41-141E-4DDE-97D7-4D8E0BAF0578}">
@@ -237,6 +240,7 @@
             <!-- <ComponentRef Id="cmpB76F273FDED5EA841158E966B403CFC8" />
             <ComponentRef Id="cmp7DD29D6442A6E450B2316729EA2C0F1D" />-->
 			<ComponentRef Id="cmp5590028E220525D7707A018B20CE3822" />
+			<ComponentRef Id="cmpFF90028E220525D7707A018B20CE3822" />
 			<ComponentRef Id="cmpA8825A49786C04320E75BCFC8E961667" />
 			<ComponentRef Id="cmp5069692C1912B298A026EA30A3823321" />
 			<ComponentRef Id="cmp650327FC006E09EDFC7039D6E7A6F340" />
