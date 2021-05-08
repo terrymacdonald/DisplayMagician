@@ -51,7 +51,6 @@ namespace DisplayMagician.UIForms
             this.cb_dont_start_if_running.Text = "Don\'t start if program already running";
             this.cb_dont_start_if_running.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_dont_start_if_running.UseVisualStyleBackColor = true;
-            this.cb_dont_start_if_running.Visible = false;
             // 
             // txt_start_program
             // 
@@ -62,7 +61,6 @@ namespace DisplayMagician.UIForms
             this.txt_start_program.Name = "txt_start_program";
             this.txt_start_program.Size = new System.Drawing.Size(535, 26);
             this.txt_start_program.TabIndex = 25;
-            this.txt_start_program.Visible = false;
             // 
             // cb_start_program_close
             // 
@@ -76,7 +74,6 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_close.Text = "Close started program when you finish playing Game";
             this.cb_start_program_close.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close.UseVisualStyleBackColor = true;
-            this.cb_start_program_close.Visible = false;
             // 
             // btn_start_program
             // 
@@ -89,7 +86,6 @@ namespace DisplayMagician.UIForms
             this.btn_start_program.TabIndex = 23;
             this.btn_start_program.Text = "Choose";
             this.btn_start_program.UseVisualStyleBackColor = true;
-            this.btn_start_program.Visible = false;
             this.btn_start_program.Click += new System.EventHandler(this.btn_start_program_Click);
             // 
             // txt_start_program_args
@@ -101,7 +97,6 @@ namespace DisplayMagician.UIForms
             this.txt_start_program_args.Name = "txt_start_program_args";
             this.txt_start_program_args.Size = new System.Drawing.Size(540, 26);
             this.txt_start_program_args.TabIndex = 22;
-            this.txt_start_program_args.Visible = false;
             // 
             // cb_start_program_pass_args
             // 
@@ -115,7 +110,6 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_pass_args.Text = "Pass arguments to program:";
             this.cb_start_program_pass_args.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_pass_args.UseVisualStyleBackColor = true;
-            this.cb_start_program_pass_args.Visible = false;
             this.cb_start_program_pass_args.CheckedChanged += new System.EventHandler(this.cb_start_program_pass_args_CheckedChanged);
             // 
             // btn_delete
@@ -129,7 +123,6 @@ namespace DisplayMagician.UIForms
             this.btn_delete.TabIndex = 27;
             this.btn_delete.Text = "X";
             this.btn_delete.UseVisualStyleBackColor = true;
-            this.btn_delete.Visible = false;
             this.btn_delete.Click += new System.EventHandler(this.btn_delete_Click);
             // 
             // cb_start_program
@@ -144,7 +137,6 @@ namespace DisplayMagician.UIForms
             this.cb_start_program.Text = "Start the following program:";
             this.cb_start_program.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program.UseVisualStyleBackColor = true;
-            this.cb_start_program.Visible = false;
             this.cb_start_program.CheckedChanged += new System.EventHandler(this.cb_start_program_CheckedChanged);
             // 
             // StartProgramControl

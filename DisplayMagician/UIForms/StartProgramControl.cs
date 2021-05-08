@@ -38,14 +38,6 @@ namespace DisplayMagician.UIForms
         {
             InitializeComponent();
 
-            // Now initialise the controls 
-            txt_start_program.BackColor = Color.White;
-            txt_start_program.ForeColor = Color.Black;
-            txt_start_program.Visible= true;
-            txt_start_program.BringToFront();
-            cb_start_program.Checked = startProgram.Enabled;
-            txt_start_program.ForeColor = Color.White;
-
             // Update the text with the start program info
             myStartProgram = startProgram;
             populateUI();
