@@ -1165,20 +1165,27 @@ namespace DisplayMagician.UIForms
 
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
-                int x = 0;
-                int y = 0;
+                int x = 5;
+                int y = 5;
+
+                Padding startProgramMargin = new Padding(10) { };
 
                 // Order the inital list in order of priority
                 foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
                 {
 
                     StartProgramControl startProgramControl = new StartProgramControl(myStartProgram);
+                    startProgramControl.Dock = DockStyle.None;
+                    startProgramControl.Margin = startProgramMargin;
+                    startProgramControl.Width = pnl_start_programs.Width - 30;
+                    //startProgramControl.Height = pnl_start_programs.Height;
                     startProgramControl.Location = new Point(x, y);
-                    startProgramControl.BringToFront();
-                    startProgramControl.Margin = DefaultMargin;
-                    startProgramControl.Width = pnl_start_programs.Width;
+                    // startProgramControl.BringToFront();
+                    //startProgramControl.Margin = DefaultMargin;
+                    //startProgramControl.Width = pnl_start_programs.Width;
                     pnl_start_programs.Controls.Add(startProgramControl);
-                    y += startProgramControl.Height;
+                    // Move the next line down
+                    y += startProgramControl.Height + 5;
                 }
             }
 
@@ -1429,7 +1436,7 @@ namespace DisplayMagician.UIForms
 
                 // Restart updating the saved_profiles listview
                 ilv_saved_profiles.ResumeLayout();
-            }
+            }       
 
             UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
             EnableSaveButtonIfValid();
@@ -2007,6 +2014,24 @@ namespace DisplayMagician.UIForms
                         MessageBoxIcon.Exclamation);
                 }
             }
+        }
+
+        public void RemoveStartProgram(StartProgramControl startProgramControlToRemove)
+        {
+            foreach (StartProgram startProgramToTest in _shortcutToEdit.StartPrograms)
+            {
+                if (startProgramControlToRemove.StartProgram.Equals(startProgramToTest))
+                {
+                    // If we find the start program then we need to remove it from the list
+                    _shortcutToEdit.StartPrograms.Remove(startProgramToTest);
+                    // And we reove the program control passed in as well
+                    pnl_start_programs.Controls.Remove(startProgramControlToRemove);
+                    break;
+                }
+            }
+
+            // And we redraw the panel again
+            pnl_start_programs.Refresh();
         }
 
         private void btn_hotkey_Click(object sender, EventArgs e)

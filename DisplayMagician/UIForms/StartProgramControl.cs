@@ -48,7 +48,7 @@ namespace DisplayMagician.UIForms
         {
             // Now populate the controls with the start program data
             txt_start_program.Text = myStartProgram.Executable;
-            cb_start_program.Checked = myStartProgram.Enabled;
+            cb_disable_start_program.Checked = myStartProgram.Disabled;
             cb_start_program_pass_args.Checked = myStartProgram.ExecutableArgumentsRequired;
             txt_start_program_args.Text = myStartProgram.Arguments;
             cb_start_program_close.Checked = myStartProgram.CloseOnFinish;
@@ -64,12 +64,13 @@ namespace DisplayMagician.UIForms
 
         private void cb_start_program_CheckedChanged(object sender, EventArgs e)
         {
-            // Disable the start program 1 fields
-            if (cb_start_program.Checked)
+            // Disable the start program fields
+            if (!cb_disable_start_program.Checked)
             {
                 // Enable the Executable Arguments Text field
                 txt_start_program.Visible = true;
                 btn_start_program.Visible = true;
+                txt_start_program_args.Visible = true;
                 cb_start_program_pass_args.Visible = true;
                 cb_start_program_close.Visible = true;
                 cb_dont_start_if_running.Visible = true;
@@ -79,6 +80,7 @@ namespace DisplayMagician.UIForms
                 // Disable the Executable Arguments Text field
                 txt_start_program.Visible = false;
                 btn_start_program.Visible = false;
+                txt_start_program_args.Visible = false;
                 cb_start_program_pass_args.Visible = false;
                 cb_start_program_close.Visible = false;
                 cb_dont_start_if_running.Visible = false;
@@ -123,18 +125,10 @@ namespace DisplayMagician.UIForms
             return textToReturn;
         }
 
-        private void lbl_start_program_Click(object sender, EventArgs e)
-        {
-            if (!cb_start_program.Checked)
-                cb_start_program.CheckState = CheckState.Checked;
-            else
-                cb_start_program.CheckState = CheckState.Unchecked;
-        }
-
-
         private void btn_delete_Click(object sender, EventArgs e)
         {
-
+            ((ShortcutForm)this.Parent.Parent.Parent.Parent).RemoveStartProgram(this);
+            //this.Parent.Controls.Remove(this);
         }
 
     }

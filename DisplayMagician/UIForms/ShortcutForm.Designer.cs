@@ -629,10 +629,12 @@ namespace DisplayMagician.UIForms
             // pnl_start_programs
             // 
             this.pnl_start_programs.AutoScroll = true;
+            this.pnl_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 5);
+            this.pnl_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 5);
             this.pnl_start_programs.BackColor = System.Drawing.Color.White;
-            this.pnl_start_programs.Location = new System.Drawing.Point(58, 65);
+            this.pnl_start_programs.Location = new System.Drawing.Point(38, 126);
             this.pnl_start_programs.Name = "pnl_start_programs";
-            this.pnl_start_programs.Size = new System.Drawing.Size(987, 507);
+            this.pnl_start_programs.Size = new System.Drawing.Size(1007, 446);
             this.pnl_start_programs.TabIndex = 2;
             // 
             // tabp_game

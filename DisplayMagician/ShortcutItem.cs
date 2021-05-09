@@ -43,7 +43,7 @@ namespace DisplayMagician
     public struct StartProgram
     {
         public int Priority;
-        public bool Enabled;
+        public bool Disabled;
         public string Executable;
         public string Arguments;
         public bool ExecutableArgumentsRequired;

@@ -773,7 +773,7 @@ namespace DisplayMagician
 
             // Now run the pre-start applications
             List<Process> startProgramsToStop = new List<Process>();
-            List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Enabled == true).OrderBy(program => program.Priority).ToList();
+            List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Disabled == true).OrderBy(program => program.Priority).ToList();
             if (startProgramsToStart.Count > 0)
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Starting {startProgramsToStart.Count} programs before the main game or executable");
