@@ -68,6 +68,7 @@ namespace DisplayMagician.UIForms
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
+            this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.p_standalone = new System.Windows.Forms.Panel();
@@ -118,7 +119,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -625,6 +625,19 @@ namespace DisplayMagician.UIForms
             this.tabp_before.Size = new System.Drawing.Size(1082, 618);
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
+            // 
+            // flp_start_programs
+            // 
+            this.flp_start_programs.AllowDrop = true;
+            this.flp_start_programs.AutoScroll = true;
+            this.flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
+            this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
+            this.flp_start_programs.BackColor = System.Drawing.Color.White;
+            this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.flp_start_programs.Location = new System.Drawing.Point(3, 107);
+            this.flp_start_programs.Name = "flp_start_programs";
+            this.flp_start_programs.Size = new System.Drawing.Size(1076, 508);
+            this.flp_start_programs.TabIndex = 0;
             // 
             // tabp_game
             // 
@@ -1247,18 +1260,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
-            // 
-            // flp_start_programs
-            // 
-            this.flp_start_programs.AutoScroll = true;
-            this.flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
-            this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
-            this.flp_start_programs.BackColor = System.Drawing.Color.White;
-            this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.flp_start_programs.Location = new System.Drawing.Point(3, 107);
-            this.flp_start_programs.Name = "flp_start_programs";
-            this.flp_start_programs.Size = new System.Drawing.Size(1076, 508);
-            this.flp_start_programs.TabIndex = 0;
             // 
             // ShortcutForm
             // 

@@ -56,6 +56,12 @@ namespace DisplayMagician.UIForms
         private Keys _hotkey = Keys.None;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private StartProgramControl startProgramControlToMove;
+        private int indexOfItemUnderMouseToDrag;
+        private int indexOfItemUnderMouseToDrop;
+        private Rectangle dragBoxFromMouseDown;
+        private Point screenOffset;
+
         public ShortcutForm(ShortcutItem shortcutToEdit)
         {
             InitializeComponent();
@@ -1185,6 +1191,9 @@ namespace DisplayMagician.UIForms
                     startProgramControl.Dock = DockStyle.None;
                     startProgramControl.Margin = startProgramMargin;
                     startProgramControl.Width = flp_start_programs.Width - 40;
+                    startProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
+                    startProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
+                    startProgramControl.AllowDrop = true;
                     //startProgramControl.Height = 170;
 
                     //startProgramControl.Height = pnl_start_programs.Height;
@@ -2123,5 +2132,44 @@ namespace DisplayMagician.UIForms
                     ShortcutRepository.RunShortcut(chosenShortcut);
             }
         }
+
+        /*private void flp_start_programs_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.All;
+        }*/
+
+        /* private void flp_start_programs_DragDrop(object sender, DragEventArgs e)
+         {
+             StartProgramControl startProgramControlBeingMoved = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
+
+             Point p = flp_start_programs.PointToClient(new Point(e.X, e.Y));
+             var startProgramControl = flp_start_programs.GetChildAtPoint(p);
+             int index = flp_start_programs.Controls.GetChildIndex(startProgramControl, false);
+             flp_start_programs.Controls.SetChildIndex(startProgramControlBeingMoved, index);
+             flp_start_programs.Invalidate();
+         }*/
+
+        private void StartProgramControl_MouseDown(object sender, MouseEventArgs e)
+        {
+            //base.OnMouseDown(e);
+            DoDragDrop(sender, DragDropEffects.All);
+        }
+
+        private void StartProgramControl_DragOver(object sender, DragEventArgs e)
+        {
+            //base.OnDragOver(e);
+            // is another dragable
+            if (e.Data.GetData(typeof(StartProgramControl)) != null)
+            {
+                FlowLayoutPanel p = (FlowLayoutPanel)(sender as StartProgramControl).Parent;
+                //Current Position             
+                int myIndex = p.Controls.GetChildIndex((sender as StartProgramControl));
+
+                //Dragged to control to location of next picturebox
+                StartProgramControl q = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
+                p.Controls.SetChildIndex(q, myIndex);
+            }
+        }
+
     }
 }

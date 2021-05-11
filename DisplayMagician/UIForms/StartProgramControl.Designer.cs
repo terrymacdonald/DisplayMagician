@@ -128,13 +128,13 @@ namespace DisplayMagician.UIForms
             this.btn_delete.UseVisualStyleBackColor = true;
             this.btn_delete.Click += new System.EventHandler(this.btn_delete_Click);
             // 
-            // cb_start_program
+            // cb_disable_start_program
             // 
             this.cb_disable_start_program.AutoSize = true;
             this.cb_disable_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_disable_start_program.ForeColor = System.Drawing.Color.White;
             this.cb_disable_start_program.Location = new System.Drawing.Point(78, 121);
-            this.cb_disable_start_program.Name = "cb_start_program";
+            this.cb_disable_start_program.Name = "cb_disable_start_program";
             this.cb_disable_start_program.Size = new System.Drawing.Size(312, 24);
             this.cb_disable_start_program.TabIndex = 28;
             this.cb_disable_start_program.Text = "Temporarily disable starting this program";
@@ -154,6 +154,7 @@ namespace DisplayMagician.UIForms
             // 
             // StartProgramControl
             // 
+            this.AllowDrop = true;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoSize = true;
             this.BackColor = System.Drawing.Color.Black;

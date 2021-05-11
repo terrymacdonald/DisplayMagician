@@ -120,4 +120,4 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the name of some of these people:
 
 * Original HelioDisplayManagement project created by the amazing Soroush Falahati 
-* Readme file created by @timegrinder
+* Various icons made by Freepik from www.flaticon.com

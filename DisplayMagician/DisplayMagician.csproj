@@ -128,7 +128,6 @@
     </Compile>
     <Compile Include="ShortcutItem.cs" />
     <Compile Include="ShortcutRepository.cs" />
-    <Compile Include="TableLayoutHelper.cs" />
     <Compile Include="UIForms\ApplyingProfileForm.cs">
       <SubType>Form</SubType>
     </Compile>
