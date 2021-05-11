@@ -456,7 +456,7 @@ namespace DisplayMagician.UIForms
 
             // Scan through the list of 
             List<StartProgram> newStartPrograms = new List<StartProgram>() { };
-            foreach (StartProgramControl myStartProgramControl in pnl_start_programs.Controls)
+            foreach (StartProgramControl myStartProgramControl in tlp_start_programs.Controls)
             {
                 newStartPrograms.Add(myStartProgramControl.StartProgram);
             }
@@ -1165,27 +1165,38 @@ namespace DisplayMagician.UIForms
 
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
-                int x = 5;
-                int y = 5;
+                //int x = 5;
+                //int y = 5;
 
                 Padding startProgramMargin = new Padding(10) { };
 
+                //Clear out the existing controls, we are generating a new table layout
+                tlp_start_programs.Controls.Clear();
+
+                //Clear out the existing row and column styles
+                tlp_start_programs.ColumnStyles.Clear();
+                tlp_start_programs.RowStyles.Clear();
+
+                int myIndex = 0;
                 // Order the inital list in order of priority
                 foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
                 {
-
                     StartProgramControl startProgramControl = new StartProgramControl(myStartProgram);
-                    startProgramControl.Dock = DockStyle.None;
-                    startProgramControl.Margin = startProgramMargin;
-                    startProgramControl.Width = pnl_start_programs.Width - 30;
+                    //startProgramControl.Dock = DockStyle.None;
+                    //startProgramControl.Margin = startProgramMargin;
+                    startProgramControl.Width = tlp_start_programs.Width - 40;
+                    //startProgramControl.Height = 170;
+
                     //startProgramControl.Height = pnl_start_programs.Height;
-                    startProgramControl.Location = new Point(x, y);
+                    //startProgramControl.Location = new Point(x, y);
                     // startProgramControl.BringToFront();
                     //startProgramControl.Margin = DefaultMargin;
                     //startProgramControl.Width = pnl_start_programs.Width;
-                    pnl_start_programs.Controls.Add(startProgramControl);
+                    tlp_start_programs.RowStyles.Add(new RowStyle(SizeType.Absolute, 170F));
+                    tlp_start_programs.RowCount = myIndex + 1;                    
+                    tlp_start_programs.Controls.Add(startProgramControl);
                     // Move the next line down
-                    y += startProgramControl.Height + 5;
+                    //y += startProgramControl.Height + 5;
                 }
             }
 
@@ -2018,20 +2029,26 @@ namespace DisplayMagician.UIForms
 
         public void RemoveStartProgram(StartProgramControl startProgramControlToRemove)
         {
+            int rowIndex = 1;
             foreach (StartProgram startProgramToTest in _shortcutToEdit.StartPrograms)
-            {
+            {                
                 if (startProgramControlToRemove.StartProgram.Equals(startProgramToTest))
                 {
                     // If we find the start program then we need to remove it from the list
-                    _shortcutToEdit.StartPrograms.Remove(startProgramToTest);
-                    // And we reove the program control passed in as well
-                    pnl_start_programs.Controls.Remove(startProgramControlToRemove);
+                    //_shortcutToEdit.StartPrograms.Remove(startProgramToTest);
+                    // And we remove the program control passed in as well
+                    tlp_start_programs.SuspendLayout();
+                    // And we remove the row control passed in as well
+                    TableLayoutHelper.RemoveArbitraryRow(tlp_start_programs, rowIndex);
+                    tlp_start_programs.ResumeLayout();
+                    //tlp_start_programs.PerformLayout();
                     break;
                 }
+                rowIndex++;
             }
 
             // And we redraw the panel again
-            pnl_start_programs.Refresh();
+            tlp_start_programs.Refresh();
         }
 
         private void btn_hotkey_Click(object sender, EventArgs e)

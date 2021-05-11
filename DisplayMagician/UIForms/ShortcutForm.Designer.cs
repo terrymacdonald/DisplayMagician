@@ -68,7 +68,6 @@ namespace DisplayMagician.UIForms
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
-            this.pnl_start_programs = new System.Windows.Forms.Panel();
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.p_standalone = new System.Windows.Forms.Panel();
@@ -119,6 +118,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.tlp_start_programs = new System.Windows.Forms.TableLayoutPanel();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -616,7 +616,7 @@ namespace DisplayMagician.UIForms
             // tabp_before
             // 
             this.tabp_before.BackColor = System.Drawing.Color.Black;
-            this.tabp_before.Controls.Add(this.pnl_start_programs);
+            this.tabp_before.Controls.Add(this.tlp_start_programs);
             this.tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_before.ForeColor = System.Drawing.Color.White;
             this.tabp_before.Location = new System.Drawing.Point(4, 32);
@@ -625,17 +625,6 @@ namespace DisplayMagician.UIForms
             this.tabp_before.Size = new System.Drawing.Size(1082, 618);
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
-            // 
-            // pnl_start_programs
-            // 
-            this.pnl_start_programs.AutoScroll = true;
-            this.pnl_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 5);
-            this.pnl_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 5);
-            this.pnl_start_programs.BackColor = System.Drawing.Color.White;
-            this.pnl_start_programs.Location = new System.Drawing.Point(38, 126);
-            this.pnl_start_programs.Name = "pnl_start_programs";
-            this.pnl_start_programs.Size = new System.Drawing.Size(1007, 446);
-            this.pnl_start_programs.TabIndex = 2;
             // 
             // tabp_game
             // 
@@ -1259,6 +1248,24 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
+            // tlp_start_programs
+            // 
+            this.tlp_start_programs.AutoScroll = true;
+            this.tlp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
+            this.tlp_start_programs.BackColor = System.Drawing.Color.White;
+            this.tlp_start_programs.ColumnCount = 1;
+            this.tlp_start_programs.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tlp_start_programs.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tlp_start_programs.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.tlp_start_programs.Location = new System.Drawing.Point(3, 112);
+            this.tlp_start_programs.MinimumSize = new System.Drawing.Size(900, 150);
+            this.tlp_start_programs.Name = "tlp_start_programs";
+            this.tlp_start_programs.RowCount = 1;
+            this.tlp_start_programs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tlp_start_programs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tlp_start_programs.Size = new System.Drawing.Size(1076, 503);
+            this.tlp_start_programs.TabIndex = 0;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1408,6 +1415,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_wait_alternative_game;
         private System.Windows.Forms.Button btn_hotkey;
         private System.Windows.Forms.Label lbl_hotkey_assigned;
-        private System.Windows.Forms.Panel pnl_start_programs;
+        private System.Windows.Forms.TableLayoutPanel tlp_start_programs;
     }
 }
