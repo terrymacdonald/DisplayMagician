@@ -118,7 +118,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.tlp_start_programs = new System.Windows.Forms.TableLayoutPanel();
+            this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -616,7 +616,7 @@ namespace DisplayMagician.UIForms
             // tabp_before
             // 
             this.tabp_before.BackColor = System.Drawing.Color.Black;
-            this.tabp_before.Controls.Add(this.tlp_start_programs);
+            this.tabp_before.Controls.Add(this.flp_start_programs);
             this.tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_before.ForeColor = System.Drawing.Color.White;
             this.tabp_before.Location = new System.Drawing.Point(4, 32);
@@ -1248,23 +1248,17 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
-            // tlp_start_programs
+            // flp_start_programs
             // 
-            this.tlp_start_programs.AutoScroll = true;
-            this.tlp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
-            this.tlp_start_programs.BackColor = System.Drawing.Color.White;
-            this.tlp_start_programs.ColumnCount = 1;
-            this.tlp_start_programs.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlp_start_programs.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlp_start_programs.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tlp_start_programs.Location = new System.Drawing.Point(3, 112);
-            this.tlp_start_programs.MinimumSize = new System.Drawing.Size(900, 150);
-            this.tlp_start_programs.Name = "tlp_start_programs";
-            this.tlp_start_programs.RowCount = 1;
-            this.tlp_start_programs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlp_start_programs.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlp_start_programs.Size = new System.Drawing.Size(1076, 503);
-            this.tlp_start_programs.TabIndex = 0;
+            this.flp_start_programs.AutoScroll = true;
+            this.flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
+            this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
+            this.flp_start_programs.BackColor = System.Drawing.Color.White;
+            this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.flp_start_programs.Location = new System.Drawing.Point(3, 107);
+            this.flp_start_programs.Name = "flp_start_programs";
+            this.flp_start_programs.Size = new System.Drawing.Size(1076, 508);
+            this.flp_start_programs.TabIndex = 0;
             // 
             // ShortcutForm
             // 
@@ -1415,6 +1409,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_wait_alternative_game;
         private System.Windows.Forms.Button btn_hotkey;
         private System.Windows.Forms.Label lbl_hotkey_assigned;
-        private System.Windows.Forms.TableLayoutPanel tlp_start_programs;
+        private System.Windows.Forms.FlowLayoutPanel flp_start_programs;
     }
 }
