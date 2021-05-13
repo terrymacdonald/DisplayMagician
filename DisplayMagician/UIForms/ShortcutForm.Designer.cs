@@ -119,6 +119,8 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.btn_add_new_start_program = new System.Windows.Forms.Button();
+            this.label3 = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -616,6 +618,8 @@ namespace DisplayMagician.UIForms
             // tabp_before
             // 
             this.tabp_before.BackColor = System.Drawing.Color.Black;
+            this.tabp_before.Controls.Add(this.label3);
+            this.tabp_before.Controls.Add(this.btn_add_new_start_program);
             this.tabp_before.Controls.Add(this.flp_start_programs);
             this.tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_before.ForeColor = System.Drawing.Color.White;
@@ -1183,10 +1187,10 @@ namespace DisplayMagician.UIForms
             this.txt_shortcut_save_name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_shortcut_save_name.Location = new System.Drawing.Point(326, 731);
+            this.txt_shortcut_save_name.Location = new System.Drawing.Point(207, 731);
             this.txt_shortcut_save_name.MaxLength = 200;
             this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
-            this.txt_shortcut_save_name.Size = new System.Drawing.Size(511, 35);
+            this.txt_shortcut_save_name.Size = new System.Drawing.Size(744, 35);
             this.txt_shortcut_save_name.TabIndex = 29;
             this.txt_shortcut_save_name.Click += new System.EventHandler(this.txt_shortcut_save_name_Click);
             this.txt_shortcut_save_name.TextChanged += new System.EventHandler(this.txt_shortcut_save_name_TextChanged);
@@ -1209,7 +1213,7 @@ namespace DisplayMagician.UIForms
             this.lbl_shortcut_name.AutoSize = true;
             this.lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
-            this.lbl_shortcut_name.Location = new System.Drawing.Point(142, 734);
+            this.lbl_shortcut_name.Location = new System.Drawing.Point(23, 734);
             this.lbl_shortcut_name.Name = "lbl_shortcut_name";
             this.lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
             this.lbl_shortcut_name.TabIndex = 31;
@@ -1223,7 +1227,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.Checked = true;
             this.cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_autosuggest.ForeColor = System.Drawing.Color.White;
-            this.cb_autosuggest.Location = new System.Drawing.Point(856, 740);
+            this.cb_autosuggest.Location = new System.Drawing.Point(969, 740);
             this.cb_autosuggest.Name = "cb_autosuggest";
             this.cb_autosuggest.Size = new System.Drawing.Size(117, 17);
             this.cb_autosuggest.TabIndex = 32;
@@ -1260,6 +1264,33 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
+            // 
+            // btn_add_new_start_program
+            // 
+            this.btn_add_new_start_program.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_add_new_start_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_add_new_start_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
+            this.btn_add_new_start_program.Location = new System.Drawing.Point(424, 61);
+            this.btn_add_new_start_program.Name = "btn_add_new_start_program";
+            this.btn_add_new_start_program.Size = new System.Drawing.Size(235, 40);
+            this.btn_add_new_start_program.TabIndex = 38;
+            this.btn_add_new_start_program.Text = "&Add Start Program";
+            this.btn_add_new_start_program.UseVisualStyleBackColor = true;
+            this.btn_add_new_start_program.Click += new System.EventHandler(this.btn_add_new_start_program_Click);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(138, 24);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(807, 20);
+            this.label3.TabIndex = 39;
+            this.label3.Text = "Add one or more additional programs to start before the main Game starts. They wi" +
+    "ll start in the order listed below.";
             // 
             // ShortcutForm
             // 
@@ -1304,6 +1335,7 @@ namespace DisplayMagician.UIForms
             this.gb_audio_volume.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).EndInit();
             this.tabp_before.ResumeLayout(false);
+            this.tabp_before.PerformLayout();
             this.tabp_game.ResumeLayout(false);
             this.tabp_game.PerformLayout();
             this.p_standalone.ResumeLayout(false);
@@ -1411,5 +1443,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_hotkey;
         private System.Windows.Forms.Label lbl_hotkey_assigned;
         private System.Windows.Forms.FlowLayoutPanel flp_start_programs;
+        private System.Windows.Forms.Button btn_add_new_start_program;
+        private System.Windows.Forms.Label label3;
     }
 }

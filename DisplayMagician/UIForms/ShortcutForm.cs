@@ -2189,5 +2189,21 @@ namespace DisplayMagician.UIForms
 
         }
 
+        private void btn_add_new_start_program_Click(object sender, EventArgs e)
+        {
+            StartProgram newStartProgram = new StartProgram() { };
+            StartProgramControl newStartProgramControl = new StartProgramControl(newStartProgram, flp_start_programs.Controls.Count);
+            newStartProgramControl.Dock = DockStyle.None;
+            newStartProgramControl.Width = flp_start_programs.Width - 40;
+            newStartProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
+            newStartProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
+            newStartProgramControl.DragDrop += new DragEventHandler(StartProgramControl_DragDrop);
+            newStartProgramControl.AllowDrop = true;
+            flp_start_programs.SuspendLayout();
+            flp_start_programs.Controls.Add(newStartProgramControl);
+            RedrawStartPrograms();
+            flp_start_programs.ResumeLayout();
+            flp_start_programs.Invalidate();
+        }
     }
 }
