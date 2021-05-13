@@ -38,6 +38,7 @@ namespace DisplayMagician.UIForms
             this.btn_delete = new System.Windows.Forms.Button();
             this.cb_disable_start_program = new System.Windows.Forms.CheckBox();
             this.lbl_start_program = new System.Windows.Forms.Label();
+            this.lbl_priority = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // cb_dont_start_if_running
@@ -58,7 +59,7 @@ namespace DisplayMagician.UIForms
             this.txt_start_program.BackColor = System.Drawing.Color.White;
             this.txt_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_start_program.ForeColor = System.Drawing.Color.Black;
-            this.txt_start_program.Location = new System.Drawing.Point(221, 17);
+            this.txt_start_program.Location = new System.Drawing.Point(221, 16);
             this.txt_start_program.Name = "txt_start_program";
             this.txt_start_program.Size = new System.Drawing.Size(503, 26);
             this.txt_start_program.TabIndex = 25;
@@ -82,7 +83,7 @@ namespace DisplayMagician.UIForms
             this.btn_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_start_program.ForeColor = System.Drawing.Color.White;
-            this.btn_start_program.Location = new System.Drawing.Point(730, 17);
+            this.btn_start_program.Location = new System.Drawing.Point(730, 16);
             this.btn_start_program.Name = "btn_start_program";
             this.btn_start_program.Size = new System.Drawing.Size(85, 27);
             this.btn_start_program.TabIndex = 23;
@@ -152,12 +153,23 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program.TabIndex = 29;
             this.lbl_start_program.Text = "Start this program:";
             // 
+            // lbl_priority
+            // 
+            this.lbl_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_priority.Location = new System.Drawing.Point(10, 16);
+            this.lbl_priority.Name = "lbl_priority";
+            this.lbl_priority.Size = new System.Drawing.Size(55, 23);
+            this.lbl_priority.TabIndex = 30;
+            this.lbl_priority.Text = "1";
+            this.lbl_priority.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // StartProgramControl
             // 
             this.AllowDrop = true;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoSize = true;
             this.BackColor = System.Drawing.Color.Black;
+            this.Controls.Add(this.lbl_priority);
             this.Controls.Add(this.lbl_start_program);
             this.Controls.Add(this.cb_disable_start_program);
             this.Controls.Add(this.btn_delete);
@@ -187,5 +199,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_delete;
         private System.Windows.Forms.CheckBox cb_disable_start_program;
         private System.Windows.Forms.Label lbl_start_program;
+        private System.Windows.Forms.Label lbl_priority;
     }
 }

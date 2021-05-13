@@ -61,6 +61,7 @@ namespace DisplayMagician.UIForms
         private int indexOfItemUnderMouseToDrop;
         private Rectangle dragBoxFromMouseDown;
         private Point screenOffset;
+        private Cursor _bitMapCursor;
 
         public ShortcutForm(ShortcutItem shortcutToEdit)
         {
@@ -1193,6 +1194,7 @@ namespace DisplayMagician.UIForms
                     startProgramControl.Width = flp_start_programs.Width - 40;
                     startProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
                     startProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
+                    startProgramControl.DragDrop += new DragEventHandler(StartProgramControl_DragDrop);
                     startProgramControl.AllowDrop = true;
                     //startProgramControl.Height = 170;
 
@@ -2152,23 +2154,85 @@ namespace DisplayMagician.UIForms
         private void StartProgramControl_MouseDown(object sender, MouseEventArgs e)
         {
             //base.OnMouseDown(e);
-            DoDragDrop(sender, DragDropEffects.All);
+            DoDragDrop(sender, DragDropEffects.Move);
+            /*Bitmap bmp = new Bitmap(btntarget.Width, btntarget.Height);
+            btntarget.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
+            //optionally define a transparent color
+            bmp.MakeTransparent(Color.White);
+
+            Cursor cur = new Cursor(bmp.GetHicon());
+            Cursor.Current = cur;*/
+
+            /*//Cast the sender to control type youre using
+            StartProgramControl send = (StartProgramControl)sender;
+            //Copy the control in a bitmap
+            Bitmap bmp = new Bitmap(send.Width, send.Height);
+            send.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
+            //In a variable save the cursor with the image of your controler
+            _bitMapCursor = new Cursor(bmp.GetHicon());
+            send.DoDragDrop(send.Text, DragDropEffects.Move);*/
         }
 
         private void StartProgramControl_DragOver(object sender, DragEventArgs e)
         {
             //base.OnDragOver(e);
             // is another dragable
-            if (e.Data.GetData(typeof(StartProgramControl)) != null)
+            if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl)
             {
+
+                e.Effect = DragDropEffects.Move;
                 FlowLayoutPanel p = (FlowLayoutPanel)(sender as StartProgramControl).Parent;
                 //Current Position             
                 int myIndex = p.Controls.GetChildIndex((sender as StartProgramControl));
 
                 //Dragged to control to location of next picturebox
-                StartProgramControl q = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
-                p.Controls.SetChildIndex(q, myIndex);
+                StartProgramControl spc = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
+                p.Controls.SetChildIndex(spc, myIndex);
+               
             }
+
+        }
+
+        private void StartProgramControl_DragDrop(object sender, DragEventArgs e)
+        {
+            //base.OnDragOver(e);
+            // is another dragable
+            if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl)
+            {
+
+                FlowLayoutPanel p = (FlowLayoutPanel)(sender as StartProgramControl).Parent;
+                //Current Position             
+                int myIndex = p.Controls.GetChildIndex((sender as StartProgramControl));
+
+                //Dragged to control to location of next picturebox
+                StartProgramControl spc = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
+                p.Controls.SetChildIndex(spc, myIndex);
+                StartProgram startProgram = spc.StartProgram;
+                startProgram.Priority = myIndex + 1;
+                spc.StartProgram = startProgram;
+
+                flp_start_programs.SuspendLayout();
+
+                // And now we update all the UI for the items in the list
+                foreach (StartProgramControl startProgramControl in p.Controls)
+                {
+                    int priority = p.Controls.GetChildIndex(startProgramControl) + 1;
+                    startProgramControl.ChangePriority(priority);
+                }
+
+                flp_start_programs.ResumeLayout();
+                flp_start_programs.Invalidate();
+            }
+
+        }
+
+        private void StartProgramControl_GiveFeedback(object sender, GiveFeedbackEventArgs e)
+        {
+            //Deactivate the default cursor
+            //e.UseDefaultCursors = false;
+            //Use the cursor created from the bitmap
+            //Cursor.Current = _bitMapCursor;
+
         }
 
     }

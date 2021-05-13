@@ -26,7 +26,7 @@ namespace DisplayMagician.UIForms
             set
             {
                 myStartProgram = value;
-                populateUI();
+                UpdateUI();
             }
         }
         public StartProgramControl()
@@ -40,13 +40,14 @@ namespace DisplayMagician.UIForms
 
             // Update the text with the start program info
             myStartProgram = startProgram;
-            populateUI();
+            UpdateUI();
 
         }
 
-        private void populateUI()
+        public void UpdateUI()
         {
             // Now populate the controls with the start program data
+            lbl_priority.Text = myStartProgram.Priority.ToString();
             txt_start_program.Text = myStartProgram.Executable;
             cb_disable_start_program.Checked = myStartProgram.Disabled;
             cb_start_program_pass_args.Checked = myStartProgram.ExecutableArgumentsRequired;
@@ -54,6 +55,13 @@ namespace DisplayMagician.UIForms
             cb_start_program_close.Checked = myStartProgram.CloseOnFinish;
             cb_dont_start_if_running.Checked = myStartProgram.DontStartIfAlreadyRunning;
 
+        }
+
+        public void ChangePriority(int priority)
+        {
+            // Now update the priority field
+            myStartProgram.Priority = priority;
+            lbl_priority.Text = priority.ToString();
         }
 
 
