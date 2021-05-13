@@ -41,7 +41,16 @@ namespace DisplayMagician.UIForms
             // Update the text with the start program info
             myStartProgram = startProgram;
             UpdateUI();
+        }
 
+        public StartProgramControl(StartProgram startProgram, int startProgramOrder)
+        {
+            InitializeComponent();
+
+            // Update the text with the start program info
+            myStartProgram = startProgram;
+            myStartProgram.Priority = startProgramOrder;
+            UpdateUI();
         }
 
         public void UpdateUI()
@@ -139,6 +148,34 @@ namespace DisplayMagician.UIForms
             //this.Parent.Controls.Remove(this);
         }
 
-    }
-    
+        private void pb_up_arrow_MouseEnter(object sender, EventArgs e)
+        {
+            pb_up_arrow.Image = DisplayMagician.Properties.Resources.redarrowsup;
+        }
+
+        private void pb_up_arrow_MouseLeave(object sender, EventArgs e)
+        {
+            pb_up_arrow.Image = DisplayMagician.Properties.Resources.whitearrowsup;
+        }
+
+        private void pb_down_arrow_MouseEnter(object sender, EventArgs e)
+        {
+            pb_down_arrow.Image = DisplayMagician.Properties.Resources.RedArrows;
+        }
+
+        private void pb_down_arrow_MouseLeave(object sender, EventArgs e)
+        {
+            pb_down_arrow.Image = DisplayMagician.Properties.Resources.whitearrows;
+        }
+
+        private void pb_down_arrow_Click(object sender, EventArgs e)
+        {
+            ((ShortcutForm)this.Parent.Parent.Parent.Parent).StartProgramLater(this);
+        }
+
+        private void pb_up_arrow_Click(object sender, EventArgs e)
+        {
+            ((ShortcutForm)this.Parent.Parent.Parent.Parent).StartProgramEarlier(this);
+        }
+    }    
 }

@@ -111,6 +111,16 @@ namespace DisplayMagician.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap redarrowsup {
+            get {
+                object obj = ResourceManager.GetObject("redarrowsup", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         public static System.Drawing.Icon Steam {
@@ -136,6 +146,26 @@ namespace DisplayMagician.Properties {
         public static System.Drawing.Bitmap Warning {
             get {
                 object obj = ResourceManager.GetObject("Warning", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap whitearrows {
+            get {
+                object obj = ResourceManager.GetObject("whitearrows", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap whitearrowsup {
+            get {
+                object obj = ResourceManager.GetObject("whitearrowsup", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

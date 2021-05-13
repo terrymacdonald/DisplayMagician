@@ -56,13 +56,6 @@ namespace DisplayMagician.UIForms
         private Keys _hotkey = Keys.None;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private StartProgramControl startProgramControlToMove;
-        private int indexOfItemUnderMouseToDrag;
-        private int indexOfItemUnderMouseToDrop;
-        private Rectangle dragBoxFromMouseDown;
-        private Point screenOffset;
-        private Cursor _bitMapCursor;
-
         public ShortcutForm(ShortcutItem shortcutToEdit)
         {
             InitializeComponent();
@@ -1172,42 +1165,30 @@ namespace DisplayMagician.UIForms
 
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
-                //int x = 5;
-                //int y = 5;
+                Padding firstStartProgramMargin = new Padding(10) { };
+                Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
 
-                Padding startProgramMargin = new Padding(10) { };
-
-                //Clear out the existing controls, we are generating a new table layout
-                //flp_start_programs.Controls.Clear();
-
-                //Clear out the existing row and column styles
-                //flp_start_programs.ColumnStyles.Clear();
-                //flp_start_programs.RowStyles.Clear();
-
-                //int myIndex = 0;
                 // Order the inital list in order of priority
+                int spOrder = 1;
                 foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
                 {
-                    StartProgramControl startProgramControl = new StartProgramControl(myStartProgram);
+                    StartProgramControl startProgramControl = new StartProgramControl(myStartProgram,spOrder);
                     startProgramControl.Dock = DockStyle.None;
-                    startProgramControl.Margin = startProgramMargin;
+                    if (spOrder == 1)
+                    {
+                        startProgramControl.Margin = firstStartProgramMargin;
+                    }
+                    else
+                    {
+                        startProgramControl.Margin = otherStartProgramMargin;
+                    }                    
                     startProgramControl.Width = flp_start_programs.Width - 40;
                     startProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
                     startProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
                     startProgramControl.DragDrop += new DragEventHandler(StartProgramControl_DragDrop);
                     startProgramControl.AllowDrop = true;
-                    //startProgramControl.Height = 170;
-
-                    //startProgramControl.Height = pnl_start_programs.Height;
-                    //startProgramControl.Location = new Point(x, y);
-                    // startProgramControl.BringToFront();
-                    //startProgramControl.Margin = DefaultMargin;
-                    //startProgramControl.Width = pnl_start_programs.Width;
-                    //flp_start_programs.RowStyles.Add(new RowStyle(SizeType.Absolute, 170F));
-                    //flp_start_programs.RowCount = myIndex + 1;
                     flp_start_programs.Controls.Add(startProgramControl);
-                    // Move the next line down
-                    //y += startProgramControl.Height + 5;
+                    spOrder++;
                 }
             }
 
@@ -2038,41 +2019,63 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        public void RedrawStartPrograms()
+        {
+            bool firstItem = true;
+            Padding firstStartProgramMargin = new Padding(10) { };
+            Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
+            foreach (StartProgramControl myStartProgramControl in flp_start_programs.Controls)
+            {
+                if (firstItem)
+                {
+                    myStartProgramControl.Margin = firstStartProgramMargin;
+                    firstItem = false;
+                }
+                else
+                {
+                    myStartProgramControl.Margin = otherStartProgramMargin;
+                }
+                int priority = flp_start_programs.Controls.GetChildIndex(myStartProgramControl) + 1;
+                myStartProgramControl.ChangePriority(priority);
+            }
+        }
+
+
         public void RemoveStartProgram(StartProgramControl startProgramControlToRemove)
         {
-
             // If we find the start program then we need to remove it from the list
             _shortcutToEdit.StartPrograms.Remove(startProgramControlToRemove.StartProgram);
-            // And we remove the program control passed in as well
+            // And we remove the program control passed in to this function as well
             flp_start_programs.SuspendLayout();
-            // And we remove the row control passed in as well
             flp_start_programs.Controls.Remove(startProgramControlToRemove);
-            //TableLayoutHelper.RemoveArbitraryRow(tlp_start_programs, rowIndex);
+            RedrawStartPrograms();
             flp_start_programs.ResumeLayout();
-            //tlp_start_programs.PerformLayout();
-            //break;
+        }
 
-            /*int rowIndex = 1;
-            foreach (StartProgram startProgramToTest in _shortcutToEdit.StartPrograms)
-            {                
-                if (startProgramControlToRemove.StartProgram.Equals(startProgramToTest))
-                {
-                    // If we find the start program then we need to remove it from the list
-                    _shortcutToEdit.StartPrograms.Remove(startProgramToTest);
-                    // And we remove the program control passed in as well
-                    flp_start_programs.SuspendLayout();
-                    // And we remove the row control passed in as well
-                    flp_start_programs.Controls.Remove(startProgramControlToRemove);
-                    //TableLayoutHelper.RemoveArbitraryRow(tlp_start_programs, rowIndex);
-                    flp_start_programs.ResumeLayout();
-                    //tlp_start_programs.PerformLayout();
-                    break;
-                }
-                rowIndex++;
-            }*/
+        public void StartProgramEarlier(StartProgramControl startProgramControlToRemove)
+        {
+            // And we move the program control passed in to this function earlier in the flow layout panel
+            flp_start_programs.SuspendLayout();
+            int currentIndex = flp_start_programs.Controls.GetChildIndex(startProgramControlToRemove);
+            int newIndex = currentIndex - 1;
+            if (newIndex <= 0)
+                newIndex = 0;
+            flp_start_programs.Controls.SetChildIndex(startProgramControlToRemove,newIndex);
+            RedrawStartPrograms();
+            flp_start_programs.ResumeLayout();
+        }
 
-            // And we redraw the panel again
-            //flp_start_programs.Refresh();
+        public void StartProgramLater(StartProgramControl startProgramControlToRemove)
+        {
+            // And we move the program control passed in to this function later in the flow layout panel
+            flp_start_programs.SuspendLayout();
+            int currentIndex = flp_start_programs.Controls.GetChildIndex(startProgramControlToRemove);
+            int newIndex = currentIndex + 1;
+            if (newIndex > flp_start_programs.Controls.Count - 1)
+                newIndex = flp_start_programs.Controls.Count - 1;
+            flp_start_programs.Controls.SetChildIndex(startProgramControlToRemove, newIndex);
+            RedrawStartPrograms();
+            flp_start_programs.ResumeLayout();
         }
 
         private void btn_hotkey_Click(object sender, EventArgs e)
@@ -2135,103 +2138,54 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        /*private void flp_start_programs_DragEnter(object sender, DragEventArgs e)
-        {
-            e.Effect = DragDropEffects.All;
-        }*/
-
-        /* private void flp_start_programs_DragDrop(object sender, DragEventArgs e)
-         {
-             StartProgramControl startProgramControlBeingMoved = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
-
-             Point p = flp_start_programs.PointToClient(new Point(e.X, e.Y));
-             var startProgramControl = flp_start_programs.GetChildAtPoint(p);
-             int index = flp_start_programs.Controls.GetChildIndex(startProgramControl, false);
-             flp_start_programs.Controls.SetChildIndex(startProgramControlBeingMoved, index);
-             flp_start_programs.Invalidate();
-         }*/
-
         private void StartProgramControl_MouseDown(object sender, MouseEventArgs e)
         {
-            //base.OnMouseDown(e);
             DoDragDrop(sender, DragDropEffects.Move);
-            /*Bitmap bmp = new Bitmap(btntarget.Width, btntarget.Height);
-            btntarget.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
-            //optionally define a transparent color
-            bmp.MakeTransparent(Color.White);
-
-            Cursor cur = new Cursor(bmp.GetHicon());
-            Cursor.Current = cur;*/
-
-            /*//Cast the sender to control type youre using
-            StartProgramControl send = (StartProgramControl)sender;
-            //Copy the control in a bitmap
-            Bitmap bmp = new Bitmap(send.Width, send.Height);
-            send.DrawToBitmap(bmp, new Rectangle(Point.Empty, bmp.Size));
-            //In a variable save the cursor with the image of your controler
-            _bitMapCursor = new Cursor(bmp.GetHicon());
-            send.DoDragDrop(send.Text, DragDropEffects.Move);*/
         }
 
         private void StartProgramControl_DragOver(object sender, DragEventArgs e)
         {
-            //base.OnDragOver(e);
-            // is another dragable
             if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl)
             {
-
+                // We make it show some effects while moving
                 e.Effect = DragDropEffects.Move;
+
+                // We figure out the position of the thing we're dragging
                 FlowLayoutPanel p = (FlowLayoutPanel)(sender as StartProgramControl).Parent;
-                //Current Position             
                 int myIndex = p.Controls.GetChildIndex((sender as StartProgramControl));
 
-                //Dragged to control to location of next picturebox
+                // We figure out the position of the thing we're being dragged over
                 StartProgramControl spc = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
-                p.Controls.SetChildIndex(spc, myIndex);
-               
+                // We set the position of the thing we're dragging to the position of the thing we're over
+                p.Controls.SetChildIndex(spc, myIndex);              
             }
-
         }
 
         private void StartProgramControl_DragDrop(object sender, DragEventArgs e)
         {
-            //base.OnDragOver(e);
-            // is another dragable
             if (e.Data.GetData(typeof(StartProgramControl)) is StartProgramControl)
             {
-
+                // We figure out the position of the thing we're dragging
                 FlowLayoutPanel p = (FlowLayoutPanel)(sender as StartProgramControl).Parent;
-                //Current Position             
                 int myIndex = p.Controls.GetChildIndex((sender as StartProgramControl));
 
-                //Dragged to control to location of next picturebox
+                // We figure out the position of the thing we're being dropped onto
                 StartProgramControl spc = (StartProgramControl)e.Data.GetData(typeof(StartProgramControl));
+                // We set the position of the thing we're dragging to the position of the thing we've been dropped on
                 p.Controls.SetChildIndex(spc, myIndex);
+
+                // We then set the final startProgram position in the data we're storing
                 StartProgram startProgram = spc.StartProgram;
                 startProgram.Priority = myIndex + 1;
                 spc.StartProgram = startProgram;
 
+                // And now we also update all the UI for the items in the list
+                // To reorder all of them
                 flp_start_programs.SuspendLayout();
-
-                // And now we update all the UI for the items in the list
-                foreach (StartProgramControl startProgramControl in p.Controls)
-                {
-                    int priority = p.Controls.GetChildIndex(startProgramControl) + 1;
-                    startProgramControl.ChangePriority(priority);
-                }
-
+                RedrawStartPrograms();
                 flp_start_programs.ResumeLayout();
                 flp_start_programs.Invalidate();
             }
-
-        }
-
-        private void StartProgramControl_GiveFeedback(object sender, GiveFeedbackEventArgs e)
-        {
-            //Deactivate the default cursor
-            //e.UseDefaultCursors = false;
-            //Use the cursor created from the bitmap
-            //Cursor.Current = _bitMapCursor;
 
         }
 

@@ -341,6 +341,9 @@
     <None Include="Resources\Epic.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\whitearrowsup.png" />
+    <None Include="Resources\redarrowsup.png" />
+    <None Include="Resources\whitearrows.png" />
     <None Include="Resources\warning.png" />
     <None Include="Resources\DisplayMagician.ico" />
     <None Include="Resources\error.png" />
