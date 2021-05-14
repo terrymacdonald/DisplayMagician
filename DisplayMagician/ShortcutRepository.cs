@@ -5,6 +5,7 @@ using DisplayMagician.InterProcess;
 using DisplayMagicianShared;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -396,7 +397,7 @@ namespace DisplayMagician
             {
                 string json = "";
                 try
-                {
+                { 
                     json = File.ReadAllText(_shortcutStorageJsonFileName, Encoding.Unicode);
                 }
                 catch (Exception ex)
@@ -406,6 +407,29 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
+
+                    // "Disabled": false,
+
+
+
+                    // Firstly perform any modifications we need to do to update the JSON structure
+                    // to handle old versions of the file that need updating. Done with a simple regex replace
+                    try
+                    {
+
+                        // Replace any "Enabled": true with "Disabled": false
+                        json = Regex.Replace(json, @"        ""Enabled"": true,", @"        ""Disabled"": false,");
+                        // Replace any "Enabled": false with "Disabled": true
+                        json = Regex.Replace(json, @"        ""Enabled"": false,", @"        ""Disabled"": true,");                        
+                    }
+                    catch(Exception ex)
+                    {
+                        // problem updating JSON
+                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to update the JSON in the {_shortcutStorageJsonFileName} but the Regex Replace threw an exception.");
+                    }
+
+
+
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
                     List<ShortcutItem> shortcuts = new List<ShortcutItem>();
 #pragma warning restore IDE0059 // Unnecessary assignment of a value
@@ -773,7 +797,7 @@ namespace DisplayMagician
 
             // Now run the pre-start applications
             List<Process> startProgramsToStop = new List<Process>();
-            List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Disabled == true).OrderBy(program => program.Priority).ToList();
+            List<StartProgram> startProgramsToStart = shortcutToUse.StartPrograms.Where(program => program.Disabled == false).Where(program => !String.IsNullOrWhiteSpace(program.Executable)).OrderBy(program => program.Priority).ToList();
             if (startProgramsToStart.Count > 0)
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Starting {startProgramsToStart.Count} programs before the main game or executable");

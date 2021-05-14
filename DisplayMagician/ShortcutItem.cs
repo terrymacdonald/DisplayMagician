@@ -739,6 +739,7 @@ namespace DisplayMagician
             get => new Version(1, 0);
         }
 
+
         public string UUID
         {
             get

@@ -57,6 +57,7 @@ namespace DisplayMagician.UIForms
             this.cb_dont_start_if_running.Text = "Don\'t start if program already running";
             this.cb_dont_start_if_running.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_dont_start_if_running.UseVisualStyleBackColor = true;
+            this.cb_dont_start_if_running.CheckedChanged += new System.EventHandler(this.cb_dont_start_if_running_CheckedChanged);
             // 
             // txt_start_program
             // 
@@ -67,6 +68,7 @@ namespace DisplayMagician.UIForms
             this.txt_start_program.Name = "txt_start_program";
             this.txt_start_program.Size = new System.Drawing.Size(538, 26);
             this.txt_start_program.TabIndex = 25;
+            this.txt_start_program.TextChanged += new System.EventHandler(this.txt_start_program_TextChanged);
             // 
             // cb_start_program_close
             // 
@@ -80,6 +82,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_close.Text = "Close started program when you finish playing Game";
             this.cb_start_program_close.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close.UseVisualStyleBackColor = true;
+            this.cb_start_program_close.CheckedChanged += new System.EventHandler(this.cb_start_program_close_CheckedChanged);
             // 
             // btn_start_program
             // 
@@ -104,6 +107,7 @@ namespace DisplayMagician.UIForms
             this.txt_start_program_args.Name = "txt_start_program_args";
             this.txt_start_program_args.Size = new System.Drawing.Size(506, 26);
             this.txt_start_program_args.TabIndex = 22;
+            this.txt_start_program_args.TextChanged += new System.EventHandler(this.txt_start_program_args_TextChanged);
             // 
             // cb_start_program_pass_args
             // 

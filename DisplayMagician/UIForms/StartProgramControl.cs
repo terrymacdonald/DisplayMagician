@@ -82,26 +82,28 @@ namespace DisplayMagician.UIForms
         private void cb_start_program_CheckedChanged(object sender, EventArgs e)
         {
             // Disable the start program fields
-            if (!cb_disable_start_program.Checked)
+            if (cb_disable_start_program.Checked)
             {
-                // Enable the Executable Arguments Text field
-                txt_start_program.Visible = true;
-                btn_start_program.Visible = true;
-                txt_start_program_args.Visible = true;
-                cb_start_program_pass_args.Visible = true;
-                cb_start_program_close.Visible = true;
-                cb_dont_start_if_running.Visible = true;
+                myStartProgram.Disabled = true;
+                // Disable the Executable Arguments Text field
+                txt_start_program.Enabled = false;
+                btn_start_program.Enabled = false;
+                txt_start_program_args.Enabled = false;
+                cb_start_program_pass_args.Enabled = false;
+                cb_start_program_close.Enabled = false;
+                cb_dont_start_if_running.Enabled = false;
             }
             else
             {
-                // Disable the Executable Arguments Text field
-                txt_start_program.Visible = false;
-                btn_start_program.Visible = false;
-                txt_start_program_args.Visible = false;
-                cb_start_program_pass_args.Visible = false;
-                cb_start_program_close.Visible = false;
-                cb_dont_start_if_running.Visible = false;
-            }
+                myStartProgram.Disabled = false;
+                // Enable the Executable Arguments Text field
+                txt_start_program.Enabled = true;
+                btn_start_program.Enabled = true;
+                txt_start_program_args.Enabled = true;
+                cb_start_program_pass_args.Enabled = true;
+                cb_start_program_close.Enabled = true;
+                cb_dont_start_if_running.Enabled = true;
+            }            
         }
 
         private void cb_start_program_pass_args_CheckedChanged(object sender, EventArgs e)
@@ -110,12 +112,12 @@ namespace DisplayMagician.UIForms
             if (cb_start_program_pass_args.Checked)
             {
                 // Enable the Executable Arguments Text field
-                txt_start_program_args.Visible = true;
+                txt_start_program_args.Enabled = true;
             }
             else
             {
                 // Disable the Executable Arguments Text field
-                txt_start_program_args.Visible = false;
+                txt_start_program_args.Enabled = false;
             }
         }
 
@@ -176,6 +178,40 @@ namespace DisplayMagician.UIForms
         private void pb_up_arrow_Click(object sender, EventArgs e)
         {
             ((ShortcutForm)this.Parent.Parent.Parent.Parent).StartProgramEarlier(this);
+        }
+
+        private void cb_dont_start_if_running_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cb_dont_start_if_running.Checked)
+            {
+                myStartProgram.DontStartIfAlreadyRunning = true;
+            }
+            else
+            {
+                myStartProgram.DontStartIfAlreadyRunning = false;
+            }
+        }
+
+        private void cb_start_program_close_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cb_start_program_close.Checked)
+            {
+                myStartProgram.CloseOnFinish = true;
+            }
+            else
+            {
+                myStartProgram.CloseOnFinish = false;
+            }
+        }
+
+        private void txt_start_program_TextChanged(object sender, EventArgs e)
+        {
+            myStartProgram.Executable = txt_start_program.Text;            
+        }
+
+        private void txt_start_program_args_TextChanged(object sender, EventArgs e)
+        {
+            myStartProgram.Arguments = txt_start_program_args.Text;
         }
     }    
 }

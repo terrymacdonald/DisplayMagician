@@ -1172,6 +1172,12 @@ namespace DisplayMagician.UIForms
                 int spOrder = 1;
                 foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
                 {
+                    if (String.IsNullOrWhiteSpace(myStartProgram.Executable))
+                    {
+                        logger.Warn($"ShortcutForm/ShortcutForm_Load: Start program #{myStartProgram.Priority} is empty, so skipping.");
+                        continue;
+                    }
+
                     StartProgramControl startProgramControl = new StartProgramControl(myStartProgram,spOrder);
                     startProgramControl.Dock = DockStyle.None;
                     if (spOrder == 1)
