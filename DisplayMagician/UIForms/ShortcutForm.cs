@@ -979,29 +979,10 @@ namespace DisplayMagician.UIForms
             // Load all the Games into the Games ListView
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
-                // Get the bitmap out of the IconPath 
-                // IconPath can be an ICO, or an EXE
-                Bitmap bm = null;
-                try
-                {
-                    bm = ShortcutItem.ToSmallBitmap(game.IconPath);
-                }
-                catch (Exception innerEx)
-                {
-                    Console.WriteLine($"ShortcutForm exception: {innerEx.Message}: {innerEx.StackTrace} - {innerEx.InnerException}");
-                    bm = Properties.Resources.Steam.ToBitmap();
-                }
-
-                // Add the images to the images array
-                //ilv_games.Images.Add(bm);
-
-                // ADd the game to the game array
-                ilv_games.Items.Add(new ImageListViewItem()
-                {
-                    Text = game.Name,
-                    Tag = game,
-                    FileName = game.IconPath
-                });
+                // Add the game to the game array
+                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
+                //ilv_saved_profiles.Items.Add(newItem);
+                ilv_games.Items.Add(newItem, _gameAdaptor);
             }
 
             

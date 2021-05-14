@@ -2052,8 +2052,14 @@ namespace DisplayMagician
                 {
                     logger.Trace($"ShortcutItem/ToSmallBitmap: The file we want to get the image from is an icon file. Attempting to load the icon file from {fileNameAndPath}.");
                     Size iconSize = new Size(128, 128);
-                    Icon myIcon = new Icon(fileNameAndPath, iconSize);
-                    Icon iconToReturn = IconUtil.TryGetIcon(myIcon,iconSize,24,true,true);
+                    Icon iconToReturn = new Icon(fileNameAndPath, iconSize);
+                    /*if (iconToReturn.Size.Width < iconSize.Width || iconToReturn.Size.Height < iconSize.Height)
+                    {
+                        // If the Icon is too small then we should try the Exe itself to see if its bigger
+                        bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
+                    }*/
+                    //Icon iconToReturn = IconFromFile.GetLargeIconFromFile(fileNameAndPath, true, true);
+                    //Icon iconToReturn = IconUtil.TryGetIcon(myIcon,iconSize,24,true,true);
                     logger.Trace($"ShortcutItem/ToSmallBitmap: Attempting to convert the icon file {fileNameAndPath} to a bitmap.");
                     bm = iconToReturn.ToBitmap();
                     logger.Trace($"ShortcutItem/ToSmallBitmap: Emptying the memory area used but the icon to stop memory leaks.");

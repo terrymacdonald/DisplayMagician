@@ -880,7 +880,11 @@ namespace DisplayMagician {
                 Bitmap bm = null;
                 try
                 {
-                    bm = ShortcutItem.ToSmallBitmap(game.IconPath);
+                    List<string> filesToSearchForIcon = new List<string>() { };
+                    filesToSearchForIcon.Add(game.IconPath);
+                    filesToSearchForIcon.Add(game.ExePath);
+
+                    bm = ImageUtils.ToSmallBitmap(filesToSearchForIcon);
                 }
                 catch (Exception ex)
                 {

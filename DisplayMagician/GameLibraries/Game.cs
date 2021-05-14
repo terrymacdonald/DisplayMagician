@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -10,7 +11,7 @@ namespace DisplayMagician.GameLibraries
             URI
         }
 
-
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         #region Properties
         public virtual string Id { get; set; }
@@ -50,6 +51,7 @@ namespace DisplayMagician.GameLibraries
         {
             return true;
         }
+        
         #endregion
     }
 }
