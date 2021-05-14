@@ -897,22 +897,6 @@ namespace DisplayMagician {
                 game.GameBitmap = bm;
             }
 
-
-            // TODO replicate this failed Task handling in Actions
-            /*bool failedAction = false;
-            foreach (var loadGameAction in loadGamesActions)
-            {
-                if (loadGameAction.  .Exception != null)
-                {
-                    failedTask = true;
-                    foreach (var ex in loadGameTask.Exception.InnerExceptions)
-                        logger.Error(ex, $"Program/LoadGamesInBackground exception during loadGamesTasks");
-                }
-            }
-
-            if (failedTask)
-                return false;*/
-
             return true;
 
         }

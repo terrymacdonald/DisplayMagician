@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
+using TsudaKageyu;
 
 namespace DisplayMagician
 {
@@ -2050,11 +2051,13 @@ namespace DisplayMagician
                 if (fileNameAndPath.EndsWith(".ico"))
                 {
                     logger.Trace($"ShortcutItem/ToSmallBitmap: The file we want to get the image from is an icon file. Attempting to load the icon file from {fileNameAndPath}.");
-                    Icon icoIcon = new Icon(fileNameAndPath, 128, 128);
+                    Size iconSize = new Size(128, 128);
+                    Icon myIcon = new Icon(fileNameAndPath, iconSize);
+                    Icon iconToReturn = IconUtil.TryGetIcon(myIcon,iconSize,24,true,true);
                     logger.Trace($"ShortcutItem/ToSmallBitmap: Attempting to convert the icon file {fileNameAndPath} to a bitmap.");
-                    bm = icoIcon.ToBitmap();
+                    bm = iconToReturn.ToBitmap();
                     logger.Trace($"ShortcutItem/ToSmallBitmap: Emptying the memory area used but the icon to stop memory leaks.");
-                    icoIcon.Dispose();
+                    iconToReturn.Dispose();
                 }
                 else
                 {

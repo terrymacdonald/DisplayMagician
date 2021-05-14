@@ -43,7 +43,7 @@ namespace DisplayMagician.UIForms
         private bool _setCaptureVolume = false;
         private decimal _captureVolume = -1;
         private ShortcutItem _shortcutToEdit = null;
-        List<Game> allGames = new List<Game>();
+        //List<Game> allGames = new List<Game>();
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
@@ -968,16 +968,16 @@ namespace DisplayMagician.UIForms
 
             // Populate a full list of games
             // Start with the Steam Games
-            allGames = new List<Game>();
+            /*allGames = new List<Game>();
             allGames.AddRange(SteamLibrary.GetLibrary().AllInstalledGames);
             // Then add the Uplay Games
             allGames.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
             // Then add the Origin Games
-            allGames.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
+            allGames.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);*/
 
 
             // Load all the Games into the Games ListView
-            foreach (var game in allGames.OrderBy(game => game.Name))
+            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
                 // Get the bitmap out of the IconPath 
                 // IconPath can be an ICO, or an EXE
@@ -993,13 +993,14 @@ namespace DisplayMagician.UIForms
                 }
 
                 // Add the images to the images array
-                il_games.Images.Add(bm);
+                //ilv_games.Images.Add(bm);
 
                 // ADd the game to the game array
-                ilv_games.Items.Add(new ImageListViewItem
+                ilv_games.Items.Add(new ImageListViewItem()
                 {
                     Text = game.Name,
-                    Tag = game
+                    Tag = game,
+                    FileName = game.IconPath
                 });
             }
 
@@ -1113,7 +1114,7 @@ namespace DisplayMagician.UIForms
             // Set the launcher items if we have them
             if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
             {
-                if (allGames.Count <= 0)
+                if (DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
                 {
                     // Fill in the game library information to highliught there isn't one detected.
                     txt_game_launcher.Text = "None detected";
@@ -1372,28 +1373,6 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_choose_game_Click(object sender, EventArgs e)
-        {
-            if (ilv_games.SelectedItems.Count > 0)
-            {
-                txt_game_name.Text = ilv_games.SelectedItems[0].Text;
-                foreach (Game game in allGames)
-                {
-                    if (game.Name == txt_game_name.Text)
-                    {
-                        if (_loadedShortcut)
-                            _isUnsaved = true;
-                        txt_game_launcher.Text = game.GameLibrary.ToString();
-                        _gameId = game.Id;
-                    }
-                }
-            }
-
-            SuggestShortcutName();
-            EnableSaveButtonIfValid();
-
-        }
-
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
             foreach (ProfileItem savedProfile in ProfileRepository.AllProfiles)
@@ -1481,7 +1460,7 @@ namespace DisplayMagician.UIForms
                     {
                         newItem = new ImageListViewItem(loadedGame, loadedGame.Name);
                         //ilv_saved_profiles.Items.Add(newItem);
-                        ilv_saved_profiles.Items.Add(newItem, _gameAdaptor);
+                        ilv_games.Items.Add(newItem, _gameAdaptor);
                     }
 
                 }
@@ -2260,7 +2239,7 @@ namespace DisplayMagician.UIForms
             if (ilv_games.SelectedItems.Count > 0)
             {
                 txt_game_name.Text = e.Item.Text;
-                foreach (Game game in allGames)
+                foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
                 {
                     if (game.Name == txt_game_name.Text)
                     {
