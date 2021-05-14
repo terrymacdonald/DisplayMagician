@@ -25,6 +25,7 @@ namespace DisplayMagician.UIForms
     {
 
         private ProfileAdaptor _profileAdaptor;
+        private GameAdaptor _gameAdaptor;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
         private ProfileItem _profileToUse = null;
         private GameStruct _gameToUse;
@@ -65,6 +66,7 @@ namespace DisplayMagician.UIForms
             try
             {
                 _profileAdaptor = new ProfileAdaptor();
+                _gameAdaptor = new GameAdaptor();
 
                 _shortcutToEdit = shortcutToEdit;
 
@@ -74,6 +76,13 @@ namespace DisplayMagician.UIForms
                 ilv_saved_profiles.AllowDrag = false;
                 ilv_saved_profiles.AllowDrop = false;
                 ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
+
+
+                ilv_games.MultiSelect = false;
+                ilv_games.ThumbnailSize = new Size(100, 100);
+                ilv_games.AllowDrag = false;
+                ilv_games.AllowDrop = false;
+                ilv_games.SetRenderer(new GameILVRenderer());
 
             }
             catch (Exception ex)
@@ -293,7 +302,7 @@ namespace DisplayMagician.UIForms
                 }
 
                 bool gameStillInstalled = false;
-                foreach (ListViewItem gameItem in lv_games.Items)
+                foreach (ImageListViewItem gameItem in ilv_games.Items)
                 {
                     if (gameItem.Text.Equals(txt_game_name.Text))
                     {
@@ -716,10 +725,22 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void RefreshImageListView(ProfileItem profile)
+        private void RefreshProfileImageListView(ProfileItem profile)
         {
             ilv_saved_profiles.ClearSelection();
             IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
+            if (matchingImageListViewItems.Any())
+            {
+                matchingImageListViewItems.First().Selected = true;
+                matchingImageListViewItems.First().Focused = true;
+                matchingImageListViewItems.First().Enabled = true;
+            }
+        }
+
+        private void RefreshGameImageListView(Game game)
+        {
+            ilv_games.ClearSelection();
+            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_games.Items where item.Text == game.Name select item);
             if (matchingImageListViewItems.Any())
             {
                 matchingImageListViewItems.First().Selected = true;
@@ -975,11 +996,10 @@ namespace DisplayMagician.UIForms
                 il_games.Images.Add(bm);
 
                 // ADd the game to the game array
-                lv_games.Items.Add(new ListViewItem
+                ilv_games.Items.Add(new ImageListViewItem
                 {
                     Text = game.Name,
-                    Tag = game,
-                    ImageIndex = il_games.Images.Count - 1
+                    Tag = game
                 });
             }
 
@@ -1122,7 +1142,7 @@ namespace DisplayMagician.UIForms
                     cb_args_game.Checked = true;
                 }
                 //select the loaded Game item if it is there
-                foreach (ListViewItem gameItem in lv_games.Items)
+                foreach (ImageListViewItem gameItem in ilv_games.Items)
                 {
                     if (gameItem.Text.Equals(_shortcutToEdit.GameName))
                     {
@@ -1354,9 +1374,9 @@ namespace DisplayMagician.UIForms
 
         private void btn_choose_game_Click(object sender, EventArgs e)
         {
-            if (lv_games.SelectedItems.Count > 0)
+            if (ilv_games.SelectedItems.Count > 0)
             {
-                txt_game_name.Text = lv_games.SelectedItems[0].Text;
+                txt_game_name.Text = ilv_games.SelectedItems[0].Text;
                 foreach (Game game in allGames)
                 {
                     if (game.Name == txt_game_name.Text)
@@ -1409,7 +1429,7 @@ namespace DisplayMagician.UIForms
                 lbl_profile_shown_subtitle.Text = "";
 
             // Refresh the image list view
-            RefreshImageListView(profile);
+            RefreshProfileImageListView(profile);
 
             // And finally show the profile in the display view
             dv_profile.Profile = profile;
@@ -1445,7 +1465,30 @@ namespace DisplayMagician.UIForms
 
                 // Restart updating the saved_profiles listview
                 ilv_saved_profiles.ResumeLayout();
-            }       
+            }
+            
+            if (DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count > 0)
+            {
+
+                // Temporarily stop updating the saved_profiles listview
+                ilv_games.SuspendLayout();
+
+                ImageListViewItem newItem = null;
+                foreach (Game loadedGame in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+                {
+                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_games.Items where item.Text == loadedGame.Name orderby item.Text select item.Text).Any();
+                    if (!thisLoadedProfileIsAlreadyHere)
+                    {
+                        newItem = new ImageListViewItem(loadedGame, loadedGame.Name);
+                        //ilv_saved_profiles.Items.Add(newItem);
+                        ilv_saved_profiles.Items.Add(newItem, _gameAdaptor);
+                    }
+
+                }
+
+                // Restart updating the saved_profiles listview
+                ilv_games.ResumeLayout();
+            }
 
             UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
             EnableSaveButtonIfValid();
@@ -2210,6 +2253,27 @@ namespace DisplayMagician.UIForms
             RedrawStartPrograms();
             flp_start_programs.ResumeLayout();
             flp_start_programs.Invalidate();
+        }
+
+        private void ilv_games_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (ilv_games.SelectedItems.Count > 0)
+            {
+                txt_game_name.Text = e.Item.Text;
+                foreach (Game game in allGames)
+                {
+                    if (game.Name == txt_game_name.Text)
+                    {
+                        if (_loadedShortcut)
+                            _isUnsaved = true;
+                        txt_game_launcher.Text = game.GameLibrary.ToString();
+                        _gameId = game.Id;
+                    }
+                }
+            }
+
+            SuggestShortcutName();
+            EnableSaveButtonIfValid();
         }
     }
 }

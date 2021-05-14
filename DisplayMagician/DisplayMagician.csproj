@@ -134,6 +134,7 @@
     <Compile Include="UIForms\ApplyingProfileForm.Designer.cs">
       <DependentUpon>ApplyingProfileForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
       <SubType>Form</SubType>
     </Compile>

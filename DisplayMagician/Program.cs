@@ -867,6 +867,36 @@ namespace DisplayMagician {
                 logger.Error(ae, $"Program/LoadGamesInBackground exception during loadGamesActions");
             }
 
+            // Produce a single array of Games we can reference later
+            GameLibrary.AllInstalledGamesInAllLibraries = SteamLibrary.GetLibrary().AllInstalledGames;
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
+
+            // Create Game Bitmaps from the Games so the rest of the program is faster later
+            // Get the bitmap out of the IconPath 
+            // IconPath can be an ICO, or an EXE
+            foreach (var game in GameLibrary.AllInstalledGamesInAllLibraries)
+            {
+                Bitmap bm = null;
+                try
+                {
+                    bm = ShortcutItem.ToSmallBitmap(game.IconPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/LoadGamesInBackground: Exception building game bitmaps during load");
+                    if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
+                        bm = Properties.Resources.Steam.ToBitmap();
+                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
+                        bm = Properties.Resources.Uplay.ToBitmap();
+                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
+                        bm = Properties.Resources.Origin.ToBitmap();
+                    else
+                        bm = Properties.Resources.DisplayMagician.ToBitmap();
+                }
+                game.GameBitmap = bm;
+            }
+
 
             // TODO replicate this failed Task handling in Actions
             /*bool failedAction = false;

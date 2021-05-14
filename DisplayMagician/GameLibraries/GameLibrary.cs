@@ -24,6 +24,8 @@ namespace DisplayMagician.GameLibraries
         }
 
         #region Class Properties
+
+        public static List<Game> AllInstalledGamesInAllLibraries { get; set; }
         public virtual List<Game> AllInstalledGames { get; set; }
 
         public virtual int InstalledGameCount { get; set; }

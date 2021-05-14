@@ -68,6 +68,8 @@ namespace DisplayMagician.UIForms
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
+            this.label3 = new System.Windows.Forms.Label();
+            this.btn_add_new_start_program = new System.Windows.Forms.Button();
             this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.lbl_no_game_libraries = new System.Windows.Forms.Label();
@@ -93,15 +95,10 @@ namespace DisplayMagician.UIForms
             this.txt_game_name = new System.Windows.Forms.TextBox();
             this.lbl_game_library = new System.Windows.Forms.Label();
             this.lbl_game_name = new System.Windows.Forms.Label();
-            this.btn_choose_game = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
             this.txt_args_game = new System.Windows.Forms.TextBox();
             this.cb_args_game = new System.Windows.Forms.CheckBox();
             this.lbl_game_timeout = new System.Windows.Forms.Label();
             this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
-            this.lv_games = new System.Windows.Forms.ListView();
-            this.clm_images = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.clm_name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.tabp_after = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -119,8 +116,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.btn_add_new_start_program = new System.Windows.Forms.Button();
-            this.label3 = new System.Windows.Forms.Label();
+            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -630,6 +626,33 @@ namespace DisplayMagician.UIForms
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(138, 24);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(807, 20);
+            this.label3.TabIndex = 39;
+            this.label3.Text = "Add one or more additional programs to start before the main Game starts. They wi" +
+    "ll start in the order listed below.";
+            // 
+            // btn_add_new_start_program
+            // 
+            this.btn_add_new_start_program.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_add_new_start_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_add_new_start_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
+            this.btn_add_new_start_program.Location = new System.Drawing.Point(424, 61);
+            this.btn_add_new_start_program.Name = "btn_add_new_start_program";
+            this.btn_add_new_start_program.Size = new System.Drawing.Size(235, 40);
+            this.btn_add_new_start_program.TabIndex = 38;
+            this.btn_add_new_start_program.Text = "&Add Start Program";
+            this.btn_add_new_start_program.UseVisualStyleBackColor = true;
+            this.btn_add_new_start_program.Click += new System.EventHandler(this.btn_add_new_start_program_Click);
+            // 
             // flp_start_programs
             // 
             this.flp_start_programs.AllowDrop = true;
@@ -670,7 +693,7 @@ namespace DisplayMagician.UIForms
             this.lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
             this.lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_game_libraries.Location = new System.Drawing.Point(401, 307);
+            this.lbl_no_game_libraries.Location = new System.Drawing.Point(375, 262);
             this.lbl_no_game_libraries.Name = "lbl_no_game_libraries";
             this.lbl_no_game_libraries.Size = new System.Drawing.Size(280, 22);
             this.lbl_no_game_libraries.TabIndex = 34;
@@ -853,6 +876,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_game
             // 
+            this.p_game.Controls.Add(this.ilv_games);
             this.p_game.Controls.Add(this.cb_wait_alternative_game);
             this.p_game.Controls.Add(this.btn_choose_alternative_game);
             this.p_game.Controls.Add(this.txt_alternative_game);
@@ -860,26 +884,24 @@ namespace DisplayMagician.UIForms
             this.p_game.Controls.Add(this.txt_game_name);
             this.p_game.Controls.Add(this.lbl_game_library);
             this.p_game.Controls.Add(this.lbl_game_name);
-            this.p_game.Controls.Add(this.btn_choose_game);
-            this.p_game.Controls.Add(this.label1);
             this.p_game.Controls.Add(this.txt_args_game);
             this.p_game.Controls.Add(this.cb_args_game);
             this.p_game.Controls.Add(this.lbl_game_timeout);
             this.p_game.Controls.Add(this.nud_timeout_game);
-            this.p_game.Controls.Add(this.lv_games);
-            this.p_game.Location = new System.Drawing.Point(34, 292);
+            this.p_game.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.p_game.Location = new System.Drawing.Point(3, 292);
             this.p_game.Name = "p_game";
-            this.p_game.Size = new System.Drawing.Size(1006, 278);
+            this.p_game.Size = new System.Drawing.Size(1076, 323);
             this.p_game.TabIndex = 7;
             // 
             // cb_wait_alternative_game
             // 
             this.cb_wait_alternative_game.AutoSize = true;
-            this.cb_wait_alternative_game.Location = new System.Drawing.Point(451, 214);
+            this.cb_wait_alternative_game.Location = new System.Drawing.Point(555, 45);
             this.cb_wait_alternative_game.Name = "cb_wait_alternative_game";
-            this.cb_wait_alternative_game.Size = new System.Drawing.Size(220, 44);
+            this.cb_wait_alternative_game.Size = new System.Drawing.Size(229, 24);
             this.cb_wait_alternative_game.TabIndex = 27;
-            this.cb_wait_alternative_game.Text = "Wait until this executable \r\nis closed before continuing:";
+            this.cb_wait_alternative_game.Text = "Monitor different executable:";
             this.cb_wait_alternative_game.UseVisualStyleBackColor = true;
             this.cb_wait_alternative_game.CheckedChanged += new System.EventHandler(this.cb_wait_alternative_game_CheckedChanged);
             // 
@@ -888,7 +910,7 @@ namespace DisplayMagician.UIForms
             this.btn_choose_alternative_game.Enabled = false;
             this.btn_choose_alternative_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_choose_alternative_game.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_alternative_game.Location = new System.Drawing.Point(878, 224);
+            this.btn_choose_alternative_game.Location = new System.Drawing.Point(983, 42);
             this.btn_choose_alternative_game.Name = "btn_choose_alternative_game";
             this.btn_choose_alternative_game.Size = new System.Drawing.Size(85, 27);
             this.btn_choose_alternative_game.TabIndex = 26;
@@ -899,14 +921,14 @@ namespace DisplayMagician.UIForms
             // txt_alternative_game
             // 
             this.txt_alternative_game.Enabled = false;
-            this.txt_alternative_game.Location = new System.Drawing.Point(667, 225);
+            this.txt_alternative_game.Location = new System.Drawing.Point(788, 43);
             this.txt_alternative_game.Name = "txt_alternative_game";
-            this.txt_alternative_game.Size = new System.Drawing.Size(205, 26);
+            this.txt_alternative_game.Size = new System.Drawing.Size(193, 26);
             this.txt_alternative_game.TabIndex = 24;
             // 
             // txt_game_launcher
             // 
-            this.txt_game_launcher.Location = new System.Drawing.Point(605, 76);
+            this.txt_game_launcher.Location = new System.Drawing.Point(150, 43);
             this.txt_game_launcher.Name = "txt_game_launcher";
             this.txt_game_launcher.ReadOnly = true;
             this.txt_game_launcher.Size = new System.Drawing.Size(149, 26);
@@ -914,17 +936,17 @@ namespace DisplayMagician.UIForms
             // 
             // txt_game_name
             // 
-            this.txt_game_name.Location = new System.Drawing.Point(605, 117);
+            this.txt_game_name.Location = new System.Drawing.Point(150, 11);
             this.txt_game_name.Name = "txt_game_name";
             this.txt_game_name.ReadOnly = true;
-            this.txt_game_name.Size = new System.Drawing.Size(360, 26);
+            this.txt_game_name.Size = new System.Drawing.Size(385, 26);
             this.txt_game_name.TabIndex = 21;
             // 
             // lbl_game_library
             // 
             this.lbl_game_library.AutoSize = true;
             this.lbl_game_library.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_library.Location = new System.Drawing.Point(490, 79);
+            this.lbl_game_library.Location = new System.Drawing.Point(36, 46);
             this.lbl_game_library.Name = "lbl_game_library";
             this.lbl_game_library.Size = new System.Drawing.Size(108, 20);
             this.lbl_game_library.TabIndex = 18;
@@ -935,55 +957,27 @@ namespace DisplayMagician.UIForms
             // 
             this.lbl_game_name.AutoSize = true;
             this.lbl_game_name.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_name.Location = new System.Drawing.Point(496, 120);
+            this.lbl_game_name.Location = new System.Drawing.Point(25, 14);
             this.lbl_game_name.Name = "lbl_game_name";
-            this.lbl_game_name.Size = new System.Drawing.Size(103, 20);
+            this.lbl_game_name.Size = new System.Drawing.Size(124, 20);
             this.lbl_game_name.TabIndex = 17;
-            this.lbl_game_name.Text = "Game Name:";
+            this.lbl_game_name.Text = "Selected Game:";
             this.lbl_game_name.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.lbl_game_name.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
-            // 
-            // btn_choose_game
-            // 
-            this.btn_choose_game.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_choose_game.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_choose_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_choose_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_choose_game.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_game.Location = new System.Drawing.Point(408, 117);
-            this.btn_choose_game.Name = "btn_choose_game";
-            this.btn_choose_game.Size = new System.Drawing.Size(40, 46);
-            this.btn_choose_game.TabIndex = 16;
-            this.btn_choose_game.Text = ">>";
-            this.btn_choose_game.UseVisualStyleBackColor = true;
-            this.btn_choose_game.Click += new System.EventHandler(this.btn_choose_game_Click);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.BackColor = System.Drawing.Color.Transparent;
-            this.label1.ForeColor = System.Drawing.Color.White;
-            this.label1.Location = new System.Drawing.Point(19, 7);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(132, 20);
-            this.label1.TabIndex = 15;
-            this.label1.Text = "Games detected:";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.label1.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // txt_args_game
             // 
             this.txt_args_game.Enabled = false;
-            this.txt_args_game.Location = new System.Drawing.Point(605, 179);
+            this.txt_args_game.Location = new System.Drawing.Point(788, 11);
             this.txt_args_game.Name = "txt_args_game";
-            this.txt_args_game.Size = new System.Drawing.Size(360, 26);
+            this.txt_args_game.Size = new System.Drawing.Size(279, 26);
             this.txt_args_game.TabIndex = 13;
             // 
             // cb_args_game
             // 
             this.cb_args_game.AutoSize = true;
             this.cb_args_game.ForeColor = System.Drawing.Color.White;
-            this.cb_args_game.Location = new System.Drawing.Point(605, 149);
+            this.cb_args_game.Location = new System.Drawing.Point(555, 13);
             this.cb_args_game.Name = "cb_args_game";
             this.cb_args_game.Size = new System.Drawing.Size(213, 24);
             this.cb_args_game.TabIndex = 12;
@@ -997,7 +991,7 @@ namespace DisplayMagician.UIForms
             // 
             this.lbl_game_timeout.AutoSize = true;
             this.lbl_game_timeout.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_timeout.Location = new System.Drawing.Point(783, 79);
+            this.lbl_game_timeout.Location = new System.Drawing.Point(349, 45);
             this.lbl_game_timeout.Name = "lbl_game_timeout";
             this.lbl_game_timeout.Size = new System.Drawing.Size(125, 20);
             this.lbl_game_timeout.TabIndex = 4;
@@ -1006,7 +1000,7 @@ namespace DisplayMagician.UIForms
             // 
             // nud_timeout_game
             // 
-            this.nud_timeout_game.Location = new System.Drawing.Point(911, 77);
+            this.nud_timeout_game.Location = new System.Drawing.Point(480, 43);
             this.nud_timeout_game.Maximum = new decimal(new int[] {
             240,
             0,
@@ -1020,21 +1014,6 @@ namespace DisplayMagician.UIForms
             0,
             0,
             0});
-            // 
-            // lv_games
-            // 
-            this.lv_games.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.clm_images,
-            this.clm_name});
-            this.lv_games.HideSelection = false;
-            this.lv_games.LargeImageList = this.il_games;
-            this.lv_games.Location = new System.Drawing.Point(23, 30);
-            this.lv_games.Name = "lv_games";
-            this.lv_games.Size = new System.Drawing.Size(338, 221);
-            this.lv_games.SmallImageList = this.il_games;
-            this.lv_games.TabIndex = 22;
-            this.lv_games.UseCompatibleStateImageBehavior = false;
-            this.lv_games.DoubleClick += new System.EventHandler(this.btn_choose_game_Click);
             // 
             // rb_launcher
             // 
@@ -1265,32 +1244,17 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
-            // btn_add_new_start_program
+            // ilv_games
             // 
-            this.btn_add_new_start_program.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_add_new_start_program.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_add_new_start_program.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
-            this.btn_add_new_start_program.Location = new System.Drawing.Point(424, 61);
-            this.btn_add_new_start_program.Name = "btn_add_new_start_program";
-            this.btn_add_new_start_program.Size = new System.Drawing.Size(235, 40);
-            this.btn_add_new_start_program.TabIndex = 38;
-            this.btn_add_new_start_program.Text = "&Add Start Program";
-            this.btn_add_new_start_program.UseVisualStyleBackColor = true;
-            this.btn_add_new_start_program.Click += new System.EventHandler(this.btn_add_new_start_program_Click);
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(138, 24);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(807, 20);
-            this.label3.TabIndex = 39;
-            this.label3.Text = "Add one or more additional programs to start before the main Game starts. They wi" +
-    "ll start in the order listed below.";
+            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.ilv_games.Location = new System.Drawing.Point(0, 97);
+            this.ilv_games.Name = "ilv_games";
+            this.ilv_games.PersistentCacheDirectory = "";
+            this.ilv_games.PersistentCacheSize = ((long)(100));
+            this.ilv_games.Size = new System.Drawing.Size(1076, 226);
+            this.ilv_games.TabIndex = 28;
+            this.ilv_games.UseWIC = true;
+            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
             // 
             // ShortcutForm
             // 
@@ -1376,15 +1340,10 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TextBox txt_game_name;
         private System.Windows.Forms.Label lbl_game_library;
         private System.Windows.Forms.Label lbl_game_name;
-        private System.Windows.Forms.Button btn_choose_game;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txt_args_game;
         private System.Windows.Forms.CheckBox cb_args_game;
         private System.Windows.Forms.Label lbl_game_timeout;
         private System.Windows.Forms.NumericUpDown nud_timeout_game;
-        private System.Windows.Forms.ListView lv_games;
-        private System.Windows.Forms.ColumnHeader clm_images;
-        private System.Windows.Forms.ColumnHeader clm_name;
         private System.Windows.Forms.RadioButton rb_launcher;
         private System.Windows.Forms.RadioButton rb_no_game;
         private System.Windows.Forms.Panel p_standalone;
@@ -1445,5 +1404,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.FlowLayoutPanel flp_start_programs;
         private System.Windows.Forms.Button btn_add_new_start_program;
         private System.Windows.Forms.Label label3;
+        private Manina.Windows.Forms.ImageListView ilv_games;
     }
 }

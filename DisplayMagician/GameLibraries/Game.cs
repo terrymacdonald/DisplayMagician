@@ -1,4 +1,6 @@
-﻿namespace DisplayMagician.GameLibraries
+﻿using System.Drawing;
+
+namespace DisplayMagician.GameLibraries
 {
     public class Game
     {
@@ -32,6 +34,8 @@
         public virtual string ProcessName { get; set; }
 
         public virtual GameStartMode StartMode { get; set; }
+
+        public Bitmap GameBitmap { get; set; }
 
         #endregion
 
