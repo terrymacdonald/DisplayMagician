@@ -540,7 +540,7 @@ namespace DisplayMagician
 
             var myIcon = System.Drawing.Icon.FromHandle(hIcon);
             //myIcon.Dispose();
-            DestroyIcon(hIcon);
+            //DestroyIcon(hIcon);
             //CloseHandle(hIcon);
 
             return myIcon;

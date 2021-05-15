@@ -17,6 +17,7 @@ using DesktopNotifications;
 using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace DisplayMagician {
 
@@ -880,11 +881,14 @@ namespace DisplayMagician {
                 Bitmap bm = null;
                 try
                 {
-                    List<string> filesToSearchForIcon = new List<string>() { };
-                    filesToSearchForIcon.Add(game.IconPath);
-                    filesToSearchForIcon.Add(game.ExePath);
+                    /*ArrayList filesToSearchForIcon = new ArrayList();
+                    filesToSearchForIcon.Add(game.ExePath); 
+                    filesToSearchForIcon.Add(game.IconPath);                    
 
-                    bm = ImageUtils.ToSmallBitmap(filesToSearchForIcon);
+                    bm = ImageUtils.ToSmallBitmap(filesToSearchForIcon);*/
+
+
+                    bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
                 }
                 catch (Exception ex)
                 {

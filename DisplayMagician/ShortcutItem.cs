@@ -116,7 +116,7 @@ namespace DisplayMagician
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
         private List<StartProgram> _startPrograms;
-        private Bitmap _shortcutBitmap, _originalLargeBitmap, _originalSmallBitmap;
+        private Bitmap _shortcutBitmap, _originalLargeBitmap;
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
         public string _originalIconPath;
@@ -203,8 +203,9 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalLargeBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -273,7 +274,8 @@ namespace DisplayMagician
             }
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -349,8 +351,9 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalLargeBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -418,7 +421,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -499,7 +503,8 @@ namespace DisplayMagician
             }
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -569,7 +574,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -635,7 +641,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -712,18 +719,8 @@ namespace DisplayMagician
             }
 
             // We create the OriginalBitmap from the IconPath
-            if (_originalIconPath.EndsWith(".ico"))
-            {
-                Icon icoIcon = new Icon(_originalIconPath, 256, 256);
-                //_originalBitmap = ExtractVistaIcon(biggestIcon);
-                _originalLargeBitmap = icoIcon.ToBitmap();
-                icoIcon.Dispose();
-            }
-            else
-            {
-                _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            }
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1315,8 +1312,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalLargeBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1386,7 +1383,8 @@ namespace DisplayMagician
             }
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1463,8 +1461,9 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalLargeBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalSmallBitmap = ToSmallBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1533,7 +1532,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1614,7 +1614,8 @@ namespace DisplayMagician
             }
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1685,7 +1686,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1752,7 +1754,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1830,7 +1833,7 @@ namespace DisplayMagician
             }
 
             // We create the OriginalBitmap from the IconPath
-            if (_originalIconPath.EndsWith(".ico"))
+            /*if (_originalIconPath.EndsWith(".ico"))
             {
                 Icon icoIcon = new Icon(_originalIconPath, 256, 256);
                 //_originalBitmap = ExtractVistaIcon(biggestIcon);
@@ -1840,7 +1843,8 @@ namespace DisplayMagician
             else
             {
                 _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            }
+            }*/
+            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
@@ -1990,7 +1994,7 @@ namespace DisplayMagician
 
         }
 
-        public static Bitmap ToLargeBitmap(string fileNameAndPath)
+        /*public static Bitmap ToLargeBitmap(string fileNameAndPath)
         {
             Bitmap bm = null;
 
@@ -2033,9 +2037,9 @@ namespace DisplayMagician
                     return null;
                 }
             }
-        }
+        }*/
 
-        public static Bitmap ToSmallBitmap(string fileNameAndPath)
+        /*public static Bitmap ToSmallBitmap(string fileNameAndPath)
         {
             Bitmap bm = null;
             try
@@ -2053,11 +2057,11 @@ namespace DisplayMagician
                     logger.Trace($"ShortcutItem/ToSmallBitmap: The file we want to get the image from is an icon file. Attempting to load the icon file from {fileNameAndPath}.");
                     Size iconSize = new Size(128, 128);
                     Icon iconToReturn = new Icon(fileNameAndPath, iconSize);
-                    /*if (iconToReturn.Size.Width < iconSize.Width || iconToReturn.Size.Height < iconSize.Height)
+                    *//*if (iconToReturn.Size.Width < iconSize.Width || iconToReturn.Size.Height < iconSize.Height)
                     {
                         // If the Icon is too small then we should try the Exe itself to see if its bigger
                         bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
-                    }*/
+                    }*//*
                     //Icon iconToReturn = IconFromFile.GetLargeIconFromFile(fileNameAndPath, true, true);
                     //Icon iconToReturn = IconUtil.TryGetIcon(myIcon,iconSize,24,true,true);
                     logger.Trace($"ShortcutItem/ToSmallBitmap: Attempting to convert the icon file {fileNameAndPath} to a bitmap.");
@@ -2087,7 +2091,7 @@ namespace DisplayMagician
                     return null;
                 }
             }
-        }
+        }*/
 
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
@@ -2129,52 +2133,7 @@ namespace DisplayMagician
                 height = 256;
             }
 
-            // Figure out sizes and positions
-            try
-            {
-                Size targetSize = new Size(width, height);
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: TargetSize is {targetSize.Width}px x {targetSize.Height}px.");
-                Size originalBitmapCurrentSize = new Size(originalBitmap.Width, originalBitmap.Height);
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: originalBitmapCurrentSize is {originalBitmapCurrentSize.Width}px x {originalBitmapCurrentSize.Height}px.");
-                Size overlaylBitmapCurrentSize = new Size(overlayBitmap.Width, overlayBitmap.Height);
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: overlaylBitmapCurrentSize is {overlaylBitmapCurrentSize.Width}px x {overlaylBitmapCurrentSize.Height}px.");
-
-                // Make a new empty bitmap of the wanted size
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: Making a new combined bitmap as the base for the image.");
-                var combinedBitmap = new Bitmap(targetSize.Width, targetSize.Height, format);
-                combinedBitmap.MakeTransparent();
-
-                using (var g = Graphics.FromImage(combinedBitmap))
-                {
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Setting smoothing mode, Interpolation mode, pixel offset mode and compositing quality.");
-                    g.SmoothingMode = SmoothingMode.None;
-                    g.InterpolationMode = InterpolationMode.NearestNeighbor;
-                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.CompositingQuality = CompositingQuality.AssumeLinear;
-
-                    // Resize the originalBitmap if needed then draw it
-                    Size originalBitmapNewSize = ResizeDrawing.FitWithin(originalBitmapCurrentSize, targetSize);
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Resizing the original bitmap to fit in the new combined bitmap. Size is now {originalBitmapNewSize.Width}px x {originalBitmapNewSize.Height}px");
-                    Point originalBitmapNewLocation = ResizeDrawing.AlignCenter(originalBitmapNewSize, targetSize);
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the original bitmap into the new combined bitmap at position {originalBitmapNewLocation.X},{originalBitmapNewLocation.Y}..");
-                    g.DrawImage(originalBitmap, originalBitmapNewLocation.X, originalBitmapNewLocation.Y, originalBitmapNewSize.Width, originalBitmapNewSize.Height);
-
-                    // Resize the overlayBitmap if needed then draw it in the bottom-right corner                    
-                    Size overlayBitmapMaxSize = ResizeDrawing.FitWithin(overlaylBitmapCurrentSize, targetSize);
-                    Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize, 70);
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Resize the overlay bitmap to fit in the bottom right corner of the new combined bitmap. Size is now {overlayBitmapNewSize.Width}px x {overlayBitmapNewSize.Height}px");
-                    Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the overlay bitmap into the new combined bitmap at position {overlayBitmapNewLocation.X},{overlayBitmapNewLocation.Y}.");
-                    g.DrawImage(overlayBitmap, overlayBitmapNewLocation.X, overlayBitmapNewLocation.Y, overlayBitmapNewSize.Width, overlayBitmapNewSize.Height);
-
-                }
-                return combinedBitmap;
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/ToBitmapOverlay: Exception while trying to add the overlay to the Bitmap. Returning null");
-                return null;
-            }
+            return ImageUtils.ToBitmapOverlay(originalBitmap, overlayBitmap, width, height, format);
 
         }
 
@@ -2182,54 +2141,7 @@ namespace DisplayMagician
         public MultiIcon ToIconOverlay()
 #pragma warning restore CS3002 // Return type is not CLS-compliant
         {
-            try
-            {
-                Size[] iconSizes = new[]
-                {
-                    new Size(256, 256),
-                    new Size(64, 64),
-                    new Size(48, 48),
-                    new Size(32, 32),
-                    new Size(24, 24),
-                    new Size(16, 16)
-                };
-                logger.Trace($"ShortcutItem/ToIconOverlay: Creating the new Multi image Icon.");
-                MultiIcon multiIcon = new MultiIcon();
-                logger.Trace($"ShortcutItem/ToIconOverlay: Adding a single icon to the multi image icon.");
-                SingleIcon icon = multiIcon.Add("Icon1");
-
-                foreach (Size size in iconSizes)
-                {
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Creating a new image layer of size {size.Width}px x {size.Height}px.");
-                    Bitmap bitmapOverlay = ToBitmapOverlay(_originalLargeBitmap, ProfileToUse.ProfileTightestBitmap, size.Width, size.Height);
-                    if (bitmapOverlay == null)
-                    {
-                        logger.Warn($"ShortcutItem/ToIconOverlay: bitmapOverlay is null, so we can't turn it into an Icon Overlay. Returning null");
-                        return null;
-                    }
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Adding the new image layer of size {size.Width}px x {size.Height}px to the multi image icon.");
-                    icon.Add(bitmapOverlay);
-
-                    if (size.Width >= 256 && size.Height >= 256)
-                    {
-                        logger.Trace($"ShortcutItem/ToIconOverlay: The image is > 256px x 256px so making it a PNG layer in the icon file.");
-                        icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
-                    }
-
-                    logger.Trace($"ShortcutItem/ToIconOverlay: Disposing of the Bitmap data we just used as the source (stops memory leaks).");
-                    bitmapOverlay.Dispose();
-                }
-
-                logger.Trace($"ShortcutItem/ToIconOverlay: Make the top layer image of the Multi image icon the default one.");
-                multiIcon.SelectedIndex = 0;
-
-                return multiIcon;
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/ToIconOverlay: Exeception occurred while trying to convert the Shortcut Bitmap to an Icon Overlay to store in the shortcut cache directory. Returning null");
-                return null;
-            }
+            return ImageUtils.ToIconOverlay(_originalLargeBitmap, ProfileToUse.ProfileTightestBitmap);
         }
 
         public void RefreshValidity()
