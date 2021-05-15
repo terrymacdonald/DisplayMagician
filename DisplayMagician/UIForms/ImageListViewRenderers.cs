@@ -398,6 +398,7 @@ namespace DisplayMagician.UIForms
                 using (Brush bItemBack = new SolidBrush(alternate && ImageListView.View == Manina.Windows.Forms.View.Details ?
                     ImageListView.Colors.AlternateBackColor : ImageListView.Colors.BackColor))
                 {
+                    //g.FillRectangle(bItemBack, bounds);
                     g.FillRectangle(bItemBack, bounds);
                 }
             }
@@ -405,15 +406,17 @@ namespace DisplayMagician.UIForms
             {
                 using (Brush bItemBack = new SolidBrush(ImageListView.Colors.DisabledBackColor))
                 {
+                    //g.FillRectangle(bItemBack, bounds);
                     g.FillRectangle(bItemBack, bounds);
                 }
             }
 
             if ((state & ItemState.Selected) != ItemState.None)
             {
-                //using (Brush bSelected = new LinearGradientBrush(bounds, ImageListView.Colors.SelectedColor1, ImageListView.Colors.SelectedColor2, LinearGradientMode.Vertical))
+                //using (Brush bSelected = new LinearGradientBrush(bounds, Color.WhiteSmoke, Color.LightGray, LinearGradientMode.Vertical))
                 using (Brush bSelected = new LinearGradientBrush(bounds, Color.WhiteSmoke, Color.LightGray, LinearGradientMode.Vertical))
                 {
+                    //Utility.FillRoundedRectangle(g, bSelected, bounds, 12);
                     Utility.FillRoundedRectangle(g, bSelected, imageBounds, 12);
                 }
             }
@@ -433,7 +436,7 @@ namespace DisplayMagician.UIForms
                         break;
                     }
                 }
-                
+
                 // Draw image border
                 if (Math.Min(pos.Width, pos.Height) > 32)
                 {
@@ -459,16 +462,18 @@ namespace DisplayMagician.UIForms
                     foreColor = ImageListView.Colors.UnFocusedForeColor;
             }
             Size szt = TextRenderer.MeasureText(item.Text, ImageListView.Font);
-            Rectangle rt = new Rectangle(bounds.Left + itemPadding.Width, bounds.Top + itemPadding.Height + ImageListView.ThumbnailSize.Height + 4, ImageListView.ThumbnailSize.Width, 3 * szt.Height);
-            TextFormatFlags flags = TextFormatFlags.EndEllipsis | TextFormatFlags.HorizontalCenter | TextFormatFlags.Top | TextFormatFlags.WordBreak;
+            Rectangle rt = new Rectangle(bounds.Left + itemPadding.Width, bounds.Top + itemPadding.Height + ImageListView.ThumbnailSize.Height, ImageListView.ThumbnailSize.Width, 3 * szt.Height);
+            TextFormatFlags flags = TextFormatFlags.EndEllipsis | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
             TextRenderer.DrawText(g, item.Text, ImageListView.Font, rt, foreColor, flags);
+
 
             if ((state & ItemState.Selected) != ItemState.None)
             {
                 using (Pen pSelectedBorder = new Pen(Color.Brown, 4))
                 {
                     //DrawRoundedRectangle(g, pSelectedBorder, bounds, 9);
-                    Utility.DrawRoundedRectangle(g, pSelectedBorder, imageBounds.Left + 1, imageBounds.Top + 1, imageBounds.Width, imageBounds.Height, 10);
+                    //Utility.DrawRoundedRectangle(g, pSelectedBorder, bounds.Left+3, bounds.Top+3, bounds.Width - 5, bounds.Height - 5, 10);
+                    Utility.DrawRoundedRectangle(g, pSelectedBorder, imageBounds.Left, imageBounds.Top, imageBounds.Width, imageBounds.Height, 10);
                 }
             }
         }

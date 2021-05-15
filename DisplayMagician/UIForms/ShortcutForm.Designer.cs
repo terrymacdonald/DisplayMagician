@@ -88,6 +88,7 @@ namespace DisplayMagician.UIForms
             this.rb_standalone = new System.Windows.Forms.RadioButton();
             this.rb_no_game = new System.Windows.Forms.RadioButton();
             this.p_game = new System.Windows.Forms.Panel();
+            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.cb_wait_alternative_game = new System.Windows.Forms.CheckBox();
             this.btn_choose_alternative_game = new System.Windows.Forms.Button();
             this.txt_alternative_game = new System.Windows.Forms.TextBox();
@@ -116,7 +117,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -894,6 +894,19 @@ namespace DisplayMagician.UIForms
             this.p_game.Size = new System.Drawing.Size(1076, 323);
             this.p_game.TabIndex = 7;
             // 
+            // ilv_games
+            // 
+            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ilv_games.Location = new System.Drawing.Point(0, 97);
+            this.ilv_games.Name = "ilv_games";
+            this.ilv_games.PersistentCacheDirectory = "";
+            this.ilv_games.PersistentCacheSize = ((long)(100));
+            this.ilv_games.Size = new System.Drawing.Size(1076, 226);
+            this.ilv_games.TabIndex = 28;
+            this.ilv_games.UseWIC = true;
+            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
+            // 
             // cb_wait_alternative_game
             // 
             this.cb_wait_alternative_game.AutoSize = true;
@@ -1243,18 +1256,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
-            // 
-            // ilv_games
-            // 
-            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.ilv_games.Location = new System.Drawing.Point(0, 97);
-            this.ilv_games.Name = "ilv_games";
-            this.ilv_games.PersistentCacheDirectory = "";
-            this.ilv_games.PersistentCacheSize = ((long)(100));
-            this.ilv_games.Size = new System.Drawing.Size(1076, 226);
-            this.ilv_games.TabIndex = 28;
-            this.ilv_games.UseWIC = true;
-            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
             // 
             // ShortcutForm
             // 
