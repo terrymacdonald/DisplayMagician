@@ -881,18 +881,25 @@ namespace DisplayMagician {
                 Bitmap bm = null;
                 try
                 {
-                    /*ArrayList filesToSearchForIcon = new ArrayList();
-                    filesToSearchForIcon.Add(game.ExePath); 
-                    filesToSearchForIcon.Add(game.IconPath);                    
+                    ArrayList filesToSearchForIcon = new ArrayList();
+                    filesToSearchForIcon.Add(game.ExePath);
+                    if (game.IconPath != game.ExePath)
+                        filesToSearchForIcon.Add(game.IconPath);
 
-                    bm = ImageUtils.ToSmallBitmap(filesToSearchForIcon);*/
+                    bm = ImageUtils.GetMeABitmapFromFile(filesToSearchForIcon);
 
 
-                    bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
+                    //bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
+
+
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/LoadGamesInBackground: Exception building game bitmaps during load");
+                    logger.Error(ex, $"Program/LoadGamesInBackground: Exception building game bitmaps during load");                    
+                }
+
+                if (bm == null)
+                {
                     if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
                         bm = Properties.Resources.Steam.ToBitmap();
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
@@ -902,6 +909,7 @@ namespace DisplayMagician {
                     else
                         bm = Properties.Resources.DisplayMagician.ToBitmap();
                 }
+
                 game.GameBitmap = bm;
             }
 

@@ -205,6 +205,7 @@ namespace DisplayMagician.UIForms
             this.tabc_shortcut.ShowToolTips = true;
             this.tabc_shortcut.Size = new System.Drawing.Size(1090, 654);
             this.tabc_shortcut.TabIndex = 28;
+            this.tabc_shortcut.VisibleChanged += new System.EventHandler(this.tabc_shortcut_VisibleChanged);
             // 
             // tabp_display
             // 
@@ -896,13 +897,16 @@ namespace DisplayMagician.UIForms
             // 
             // ilv_games
             // 
-            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.ilv_games.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ilv_games.IntegralScroll = true;
             this.ilv_games.Location = new System.Drawing.Point(0, 97);
             this.ilv_games.Name = "ilv_games";
             this.ilv_games.PersistentCacheDirectory = "";
             this.ilv_games.PersistentCacheSize = ((long)(100));
             this.ilv_games.Size = new System.Drawing.Size(1076, 226);
+            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
             this.ilv_games.TabIndex = 28;
             this.ilv_games.UseWIC = true;
             this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
@@ -1405,6 +1409,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.FlowLayoutPanel flp_start_programs;
         private System.Windows.Forms.Button btn_add_new_start_program;
         private System.Windows.Forms.Label label3;
-        private Manina.Windows.Forms.ImageListView ilv_games;
+        internal Manina.Windows.Forms.ImageListView ilv_games;
     }
 }

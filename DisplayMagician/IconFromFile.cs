@@ -583,10 +583,10 @@ namespace DisplayMagician
             IntPtr hIcon = IntPtr.Zero;
             int ILD_TRANSPARENT = 1;
             hres = iml.GetIcon(iconIndex, ILD_TRANSPARENT, ref hIcon);
-            //if (hres == 0)
-            //{
-            //    throw (new System.Exception("Error iml.GetIcon"));
-            //}
+            /*if (hres == 0)
+            {
+                return new Bitmap(1, 1);
+            }*/
 
             var myIcon = System.Drawing.Icon.FromHandle(hIcon);
             Bitmap bm = myIcon.ToBitmap();

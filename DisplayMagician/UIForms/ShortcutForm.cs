@@ -463,7 +463,7 @@ namespace DisplayMagician.UIForms
                 _capturePermanence = ShortcutPermanence.Temporary;
             }
 
-            // Scan through the list of 
+            // Add the startprograms to the list
             List<StartProgram> newStartPrograms = new List<StartProgram>() { };
             foreach (StartProgramControl myStartProgramControl in flp_start_programs.Controls)
             {
@@ -472,55 +472,7 @@ namespace DisplayMagician.UIForms
 
             // Replace the old start programs with the ones we've created now
             _startPrograms = newStartPrograms;
-            // Save the start program 1
-            /*StartProgram myStartProgram = new StartProgram
-            {
-                Priority = 1,
-                Enabled = cb_start_program1.Checked,
-                Executable = txt_start_program1.Text,
-                ExecutableArgumentsRequired = cb_start_program_pass_args1.Checked,
-                Arguments = txt_start_program_args1.Text,
-                CloseOnFinish = cb_start_program_close1.Checked,
-                DontStartIfAlreadyRunning = cb_dont_start_if_running1.Checked
-            };
-            _startPrograms.Add(myStartProgram);
-
-            myStartProgram = new StartProgram
-            {
-                Priority = 2,
-                Executable = txt_start_program2.Text,
-                Enabled = cb_start_program2.Checked,
-                ExecutableArgumentsRequired = cb_start_program_pass_args2.Checked,
-                Arguments = txt_start_program_args2.Text,
-                CloseOnFinish = cb_start_program_close2.Checked,
-                DontStartIfAlreadyRunning = cb_dont_start_if_running2.Checked
-            };
-            _startPrograms.Add(myStartProgram);
-
-            myStartProgram = new StartProgram
-            {
-                Priority = 3,
-                Executable = txt_start_program3.Text,
-                Enabled = cb_start_program3.Checked,
-                ExecutableArgumentsRequired = cb_start_program_pass_args3.Checked,
-                Arguments = txt_start_program_args3.Text,
-                CloseOnFinish = cb_start_program_close3.Checked,
-                DontStartIfAlreadyRunning = cb_dont_start_if_running3.Checked
-            };
-            _startPrograms.Add(myStartProgram);
-
-            myStartProgram = new StartProgram
-            {
-                Priority = 4,
-                Executable = txt_start_program4.Text,
-                Enabled = cb_start_program4.Checked,
-                ExecutableArgumentsRequired = cb_start_program_pass_args4.Checked,
-                Arguments = txt_start_program_args4.Text,
-                CloseOnFinish = cb_start_program_close4.Checked,
-                DontStartIfAlreadyRunning = cb_dont_start_if_running4.Checked
-            };
-            _startPrograms.Add(myStartProgram);            */
-
+            
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
             if (rb_launcher.Checked)
@@ -731,21 +683,26 @@ namespace DisplayMagician.UIForms
             IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
             if (matchingImageListViewItems.Any())
             {
-                matchingImageListViewItems.First().Selected = true;
-                matchingImageListViewItems.First().Focused = true;
-                matchingImageListViewItems.First().Enabled = true;
+                ImageListViewItem itemToSelect = matchingImageListViewItems.First();
+                itemToSelect.Selected = true;
+                itemToSelect.Focused = true;
+                itemToSelect.Enabled = true;
+                ilv_saved_profiles.EnsureVisible(itemToSelect.Index);
             }
         }
 
-        private void RefreshGameImageListView(Game game)
+        private void SelectGameInImageListView()
         {
             ilv_games.ClearSelection();
-            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_games.Items where item.Text == game.Name select item);
+            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_games.Items where item.Text == _shortcutToEdit.GameName select item);
             if (matchingImageListViewItems.Any())
             {
-                matchingImageListViewItems.First().Selected = true;
-                matchingImageListViewItems.First().Focused = true;
-                matchingImageListViewItems.First().Enabled = true;
+                ImageListViewItem itemToSelect = matchingImageListViewItems.First();
+                itemToSelect.Selected = true;
+                itemToSelect.Focused = true;
+                itemToSelect.Enabled = true;
+                ilv_games.EnsureVisible(itemToSelect.Index);
+                ilv_games.Refresh();
             }
         }
 
@@ -965,17 +922,6 @@ namespace DisplayMagician.UIForms
                 rb_set_capture_volume.Checked = false;
             }
             
-
-            // Populate a full list of games
-            // Start with the Steam Games
-            /*allGames = new List<Game>();
-            allGames.AddRange(SteamLibrary.GetLibrary().AllInstalledGames);
-            // Then add the Uplay Games
-            allGames.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
-            // Then add the Origin Games
-            allGames.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);*/
-
-
             // Load all the Games into the Games ListView
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
@@ -985,7 +931,8 @@ namespace DisplayMagician.UIForms
                 ilv_games.Items.Add(newItem, _gameAdaptor);
             }
 
-            
+            SelectGameInImageListView();
+
             if (_shortcutToEdit != null)
             {
                 if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
@@ -1129,6 +1076,7 @@ namespace DisplayMagician.UIForms
                     if (gameItem.Text.Equals(_shortcutToEdit.GameName))
                     {
                         gameItem.Selected = true;
+                        ilv_games.EnsureVisible(gameItem.Index);
                         break;
                     }
                 }
@@ -1427,21 +1375,36 @@ namespace DisplayMagician.UIForms
                 ilv_saved_profiles.ResumeLayout();
             }
             
-            if (DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count > 0)
+            /*if (DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count > 0)
             {
 
                 // Temporarily stop updating the saved_profiles listview
                 ilv_games.SuspendLayout();
 
-                ImageListViewItem newItem = null;
+                ImageListViewItem ilvItem = null;
                 foreach (Game loadedGame in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
                 {
                     bool thisLoadedProfileIsAlreadyHere = (from item in ilv_games.Items where item.Text == loadedGame.Name orderby item.Text select item.Text).Any();
                     if (!thisLoadedProfileIsAlreadyHere)
                     {
-                        newItem = new ImageListViewItem(loadedGame, loadedGame.Name);
+                        ilvItem = new ImageListViewItem(loadedGame, loadedGame.Name);
                         //ilv_saved_profiles.Items.Add(newItem);
-                        ilv_games.Items.Add(newItem, _gameAdaptor);
+                        ilv_games.Items.Add(ilvItem, _gameAdaptor);
+                    }
+
+                }
+
+                // If a game has been selected
+                if (!String.IsNullOrEmpty(_shortcutToEdit.GameName))
+                {
+                    foreach (ImageListViewItem gameItem in ilv_games.Items)
+                    {
+                        if (gameItem.Text == _shortcutToEdit.GameName)
+                        {
+                            gameItem.Selected = true;
+                            ilv_games.EnsureVisible(gameItem.Index);
+                        }
+
                     }
 
                 }
@@ -1449,7 +1412,7 @@ namespace DisplayMagician.UIForms
                 // Restart updating the saved_profiles listview
                 ilv_games.ResumeLayout();
             }
-
+*/
             UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
             EnableSaveButtonIfValid();
         }
@@ -2235,5 +2198,17 @@ namespace DisplayMagician.UIForms
             SuggestShortcutName();
             EnableSaveButtonIfValid();
         }
+
+        private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
+        {
+            if (tabc_shortcut.Visible == true)
+                SelectGameInImageListView();
+        }
+
+        /*private void ilv_games_VisibleChanged(object sender, EventArgs e)
+        {
+            if (ilv_games.SelectedItems.Count > 0)
+                ilv_games.EnsureVisible(ilv_games.SelectedItems[0].Index);
+        }*/
     }
 }

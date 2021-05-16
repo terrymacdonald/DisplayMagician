@@ -256,30 +256,33 @@ namespace DisplayMagician.UIForms
 
         private void btn_edit_Click(object sender, EventArgs e)
         {
-            int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
-            string shortcutUUID = ilv_saved_shortcuts.Items[currentIlvIndex].EquipmentModel;
-            _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
-
-            if (_selectedShortcut == null)
-                return;
-
-            this.Cursor = Cursors.WaitCursor;
-
-            // We need to stop ImageListView redrawing things before we're ready
-            // This stops an exception when ILV is just too keen!
-            
-
-            var shortcutForm = new ShortcutForm(_selectedShortcut);
-            //ilv_saved_shortcuts.SuspendLayout();
-            shortcutForm.ShowDialog(this);
-            if (shortcutForm.DialogResult == DialogResult.OK)
+            if (ilv_saved_shortcuts.SelectedItems.Count > 0)
             {
-                RefreshShortcutLibraryUI();
-                // As this is an edit, we need to manually force saving the shortcut library
-                ShortcutRepository.SaveShortcuts();
-            }
+                int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
+                string shortcutUUID = ilv_saved_shortcuts.Items[currentIlvIndex].EquipmentModel;
+                _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
 
-            this.Cursor = Cursors.Default;
+                if (_selectedShortcut == null)
+                    return;
+
+                this.Cursor = Cursors.WaitCursor;
+
+                // We need to stop ImageListView redrawing things before we're ready
+                // This stops an exception when ILV is just too keen!
+
+
+                var shortcutForm = new ShortcutForm(_selectedShortcut);
+                //ilv_saved_shortcuts.SuspendLayout();
+                shortcutForm.ShowDialog(this);
+                if (shortcutForm.DialogResult == DialogResult.OK)
+                {
+                    RefreshShortcutLibraryUI();
+                    // As this is an edit, we need to manually force saving the shortcut library
+                    ShortcutRepository.SaveShortcuts();
+                }
+
+                this.Cursor = Cursors.Default;
+            }
         }
 
         private void btn_delete_Click(object sender, EventArgs e)
