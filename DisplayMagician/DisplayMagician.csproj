@@ -280,9 +280,6 @@
     <PackageReference Include="HtmlAgilityPack">
       <Version>1.11.33</Version>
     </PackageReference>
-    <PackageReference Include="IconExtractor">
-      <Version>1.0.1</Version>
-    </PackageReference>
     <PackageReference Include="IconExtractor.dll">
       <Version>1.0.2.1-beta</Version>
     </PackageReference>
