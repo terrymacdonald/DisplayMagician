@@ -49,7 +49,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdapter/GetThumbnail exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Warn(ex, $"ShortcutAdapter/GetThumbnail exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
@@ -81,7 +81,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdapter/GetUniqueIdentifier exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Warn(ex, $"ShortcutAdapter/GetUniqueIdentifier exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a Shortcut
                 // Then we return null
                 return null;
@@ -100,12 +100,12 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                string shortcutName = (string)key;
-                return shortcutName;
+                ShortcutItem shortcut = (ShortcutItem)key;
+                return shortcut.Name;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdaptor/GetSourceImage exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Warn(ex, $"ShortcutAdaptor/GetSourceImage exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
 
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
@@ -198,7 +198,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ShortcutAdapter/Utility.Tuple exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Warn(ex, $"ShortcutAdapter/Utility.Tuple exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;

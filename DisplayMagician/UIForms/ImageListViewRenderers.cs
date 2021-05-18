@@ -421,7 +421,6 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            // Draw the image
             Image img = ImageUtils.RoundCorners(item.GetCachedImage(CachedImageType.Thumbnail), 20);
             if (img != null)
             {

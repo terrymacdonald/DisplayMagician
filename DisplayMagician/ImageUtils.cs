@@ -21,6 +21,11 @@ namespace DisplayMagician
 
         public static Image RoundCorners(Image StartImage, int CornerRadius)
         {
+            if (StartImage == null)
+            {
+                throw new ArgumentNullException("StartImage");
+            }
+
             CornerRadius *= 2;
             Bitmap RoundedImage = new Bitmap(StartImage.Width, StartImage.Height);
             using (Graphics g = Graphics.FromImage(RoundedImage))
@@ -98,6 +103,11 @@ namespace DisplayMagician
 
         public static Image MakeGrayscale(Image original)
         {
+            if (original == null)
+            {
+                throw new ArgumentNullException("original");
+            }
+
             //create a blank bitmap the same size as original
             Image newBitmap = new Bitmap(original.Width, original.Height);
 
@@ -132,101 +142,6 @@ namespace DisplayMagician
             return newBitmap;
         }
 
-        /*       public static Bitmap ToLargeBitmap(string fileNameAndPath)
-               {
-                   Bitmap bmToReturn = null;
-
-                   try
-                   {
-                       if (String.IsNullOrWhiteSpace(fileNameAndPath))
-                       {
-                           logger.Warn($"ShortcutItem/ToLargeBitmap: Bitmap fileNameAndPath is empty! Unable to get the large icon from the file (256px x 256px).");
-                           return null;
-                       }
-
-                       if (fileNameAndPath.EndsWith(".ico"))
-                       {
-                           logger.Trace($"ShortcutItem/ToLargeBitmap: The file we want to get the image from is an icon file. Attempting to extract the icon file from {fileNameAndPath}.");
-
-                           Icon myIcon = new Icon(fileNameAndPath,128,128);
-                           bmToReturn = myIcon.ToBitmap();
-                           MultiIcon myMultiIcon = new MultiIcon();
-                           SingleIcon mySingleIcon = myMultiIcon.Add("Icon1");
-                           //mySingleIcon.CreateFrom(fileNameAndPath,IconOutputFormat.Vista);
-                           mySingleIcon.Load(fileNameAndPath);
-                           Bitmap bm = null;
-                           foreach (IconImage myIconImage in mySingleIcon)
-                           {
-                               bm = myIconImage.Image;
-
-                               if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                               {
-                                   bmToReturn = bm;
-                                   logger.Trace($"ShortcutItem/ToLargeBitmap: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                               }
-                           }                                    
-                       }
-                       else
-                       {
-                           Icon myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
-                           bmToReturn = myIcon.ToBitmap();
-
-                           logger.Trace($"ShortcutItem/ToLargeBitmap: The file {fileNameAndPath} isn't an Icon file, so trying to use GetLargeBitmapFromFile to extract the image.");
-                           Bitmap bm = null;
-                           bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, false, false);
-
-                           if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                           {
-                               bmToReturn = bm;
-                               logger.Trace($"ShortcutItem/ToLargeBitmap: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                           }
-                       }
-                       return bmToReturn;
-                   }
-                   catch (Exception ex)
-                   {
-                       logger.Warn(ex, $"ShortcutItem/ToLargeBitmap: Exception while trying to save the Shortcut icon initially. Trying again with GetLargeBitmapFromFile.");
-                       try
-                       {
-                           logger.Trace($"ShortcutItem/ToLargeBitmap: Attempt2. The file {fileNameAndPath} isn't an Icon file, so trying to use GetLargeBitmapFromFile to extract the image.");
-                           bmToReturn = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, false);
-                           return bmToReturn;
-                       }
-                       catch (Exception innerex)
-                       {
-                           logger.Warn(innerex, $"ShortcutItem/ToLargeBitmap: Exception while trying to save the Shortcut icon a second time. Giving up.");
-                           return null;
-                       }
-                   }
-               }
-
-               public static Bitmap ToLargeBitmap(ArrayList fileNamesAndPaths)
-               {
-                   Bitmap bmToReturn = null;
-
-
-                   if (fileNamesAndPaths.Count == 0)
-                   {
-                       logger.Warn($"ShortcutItem/ToLargeBitmap2: The fileNamesAndPaths list is empty! Can't get the large bitmap.");
-                       return null;
-                   }
-                   foreach (string fileNameAndPath in fileNamesAndPaths)
-                   {
-                       Bitmap bm = ToLargeBitmap(fileNameAndPath);
-
-                       if (bmToReturn == null)
-                       {
-                           bmToReturn = bm;
-                       }
-                       if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                       {
-                           bmToReturn = bm;
-                       }
-                   }
-                   return bmToReturn;
-
-               }*/
-
         public static Bitmap GetMeABitmapFromFile(string fileNameAndPath)
         {            
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
@@ -238,15 +153,24 @@ namespace DisplayMagician
             Icon myIcon = null;
             Bitmap bm = null;
             Bitmap bmToReturn = new Bitmap(1, 1);
-            try
-            {
+
+            try {
 
                 List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
+                Size largeSize = new Size(256, 256);
                 foreach (Icon myExtractedIcon in myExtractedIcons)
                 {
-                    Size largeSize = new Size(256, 256);
-                    myIcon = myExtractedIcon.TryGetIcon(largeSize, 32, true, true);
-
+                    
+                    try
+                    {
+                        myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
+                    }
+                    catch (ArgumentNullException nullex)
+                    {
+                        logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this icon that we couldn't test, so skipping it.");
+                        continue;
+                    }
+                    
                     if (myIcon != null)
                     {
                         bm = myIcon.ToBitmap();
@@ -254,22 +178,25 @@ namespace DisplayMagician
                         if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                         {
                             bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/ToSmallBitmap: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                         }
                     }
                 }
+
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor! ");
             }
 
+
             if (fileNameAndPath.EndsWith(".ico"))
-            {
+            {                
+              
                 try
                 {
 
-                    logger.Trace($"ShortcutItem/ToSmallBitmap: The file we want to get the image from is an icon file. Attempting to extract the icon file from {fileNameAndPath}.");
+                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: The file we want to get the image from is an icon file. Attempting to extract the icon file from {fileNameAndPath}.");
 
 
                     myIcon = new Icon(fileNameAndPath, 256, 256);
@@ -283,7 +210,7 @@ namespace DisplayMagician
                     if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                     {
                         bmToReturn = bm;
-                        logger.Trace($"ShortcutItem/ToSmallBitmap: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                     }
                 }
                 catch (Exception ex)
@@ -305,7 +232,7 @@ namespace DisplayMagician
                         if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                         {
                             bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/ToSmallBitmap: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                         }
                     }
                 }
@@ -316,6 +243,7 @@ namespace DisplayMagician
             }
             else
             {
+
                 try
                 {
                     List<Icon> myIcons = ImageUtils.ExtractIconsFromExe(fileNameAndPath, true);
@@ -328,7 +256,7 @@ namespace DisplayMagician
                             if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                             {
                                 bmToReturn = bm;
-                                logger.Trace($"ShortcutItem/ToSmallBitmap: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                             }
                         }
                     }
@@ -349,7 +277,7 @@ namespace DisplayMagician
                         if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                         {
                             bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/ToSmallBitmap: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                         }
                     }
                 }
@@ -386,7 +314,7 @@ namespace DisplayMagician
 
             if (fileNamesAndPaths.Count == 0)
             {
-                logger.Warn($"ShortcutItem/ToSmallBitmap2: The fileNamesAndPaths list is empty! Can't get the large bitmap.");
+                logger.Warn($"ShortcutItem/GetMeABitmapFromFile2: The fileNamesAndPaths list is empty! Can't get the bitmap from the files.");
                 return null;
             }
             foreach (string fileNameAndPath in fileNamesAndPaths)
@@ -540,80 +468,85 @@ namespace DisplayMagician
         }
 
         [DllImport("Shell32", CharSet = CharSet.Auto)]
-        private static unsafe extern int ExtractIconEx(string lpszFile, int nIconIndex, IntPtr[] phIconLarge, IntPtr[] phIconSmall, int nIcons);
+        private static  extern int ExtractIconEx(string lpszFile, int nIconIndex, IntPtr[] phIconLarge, IntPtr[] phIconSmall, int nIcons);
 
         [DllImport("user32.dll", EntryPoint = "DestroyIcon", SetLastError = true)]
-        private static unsafe extern int DestroyIcon(IntPtr hIcon);
+        private static  extern int DestroyIcon(IntPtr hIcon);
 
         public static List<Icon> ExtractIconsFromExe(string file, bool large)
         {
-            unsafe
+            int readIconCount = 0;
+            IntPtr[] hLargeIconEx = new IntPtr[] { IntPtr.Zero };
+            IntPtr[] hSmallIconEx = new IntPtr[] { IntPtr.Zero };
+
+            try
             {
-                int readIconCount = 0;
-                IntPtr[] hLargeIconEx = new IntPtr[] { IntPtr.Zero };
-                IntPtr[] hSmallIconEx = new IntPtr[] { IntPtr.Zero };
-
-                try
+                List<Icon> extractedIcons = new List<Icon>() { };
+                // First we get the total number of icons using ExtractIconEx
+                int totalIconCount = ExtractIconEx(file, -1, null, null, 0);
+                if (totalIconCount > 0)
                 {
-                    List<Icon> extractedIcons = new List<Icon>() { };
-                    // First we get the total number of icons using ExtractIconEx
-                    int totalIconCount = ExtractIconEx(file, -1, null, null, 0);
-                    if (totalIconCount > 0)
+                    for (int iconNum = 0; iconNum < totalIconCount; iconNum++)
                     {
-                        for (int iconNum = 0; iconNum < totalIconCount; iconNum++)
+                        hLargeIconEx = new IntPtr[] { IntPtr.Zero };
+                        hSmallIconEx = new IntPtr[] { IntPtr.Zero };
+                        //if (large)
+                        //readIconCount = ExtractIconEx(file, 0, hIconEx, hDummy, 1);
+                        //    readIconCount = ExtractIconEx(file, iconNum, hIconEx, null, 1);
+                        //else
+                        //readIconCount = ExtractIconEx(file, 0, hDummy, hIconEx, 1);
+                        //    readIconCount = ExtractIconEx(file, iconNum, null, hIconEx, 1);
+
+                        readIconCount = ExtractIconEx(file, iconNum, hLargeIconEx, hSmallIconEx, 1);
+
+                        if (readIconCount > 0)
                         {
-                            hLargeIconEx = new IntPtr[] { IntPtr.Zero };
-                            hSmallIconEx = new IntPtr[] { IntPtr.Zero };
-                            //if (large)
-                            //readIconCount = ExtractIconEx(file, 0, hIconEx, hDummy, 1);
-                            //    readIconCount = ExtractIconEx(file, iconNum, hIconEx, null, 1);
-                            //else
-                            //readIconCount = ExtractIconEx(file, 0, hDummy, hIconEx, 1);
-                            //    readIconCount = ExtractIconEx(file, iconNum, null, hIconEx, 1);
-
-                            readIconCount = ExtractIconEx(file, iconNum, hLargeIconEx, hSmallIconEx, 1);
-
-                            if (readIconCount > 0)
+                            if (hLargeIconEx[0] != IntPtr.Zero)
                             {
-                                if (hLargeIconEx[0] != IntPtr.Zero)
-                                {
-                                    Icon extractedIcon = (Icon)Icon.FromHandle(hLargeIconEx[0]).Clone();
-                                    extractedIcons.Add(extractedIcon);
-                                }
-                                else if (hSmallIconEx[0] != IntPtr.Zero)
-                                {
-                                    Icon extractedIcon = (Icon)Icon.FromHandle(hSmallIconEx[0]).Clone();
-                                    extractedIcons.Add(extractedIcon);
-                                }
-                                // GET FIRST EXTRACTED ICON
-                                return extractedIcons;
+                                Icon extractedIcon = (Icon)Icon.FromHandle(hLargeIconEx[0]).Clone();
+                                extractedIcons.Add(extractedIcon);
+                            }
+                            else if (hSmallIconEx[0] != IntPtr.Zero)
+                            {
+                                Icon extractedIcon = (Icon)Icon.FromHandle(hSmallIconEx[0]).Clone();
+                                extractedIcons.Add(extractedIcon);
                             }
                         }
-                        return extractedIcons;
                     }
-                    else
-                        return null;
 
-                }
-                catch (Exception ex)
-                {
-                    /* EXTRACT ICON ERROR */
-
-                    // BUBBLE UP
-                    throw new ApplicationException("Could not extract icon", ex);
-                }
-                finally
-                {
-                    // RELEASE RESOURCES
-                    foreach (IntPtr ptr in hLargeIconEx)
+                    /*foreach (IntPtr ptr in hLargeIconEx)
                         if (ptr != IntPtr.Zero)
                             DestroyIcon(ptr);
 
                     foreach (IntPtr ptr in hSmallIconEx)
                         if (ptr != IntPtr.Zero)
-                            DestroyIcon(ptr);
+                            DestroyIcon(ptr);*/
+
+                    return extractedIcons;
                 }
+                else
+                    return null;
+
             }
+            catch (Exception ex)
+            {
+                /* EXTRACT ICON ERROR */
+
+                // BUBBLE UP
+                throw new ApplicationException("Could not extract icon", ex);
+            }
+            finally
+            {
+                // RELEASE RESOURCES
+                foreach (IntPtr ptr in hLargeIconEx)
+                    if (ptr != IntPtr.Zero)
+                        DestroyIcon(ptr);
+
+                foreach (IntPtr ptr in hSmallIconEx)
+                    if (ptr != IntPtr.Zero)
+                        DestroyIcon(ptr);
+            }
+            
         }
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
@@ -647,7 +580,7 @@ namespace DisplayMagician
         /// <param name="size">Size of the icon to load. If there is no such size available, a larger or smaller
         ///        sized-icon is scaled.</param>
         /// <returns>List of all icons.</returns>
-        public static Icon GetIconFromExe(string path = null, string resId = "#32512", int size = 32)
+        public static Icon GetIconFromExe(string path = null, int size = 256, string resId = "#32512")
         {
             // load module
             IntPtr h;

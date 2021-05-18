@@ -45,7 +45,9 @@ namespace DisplayMagician.UIForms
                 Game game = (Game)key;
 
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
+              
                 return game.GameBitmap.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
+
             }
             catch (Exception ex)
             {
@@ -99,8 +101,8 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                string gameName = (string)key;
-                return gameName;
+                Game game = (Game)key;
+                return game.Name;
             }
             catch (Exception ex)
             {
@@ -126,10 +128,10 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                ShortcutItem shortcut = (ShortcutItem)key;
+                Game game = (Game)key;
 
                 // Get file info
-                if (shortcut.ShortcutBitmap is Bitmap)
+                if (game.GameBitmap is Bitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
                     // System.Drawing.Image exception created while accessing the Size
@@ -139,13 +141,13 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySize = shortcut.ShortcutBitmap.Size;
+                            mySize = game.GameBitmap.Size;
                             gotSize = true;
                         }
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
-                            logger.Warn(ex, "ShortcutAdaptor/GetDetails: System.Drawing.Image exception caused while trying to get the ProfileBitmap Size as an Integer.");
+                            logger.Warn(ex, "GameAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the GameBitmap Size as an Integer.");
                         }
                     }
 
@@ -157,26 +159,28 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySizeF = shortcut.ShortcutBitmap.PhysicalDimension;
+                            mySizeF = game.GameBitmap.PhysicalDimension;
                             gotSizeF = true;
                         }
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
-                            logger.Warn(ex, "ShortcutAdaptor/GetDetails: System.Drawing.Image exception caused while trying to get the ProfileBitmap Size as a Float.");
+                            logger.Warn(ex, "GameAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the GameBitmap Size as a Float.");
                         }
                     }
 
-                    string name = shortcut.Name;
-                    string filepath = Path.GetDirectoryName(shortcut.SavedShortcutIconCacheFilename);
-                    string filename = Path.GetFileName(shortcut.SavedShortcutIconCacheFilename);
+                    string name = game.Name;
+                    //string filepath = Path.GetDirectoryName(shortcut.SavedShortcutIconCacheFilename);
+                    //string filename = Path.GetFileName(shortcut.SavedShortcutIconCacheFilename);
                     DateTime now = DateTime.Now;
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateModified, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FileSize, string.Empty, (long)0));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, filepath ?? ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, filepath ?? ""));
+                    //details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, filepath ?? ""));
+                    //details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, filepath ?? ""));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FilePath, string.Empty, ""));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FolderName, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, mySize));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, mySizeF));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, name ?? ""));
@@ -197,7 +201,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, "ShortcutAdapter/Utility.Tuple: Exception caused while trying to add details to the Game ImageListViewItem.");
+                logger.Warn(ex, "GameAdapter/Utility.Tuple: Exception caused while trying to add details to the Game ImageListViewItem.");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;

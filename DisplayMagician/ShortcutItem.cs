@@ -116,7 +116,7 @@ namespace DisplayMagician
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
         private List<StartProgram> _startPrograms;
-        private Bitmap _shortcutBitmap, _originalLargeBitmap;
+        private Bitmap _shortcutBitmap, _originalBitmap;
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
         public string _originalIconPath;
@@ -153,584 +153,6 @@ namespace DisplayMagician
             //RefreshValidity();
 
         }
-
-
-        public ShortcutItem(
-            string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence,
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null,
-            bool autoName = true,
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _category = ShortcutCategory.NoGame;
-            _profileToUse = profile;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-            // We create the OriginalLargeBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            //_originalSmallBitmap = ToSmallBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
-        public ShortcutItem(
-            string name, 
-            string profileUuid, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false, 
-            string audioDevice = "", 
-            bool setAudioVolume = false, 
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false, 
-            decimal captureVolume = -1, 
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.NoGame;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-            {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
-                {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
-            }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
-
-
-        public ShortcutItem(
-            string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile, 
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-            string gameAppId,
-            string gameName,
-            SupportedGameLibraryType gameLibrary,
-            int gameTimeout,
-            string gameArguments,
-            bool gameArgumentsRequired,
-            string differentGameExeToMonitor,
-            bool monitorDifferentGameExe,
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence,
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null,
-            bool autoName = true,
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name; 
-            _profileToUse = profile;
-            _category = ShortcutCategory.Game;
-            _gameAppId = gameAppId;
-            _gameName = gameName;
-            _gameLibrary = gameLibrary;
-            _startTimeout = gameTimeout;
-            _gameArguments = gameArguments;
-            _gameArgumentsRequired = gameArgumentsRequired;
-            _differentGameExeToMonitor = differentGameExeToMonitor;
-            _monitorDifferentGameExe = monitorDifferentGameExe;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-            // We create the OriginalLargeBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            //_originalSmallBitmap = ToSmallBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
-        public ShortcutItem(
-            string name, 
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile, 
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-            GameStruct game, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            // Create a new UUID for the shortcut if one wasn't created already
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileToUse = profile;
-            _category = ShortcutCategory.Game;
-            _gameAppId = game.GameToPlay.Id;
-            _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibrary;
-            _startTimeout = game.StartTimeout;
-            _gameArguments = game.GameArguments;
-            _gameArgumentsRequired = game.GameArgumentsRequired;
-            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
-            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
-
-
-        public ShortcutItem(
-            string name, 
-            string profileUuid, 
-            GameStruct game, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.Game;
-            _gameAppId = game.GameToPlay.Id;
-            _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibrary;
-            _startTimeout = game.StartTimeout;
-            _gameArguments = game.GameArguments;
-            _gameArgumentsRequired = game.GameArgumentsRequired;
-            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
-            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
-            _gameArgumentsRequired = false;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-            {
-                if (profileToTest.UUID.Equals(_profileUuid,StringComparison.OrdinalIgnoreCase))
-                {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
-            }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
-        public ShortcutItem(
-            string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-            string differentExecutableToMonitor,
-            string executableNameAndPath,
-            int executableTimeout,
-            string executableArguments,
-            bool executableArgumentsRequired,
-            bool processNameToMonitorUsesExecutable,
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence,
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null,
-            bool autoName = true,
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileToUse = profile;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = differentExecutableToMonitor;
-            _executableNameAndPath = executableNameAndPath;
-            _startTimeout = executableTimeout;
-            _executableArguments = executableArguments;
-            _executableArgumentsRequired = executableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = processNameToMonitorUsesExecutable;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //     _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
-        public ShortcutItem(
-            string name, 
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile, 
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-            Executable executable, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name; 
-            _profileToUse = profile;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
-            _executableNameAndPath = executable.ExecutableNameAndPath;
-            _startTimeout = executable.ExecutableTimeout;
-            _executableArguments = executable.ExecutableArguments;
-            _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
-        public ShortcutItem(
-            string name, 
-            string profileUuid, 
-            Executable executable, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
-            ) : this()
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
-            _executableNameAndPath = executable.ExecutableNameAndPath;
-            _startTimeout = executable.ExecutableTimeout;
-            _executableArguments = executable.ExecutableArguments;
-            _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-            {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
-                {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
-            }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            RefreshValidity();
-        }
-
 
         public static Version Version
         {
@@ -1197,12 +619,12 @@ namespace DisplayMagician
         {
             get
             {
-                return _originalLargeBitmap;
+                return _originalBitmap;
             }
 
             set
             {
-                _originalLargeBitmap = value;
+                _originalBitmap = value;
 
                 // And we do the same for the Bitmap overlay, but only if the ProfileToUse is set
                 //if (_profileToUse is ProfileItem)
@@ -1311,164 +733,12 @@ namespace DisplayMagician
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            // We create the OriginalLargeBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
+            _originalBitmap = profile.ProfileBitmap;
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            ReplaceShortcutIconInCache();
-            RefreshValidity();
-        }
-
-        public void UpdateNoGameShortcut(
-            string name, 
-            string profileUuid, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
-            )
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.NoGame;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-            {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
-                {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
-            }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            ReplaceShortcutIconInCache();
-            RefreshValidity();
-        }
-
-
-
-        public void UpdateGameShortcut(
-            string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-            string gameAppId,
-            string gameName,
-            SupportedGameLibraryType gameLibrary,
-            int gameTimeout,
-            string gameArguments,
-            bool gameArgumentsRequired,
-            string differentGameExeToMonitor,
-            bool monitorDifferentGameExe,        
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence,
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null,
-            bool autoName = true,
-            string uuid = "",
-            Keys hotkey = Keys.None
-            )
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileToUse = profile;
-            _category = ShortcutCategory.Game;
-            _gameAppId = gameAppId;
-            _gameName = gameName;
-            _gameLibrary = gameLibrary;
-            _startTimeout = gameTimeout;
-            _gameArguments = gameArguments;
-            _gameArgumentsRequired = gameArgumentsRequired;
-            _differentGameExeToMonitor = differentGameExeToMonitor;
-            _monitorDifferentGameExe = monitorDifferentGameExe;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-            // We create the OriginalLargeBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            //_originalSmallBitmap = ToSmallBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            //if (_profileToUse is ProfileItem)
+            //    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -1531,169 +801,20 @@ namespace DisplayMagician
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            ReplaceShortcutIconInCache();
-            RefreshValidity();
-        }
-
-
-
-        public void UpdateGameShortcut(
-            string name, 
-            string profileUuid, 
-            GameStruct game, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true, 
-            string uuid = "",
-            Keys hotkey = Keys.None
-            )
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.Game;
-            _gameAppId = game.GameToPlay.Id;
-            _gameName = game.GameToPlay.Name;
-            _gameLibrary = game.GameToPlay.GameLibrary;
-            _startTimeout = game.StartTimeout;
-            _gameArguments = game.GameArguments;
-            _gameArgumentsRequired = game.GameArgumentsRequired;
-            _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
-            _monitorDifferentGameExe = game.MonitorDifferentGameExe;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
+            // We create the OriginalBitmap
+            // Find the game bitmap that matches the game name we just got
+            foreach (var aGame in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
             {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
+                if (aGame.Name.Equals(_gameName))
                 {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
+                    _originalBitmap = aGame.GameBitmap;
+                }                
             }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
+            
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            ReplaceShortcutIconInCache();
-            RefreshValidity();
-        }
-
-        public void UpdateExecutableShortcut(
-            string name,
-#pragma warning disable CS3001 // Argument type is not CLS-compliant
-            ProfileItem profile,
-#pragma warning restore CS3001 // Argument type is not CLS-compliant
-            string differentExecutableToMonitor,
-            string executableNameAndPath,
-            int executableTimeout,
-            string executableArguments,
-            bool executableArgumentsRequired,
-            bool processNameToMonitorUsesExecutable,
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence,
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null,
-            bool autoName = true,
-            Keys hotkey = Keys.None,
-            string uuid = ""
-            )
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileToUse = profile;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = differentExecutableToMonitor;
-            _executableNameAndPath = executableNameAndPath;
-            _startTimeout = executableTimeout;
-            _executableArguments = executableArguments;
-            _executableArgumentsRequired = executableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = processNameToMonitorUsesExecutable;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileUuid
-            _profileUuid = profile.UUID;
-
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //     _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -1754,108 +875,19 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
+            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);            
+            // We create the OriginalBitmap
+            _originalBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
 
             // We create the ShortcutBitmap from the OriginalBitmap 
             // (We only do it if there is a valid profile)
             //if (_profileToUse is ProfileItem)
             //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
         }
-
-        public void UpdateExecutableShortcut(
-            string name, 
-            string profileUuid, 
-            Executable executable, 
-            ShortcutPermanence displayPermanence,
-            ShortcutPermanence audioPermanence, 
-            ShortcutPermanence capturePermanence,
-            string originalIconPath,
-            bool changeAudioDevice = false,
-            string audioDevice = "",
-            bool setAudioVolume = false,
-            decimal audioVolume = -1,
-            bool changeCaptureDevice = false,
-            string captureDevice = "",
-            bool setCaptureVolume = false,
-            decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
-            bool autoName = true,
-            Keys hotkey = Keys.None,
-            string uuid = ""
-            )
-        {
-            if (!String.IsNullOrWhiteSpace(uuid))
-                _uuid = uuid;
-            _name = name;
-            _profileUuid = profileUuid;
-            _category = ShortcutCategory.Application;
-            _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
-            _executableNameAndPath = executable.ExecutableNameAndPath;
-            _startTimeout = executable.ExecutableTimeout;
-            _executableArguments = executable.ExecutableArguments;
-            _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
-            _changeAudioDevice = changeAudioDevice;
-            _audioDevice = audioDevice;
-            _setAudioVolume = setAudioVolume;
-            _audioVolume = audioVolume;
-            _changeCaptureDevice = changeCaptureDevice;
-            _captureDevice = captureDevice;
-            _setCaptureVolume = setCaptureVolume;
-            _captureVolume = captureVolume;
-            _displayPermanence = displayPermanence;
-            _audioPermanence = audioPermanence;
-            _capturePermanence = capturePermanence;
-            _autoName = autoName;
-            _startPrograms = startPrograms;
-            _originalIconPath = originalIconPath;
-            _hotkey = hotkey;
-
-            // Now we need to find and populate the profileToUse
-            foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-            {
-                if (profileToTest.UUID.Equals(_profileUuid, StringComparison.OrdinalIgnoreCase))
-                {
-                    _profileToUse = profileToTest;
-                    break;
-                }
-
-            }
-
-            if (_profileToUse == null)
-            {
-                throw new Exception($"Trying to create a ShortcutItem and cannot find a loaded profile with UUID {uuid}.");
-            }
-
-            // We create the OriginalBitmap from the IconPath
-            /*if (_originalIconPath.EndsWith(".ico"))
-            {
-                Icon icoIcon = new Icon(_originalIconPath, 256, 256);
-                //_originalBitmap = ExtractVistaIcon(biggestIcon);
-                _originalLargeBitmap = icoIcon.ToBitmap();
-                icoIcon.Dispose();
-            }
-            else
-            {
-                _originalLargeBitmap = ToLargeBitmap(_originalIconPath);
-            }*/
-            _originalLargeBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-
-            ReplaceShortcutIconInCache();
-            RefreshValidity();
-        }
-
 
         public bool CopyTo (ShortcutItem shortcut, bool overwriteUUID = true)
         {
@@ -1994,125 +1026,40 @@ namespace DisplayMagician
 
         }
 
-        /*public static Bitmap ToLargeBitmap(string fileNameAndPath)
-        {
-            Bitmap bm = null;
-
-            try
-            {
-                if (String.IsNullOrWhiteSpace(fileNameAndPath))
-                {
-                    logger.Warn($"ShortcutItem/ToLargeBitmap: Bitmap fileNameAndPath is empty! Unable to get the large icon from the file (256px x 256px).");
-                    return null;
-                }
-
-                if (fileNameAndPath.EndsWith(".ico"))
-                {
-                    logger.Trace($"ShortcutItem/ToLargeBitmap: The file we want to get the image from is an icon file. Attempting to load the icon file from {fileNameAndPath}.");
-                    Icon icoIcon = new Icon(fileNameAndPath, 256, 256);
-                    logger.Trace($"ShortcutItem/ToLargeBitmap: Attempting to convert the icon file {fileNameAndPath} to a bitmap.");
-                    bm = icoIcon.ToBitmap();
-                    logger.Trace($"ShortcutItem/ToLargeBitmap: Emptying the memory area used but the icon to stop memory leaks.");
-                    icoIcon.Dispose();
-                }
-                else
-                {
-                    logger.Trace($"ShortcutItem/ToLargeBitmap: The file {fileNameAndPath} isn't an Icon file, so trying to use GetLargeBitmapFromFile to extract the image.");
-                    bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, false);
-                }
-                return bm;
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/ToLargeBitmap: Exception while trying to save the Shortcut icon initially. Trying again with GetLargeBitmapFromFile.");
-                try
-                {
-                    logger.Trace($"ShortcutItem/ToLargeBitmap: Attempt2. The file {fileNameAndPath} isn't an Icon file, so trying to use GetLargeBitmapFromFile to extract the image.");
-                    bm = IconFromFile.GetLargeBitmapFromFile(fileNameAndPath, true, false);
-                    return bm;
-                }
-                catch (Exception innerex)
-                {
-                    logger.Warn(innerex, $"ShortcutItem/ToLargeBitmap: Exception while trying to save the Shortcut icon a second time. Giving up.");
-                    return null;
-                }
-            }
-        }*/
-
-        /*public static Bitmap ToSmallBitmap(string fileNameAndPath)
-        {
-            Bitmap bm = null;
-            try
-            {
-                
-                if (String.IsNullOrWhiteSpace(fileNameAndPath))
-                {
-                    logger.Warn($"ShortcutItem/ToSmallBitmap: Bitmap fileNameAndPath is empty! Unable to get the small icon from the file (128px x 128px).");
-                    return null;
-                }
-                   
-                
-                if (fileNameAndPath.EndsWith(".ico"))
-                {
-                    logger.Trace($"ShortcutItem/ToSmallBitmap: The file we want to get the image from is an icon file. Attempting to load the icon file from {fileNameAndPath}.");
-                    Size iconSize = new Size(128, 128);
-                    Icon iconToReturn = new Icon(fileNameAndPath, iconSize);
-                    *//*if (iconToReturn.Size.Width < iconSize.Width || iconToReturn.Size.Height < iconSize.Height)
-                    {
-                        // If the Icon is too small then we should try the Exe itself to see if its bigger
-                        bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
-                    }*//*
-                    //Icon iconToReturn = IconFromFile.GetLargeIconFromFile(fileNameAndPath, true, true);
-                    //Icon iconToReturn = IconUtil.TryGetIcon(myIcon,iconSize,24,true,true);
-                    logger.Trace($"ShortcutItem/ToSmallBitmap: Attempting to convert the icon file {fileNameAndPath} to a bitmap.");
-                    bm = iconToReturn.ToBitmap();
-                    logger.Trace($"ShortcutItem/ToSmallBitmap: Emptying the memory area used but the icon to stop memory leaks.");
-                    iconToReturn.Dispose();
-                }
-                else
-                {
-                    logger.Trace($"ShortcutItem/ToSmallBitmap: The file {fileNameAndPath} isn't an Icon file, so trying to use GetSmallBitmapFromFile to extract the image.");
-                    bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
-                }
-                return bm;
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/ToSmallBitmap: Exception while trying to save the Shortcut icon initially. Trying again with GetSmallBitmapFromFile.");
-                try
-                {
-                    logger.Trace($"ShortcutItem/ToSmallBitmap: Attempt2. The file {fileNameAndPath} isn't an Icon file, so trying to use GetSmallBitmapFromFile to extract the image.");
-                    bm = IconFromFile.GetSmallBitmapFromFile(fileNameAndPath, false, false, false);
-                    return bm;
-                }
-                catch (Exception innerex)
-                {
-                    logger.Warn(innerex, $"ShortcutItem/ToSmallBitmap: Exception while trying to save the Shortcut icon a second time. Giving up.");
-                    return null;
-                }
-            }
-        }*/
-
         public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
             if (originalBitmap == null)
             {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: OriginalBitmap is null, so we'll try to make the BitmapOverlay using GameLibrary Icon.");
-                if (_gameLibrary == SupportedGameLibraryType.Steam)
+                if (_category == ShortcutCategory.Application)
                 {
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");
-                    originalBitmap = Properties.Resources.Steam.ToBitmap();
+                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the executable icon as the icon instead.");
+                    originalBitmap = ImageUtils.GetMeABitmapFromFile(_executableNameAndPath);
                 }
-                else if (_gameLibrary == SupportedGameLibraryType.Uplay)
+                else if (_category == ShortcutCategory.Game)
                 {
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
-                    originalBitmap = Properties.Resources.Uplay.ToBitmap();
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: OriginalBitmap is null, so we'll try to make the BitmapOverlay using GameLibrary Icon.");
+                    if (_gameLibrary == SupportedGameLibraryType.Steam)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");
+                        originalBitmap = Properties.Resources.Steam.ToBitmap();
+                    }
+                    else if (_gameLibrary == SupportedGameLibraryType.Uplay)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
+                        originalBitmap = Properties.Resources.Uplay.ToBitmap();
+                    }
+                    else if (_gameLibrary == SupportedGameLibraryType.Origin)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
+                        originalBitmap = Properties.Resources.Origin.ToBitmap();
+                    }
                 }
-                else if (_gameLibrary == SupportedGameLibraryType.Origin)
+                else
                 {
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
-                    originalBitmap = Properties.Resources.Origin.ToBitmap();
+                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the profile icon as the icon instead.");
+                    originalBitmap = _profileToUse.ProfileBitmap;
                 }
+                
             }
 
             if (overlayBitmap == null)
@@ -2141,7 +1088,7 @@ namespace DisplayMagician
         public MultiIcon ToIconOverlay()
 #pragma warning restore CS3002 // Return type is not CLS-compliant
         {
-            return ImageUtils.ToIconOverlay(_originalLargeBitmap, ProfileToUse.ProfileTightestBitmap);
+            return ImageUtils.ToIconOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap);
         }
 
         public void RefreshValidity()

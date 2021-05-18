@@ -205,7 +205,7 @@ namespace DisplayMagician.UIForms
             this.tabc_shortcut.ShowToolTips = true;
             this.tabc_shortcut.Size = new System.Drawing.Size(1090, 654);
             this.tabc_shortcut.TabIndex = 28;
-            this.tabc_shortcut.VisibleChanged += new System.EventHandler(this.tabc_shortcut_VisibleChanged);
+            //this.tabc_shortcut.VisibleChanged += new System.EventHandler(this.tabc_shortcut_VisibleChanged);
             // 
             // tabp_display
             // 

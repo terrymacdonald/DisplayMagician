@@ -1071,7 +1071,7 @@ namespace DisplayMagician.UIForms
                     cb_args_game.Checked = true;
                 }
                 //select the loaded Game item if it is there
-                foreach (ImageListViewItem gameItem in ilv_games.Items)
+                /*foreach (ImageListViewItem gameItem in ilv_games.Items)
                 {
                     if (gameItem.Text.Equals(_shortcutToEdit.GameName))
                     {
@@ -1080,7 +1080,7 @@ namespace DisplayMagician.UIForms
                         break;
                     }
                 }
-            }
+*/            }
 
             cb_autosuggest.Checked = _shortcutToEdit.AutoName;
 
@@ -2199,11 +2199,11 @@ namespace DisplayMagician.UIForms
             EnableSaveButtonIfValid();
         }
 
-        private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
+        /*private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
         {
             if (tabc_shortcut.Visible == true)
                 SelectGameInImageListView();
-        }
+        }*/
 
         /*private void ilv_games_VisibleChanged(object sender, EventArgs e)
         {

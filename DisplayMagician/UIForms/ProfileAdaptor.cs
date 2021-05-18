@@ -121,8 +121,8 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                string profileName = (string)key;
-                return profileName;
+                ProfileItem profile = (ProfileItem)key;
+                return profile.Name;
             }
             catch (Exception ex)
             {
