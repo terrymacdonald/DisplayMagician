@@ -702,7 +702,7 @@ namespace DisplayMagician.UIForms
                 itemToSelect.Focused = true;
                 itemToSelect.Enabled = true;
                 ilv_games.EnsureVisible(itemToSelect.Index);
-                ilv_games.Refresh();
+                //ilv_games.Refresh();
             }
         }
 
@@ -931,8 +931,6 @@ namespace DisplayMagician.UIForms
                 ilv_games.Items.Add(newItem, _gameAdaptor);
             }
 
-            SelectGameInImageListView();
-
             if (_shortcutToEdit != null)
             {
                 if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
@@ -1070,17 +1068,7 @@ namespace DisplayMagician.UIForms
                 {
                     cb_args_game.Checked = true;
                 }
-                //select the loaded Game item if it is there
-                /*foreach (ImageListViewItem gameItem in ilv_games.Items)
-                {
-                    if (gameItem.Text.Equals(_shortcutToEdit.GameName))
-                    {
-                        gameItem.Selected = true;
-                        ilv_games.EnsureVisible(gameItem.Index);
-                        break;
-                    }
-                }
-*/            }
+            }
 
             cb_autosuggest.Checked = _shortcutToEdit.AutoName;
 
@@ -1375,44 +1363,6 @@ namespace DisplayMagician.UIForms
                 ilv_saved_profiles.ResumeLayout();
             }
             
-            /*if (DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count > 0)
-            {
-
-                // Temporarily stop updating the saved_profiles listview
-                ilv_games.SuspendLayout();
-
-                ImageListViewItem ilvItem = null;
-                foreach (Game loadedGame in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
-                {
-                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_games.Items where item.Text == loadedGame.Name orderby item.Text select item.Text).Any();
-                    if (!thisLoadedProfileIsAlreadyHere)
-                    {
-                        ilvItem = new ImageListViewItem(loadedGame, loadedGame.Name);
-                        //ilv_saved_profiles.Items.Add(newItem);
-                        ilv_games.Items.Add(ilvItem, _gameAdaptor);
-                    }
-
-                }
-
-                // If a game has been selected
-                if (!String.IsNullOrEmpty(_shortcutToEdit.GameName))
-                {
-                    foreach (ImageListViewItem gameItem in ilv_games.Items)
-                    {
-                        if (gameItem.Text == _shortcutToEdit.GameName)
-                        {
-                            gameItem.Selected = true;
-                            ilv_games.EnsureVisible(gameItem.Index);
-                        }
-
-                    }
-
-                }
-
-                // Restart updating the saved_profiles listview
-                ilv_games.ResumeLayout();
-            }
-*/
             UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
             EnableSaveButtonIfValid();
         }
@@ -2199,16 +2149,10 @@ namespace DisplayMagician.UIForms
             EnableSaveButtonIfValid();
         }
 
-        /*private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
+        private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
         {
             if (tabc_shortcut.Visible == true)
                 SelectGameInImageListView();
-        }*/
-
-        /*private void ilv_games_VisibleChanged(object sender, EventArgs e)
-        {
-            if (ilv_games.SelectedItems.Count > 0)
-                ilv_games.EnsureVisible(ilv_games.SelectedItems[0].Index);
-        }*/
+        }
     }
 }

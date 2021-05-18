@@ -881,16 +881,17 @@ namespace DisplayMagician {
                 Bitmap bm = null;
                 try
                 {
-                    ArrayList filesToSearchForIcon = new ArrayList();
+                    /*ArrayList filesToSearchForIcon = new ArrayList();
                     filesToSearchForIcon.Add(game.ExePath);
                     if (game.IconPath != game.ExePath)
                         filesToSearchForIcon.Add(game.IconPath);
 
-                    bm = ImageUtils.GetMeABitmapFromFile(filesToSearchForIcon);
+                    bm = ImageUtils.GetMeABitmapFromFile(filesToSearchForIcon);*/
 
-
-                    //bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
-
+                    // We only want the icon location that the GameLibrary told us to use
+                    // Note: This may be an icon file, or an exe file.
+                    // This function tries to get a 256x256 Vista sized bitmap from the file
+                    bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
 
                 }
                 catch (Exception ex)

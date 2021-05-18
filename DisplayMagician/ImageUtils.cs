@@ -152,43 +152,7 @@ namespace DisplayMagician
 
             Icon myIcon = null;
             Bitmap bm = null;
-            Bitmap bmToReturn = new Bitmap(1, 1);
-
-            try {
-
-                List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
-                Size largeSize = new Size(256, 256);
-                foreach (Icon myExtractedIcon in myExtractedIcons)
-                {
-                    
-                    try
-                    {
-                        myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
-                    }
-                    catch (ArgumentNullException nullex)
-                    {
-                        logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this icon that we couldn't test, so skipping it.");
-                        continue;
-                    }
-                    
-                    if (myIcon != null)
-                    {
-                        bm = myIcon.ToBitmap();
-
-                        if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                        {
-                            bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                        }
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor! ");
-            }
-
+            Bitmap bmToReturn = new Bitmap(1, 1);            
 
             if (fileNameAndPath.EndsWith(".ico"))
             {                
@@ -244,7 +208,7 @@ namespace DisplayMagician
             else
             {
 
-                try
+                /*try
                 {
                     List<Icon> myIcons = ImageUtils.ExtractIconsFromExe(fileNameAndPath, true);
                     if (myIcons != null && myIcons.Count > 0)
@@ -264,7 +228,7 @@ namespace DisplayMagician
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using ImageUtils.ExtractIconsFromExe.");
-                }
+                }*/
 
                 try
                 {
@@ -287,6 +251,43 @@ namespace DisplayMagician
                 }
 
             }
+
+            try
+            {
+
+                List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
+                Size largeSize = new Size(256, 256);
+                foreach (Icon myExtractedIcon in myExtractedIcons)
+                {
+
+                    try
+                    {
+                        myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
+                    }
+                    catch (ArgumentNullException nullex)
+                    {
+                        logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this icon that we couldn't test, so skipping it.");
+                        continue;
+                    }
+
+                    if (myIcon != null)
+                    {
+                        bm = myIcon.ToBitmap();
+
+                        if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
+                        {
+                            bmToReturn = bm;
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor! ");
+            }
+
 
             if (bmToReturn == null)
             {
