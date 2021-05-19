@@ -343,12 +343,16 @@
     <None Include="Resources\Epic.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\Steam.png" />
+    <None Include="Resources\Uplay.png" />
     <None Include="Resources\whitearrowsup.png" />
     <None Include="Resources\redarrowsup.png" />
     <None Include="Resources\whitearrows.png" />
     <None Include="Resources\warning.png" />
     <None Include="Resources\DisplayMagician.ico" />
     <None Include="Resources\error.png" />
+    <None Include="Resources\Epic.png" />
+    <None Include="Resources\Origin.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

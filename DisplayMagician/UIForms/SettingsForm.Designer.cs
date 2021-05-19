@@ -36,17 +36,17 @@ namespace DisplayMagician.UIForms
             this.cmb_loglevel = new System.Windows.Forms.ComboBox();
             this.cb_minimise_notification_area = new System.Windows.Forms.CheckBox();
             this.gb_hotkeys = new System.Windows.Forms.GroupBox();
-            this.btn_hotkey_main_window = new System.Windows.Forms.Button();
-            this.btn_hotkey_display_profile = new System.Windows.Forms.Button();
-            this.btn_hotkey_shortcuts = new System.Windows.Forms.Button();
-            this.lbl_hotkey_main_window_description = new System.Windows.Forms.Label();
-            this.lbl_hotkey_display_profile_description = new System.Windows.Forms.Label();
-            this.lbl_hotkey_shortcut_library_description = new System.Windows.Forms.Label();
-            this.btn_clear_all_hotkeys = new System.Windows.Forms.Button();
-            this.lv_dynamic_hotkeys = new System.Windows.Forms.ListView();
-            this.lbl_hotkey_main_window = new System.Windows.Forms.Label();
-            this.lbl_hotkey_display_profile = new System.Windows.Forms.Label();
             this.lbl_hotkey_shortcut_library = new System.Windows.Forms.Label();
+            this.lbl_hotkey_display_profile = new System.Windows.Forms.Label();
+            this.lbl_hotkey_main_window = new System.Windows.Forms.Label();
+            this.lv_dynamic_hotkeys = new System.Windows.Forms.ListView();
+            this.btn_clear_all_hotkeys = new System.Windows.Forms.Button();
+            this.lbl_hotkey_shortcut_library_description = new System.Windows.Forms.Label();
+            this.lbl_hotkey_display_profile_description = new System.Windows.Forms.Label();
+            this.lbl_hotkey_main_window_description = new System.Windows.Forms.Label();
+            this.btn_hotkey_shortcuts = new System.Windows.Forms.Button();
+            this.btn_hotkey_display_profile = new System.Windows.Forms.Button();
+            this.btn_hotkey_main_window = new System.Windows.Forms.Button();
             this.gb_general.SuspendLayout();
             this.gb_hotkeys.SuspendLayout();
             this.SuspendLayout();
@@ -152,80 +152,44 @@ namespace DisplayMagician.UIForms
             this.gb_hotkeys.TabStop = false;
             this.gb_hotkeys.Text = "Hotkeys";
             // 
-            // btn_hotkey_main_window
+            // lbl_hotkey_shortcut_library
             // 
-            this.btn_hotkey_main_window.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_hotkey_main_window.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_hotkey_main_window.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_hotkey_main_window.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_hotkey_main_window.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_hotkey_main_window.ForeColor = System.Drawing.Color.White;
-            this.btn_hotkey_main_window.Location = new System.Drawing.Point(412, 27);
-            this.btn_hotkey_main_window.Name = "btn_hotkey_main_window";
-            this.btn_hotkey_main_window.Size = new System.Drawing.Size(88, 33);
-            this.btn_hotkey_main_window.TabIndex = 36;
-            this.btn_hotkey_main_window.Text = "Set Hotkey";
-            this.btn_hotkey_main_window.UseVisualStyleBackColor = true;
-            this.btn_hotkey_main_window.Click += new System.EventHandler(this.btn_hotkey_main_window_Click);
+            this.lbl_hotkey_shortcut_library.Location = new System.Drawing.Point(236, 133);
+            this.lbl_hotkey_shortcut_library.Name = "lbl_hotkey_shortcut_library";
+            this.lbl_hotkey_shortcut_library.Size = new System.Drawing.Size(169, 16);
+            this.lbl_hotkey_shortcut_library.TabIndex = 47;
+            this.lbl_hotkey_shortcut_library.Text = "None Set";
+            this.lbl_hotkey_shortcut_library.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lbl_hotkey_shortcut_library.Click += new System.EventHandler(this.lbl_hotkey_shortcut_library_Click);
             // 
-            // btn_hotkey_display_profile
+            // lbl_hotkey_display_profile
             // 
-            this.btn_hotkey_display_profile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_hotkey_display_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_hotkey_display_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_hotkey_display_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_hotkey_display_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_hotkey_display_profile.ForeColor = System.Drawing.Color.White;
-            this.btn_hotkey_display_profile.Location = new System.Drawing.Point(411, 75);
-            this.btn_hotkey_display_profile.Name = "btn_hotkey_display_profile";
-            this.btn_hotkey_display_profile.Size = new System.Drawing.Size(89, 33);
-            this.btn_hotkey_display_profile.TabIndex = 37;
-            this.btn_hotkey_display_profile.Text = "Set Hotkey";
-            this.btn_hotkey_display_profile.UseVisualStyleBackColor = true;
-            this.btn_hotkey_display_profile.Click += new System.EventHandler(this.btn_hotkey_display_profile_Click);
+            this.lbl_hotkey_display_profile.Location = new System.Drawing.Point(236, 83);
+            this.lbl_hotkey_display_profile.Name = "lbl_hotkey_display_profile";
+            this.lbl_hotkey_display_profile.Size = new System.Drawing.Size(169, 16);
+            this.lbl_hotkey_display_profile.TabIndex = 46;
+            this.lbl_hotkey_display_profile.Text = "None Set";
+            this.lbl_hotkey_display_profile.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lbl_hotkey_display_profile.Click += new System.EventHandler(this.lbl_hotkey_display_profile_Click);
             // 
-            // btn_hotkey_shortcuts
+            // lbl_hotkey_main_window
             // 
-            this.btn_hotkey_shortcuts.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_hotkey_shortcuts.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_hotkey_shortcuts.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_hotkey_shortcuts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_hotkey_shortcuts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_hotkey_shortcuts.ForeColor = System.Drawing.Color.White;
-            this.btn_hotkey_shortcuts.Location = new System.Drawing.Point(411, 125);
-            this.btn_hotkey_shortcuts.Name = "btn_hotkey_shortcuts";
-            this.btn_hotkey_shortcuts.Size = new System.Drawing.Size(88, 33);
-            this.btn_hotkey_shortcuts.TabIndex = 38;
-            this.btn_hotkey_shortcuts.Text = "Set Hotkey";
-            this.btn_hotkey_shortcuts.UseVisualStyleBackColor = true;
-            this.btn_hotkey_shortcuts.Click += new System.EventHandler(this.btn_hotkey_shortcuts_Click);
+            this.lbl_hotkey_main_window.Location = new System.Drawing.Point(237, 35);
+            this.lbl_hotkey_main_window.Name = "lbl_hotkey_main_window";
+            this.lbl_hotkey_main_window.Size = new System.Drawing.Size(169, 16);
+            this.lbl_hotkey_main_window.TabIndex = 45;
+            this.lbl_hotkey_main_window.Text = "None Set";
+            this.lbl_hotkey_main_window.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lbl_hotkey_main_window.Click += new System.EventHandler(this.lbl_hotkey_main_window_Click);
             // 
-            // lbl_hotkey_main_window_description
+            // lv_dynamic_hotkeys
             // 
-            this.lbl_hotkey_main_window_description.AutoSize = true;
-            this.lbl_hotkey_main_window_description.Location = new System.Drawing.Point(26, 35);
-            this.lbl_hotkey_main_window_description.Name = "lbl_hotkey_main_window_description";
-            this.lbl_hotkey_main_window_description.Size = new System.Drawing.Size(185, 16);
-            this.lbl_hotkey_main_window_description.TabIndex = 39;
-            this.lbl_hotkey_main_window_description.Text = "Hotkey to open Main Window:";
-            // 
-            // lbl_hotkey_display_profile_description
-            // 
-            this.lbl_hotkey_display_profile_description.AutoSize = true;
-            this.lbl_hotkey_display_profile_description.Location = new System.Drawing.Point(25, 83);
-            this.lbl_hotkey_display_profile_description.Name = "lbl_hotkey_display_profile_description";
-            this.lbl_hotkey_display_profile_description.Size = new System.Drawing.Size(243, 16);
-            this.lbl_hotkey_display_profile_description.TabIndex = 40;
-            this.lbl_hotkey_display_profile_description.Text = "Hotkey to open Display Profile Window:";
-            // 
-            // lbl_hotkey_shortcut_library_description
-            // 
-            this.lbl_hotkey_shortcut_library_description.AutoSize = true;
-            this.lbl_hotkey_shortcut_library_description.Location = new System.Drawing.Point(25, 133);
-            this.lbl_hotkey_shortcut_library_description.Name = "lbl_hotkey_shortcut_library_description";
-            this.lbl_hotkey_shortcut_library_description.Size = new System.Drawing.Size(197, 16);
-            this.lbl_hotkey_shortcut_library_description.TabIndex = 41;
-            this.lbl_hotkey_shortcut_library_description.Text = "Hotkey to open Shortcut Library:";
+            this.lv_dynamic_hotkeys.HideSelection = false;
+            this.lv_dynamic_hotkeys.Location = new System.Drawing.Point(27, 177);
+            this.lv_dynamic_hotkeys.Name = "lv_dynamic_hotkeys";
+            this.lv_dynamic_hotkeys.Size = new System.Drawing.Size(473, 143);
+            this.lv_dynamic_hotkeys.TabIndex = 44;
+            this.lv_dynamic_hotkeys.UseCompatibleStateImageBehavior = false;
             // 
             // btn_clear_all_hotkeys
             // 
@@ -243,44 +207,80 @@ namespace DisplayMagician.UIForms
             this.btn_clear_all_hotkeys.UseVisualStyleBackColor = true;
             this.btn_clear_all_hotkeys.Click += new System.EventHandler(this.btn_clear_all_hotkeys_Click);
             // 
-            // lv_dynamic_hotkeys
+            // lbl_hotkey_shortcut_library_description
             // 
-            this.lv_dynamic_hotkeys.HideSelection = false;
-            this.lv_dynamic_hotkeys.Location = new System.Drawing.Point(27, 177);
-            this.lv_dynamic_hotkeys.Name = "lv_dynamic_hotkeys";
-            this.lv_dynamic_hotkeys.Size = new System.Drawing.Size(473, 143);
-            this.lv_dynamic_hotkeys.TabIndex = 44;
-            this.lv_dynamic_hotkeys.UseCompatibleStateImageBehavior = false;
+            this.lbl_hotkey_shortcut_library_description.AutoSize = true;
+            this.lbl_hotkey_shortcut_library_description.Location = new System.Drawing.Point(25, 133);
+            this.lbl_hotkey_shortcut_library_description.Name = "lbl_hotkey_shortcut_library_description";
+            this.lbl_hotkey_shortcut_library_description.Size = new System.Drawing.Size(197, 16);
+            this.lbl_hotkey_shortcut_library_description.TabIndex = 41;
+            this.lbl_hotkey_shortcut_library_description.Text = "Hotkey to open Shortcut Library:";
             // 
-            // lbl_hotkey_main_window
+            // lbl_hotkey_display_profile_description
             // 
-            this.lbl_hotkey_main_window.Location = new System.Drawing.Point(237, 35);
-            this.lbl_hotkey_main_window.Name = "lbl_hotkey_main_window";
-            this.lbl_hotkey_main_window.Size = new System.Drawing.Size(169, 16);
-            this.lbl_hotkey_main_window.TabIndex = 45;
-            this.lbl_hotkey_main_window.Text = "None Set";
-            this.lbl_hotkey_main_window.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.lbl_hotkey_main_window.Click += new System.EventHandler(this.lbl_hotkey_main_window_Click);
+            this.lbl_hotkey_display_profile_description.AutoSize = true;
+            this.lbl_hotkey_display_profile_description.Location = new System.Drawing.Point(25, 83);
+            this.lbl_hotkey_display_profile_description.Name = "lbl_hotkey_display_profile_description";
+            this.lbl_hotkey_display_profile_description.Size = new System.Drawing.Size(243, 16);
+            this.lbl_hotkey_display_profile_description.TabIndex = 40;
+            this.lbl_hotkey_display_profile_description.Text = "Hotkey to open Display Profile Window:";
             // 
-            // lbl_hotkey_display_profile
+            // lbl_hotkey_main_window_description
             // 
-            this.lbl_hotkey_display_profile.Location = new System.Drawing.Point(236, 83);
-            this.lbl_hotkey_display_profile.Name = "lbl_hotkey_display_profile";
-            this.lbl_hotkey_display_profile.Size = new System.Drawing.Size(169, 16);
-            this.lbl_hotkey_display_profile.TabIndex = 46;
-            this.lbl_hotkey_display_profile.Text = "None Set";
-            this.lbl_hotkey_display_profile.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.lbl_hotkey_display_profile.Click += new System.EventHandler(this.lbl_hotkey_display_profile_Click);
+            this.lbl_hotkey_main_window_description.AutoSize = true;
+            this.lbl_hotkey_main_window_description.Location = new System.Drawing.Point(26, 35);
+            this.lbl_hotkey_main_window_description.Name = "lbl_hotkey_main_window_description";
+            this.lbl_hotkey_main_window_description.Size = new System.Drawing.Size(185, 16);
+            this.lbl_hotkey_main_window_description.TabIndex = 39;
+            this.lbl_hotkey_main_window_description.Text = "Hotkey to open Main Window:";
             // 
-            // lbl_hotkey_shortcut_library
+            // btn_hotkey_shortcuts
             // 
-            this.lbl_hotkey_shortcut_library.Location = new System.Drawing.Point(236, 133);
-            this.lbl_hotkey_shortcut_library.Name = "lbl_hotkey_shortcut_library";
-            this.lbl_hotkey_shortcut_library.Size = new System.Drawing.Size(169, 16);
-            this.lbl_hotkey_shortcut_library.TabIndex = 47;
-            this.lbl_hotkey_shortcut_library.Text = "None Set";
-            this.lbl_hotkey_shortcut_library.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.lbl_hotkey_shortcut_library.Click += new System.EventHandler(this.lbl_hotkey_shortcut_library_Click);
+            this.btn_hotkey_shortcuts.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_hotkey_shortcuts.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_hotkey_shortcuts.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_hotkey_shortcuts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_hotkey_shortcuts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_hotkey_shortcuts.ForeColor = System.Drawing.Color.White;
+            this.btn_hotkey_shortcuts.Location = new System.Drawing.Point(411, 125);
+            this.btn_hotkey_shortcuts.Name = "btn_hotkey_shortcuts";
+            this.btn_hotkey_shortcuts.Size = new System.Drawing.Size(88, 33);
+            this.btn_hotkey_shortcuts.TabIndex = 38;
+            this.btn_hotkey_shortcuts.Text = "Set Hotkey";
+            this.btn_hotkey_shortcuts.UseVisualStyleBackColor = true;
+            this.btn_hotkey_shortcuts.Click += new System.EventHandler(this.btn_hotkey_shortcuts_Click);
+            // 
+            // btn_hotkey_display_profile
+            // 
+            this.btn_hotkey_display_profile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_hotkey_display_profile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_hotkey_display_profile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_hotkey_display_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_hotkey_display_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_hotkey_display_profile.ForeColor = System.Drawing.Color.White;
+            this.btn_hotkey_display_profile.Location = new System.Drawing.Point(411, 75);
+            this.btn_hotkey_display_profile.Name = "btn_hotkey_display_profile";
+            this.btn_hotkey_display_profile.Size = new System.Drawing.Size(89, 33);
+            this.btn_hotkey_display_profile.TabIndex = 37;
+            this.btn_hotkey_display_profile.Text = "Set Hotkey";
+            this.btn_hotkey_display_profile.UseVisualStyleBackColor = true;
+            this.btn_hotkey_display_profile.Click += new System.EventHandler(this.btn_hotkey_display_profile_Click);
+            // 
+            // btn_hotkey_main_window
+            // 
+            this.btn_hotkey_main_window.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_hotkey_main_window.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_hotkey_main_window.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_hotkey_main_window.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_hotkey_main_window.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_hotkey_main_window.ForeColor = System.Drawing.Color.White;
+            this.btn_hotkey_main_window.Location = new System.Drawing.Point(412, 27);
+            this.btn_hotkey_main_window.Name = "btn_hotkey_main_window";
+            this.btn_hotkey_main_window.Size = new System.Drawing.Size(88, 33);
+            this.btn_hotkey_main_window.TabIndex = 36;
+            this.btn_hotkey_main_window.Text = "Set Hotkey";
+            this.btn_hotkey_main_window.UseVisualStyleBackColor = true;
+            this.btn_hotkey_main_window.Click += new System.EventHandler(this.btn_hotkey_main_window_Click);
             // 
             // SettingsForm
             // 

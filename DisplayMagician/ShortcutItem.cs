@@ -995,17 +995,17 @@ namespace DisplayMagician
                     if (_gameLibrary == SupportedGameLibraryType.Steam) 
                     {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");                        
-                        bm = ToBitmapOverlay(Properties.Resources.Steam.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(),256,256);                        
+                        bm = ToBitmapOverlay(Properties.Resources.Steam, _profileToUse.ProfileIcon.ToBitmap(),256,256);                        
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.Uplay) 
                       {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Uplay.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                        bm = ToBitmapOverlay(Properties.Resources.Uplay, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.Origin)
                     {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Origin.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                        bm = ToBitmapOverlay(Properties.Resources.Origin, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
                     }
                     si.Add(bm);
                     logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the replacement icon for Shortcut '{Name}' to {_savedShortcutIconCacheFilename}.");
@@ -1041,17 +1041,17 @@ namespace DisplayMagician
                     if (_gameLibrary == SupportedGameLibraryType.Steam)
                     {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Steam.ToBitmap();
+                        originalBitmap = Properties.Resources.Steam;
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.Uplay)
                     {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Uplay.ToBitmap();
+                        originalBitmap = Properties.Resources.Uplay;
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.Origin)
                     {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Origin.ToBitmap();
+                        originalBitmap = Properties.Resources.Origin;
                     }
                 }
                 else

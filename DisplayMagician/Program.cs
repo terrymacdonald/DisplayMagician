@@ -421,37 +421,6 @@ namespace DisplayMagician {
                             heliosIcon.Save(fs);
                     }
 
-                    // Save a copy of the Steam Icon, and all the game library ones in preparation for future use
-                    if (!File.Exists(AppSteamIconFilename))
-                    {
-                        Icon heliosIcon = (Icon)Properties.Resources.Steam;
-                        using (FileStream fs = new FileStream(AppSteamIconFilename, FileMode.Create))
-                            heliosIcon.Save(fs);
-                    }
-
-                    // Save a copy of the Uplay Icon, and all the game library ones in preparation for future use
-                    if (!File.Exists(AppUplayIconFilename))
-                    {
-                        Icon heliosIcon = (Icon)Properties.Resources.Uplay;
-                        using (FileStream fs = new FileStream(AppUplayIconFilename, FileMode.Create))
-                            heliosIcon.Save(fs);
-                    }
-
-                    // Save a copy of the Epic Icon, and all the game library ones in preparation for future use
-                    if (!File.Exists(AppEpicIconFilename))
-                    {
-                        Icon heliosIcon = (Icon)Properties.Resources.Epic;
-                        using (FileStream fs = new FileStream(AppEpicIconFilename, FileMode.Create))
-                            heliosIcon.Save(fs);
-                    }
-
-                    // Save a copy of the Origin Icon, and all the game library ones in preparation for future use
-                    if (!File.Exists(AppOriginIconFilename))
-                    {
-                        Icon heliosIcon = (Icon)Properties.Resources.Origin;
-                        using (FileStream fs = new FileStream(AppOriginIconFilename, FileMode.Create))
-                            heliosIcon.Save(fs);
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -902,11 +871,11 @@ namespace DisplayMagician {
                 if (bm == null)
                 {
                     if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
-                        bm = Properties.Resources.Steam.ToBitmap();
+                        bm = Properties.Resources.Steam;
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
-                        bm = Properties.Resources.Uplay.ToBitmap();
+                        bm = Properties.Resources.Uplay;
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
-                        bm = Properties.Resources.Origin.ToBitmap();
+                        bm = Properties.Resources.Origin;
                     else
                         bm = Properties.Resources.DisplayMagician.ToBitmap();
                 }

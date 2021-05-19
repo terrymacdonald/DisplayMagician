@@ -108,7 +108,6 @@ namespace DisplayMagician.UIForms
             lv_dynamic_hotkeys.View = View.Details;
             lv_dynamic_hotkeys.GridLines = true;
             lv_dynamic_hotkeys.FullRowSelect = true;
-            lv_dynamic_hotkeys.ShowGroups = true;
 
             //Add column header
             lv_dynamic_hotkeys.Columns.Add("Name", 300);
@@ -340,9 +339,9 @@ namespace DisplayMagician.UIForms
                 testHotkey = Program.AppProgramSettings.HotkeyShortcutLibraryWindow;
             else
                 testHotkey = Keys.None;
-            string hotkeyHeading = $"Choose a Hotkey for the Display Profile window";
+            string hotkeyHeading = $"Choose a Hotkey for the Shortcut Library window";
             string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply use to" + Environment.NewLine +
-                "open the Display Profile window. This must be a Hotkey that" + Environment.NewLine +
+                "open the Shortcut Library window. This must be a Hotkey that" + Environment.NewLine +
                 "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
                 "might not see it.";
             HotkeyForm scHotkeyForm = new HotkeyForm(testHotkey, hotkeyHeading, hotkeyDescription);
@@ -448,5 +447,6 @@ namespace DisplayMagician.UIForms
                 return String.Empty;
             }
         }
+
     }
 }
