@@ -62,14 +62,18 @@ namespace DisplayMagicianShared.NVIDIA
             string EDIDManufactureCode = "";
             string friendlyName = "";
             bool devicePathContainsUID5120 = false;
-            bool isNvidiaSurround = false;
+            bool isNvidiaEDID = false;
+            bool isNvidiaDeviceName = false;
+            bool isNvidiaDevicePath = false;
+
             try
             {
                 EDIDManufactureCode = pathTargetInfo.DisplayTarget.EDIDManufactureCode;
                 SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Grabbed EDIDManufactureCode of {EDIDManufactureCode}.");
                 if (string.Equals(EDIDManufactureCode, "NVS", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    isNvidiaSurround = true;
+                    SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The EDIDManufactureCode of {EDIDManufactureCode} matches 'NVS', so this is an NVIDIA surround topology.");
+                    isNvidiaEDID = true;
                 }
             }
             catch (Exception ex)
@@ -83,7 +87,8 @@ namespace DisplayMagicianShared.NVIDIA
                 SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Grabbed Display FriendlyName of {friendlyName}.");
                 if (string.Equals(friendlyName, "NV Surround", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    isNvidiaSurround = true;
+                    SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The Display FriendlyName of {friendlyName} matches 'NV Surround', so this is an NVIDIA surround topology.");
+                    isNvidiaDeviceName = true;
                 }
             }
             catch (Exception ex)
@@ -97,7 +102,8 @@ namespace DisplayMagicianShared.NVIDIA
                 SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Testing if the Display DevicePath contains UID5120 = {devicePathContainsUID5120}.");
                 if (devicePathContainsUID5120)
                 {
-                    isNvidiaSurround = true;
+                    SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The Device Path contains UID5120, so this is an NVIDIA surround topology.");
+                    isNvidiaDevicePath = true;
                 }
             }
             catch (Exception ex)
@@ -106,15 +112,16 @@ namespace DisplayMagicianShared.NVIDIA
             }
 
             // If the checks haven't passed, then we return null
-            if (!isNvidiaSurround)
+            if (!isNvidiaEDID && !isNvidiaDeviceName && !isNvidiaDevicePath)
             {
-                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: As far as we can tell, this isn't an NVIDIA Surround window, so we're returning null.");
+                SharedLogger.logger.Warn($"SurroundTopology/FromPathTargetInfo: As far as we can tell, this isn't an NVIDIA Surround window, so we're returning null.");
                 return null;
             }
 
             try
             {
                 // Get parent DisplayConfig PathInfo by checking display targets
+                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Get parent DisplayConfig PathInfo by checking display targets.");
                 var correspondingWindowsPathInfo =
                     PathInfo.GetActivePaths()
                         .FirstOrDefault(
@@ -127,6 +134,7 @@ namespace DisplayMagicianShared.NVIDIA
                 {
                     // Get corresponding NvAPI PathInfo
                     // If position is same, then the two paths are equal, after all position is whats important in path sources
+                    SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Get corresponding NvAPI PathInfo. If position is same, then the two paths are equal, after all position is whats important in path sources");
                     var correspondingNvidiaPathInfo =
                         NvAPIWrapper.Display.PathInfo.GetDisplaysConfig()
                             .FirstOrDefault(
@@ -140,12 +148,14 @@ namespace DisplayMagicianShared.NVIDIA
                     {
                         // Get corresponding NvAPI PathTargetInfo
                         // We now assume that there is only one target for a NvAPI PathInfo, in an other word, for now, it is not possible to have a cloned surround display
+                        SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Get corresponding NvAPI PathTargetInfo. We now assume that there is only one target for a NvAPI PathInfo, in an other word, for now, it is not possible to have a cloned surround display");
                         var correspondingNvidiaTargetInfo = correspondingNvidiaPathInfo.TargetsInfo.FirstOrDefault();
 
                         if (correspondingNvidiaTargetInfo != null)
                         {
                             // Get corresponding NvAPI Grid Topology
                             // We also assume that the NVS monitor uses a similar display id to one of real physical monitors
+                            SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Get corresponding NvAPI Grid Topology. We also assume that the NVS monitor uses a similar display id to one of real physical monitors");
                             var correspondingNvidiaTopology =
                                 GridTopology.GetGridTopologies()
                                     .FirstOrDefault(
@@ -154,7 +164,13 @@ namespace DisplayMagicianShared.NVIDIA
 
                             if (correspondingNvidiaTopology != null)
                             {
+                                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Return the new NVIDIA Topology SurroundTopology object");
                                 return new SurroundTopology(correspondingNvidiaTopology);
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The correspondingNvidiaTopology SurroundTopology object wa null, so nothing to return");
+                                return null;
                             }
                         }
                     }

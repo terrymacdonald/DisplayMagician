@@ -44,20 +44,29 @@ namespace DisplayMagicianShared.Topology
 
             if (surround != null)
             {
-                try
-                {
-                    SurroundTopology = SurroundTopology.FromPathTargetInfo(targetInfo);
-                    SharedLogger.logger.Trace($"PathTarget/PathTarget: The SurroundTopology object supplied was not null, and we found {SurroundTopology.Displays.Count()} displays involved in it {SurroundTopology.Columns}x{SurroundTopology.Rows}");
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Error(ex, $"PathTarget/PathTarget: A SurroundTopology object was supplied, but we had an exception getting the SurroundTopology from the PathTargetInfo object.");
-                }
-
+                SharedLogger.logger.Trace($"PathTarget/PathTarget: This PathTarget supplied an NVIDIA surround object, so using the SurroundTopology supplied.");
+                SurroundTopology = surround;
             }
             else
             {
-                SharedLogger.logger.Trace($"PathTarget/PathTarget: This PathTarget doesn't use NVIDIA surround technology, so leaving the SurroundTopology null.");
+                
+                try
+                {
+                    SurroundTopology = SurroundTopology.FromPathTargetInfo(targetInfo);
+                    if (SurroundTopology != null)
+                    {
+                        SharedLogger.logger.Trace($"PathTarget/PathTarget: The SurroundTopology object supplied was null, so we created one ourselves. We found {SurroundTopology.Displays.Count()} displays involved in it {SurroundTopology.Columns}x{SurroundTopology.Rows}");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"PathTarget/PathTarget: The SurroundTopology object supplied was null, so we tried to create one ourselves and failed. This is likely a non NVIDIA surround display profile.");
+                    }
+                    
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Error(ex, $"PathTarget/PathTarget: A SurroundTopology object was not supplied, but we had an exception getting our own SurroundTopology from the PathTargetInfo object.");
+                }
             }
             
         }
