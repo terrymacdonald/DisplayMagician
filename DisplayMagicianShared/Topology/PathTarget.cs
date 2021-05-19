@@ -18,23 +18,48 @@ namespace DisplayMagicianShared.Topology
             if (index > 0)
             {
                 DevicePath = DevicePath.Substring(0, index).TrimEnd('#');
+                SharedLogger.logger.Trace($"PathTarget/PathTarget: Grabbed the DevicePath of {DevicePath}.");
             }
 
             FrequencyInMillihertz = targetInfo.FrequencyInMillihertz;
+            SharedLogger.logger.Trace($"PathTarget/PathTarget: Grabbed the FrequencyInMillihertz of {FrequencyInMillihertz}.");
             Rotation = targetInfo.Rotation.ToRotation();
+            SharedLogger.logger.Trace($"PathTarget/PathTarget: Grabbed the Rotation of {Rotation}.");
             Scaling = targetInfo.Scaling.ToScaling();
+            SharedLogger.logger.Trace($"PathTarget/PathTarget: Grabbed the Scaling of {Scaling}.");
             ScanLineOrdering = targetInfo.ScanLineOrdering.ToScanLineOrdering();
+            SharedLogger.logger.Trace($"PathTarget/PathTarget: Grabbed the ScanLineOrdering of {ScanLineOrdering}.");
 
             try
             {
                 DisplayName = targetInfo.DisplayTarget.FriendlyName;
+                SharedLogger.logger.Trace($"PathTarget/PathTarget: Grabbed the DisplayName of {DisplayName}.");
+
             }
-            catch
+            catch (Exception ex)
             {
+                SharedLogger.logger.Warn(ex, $"PathTarget/PathTarget: Exception grabbing the DisplayName of {DisplayName} from the TargetInfo DisplayTarget.");
                 DisplayName = null;
             }
 
-            SurroundTopology = surround ?? SurroundTopology.FromPathTargetInfo(targetInfo);
+            if (surround != null)
+            {
+                try
+                {
+                    SurroundTopology = SurroundTopology.FromPathTargetInfo(targetInfo);
+                    SharedLogger.logger.Trace($"PathTarget/PathTarget: The SurroundTopology object supplied was not null, and we found {SurroundTopology.Displays.Count()} displays involved in it {SurroundTopology.Columns}x{SurroundTopology.Rows}");
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Error(ex, $"PathTarget/PathTarget: A SurroundTopology object was supplied, but we had an exception getting the SurroundTopology from the PathTargetInfo object.");
+                }
+
+            }
+            else
+            {
+                SharedLogger.logger.Trace($"PathTarget/PathTarget: This PathTarget doesn't use NVIDIA surround technology, so leaving the SurroundTopology null.");
+            }
+            
         }
 
 

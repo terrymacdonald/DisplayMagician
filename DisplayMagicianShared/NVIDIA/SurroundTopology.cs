@@ -52,19 +52,63 @@ namespace DisplayMagicianShared.NVIDIA
         public static SurroundTopology FromPathTargetInfo(PathTargetInfo pathTargetInfo)
         {
             // We go through the code if only the path belongs to a NVIDIA virtual surround display
-            // TODO: Should we try to resolve every target info to be sure?
-            if (!string.Equals(
-                    pathTargetInfo.DisplayTarget.EDIDManufactureCode,
-                    "NVS",
-                    StringComparison.InvariantCultureIgnoreCase
-                ) &&
-                !string.Equals(
-                    pathTargetInfo.DisplayTarget.FriendlyName,
-                    "NV Surround",
-                    StringComparison.InvariantCultureIgnoreCase
-                ) &&
-                !pathTargetInfo.DisplayTarget.DevicePath.ToLower().Contains("&UID5120".ToLower()))
+            // and is not null
+            if (pathTargetInfo == null)
             {
+                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The PathTargetInfo object supplied was null, so we have to return null back.");
+                return null;
+            }
+
+            string EDIDManufactureCode = "";
+            string friendlyName = "";
+            bool devicePathContainsUID5120 = false;
+            bool isNvidiaSurround = false;
+            try
+            {
+                EDIDManufactureCode = pathTargetInfo.DisplayTarget.EDIDManufactureCode;
+                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Grabbed EDIDManufactureCode of {EDIDManufactureCode}.");
+                if (string.Equals(EDIDManufactureCode, "NVS", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    isNvidiaSurround = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SurroundTopology/FromPathTargetInfo: Exception trying to access EDIDManufactureCode.");
+            }
+
+            try
+            {
+                friendlyName = pathTargetInfo.DisplayTarget.FriendlyName;
+                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Grabbed Display FriendlyName of {friendlyName}.");
+                if (string.Equals(friendlyName, "NV Surround", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    isNvidiaSurround = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SurroundTopology/FromPathTargetInfo: Exception trying to access friendlyName.");
+            }
+
+            try
+            {
+                devicePathContainsUID5120 = pathTargetInfo.DisplayTarget.DevicePath.ToLower().Contains("&UID5120".ToLower());
+                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Testing if the Display DevicePath contains UID5120 = {devicePathContainsUID5120}.");
+                if (devicePathContainsUID5120)
+                {
+                    isNvidiaSurround = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SurroundTopology/FromPathTargetInfo: Exception trying to access friendlyName.");
+            }
+
+            // If the checks haven't passed, then we return null
+            if (!isNvidiaSurround)
+            {
+                SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: As far as we can tell, this isn't an NVIDIA Surround window, so we're returning null.");
                 return null;
             }
 
@@ -116,11 +160,12 @@ namespace DisplayMagicianShared.NVIDIA
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                SharedLogger.logger.Warn(ex, $"SurroundTopology/FromPathTargetInfo: Exception trying to get the Grid Topology from the NVIDIA driver.");
             }
-
+            // if we get here, then we've failed to get the NVIDIA Grid Topology
+            SharedLogger.logger.Warn($"SurroundTopology/FromPathTargetInfo: We've tried to get the Grid Topology from the NVIDIA driver but we can't!");
             return null;
         }
 

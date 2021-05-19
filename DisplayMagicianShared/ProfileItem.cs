@@ -511,14 +511,20 @@ namespace DisplayMagicianShared
             int validDisplayCount = 0;
 
             //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
-            
+
             foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
             {
                 // If this profile has a display that isn't currently available then we need to say it's a no!
-                //if (ProfileRepository.ConnectedDisplayIdentifiers.Contains(profileDisplayIdentifier))
-                //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
                 if (ProfileRepository.ConnectedDisplayIdentifiers.Any(s => profileDisplayIdentifier.Equals(s)))
+                {
+                    SharedLogger.logger.Trace($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is connected now.");
                     validDisplayCount++;
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is NOT currently connected, so this profile cannot be used.");
+                }
+                    
             }
             if (validDisplayCount == ProfileDisplayIdentifiers.Count)
             {
