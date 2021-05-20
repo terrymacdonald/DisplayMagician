@@ -911,12 +911,21 @@ namespace DisplayMagician {
                     // We only want the icon location that the GameLibrary told us to use
                     // Note: This may be an icon file, or an exe file.
                     // This function tries to get a 256x256 Vista sized bitmap from the file
+                    logger.Trace($"Program/LoadGamesInBackground: Attempting to get game bitmaps from {game.Name}.");
                     bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
+                    if (bm != null && bm.GetType() == typeof(Bitmap))
+                    {
+                        logger.Trace($"Program/LoadGamesInBackground: Got game bitmaps from {game.Name}.");
+                    }
+                    else
+                    {
+                        logger.Trace($"Program/LoadGamesInBackground: Couldn't get game bitmaps from {game.Name} for some reason.");
+                    }
 
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/LoadGamesInBackground: Exception building game bitmaps during load");                    
+                    logger.Error(ex, $"Program/LoadGamesInBackground: Exception building game bitmaps for {game.Name} during load");                    
                 }
 
                 if (bm == null)

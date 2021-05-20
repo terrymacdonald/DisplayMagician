@@ -174,7 +174,11 @@ namespace DisplayMagician
                     if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                     {
                         bmToReturn = bm;
-                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using standard Icon access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                    }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using standard Icon access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                     }
                 }
                 catch (Exception ex)
@@ -196,7 +200,11 @@ namespace DisplayMagician
                         if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                         {
                             bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using MultiIcon access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                        }
+                        else
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using MultiIcon access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                         }
                     }
                 }
@@ -241,7 +249,11 @@ namespace DisplayMagician
                         if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                         {
                             bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                        }
+                        else
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                         }
                     }
                 }
@@ -277,8 +289,16 @@ namespace DisplayMagician
                         if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
                         {
                             bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
                         }
+                        else
+                        {
+                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
+                        }
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
                     }
                 }
 
@@ -318,8 +338,10 @@ namespace DisplayMagician
                 logger.Warn($"ShortcutItem/GetMeABitmapFromFile2: The fileNamesAndPaths list is empty! Can't get the bitmap from the files.");
                 return null;
             }
+            logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: We have {fileNamesAndPaths.Count} files to try and extract a bitmap from.");
             foreach (string fileNameAndPath in fileNamesAndPaths)
             {
+                logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: Getting a bitmap from {fileNameAndPath} by running GetMeABitmapFromFile.");
                 Bitmap bm = GetMeABitmapFromFile(fileNameAndPath);
 
                 if (bmToReturn == null)
@@ -330,10 +352,11 @@ namespace DisplayMagician
                 {
                     bmToReturn = bm;
                 }
+                logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: The biggest bitmap we could get from {fileNameAndPath} was {bm.Width}x{bm.Height}.");
             }
 
             // Now we check if the icon is still too small. 
-
+            logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: The biggest bitmap we could get from the {fileNamesAndPaths.Count} files was {bmToReturn.Width}x{bmToReturn.Height}.");
             return bmToReturn;
 
         }

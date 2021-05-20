@@ -42,21 +42,68 @@ namespace DisplayMagician.UIForms
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
 
-            if (Program.AppProgramSettings.HotkeyMainWindow != Keys.None)
-                HotkeyManager.Current.AddOrReplace("HotkeyMainWindow", Program.AppProgramSettings.HotkeyMainWindow, OnWindowHotkeyPressed);
-            if (Program.AppProgramSettings.HotkeyDisplayProfileWindow != Keys.None)
-                HotkeyManager.Current.AddOrReplace("HotkeyDisplayProfileWindow", Program.AppProgramSettings.HotkeyDisplayProfileWindow, OnWindowHotkeyPressed);
-            if (Program.AppProgramSettings.HotkeyShortcutLibraryWindow != Keys.None)
+            try
+            {
+                if (Program.AppProgramSettings.HotkeyMainWindow != Keys.None)
+                    HotkeyManager.Current.AddOrReplace("HotkeyMainWindow", Program.AppProgramSettings.HotkeyMainWindow, OnWindowHotkeyPressed);
+            }
+            catch (HotkeyAlreadyRegisteredException ex)
+            {
+                logger.Warn(ex, $"MainForm/MainForm: The Hotkey to open the Main Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                MessageBox.Show(
+                                $"The '{Program.AppProgramSettings.HotkeyMainWindow}' Hotkey you set to open the Main Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"Can't set Main Window Hotkey",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            }
+
+            try
+            {
+                if (Program.AppProgramSettings.HotkeyDisplayProfileWindow != Keys.None)
+                    HotkeyManager.Current.AddOrReplace("HotkeyDisplayProfileWindow", Program.AppProgramSettings.HotkeyDisplayProfileWindow, OnWindowHotkeyPressed);
+
+            }
+            catch (HotkeyAlreadyRegisteredException ex)
+            {
+                logger.Warn(ex, $"MainForm/MainForm: The Hotkey to open the Display Profile Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                MessageBox.Show(
+                                $"The '{Program.AppProgramSettings.HotkeyDisplayProfileWindow}' Hotkey you set to open the Display Profile Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"Can't set Display Profile Window Hotkey",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            }
+
+            try
+            {
+                if (Program.AppProgramSettings.HotkeyShortcutLibraryWindow != Keys.None)
                     HotkeyManager.Current.AddOrReplace("HotkeyShortcutLibraryWindow", Program.AppProgramSettings.HotkeyShortcutLibraryWindow, OnWindowHotkeyPressed);
-            
+
+            }
+            catch (HotkeyAlreadyRegisteredException ex)
+            {
+                logger.Warn(ex, $"MainForm/MainForm: The Hotkey to open the Shortcut Library Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                MessageBox.Show(
+                                $"The '{Program.AppProgramSettings.HotkeyShortcutLibraryWindow}' Hotkey you set to open the Shortcut Library Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"Can't set Shortcut Library Window Hotkey",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            }
 
             // Add all the Profile Hotkeys that are set
             foreach (ProfileItem myProfile in ProfileRepository.AllProfiles)
             {
                 if (myProfile.Hotkey != Keys.None)
                 {
-                    hotkeyDisplayProfiles.Add(myProfile.UUID);
-                    HotkeyManager.Current.AddOrReplace(myProfile.UUID, myProfile.Hotkey, OnWindowHotkeyPressed);
+                    try
+                    {
+                        HotkeyManager.Current.AddOrReplace(myProfile.UUID, myProfile.Hotkey, OnWindowHotkeyPressed); 
+                        hotkeyDisplayProfiles.Add(myProfile.UUID);                        
+                    }
+                    catch (HotkeyAlreadyRegisteredException ex)
+                    {
+                        logger.Warn(ex, $"MainForm/MainForm: The '{myProfile.Hotkey}' Hotkey you set to run the {myProfile.Name} Display Profile is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                        MessageBox.Show(
+                                        $"The '{myProfile.Hotkey}' Hotkey you set to run the {myProfile.Name} Display Profile is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", $"Can't set {myProfile.Name} Display Profile Hotkey",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                    }
                 }
             }
 
@@ -65,8 +112,19 @@ namespace DisplayMagician.UIForms
             {
                 if (myShortcut.Hotkey != Keys.None)
                 {
-                    hotkeyShortcuts.Add(myShortcut.UUID);
-                    HotkeyManager.Current.AddOrReplace(myShortcut.UUID, myShortcut.Hotkey, OnWindowHotkeyPressed);
+                    try
+                    {
+                        HotkeyManager.Current.AddOrReplace(myShortcut.UUID, myShortcut.Hotkey, OnWindowHotkeyPressed);
+                        hotkeyShortcuts.Add(myShortcut.UUID);
+                    }
+                    catch (HotkeyAlreadyRegisteredException ex)
+                    {
+                        logger.Warn(ex, $"MainForm/MainForm: The '{myShortcut.Hotkey}' Hotkey you set to run the {myShortcut.Name} Shortcut is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                        MessageBox.Show(
+                                        $"The '{myShortcut.Hotkey}' Hotkey you set to run the {myShortcut.Name} Shortcut is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", $"Can't set {myShortcut.Name} Shortcut Hotkey",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                    }
                 }
             }
             // And now connect up our processing function
