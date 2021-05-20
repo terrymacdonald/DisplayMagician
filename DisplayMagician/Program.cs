@@ -225,9 +225,27 @@ namespace DisplayMagician {
                 return string.Format("Version {0}", Assembly.GetExecutingAssembly().GetName().Version);
             });
 
+            CommandOption debug = app.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
+            CommandOption trace = app.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
+
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
+                if (trace.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+                else if (debug.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
 
@@ -247,6 +265,21 @@ namespace DisplayMagician {
             // This is the ChangeProfile command
             app.Command(DisplayMagicianStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
             {
+                if (trace.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+                else if (debug.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
                 argumentProfile.Validators.Add(new ProfileMustExistValidator());
 
@@ -276,6 +309,21 @@ namespace DisplayMagician {
             // This is the CreateProfile command
             app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
             {
+                if (trace.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+                else if (debug.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+
                 //description and help text of the command.
                 createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
 
@@ -290,6 +338,21 @@ namespace DisplayMagician {
 
             app.OnExecute(() =>
             {
+                if (trace.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+                else if (debug.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+
                 logger.Debug($"No commandline command was invoked, so starting up normally");
                 // Add a workaround to handle the weird way that Windows tell us that DisplayMagician 
                 // was started from a Notification Toast when closed (Windows 10)
@@ -308,7 +371,7 @@ namespace DisplayMagician {
 
                     }
                 }
-                Console.WriteLine("Starting Normally...");
+                logger.Info("Starting Normally...");
                 StartUpApplication();
                 return 0;
             });
@@ -351,7 +414,7 @@ namespace DisplayMagician {
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
             return 0;
-        }
+        }       
 
         private static void CreateProfile()
         {
@@ -670,7 +733,7 @@ namespace DisplayMagician {
             logger.Debug($"Program/LoadGamesInBackground: Starting");
             // Now lets prepare loading all the Steam games we have installed
             
-            Task loadSteamGamesTask = new Task(() =>
+            /*Task loadSteamGamesTask = new Task(() =>
             {
                 // Check if Steam is installed
                 GameLibrary steamLibrary = SteamLibrary.GetLibrary();
@@ -678,12 +741,10 @@ namespace DisplayMagician {
                 {
                     // Load Steam library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Steam Games");
-                    Console.Write("Loading Installed Steam Games...");
                     if (!steamLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
                     }
-                    Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {steamLibrary.InstalledGameCount})");
                 }
                 else
@@ -702,12 +763,10 @@ namespace DisplayMagician {
                 {
                     // Load Uplay library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Uplay Games");
-                    Console.Write("Loading Installed Uplay Games...");
                     if (!uplayLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                     }
-                    Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {uplayLibrary.InstalledGameCount})");
                 }
                 else
@@ -727,12 +786,10 @@ namespace DisplayMagician {
                 {
                     // Load Origin library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Origin Games");
-                    Console.Write("Loading Installed Origin Games...");
                     if (!originLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Origin Games!");
                     }
-                    Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {originLibrary.InstalledGameCount})");
                 }
                 else
@@ -741,7 +798,7 @@ namespace DisplayMagician {
                     Console.WriteLine("Origin not installed.");
                 }
 
-            });
+            });*/
 
             Action loadSteamGamesAction = new Action(() =>
             {
@@ -751,12 +808,10 @@ namespace DisplayMagician {
                 {
                     // Load Steam library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Steam Games");
-                    Console.Write("Loading Installed Steam Games...");
                     if (!steamLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
                     }
-                    Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {steamLibrary.InstalledGameCount})");
                 }
                 else
@@ -775,12 +830,10 @@ namespace DisplayMagician {
                 {
                     // Load Uplay library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Uplay Games");
-                    Console.Write("Loading Installed Uplay Games...");
                     if (!uplayLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
                     }
-                    Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {uplayLibrary.InstalledGameCount})");
                 }
                 else
@@ -800,12 +853,10 @@ namespace DisplayMagician {
                 {
                     // Load Origin library games
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Origin Games");
-                    Console.Write("Loading Installed Origin Games...");
                     if (!originLibrary.LoadInstalledGames())
                     {
                         logger.Info($"Program/LoadGamesInBackground: Cannot load installed Origin Games!");
                     }
-                    Console.WriteLine("Done.");
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {originLibrary.InstalledGameCount})");
                 }
                 else
