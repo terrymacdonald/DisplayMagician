@@ -582,5 +582,10 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void btn_help_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki";
+            System.Diagnostics.Process.Start(targetURL);
+        }
     }
 }
