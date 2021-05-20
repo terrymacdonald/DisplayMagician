@@ -46,6 +46,7 @@
             this.tsmi_run = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_save_to_desktop = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_delete = new System.Windows.Forms.ToolStripMenuItem();
+            this.lbl_mask = new System.Windows.Forms.Label();
             this.cms_shortcuts.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -245,6 +246,22 @@
             this.tsmi_delete.Text = "Delete Shortcut...";
             this.tsmi_delete.Click += new System.EventHandler(this.tsmi_delete_Click);
             // 
+            // lbl_masked_form
+            // 
+            this.lbl_mask.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbl_mask.BackColor = System.Drawing.Color.Gray;
+            this.lbl_mask.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_mask.ForeColor = System.Drawing.Color.White;
+            this.lbl_mask.Location = new System.Drawing.Point(360, 306);
+            this.lbl_mask.Name = "lbl_masked_form";
+            this.lbl_mask.Size = new System.Drawing.Size(415, 104);
+            this.lbl_mask.TabIndex = 33;
+            this.lbl_mask.Text = "lbl_masked_form";
+            this.lbl_mask.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lbl_mask.Visible = false;
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -252,6 +269,7 @@
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(1134, 716);
+            this.Controls.Add(this.lbl_mask);
             this.Controls.Add(this.lbl_create_shortcut);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btn_save);
@@ -295,5 +313,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmi_run;
         private System.Windows.Forms.ToolStripMenuItem tsmi_delete;
         private System.Windows.Forms.ToolStripMenuItem tsmi_save_to_desktop;
+        private System.Windows.Forms.Label lbl_mask;
     }
 }

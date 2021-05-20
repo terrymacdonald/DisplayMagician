@@ -330,10 +330,13 @@ namespace DisplayMagician.UIForms
 
             if (!Program.AppProgramSettings.MinimiseOnStart)
             {
-                // Create a MaskForm that will cover the ShortcutLibrary Window to lock
-                // the controls and inform the user that the game is running....
-                MaskedForm maskedForm = MaskedForm.Show(this, message);
-                maskedForm.BringToFront();
+                // Create a Mask Control that will cover the ShortcutLibrary Window to lock
+                lbl_mask.Text = message;
+                lbl_mask.Location = new Point(0, 0);
+                lbl_mask.Size = this.Size;
+                lbl_mask.BackColor = Color.FromArgb(100, Color.Black);
+                lbl_mask.BringToFront();
+                lbl_mask.Visible = true;
 
                 ilv_saved_shortcuts.SuspendLayout();
                 ilv_saved_shortcuts.Refresh();
@@ -346,7 +349,9 @@ namespace DisplayMagician.UIForms
 
                 ilv_saved_shortcuts.ResumeLayout();
 
-                maskedForm.Close();
+                // REmove the Masked Control to allow the user to start using DisplayMagician again.
+                lbl_mask.Visible = false;
+                lbl_mask.SendToBack();
             }
             else
             {
