@@ -73,6 +73,8 @@ namespace DisplayMagician.UIForms
             // cb_start_program_close
             // 
             this.cb_start_program_close.AutoSize = true;
+            this.cb_start_program_close.Checked = true;
+            this.cb_start_program_close.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_start_program_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_start_program_close.ForeColor = System.Drawing.Color.White;
             this.cb_start_program_close.Location = new System.Drawing.Point(506, 86);
@@ -86,7 +88,6 @@ namespace DisplayMagician.UIForms
             // 
             // btn_start_program
             // 
-            this.btn_start_program.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btn_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_start_program.ForeColor = System.Drawing.Color.White;
