@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using NHotkey.WindowsForms;
 using NHotkey;
 using System.Linq;
+using System.Diagnostics;
 
 namespace DisplayMagician.UIForms
 {
@@ -49,9 +50,9 @@ namespace DisplayMagician.UIForms
             }
             catch (HotkeyAlreadyRegisteredException ex)
             {
-                logger.Warn(ex, $"MainForm/MainForm: The Hotkey to open the Main Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                logger.Warn(ex, $"MainForm/MainForm: The '{Program.HotkeyToString(Program.AppProgramSettings.HotkeyMainWindow)}' Hotkey to open the Main Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
                 MessageBox.Show(
-                                $"The '{Program.AppProgramSettings.HotkeyMainWindow}' Hotkey you set to open the Main Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"Can't set Main Window Hotkey",
+                                $"The '{Program.HotkeyToString(Program.AppProgramSettings.HotkeyMainWindow)}' Hotkey you set to open the Main Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"DisplayMagician Hotkey Registration Error",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
             }
@@ -64,9 +65,9 @@ namespace DisplayMagician.UIForms
             }
             catch (HotkeyAlreadyRegisteredException ex)
             {
-                logger.Warn(ex, $"MainForm/MainForm: The Hotkey to open the Display Profile Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                logger.Warn(ex, $"MainForm/MainForm: The '{Program.HotkeyToString(Program.AppProgramSettings.HotkeyDisplayProfileWindow)}' Hotkey to open the Display Profile Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
                 MessageBox.Show(
-                                $"The '{Program.AppProgramSettings.HotkeyDisplayProfileWindow}' Hotkey you set to open the Display Profile Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"Can't set Display Profile Window Hotkey",
+                                $"The '{Program.HotkeyToString(Program.AppProgramSettings.HotkeyDisplayProfileWindow)}' Hotkey you set to open the Display Profile Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"DisplayMagician Hotkey Registration Error",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
             }
@@ -79,9 +80,9 @@ namespace DisplayMagician.UIForms
             }
             catch (HotkeyAlreadyRegisteredException ex)
             {
-                logger.Warn(ex, $"MainForm/MainForm: The Hotkey to open the Shortcut Library Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                logger.Warn(ex, $"MainForm/MainForm: The '{Program.HotkeyToString(Program.AppProgramSettings.HotkeyShortcutLibraryWindow)}' Hotkey to open the Shortcut Library Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
                 MessageBox.Show(
-                                $"The '{Program.AppProgramSettings.HotkeyShortcutLibraryWindow}' Hotkey you set to open the Shortcut Library Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"Can't set Shortcut Library Window Hotkey",
+                                $"The '{Program.HotkeyToString(Program.AppProgramSettings.HotkeyShortcutLibraryWindow)}' Hotkey you set to open the Shortcut Library Window is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", @"DisplayMagician Hotkey Registration Error",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
             }
@@ -98,9 +99,9 @@ namespace DisplayMagician.UIForms
                     }
                     catch (HotkeyAlreadyRegisteredException ex)
                     {
-                        logger.Warn(ex, $"MainForm/MainForm: The '{myProfile.Hotkey}' Hotkey you set to run the {myProfile.Name} Display Profile is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                        logger.Warn(ex, $"MainForm/MainForm: The '{Program.HotkeyToString(myProfile.Hotkey)}' Hotkey you set to run the {myProfile.Name} Display Profile is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
                         MessageBox.Show(
-                                        $"The '{myProfile.Hotkey}' Hotkey you set to run the {myProfile.Name} Display Profile is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", $"Can't set {myProfile.Name} Display Profile Hotkey",
+                                        $"The '{Program.HotkeyToString(myProfile.Hotkey)}' Hotkey you set to run the {myProfile.Name} Display Profile is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", $"DisplayMagician Hotkey Registration Error",
                                         MessageBoxButtons.OK,
                                         MessageBoxIcon.Error);
                     }
@@ -119,17 +120,14 @@ namespace DisplayMagician.UIForms
                     }
                     catch (HotkeyAlreadyRegisteredException ex)
                     {
-                        logger.Warn(ex, $"MainForm/MainForm: The '{myShortcut.Hotkey}' Hotkey you set to run the {myShortcut.Name} Shortcut is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
+                        logger.Warn(ex, $"MainForm/MainForm: The '{Program.HotkeyToString(myShortcut.Hotkey)}' Hotkey you set to run the {myShortcut.Name} Shortcut is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.");
                         MessageBox.Show(
-                                        $"The '{myShortcut.Hotkey}' Hotkey you set to run the {myShortcut.Name} Shortcut is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", $"Can't set {myShortcut.Name} Shortcut Hotkey",
+                                        $"The '{Program.HotkeyToString(myShortcut.Hotkey)}' Hotkey you set to run the {myShortcut.Name} Shortcut is already registered by something else! We cannot use that Hotkey. Please choose another Hotkey, or stop the other application from using it.", $"DisplayMagician Hotkey Registration Error",
                                         MessageBoxButtons.OK,
                                         MessageBoxIcon.Error);
                     }
                 }
-            }
-            // And now connect up our processing function
-            
-
+            }          
 
             if (Program.AppProgramSettings.MinimiseOnStart) 
             {
@@ -296,11 +294,15 @@ namespace DisplayMagician.UIForms
             EnableShortcutButtonIfProfiles();
 
             //Run the AutoUpdater to see if there are any updates available.
+            //FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(Application.ExecutablePath);
+            //AutoUpdater.InstalledVersion = new Version(fvi.FileVersion);
             AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
             AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
             AutoUpdater.RunUpdateAsAdmin = true;
             AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
             AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/");
+
+            logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
         }
 
         private void EnableShortcutButtonIfProfiles()
@@ -491,23 +493,33 @@ namespace DisplayMagician.UIForms
         private void AutoUpdaterOnParseUpdateInfoEvent(ParseUpdateInfoEventArgs args)
         {
             dynamic json = JsonConvert.DeserializeObject(args.RemoteData);
-            args.UpdateInfo = new UpdateInfoEventArgs
+            logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Received the following Update JSON file from {AutoUpdater.AppCastURL}: {args.RemoteData}");          
+            try
             {
-                CurrentVersion = json.version,
-                ChangelogURL = json.changelog,
-                DownloadURL = json.url,
-                Mandatory = new Mandatory
+                logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
+                args.UpdateInfo = new UpdateInfoEventArgs
                 {
-                    Value = json.mandatory.value,
-                    UpdateMode = json.mandatory.mode,
-                    MinimumVersion = json.mandatory.minVersion
-                },
-                CheckSum = new CheckSum
-                {
-                    Value = json.checksum.value,
-                    HashingAlgorithm = json.checksum.hashingAlgorithm
-                }
-            };
+                    CurrentVersion = (string)json["version"],
+                    ChangelogURL = (string)json["changelog"],
+                    DownloadURL = (string)json["url"],
+                    Mandatory = new Mandatory
+                    {
+                        Value = (bool)json["mandatory"]["value"],
+                        UpdateMode = (Mode)(int)json["mandatory"]["mode"],
+                        MinimumVersion = (string)json["mandatory"]["minVersion"]
+                    },
+                    CheckSum = new CheckSum
+                    {
+                        Value = (string)json["checksum"]["value"],
+                        HashingAlgorithm = (string)json["checksum"]["hashingAlgorithm"]
+                    }
+                };
+            }
+            catch(Exception ex)
+            {
+                logger.Error(ex, $"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
+            }
+            
         }        
 
         private void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
@@ -516,6 +528,7 @@ namespace DisplayMagician.UIForms
             {
                 if (args.IsUpdateAvailable)
                 {
+                    logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
                     DialogResult dialogResult;
                     if (args.Mandatory.Value)
                     {

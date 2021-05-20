@@ -947,6 +947,29 @@ namespace DisplayMagician {
 
         }
 
+        public static string HotkeyToString(Keys hotkey)
+        {
+            string parsedHotkey = String.Empty;
+            KeysConverter kc = new KeysConverter();
+
+            // Lets parse the hotkey to create the text we need
+            parsedHotkey = kc.ConvertToString(hotkey);
+
+            // Control also shows as Ctrl+ControlKey, so we trim the +ControlKeu
+            if (parsedHotkey.Contains("+ControlKey"))
+                parsedHotkey = parsedHotkey.Replace("+ControlKey", "");
+
+            // Shift also shows as Shift+ShiftKey, so we trim the +ShiftKeu
+            if (parsedHotkey.Contains("+ShiftKey"))
+                parsedHotkey = parsedHotkey.Replace("+ShiftKey", "");
+
+            // Alt also shows as Alt+Menu, so we trim the +Menu
+            if (parsedHotkey.Contains("+Menu"))
+                parsedHotkey = parsedHotkey.Replace("+Menu", "");
+
+            return parsedHotkey;
+        }
+
     }
 
 
