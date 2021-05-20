@@ -140,6 +140,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DisplayMagician - Please Wait";
+            this.TopMost = true;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ApplyingProfileForm_FormClosing);
             this.Load += new System.EventHandler(this.ApplyingProfileForm_Reposition);
             this.Shown += new System.EventHandler(this.ApplyingProfileForm_Shown);
