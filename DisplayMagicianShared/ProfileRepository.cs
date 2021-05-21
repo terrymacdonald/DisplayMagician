@@ -12,6 +12,7 @@ using WindowsDisplayAPI;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using NvAPIWrapper.Native.GPU;
+using System.Windows.Forms;
 
 namespace DisplayMagicianShared
 {
@@ -27,6 +28,7 @@ namespace DisplayMagicianShared
         public static Version _version = new Version(1, 0, 0);
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
+        private static bool notifiedEDIDErrorToUser = false;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -905,13 +907,26 @@ namespace DisplayMagicianShared
 
                 foreach (Display attachedDisplay in attachedDisplayDevices)
                 {
-                    DisplayAdapter displayAdapter = attachedDisplay.Adapter;
-                    PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
-                    PathDisplaySource pathDisplaySource = attachedDisplay.ToPathDisplaySource();
-                    PathDisplayTarget pathDisplayTarget = attachedDisplay.ToPathDisplayTarget();
+                    DisplayAdapter displayAdapter = null;
+                    PathDisplayAdapter pathDisplayAdapter = null;
+                    PathDisplaySource pathDisplaySource = null;
+                    PathDisplayTarget pathDisplayTarget = null;
 
+                    
                     try
                     {
+                        // We keep these lines here to detect if there is an exception so we can report it
+                        // nicely to the user.
+                        displayAdapter = attachedDisplay.Adapter;
+                        pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
+                        pathDisplaySource = attachedDisplay.ToPathDisplaySource();
+                        pathDisplayTarget = attachedDisplay.ToPathDisplayTarget();
+
+                        // This line is just to force an EDID lookup first up so that we can deterine if there is an issue 
+                        // with the Monitor, and then tell the user
+                        string EDIDManufacturerId = pathDisplayTarget.EDIDManufactureId.ToString();
+
+                        // print some trace messages so we can figure out issues if needed later
                         SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDN : {attachedDisplay.DeviceName}");
                         SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDFN : {attachedDisplay.DisplayFullName}");
                         SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDIN : {attachedDisplay.DisplayName}");
@@ -953,6 +968,22 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTTI : {pathDisplayTarget.TargetId}");
                         SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
                     }
+                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
+                        if (!notifiedEDIDErrorToUser)
+                        {
+                            MessageBox.Show(
+                                $"Your monitor {attachedDisplay.DisplayFullName} is not responding when we ask about it's configuration. DisplayMagician may not be able to use this monitor!", @"DisplayMagician cannot talk to your monitor",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                            notifiedEDIDErrorToUser = true;
+                        }                            
+                    }
+                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
+                    }
                     catch (Exception ex)
                     {
                         SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception accessing one of the WindowsDisplayAPI items to print it out during a TRACE session");
@@ -982,6 +1013,10 @@ namespace DisplayMagicianShared
                     try
                     {
                         displayInfo.Add(pathDisplayTarget.ConnectorInstance.ToString());
+                    }                    
+                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception2 while we were trying to access the DisplayTarget to gather information about your display configuration.");
                     }
                     catch (Exception ex)
                     {
@@ -1001,27 +1036,51 @@ namespace DisplayMagicianShared
                     {
                         displayInfo.Add(pathDisplayTarget.EDIDManufactureCode.ToString());
                     }
+                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers2: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
+                    }
+                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers2: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
+                    }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display EDID Manufacturer Code from video card. Substituting with a # instead");
+                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers2: Exception getting Windows Display EDID Manufacturer Code from video card. Substituting with a # instead");
                         displayInfo.Add("#");
                     }
                     try
                     {
                         displayInfo.Add(pathDisplayTarget.EDIDManufactureId.ToString());
                     }
+                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers3: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
+                    }
+                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers3: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
+                    }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display EDID Manufacturer ID from video card. Substituting with a # instead");
+                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers3: Exception getting Windows Display EDID Manufacturer ID from video card. Substituting with a # instead");
                         displayInfo.Add("#");
                     }
                     try
                     {
                         displayInfo.Add(pathDisplayTarget.EDIDProductCode.ToString());
                     }
+                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers4: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
+                    }
+                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
+                    {
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers4: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
+                    }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display EDID Product Code from video card. Substituting with a # instead");
+                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers4: Exception getting Windows Display EDID Product Code from video card. Substituting with a # instead");
                         displayInfo.Add("#");
                     }
                     try
@@ -1039,6 +1098,7 @@ namespace DisplayMagicianShared
                     // Add it to the list of display identifiers so we can return it
                     displayIdentifiers.Add(displayIdentifier);
                     SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
+                    
                 }
 
             }

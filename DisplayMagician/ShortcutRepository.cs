@@ -61,9 +61,6 @@ namespace DisplayMagician
                 logger.Warn(ex, $"ShortcutRepository/ShortcutRepository: Exception while trying to initialise CoreAudioController. Audio Chipset on your computer is not supported. You will be unable to set audio settings.");
             }
 
-            //_audioController.DefaultPlaybackDevice.SetAsDefault();
-            //_audioController.DefaultCaptureDevice.SetAsDefault();
-
             // Load the Shortcuts from storage
             LoadShortcuts();
 
@@ -83,30 +80,6 @@ namespace DisplayMagician
                 return _allShortcuts;
             }
         }
-
-        /*public static Dictionary<string, bool> ShortcutWarningLookup
-        {
-            get
-            {
-                if (!_shortcutsLoaded)
-                    // Load the Shortcuts from storage if they need to be
-                    LoadShortcuts();
-
-                return _shortcutWarningLookup;
-            }
-        }
-
-        public static Dictionary<string, bool> ShortcutErrorLookup
-        {
-            get
-            {
-                if (!_shortcutsLoaded)
-                    // Load the Shortcuts from storage if they need to be
-                    LoadShortcuts();
-
-                return _shortcutErrorLookup;
-            }
-        }*/
 
         public static int ShortcutCount
         {
@@ -1646,7 +1619,7 @@ namespace DisplayMagician
                         logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't access the wait status for a process we're trying to stop.");
                     }
                     catch (InvalidOperationException ex) {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't kill the process as there is no process associated with the Process object.");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't kill the process as the proicess appears to have closed already. This can be caused if your {processToStop.ProcessName}.exe loaded another exe then closed itself. DisplayMagician cannot track that sort of behaviour.");
                     }
                     catch (SystemException ex)
                     {

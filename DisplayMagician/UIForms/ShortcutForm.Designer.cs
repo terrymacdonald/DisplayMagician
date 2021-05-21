@@ -343,11 +343,11 @@ namespace DisplayMagician.UIForms
             this.lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
             this.lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(326, 298);
+            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(263, 298);
             this.lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
-            this.lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(430, 22);
+            this.lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(557, 22);
             this.lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
-            this.lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn\'t supported :(";
+            this.lbl_disabled_shortcut_audio_chipset.Text = "Unsupported Audio Chipset. Setting audio isn\'t supported on your computer :(";
             this.lbl_disabled_shortcut_audio_chipset.Visible = false;
             // 
             // gb_capture_settings

@@ -1965,8 +1965,10 @@ namespace DisplayMagician.UIForms
 
         public void RemoveStartProgram(StartProgramControl startProgramControlToRemove)
         {
-            // If we find the start program then we need to remove it from the list
-            _shortcutToEdit.StartPrograms.Remove(startProgramControlToRemove.StartProgram);
+            // If we find the start program then we need to remove it from the list (only if one was supplied)
+            if (_shortcutToEdit.StartPrograms != null && _shortcutToEdit.StartPrograms.Count > 0)
+                _shortcutToEdit.StartPrograms.Remove(startProgramControlToRemove.StartProgram);
+            
             // And we remove the program control passed in to this function as well
             flp_start_programs.SuspendLayout();
             flp_start_programs.Controls.Remove(startProgramControlToRemove);
@@ -2113,7 +2115,10 @@ namespace DisplayMagician.UIForms
 
         private void btn_add_new_start_program_Click(object sender, EventArgs e)
         {
-            StartProgram newStartProgram = new StartProgram() { };
+            // Create a new startProgram with sensible defaults
+            StartProgram newStartProgram = new StartProgram() {
+                CloseOnFinish = true
+            };
             StartProgramControl newStartProgramControl = new StartProgramControl(newStartProgram, flp_start_programs.Controls.Count);
             newStartProgramControl.Dock = DockStyle.None;
             newStartProgramControl.Width = flp_start_programs.Width - 40;
