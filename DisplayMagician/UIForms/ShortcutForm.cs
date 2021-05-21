@@ -1103,6 +1103,8 @@ namespace DisplayMagician.UIForms
 
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
+                flp_start_programs.Controls.Clear();
+                
                 Padding firstStartProgramMargin = new Padding(10) { };
                 Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
 
