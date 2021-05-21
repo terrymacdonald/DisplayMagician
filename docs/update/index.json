@@ -1,6 +1,6 @@
 {
   "version": "1.1.0.0",
-  "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v1.1.0/DisplayMagicianSetup-v1.1.0.msi",
+  "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v1.1.0.1/DisplayMagicianSetup-v1.1.0.msi",
   "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases",
   "mandatory": {
     "value": false,
