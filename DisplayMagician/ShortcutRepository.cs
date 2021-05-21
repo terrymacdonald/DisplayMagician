@@ -712,7 +712,7 @@ namespace DisplayMagician
                 }
                 catch(Exception ex)
                 {
-                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Audio Devices!");
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Audio Devices!");
                 }
 
 
@@ -784,12 +784,12 @@ namespace DisplayMagician
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Capture Devices!");
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception accessing or manipulating Capture Devices!");
                 }
             }
             else
             {
-                logger.Warn($"ShortcutRepository/RunShortcut: CoreAudio Controller is null, so we can't set Audio or Capture Devices!");
+                logger.Error($"ShortcutRepository/RunShortcut: CoreAudio Controller is null, so we can't set Audio or Capture Devices!");
             }
 
             // Set the IP Service status back to what it was
