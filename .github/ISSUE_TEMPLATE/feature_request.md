@@ -1,9 +1,9 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
-title: ''
+about: Suggest an idea to improve DisplayMagician
+title: "[FEATURE]"
 labels: enhancement
-assignees: falahati
+assignees: terrymacdonald
 
 ---
 
