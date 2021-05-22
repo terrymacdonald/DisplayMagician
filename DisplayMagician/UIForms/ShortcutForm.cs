@@ -2021,10 +2021,13 @@ namespace DisplayMagician.UIForms
             displayHotkeyForm.ShowDialog(this);
             if (displayHotkeyForm.DialogResult == DialogResult.OK)
             {
+                // If the hotkey has changed, then set the unsaved warning to true
+                if (!_hotkey.Equals(displayHotkeyForm.Hotkey))
+                    _isUnsaved = true;
                 // now we store the Hotkey to be saved later
                 _hotkey = displayHotkeyForm.Hotkey;
                 // And if we get back and this is a Hotkey with a value, we need to show that in the UI
-                UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
+                UpdateHotkeyLabel(_hotkey);
             }
         }
 

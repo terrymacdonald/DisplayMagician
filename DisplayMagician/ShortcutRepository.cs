@@ -982,7 +982,8 @@ namespace DisplayMagician
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
                     .AddToastActivationInfo("notify=runningApplication", ToastActivationType.Foreground)
                     .AddText($"Running {processNameToLookFor}", hintMaxLines: 1)
-                    .AddText($"Waiting for all {processNameToLookFor} windows to exit...");
+                    .AddText($"Waiting for all {processNameToLookFor} windows to exit...")
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"),false,true);
                     //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
@@ -990,6 +991,7 @@ namespace DisplayMagician
                 doc.LoadXml(toastContent.GetContent());
                 // And create the toast notification
                 var toast = new ToastNotification(doc);
+                toast.SuppressPopup = false;
                 // Remove any other Notifications from us
                 DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
                 // And then show this notification
@@ -1028,7 +1030,8 @@ namespace DisplayMagician
                 tcBuilder = new ToastContentBuilder()
                     .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
                     .AddText($"{processNameToLookFor} was closed", hintMaxLines: 1)
-                    .AddText($"All {processNameToLookFor} processes were shutdown and changes were reverted.");
+                    .AddText($"All {processNameToLookFor} processes were shutdown and changes were reverted.")
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true); 
                 toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 doc = new XmlDocument();
@@ -1078,7 +1081,8 @@ namespace DisplayMagician
                     ToastContentBuilder tcBuilder = new ToastContentBuilder()
                         .AddToastActivationInfo($"notify=starting{gameLibraryToUse.GameLibraryName}", ToastActivationType.Foreground)
                         .AddText($"Starting {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
-                        .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to start (and update if needed)...");
+                        .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to start (and update if needed)...")
+                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                     //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                     ToastContent toastContent = tcBuilder.Content;
                     // Make sure to use Windows.Data.Xml.Dom
@@ -1144,7 +1148,8 @@ namespace DisplayMagician
                         tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo($"notify=updating{gameLibraryToUse.GameLibraryName}", ToastActivationType.Foreground)
                             .AddText($"Updating {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
-                            .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to update itself...");
+                            .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to update itself...")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                         toastContent = tcBuilder.Content;
                         // Make sure to use Windows.Data.Xml.Dom
@@ -1193,7 +1198,8 @@ namespace DisplayMagician
                         tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo($"notify=updating{gameToRun.Name}", ToastActivationType.Foreground)
                             .AddText($"Updating {gameToRun.Name}", hintMaxLines: 1)
-                            .AddText($"Waiting for {gameToRun.Name} Game to update...");
+                            .AddText($"Waiting for {gameToRun.Name} Game to update...")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                         toastContent = tcBuilder.Content;
                         // Make sure to use Windows.Data.Xml.Dom
@@ -1349,7 +1355,8 @@ namespace DisplayMagician
                                 tcBuilder = new ToastContentBuilder()
                                     .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
                                     .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
-                                    .AddText($"{shortcutToUse.GameName} game was exited.");
+                                    .AddText($"{shortcutToUse.GameName} game was exited.")
+                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                                 toastContent = tcBuilder.Content;
                                 // Make sure to use Windows.Data.Xml.Dom
                                 doc = new XmlDocument();
@@ -1374,7 +1381,8 @@ namespace DisplayMagician
                             tcBuilder = new ToastContentBuilder()
                                 .AddToastActivationInfo($"notify=running{gameLibraryToUse.GameLibraryName}Game", ToastActivationType.Foreground)
                                 .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
-                                .AddText($"Waiting for the {altGameProcessToMonitor} alternative game process to exit...");
+                                .AddText($"Waiting for the {altGameProcessToMonitor} alternative game process to exit...")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                             toastContent = tcBuilder.Content;
                             // Make sure to use Windows.Data.Xml.Dom
@@ -1409,7 +1417,8 @@ namespace DisplayMagician
                             tcBuilder = new ToastContentBuilder()
                                 .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
                                 .AddText($"{altGameProcessToMonitor} was closed", hintMaxLines: 1)
-                                .AddText($"{altGameProcessToMonitor} alternative game executable was exited.");
+                                .AddText($"{altGameProcessToMonitor} alternative game executable was exited.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             toastContent = tcBuilder.Content;
                             // Make sure to use Windows.Data.Xml.Dom
                             doc = new XmlDocument();
@@ -1438,7 +1447,8 @@ namespace DisplayMagician
                         tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo($"notify=running{gameLibraryToUse.GameLibraryName}Game", ToastActivationType.Foreground)
                             .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
-                            .AddText($"Waiting for the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit...");
+                            .AddText($"Waiting for the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit...")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                         toastContent = tcBuilder.Content;
                         // Make sure to use Windows.Data.Xml.Dom
@@ -1518,7 +1528,8 @@ namespace DisplayMagician
                             tcBuilder = new ToastContentBuilder()
                                 .AddToastActivationInfo("notify=stopDetected", ToastActivationType.Foreground)
                                 .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
-                                .AddText($"{shortcutToUse.GameName} game was exited.");
+                                .AddText($"{shortcutToUse.GameName} game was exited.")
+                                .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             toastContent = tcBuilder.Content;
                             // Make sure to use Windows.Data.Xml.Dom
                             doc = new XmlDocument();
@@ -1574,7 +1585,8 @@ namespace DisplayMagician
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
                     .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
                     .AddText("DisplayMagician is minimised", hintMaxLines: 1)
-                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open")
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 var doc = new XmlDocument();

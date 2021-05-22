@@ -224,7 +224,8 @@ namespace DisplayMagician.UIForms
                     .AddText("DisplayMagician is still running...", hintMaxLines: 1)
                     .AddText("DisplayMagician will wait in the background until you need it.")
                     .AddButton("Open DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=open")
-                    .AddButton("Exit DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=exit");
+                    .AddButton("Exit DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=exit")
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 var doc = new XmlDocument();
