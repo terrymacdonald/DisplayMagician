@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea to improve DisplayMagician
-title: "[FEATURE]"
+title: ''
 labels: enhancement
 assignees: terrymacdonald
 

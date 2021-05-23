@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a bug report to help us fix something broken in DisplayMagician
-title: "[BUG] "
+title: ''
 labels: bug
 assignees: terrymacdonald
 
