@@ -116,6 +116,7 @@
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ImageUtils.cs" />
+    <Compile Include="ProcessUtils.cs" />
     <Compile Include="ProgramSettings.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
