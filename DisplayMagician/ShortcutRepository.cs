@@ -784,7 +784,7 @@ namespace DisplayMagician
                         if (alreadyRunningProcesses.Length > 0)
                         {
                             logger.Info($"ShortcutRepository/RunShortcut: Process {processToStart.Executable} is already running, so we won't start another one");
-                            break;
+                            continue;
                         }
                             
                     }
@@ -1611,6 +1611,14 @@ namespace DisplayMagician
                 // Stop the programs in the reverse order we started them
                 foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
                 {
+                    if (processToStop.HasExited)
+                    {
+                        // if the process has already exited (e.g. the user exited it themselves)
+                        // then stop trying to stop the process, and instead log the fact it already stopped.
+                        Console.WriteLine($"Stopping process {processToStop.StartInfo.FileName} but was already stopped by user or another process.");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName} but was already stopped by user or another process.");
+                        continue;
+                    }
                     Console.WriteLine($"Stopping process {processToStop.StartInfo.FileName}");
                     logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName}");
                     try
