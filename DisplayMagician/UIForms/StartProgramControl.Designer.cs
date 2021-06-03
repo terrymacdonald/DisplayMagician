@@ -79,9 +79,9 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_close.ForeColor = System.Drawing.Color.White;
             this.cb_start_program_close.Location = new System.Drawing.Point(506, 86);
             this.cb_start_program_close.Name = "cb_start_program_close";
-            this.cb_start_program_close.Size = new System.Drawing.Size(398, 24);
+            this.cb_start_program_close.Size = new System.Drawing.Size(458, 24);
             this.cb_start_program_close.TabIndex = 24;
-            this.cb_start_program_close.Text = "Close started program when you finish playing Game";
+            this.cb_start_program_close.Text = "Close started program when finished (unless already running)";
             this.cb_start_program_close.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.cb_start_program_close.UseVisualStyleBackColor = true;
             this.cb_start_program_close.CheckedChanged += new System.EventHandler(this.cb_start_program_close_CheckedChanged);

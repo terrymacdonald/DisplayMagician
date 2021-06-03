@@ -117,6 +117,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.btn_find_examples = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -615,6 +616,7 @@ namespace DisplayMagician.UIForms
             // tabp_before
             // 
             this.tabp_before.BackColor = System.Drawing.Color.Black;
+            this.tabp_before.Controls.Add(this.btn_find_examples);
             this.tabp_before.Controls.Add(this.label3);
             this.tabp_before.Controls.Add(this.btn_add_new_start_program);
             this.tabp_before.Controls.Add(this.flp_start_programs);
@@ -1261,6 +1263,22 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
+            // btn_find_examples
+            // 
+            this.btn_find_examples.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_find_examples.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_find_examples.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_find_examples.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_find_examples.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_find_examples.ForeColor = System.Drawing.Color.White;
+            this.btn_find_examples.Location = new System.Drawing.Point(976, 72);
+            this.btn_find_examples.Name = "btn_find_examples";
+            this.btn_find_examples.Size = new System.Drawing.Size(94, 25);
+            this.btn_find_examples.TabIndex = 40;
+            this.btn_find_examples.Text = "Find &Examples";
+            this.btn_find_examples.UseVisualStyleBackColor = true;
+            this.btn_find_examples.Click += new System.EventHandler(this.btn_find_examples_Click);
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1410,5 +1428,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_add_new_start_program;
         private System.Windows.Forms.Label label3;
         internal Manina.Windows.Forms.ImageListView ilv_games;
+        private System.Windows.Forms.Button btn_find_examples;
     }
 }

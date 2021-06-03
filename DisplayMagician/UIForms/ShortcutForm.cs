@@ -2012,7 +2012,7 @@ namespace DisplayMagician.UIForms
             else
                 testHotkey = Keys.None;
             string hotkeyHeading = $"Choose a '{_shortcutToEdit.Name}' Shortcut Hotkey";
-            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can start this" + Environment.NewLine +
+            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can run this" + Environment.NewLine +
                 "game shortcut using your keyboard. This must be a Hotkey that" + Environment.NewLine +
                 "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
                 "might not see it.";
@@ -2163,6 +2163,12 @@ namespace DisplayMagician.UIForms
         {
             if (tabc_shortcut.Visible == true)
                 SelectGameInImageListView();
+        }
+
+        private void btn_find_examples_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Start-Program-Examples";
+            System.Diagnostics.Process.Start(targetURL);
         }
     }
 }

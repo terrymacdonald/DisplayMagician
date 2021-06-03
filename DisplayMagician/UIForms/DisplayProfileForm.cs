@@ -475,8 +475,8 @@ namespace DisplayMagician.UIForms
             else
                 testHotkey = Keys.None;
             string hotkeyHeading = $"Choose a '{_selectedProfile.Name}' Display Profile Hotkey";
-            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply to this" + Environment.NewLine +
-                "screen using your keyboard. This must be a Hotkey that" + Environment.NewLine +
+            string hotkeyDescription = $"Choose a Hotkey (a keyboard shortcut) so that you can apply this" + Environment.NewLine +
+                "Display Profile using your keyboard. This must be a Hotkey that" + Environment.NewLine +
                 "is unique across all your applications otherwise DisplayMagician" + Environment.NewLine +
                 "might not see it.";
             HotkeyForm displayHotkeyForm = new HotkeyForm(testHotkey,hotkeyHeading, hotkeyDescription);

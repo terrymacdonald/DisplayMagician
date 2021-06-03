@@ -783,7 +783,7 @@ namespace DisplayMagician
                         Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
                         if (alreadyRunningProcesses.Length > 0)
                         {
-                            logger.Info($"ShortcutRepository/RunShortcut: Process {processToStart.Executable} is already running, so we won't start another one");
+                            logger.Info($"ShortcutRepository/RunShortcut: Process {processToStart.Executable} is already running, so we won't start a new one, and we won't stop it later");
                             continue;
                         }
                             
@@ -1614,147 +1614,67 @@ namespace DisplayMagician
                 // Stop the programs in the reverse order we started them
                 foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
                 {
-                    if (processToStop.HasExited)
+                    bool stoppedMainProcess = false;
+
+                    // Stop the process if it hasn't stopped already
+                    if (!processToStop.HasExited)
                     {
-                        // First check whether it was a loader process that started a subprocess
-                        // If so, we need to go through and find and close all subprocesses
-                        List<Process> childProcesses = ProcessUtils.FindChildProcesses(processToStop);
-                        if (childProcesses.Count > 0)
+                        logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName}");
+                        if (ProcessUtils.StopProcess(processToStop))
                         {
-                            foreach (Process childProcessToStop in childProcesses)
+                            logger.Debug($"ShortcutRepository/RunShortcut: Successfully stopped process {processToStop.StartInfo.FileName}");
+                            stoppedMainProcess = true;
+                        }
+                    }
+
+                    // Next, check whether it had any other processes it started itself
+                    // (copes with loader processes that perform the initial start, then run the main exe)
+                    // If so, we need to go through and find and close all subprocesses
+                    List<Process> childProcesses = ProcessUtils.FindChildProcesses(processToStop);
+                    if (childProcesses.Count > 0)
+                    {
+                        foreach (Process childProcessToStop in childProcesses)
+                        {
+                            if (processToStop.HasExited)
                             {
-                                if (processToStop.HasExited)
-                                {
-                                    // if there were no child processes, and the only process has already exited (e.g. the user exited it themselves)
-                                    // then stop trying to stop the process, and instead log the fact it already stopped.
-                                    Console.WriteLine($"Stopping child process {childProcessToStop.StartInfo.FileName} but was already stopped by user or another process.");
-                                    logger.Warn($"ShortcutRepository/RunShortcut: Stopping child process {childProcessToStop.StartInfo.FileName} but was already stopped by user or another process.");
-                                    continue;
-                                }
-
-                                Console.WriteLine($"Stopping child process {childProcessToStop.StartInfo.FileName} of parent process {processToStop.StartInfo.FileName}");
-                                logger.Debug($"ShortcutRepository/RunShortcut: Stopping child process {childProcessToStop.StartInfo.FileName} of parent process {processToStop.StartInfo.FileName}");
-                                try
-                                {
-                                    // Stop the program
-                                    childProcessToStop.CloseMainWindow();
-                                    childProcessToStop.WaitForExit(5000);
-                                    if (!childProcessToStop.HasExited)
-                                    {
-                                        Console.WriteLine($"- Process {childProcessToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
-                                        logger.Warn($"ShortcutRepository/RunShortcut: Process {childProcessToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
-                                        childProcessToStop.Kill();
-                                        childProcessToStop.WaitForExit(5000);
-                                    }
-                                    childProcessToStop.Close();
-                                }
-                                catch (Win32Exception ex)
-                                {
-                                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't access the wait status for a child process we're trying to stop.");
-                                }
-                                catch (InvalidOperationException ex)
-                                {
-                                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't kill the child process as the child process appears to have closed already. This can be caused if your {childProcessToStop.StartInfo.FileName} loaded another exe then closed itself. DisplayMagician cannot track that sort of behaviour.");
-                                }
-                                catch (SystemException ex)
-                                {
-                                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't WaitForExit the child process as there is no child process associated with the Process object (or cannot get the ID from the process handle).");
-                                }
-
-                                catch (AggregateException ae)
-                                {
-                                    logger.Error(ae, $"ShortcutRepository/RunShortcut: Got an AggregateException.");
-                                }
-
+                                // if there were no child processes, and the only process has already exited (e.g. the user exited it themselves)
+                                // then stop trying to stop the process, and instead log the fact it already stopped.
+                                Console.WriteLine($"Stopping child process {childProcessToStop.StartInfo.FileName} but was already stopped by user or another process.");
+                                logger.Warn($"ShortcutRepository/RunShortcut: Stopping child process {childProcessToStop.StartInfo.FileName} but was already stopped by user or another process.");
+                                continue;
                             }
+
+                            Console.WriteLine($"Stopping child process {childProcessToStop.StartInfo.FileName} of parent process {processToStop.StartInfo.FileName}");
+                            logger.Debug($"ShortcutRepository/RunShortcut: Stopping child process {childProcessToStop.StartInfo.FileName} of parent process {processToStop.StartInfo.FileName}");                                
+                            ProcessUtils.StopProcess(childProcessToStop);
+                        }
+                    }
+
+                    // if the only main process has already exited (e.g. the user exited it themselves)
+                    // then we try to stop any processes with the same name as the application we started
+                    // Look for the processes with the ProcessName we sorted out earlier
+                    // Basically, if we haven't stopped all the children processes, then this is the last gasp
+                    if (!stoppedMainProcess)
+                    {
+                        string processName = Path.GetFileNameWithoutExtension(processToStop.StartInfo.FileName);
+                        List<Process> namedProcessesToStop = Process.GetProcessesByName(processName).ToList();
+
+                        // If we have found one or more processes then we should be good to go
+                        if (namedProcessesToStop.Count > 0)
+                        {
+                            logger.Warn($"ShortcutRepository/RunShortcut: We couldn't find any children processes so we've looked for named processes with the name '{processToStop.StartInfo.FileName}' and we found {namedProcessesToStop.Count}. Closing them.");
+                            foreach (Process namedProcessToStop in namedProcessesToStop)
+                            {
+                                ProcessUtils.StopProcess(namedProcessToStop);
+                            }                                
                         }
                         else
                         {
-                            // if there were no child processes found, and the only process has already exited (e.g. the user exited it themselves)
-                            // then we try to stop any processes with the same name as the application we started
-                            // Look for the processes with the ProcessName we sorted out earlier
-                            string processName = Path.GetFileNameWithoutExtension(processToStop.StartInfo.FileName);
-                            List<Process> namedProcessesToStop = Process.GetProcessesByName(processName).ToList();
-
-                            // If we have found one or more processes then we should be good to go
-                            if (namedProcessesToStop.Count > 0)
-                            {
-                                logger.Warn($"ShortcutRepository/RunShortcut: We couldn't find any children processes so we've looked for named processes with the name '{processToStop.StartInfo.FileName}' and we found {namedProcessesToStop.Count}. Closing them.");
-                                foreach (Process namedProcessToStop in namedProcessesToStop)
-                                {
-                                    try
-                                    {
-                                        // Stop the named process
-                                        namedProcessToStop.CloseMainWindow();
-                                        namedProcessToStop.WaitForExit(5000);
-                                        namedProcessToStop.Kill();
-                                        /*if (!namedProcessToStop.HasExited)
-                                        {
-                                            logger.Warn($"ShortcutRepository/RunShortcut: Named process {namedProcessToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
-                                            namedProcessToStop.Kill();
-                                            namedProcessToStop.WaitForExit(5000);
-                                        }*/
-                                        namedProcessToStop.Close();
-                                    }
-                                    catch (Win32Exception ex)
-                                    {
-                                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't access the wait status for a named process we're trying to stop.");
-                                    }
-                                    catch (InvalidOperationException ex)
-                                    {
-                                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't kill the named process as the process appears to have closed already.");
-                                    }
-                                    catch (SystemException ex)
-                                    {
-                                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't WaitForExit the named process as there is no process associated with the Process object (or cannot get the ID from the named process handle).");
-                                    }
-
-                                    catch (AggregateException ae)
-                                    {
-                                        logger.Error(ae, $"ShortcutRepository/RunShortcut: Got an AggregateException.");
-                                    }
-                                }                                
-                            }
-                            else
-                            {
-                                // then stop trying to stop the process, and instead log the fact it already stopped.
-                                Console.WriteLine($"Stopping only process {processToStop.StartInfo.FileName} but was already stopped by user or another process.");
-                                logger.Debug($"ShortcutRepository/RunShortcut: Stopping only process {processToStop.StartInfo.FileName} but was already stopped by user or another process.");
-                                
-                            }
-                            continue;
+                            // then give up trying to stop the process, and instead log the fact it already stopped.
+                            Console.WriteLine($"Stopping only process {processToStop.StartInfo.FileName} but was already stopped by user or another process.");
+                            logger.Debug($"ShortcutRepository/RunShortcut: Stopping only process {processToStop.StartInfo.FileName} but was already stopped by user or another process.");                                
                         }
-                            
-                    }
-                    Console.WriteLine($"Stopping process {processToStop.StartInfo.FileName}");
-                    logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName}");
-                    try
-                    {
-                        // Stop the program
-                        processToStop.CloseMainWindow();
-                        processToStop.WaitForExit(5000);
-                        if (!processToStop.HasExited)
-                        {
-                            Console.WriteLine($"- Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
-                            logger.Warn($"ShortcutRepository/RunShortcut: Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
-                            processToStop.Kill();
-                            processToStop.WaitForExit(5000);
-                        }
-                        processToStop.Close();
-                    }
-                    catch (Win32Exception ex) {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't access the wait status for a process we're trying to stop.");
-                    }
-                    catch (InvalidOperationException ex) {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't kill the process as the proicess appears to have closed already. This can be caused if your {processToStop.StartInfo.FileName} loaded another exe then closed itself. DisplayMagician cannot track that sort of behaviour.");
-                    }
-                    catch (SystemException ex)
-                    {
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Couldn't WaitForExit the process as there is no process associated with the Process object (or cannot get the ID from the process handle).");
-                    }
-
-                    catch (AggregateException ae) {
-                        logger.Error(ae, $"ShortcutRepository/RunShortcut: Got an AggregateException.");
+                        continue;
                     }
 
                 }

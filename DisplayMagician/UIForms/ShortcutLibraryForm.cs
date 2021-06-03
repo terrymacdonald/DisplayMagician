@@ -107,10 +107,25 @@ namespace DisplayMagician.UIForms
 
         private void btn_save_Click(object sender, EventArgs e)
         {
-            //DialogResult = DialogResult.None;
-
             // Only do something if there is a shortcut selected
-            if (_selectedShortcut != null)
+            if (_selectedShortcut == null)
+            {
+                if (ShortcutRepository.ShortcutCount > 0)
+                {
+                    MessageBox.Show(
+                        @"You need to select a Game Shortcut in order to save a desktop shortcut to it. Please select a Game Shortcut then try again, or right-click on the Game Shortcut and select 'Save Shortcut to Desktop'.",
+                        @"Select Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        @"You need to create a Game Shortcut before you can save a desktop shortcut to it. Please create a Game Shortcut by clicking the New button.",
+                        @"Create Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+            }
+            else
             {
 
                 // if shortcut is not valid then ask if the user
@@ -256,14 +271,30 @@ namespace DisplayMagician.UIForms
 
         private void btn_edit_Click(object sender, EventArgs e)
         {
+            if (_selectedShortcut == null)
+            {
+                if (ShortcutRepository.ShortcutCount > 0)
+                {
+                    MessageBox.Show(
+                        @"You need to select a Game Shortcut in order to edit it. Please select a Game Shortcut then try again, or right-click on the Game Shortcut and select 'Edit Shortcut'.",
+                        @"Select Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        @"You need to create a Game Shortcut before you can edit it. Please create a Game Shortcut by clicking the New button.",
+                        @"Create Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+            }
+
             if (ilv_saved_shortcuts.SelectedItems.Count > 0)
             {
                 int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
                 string shortcutUUID = ilv_saved_shortcuts.Items[currentIlvIndex].EquipmentModel;
                 _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
-
-                if (_selectedShortcut == null)
-                    return;
 
                 this.Cursor = Cursors.WaitCursor;
 
@@ -288,7 +319,22 @@ namespace DisplayMagician.UIForms
         private void btn_delete_Click(object sender, EventArgs e)
         {
             if (_selectedShortcut == null)
-                return;
+            {
+                if (ShortcutRepository.ShortcutCount > 0)
+                {
+                    MessageBox.Show(
+                        @"You need to select a Game Shortcut in order to delete it. Please select a Game Shortcut then try again, or right-click on the Game Shortcut and select 'Delete Shortcut'.",
+                        @"Select Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        @"You need to create a Game Shortcut before you can delete it. Please create a Game Shortcut by clicking the New button.",
+                        @"Create Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+            }
 
             if (MessageBox.Show($"Are you sure you want to delete the '{_selectedShortcut.Name}' Shortcut?", $"Delete '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
                 return;
@@ -309,7 +355,22 @@ namespace DisplayMagician.UIForms
         private void btn_run_Click(object sender, EventArgs e)
         {
             if (_selectedShortcut == null)
-                return;
+            {
+                if (ShortcutRepository.ShortcutCount > 0)
+                {
+                    MessageBox.Show(
+                        @"You need to select a Game Shortcut in order to run it. Please select a Game Shortcut then try again, or right-click on the Game Shortcut and select 'Run Shortcut'. Please note you cannot run an invalid Game Shortcut.",
+                        @"Select Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        @"You need to create a Game Shortcut in order to run it. Please create a Game Shortcut by clicking the New button.",
+                        @"Create Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+            }
 
             // Only run the if shortcut is valid
             if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
