@@ -8,7 +8,8 @@ namespace DisplayMagician.GameLibraries
         Unknown,
         Steam,
         Uplay,
-        Origin
+        Origin,
+        Epic
     }
 
     public class GameLibrary

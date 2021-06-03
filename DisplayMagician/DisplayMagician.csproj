@@ -99,6 +99,8 @@
     <Compile Include="GameLibraries\Game.cs" />
     <Compile Include="GameLibraries\GameLibrary.cs" />
     <Compile Include="GameLibraries\GameUtils.cs" />
+    <Compile Include="GameLibraries\EpicGame.cs" />
+    <Compile Include="GameLibraries\EpicLibrary.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\AppInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\EUniverse.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />
