@@ -55,7 +55,10 @@ namespace DisplayMagician.GameLibraries
                 using (var steamInstallKey = Registry.LocalMachine.OpenSubKey(_registrySteamKey, RegistryKeyPermissionCheck.ReadSubTree))
                 {
                     if (steamInstallKey == null)
+                    {
+                        logger.Info($"SteamLibrary/SteamLibrary: Steam library is not installed!");
                         return;
+                    }
                     _steamPath = steamInstallKey.GetValue("InstallPath", "C:\\Program Files (x86)\\Steam").ToString();
                     _steamExe = $"{_steamPath}\\steam.exe";
                 }                   

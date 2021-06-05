@@ -126,6 +126,10 @@ namespace DisplayMagician.UIForms
                 {
                     return SupportedGameLibraryType.Origin;
                 }
+                else if (txt_game_launcher.Text.Contains("Epic"))
+                {
+                    return SupportedGameLibraryType.Epic;
+                }
 
                 return SupportedGameLibraryType.Unknown;
             }
@@ -143,6 +147,10 @@ namespace DisplayMagician.UIForms
 
                     case SupportedGameLibraryType.Origin:
                         txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Origin);
+                        break;
+
+                    case SupportedGameLibraryType.Epic:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Epic);
                         break;
 
                     case SupportedGameLibraryType.Unknown:
@@ -509,28 +517,62 @@ namespace DisplayMagician.UIForms
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Origin game!");
                     _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First();
                 }
+                // If the game is an Epic Game
+                else if (txt_game_launcher.Text == SupportedGameLibraryType.Epic.ToString())
+                {
+                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Epic game!");
+                    _gameToUse.GameToPlay = (from epicGame in EpicLibrary.GetLibrary().AllInstalledGames where epicGame.Id == _gameId select epicGame).First();
+                }
 
-                _shortcutToEdit.UpdateGameShortcut(
-                    txt_shortcut_save_name.Text,
-                    _profileToUse,
-                    _gameToUse,
-                    _displayPermanence,
-                    _audioPermanence,
-                    _capturePermanence,
-                    _gameToUse.GameToPlay.IconPath,
-                    _changeAudioDevice,
-                    _audioDevice,
-                    _setAudioVolume,
-                    _audioVolume,
-                    _changeCaptureDevice,
-                    _captureDevice,
-                    _setCaptureVolume,
-                    _captureVolume,
-                    _startPrograms,
-                    _autoName,
-                    _uuid,
-                    _hotkey
-                );
+                try
+                {
+                    _shortcutToEdit.UpdateGameShortcut(
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _gameToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _gameToUse.GameToPlay.IconPath,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _autoName,
+                        _uuid,
+                        _hotkey
+                    );
+                }
+                catch(Exception ex)
+                {
+                    logger.Error(ex,$"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut! :  ",
+                        txt_shortcut_save_name.Text, 
+                        _profileToUse,
+                        _gameToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _gameToUse.GameToPlay.IconPath,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _autoName,
+                        _uuid,
+                        _hotkey
+                    );
+                }
+                
             }
             else if (rb_standalone.Checked)
             {
@@ -553,50 +595,102 @@ namespace DisplayMagician.UIForms
                     _executableToUse.ProcessNameToMonitorUsesExecutable = true;
                 }
 
-                _shortcutToEdit.UpdateExecutableShortcut(
-                    txt_shortcut_save_name.Text,
-                    _profileToUse,
-                    _executableToUse,
-                    _displayPermanence,
-                    _audioPermanence,
-                    _capturePermanence,
-                    _executableToUse.ExecutableNameAndPath,
-                    _changeAudioDevice,
-                    _audioDevice,
-                    _setAudioVolume,
-                    _audioVolume,
-                    _changeCaptureDevice,
-                    _captureDevice,
-                    _setCaptureVolume,
-                    _captureVolume,
-                    _startPrograms,
-                    _autoName,
-                    _hotkey
-                );
+                try
+                {
+                    _shortcutToEdit.UpdateExecutableShortcut(
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _executableToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _executableToUse.ExecutableNameAndPath,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _autoName,
+                        _hotkey
+                    );
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut! :  ",
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _executableToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _executableToUse.ExecutableNameAndPath,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _autoName,
+                        _hotkey
+                    );
+                }
 
             }
             else
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're not saving any game or executable to start!");
-                _shortcutToEdit.UpdateNoGameShortcut(
-                    txt_shortcut_save_name.Text,
-                    _profileToUse,
-                    _displayPermanence,
-                    _audioPermanence,
-                    _capturePermanence,
-                    _executableToUse.ExecutableNameAndPath,
-                    _changeAudioDevice,
-                    _audioDevice,
-                    _setAudioVolume,
-                    _audioVolume,
-                    _changeCaptureDevice,
-                    _captureDevice,
-                    _setCaptureVolume,
-                    _captureVolume,
-                    _startPrograms,
-                    _autoName,
-                    _hotkey
-                );
+                try
+                {
+                    _shortcutToEdit.UpdateNoGameShortcut(
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _executableToUse.ExecutableNameAndPath,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _autoName,
+                        _hotkey
+                    );
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a shortcut that doesn't run anything! :  ",
+                        txt_shortcut_save_name.Text,
+                        _profileToUse,
+                        _displayPermanence,
+                        _audioPermanence,
+                        _capturePermanence,
+                        _executableToUse.ExecutableNameAndPath,
+                        _changeAudioDevice,
+                        _audioDevice,
+                        _setAudioVolume,
+                        _audioVolume,
+                        _changeCaptureDevice,
+                        _captureDevice,
+                        _setCaptureVolume,
+                        _captureVolume,
+                        _startPrograms,
+                        _autoName,
+                        _hotkey
+                    );
+                }
+
 
             }
 

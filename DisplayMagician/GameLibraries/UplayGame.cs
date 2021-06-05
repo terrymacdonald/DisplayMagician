@@ -76,6 +76,17 @@ namespace DisplayMagician.GameLibraries
             get => _uplayGameDir;
             set => _uplayGameDir = value;
         }
+        public override string Executable
+        {
+            get => _uplayGameExe;
+            set => _uplayGameExe = value;
+        }
+
+        public override string ProcessName
+        {
+            get => _uplayGameProcessName;
+            set => _uplayGameProcessName = value;
+        }
 
         public override bool IsRunning
         {

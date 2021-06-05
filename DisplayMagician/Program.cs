@@ -799,12 +799,36 @@ namespace DisplayMagician {
 
             });
 
+            // Now lets prepare loading all the Epic games we have installed
+            Action loadEpicGamesAction = new Action(() =>
+            {
+                // Check if Epic is installed
+                GameLibrary epicLibrary = OriginLibrary.GetLibrary();
+                if (epicLibrary.IsGameLibraryInstalled)
+                {
+                    // Load Origin library games
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Epic Games");
+                    if (!epicLibrary.LoadInstalledGames())
+                    {
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed OrigiEpicn Games!");
+                    }
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Epic Games (found {epicLibrary.InstalledGameCount})");
+                }
+                else
+                {
+                    logger.Info($"Program/LoadGamesInBackground: Epic not installed.");
+                    Console.WriteLine("Epic not installed.");
+                }
+
+            });
+
 
             // Store all the actions in a array so we can wait on them later
             List<Action> loadGamesActions = new List<Action>();
             loadGamesActions.Add(loadSteamGamesAction);
             loadGamesActions.Add(loadUplayGamesAction);
             loadGamesActions.Add(loadOriginGamesAction);
+            loadGamesActions.Add(loadEpicGamesAction);
 
             try
             {
@@ -824,6 +848,7 @@ namespace DisplayMagician {
             GameLibrary.AllInstalledGamesInAllLibraries = SteamLibrary.GetLibrary().AllInstalledGames;
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(EpicLibrary.GetLibrary().AllInstalledGames);
 
             // Create Game Bitmaps from the Games so the rest of the program is faster later
             // Get the bitmap out of the IconPath 
@@ -868,6 +893,8 @@ namespace DisplayMagician {
                         bm = Properties.Resources.Uplay;
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
                         bm = Properties.Resources.Origin;
+                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Epic))
+                        bm = Properties.Resources.Epic;
                     else
                         bm = Properties.Resources.DisplayMagician.ToBitmap();
                 }

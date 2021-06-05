@@ -1068,7 +1068,11 @@ namespace DisplayMagician
                     // We now need to get the Origin Game  info
                     gameLibraryToUse = OriginLibrary.GetLibrary();
                 }
-
+                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.Epic))
+                {
+                    // We now need to get the Epic Game  info
+                    gameLibraryToUse = EpicLibrary.GetLibrary();
+                }
                 gameToRun = gameLibraryToUse.GetGameById(shortcutToUse.GameAppId);
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameLibraryToUse.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
 

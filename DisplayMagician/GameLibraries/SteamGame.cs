@@ -76,6 +76,18 @@ namespace DisplayMagician.GameLibraries
             set => _steamGameDir = value;
         }
 
+        public override string Executable 
+        {
+            get => _steamGameExe;
+            set => _steamGameExe = value;
+        }
+
+        public override string ProcessName 
+        {
+            get => _steamGameProcessName;
+            set => _steamGameProcessName = value;
+        }
+
         public override bool IsRunning
         {
             get

@@ -27,6 +27,7 @@ namespace DisplayMagician.GameLibraries
                 (send, certificate, chain, sslPolicyErrors) => true;
         }
 
+        public EpicGame() { }
 
         public EpicGame(string epicGameId, string epicGameName, string epicGameExePath, string epicGameIconPath)
         {
@@ -75,6 +76,18 @@ namespace DisplayMagician.GameLibraries
         {
             get => _epicGameDir;
             set => _epicGameDir = value;
+        }
+
+        public override string Executable
+        {
+            get => _epicGameExe;
+            set => _epicGameExe = value;
+        }
+
+        public override string ProcessName
+        {
+            get => _epicGameProcessName;
+            set => _epicGameProcessName = value;
         }
 
         public override bool IsRunning
@@ -135,7 +148,7 @@ namespace DisplayMagician.GameLibraries
 
         public override string GetStartURI(string gameArguments = "")
         {
-            string address = $"epic2://game/launch?offerIds={_epicGameId}";
+            string address = $@"com.epicgames.launcher://apps/{_epicGameId}?action=launch&silent=true";
             if (String.IsNullOrWhiteSpace(gameArguments))
             {
                 address += "/" + gameArguments;

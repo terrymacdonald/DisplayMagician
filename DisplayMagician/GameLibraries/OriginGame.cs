@@ -77,6 +77,18 @@ namespace DisplayMagician.GameLibraries
             set => _originGameDir = value;
         }
 
+        public override string Executable
+        {
+            get => _originGameExe;
+            set => _originGameExe = value;
+        }
+
+        public override string ProcessName
+        {
+            get => _originGameProcessName;
+            set => _originGameProcessName = value;
+        }
+
         public override bool IsRunning
         {
             get

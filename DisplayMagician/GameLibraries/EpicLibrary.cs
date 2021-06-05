@@ -10,6 +10,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using System.Web;
 using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -28,13 +29,12 @@ namespace DisplayMagician.GameLibraries
         private string _epicExe;
         private string _epicPath;
         private string _epicLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic");
+        private string _epicProgramFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Epic Games");
         private bool _isEpicInstalled = false;
-        private List<string> _epicProcessList = new List<string>(){ "epic" };
+        private List<string> _epicProcessList = new List<string>(){ "EpicGamesLauncher" };
 
-        //private  string _epicConfigVdfFile;
-        internal  string registryEpicLauncherKey = @"SOFTWARE\WOW6432Node\Epic";
-        //internal  string registryEpicInstallsKey = @"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs";
-        //internal  string registryEpicOpenCmdKey = @"SOFTWARE\Classes\Epic\Shell\Open\Command";
+        internal string registryEpicOnlineServicesKey = @"SOFTWARE\Epic Games\EOS";
+        //internal string registryEpicLauncherKey = @"SOFTWARE\WOW6432Node\Epic";
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
 
@@ -48,14 +48,17 @@ namespace DisplayMagician.GameLibraries
         {
             try
             {
-                logger.Trace($"EpicLibrary/EpicLibrary: Epic launcher registry key = HKLM\\{registryEpicLauncherKey}");
+                logger.Trace($"EpicLibrary/EpicLibrary: Epic Online Services registry key = HKLM\\{registryEpicOnlineServicesKey}");
                 // Find the EpicExe location, and the EpicPath for later
-                RegistryKey EpicInstallKey = Registry.LocalMachine.OpenSubKey(registryEpicLauncherKey, RegistryKeyPermissionCheck.ReadSubTree);
-                if (EpicInstallKey == null)
+                RegistryKey EpicOnlineServicesKey = Registry.CurrentUser.OpenSubKey(registryEpicOnlineServicesKey, RegistryKeyPermissionCheck.ReadSubTree);
+                if (EpicOnlineServicesKey == null)
+                {
+                    logger.Info($"EpicLibrary/EpicLibrary: Epic library is not installed!");
                     return;
-                _epicExe = EpicInstallKey.GetValue("ClientPath", @"C:\Program Files (x86)\Epic\Epic.exe").ToString();
-                _epicPath = _epicExe;
-                _epicPath = _epicPath.Replace(@"\Epic.exe", "");
+                }
+                    
+                _epicExe = EpicOnlineServicesKey.GetValue("ModSdkCommand", @"C:/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win64/EpicGamesLauncher.exe").ToString();
+                _epicPath = Path.GetDirectoryName(_epicExe);
                 if (File.Exists(_epicExe))
                 {
                     logger.Info($"EpicLibrary/EpicLibrary: Epic library is installed in {_epicPath}. Found {_epicExe}");
@@ -69,15 +72,15 @@ namespace DisplayMagician.GameLibraries
             }
             catch (SecurityException ex)
             {
-                logger.Warn(ex, "EpicLibrary/EpicLibrary: The user does not have the permissions required to read the Epic ClientPath registry key.");
+                logger.Warn(ex, "EpicLibrary/EpicLibrary: The user does not have the permissions required to read the Epic Online Services registry key.");
             }
             catch(ObjectDisposedException ex)
             {
-                logger.Warn(ex, "EpicLibrary/EpicLibrary: The Microsoft.Win32.RegistryKey is closed when trying to access the Epic ClientPath registry key (closed keys cannot be accessed).");
+                logger.Warn(ex, "EpicLibrary/EpicLibrary: The Microsoft.Win32.RegistryKey is closed when trying to access the Epic Online Services registry key (closed keys cannot be accessed).");
             }
             catch (IOException ex)
             {
-                logger.Warn(ex, "EpicLibrary/EpicLibrary: The Epic ClientPath registry key has been marked for deletion so we cannot access the value dueing the EpicLibrary check.");
+                logger.Warn(ex, "EpicLibrary/EpicLibrary: The Epic Online Services registry key has been marked for deletion so we cannot access the value dueing the EpicLibrary check.");
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -427,276 +430,102 @@ namespace DisplayMagician.GameLibraries
                     return false;
                 }
 
-                var localContentPath = Path.Combine(_epicLocalContent, "LocalContent");
-                logger.Trace($"EpicLibrary/LoadInstalledGames: Looking for Local Content in {localContentPath}");
-
-                if (Directory.Exists(localContentPath))
+                var localInstalledGameListFile = Path.Combine(_epicLocalContent, "UnrealEngineLauncher","LauncherInstalled.dat");
+                logger.Trace($"EpicLibrary/LoadInstalledGames: Looking for locally installed games file {localInstalledGameListFile}");
+                if (!File.Exists(localInstalledGameListFile))
                 {
-                    logger.Trace($"EpicLibrary/LoadInstalledGames: Local Content Directory {localContentPath} exists!");
-                    string[] packages = Directory.GetFiles(localContentPath, "*.mfst", SearchOption.AllDirectories);
-                    logger.Trace($"EpicLibrary/LoadInstalledGames: Found .mfst files in Local Content Directory {localContentPath}: {packages.ToString()}");
-                    foreach (string package in packages)
+                    logger.Error($"EpicLibrary/LoadInstalledGames: Couldn't find locally installed games file {localInstalledGameListFile}. There seems to be a problem with your Epic installation.");
+                    return false;
+                }
+
+                logger.Trace($"EpicLibrary/LoadInstalledGames: Locally installed games file {localInstalledGameListFile} exists!");
+                LauncherInstalled epicLauncherInstalledDat;
+                try
+                {
+                    epicLauncherInstalledDat = JsonConvert.DeserializeObject<LauncherInstalled>(File.ReadAllText(localInstalledGameListFile));
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"EpicLibrary/LoadInstalledGames: Exception trying to convert the {localInstalledGameListFile} to a JSON object to read the installed games. There seems to be a problem with your Epic installation.");
+                    return false;
+                }
+
+                List<InstalledManifiest> allManifests = new List<InstalledManifiest>();
+                var installListPath = Path.Combine(_epicLocalContent, "EpicGamesLauncher", "Data", "Manifests");
+                if (!Directory.Exists(installListPath))
+                {
+                    logger.Error($"EpicLibrary/LoadInstalledGames: Couldn't find the manifests for any locally installed games {installListPath}. There seems to be a problem with your Epic installation.");
+                    return false;
+                }
+
+                foreach (string localInstalledGameManifestFile in Directory.GetFiles(installListPath, "*.item"))
+                {
+                    InstalledManifiest epicManifest;
+                    try
                     {
-                        logger.Trace($"EpicLibrary/LoadInstalledGames: Parsing {package} name to find GameID");
-                        try
-                        {
-                            GameAppInfo epicGame = new GameAppInfo();
-                            epicGame.GameID = Path.GetFileNameWithoutExtension(package);
-                            logger.Trace($"EpicLibrary/LoadInstalledGames: Got GameID of {epicGame.GameID } from file {package}");
-                            if (!epicGame.GameID.StartsWith("Epic"))
-                            {
-                                // If the gameId doesn't start with epic, then we need to find it!
-                                // Get game id by fixing file via adding : before integer part of the name
-                                // for example OFB-EAST52017 converts to OFB-EAST:52017
-                                Match match = Regex.Match(epicGame.GameID, @"^(.*?)(\d+)$");
-                                if (!match.Success)
-                                {
-                                    logger.Warn($"EpicLibrary/LoadInstalledGames: Failed to match game id from file {package} name so ignoring game");
-                                    continue;
-                                }
+                        epicManifest = JsonConvert.DeserializeObject<InstalledManifiest>(File.ReadAllText(localInstalledGameManifestFile));
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"EpicLibrary/LoadInstalledGames: Exception trying to convert the {localInstalledGameListFile} to a JSON object to read the installed games. There seems to be a problem with your Epic installation.");
+                        return false;
+                    }
 
-                                epicGame.GameID = match.Groups[1].Value + ":" + match.Groups[2].Value;
-                                logger.Trace($"EpicLibrary/LoadInstalledGames: GameID doesn't start with 'Epic' so using different pattern to find {epicGame.GameID} GameID");
-                            }
-
-                            // Now we get the rest of the game information out of the manifest file
-                            Dictionary<string, string> manifestInfo = ParseEpicManifest(package);
-
-                            logger.Trace($"EpicLibrary/LoadInstalledGames: Looking whether Epic is still downloading the game to install it");
-                            if (manifestInfo.ContainsKey("ddinitialdownload") && manifestInfo["ddinitialdownload"] == "1")
-                            {
-                                // Epic is downloading and installing the game so we skip it
-                                logger.Warn($"EpicLibrary/LoadInstalledGames: Epic is still downloading the game with Game ID {epicGame.GameID} to install it");
-                                continue;
-                            }
-                            logger.Trace($"EpicLibrary/LoadInstalledGames: Looking whether Epic is downloading game updates");
-                            if (manifestInfo.ContainsKey("downloading") && manifestInfo["downloading"] == "1")
-                            {
-                                // Epic is downloading some new content so we can't play it at the moment
-                                logger.Warn($"EpicLibrary/LoadInstalledGames: Epic is downloading game updates for the game with Game ID {epicGame.GameID}");
-                                continue;
-                            }
-
-                            epicGame.GameInstallDir = null;
-                            logger.Trace($"EpicLibrary/LoadInstalledGames: Looking where the game with Game ID {epicGame.GameID} is installed");
-                            if (manifestInfo.ContainsKey("dipinstallpath"))
-                            {
-                                // This is where Epic has installed this game
-                                epicGame.GameInstallDir = HttpUtility.UrlDecode(manifestInfo["dipinstallpath"]);
-                                if (String.IsNullOrEmpty(epicGame.GameInstallDir) || !Directory.Exists(epicGame.GameInstallDir))
-                                {
-                                    logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} found but no valid directory found at {epicGame.GameInstallDir}");
-                                    continue;
-                                }
-                            }
-                            else
-                            {
-                                logger.Warn($"EpicLibrary/LoadInstalledGames: Couldn't figure out where Game ID {epicGame.GameID} is installed. Skipping game.");
-                            }
-
-                            string gameInstallerData = Path.Combine(epicGame.GameInstallDir, @"__Installer", @"installerdata.xml");
-                            logger.Trace($"EpicLibrary/LoadInstalledGames: Parsing the Game Installer Data at {gameInstallerData}");
-
-                            if (File.Exists(gameInstallerData))
-                            {
-                                logger.Trace($"EpicLibrary/LoadInstalledGames: Game Installer Data file was found at {gameInstallerData}");
-                                logger.Trace($"EpicLibrary/LoadInstalledGames: Attempting to parse XML Game Installer Data file at {gameInstallerData}");
-                                // Now we parse the XML
-                                XDocument xdoc = XDocument.Load(gameInstallerData);
-                                epicGame.GameName = xdoc.XPathSelectElement("/DiPManifest/gameTitles/gameTitle[@locale='en_US']").Value;
-                                logger.Trace($"EpicLibrary/LoadInstalledGames: Game Name {epicGame.GameName} found in Game Installer Data file {gameInstallerData}");
-                                string gameFilePath = xdoc.XPathSelectElement("/DiPManifest/runtime/launcher/filePath").Value;
-                                logger.Trace($"EpicLibrary/LoadInstalledGames: Game File Path is {gameFilePath } found in Game Installer Data file {gameInstallerData}");
-
-                                string epicGameInstallLocation = "";
-                                // Check whether gameFilePath contains a registry key! Cause if it does we need to lookup the path there instead
-                                if (gameFilePath.StartsWith("[HKEY_LOCAL_MACHINE"))
-                                {
-                                    logger.Trace($"EpicLibrary/LoadInstalledGames: Game File Path starts with a registery key so needs to be translated");
-                                    // The filePath contains a registry key lookup that we need to execute and replace
-                                    string epicGameInstallKeyNameAndValue = "";
-                                    string epicGameRestOfFile = "";
-                                    MatchCollection mc = Regex.Matches(gameFilePath, @"\[HKEY_LOCAL_MACHINE\\(.*)\](.*)");
-                                    if (mc.Count > 0)
-                                    {
-                                        // Split the Reg key bit from the File Path bit
-
-                                        epicGameInstallKeyNameAndValue = mc[0].Groups[1].ToString();
-                                        logger.Trace($"EpicLibrary/LoadInstalledGames: epicGameInstallKeyNameAndValue = {epicGameInstallKeyNameAndValue}");
-                                        epicGameRestOfFile = mc[0].Groups[2].ToString();
-                                        logger.Trace($"EpicLibrary/LoadInstalledGames: epicGameRestOfFile = {epicGameRestOfFile}");
-                                        if (epicGameInstallKeyNameAndValue == null || epicGameInstallKeyNameAndValue == "")
-                                        {
-                                            // then we have a problem and we need to continue and ignore this game
-                                            logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} has registry key but we can't extract it! gameFilePath is {gameFilePath}.");
-                                            continue;
-                                        }
-
-                                        // Split the reg key from the value name 
-
-                                        string epicGameInstallKeyName = "";
-                                        string epicGameInstallKeyValue = "";
-                                        mc = Regex.Matches(epicGameInstallKeyNameAndValue, @"(.*)\\([^\\]*)");
-                                        if (mc.Count > 0)
-                                        {
-                                            epicGameInstallKeyName = mc[0].Groups[1].ToString();
-                                            logger.Trace($"EpicLibrary/LoadInstalledGames: epicGameInstallKeyName = {epicGameInstallKeyName }");
-                                            epicGameInstallKeyValue = mc[0].Groups[2].ToString();
-                                            logger.Trace($"EpicLibrary/LoadInstalledGames: epicGameInstallKeyValue = {epicGameInstallKeyValue }");
-                                        }
-
-                                        // Lookup the reg key to figure out where the game is installed 
-                                        try
-                                        {
-                                            RegistryKey epicGameInstallKey = Registry.LocalMachine.OpenSubKey(epicGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
-                                            if (epicGameInstallKey == null)
-                                            {
-                                                // then we have a problem as we cannot find the game exe location!
-                                                logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} has a install reg key we cannot find! epicGameInstallKey is {gameFilePath} and epicGameInstallKeyValue is {epicGameInstallKeyValue}.");
-                                                continue;
-                                            }
-                                            epicGameInstallLocation = Path.Combine(epicGameInstallKey.GetValue(epicGameInstallKeyValue).ToString(), epicGameRestOfFile);
-                                            if (!File.Exists(epicGameInstallLocation))
-                                            {
-                                                // then we have a problem as we cannot locate the game exe file to start!
-                                                logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} has gameexe we cannot find! epicGameInstallLocation is {epicGameInstallLocation}.");
-                                                continue;
-                                            }
-                                            epicGame.GameExePath = epicGameInstallLocation;
-                                        }
-                                        catch (SecurityException ex)
-                                        {
-                                            logger.Warn(ex, $"EpicLibrary/LoadInstalledGames: The user does not have the permissions required to read the Epic Game location registry key {epicGameInstallKeyName}, so skipping game");
-                                            continue;
-                                        }
-                                        catch (ObjectDisposedException ex)
-                                        {
-                                            logger.Warn(ex, "EpicLibrary/LoadInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Epic ClientPath registry key (closed keys cannot be accessed), so skipping game");
-                                            continue;
-                                        }
-                                        catch (IOException ex)
-                                        {
-                                            logger.Warn(ex, "EpicLibrary/LoadInstalledGames: The Epic ClientPath registry key has been marked for deletion so we cannot access the value dueing the EpicLibrary check, so skipping game");
-                                            continue;
-                                        }
-                                        catch (UnauthorizedAccessException ex)
-                                        {
-                                            logger.Warn(ex, "EpicLibrary/LoadInstalledGames: The user does not have the necessary registry rights to check whether Epic is installed, so skipping game");
-                                            continue;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        logger.Warn($"EpicLibrary/LoadInstalledGames: Game File Path {gameFilePath} starts with '[HEKY_LOCAL_MACHINE' but didn't match the regex when it should have");
-                                        continue;
-                                    }
-                                    
-                                }
-                                else if (gameFilePath.StartsWith("[HKEY_CURRENT_USER"))
-                                {
-                                    // The filePath contains a registry key lookup that we need to execute and replace
-                                    MatchCollection mc = Regex.Matches(gameFilePath, @"\[HKEY_CURRENT_USER\\(.*)\](.*)");
-                                    if (mc.Count > 0)
-                                    {
-                                        string epicGameInstallKeyNameAndValue = mc[0].Groups[1].ToString();
-                                        string epicGameRestOfFile = mc[0].Groups[2].ToString();
-                                        if (epicGameInstallKeyNameAndValue == null)
-                                        {
-                                            // then we have a problem and we need to continue and ignore this game
-                                            logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} has registry but we can't match it! gameFilePath is {gameFilePath}.");
-                                            continue;
-                                        }
-
-                                        mc = Regex.Matches(epicGameInstallKeyNameAndValue, @"(.*)\\([^\\]*)");
-                                        string epicGameInstallKeyName = mc[0].Groups[1].ToString();
-                                        string epicGameInstallKeyValue = mc[0].Groups[2].ToString();
-
-                                        try
-                                        {
-                                            RegistryKey epicGameInstallKey = Registry.LocalMachine.OpenSubKey(epicGameInstallKeyName, RegistryKeyPermissionCheck.ReadSubTree);
-                                            if (epicGameInstallKey == null)
-                                            {
-                                                // then we have a problem as we cannot find the game exe location!
-                                                logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} has a install reg key we cannot find! epicGameInstallKey is {gameFilePath} and epicGameInstallKeyValue is {epicGameInstallKeyValue}.");
-                                                continue;
-                                            }
-                                            epicGameInstallLocation = Path.Combine(epicGameInstallKey.GetValue(epicGameInstallKeyValue).ToString(), epicGameRestOfFile);
-                                            if (!File.Exists(epicGameInstallLocation))
-                                            {
-                                                // then we have a problem as we cannot locate the game exe file to start!
-                                                logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} has gameexe we cannot find! epicGameInstallLocation is {epicGameInstallLocation}.");
-                                                continue;
-                                            }
-                                            epicGame.GameExePath = epicGameInstallLocation;
-
-                                        }
-                                        catch (SecurityException ex)
-                                        {
-                                            logger.Warn(ex, $"EpicLibrary/LoadInstalledGames: The user does not have the permissions required to read the Epic Game location registry key {epicGameInstallKeyName}, so skipping game");
-                                            continue;
-                                        }
-                                        catch (ObjectDisposedException ex)
-                                        {
-                                            logger.Warn(ex, "EpicLibrary/LoadInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Epic ClientPath registry key (closed keys cannot be accessed), so skipping game");
-                                            continue;
-                                        }
-                                        catch (IOException ex)
-                                        {
-                                            logger.Warn(ex, "EpicLibrary/LoadInstalledGames: The Epic ClientPath registry key has been marked for deletion so we cannot access the value dueing the EpicLibrary check, so skipping game");
-                                            continue;
-                                        }
-                                        catch (UnauthorizedAccessException ex)
-                                        {
-                                            logger.Warn(ex, "EpicLibrary/LoadInstalledGames: The user does not have the necessary registry rights to check whether Epic is installed, so skipping game");
-                                            continue;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        logger.Warn($"EpicLibrary/LoadInstalledGames: Game File Path {gameFilePath} starts with '[HKEY_CURRENT_USER' but didn't match the regex when it should have, so skipping game");
-                                        continue;
-                                    }
-                                }
-                                else
-                                {
-                                    // If we get here, then the gameFilepath is the actual filepath! So we just copy it.
-                                    logger.Trace($"EpicLibrary/LoadInstalledGames: Game File Path {gameFilePath} doesn't start with '[HKEY_LOCAL_MACHINE' or '[HKEY_CURRENT_USER' so it must be aplain file path");
-                                    epicGame.GameExePath = gameFilePath;
-                                }
-
-
-                                if (!File.Exists(epicGame.GameExePath))
-                                {
-                                    logger.Warn($"EpicLibrary/LoadInstalledGames: Epic game with ID {epicGame.GameID} found but no game exe found at epicGame.GameExePath {epicGame.GameExePath} so skipping game");
-                                    continue;
-                                }
-
-                                // TODO check for icon! For now we will just use the exe one                               
-                                epicGame.GameIconPath = epicGame.GameExePath;
-                                logger.Trace($"EpicLibrary/LoadInstalledGames: Epic gameIconPath = {epicGame.GameIconPath} (currently just taking it from the file exe!");
-
-                                // If we reach here we add the Game to the list of games we have!
-                                _allEpicGames.Add(new EpicGame(epicGame.GameID, epicGame.GameName, epicGame.GameExePath, epicGame.GameIconPath));
-                            }
-                            else
-                            {
-                                // If we can't find the __Installer\installerdata.xml file then we ignore this game
-                                logger.Trace($"EpicLibrary/LoadInstalledGames: Couldn't find Game Installer Data file at {gameInstallerData} for game with GameID {epicGame.GameID} so skipping this game");
-                                continue;
-                            }
-                            
-                            
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex, $"EpicLibrary/LoadInstalledGames: Failed to import installed Epic game {package}.");
-                        }
+                    if (epicManifest != null)
+                    // Some weird issue causes manifest to be created empty by Epic client
+                    {
+                        allManifests.Add(epicManifest);
                     }
                 }
-                else
+
+                if (allManifests.Count == 0)
                 {
                     logger.Warn($"EpicLibrary/LoadInstalledGames: No Epic games installed in the Epic library");
                     return false;
+                }
+
+                foreach (LauncherInstalled.InstalledApp installedApp in epicLauncherInstalledDat.InstallationList)
+                {
+                    if (installedApp.AppName.StartsWith("UE_"))
+                    {
+                        continue;
+                    }
+
+                    InstalledManifiest installedAppManifest = allManifests.FirstOrDefault(a => a.AppName == installedApp.AppName);
+
+                    // DLC
+                    if (installedAppManifest.AppName != installedAppManifest.MainGameAppName)
+                    {
+                        continue;
+                    }
+
+                    // UE plugins
+                    if (installedAppManifest.AppCategories?.Any(a => a == "plugins" || a == "plugins/engine") == true)
+                    {
+                        continue;
+                    }
+
+                    // Extract the info into a game object                    
+                    EpicGame epicGame = new EpicGame();
+                    epicGame.Name = installedAppManifest?.DisplayName ?? Path.GetFileName(installedApp.InstallLocation);
+                    epicGame.Directory  = installedAppManifest?.InstallLocation ?? installedApp.InstallLocation;
+                    epicGame.Executable = installedAppManifest.LaunchExecutable;
+                    epicGame.ExePath = Path.Combine(epicGame.Directory, installedAppManifest.LaunchExecutable);
+                    epicGame.IconPath = epicGame.ExePath;
+                    epicGame.Id = installedAppManifest?.MainGameAppName?? installedApp.AppName;
+                    epicGame.ProcessName = Path.GetFileNameWithoutExtension(epicGame.ExePath);
+
+/*                    _epicGameId = epicGameId;
+                    _epicGameName = epicGameName;
+                    _epicGameExePath = epicGameExePath;
+                    _epicGameDir = Path.GetDirectoryName(epicGameExePath);
+                    _epicGameExe = Path.GetFileName(_epicGameExePath);
+                    _epicGameProcessName = Path.GetFileNameWithoutExtension(_epicGameExePath);
+                    _epicGameIconPath = epicGameIconPath;
+*/
+                    // Add the Epic Game to the list of Epic Games
+                    _allEpicGames.Add(epicGame);
+
                 }
 
                 logger.Info($"EpicLibrary/LoadInstalledGames: Found {_allEpicGames.Count} installed Epic games");
@@ -737,6 +566,54 @@ namespace DisplayMagician.GameLibraries
 
         #endregion
 
+    }
+
+    public class LauncherInstalled
+    {
+        public class InstalledApp
+        {
+            public string InstallLocation;
+            public string AppName;
+            public long AppID;
+            public string AppVersion;
+        }
+
+        public List<InstalledApp> InstallationList;
+    }
+
+    public class InstalledManifiest
+    {
+        public int FormatVersion;
+        public bool bIsCompleteInstalln;
+        public string LaunchCommand;
+        public string LaunchExecutable;
+        public string ManifestLocation;
+        public bool bIsApplication;
+        public bool bIsExecutable;
+        public bool bIsManaged;
+        public bool bNeedsValidation;
+        public bool bRequiresAuth;
+        public bool bAllowMultipleInstances;
+        public bool bCanRunOffline;
+        public string AppName;
+        public string CatalogNamespace;
+        public string CatalogItemId;
+        public List<string> AppCategories;
+        public string DisplayName;
+        public string FullAppName;
+        public string InstallationGuid;
+        public string InstallLocation;
+        public string InstallSessionId;
+        public string StagingLocation;
+        public string TechnicalType;
+        public string VaultThumbnailUrl;
+        public string VaultTitleText;
+        public string InstallSize;
+        public string MainWindowProcessName;
+        public List<string> ProcessNames;
+        public string MainGameAppName;
+        public string MainGameCatalogueItemId;
+        public string MandatoryAppFolderName;
     }
 
     [global::System.Serializable]

@@ -1007,6 +1007,11 @@ namespace DisplayMagician
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
                         bm = ToBitmapOverlay(Properties.Resources.Origin, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
                     }
+                    else if (_gameLibrary == SupportedGameLibraryType.Epic)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Epic icon as the icon instead.");
+                        bm = ToBitmapOverlay(Properties.Resources.Epic, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                    }
                     si.Add(bm);
                     logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the replacement icon for Shortcut '{Name}' to {_savedShortcutIconCacheFilename}.");
                     shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
@@ -1052,6 +1057,16 @@ namespace DisplayMagician
                     {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
                         originalBitmap = Properties.Resources.Origin;
+                    }
+                    else if (_gameLibrary == SupportedGameLibraryType.Epic)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Epic icon as the icon instead.");
+                        originalBitmap = Properties.Resources.Epic;
+                    }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                        originalBitmap = Properties.Resources.DisplayMagician.ToBitmap();
                     }
                 }
                 else
@@ -1163,12 +1178,19 @@ namespace DisplayMagician
                     // We now need to get the Uplay Game  info
                     gameLibraryToUse = UplayLibrary.GetLibrary();
                 }
-                // If the game is a Uplay Game we check for that
+                // If the game is an Origin Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Origin))
                 {
                     logger.Trace($"ShortcutItem/RefreshValidity: The game library is Origin");
                     // We now need to get the Uplay Game  info
                     gameLibraryToUse = OriginLibrary.GetLibrary();
+                }
+                // If the game is an Epic Game we check for that
+                else if (GameLibrary.Equals(SupportedGameLibraryType.Epic))
+                {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is Epic");
+                    // We now need to get the Epic Game  info
+                    gameLibraryToUse = EpicLibrary.GetLibrary();
                 }
 
                 // Check if Gamelibrary is installed and error if it isn't
