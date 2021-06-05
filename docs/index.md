@@ -10,9 +10,9 @@ DisplayMagician is an open source tool for automatically configuring your displa
 [![](https://img.shields.io/github/downloads/terrymacdonald/DisplayMagician/total.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
 [![](https://img.shields.io/github/tag-date/terrymacdonald/DisplayMagician.svg?label=version&style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
 
-The latest version of this application is available for download via the [release](https://github.com/terrymacdonald/DisplayMagician/releases) page.
+The latest version of this application is available for download via the [release](https://github.com/terrymacdonald/DisplayMagician/releases/latest) page.
 
-<div style="text-align:center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-download.png"/></a></div>
+<div style="text-align:center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases/latest"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-download.png"/></a></div>
 
 ## What it does
 
