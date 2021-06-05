@@ -12,6 +12,8 @@ DisplayMagician is an open source tool for automatically configuring your displa
 
 The latest version of this application is available for download via the [release](https://github.com/terrymacdonald/DisplayMagician/releases) page.
 
+<div style="text-align:center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-download.png"/></a></div>
+
 ## What it does
 
 Different games require your displays configured in different ways. If you're a simracer like me, you also require a lot of additional 'helper' applications the give you the additional functionality to game the way you want. Making all those changes each time I wanted to play each game REALLY started annoying me, and I thought there must be a better way.
