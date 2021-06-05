@@ -87,7 +87,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 4. Click the 'New' button to create a new Game Shortcut
     * Choose the Display Profile you want to use with the Game Shortcut. Make sure it matches what the game expects :).
     * Click on the '2. Choose Audio' tab, to modify which speakers you use for sound, or which microphone you use to talk into.
-    * Click on the '3. Choose what happens before' tab, to choose any other programs you want to start before you start the main Game or Application. You can choose if you want to shut them down afterwards too!
+    * Click on the '3. Choose what happens before' tab, to choose any other programs you want to start before you start the main Game or Application. You can choose if you want to shut them down afterwards too! Click on the 'Find Examples' button if you'd like to see some example helper software and their settings for popular games.
     * Click on the '4. Choose Game to start' tab, to choose the main game or application that the Game Shortcut will start and monitor.
     * Choose the Game from the list shown (be sure to click the > button), or if it's not listed there then select the game or application executable. 
     * Click on the '5. Chose what happens afterwards' tab, and choose if you want to rollback any changes made by the Game Shortcut when it runs, or if you want to keep them.
