@@ -35,7 +35,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or start your games by right-clicking on the DisplayMagician Notification Tray icon.
 * Choose which Audio Device you want the shortcut to use. Like using the wireless headset when driving? This lets you with a single click.
 * Add one or more programs to pre-start before your game or application
-* Works with Steam, Ubisoft Uplay, Electronic Arts Origin and Epic Games Game launchers!
+* Works with Steam, Ubisoft Uplay, Electronic Arts Origin, Epic Games and Galaxy of Games Game launchers!
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
@@ -46,7 +46,6 @@ DisplayMagician lets you set up the following information for each game or appli
 * Support of AMD Eyefinity if someone donates an AMD video card to me (Need to create a C# wrapper for AMD ADL)
 * Add Battlenet Game Launcher
 * Add Bethesda Game Launcher
-* Add Galaxy of Games Game Launcher (maybe?)
 * Add Unit Tests!
 * Change UI from Winforms to .NET6 and MAUI
 
