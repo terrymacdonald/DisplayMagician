@@ -35,7 +35,12 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or start your games by right-clicking on the DisplayMagician Notification Tray icon.
 * Choose which Audio Device you want the shortcut to use. Like using the wireless headset when driving? This lets you with a single click.
 * Add one or more programs to pre-start before your game or application
-* Works with Steam, Ubisoft Uplay, Electronic Arts Origin, Epic Games and Galaxy of Games Game launchers!
+* Works with the following Game Launchers:
+  * Steam
+  * Ubisoft Uplay
+  * Electronic Arts Origin
+  * Epic Games 
+  * Galaxy of Games
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
