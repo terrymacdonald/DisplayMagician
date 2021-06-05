@@ -4,7 +4,7 @@
 
 DisplayMagician is an open source tool for automatically configuring your displays and sound for a game or application from a single Windows Shortcut. DisplayMagician is designed to change your display profile, change audio devices, start extra programs and then run the game or application you want. It will even reset things back to the way they were for you once you've closed the game or application!
 
-<div style="text-align:center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianMainScreen.png"/></div>
+<p align="center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianMainScreen.png"/></p>
 
 ## Download
 [![](https://img.shields.io/github/downloads/terrymacdonald/DisplayMagician/total.svg?style=flat-square)](https://github.com/terrymacdonald/DisplayMagician/releases)
@@ -12,7 +12,7 @@ DisplayMagician is an open source tool for automatically configuring your displa
 
 The latest version of this application is available for download via the [release](https://github.com/terrymacdonald/DisplayMagician/releases/latest) page.
 
-<div style="text-align:center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases/latest"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-download.png"/></a></div>
+<p align="center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases/latest"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/gh-download.png"/></a></p>
 
 ## What it does
 
