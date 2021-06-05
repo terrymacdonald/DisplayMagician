@@ -65,16 +65,16 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 ## Usage
 
 ### Screenshots
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianMainScreen.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianDisplayProfiles.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShortcutLibrary.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut1.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut2.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianDisplayProfileHotkey.png"/></div>
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShellExtension.png"/></div>
+<p align="center"><img src="READMEAssets/DisplayMagicianMainScreen.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfiles.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianShortcutLibrary.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut1.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut2.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut3.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut4.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut5.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfileHotkey.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianShellExtension.png"/></p>
 
 
 ### Initial Setup:
@@ -100,7 +100,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
     * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. The Save button only shows if you have a valid Shortcut set up.
 5. Once you've saved the Short cut, you should see it in the Shortcut Library.
 6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
-<div style="text-align:center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></div>
+<p align="center"><img src="READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></p>
 7. You can now double-click on the Desktop shortcut you just saved, and DisplayMagician will do exactly what you asked it to!
 
 
