@@ -97,7 +97,8 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 5. Once you've saved the Short cut, you should see it in the Shortcut Library.
 6. To create a Desktop shortcut file from your Shortcut, select it in the list in your Shortcut Library, and click the 'Save to Desktop' button. This will then write the Shortcut to your computer, ready to use!
 <p align="center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianShortcutOnDesktop.png"/></p>
-7. You can now double-click on the Desktop shortcut you just saved, and DisplayMagician will do exactly what you asked it to!
+
+You can now double-click on the Desktop shortcut you just saved, and DisplayMagician will do exactly what you asked it to!
 
 
 ## License
