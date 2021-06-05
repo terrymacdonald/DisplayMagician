@@ -754,6 +754,17 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
+
+        public override Process StartGame(Game game, string gameArguments = "")
+        {
+            string address = $"steam://rungameid/{game.Id}";
+            if (!String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            Process gameProcess = Process.Start(address);
+            return gameProcess;
+        }
         #endregion
 
     }

@@ -738,6 +738,16 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
+        public override Process StartGame(Game game, string gameArguments = "")
+        {
+            string address = $"origin2://game/launch?offerIds={game.Id}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            Process gameProcess = Process.Start(address);
+            return gameProcess;
+        }
         #endregion
 
     }

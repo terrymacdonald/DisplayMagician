@@ -717,6 +717,22 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
+        public override Process StartGame(Game game, string gameArguments = "")
+        {
+            string address = $"uplay://launch/{game.Id}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            else
+            {
+                address += "/0";
+            }
+            Process gameProcess = Process.Start(address);
+            return gameProcess;
+
+        }
+
         #endregion
 
     }

@@ -8,85 +8,86 @@ using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
-    public class OriginGame : Game
+    public class GogGame : Game
     {
-        private string _originGameId;
-        private string _originGameName;
-        private string _originGameExePath;
-        private string _originGameDir;
-        private string _originGameExe;
-        private string _originGameProcessName;
-        private string _originGameIconPath;
-        //private string _originURI;
-        private static readonly OriginLibrary _originGameLibrary = OriginLibrary.GetLibrary();
+        private string _gogGameId;
+        private string _gogGameName;
+        private string _gogGameExePath;
+        private string _gogGameDir;
+        private string _gogGameExe;
+        private string _gogGameProcessName;
+        private string _gogGameIconPath;
+        //private string _gogURI;
+        private static readonly GogLibrary _gogGameLibrary = GogLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static OriginGame()
+        static GogGame()
         {
             ServicePointManager.ServerCertificateValidationCallback +=
                 (send, certificate, chain, sslPolicyErrors) => true;
         }
 
+        public GogGame() { }
 
-        public OriginGame(string originGameId, string originGameName, string originGameExePath, string originGameIconPath)
+        public GogGame(string gogGameId, string gogGameName, string gogGameExePath, string gogGameIconPath)
         {
 
-            //_gameRegistryKey = $@"{OriginLibrary.registryOriginInstallsKey}\\{OriginGameId}";
-            _originGameId = originGameId;
-            _originGameName = originGameName;
-            _originGameExePath = originGameExePath;
-            _originGameDir = Path.GetDirectoryName(originGameExePath);
-            _originGameExe = Path.GetFileName(_originGameExePath);
-            _originGameProcessName = Path.GetFileNameWithoutExtension(_originGameExePath);
-            _originGameIconPath = originGameIconPath;
+            //_gameRegistryKey = $@"{GogLibrary.registryGogInstallsKey}\\{GogGameId}";
+            _gogGameId = gogGameId;
+            _gogGameName = gogGameName;
+            _gogGameExePath = gogGameExePath;
+            _gogGameDir = Path.GetDirectoryName(gogGameExePath);
+            _gogGameExe = Path.GetFileName(_gogGameExePath);
+            _gogGameProcessName = Path.GetFileNameWithoutExtension(_gogGameExePath);
+            _gogGameIconPath = gogGameIconPath;
 
         }
 
         public override string Id
         {
-            get => _originGameId;
-            set => _originGameId = value;
+            get => _gogGameId;
+            set => _gogGameId = value;
         }
 
         public override string Name
         {
-            get => _originGameName;
-            set => _originGameName = value;
+            get => _gogGameName;
+            set => _gogGameName = value;
         }
 
         public override SupportedGameLibraryType GameLibrary
         {
-            get => SupportedGameLibraryType.Origin;
+            get => SupportedGameLibraryType.GOG;
         }
 
         public override string IconPath
         {
-            get => _originGameIconPath;
-            set => _originGameIconPath = value;
+            get => _gogGameIconPath;
+            set => _gogGameIconPath = value;
         }
 
         public override string ExePath
         {
-            get => _originGameExePath;
-            set => _originGameExePath = value;
+            get => _gogGameExePath;
+            set => _gogGameExePath = value;
         }
 
         public override string Directory
         {
-            get => _originGameDir;
-            set => _originGameDir = value;
+            get => _gogGameDir;
+            set => _gogGameDir = value;
         }
 
         public override string Executable
         {
-            get => _originGameExe;
-            set => _originGameExe = value;
+            get => _gogGameExe;
+            set => _gogGameExe = value;
         }
 
         public override string ProcessName
         {
-            get => _originGameProcessName;
-            set => _originGameProcessName = value;
+            get => _gogGameProcessName;
+            set => _gogGameProcessName = value;
         }
 
         public override bool IsRunning
@@ -94,17 +95,17 @@ namespace DisplayMagician.GameLibraries
             get
             {
                 int numGameProcesses = 0;
-                List<Process> gameProcesses = Process.GetProcessesByName(_originGameProcessName).ToList();
+                List<Process> gameProcesses = Process.GetProcessesByName(_gogGameProcessName).ToList();
                 foreach (Process gameProcess in gameProcesses)
                 {
                     try
                     {                       
-                        if (gameProcess.ProcessName.Equals(_originGameProcessName))
+                        if (gameProcess.ProcessName.Equals(_gogGameProcessName))
                             numGameProcesses++;
                     }
                     catch (Exception ex)
                     {
-                        logger.Debug(ex, $"OriginGame/IsRunning: Accessing Process.ProcessName caused exception. Trying GameUtils.GetMainModuleFilepath instead");
+                        logger.Debug(ex, $"GogGame/IsRunning: Accessing Process.ProcessName caused exception. Trying GameUtils.GetMainModuleFilepath instead");
                         // If there is a race condition where MainModule isn't available, then we 
                         // instead try the much slower GetMainModuleFilepath (which does the same thing)
                         string filePath = GameUtils.GetMainModuleFilepath(gameProcess.Id);
@@ -112,13 +113,13 @@ namespace DisplayMagician.GameLibraries
                         {
                             // if we hit this bit then GameUtils.GetMainModuleFilepath failed,
                             // so we just assume that the process is a game process
-                            // as it matched the original process search
+                            // as it matched the gogal process search
                             numGameProcesses++;
                             continue;
                         }
                         else
                         {
-                            if (filePath.StartsWith(_originGameExePath))
+                            if (filePath.StartsWith(_gogGameExePath))
                                 numGameProcesses++;
                         }
                             
@@ -131,7 +132,7 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        // Have to do much more research to figure out how to detect when Origin is updating a game
+        // Have to do much more research to figure out how to detect when Gog is updating a game
         public override bool IsUpdating
         {
             get
@@ -140,23 +141,23 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public bool CopyTo(OriginGame OriginGame)
+        public bool CopyTo(GogGame GogGame)
         {
-            if (!(OriginGame is OriginGame))
+            if (!(GogGame is GogGame))
                 return false;
 
             // Copy all the game data over to the other game
-            OriginGame.IconPath = IconPath;
-            OriginGame.Id = Id;
-            OriginGame.Name = Name;
-            OriginGame.ExePath = ExePath;
-            OriginGame.Directory = Directory;
+            GogGame.IconPath = IconPath;
+            GogGame.Id = Id;
+            GogGame.Name = Name;
+            GogGame.ExePath = ExePath;
+            GogGame.Directory = Directory;
             return true;
         }
 
         public override string ToString()
         {
-            var name = _originGameName;
+            var name = _gogGameName;
 
             if (string.IsNullOrWhiteSpace(name))
             {

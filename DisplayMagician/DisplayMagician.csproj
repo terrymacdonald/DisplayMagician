@@ -96,6 +96,8 @@
   <ItemGroup>
     <Compile Include="DesktopNotificationActivator.cs" />
     <Compile Include="DesktopNotificationManagerCompat.cs" />
+    <Compile Include="GameLibraries\GOGGame.cs" />
+    <Compile Include="GameLibraries\GOGLibrary.cs" />
     <Compile Include="GameLibraries\Game.cs" />
     <Compile Include="GameLibraries\GameLibrary.cs" />
     <Compile Include="GameLibraries\GameUtils.cs" />
@@ -325,16 +327,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Resources\Steam.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Uplay.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Origin.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Epic.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Steam.png" />
@@ -347,6 +339,7 @@
     <None Include="Resources\error.png" />
     <None Include="Resources\Epic.png" />
     <None Include="Resources\Origin.png" />
+    <None Include="Resources\GOG.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

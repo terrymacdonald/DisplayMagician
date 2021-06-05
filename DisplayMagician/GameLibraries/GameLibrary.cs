@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -9,7 +10,8 @@ namespace DisplayMagician.GameLibraries
         Steam,
         Uplay,
         Origin,
-        Epic
+        Epic,
+        GOG
     }
 
     public class GameLibrary
@@ -98,6 +100,11 @@ namespace DisplayMagician.GameLibraries
         public virtual bool LoadInstalledGames()
         {           
             return false;
+        }
+
+        public virtual Process StartGame(Game game, string gameArguments = "")
+        {
+            return null;
         }
 
         #endregion

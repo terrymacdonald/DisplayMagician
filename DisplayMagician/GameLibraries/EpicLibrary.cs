@@ -515,14 +515,6 @@ namespace DisplayMagician.GameLibraries
                     epicGame.Id = installedAppManifest?.MainGameAppName?? installedApp.AppName;
                     epicGame.ProcessName = Path.GetFileNameWithoutExtension(epicGame.ExePath);
 
-/*                    _epicGameId = epicGameId;
-                    _epicGameName = epicGameName;
-                    _epicGameExePath = epicGameExePath;
-                    _epicGameDir = Path.GetDirectoryName(epicGameExePath);
-                    _epicGameExe = Path.GetFileName(_epicGameExePath);
-                    _epicGameProcessName = Path.GetFileNameWithoutExtension(_epicGameExePath);
-                    _epicGameIconPath = epicGameIconPath;
-*/
                     // Add the Epic Game to the list of Epic Games
                     _allEpicGames.Add(epicGame);
 
@@ -564,6 +556,17 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
+        public override Process StartGame(Game game, string gameArguments = "")
+        {
+            string address = $@"com.epicgames.launcher://apps/{game.Id}?action=launch&silent=true";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += "/" + gameArguments;
+            }
+            Process gameProcess = Process.Start(address);
+            return gameProcess;
+
+        }
         #endregion
 
     }

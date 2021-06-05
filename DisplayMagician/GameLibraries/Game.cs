@@ -6,11 +6,6 @@ namespace DisplayMagician.GameLibraries
     public class Game
     {
 
-        public enum GameStartMode
-        {
-            URI
-        }
-
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         #region Properties
@@ -34,18 +29,12 @@ namespace DisplayMagician.GameLibraries
 
         public virtual string ProcessName { get; set; }
 
-        public virtual GameStartMode StartMode { get; set; }
-
         public Bitmap GameBitmap { get; set; }
 
         #endregion
 
 
         #region Methods
-        public virtual string GetStartURI(string gameArguments = "")
-        {
-            return "";
-        }
 
         public virtual bool CopyTo(Game steamGame)
         {

@@ -130,6 +130,10 @@ namespace DisplayMagician.UIForms
                 {
                     return SupportedGameLibraryType.Epic;
                 }
+                else if (txt_game_launcher.Text.Contains("GOG"))
+                {
+                    return SupportedGameLibraryType.GOG;
+                }
 
                 return SupportedGameLibraryType.Unknown;
             }
@@ -151,6 +155,10 @@ namespace DisplayMagician.UIForms
 
                     case SupportedGameLibraryType.Epic:
                         txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Epic);
+                        break;
+
+                    case SupportedGameLibraryType.GOG:
+                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.GOG);
                         break;
 
                     case SupportedGameLibraryType.Unknown:
@@ -522,6 +530,12 @@ namespace DisplayMagician.UIForms
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Epic game!");
                     _gameToUse.GameToPlay = (from epicGame in EpicLibrary.GetLibrary().AllInstalledGames where epicGame.Id == _gameId select epicGame).First();
+                }
+                // If the game is an GOG Game
+                else if (txt_game_launcher.Text == SupportedGameLibraryType.GOG.ToString())
+                {
+                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an GOG game!");
+                    _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).First();
                 }
 
                 try

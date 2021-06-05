@@ -1073,6 +1073,11 @@ namespace DisplayMagician
                     // We now need to get the Epic Game  info
                     gameLibraryToUse = EpicLibrary.GetLibrary();
                 }
+                else if (shortcutToUse.GameLibrary.Equals(SupportedGameLibraryType.GOG))
+                {
+                    // We now need to get the GOG Game info
+                    gameLibraryToUse = GogLibrary.GetLibrary();
+                }
                 gameToRun = gameLibraryToUse.GetGameById(shortcutToUse.GameAppId);
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the {gameToRun.Name} {gameLibraryToUse.GameLibraryName} Game, and then we're going to monitor it to wait for it to close.");
 
@@ -1100,24 +1105,9 @@ namespace DisplayMagician
                     DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
                     Process gameProcess;
-                    if (gameToRun.StartMode.Equals(Game.GameStartMode.URI))
-                    {
-
-                        // Prepare to start the game using the URI method
-                        string address = "";
-                        if (shortcutToUse.GameArgumentsRequired)
-                        {
-                            address = gameToRun.GetStartURI(shortcutToUse.GameArguments);
-                            logger.Debug($"ShortcutRepository/RunShortcut: Shortcut has arguments: {shortcutToUse.GameArguments}");
-                        }
-                        else
-                        {
-                            address = gameToRun.GetStartURI("");
-                            logger.Debug($"ShortcutRepository/RunShortcut: Shortcut has no arguments");
-                        }
-                        logger.Debug($"ShortcutRepository/RunShortcut: Game launch URI is {address}");
-                        gameProcess = Process.Start(address);
-                    }
+                    //string gameRunCmd = gameLibraryToUse.GetRunCmd(gameToRun, shortcutToUse.GameArguments);
+                    //gameProcess = Process.Start(gameRunCmd);                    
+                    gameProcess = gameLibraryToUse.StartGame(gameToRun, shortcutToUse.GameArguments);
 
                     // Delay 500ms
                     Thread.Sleep(500);

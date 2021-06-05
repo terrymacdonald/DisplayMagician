@@ -167,21 +167,6 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public override GameStartMode StartMode
-        {
-            get => GameStartMode.URI;
-        }
-
-        public override string GetStartURI(string gameArguments = "")
-        {
-            string address = $"steam://rungameid/{Id}";
-            if (String.IsNullOrWhiteSpace(gameArguments))
-            {
-                address += "/" + gameArguments;
-            }
-            return address;
-        }
-
         public bool CopyInto(SteamGame steamGame)
         {
             if (!(steamGame is SteamGame))

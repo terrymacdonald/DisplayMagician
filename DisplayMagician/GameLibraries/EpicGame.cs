@@ -141,21 +141,6 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public override GameStartMode StartMode
-        {
-            get => GameStartMode.URI;
-        }
-
-        public override string GetStartURI(string gameArguments = "")
-        {
-            string address = $@"com.epicgames.launcher://apps/{_epicGameId}?action=launch&silent=true";
-            if (String.IsNullOrWhiteSpace(gameArguments))
-            {
-                address += "/" + gameArguments;
-            }
-            return address;
-        }
-
         public bool CopyTo(EpicGame EpicGame)
         {
             if (!(EpicGame is EpicGame))

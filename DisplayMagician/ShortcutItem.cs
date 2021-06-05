@@ -1012,6 +1012,11 @@ namespace DisplayMagician
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Epic icon as the icon instead.");
                         bm = ToBitmapOverlay(Properties.Resources.Epic, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
                     }
+                    else if (_gameLibrary == SupportedGameLibraryType.GOG)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the GOG icon as the icon instead.");
+                        bm = ToBitmapOverlay(Properties.Resources.GOG, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                    }
                     si.Add(bm);
                     logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the replacement icon for Shortcut '{Name}' to {_savedShortcutIconCacheFilename}.");
                     shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
@@ -1062,6 +1067,11 @@ namespace DisplayMagician
                     {
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Epic icon as the icon instead.");
                         originalBitmap = Properties.Resources.Epic;
+                    }
+                    else if (_gameLibrary == SupportedGameLibraryType.GOG)
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the GOG icon as the icon instead.");
+                        originalBitmap = Properties.Resources.GOG;
                     }
                     else
                     {
@@ -1191,6 +1201,13 @@ namespace DisplayMagician
                     logger.Trace($"ShortcutItem/RefreshValidity: The game library is Epic");
                     // We now need to get the Epic Game  info
                     gameLibraryToUse = EpicLibrary.GetLibrary();
+                }
+                // If the game is an GOG Game we check for that
+                else if (GameLibrary.Equals(SupportedGameLibraryType.GOG))
+                {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The game library is GOG");
+                    // We now need to get the GOG Game  info
+                    gameLibraryToUse = GogLibrary.GetLibrary();
                 }
 
                 // Check if Gamelibrary is installed and error if it isn't

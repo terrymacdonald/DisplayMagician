@@ -810,7 +810,7 @@ namespace DisplayMagician {
                     logger.Info($"Program/LoadGamesInBackground: Loading Installed Epic Games");
                     if (!epicLibrary.LoadInstalledGames())
                     {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed OrigiEpicn Games!");
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Epic Games!");
                     }
                     logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Epic Games (found {epicLibrary.InstalledGameCount})");
                 }
@@ -822,6 +822,28 @@ namespace DisplayMagician {
 
             });
 
+            // Now lets prepare loading all the GOG games we have installed
+            Action loadGogGamesAction = new Action(() =>
+            {
+                // Check if GOG is installed
+                GameLibrary gogLibrary = GogLibrary.GetLibrary();
+                if (gogLibrary.IsGameLibraryInstalled)
+                {
+                    // Load Origin library games
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed GOG Games");
+                    if (!gogLibrary.LoadInstalledGames())
+                    {
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed GOG Games!");
+                    }
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed GOG Games (found {gogLibrary.InstalledGameCount})");
+                }
+                else
+                {
+                    logger.Info($"Program/LoadGamesInBackground: GOG not installed.");
+                    Console.WriteLine("GOG not installed.");
+                }
+
+            });
 
             // Store all the actions in a array so we can wait on them later
             List<Action> loadGamesActions = new List<Action>();
@@ -829,6 +851,7 @@ namespace DisplayMagician {
             loadGamesActions.Add(loadUplayGamesAction);
             loadGamesActions.Add(loadOriginGamesAction);
             loadGamesActions.Add(loadEpicGamesAction);
+            loadGamesActions.Add(loadGogGamesAction);
 
             try
             {
@@ -849,6 +872,7 @@ namespace DisplayMagician {
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(EpicLibrary.GetLibrary().AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(GogLibrary.GetLibrary().AllInstalledGames);
 
             // Create Game Bitmaps from the Games so the rest of the program is faster later
             // Get the bitmap out of the IconPath 
@@ -895,6 +919,8 @@ namespace DisplayMagician {
                         bm = Properties.Resources.Origin;
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Epic))
                         bm = Properties.Resources.Epic;
+                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.GOG))
+                        bm = Properties.Resources.GOG;
                     else
                         bm = Properties.Resources.DisplayMagician.ToBitmap();
                 }
