@@ -41,9 +41,9 @@ DisplayMagician lets you set up the following information for each game or appli
 * Works with the following Game Launchers:
   * Steam
   * Ubisoft Uplay
-  * Electronic Arts Origin
+  * Origin (Electronic Arts)
   * Epic Games 
-  * Galaxy of Games
+  * GOG.com
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
