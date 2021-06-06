@@ -94,7 +94,7 @@ namespace DisplayMagician
         private bool _processNameToMonitorUsesExecutable = true;
         private string _gameAppId;
         private string _gameName;
-        private SupportedGameLibraryType _gameLibrary;
+        private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
         private int _startTimeout = 20;
         private string _gameArguments;
         private bool _gameArgumentsRequired;
@@ -1017,6 +1017,11 @@ namespace DisplayMagician
                         logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the GOG icon as the icon instead.");
                         bm = ToBitmapOverlay(Properties.Resources.GOG, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
                     }
+                    else
+                    {
+                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                        bm = ToBitmapOverlay(Properties.Resources.DisplayMagician.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                    }
                     si.Add(bm);
                     logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the replacement icon for Shortcut '{Name}' to {_savedShortcutIconCacheFilename}.");
                     shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
@@ -1042,7 +1047,7 @@ namespace DisplayMagician
             {
                 if (_category == ShortcutCategory.Application)
                 {
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the executable icon as the icon instead.");
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the executable icon as the icon instead.");
                     originalBitmap = ImageUtils.GetMeABitmapFromFile(_executableNameAndPath);
                 }
                 else if (_category == ShortcutCategory.Game)
@@ -1050,38 +1055,38 @@ namespace DisplayMagician
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: OriginalBitmap is null, so we'll try to make the BitmapOverlay using GameLibrary Icon.");
                     if (_gameLibrary == SupportedGameLibraryType.Steam)
                     {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");
+                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Steam icon as the icon instead.");
                         originalBitmap = Properties.Resources.Steam;
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.Uplay)
                     {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
+                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Uplay icon as the icon instead.");
                         originalBitmap = Properties.Resources.Uplay;
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.Origin)
                     {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
+                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Origin icon as the icon instead.");
                         originalBitmap = Properties.Resources.Origin;
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.Epic)
                     {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Epic icon as the icon instead.");
+                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Epic icon as the icon instead.");
                         originalBitmap = Properties.Resources.Epic;
                     }
                     else if (_gameLibrary == SupportedGameLibraryType.GOG)
                     {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the GOG icon as the icon instead.");
+                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the GOG icon as the icon instead.");
                         originalBitmap = Properties.Resources.GOG;
                     }
                     else
                     {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
                         originalBitmap = Properties.Resources.DisplayMagician.ToBitmap();
                     }
                 }
                 else
                 {
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the profile icon as the icon instead.");
+                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the profile icon as the icon instead.");
                     originalBitmap = _profileToUse.ProfileBitmap;
                 }
                 
@@ -1209,32 +1214,47 @@ namespace DisplayMagician
                     // We now need to get the GOG Game  info
                     gameLibraryToUse = GogLibrary.GetLibrary();
                 }
-
-                // Check if Gamelibrary is installed and error if it isn't
-                if (!gameLibraryToUse.IsGameLibraryInstalled)
+                else
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The game library is not installed!");
+                    gameLibraryToUse = null;
+                    logger.Warn($"ShortcutItem/RefreshValidity: The game shortcut uses an unsupported game library! (You've probably downgraded DisplayMagician to an earlier version)");
                     ShortcutError error = new ShortcutError();
-                    error.Name = $"{gameLibraryToUse.GameLibraryName}NotInstalled";
+                    error.Name = $"UnknownGameLibrary";
                     error.Validity = ShortcutValidity.Error;
-                    error.Message = $"{gameLibraryToUse.GameLibraryName} is not installed on this computer.";
+                    error.Message = $"The game shortcut uses an unsupported game library.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Error;
                 }
 
-                // We need to look up details about the game
-                if (!gameLibraryToUse.ContainsGameById(GameAppId))
+                if (gameLibraryToUse != null)
                 {
-                    logger.Warn($"ShortcutItem/RefreshValidity: The game library does not have Game ID {GameAppId} installed!");
-                    ShortcutError error = new ShortcutError();
-                    error.Name = "{gameLibraryToUse.GameLibraryName}GameNotInstalled";
-                    error.Validity = ShortcutValidity.Error;
-                    error.Message = $"The {gameLibraryToUse.GameLibraryName} Game with AppID '{GameAppId}' is not installed on this computer.";
-                    _shortcutErrors.Add(error);
-                    if (worstError != ShortcutValidity.Error)
-                        worstError = ShortcutValidity.Error;
-                }
+                    // Check if Gamelibrary is installed and error if it isn't
+                    if (!gameLibraryToUse.IsGameLibraryInstalled)
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The game library is not installed!");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = $"{gameLibraryToUse.GameLibraryName}NotInstalled";
+                        error.Validity = ShortcutValidity.Error;
+                        error.Message = $"{gameLibraryToUse.GameLibraryName} is not installed on this computer.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Error;
+                    }
+
+                    // We need to look up details about the game
+                    if (!gameLibraryToUse.ContainsGameById(GameAppId))
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: The game library does not have Game ID {GameAppId} installed!");
+                        ShortcutError error = new ShortcutError();
+                        error.Name = "{gameLibraryToUse.GameLibraryName}GameNotInstalled";
+                        error.Validity = ShortcutValidity.Error;
+                        error.Message = $"The {gameLibraryToUse.GameLibraryName} Game with AppID '{GameAppId}' is not installed on this computer.";
+                        _shortcutErrors.Add(error);
+                        if (worstError != ShortcutValidity.Error)
+                            worstError = ShortcutValidity.Error;
+                    }
+                }                
             }
             // Check the Audio Device is still valid (if one is specified)
             CoreAudioController audioController = ShortcutRepository.AudioController;

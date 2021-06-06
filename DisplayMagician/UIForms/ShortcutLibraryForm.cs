@@ -19,7 +19,7 @@ namespace DisplayMagician.UIForms
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ShortcutItem _selectedShortcut = null;
-        //public static Dictionary<string, bool> shortcutValidity = new Dictionary<string, bool>();
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutLibraryForm()
         {
@@ -65,6 +65,14 @@ namespace DisplayMagician.UIForms
 
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
+                // Ignore any shortcuts with incompatible game libraries
+                if (!Enum.IsDefined(typeof(SupportedGameLibraryType), loadedShortcut.GameLibrary) || loadedShortcut.GameLibrary == SupportedGameLibraryType.Unknown)
+                {
+                    // Skip showing unknown game library items as we have no way to deal with them
+                    logger.Warn( $"ShortcutLibraryForm/RefreshShortcutLibraryUI: Ignoring game shortcut {loadedShortcut.Name} as it's from a Game library this version doesn't support.");
+                    continue;
+                }
+
                 newItem = new ImageListViewItem(loadedShortcut, loadedShortcut.Name);
 
                 // Select it if its the selectedProfile

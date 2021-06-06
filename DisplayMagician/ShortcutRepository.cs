@@ -380,11 +380,6 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-
-                    // "Disabled": false,
-
-
-
                     // Firstly perform any modifications we need to do to update the JSON structure
                     // to handle old versions of the file that need updating. Done with a simple regex replace
                     try
@@ -400,8 +395,6 @@ namespace DisplayMagician
                         // problem updating JSON
                         logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to update the JSON in the {_shortcutStorageJsonFileName} but the Regex Replace threw an exception.");
                     }
-
-
 
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
                     List<ShortcutItem> shortcuts = new List<ShortcutItem>();
