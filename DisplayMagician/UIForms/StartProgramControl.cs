@@ -111,11 +111,13 @@ namespace DisplayMagician.UIForms
             // Disable the start program 1 fields
             if (cb_start_program_pass_args.Checked)
             {
+                myStartProgram.ExecutableArgumentsRequired = true;
                 // Enable the Executable Arguments Text field
                 txt_start_program_args.Enabled = true;
             }
             else
             {
+                myStartProgram.ExecutableArgumentsRequired = false;
                 // Disable the Executable Arguments Text field
                 txt_start_program_args.Enabled = false;
             }
