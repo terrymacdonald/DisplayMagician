@@ -472,7 +472,26 @@ namespace ATI.ADL
             internal static extern int ADL2_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_SLSMapConfig_Get(int iAdapterIndex, int iSLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
+            internal static extern int ADL2_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
+
+            // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_SLSMapConfig_SetState(int AdapterIndex, int SLSMapIndex, int State);
+
+            // Function to get the current supported SLS grid patterns (MxN) for a GPU.
+            // This function gets a list of supported SLS grids for a specified input adapter based on display devices currently connected to the GPU.
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_SLSGrid_Caps(int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
+
+            // Function to get the active SLS map index list for a given GPU.
+            // This function retrieves a list of active SLS map indexes for a specified input GPU.            
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_SLSMapIndexList_Get(int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int options);
+
+            // Function to get the active SLS map index list for a given GPU.
+            // This function retrieves a list of active SLS map indexes for a specified input GPU.            
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_SLSMapIndex_Get(int adapterIndex, int ADLNumDisplayTarget, ref ADLDisplayTarget displayTarget, ref int SLSMapIndex);
 
             #endregion DLLImport
         }
