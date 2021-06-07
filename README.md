@@ -47,11 +47,10 @@ DisplayMagician lets you set up the following information for each game or appli
 * Optionally rollback to your previous Display profile once the game or application has closed.
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
-* Supports NVIDIA Surround setups (but doesn't support AMD Eyefinity yet... maybe someone wants to donate an AMD videocard?)
+* Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
 
 ## Planned features
 
-* Support of AMD Eyefinity if someone donates an AMD video card to me (Need to create a C# wrapper for AMD ADL)
 * Add Battlenet Game Launcher
 * Add Bethesda Game Launcher
 * Add Unit Tests!
