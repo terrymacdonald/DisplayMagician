@@ -56,6 +56,12 @@ DisplayMagician lets you set up the following information for each game or appli
 * Add Unit Tests!
 * Change UI from Winforms to .NET6 and MAUI
 
+## Requirements
+
+* DisplayMagician only support 64-bit Windows 10
+* NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
+* AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
+
 ## Donation
 I am doing this work to scratch a programming itch I've had for a while. It's pretty fun to take something carefully crafted by another developer and extend it with a lot of other awesome features. That said, I'd appreciate a donation to help buy a coffee or two! 
 
