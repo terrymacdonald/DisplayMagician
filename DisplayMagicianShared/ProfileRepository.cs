@@ -803,8 +803,8 @@ namespace DisplayMagicianShared
                 // Second parameter is 1: So we only get the adapters present in the system
                 ADLRet = ADL.ADL2_Main_Control_Create(ADL.ADL2_Main_Memory_Alloc, 1);
             if (ADL.ADL_SUCCESS == ADLRet)
-            { 
-
+            {
+                ADLRet = ADL.ADL2_Display_SLSMapConfig_Get()
             }
                
             try
