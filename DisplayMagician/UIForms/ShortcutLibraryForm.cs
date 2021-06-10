@@ -66,7 +66,7 @@ namespace DisplayMagician.UIForms
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
                 // Ignore any shortcuts with incompatible game libraries
-                if (!Enum.IsDefined(typeof(SupportedGameLibraryType), loadedShortcut.GameLibrary) || loadedShortcut.GameLibrary == SupportedGameLibraryType.Unknown)
+                if (loadedShortcut.Category == ShortcutCategory.Game && (!Enum.IsDefined(typeof(SupportedGameLibraryType), loadedShortcut.GameLibrary) || loadedShortcut.GameLibrary == SupportedGameLibraryType.Unknown))
                 {
                     // Skip showing unknown game library items as we have no way to deal with them
                     logger.Warn( $"ShortcutLibraryForm/RefreshShortcutLibraryUI: Ignoring game shortcut {loadedShortcut.Name} as it's from a Game library this version doesn't support.");
