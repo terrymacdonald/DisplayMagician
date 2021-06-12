@@ -12,7 +12,7 @@ using WindowsDisplayAPI;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using NvAPIWrapper.Native.GPU;
-using ATI.ADL;
+using DisplayMagicianShared.AMD;
 using System.Windows.Forms;
 
 namespace DisplayMagicianShared
@@ -795,17 +795,7 @@ namespace DisplayMagicianShared
             }
 
             // If the Video Card is an AMD, then we should generate specific AMD displayIdentifiers
-            bool isAmd = false;
-            int ADLRet = -1;
-            int NumberOfAdapters = 0;
-            int NumberOfDisplays = 0;
-            if (ADL.ADL2_Main_Control_Create != null)
-                // Second parameter is 1: So we only get the adapters present in the system
-                ADLRet = ADL.ADL2_Main_Control_Create(ADL.ADL2_Main_Memory_Alloc, 1);
-            if (ADL.ADL_SUCCESS == ADLRet)
-            {
-                ADLRet = ADL.ADL2_Display_SLSMapConfig_Get()
-            }
+            AMD.ADLWrapper thingy = new AMD.ADLWrapper();
                
             try
             {
@@ -1153,6 +1143,9 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception. This means the video card isn't compatible with the NvAPIWrapper library we use. It is unlikely to be an NVIDIA video card.");
             }
+
+            // If the Video Card is an AMD, then we should generate specific AMD displayIdentifiers
+            AMD.ADLWrapper thingy = new AMD.ADLWrapper();
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             //if (false)

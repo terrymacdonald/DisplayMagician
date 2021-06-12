@@ -427,7 +427,7 @@ namespace ATI.ADL
         internal const int ADL_MAX_GLSYNC_PORTS = 8;
         /// <summary> Maximum number of GL-Sync ports on the GL-Sync module </summary>
         internal const int ADL_MAX_GLSYNC_PORT_LEDS = 8;
-        /// <summary> Maximum number of ADLMOdes for the adapter </summary>
+        /// <summary> Maximum number of ADLModes for the adapter </summary>
         internal const int ADL_MAX_NUM_DISPLAYMODES = 1024; 
 
         #endregion Internal Constant
