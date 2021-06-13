@@ -40,35 +40,35 @@ namespace ATI.ADL
     /// <summary> ADL Memory allocation function allows ADL to callback for memory allocation</summary>
     /// <param name="size">input size</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate IntPtr ADL2_Main_Memory_Alloc (int size);
+    internal delegate IntPtr ADL_Main_Memory_Alloc (int size);
 
     // ///// <summary> ADL Create Function to create ADL Data</summary>
     /// <param name="callback">Call back functin pointer which is ised to allocate memeory </param>
     /// <param name="enumConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
     ///// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Main_Control_Create(ADL2_Main_Memory_Alloc callback, int enumConnectedAdapters);
+    internal delegate int ADL_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
 
     /// <summary> ADL Destroy Function to free up ADL Data</summary>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Main_Control_Destroy ();
+    internal delegate int ADL_Main_Control_Destroy ();
 
     /// <summary> ADL Function to get the number of adapters</summary>
     /// <param name="numAdapters">return number of adapters</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Adapter_NumberOfAdapters_Get (ref int numAdapters);
+    internal delegate int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
 
     /// <summary> ADL Function to get the GPU adapter information</summary>
     /// <param name="info">return GPU adapter information</param>
     /// <param name="inputSize">the size of the GPU adapter struct</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Adapter_AdapterInfo_Get (IntPtr info, int inputSize);
+    internal delegate int ADL_Adapter_AdapterInfo_Get (IntPtr info, int inputSize);
 
     /// <summary> Function to determine if the adapter is active or not.</summary>
     /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
     /// <param name="adapterIndex"> Adapter Index.</param>
     /// <param name="status"> Status of the adapter. True: Active; False: Dsiabled</param>
     /// <returns>Non zero is successfull</returns> 
-    internal delegate int ADL2_Adapter_Active_Get(int adapterIndex, ref int status);
+    internal delegate int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
 
     /// <summary>Get display information based on adapter index</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -76,7 +76,7 @@ namespace ATI.ADL
     /// <param name="displayInfoArray">return ADLDisplayInfo Array for supported displays' information</param>
     /// <param name="forceDetect">force detect or not</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL2_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+    internal delegate int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
     /// <summary>Function to retrieve an SLS configuration.</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -94,7 +94,7 @@ namespace ATI.ADL
     /// <param name="SLSOffset">return ADLSLSOffset Array that contains the SLS offsets</param>
     /// <param name="option">Specifies the layout type of SLS grid data. It is bit vector. There are two types of SLS layout:s, relative to landscape (ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE) and relative to current angle (ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE).</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL2_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int numSLSTarget, out IntPtr SLSTargetArray, ref int numNativeMode, 
+    internal delegate int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int numSLSTarget, out IntPtr SLSTargetArray, ref int numNativeMode, 
         out IntPtr SLSNativeMode, ref int numBezelMode, out IntPtr SLSBezelMode, ref int numTransientMode, out IntPtr SLSTransientMode, ref int numSLSOffset, out IntPtr SLSOffset, int option);
 
     #endregion Export Delegates
@@ -448,50 +448,50 @@ namespace ATI.ADL
             internal static extern HMODULE GetModuleHandle (string moduleName);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Main_Control_Create (ADL2_Main_Memory_Alloc callback, int enumConnectedAdapters);
+            internal static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Main_Control_Destroy ();
+            internal static extern int ADL_Main_Control_Destroy ();
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Main_Control_IsFunctionValid (HMODULE module, string procName);
+            internal static extern int ADL_Main_Control_IsFunctionValid (HMODULE module, string procName);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern FARPROC ADL2_Main_Control_GetProcAddress (HMODULE module, string procName);
+            internal static extern FARPROC ADL_Main_Control_GetProcAddress (HMODULE module, string procName);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_NumberOfAdapters_Get (ref int numAdapters);
+            internal static extern int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_AdapterInfo_Get (IntPtr info, int inputSize);
+            internal static extern int ADL_Adapter_AdapterInfo_Get (IntPtr info, int inputSize);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_Active_Get(int adapterIndex, ref int status);
+            internal static extern int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+            internal static extern int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
+            internal static extern int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
 
             // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_SLSMapConfig_SetState(int AdapterIndex, int SLSMapIndex, int State);
+            internal static extern int ADL_Display_SLSMapConfig_SetState(int AdapterIndex, int SLSMapIndex, int State);
 
             // Function to get the current supported SLS grid patterns (MxN) for a GPU.
             // This function gets a list of supported SLS grids for a specified input adapter based on display devices currently connected to the GPU.
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_SLSGrid_Caps(int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
+            internal static extern int ADL_Display_SLSGrid_Caps(int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
 
             // Function to get the active SLS map index list for a given GPU.
             // This function retrieves a list of active SLS map indexes for a specified input GPU.            
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_SLSMapIndexList_Get(int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int options);
+            internal static extern int ADL_Display_SLSMapIndexList_Get(int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int options);
 
             // Function to get the active SLS map index list for a given GPU.
             // This function retrieves a list of active SLS map indexes for a specified input GPU.            
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_SLSMapIndex_Get(int adapterIndex, int ADLNumDisplayTarget, ref ADLDisplayTarget displayTarget, ref int SLSMapIndex);
+            internal static extern int ADL_Display_SLSMapIndex_Get(int adapterIndex, int ADLNumDisplayTarget, ref ADLDisplayTarget displayTarget, ref int SLSMapIndex);
 
             #endregion DLLImport
         }
@@ -516,7 +516,7 @@ namespace ATI.ADL
             {
                 try
                 {
-                    if (1 == ADLImport.ADL2_Main_Control_IsFunctionValid(IntPtr.Zero, "ADL2_Main_Control_Create"))
+                    if (1 == ADLImport.ADL_Main_Control_IsFunctionValid(IntPtr.Zero, "ADL_Main_Control_Create"))
                     {
                         ADLLibrary = ADLImport.GetModuleHandle(ADLImport.Atiadlxx_FileName);
                     }
@@ -533,7 +533,7 @@ namespace ATI.ADL
             {
                 if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
                 {
-                    ADLImport.ADL2_Main_Control_Destroy();
+                    ADLImport.ADL_Main_Control_Destroy();
                 }
             }
             #endregion Destructor
@@ -547,7 +547,7 @@ namespace ATI.ADL
                 bool result = false;
                 if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
                 {
-                    if (1 == ADLImport.ADL2_Main_Control_IsFunctionValid(ADLCheckLibrary_.ADLLibrary, functionName))
+                    if (1 == ADLImport.ADL_Main_Control_IsFunctionValid(ADLCheckLibrary_.ADLLibrary, functionName))
                     {
                         result = true;
                     }
@@ -565,7 +565,7 @@ namespace ATI.ADL
                 FARPROC result = System.IntPtr.Zero;
                 if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
                 {
-                    result = ADLImport.ADL2_Main_Control_GetProcAddress(ADLCheckLibrary_.ADLLibrary, functionName);
+                    result = ADLImport.ADL_Main_Control_GetProcAddress(ADLCheckLibrary_.ADLLibrary, functionName);
                 }
                 return result;
             }
@@ -575,191 +575,191 @@ namespace ATI.ADL
 
         #region Export Functions
 
-        #region ADL2_Main_Memory_Alloc
+        #region ADL_Main_Memory_Alloc
         /// <summary> Build in memory allocation function</summary>
-        internal static ADL2_Main_Memory_Alloc ADL2_Main_Memory_Alloc = ADL2_Main_Memory_Alloc_;
+        internal static ADL_Main_Memory_Alloc ADL_Main_Memory_Alloc = ADL_Main_Memory_Alloc_;
         /// <summary> Build in memory allocation function</summary>
         /// <param name="size">input size</param>
         /// <returns>return the memory buffer</returns>
-        private static IntPtr ADL2_Main_Memory_Alloc_ (int size)
+        private static IntPtr ADL_Main_Memory_Alloc_ (int size)
         {
             IntPtr result = Marshal.AllocCoTaskMem(size);
             return result;
         }
-        #endregion ADL2_Main_Memory_Alloc
+        #endregion ADL_Main_Memory_Alloc
 
-        #region ADL2_Main_Memory_Free
+        #region ADL_Main_Memory_Free
         /// <summary> Build in memory free function</summary>
         /// <param name="buffer">input buffer</param>
-        internal static void ADL2_Main_Memory_Free (IntPtr buffer)
+        internal static void ADL_Main_Memory_Free (IntPtr buffer)
         {
             if (IntPtr.Zero != buffer)
             {
                 Marshal.FreeCoTaskMem(buffer);
             }
         }
-        #endregion ADL2_Main_Memory_Free
+        #endregion ADL_Main_Memory_Free
 
-        #region ADL2_Main_Control_Create
-        /// <summary> ADL2_Main_Control_Create Delegates</summary>
-        internal static ADL2_Main_Control_Create ADL2_Main_Control_Create
+        #region ADL_Main_Control_Create
+        /// <summary> ADL_Main_Control_Create Delegates</summary>
+        internal static ADL_Main_Control_Create ADL_Main_Control_Create
         {
             get
             {
-                if (!ADL2_Main_Control_Create_Check && null == ADL2_Main_Control_Create_)
+                if (!ADL_Main_Control_Create_Check && null == ADL_Main_Control_Create_)
                 {
-                    ADL2_Main_Control_Create_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Main_Control_Create"))
+                    ADL_Main_Control_Create_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Main_Control_Create"))
                     {
-                        ADL2_Main_Control_Create_ = ADLImport.ADL2_Main_Control_Create;
+                        ADL_Main_Control_Create_ = ADLImport.ADL_Main_Control_Create;
                     }
                 }
-                return ADL2_Main_Control_Create_;
+                return ADL_Main_Control_Create_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL2_Main_Control_Create ADL2_Main_Control_Create_ = null;
+        private static ADL_Main_Control_Create ADL_Main_Control_Create_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Main_Control_Create_Check = false;
-        #endregion ADL2_Main_Control_Create
+        private static bool ADL_Main_Control_Create_Check = false;
+        #endregion ADL_Main_Control_Create
 
-        #region ADL2_Main_Control_Destroy
-        /// <summary> ADL2_Main_Control_Destroy Delegates</summary>
-        internal static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy
+        #region ADL_Main_Control_Destroy
+        /// <summary> ADL_Main_Control_Destroy Delegates</summary>
+        internal static ADL_Main_Control_Destroy ADL_Main_Control_Destroy
         {
             get
             {
-                if (!ADL2_Main_Control_Destroy_Check && null == ADL2_Main_Control_Destroy_)
+                if (!ADL_Main_Control_Destroy_Check && null == ADL_Main_Control_Destroy_)
                 {
-                    ADL2_Main_Control_Destroy_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Main_Control_Destroy"))
+                    ADL_Main_Control_Destroy_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Main_Control_Destroy"))
                     {
-                        ADL2_Main_Control_Destroy_ = ADLImport.ADL2_Main_Control_Destroy;
+                        ADL_Main_Control_Destroy_ = ADLImport.ADL_Main_Control_Destroy;
                     }
                 }
-                return ADL2_Main_Control_Destroy_;
+                return ADL_Main_Control_Destroy_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy_ = null;
+        private static ADL_Main_Control_Destroy ADL_Main_Control_Destroy_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Main_Control_Destroy_Check = false;
-        #endregion ADL2_Main_Control_Destroy
+        private static bool ADL_Main_Control_Destroy_Check = false;
+        #endregion ADL_Main_Control_Destroy
 
-        #region ADL2_Adapter_NumberOfAdapters_Get
-        /// <summary> ADL2_Adapter_NumberOfAdapters_Get Delegates</summary>
-        internal static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get
+        #region ADL_Adapter_NumberOfAdapters_Get
+        /// <summary> ADL_Adapter_NumberOfAdapters_Get Delegates</summary>
+        internal static ADL_Adapter_NumberOfAdapters_Get ADL_Adapter_NumberOfAdapters_Get
         {
             get
             {
-                if (!ADL2_Adapter_NumberOfAdapters_Get_Check && null == ADL2_Adapter_NumberOfAdapters_Get_)
+                if (!ADL_Adapter_NumberOfAdapters_Get_Check && null == ADL_Adapter_NumberOfAdapters_Get_)
                 {
-                    ADL2_Adapter_NumberOfAdapters_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_NumberOfAdapters_Get"))
+                    ADL_Adapter_NumberOfAdapters_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_NumberOfAdapters_Get"))
                     {
-                        ADL2_Adapter_NumberOfAdapters_Get_ = ADLImport.ADL2_Adapter_NumberOfAdapters_Get;
+                        ADL_Adapter_NumberOfAdapters_Get_ = ADLImport.ADL_Adapter_NumberOfAdapters_Get;
                     }
                 }
-                return ADL2_Adapter_NumberOfAdapters_Get_;
+                return ADL_Adapter_NumberOfAdapters_Get_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get_ = null;
+        private static ADL_Adapter_NumberOfAdapters_Get ADL_Adapter_NumberOfAdapters_Get_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_NumberOfAdapters_Get_Check = false;
-        #endregion ADL2_Adapter_NumberOfAdapters_Get
+        private static bool ADL_Adapter_NumberOfAdapters_Get_Check = false;
+        #endregion ADL_Adapter_NumberOfAdapters_Get
 
-        #region ADL2_Adapter_AdapterInfo_Get
-        /// <summary> ADL2_Adapter_AdapterInfo_Get Delegates</summary>
-        internal static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get
+        #region ADL_Adapter_AdapterInfo_Get
+        /// <summary> ADL_Adapter_AdapterInfo_Get Delegates</summary>
+        internal static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get
         {
             get
             {
-                if (!ADL2_Adapter_AdapterInfo_Get_Check && null == ADL2_Adapter_AdapterInfo_Get_)
+                if (!ADL_Adapter_AdapterInfo_Get_Check && null == ADL_Adapter_AdapterInfo_Get_)
                 {
-                    ADL2_Adapter_AdapterInfo_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfo_Get"))
+                    ADL_Adapter_AdapterInfo_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_AdapterInfo_Get"))
                     {
-                        ADL2_Adapter_AdapterInfo_Get_ = ADLImport.ADL2_Adapter_AdapterInfo_Get;
+                        ADL_Adapter_AdapterInfo_Get_ = ADLImport.ADL_Adapter_AdapterInfo_Get;
                     }
                 }
-                return ADL2_Adapter_AdapterInfo_Get_;
+                return ADL_Adapter_AdapterInfo_Get_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get_ = null;
+        private static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_AdapterInfo_Get_Check = false;
-        #endregion ADL2_Adapter_AdapterInfo_Get
+        private static bool ADL_Adapter_AdapterInfo_Get_Check = false;
+        #endregion ADL_Adapter_AdapterInfo_Get
 
-        #region ADL2_Adapter_Active_Get
-        /// <summary> ADL2_Adapter_Active_Get Delegates</summary>
-        internal static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get
+        #region ADL_Adapter_Active_Get
+        /// <summary> ADL_Adapter_Active_Get Delegates</summary>
+        internal static ADL_Adapter_Active_Get ADL_Adapter_Active_Get
         {
             get
             {
-                if (!ADL2_Adapter_Active_Get_Check && null == ADL2_Adapter_Active_Get_)
+                if (!ADL_Adapter_Active_Get_Check && null == ADL_Adapter_Active_Get_)
                 {
-                    ADL2_Adapter_Active_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_Active_Get"))
+                    ADL_Adapter_Active_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_Active_Get"))
                     {
-                        ADL2_Adapter_Active_Get_ = ADLImport.ADL2_Adapter_Active_Get;
+                        ADL_Adapter_Active_Get_ = ADLImport.ADL_Adapter_Active_Get;
                     }
                 }
-                return ADL2_Adapter_Active_Get_;
+                return ADL_Adapter_Active_Get_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get_ = null;
+        private static ADL_Adapter_Active_Get ADL_Adapter_Active_Get_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_Active_Get_Check = false;
-        #endregion ADL2_Adapter_Active_Get
+        private static bool ADL_Adapter_Active_Get_Check = false;
+        #endregion ADL_Adapter_Active_Get
 
-        #region ADL2_Display_DisplayInfo_Get
-        /// <summary> ADL2_Display_DisplayInfo_Get Delegates</summary>
-        internal static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get
+        #region ADL_Display_DisplayInfo_Get
+        /// <summary> ADL_Display_DisplayInfo_Get Delegates</summary>
+        internal static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get
         {
             get
             {
-                if (!ADL2_Display_DisplayInfo_Get_Check && null == ADL2_Display_DisplayInfo_Get_)
+                if (!ADL_Display_DisplayInfo_Get_Check && null == ADL_Display_DisplayInfo_Get_)
                 {
-                    ADL2_Display_DisplayInfo_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayInfo_Get"))
+                    ADL_Display_DisplayInfo_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DisplayInfo_Get"))
                     {
-                        ADL2_Display_DisplayInfo_Get_ = ADLImport.ADL2_Display_DisplayInfo_Get;
+                        ADL_Display_DisplayInfo_Get_ = ADLImport.ADL_Display_DisplayInfo_Get;
                     }
                 }
-                return ADL2_Display_DisplayInfo_Get_;
+                return ADL_Display_DisplayInfo_Get_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get_ = null;
+        private static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DisplayInfo_Get_Check = false;
-        #endregion ADL2_Display_DisplayInfo_Get
+        private static bool ADL_Display_DisplayInfo_Get_Check = false;
+        #endregion ADL_Display_DisplayInfo_Get
 
-        #region ADL2_Display_SLSMapConfig_Get
-        /// <summary> ADL2_Display_SLSMapConfig_Get Delegates</summary>
-        internal static ADL2_Display_SLSMapConfig_Get ADL2_Display_SLSMapConfig_Get
+        #region ADL_Display_SLSMapConfig_Get
+        /// <summary> ADL_Display_SLSMapConfig_Get Delegates</summary>
+        internal static ADL_Display_SLSMapConfig_Get ADL_Display_SLSMapConfig_Get
         {
             get
             {
-                if (!ADL2_Display_SLSMapConfig_Get_Check && null == ADL2_Display_SLSMapConfig_Get_)
+                if (!ADL_Display_SLSMapConfig_Get_Check && null == ADL_Display_SLSMapConfig_Get_)
                 {
-                    ADL2_Display_SLSMapConfig_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_SLSMapConfig_Get"))
+                    ADL_Display_SLSMapConfig_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_SLSMapConfig_Get"))
                     {
-                        ADL2_Display_SLSMapConfig_Get_ = ADLImport.ADL2_Display_SLSMapConfig_Get;
+                        ADL_Display_SLSMapConfig_Get_ = ADLImport.ADL_Display_SLSMapConfig_Get;
                     }
                 }
-                return ADL2_Display_SLSMapConfig_Get_;
+                return ADL_Display_SLSMapConfig_Get_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL2_Display_SLSMapConfig_Get ADL2_Display_SLSMapConfig_Get_ = null;
+        private static ADL_Display_SLSMapConfig_Get ADL_Display_SLSMapConfig_Get_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_SLSMapConfig_Get_Check = false;
-        #endregion ADL2_Display_SLSMapConfig_Get
+        private static bool ADL_Display_SLSMapConfig_Get_Check = false;
+        #endregion ADL_Display_SLSMapConfig_Get
         
 
         #endregion Export Functions

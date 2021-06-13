@@ -16,14 +16,14 @@ namespace DisplayMagicianShared.AMD
             int NumberOfAdapters = 0;
             int NumberOfDisplays = 0;
 
-            if (null != ADL.ADL2_Main_Control_Create)
+            if (null != ADL.ADL_Main_Control_Create)
                 // Second parameter is 1: Get only the present adapters
-                ADLRet = ADL.ADL2_Main_Control_Create(ADL.ADL2_Main_Memory_Alloc, 1);
+                ADLRet = ADL.ADL_Main_Control_Create(ADL.ADL_Main_Memory_Alloc, 1);
             if (ADL.ADL_SUCCESS == ADLRet)
             {
-                if (null != ADL.ADL2_Adapter_NumberOfAdapters_Get)
+                if (null != ADL.ADL_Adapter_NumberOfAdapters_Get)
                 {
-                    ADL.ADL2_Adapter_NumberOfAdapters_Get(ref NumberOfAdapters);
+                    ADL.ADL_Adapter_NumberOfAdapters_Get(ref NumberOfAdapters);
                 }
                 Console.WriteLine("Number Of Adapters: " + NumberOfAdapters.ToString() + "\n");
 
@@ -33,16 +33,16 @@ namespace DisplayMagicianShared.AMD
                     ADLAdapterInfoArray OSAdapterInfoData;
                     OSAdapterInfoData = new ADLAdapterInfoArray();
 
-                    if (null != ADL.ADL2_Adapter_AdapterInfo_Get)
+                    if (null != ADL.ADL_Adapter_AdapterInfo_Get)
                     {
                         IntPtr AdapterBuffer = IntPtr.Zero;
                         int size = Marshal.SizeOf(OSAdapterInfoData);
                         AdapterBuffer = Marshal.AllocCoTaskMem((int)size);
                         Marshal.StructureToPtr(OSAdapterInfoData, AdapterBuffer, false);
 
-                        if (null != ADL.ADL2_Adapter_AdapterInfo_Get)
+                        if (null != ADL.ADL_Adapter_AdapterInfo_Get)
                         {
-                            ADLRet = ADL.ADL2_Adapter_AdapterInfo_Get(AdapterBuffer, size);
+                            ADLRet = ADL.ADL_Adapter_AdapterInfo_Get(AdapterBuffer, size);
                             if (ADL.ADL_SUCCESS == ADLRet)
                             {
                                 OSAdapterInfoData = (ADLAdapterInfoArray)Marshal.PtrToStructure(AdapterBuffer, OSAdapterInfoData.GetType());
@@ -51,8 +51,8 @@ namespace DisplayMagicianShared.AMD
                                 for (int i = 0; i < NumberOfAdapters; i++)
                                 {
                                     // Check if the adapter is active
-                                    if (null != ADL.ADL2_Adapter_Active_Get)
-                                        ADLRet = ADL.ADL2_Adapter_Active_Get(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, ref IsActive);
+                                    if (null != ADL.ADL_Adapter_Active_Get)
+                                        ADLRet = ADL.ADL_Adapter_Active_Get(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, ref IsActive);
 
                                     if (ADL.ADL_SUCCESS == ADLRet)
                                     {
@@ -74,13 +74,13 @@ namespace DisplayMagicianShared.AMD
                                         // Obtain information about displays
                                         ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
 
-                                        if (null != ADL.ADL2_Display_DisplayInfo_Get)
+                                        if (null != ADL.ADL_Display_DisplayInfo_Get)
                                         {
                                             IntPtr DisplayBuffer = IntPtr.Zero;
                                             int j = 0;
 
                                             // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                            ADLRet = ADL.ADL2_Display_DisplayInfo_Get(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 1);
+                                            ADLRet = ADL.ADL_Display_DisplayInfo_Get(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 1);
                                             if (ADL.ADL_SUCCESS == ADLRet)
                                             {
                                                 List<ADLDisplayInfo> DisplayInfoData = new List<ADLDisplayInfo>();
@@ -133,8 +133,8 @@ namespace DisplayMagicianShared.AMD
                             Marshal.FreeCoTaskMem(AdapterBuffer);
                     }
                 }
-                if (null != ADL.ADL2_Main_Control_Destroy)
-                    ADL.ADL2_Main_Control_Destroy();
+                if (null != ADL.ADL_Main_Control_Destroy)
+                    ADL.ADL_Main_Control_Destroy();
             }
             else
             {
