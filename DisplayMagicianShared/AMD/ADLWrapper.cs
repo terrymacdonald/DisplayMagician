@@ -80,14 +80,25 @@ namespace DisplayMagicianShared.AMD
                                             int j = 0;
 
                                             // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                            ADLRet = ADL.ADL_Display_DisplayInfo_Get(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 1);
+                                            ADLRet = ADL.ADL_Display_DisplayInfo_Get(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 0);
                                             if (ADL.ADL_SUCCESS == ADLRet)
                                             {
+
                                                 List<ADLDisplayInfo> DisplayInfoData = new List<ADLDisplayInfo>();
-                                                for (j = 0; j < NumberOfDisplays; j++)
+
+                                                try
                                                 {
-                                                    oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt32() + j * Marshal.SizeOf(oneDisplayInfo)), oneDisplayInfo.GetType());
-                                                    DisplayInfoData.Add(oneDisplayInfo);
+
+                                                    for (j = 0; j < NumberOfDisplays; j++)
+                                                    {
+                                                        oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (j * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
+                                                        DisplayInfoData.Add(oneDisplayInfo);
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    Console.WriteLine("Exception caused trying to access attached displays");
+                                                    continue;
                                                 }
                                                 Console.WriteLine("\nTotal Number of Displays supported: " + NumberOfDisplays.ToString());
                                                 Console.WriteLine("\nDispID  AdpID  Type OutType  CnctType Connected  Mapped  InfoValue DisplayName ");

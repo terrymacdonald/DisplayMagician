@@ -244,6 +244,15 @@ namespace ATI.ADL
         ///<summary> Indicating the display info value.<summary>
         internal int DisplayInfoValue;
     }
+
+    /// <summary> ADLDisplayInfo Array</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLDisplayInfoArray
+    {
+        /// <summary> ADLDisplayInfo Array </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
+        internal ADLDisplayInfo[] ADLDisplayInfo;
+    }
     #endregion ADLDisplayInfo
 
     #region ADLSLS
