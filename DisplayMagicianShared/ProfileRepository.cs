@@ -30,6 +30,7 @@ namespace DisplayMagicianShared
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;
+        private static ADLWrapper AMDLibrary;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -50,7 +51,25 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NvAPIWrapper.NVIDIA library.");
                 NvAPIWrapper.NVIDIA.Initialize();
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NvAPIWrapper caused an exception.");
+            }
 
+            // Initialise the the AMD ADLWrapper
+            try
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
+                AMDLibrary = new ADLWrapper();
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising AMD ADL caused an exception.");
+            }
+
+            try
+            {
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppProfileStoragePath))
                 {
@@ -76,7 +95,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NvAPIWrapper caused an exception.");
+                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Exception creating the Profiles storage folder.");
             }
             // Load the Profiles from storage
             LoadProfiles();
@@ -795,8 +814,16 @@ namespace DisplayMagicianShared
             }
 
             // If the Video Card is an AMD, then we should generate specific AMD displayIdentifiers
-            AMD.ADLWrapper thingy = new AMD.ADLWrapper();
-               
+            bool isAMD = false;
+            if (AMDLibrary.IsInstalled)
+            {
+                isAMD = true;
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: The video card is an AMD video card.");
+                // Needs a lot of work here! We need to check if the AMD returned the right stuff, and then use Windows if there is an error.
+                return AMDLibrary.GenerateDisplayProfilesIdentifiers();
+            }
+            
+
             try
             {
                 myPhysicalGPUs = NvAPIWrapper.GPU.PhysicalGPU.GetPhysicalGPUs();
