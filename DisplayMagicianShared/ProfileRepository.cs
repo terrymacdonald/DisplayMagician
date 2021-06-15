@@ -820,7 +820,7 @@ namespace DisplayMagicianShared
                 isAMD = true;
                 SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: The video card is an AMD video card.");
                 // Needs a lot of work here! We need to check if the AMD returned the right stuff, and then use Windows if there is an error.
-                return AMDLibrary.GenerateDisplayProfilesIdentifiers();
+                return AMDLibrary.GenerateProfileDisplayIdentifiers();
             }
             
 

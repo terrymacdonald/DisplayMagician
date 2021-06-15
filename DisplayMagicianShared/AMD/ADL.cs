@@ -66,9 +66,23 @@ namespace ATI.ADL
     /// <summary> Function to determine if the adapter is active or not.</summary>
     /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
     /// <param name="adapterIndex"> Adapter Index.</param>
-    /// <param name="status"> Status of the adapter. True: Active; False: Dsiabled</param>
-    /// <returns>Non zero is successfull</returns> 
+    /// <param name="status"> Status of the adapter. True: Active; False: Disabled</param>
+    /// <returns>Non zero is successful</returns> 
     internal delegate int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
+
+    /// <summary> Function to get the unique identifier of an adapter.</summary>
+    /// <remarks>This function retrieves the unique identifier of a specified adapter. The adapter ID is a unique value and will be used to determine what other controllers share the same adapter. The desktop will use this to find which HDCs are associated with an adapter.</remarks>  
+    /// <param name="adapterIndex"> Adapter Index.</param>
+    /// <param name="adapterId"> The pointer to the adapter identifier. Zero means: The adapter is not AMD.</param>
+    /// <returns>return ADL Error Code</returns> 
+    internal delegate int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
+
+    /// <summary>Function to retrieve adapter capability information.</summary>
+    /// <remarks>This function implements a DI call to retrieve adapter capability information .</remarks>  
+    /// <param name="adapterIndex"> Adapter Index.</param>
+    /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
+    /// <returns>return ADL Error Code</returns> 
+    internal delegate int ADL_Adapter_Caps(int adapterIndex, out IntPtr adapterCapabilities);
 
     /// <summary>Get display information based on adapter index</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -253,6 +267,27 @@ namespace ATI.ADL
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
         internal ADLDisplayInfo[] ADLDisplayInfo;
     }
+
+    /// <summary> ADLAdapterCaps Structure</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLAdapterCaps
+    {
+        /// <summary> AdapterID for this adapter </summary>
+        internal int AdapterID;
+        /// <summary> The bit mask identifies the adapter caps. </summary>
+        internal int CapsMask;
+        /// <summary> The bit identifies the adapter caps define_adapter_caps. </summary>
+        internal int CapsValue;
+        /// <summary> Number of controllers for this adapter. </summary>
+        internal int NumControllers;
+        /// <summary> Number of displays for this adapter.</summary>
+        internal int NumDisplays;
+        /// <summary> Number of GLSyncConnectors. </summary>
+        internal int NumOfGLSyncConnectors;
+        /// <summary> Number of overlays for this adapter.</summary>
+        internal int NumOverlays;
+    }
+
     #endregion ADLDisplayInfo
 
     #region ADLSLS
@@ -437,7 +472,11 @@ namespace ATI.ADL
         /// <summary> Maximum number of GL-Sync ports on the GL-Sync module </summary>
         internal const int ADL_MAX_GLSYNC_PORT_LEDS = 8;
         /// <summary> Maximum number of ADLModes for the adapter </summary>
-        internal const int ADL_MAX_NUM_DISPLAYMODES = 1024; 
+        internal const int ADL_MAX_NUM_DISPLAYMODES = 1024;
+        /// <summary> Define true </summary>
+        internal const int ADL_TRUE = 1;
+        /// <summary> Maximum number of ADLModes for the adapter </summary>
+        internal const int ADL_FALSE = 0;
 
         #endregion Internal Constant
 
@@ -476,6 +515,13 @@ namespace ATI.ADL
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
+            
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL_Adapter_Caps(int adapterIndex, out IntPtr adapterCapabilities);
+
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
@@ -700,6 +746,53 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL_Adapter_AdapterInfo_Get_Check = false;
         #endregion ADL_Adapter_AdapterInfo_Get
+
+        #region ADL_Adapter_ID_Get
+        #endregion ADL_Adapter_ID_Get
+
+        /// <summary> ADL_Adapter_Active_Get Delegates</summary>
+        internal static ADL_Adapter_ID_Get ADL_Adapter_ID_Get
+        {
+            get
+            {
+                if (!ADL_Adapter_ID_Get_Check && null == ADL_Adapter_ID_Get_)
+                {
+                    ADL_Adapter_ID_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_ID_Get"))
+                    {
+                        ADL_Adapter_ID_Get_ = ADLImport.ADL_Adapter_ID_Get;
+                    }
+                }
+                return ADL_Adapter_ID_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL_Adapter_ID_Get ADL_Adapter_ID_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL_Adapter_ID_Get_Check = false;
+
+        #region ADL_Adapter_Caps
+        /// <summary> ADL_Adapter_Active_Get Delegates</summary>
+        internal static ADL_Adapter_Caps ADL_Adapter_Caps
+        {
+            get
+            {
+                if (!ADL_Adapter_Caps_Check && null == ADL_Adapter_Caps_)
+                {
+                    ADL_Adapter_Caps_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_Caps"))
+                    {
+                        ADL_Adapter_Caps_ = ADLImport.ADL_Adapter_Caps;
+                    }
+                }
+                return ADL_Adapter_Caps_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL_Adapter_Caps ADL_Adapter_Caps_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL_Adapter_Caps_Check = false;
+        #endregion ADL_Adapter_Caps
 
         #region ADL_Adapter_Active_Get
         /// <summary> ADL_Adapter_Active_Get Delegates</summary>
