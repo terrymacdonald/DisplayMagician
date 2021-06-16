@@ -183,43 +183,15 @@ namespace DisplayMagicianShared.AMD
                                     SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({OSAdapterInfoData.ADLAdapterInfo[i].AdapterName}) AdapterID is {AdapterID.ToString()}");
                                 }
 
-                                // Get the ADapter Capabilities
-                                // 
-                                IntPtr AdapterCapabilitiesBuffer = IntPtr.Zero;
-                                //ADLAdapterCaps AdapterCapabilities;
-                                //ADLAdapterCaps AdapterCapabilities = new ADLAdapterCaps();
-                                //AdapterCapabilitiesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(AdapterCapabilities));
-
-                                //Marshal.StructureToPtr(OSAdapterInfoData, AdapterBuffer, false);
-                                //IntPtr vtablePtr = Marshal.ReadIntPtr(instancePtr, 0);
-                                //IntPtr AdapterCapabilitiesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ADLAdapterCaps)));
-                                if (ADL.ADL_Adapter_Caps != null)
+                                // Get the Adapter Capabilities
+                                ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
+                                if (ADL.ADL_AdapterX2_Caps != null)
                                 {
-                                    ADLRet = ADL.ADL_Adapter_Caps(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, out AdapterCapabilitiesBuffer);
+                                    ADLRet = ADL.ADL_AdapterX2_Caps(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, out AdapterCapabilities);
                                 }
-                                //Marshal.PtrToStructure(AdapterCapabilitiesBuffer, AdapterCapabilities);
-                                //ADLAdapterCaps AdapterCapabilities = (ADLAdapterCaps)Marshal.PtrToStructure(AdapterCapabilitiesBuffer, typeof(ADLAdapterCaps));
-                                IntPtr AdapterCapabilitiesPtr = Marshal.ReadIntPtr(AdapterCapabilitiesBuffer, 0);
-                                ADLAdapterCaps AdapterCapabilities = Marshal.PtrToStructure<ADLAdapterCaps>(AdapterCapabilitiesPtr);
 
-
-                                //AdapterCapabilities = (ADLAdapterCaps)Marshal.PtrToStructure(AdapterCapabilitiesBuffer, AdapterCapabilities.GetType());
-                                //AdapterCapabilities = (ADLAdapterCaps)Marshal.PtrToStructure(new IntPtr(AdapterCapabilitiesBuffer.ToInt64() + Marshal.SizeOf(AdapterCapabilities)), AdapterCapabilities.GetType());
-                                //AdapterCapabilities = (ADLAdapterCaps)Marshal.PtrToStructure(AdapterCapabilitiesBuffer, AdapterCapabilities.GetType());
-                                //Marshal.PtrToStructure<ADLAdapterCaps>(AdapterCapabilitiesBuffer, AdapterCapabilities);
-                                //Marshal.PtrToStructure(AdapterCapabilitiesBuffer, AdapterCapabilities.GetType());
-                                //Marshal.FreeCoTaskMem(AdapterCapabilitiesBuffer);
+                                //ADLAdapterCapsX2 AdapterCapabilities = (ADLAdapterCapsX2)Marshal.PtrToStructure(AdapterCapabilitiesBuffer, typeof(ADLAdapterCapsX2));
                                 Console.Write(AdapterCapabilities.AdapterID);
-
-                                //AdapterCapabilitiesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(AdapterCapabilities)) ;
-                                //AdapterCapabilities = (ADLAdapterCaps)Marshal.PtrToStructure(Marshal.SizeOf(AdapterCapabilities), AdapterCapabilities.GetType());
-
-                                // Get OS adpater info from ADL                                
-                                //AdapterCapabilitiesData.dw size = Marshal.SizeOf(AdapterCapabilitiesData);
-                                //AdapterCapabilities = Marshal.AllocCoTaskMem((int)size);
-                                //Marshal.StructureToPtr(AdapterCapabilitiesData, AdapterCapabilities, false);
-
-                                //AdapterCapabilitiesData = (ADLAdapterCaps)Marshal.PtrToStructure(AdapterCapabilities, AdapterCapabilitiesData.GetType());
 
                                 // Obtain information about displays
                                 ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
@@ -257,15 +229,26 @@ namespace DisplayMagicianShared.AMD
                                         for (j = 0; j < NumberOfDisplays; j++)
                                         {
                                             // Skip non connected displays
-                                            //if ()
+                                            if ((DisplayInfoData[j].DisplayInfoValue & 1) != 1)
+                                            {
+                                                SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({OSAdapterInfoData.ADLAdapterInfo[i].AdapterName}) AdapterID display ID#{j} is not connected");
+                                                continue;
+                                            }
 
-                                            int InfoValue = DisplayInfoData[j].DisplayInfoValue;
-                                            string StrConnected = (1 == (InfoValue & 1)) ? "Yes" : "No ";
-                                            string StrMapped = (2 == (InfoValue & 2)) ? "Yes" : "No ";
-                                            int AdpID = DisplayInfoData[j].DisplayID.DisplayLogicalAdapterIndex;
-                                            string StrAdpID = (AdpID < 0) ? "--" : AdpID.ToString("d2");
+                                            // Skip connected but non-mapped displays (not mapped in windows)
+                                            if ((DisplayInfoData[j].DisplayInfoValue & 2) != 2)
+                                            {
+                                                SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({OSAdapterInfoData.ADLAdapterInfo[i].AdapterName}) AdapterID display ID#{j} is not connected");
+                                                continue;
+                                            }
 
-                                            Console.WriteLine(DisplayInfoData[j].DisplayID.DisplayLogicalIndex.ToString() + "        " +
+                                            //int InfoValue = DisplayInfoData[j].DisplayInfoValue;
+                                            //string StrConnected = (1 == (InfoValue & 1)) ? "Yes" : "No ";
+                                            //string StrMapped = (2 == (InfoValue & 2)) ? "Yes" : "No ";
+                                            //int AdpID = DisplayInfoData[j].DisplayID.DisplayLogicalAdapterIndex;
+                                            //string StrAdpID = (AdpID < 0) ? "--" : AdpID.ToString("d2");
+
+                                            /*Console.WriteLine(DisplayInfoData[j].DisplayID.DisplayLogicalIndex.ToString() + "        " +
                                                                     StrAdpID + "      " +
                                                                     DisplayInfoData[j].DisplayType.ToString() + "      " +
                                                                     DisplayInfoData[j].DisplayOutputType.ToString() + "      " +
@@ -273,7 +256,20 @@ namespace DisplayMagicianShared.AMD
                                                                     StrConnected + "        " +
                                                                     StrMapped + "      " +
                                                                     InfoValue.ToString("x4") + "   " +
-                                                                    DisplayInfoData[j].DisplayName.ToString());
+                                                                    DisplayInfoData[j].DisplayName.ToString());*/
+
+                                            ADLDisplayConfig DisplayConfig = new ADLDisplayConfig();
+                                            if (ADL.ADL_Display_DeviceConfig_Get != null)
+                                            {
+                                                // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
+                                                ADLRet = ADL.ADL_Display_DeviceConfig_Get(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex, DisplayInfoData[j].DisplayID.DisplayLogicalIndex, out DisplayConfig);
+                                                if (ADLRet == ADL.ADL_SUCCESS)
+                                                {
+
+                                                }
+                                            }
+                                                
+
 
                                             // Create an array of all the important display info we need to record
                                             List<string> displayInfoIdentifier = new List<string>();
@@ -310,11 +306,21 @@ namespace DisplayMagicianShared.AMD
 
                                             try
                                             {
-                                                displayInfoIdentifier.Add(OSAdapterInfoData.ADLAdapterInfo[i].AdapterIndex.ToString());
+                                                displayInfoIdentifier.Add(AdapterID.ToString());
                                             }
                                             catch (Exception ex)
                                             {
-                                                SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting AMD Adapter Index from video card. Substituting with a # instead");
+                                                SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting AMD AdapterID from video card. Substituting with a # instead");
+                                                displayInfoIdentifier.Add("#");
+                                            }
+
+                                            try
+                                            {
+                                                displayInfoIdentifier.Add(AdapterID.ToString());
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting AMD AdapterID from video card. Substituting with a # instead");
                                                 displayInfoIdentifier.Add("#");
                                             }
                                         }

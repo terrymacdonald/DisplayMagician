@@ -82,7 +82,7 @@ namespace ATI.ADL
     /// <param name="adapterIndex"> Adapter Index.</param>
     /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
     /// <returns>return ADL Error Code</returns> 
-    internal delegate int ADL_Adapter_Caps(int adapterIndex, out IntPtr adapterCapabilities);
+    internal delegate int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
 
     /// <summary>Get display information based on adapter index</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -91,6 +91,13 @@ namespace ATI.ADL
     /// <param name="forceDetect">force detect or not</param>
     /// <returns>return ADL Error Code</returns>
     internal delegate int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+
+    /// <summary>This function retrieves HDTV capability settings for a specified display.</summary>
+    /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="displayIndex">Display Index</param>
+    /// <param name="displayConfig">return ADLDisplayConfig with HDTV capability settings in it</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
     /// <summary>Function to retrieve an SLS configuration.</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -268,24 +275,42 @@ namespace ATI.ADL
         internal ADLDisplayInfo[] ADLDisplayInfo;
     }
 
+    /// <summary> ADLDisplayConfig Structure</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLDisplayConfig
+    {
+        /// <summary> HDTV Connector Type </summary>
+        internal long ConnectorType;
+        /// <summary> HDTV Capabilities themselves </summary>
+        internal long DeviceData;
+        /// <summary> Overridden HDTV capabilities</summary>
+        internal long OverriddedDeviceData;
+        /// <summary> Reserved for future use</summary>
+        internal long Reserved;
+        /// <summary> Size of this data structure </summary>
+        internal long Size;
+    }
+
     /// <summary> ADLAdapterCaps Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLAdapterCaps
+    internal struct ADLAdapterCapsX2
     {
         /// <summary> AdapterID for this adapter </summary>
         internal int AdapterID;
-        /// <summary> The bit mask identifies the adapter caps. </summary>
-        internal int CapsMask;
-        /// <summary> The bit identifies the adapter caps define_adapter_caps. </summary>
-        internal int CapsValue;
         /// <summary> Number of controllers for this adapter. </summary>
         internal int NumControllers;
         /// <summary> Number of displays for this adapter.</summary>
         internal int NumDisplays;
-        /// <summary> Number of GLSyncConnectors. </summary>
-        internal int NumOfGLSyncConnectors;
         /// <summary> Number of overlays for this adapter.</summary>
         internal int NumOverlays;
+        /// <summary> Number of GLSyncConnectors. </summary>
+        internal int NumOfGLSyncConnectors;
+        /// <summary> The bit mask identifies the adapter caps. </summary>
+        internal int CapsMask;
+        /// <summary> The bit identifies the adapter caps define_adapter_caps. </summary>
+        internal int CapsValue;
+        /// <summary> Number of Connectors for this adapter. </summary>
+        internal int NumConnectors;
     }
 
     #endregion ADLDisplayInfo
@@ -477,6 +502,64 @@ namespace ATI.ADL
         internal const int ADL_TRUE = 1;
         /// <summary> Maximum number of ADLModes for the adapter </summary>
         internal const int ADL_FALSE = 0;
+        /// <summary> Indicates the active dongle, all types </summary>
+        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE = 12;
+        /// <summary> Indicates the Active dongle DP->DVI(double link) connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL = 6;
+        /// <summary> Indicates the Active dongle DP->DVI(single link) connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL = 5;
+        /// <summary> Indicates the Active dongle DP->HDMI connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI = 7;
+        /// <summary> Indicates the Active dongle DP->VGA connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA = 8;
+        /// <summary> Indicates the DISPLAY PORT connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_DISPLAY_PORT = 4;
+        /// <summary> Indicates the DVI_I connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_DVI = 1;
+        /// <summary> Indicates the DVI_SL connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_DVI_SL = 2;
+        /// <summary> Indicates the HDMI connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_HDMI = 3;
+        /// <summary> Indicates the MST type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_MST = 11;
+        /// <summary> Indicates the Active dongle DP->VGA connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI = 10;
+        /// <summary> Indicates the Passive dongle DP->HDMI connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI = 9;
+        /// <summary> Indicates the VGA connection type is valid. </summary>
+        internal const int ADL_CONNECTION_TYPE_VGA = 0;
+        /// <summary> Indicates the Virtual Connection Type.</summary>
+        internal const int ADL_CONNECTION_TYPE_VIRTUAL = 13;
+        /// <summary> Indicates Active Dongle-JP Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_JP = 5;
+        /// <summary> Indicates Active Dongle-NA Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NA = 4;
+        /// <summary> Indicates Active Dongle-NONI2C Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C = 6;
+        /// <summary> Indicates Active Dongle-NONI2C-D Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D = 7;
+        /// <summary> Indicates Display port Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_DISPLAYPORT = 10;
+        /// <summary> Indicates DVI-D Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_DVI_D = 2;
+        /// <summary> Indicates DVI-I Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_DVI_I = 3;
+        /// <summary> Indicates EDP Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_EDP = 11;
+        /// <summary> Indicates HDMI-Type A Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_HDMI_TYPE_A = 8;
+        /// <summary> Indicates HDMI-Type B Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_HDMI_TYPE_B = 9;
+        /// <summary> Indicates MiniDP Connector type. </summary>
+        internal const int ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT = 12;
+        /// <summary> Indicates Unknown Connector type. </summary>
+        internal const int ADL_CONNECTOR_TYPE_UNKNOWN = 0;
+        /// <summary> Indicates USB type C Connector type. </summary>
+        internal const int ADL_CONNECTOR_TYPE_USB_TYPE_C = 14;
+        /// <summary> Indicates VGA Connector type.  </summary>
+        internal const int ADL_CONNECTOR_TYPE_VGA = 1;
+        /// <summary> Indicates Virtual Connector type.</summary>
+        internal const int ADL_CONNECTOR_TYPE_VIRTUAL = 13;
 
         #endregion Internal Constant
 
@@ -520,11 +603,14 @@ namespace ATI.ADL
             internal static extern int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
             
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Adapter_Caps(int adapterIndex, out IntPtr adapterCapabilities);
+            internal static extern int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
 
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
@@ -771,28 +857,28 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL_Adapter_ID_Get_Check = false;
 
-        #region ADL_Adapter_Caps
-        /// <summary> ADL_Adapter_Active_Get Delegates</summary>
-        internal static ADL_Adapter_Caps ADL_Adapter_Caps
+        #region ADL_AdapterX2_Caps
+        /// <summary> ADL_AdapterX2_Caps Delegates</summary>
+        internal static ADL_AdapterX2_Caps ADL_AdapterX2_Caps
         {
             get
             {
-                if (!ADL_Adapter_Caps_Check && null == ADL_Adapter_Caps_)
+                if (!ADL_AdapterX2_Caps_Check && null == ADL_AdapterX2_Caps_)
                 {
-                    ADL_Adapter_Caps_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_Caps"))
+                    ADL_AdapterX2_Caps_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_AdapterX2_Caps"))
                     {
-                        ADL_Adapter_Caps_ = ADLImport.ADL_Adapter_Caps;
+                        ADL_AdapterX2_Caps_ = ADLImport.ADL_AdapterX2_Caps;
                     }
                 }
-                return ADL_Adapter_Caps_;
+                return ADL_AdapterX2_Caps_;
             }
         }
         /// <summary> Private Delegate</summary>
-        private static ADL_Adapter_Caps ADL_Adapter_Caps_ = null;
+        private static ADL_AdapterX2_Caps ADL_AdapterX2_Caps_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Adapter_Caps_Check = false;
-        #endregion ADL_Adapter_Caps
+        private static bool ADL_AdapterX2_Caps_Check = false;
+        #endregion ADL_AdapterX2_Caps
 
         #region ADL_Adapter_Active_Get
         /// <summary> ADL_Adapter_Active_Get Delegates</summary>
@@ -816,6 +902,29 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL_Adapter_Active_Get_Check = false;
         #endregion ADL_Adapter_Active_Get
+
+        #region ADL_Display_DeviceConfig_Get
+        /// <summary> ADL_Display_DeviceConfig_Get Delegates</summary>
+        internal static ADL_Display_DeviceConfig_Get ADL_Display_DeviceConfig_Get
+        {
+            get
+            {
+                if (!ADL_Display_DeviceConfig_Get_Check && null == ADL_Display_DeviceConfig_Get_)
+                {
+                    ADL_Display_DeviceConfig_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DeviceConfig_Get"))
+                    {
+                        ADL_Display_DeviceConfig_Get_ = ADLImport.ADL_Display_DeviceConfig_Get;
+                    }
+                }
+                return ADL_Display_DeviceConfig_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL_Display_DeviceConfig_Get ADL_Display_DeviceConfig_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL_Display_DeviceConfig_Get_Check = false;
+        #endregion ADL_Display_DeviceConfig_Get
 
         #region ADL_Display_DisplayInfo_Get
         /// <summary> ADL_Display_DisplayInfo_Get Delegates</summary>
