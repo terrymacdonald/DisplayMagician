@@ -285,7 +285,7 @@ namespace DisplayMagicianShared.AMD
 
                                             try
                                             {
-                                                ADL.ADLConnectionType connector = (ADL.ADLConnectionType)DisplayInfoData[j].DisplayConnector;
+                                                ADL.ADLConnectionType connector = (ADL.ADLConnectionType)DisplayInfoData[j].DisplayOutputType;
                                                 displayInfoIdentifierSection.Add(connector.ToString("G"));
                                             }
                                             catch (Exception ex)
@@ -535,8 +535,10 @@ namespace DisplayMagicianShared.AMD
 
                                             try
                                             {
-                                                ADL.ADLConnectionType connector = (ADL.ADLConnectionType)DisplayInfoData[j].DisplayConnector;
+                                                ADL.ADLConnectionType connector = (ADL.ADLConnectionType)DisplayInfoData[j].DisplayOutputType;
                                                 displayInfoIdentifierSection.Add(connector.ToString());
+
+                                                ADL.ADLConnectionType connector = (ADL.ADLConnectionType)DisplayInfoData[j].DisplayType;
                                             }
                                             catch (Exception ex)
                                             {
