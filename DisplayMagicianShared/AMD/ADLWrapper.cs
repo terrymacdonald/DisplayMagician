@@ -112,6 +112,86 @@ namespace DisplayMagicianShared.AMD
 
             List<string> displayIdentifiers = new List<string>();
 
+            // Keep a list of things we want to track
+            List<ADLDisplayMap> allDisplayMaps = new List<ADLDisplayMap>();
+            List<ADLDisplayTarget> allDisplayTargets = new List<ADLDisplayTarget>();
+
+            if (ADL.ADL_Display_DisplayMapConfig_Get != null)
+            {
+                IntPtr DisplayMapBuffer = IntPtr.Zero;
+                IntPtr DisplayTargetBuffer = IntPtr.Zero;
+                int numDisplayMaps = 0;
+                int numDisplayTargets = 0;                         
+
+                // Get the DisplayMap info for all adapters on the machine in one go
+                ADLRet = ADL.ADL_Display_DisplayMapConfig_Get(-1, out numDisplayMaps, out DisplayMapBuffer, out numDisplayTargets, out DisplayTargetBuffer, 0);
+                if (ADLRet == ADL.ADL_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Number Of DisplayMaps: {numDisplayMaps.ToString()} ");
+                    
+                    // Marshal the Display Maps
+                    ADLDisplayMap oneDisplayMap = new ADLDisplayMap();                    
+
+                    for (int displayMapNum = 0; displayMapNum < numDisplayMaps; displayMapNum++)
+                    {
+                        // NOTE: the ToInt64 work on 64 bit, need to change to ToInt32 for 32 bit OS
+                        oneDisplayMap = (ADLDisplayMap)Marshal.PtrToStructure(new IntPtr(DisplayMapBuffer.ToInt64() + (displayMapNum * Marshal.SizeOf(oneDisplayMap))), oneDisplayMap.GetType());
+                        allDisplayMaps.Add(oneDisplayMap);
+                    }
+
+                    //Marshall the DisplayTargets
+                    ADLDisplayTarget oneDisplayTarget = new ADLDisplayTarget();                  
+
+                    for (int displayTargetNum = 0; displayTargetNum < numDisplayTargets; displayTargetNum++)
+                    {
+                        // NOTE: the ToInt64 work on 64 bit, need to change to ToInt32 for 32 bit OS
+                        oneDisplayTarget = (ADLDisplayTarget)Marshal.PtrToStructure(new IntPtr(DisplayMapBuffer.ToInt64() + (displayTargetNum * Marshal.SizeOf(oneDisplayTarget))), oneDisplayTarget.GetType());
+                        allDisplayTargets.Add(oneDisplayTarget);
+                    }
+
+                }
+            }
+
+            if (ADL.ADL_Display_DisplayMapConfig_PossibleAddAndRemove != null)
+            {
+                int numDisplayMap = 1;
+                int numDisplayTarget = 1;
+
+                IntPtr PossibleAddTargetBuffer = IntPtr.Zero;
+                IntPtr PossibleRemoveTargetBuffer = IntPtr.Zero;
+                int numPossibleAddTargets = 0;
+                int numPossibleRemoveTargets = 0;
+
+                List<ADLDisplayTarget> allPossibleAddDisplayTargets = new List<ADLDisplayTarget>();
+                List<ADLDisplayTarget> allPossibleRemoveDisplayTargets = new List<ADLDisplayTarget>();
+
+                // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
+                ADLRet = ADL.ADL_Display_DisplayMapConfig_PossibleAddAndRemove(0, numDisplayMap, allDisplayMaps[0], numDisplayTarget, allDisplayTargets[0], out numPossibleAddTargets, out PossibleAddTargetBuffer, out numPossibleRemoveTargets, out PossibleRemoveTargetBuffer);
+                if (ADLRet == ADL.ADL_SUCCESS)
+                {
+                    // Marshal the Possible Add Targets
+                    ADLDisplayTarget oneDisplayTarget = new ADLDisplayTarget();
+
+                    for (int displayTargetNum = 0; displayTargetNum < numPossibleAddTargets; displayTargetNum++)
+                    {
+                        // NOTE: the ToInt64 work on 64 bit, need to change to ToInt32 for 32 bit OS
+                        oneDisplayTarget = (ADLDisplayTarget)Marshal.PtrToStructure(new IntPtr(PossibleAddTargetBuffer.ToInt64() + (displayTargetNum * Marshal.SizeOf(oneDisplayTarget))), oneDisplayTarget.GetType());
+                        allPossibleAddDisplayTargets.Add(oneDisplayTarget);
+                    }
+
+                    // Marshal the Possible Remove Targets
+                    // oneDisplayTarget = new ADLDisplayTarget();
+
+                    for (int displayTargetNum = 0; displayTargetNum < numPossibleRemoveTargets; displayTargetNum++)
+                    {
+                        // NOTE: the ToInt64 work on 64 bit, need to change to ToInt32 for 32 bit OS
+                        oneDisplayTarget = (ADLDisplayTarget)Marshal.PtrToStructure(new IntPtr(PossibleRemoveTargetBuffer.ToInt64() + (displayTargetNum * Marshal.SizeOf(oneDisplayTarget))), oneDisplayTarget.GetType());
+                        allPossibleAddDisplayTargets.Add(oneDisplayTarget);
+                    }
+                }
+            }
+
+
             if (null != ADL.ADL_Adapter_NumberOfAdapters_Get)
             {
                 ADL.ADL_Adapter_NumberOfAdapters_Get(ref NumberOfAdapters);
@@ -222,7 +302,7 @@ namespace DisplayMagicianShared.AMD
                                                 continue;
                                             }
 
-                                            // Skip connected but non-mapped displays (not mapped in windows)
+                                            // Skip connected but non-mapped displays (not mapped in windows) - wae want all displays currently visible in the OS
                                             if ((DisplayInfoData[j].DisplayInfoValue & 2) != 2)
                                             {
                                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({OSAdapterInfoData.ADLAdapterInfo[i].AdapterName}) AdapterID display ID#{j} is not connected");
@@ -369,6 +449,7 @@ namespace DisplayMagicianShared.AMD
 
             List<string> displayIdentifiers = new List<string>();
 
+
             if (null != ADL.ADL_Adapter_NumberOfAdapters_Get)
             {
                 ADL.ADL_Adapter_NumberOfAdapters_Get(ref NumberOfAdapters);
@@ -472,7 +553,7 @@ namespace DisplayMagicianShared.AMD
 
                                         for (j = 0; j < NumberOfDisplays; j++)
                                         {
-                                            // Skip non connected displays
+                                            // Skip non connected displays - we want only connected displays that could potentially be used now (thats both mapped and non-mapped displays)
                                             if ((DisplayInfoData[j].DisplayInfoValue & 1) != 1)
                                             {
                                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({OSAdapterInfoData.ADLAdapterInfo[i].AdapterName}) AdapterID display ID#{j} is not connected");
@@ -537,8 +618,6 @@ namespace DisplayMagicianShared.AMD
                                             {
                                                 ADL.ADLConnectionType connector = (ADL.ADLConnectionType)DisplayInfoData[j].DisplayOutputType;
                                                 displayInfoIdentifierSection.Add(connector.ToString());
-
-                                                ADL.ADLConnectionType connector = (ADL.ADLConnectionType)DisplayInfoData[j].DisplayType;
                                             }
                                             catch (Exception ex)
                                             {

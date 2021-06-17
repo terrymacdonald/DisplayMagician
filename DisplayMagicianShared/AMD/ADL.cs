@@ -99,6 +99,31 @@ namespace ATI.ADL
     /// <returns>return ADL Error Code</returns>
     internal delegate int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
+    /// <summary>Function to retrieve current display map configurations.</summary>
+    /// <remarks>This function retrieves the current display map configurations, including the controllers and adapters mapped to each display.</remarks>  
+    /// <param name="adapterIndex">	The ADL index handle of the desired adapter. A value of -1 returns all display configurations for the system across multiple GPUs.</param>
+    /// <param name="numDisplayMap">Number of returned Display Maps</param>
+    /// <param name="displayMap">Array of ADLDisplayMap objects</param>
+    /// <param name="numDisplayTarget">Number of Display Targets</param>
+    /// <param name="displayTarget">Array of ADLDisplayTarget objects</param>
+    /// <param name="options">Options supplied</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
+
+    /// <summary>Function to validate a list of display configurations.</summary>
+    /// <remarks>This function allows the user to input a potential displays map and its targets. The function can also be used to obtain a list of display targets that can be added to this given topology and a list of display targets that can be removed from this given topology.</remarks>  
+    /// <param name="adapterIndex">	The ADL index handle of the desired adapter. Cannot be set to -1 </param>
+    /// <param name="numDisplayMap">Number of Display Map</param>
+    /// <param name="displayMap">Number of Display Map</param>
+    /// <param name="numDisplayTarget">Number of Display Map</param>
+    /// <param name="displayTarget">Number of Display Map</param>
+    /// <param name="numPossibleAddTarget">Number of Display Map</param>
+    /// <param name="possibleAddTarget">Number of Display Map</param>
+    /// <param name="numPossibleRemoveTarget">Number of Display Map</param>
+    /// <param name="possibleRemoveTarget">Number of Display Map</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+
     /// <summary>Function to retrieve an SLS configuration.</summary>
     /// <param name="adapterIndex">Adapter Index</param>
     /// <param name="SLSMapIndex">Specifies the SLS map index to be queried.</param>
@@ -155,7 +180,7 @@ namespace ATI.ADL
     #endregion ADLMode
 
     #region ADLDisplayTarget
-    /// <summary> ADLDisplayTarget Array</summary>
+    /// <summary> ADLDisplayTarget </summary>
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLDisplayTarget
     {
@@ -167,6 +192,15 @@ namespace ATI.ADL
         internal int DisplayTargetMask;
         /// <summary> The bit mask identifies the display status. </summary>
         internal int DisplayTargetValue;
+    }
+
+    /// <summary> ADLDisplayTargetArray Array</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLDisplayTargetArray
+    {
+        /// <summary> ADLDisplayTarget Array </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
+        internal ADLDisplayTarget[] ADLDisplayTarget;
     }
     #endregion ADLDisplayTarget
 
@@ -289,6 +323,33 @@ namespace ATI.ADL
         internal long Reserved;
         /// <summary> Size of this data structure </summary>
         internal long Size;
+    }
+
+    /// <summary> ADLDisplayMap Structure</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLDisplayMap
+    {
+        /// <summary> The Display Mode for the current map.</summary>
+        internal ADLMode DisplayMode;
+        /// <summary> The current display map index. It is the OS desktop index. For example, if the OS index 1 is showing clone mode, the display map will be 1. </summary>
+        internal int DisplayMapIndex;
+        /// <summary> The bit mask identifies the number of bits DisplayMap is currently using. It is the sum of all the bit definitions defined in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
+        internal int DisplayMapMask;
+        /// <summary> The bit mask identifies the display status. The detailed definition is in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
+        internal int DisplayMapValue;
+        /// <summary> The first target array index in the Target array </summary>
+        internal int FirstDisplayTargetArrayIndex;
+        /// <summary> The number of display targets belongs to this map </summary>
+        internal int NumDisplayTarget;
+    }
+
+    /// <summary> ADLDisplayMapArray Array</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLDisplayMapArray
+    {
+        /// <summary> ADLAdapterInfo Array </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
+        internal ADLDisplayMap[] ADLDisplayMap;
     }
 
     /// <summary> ADLAdapterCaps Structure</summary>
@@ -478,6 +539,8 @@ namespace ATI.ADL
     internal static class ADL
     {
         #region Internal Constant
+        /// <summary> Selects all adapters instead of aparticular single adapter</summary>
+        internal const int ADL_ADAPTER_INDEX_ALL = -1;
         /// <summary> Define the maximum path</summary>
         internal const int ADL_MAX_PATH = 256;
         /// <summary> Define the maximum adapters</summary>
@@ -626,12 +689,17 @@ namespace ATI.ADL
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
 
-
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
@@ -947,6 +1015,52 @@ namespace ATI.ADL
         private static bool ADL_Display_DeviceConfig_Get_Check = false;
         #endregion ADL_Display_DeviceConfig_Get
 
+        #region ADL_Display_DisplayMapConfig_Get
+        /// <summary> ADL_Display_DisplayMapConfig_Get Delegates</summary>
+        internal static ADL_Display_DisplayMapConfig_Get ADL_Display_DisplayMapConfig_Get
+        {
+            get
+            {
+                if (!ADL_Display_DisplayMapConfig_Get_Check && null == ADL_Display_DisplayMapConfig_Get_)
+                {
+                    ADL_Display_DisplayMapConfig_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DisplayMapConfig_Get"))
+                    {
+                        ADL_Display_DisplayMapConfig_Get_ = ADLImport.ADL_Display_DisplayMapConfig_Get;
+                    }
+                }
+                return ADL_Display_DisplayMapConfig_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL_Display_DisplayMapConfig_Get ADL_Display_DisplayMapConfig_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL_Display_DisplayMapConfig_Get_Check = false;
+        #endregion ADL_Display_DisplayMapConfig_Get
+
+        #region ADL_Display_DisplayMapConfig_PossibleAddAndRemove
+        /// <summary> ADL_Display_DisplayMapConfig_PossibleAddAndRemove Delegates</summary>
+        internal static ADL_Display_DisplayMapConfig_PossibleAddAndRemove ADL_Display_DisplayMapConfig_PossibleAddAndRemove
+        {
+            get
+            {
+                if (!ADL_Display_DisplayMapConfig_PossibleAddAndRemove_Check && null == ADL_Display_DisplayMapConfig_PossibleAddAndRemove_)
+                {
+                    ADL_Display_DisplayMapConfig_PossibleAddAndRemove_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DisplayMapConfig_PossibleAddAndRemove"))
+                    {
+                        ADL_Display_DisplayMapConfig_PossibleAddAndRemove_ = ADLImport.ADL_Display_DisplayMapConfig_PossibleAddAndRemove;
+                    }
+                }
+                return ADL_Display_DisplayMapConfig_PossibleAddAndRemove_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL_Display_DisplayMapConfig_PossibleAddAndRemove ADL_Display_DisplayMapConfig_PossibleAddAndRemove_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL_Display_DisplayMapConfig_PossibleAddAndRemove_Check = false;
+        #endregion ADL_Display_DisplayMapConfig_PossibleAddAndRemove
+
         #region ADL_Display_DisplayInfo_Get
         /// <summary> ADL_Display_DisplayInfo_Get Delegates</summary>
         internal static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get
@@ -969,6 +1083,7 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL_Display_DisplayInfo_Get_Check = false;
         #endregion ADL_Display_DisplayInfo_Get
+
 
         #region ADL_Display_SLSMapConfig_Get
         /// <summary> ADL_Display_SLSMapConfig_Get Delegates</summary>
