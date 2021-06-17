@@ -563,6 +563,27 @@ namespace ATI.ADL
 
         #endregion Internal Constant
 
+        #region Internal Enums
+
+        internal enum ADLConnectionType
+        {
+            Unknown = 1, 
+            DVI = 1,
+            DVI_SL = 2,
+            HDMI = 4,
+            DisplayPort = 4,
+            ActiveDongleDPToDVI_SL = 5,
+            ActiveDongleDPToDVI_DL = 6,
+            ActiveDongleDPToHDMI = 7,
+            ActiveDongleDPToVGA = 8,
+            PassiveDongleDPToHDMI = 9,
+            PassiveDongleDPToDVI = 10,
+            MST = 11,
+            ActiveDongle = 12,
+            Virtual = 13
+        }
+        #endregion Internal Enums
+
         #region Class ADLImport
         /// <summary> ADLImport class</summary>
         private static class ADLImport
