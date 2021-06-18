@@ -277,7 +277,23 @@ namespace DisplayMagicianShared.AMD
                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} is active! ({oneAdapter.AdapterName}).");
 
                                 Console.WriteLine($"### Adapter Info for Adapter #{oneAdapter.AdapterIndex} ###");
-                                Console.WriteLine($"Adapter ID = {oneAdapter}");
+                                Console.WriteLine($"Adapter AdapterIndex = {oneAdapter.AdapterIndex}");
+                                Console.WriteLine($"Adapter AdapterName = {oneAdapter.AdapterName}");
+                                Console.WriteLine($"Adapter BusNumber = {oneAdapter.BusNumber}");
+                                Console.WriteLine($"Adapter DeviceNumber = {oneAdapter.DeviceNumber}");
+                                Console.WriteLine($"Adapter DisplayName = {oneAdapter.DisplayName}");
+                                Console.WriteLine($"Adapter DriverPath = {oneAdapter.DriverPath}");
+                                Console.WriteLine($"Adapter DriverPathExt = {oneAdapter.DriverPathExt}");
+                                Console.WriteLine($"Adapter Exist = {oneAdapter.Exist}");
+                                Console.WriteLine($"Adapter FunctionNumber = {oneAdapter.FunctionNumber}");
+                                Console.WriteLine($"Adapter InfoMask = {oneAdapter.InfoMask}");
+                                Console.WriteLine($"Adapter InfoValue = {oneAdapter.InfoValue}");
+                                Console.WriteLine($"Adapter OSDisplayIndex = {oneAdapter.OSDisplayIndex}");
+                                Console.WriteLine($"Adapter PNPString = {oneAdapter.PNPString}");
+                                Console.WriteLine($"Adapter Present = {oneAdapter.Present}");
+                                Console.WriteLine($"Adapter Size = {oneAdapter.Size}");
+                                Console.WriteLine($"Adapter UDID = {oneAdapter.UDID}");
+                                Console.WriteLine($"Adapter VendorID = {oneAdapter.VendorID}");
 
                                 // Get the Adapter Capabilities
                                 ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
