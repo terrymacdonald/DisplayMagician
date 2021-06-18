@@ -54,7 +54,45 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL2_Main_Control_Destroy(IntPtr contextHandle);
 
-    // ///// <summary> ADL2 Create Function to create ADL Data</summary>
+    ///// <summary> ADL2 Function to get the number of adapters</summary>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="numAdapters">return number of adapters</param>
+    internal delegate int ADL2_Adapter_NumberOfAdapters_Get(IntPtr ADLContextHandle, ref int numAdapters);
+
+    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterInfoArray">return GPU adapter information</param>
+    /// <param name="inputSize">the size of the GPU adapter struct</param>
+    /// <returns> retrun ADL Error Code</returns>
+    internal delegate int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr adapterInfoArray);
+
+    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterInfoArray">return GPU adapter information. Is a pointer to the pointer of AdapterInfo array. Initialize to NULL before calling this API. ADL will allocate the necessary memory, using the user provided callback function.</param>
+    /// <returns> retrun ADL Error Code</returns>
+    internal delegate int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr adapterInfoArray);
+
+    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">The ADL index handle of the desired adapter or -1 if all adapters are desired</param>
+    /// <param name="numAdapters">Number of items in the AdapterInfo Array. Can pass NULL pointer if passign an adapter index (in which case only one AdapterInfo is returned)</param>
+    /// <param name="adapterInfoArray">return GPU adapter information</param>
+    /// <returns> retrun ADL Error Code</returns>
+    internal delegate int  ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoArray);
+
+    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">The ADL index handle of the desired adapter or -1 if all adapters are desired</param>
+    /// <param name="numAdapters">Number of items in the AdapterInfo Array. Can pass NULL pointer if passign an adapter index (in which case only one AdapterInfo is returned)</param>
+    /// <param name="adapterInfoX2Array">return GPU adapter information in adapterInfoX2 array</param>
+    /// <returns> retrun ADL Error Code</returns>
+    internal delegate  int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoX2Array);
+
+    ///// <summary> ADL2 Create Function to create ADL Data</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="adapterIndex">Adapter Index</param>
     /// <param name="displayIndex">Display Index</param>
@@ -78,12 +116,6 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
 
-    /// <summary> ADL Function to get the GPU adapter information</summary>
-    /// <param name="info">return GPU adapter information</param>
-    /// <param name="inputSize">the size of the GPU adapter struct</param>
-    /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL_Adapter_AdapterInfo_Get (IntPtr info, int inputSize);
-
     /// <summary> Function to determine if the adapter is active or not.</summary>
     /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
     /// <param name="adapterIndex"> Adapter Index.</param>
@@ -104,6 +136,14 @@ namespace ATI.ADL
     /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
     /// <returns>return ADL Error Code</returns> 
     internal delegate int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+
+    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
+    /// <param name="adapterInfoArray">return GPU adapter information</param>
+    /// <param name="inputSize">the size of the GPU adapter struct</param>
+    /// <returns> retrun ADL Error Code</returns>
+    internal delegate int ADL_Adapter_AdapterInfo_Get(out IntPtr adapterInfoArray, int inputSize);
+
 
     /// <summary>Function to get the EDID data.</summary>
     /// <remarks>This function retrieves the EDID data for a specififed display.</remarks>  
@@ -285,6 +325,62 @@ namespace ATI.ADL
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_ADAPTERS)]
         internal ADLAdapterInfo[] ADLAdapterInfo;
     }
+
+    /// <summary> ADLAdapterInfoX2 Structure</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLAdapterInfoX2
+    {
+        /// <summary>The size of the structure</summary>
+        int Size;
+        /// <summary> Adapter Index</summary>
+        internal int AdapterIndex;
+        /// <summary> Adapter UDID</summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        internal string UDID;
+        /// <summary> Adapter Bus Number</summary>
+        internal int BusNumber;
+        /// <summary> Adapter Device Number</summary>
+        internal int DeviceNumber;
+        /// <summary> Adapter Function Number</summary>
+        internal int FunctionNumber;
+        /// <summary> Adapter Vendor ID</summary>
+        internal int VendorID;
+        /// <summary> Adapter Adapter name</summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        internal string AdapterName;
+        /// <summary> Adapter Display name</summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        internal string DisplayName;
+        /// <summary> Adapter Present status</summary>
+        internal int Present;
+        /// <summary> Adapter Exist status</summary>
+        internal int Exist;
+        /// <summary> Adapter Driver Path</summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        internal string DriverPath;
+        /// <summary> Adapter Driver Ext Path</summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        internal string DriverPathExt;
+        /// <summary> Adapter PNP String</summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        internal string PNPString;
+        /// <summary> OS Display Index</summary>
+        internal int OSDisplayIndex;
+        /// <summary> Display Info Mask</summary>
+        internal int InfoMask;
+        /// <summary> Display Info Value</summary>
+        internal int InfoValue;
+    }
+
+    /// <summary> ADLAdapterInfoX2 Array</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLAdapterInfoX2Array
+    {
+        /// <summary> ADLAdapterInfo Array </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_ADAPTERS)]
+        internal ADLAdapterInfoX2[] ADLAdapterInfoX2;
+    }
+
     #endregion ADLAdapterInfo
 
 
@@ -927,6 +1023,21 @@ namespace ATI.ADL
             internal static extern int ADL2_Main_Control_Destroy(IntPtr contextHandle);
 
             [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Adapter_NumberOfAdapters_Get(IntPtr contextHandle, ref int numAdapters);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr AdapterInfoArray);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr AdapterInfoArray);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoArray);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoX2Array);
+
+            [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL2_Display_DDCInfo2_Get(IntPtr contextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 DDCInfo);
 
             [DllImport(Atiadlxx_FileName)]
@@ -945,7 +1056,7 @@ namespace ATI.ADL
             internal static extern int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Adapter_AdapterInfo_Get (IntPtr info, int inputSize);
+            internal static extern int ADL_Adapter_AdapterInfo_Get (out IntPtr info, int inputSize);
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
@@ -1145,7 +1256,121 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL2_Main_Control_Destroy_Check = false;
         #endregion ADL2_Main_Control_Destroy
-      
+
+        #region ADL2_Adapter_NumberOfAdapters_Get
+        /// <summary> ADL2_Adapter_NumberOfAdapters_Get Delegates</summary>
+        internal static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get
+        {
+            get
+            {
+                if (!ADL2_Adapter_NumberOfAdapters_Get_Check && null == ADL2_Adapter_NumberOfAdapters_Get_)
+                {
+                    ADL2_Adapter_NumberOfAdapters_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_NumberOfAdapters_Get"))
+                    {
+                        ADL2_Adapter_NumberOfAdapters_Get_ = ADLImport.ADL2_Adapter_NumberOfAdapters_Get;
+                    }
+                }
+                return ADL2_Adapter_NumberOfAdapters_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Adapter_NumberOfAdapters_Get_Check = false;
+        #endregion ADL2_Adapter_NumberOfAdapters_Get
+
+        #region ADL2_Adapter_AdapterInfo_Get
+        /// <summary> ADL2_Adapter_AdapterInfo_Get Delegates</summary>
+        internal static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get
+        {
+            get
+            {
+                if (!ADL2_Adapter_AdapterInfo_Get_Check && null == ADL2_Adapter_AdapterInfo_Get_)
+                {
+                    ADL2_Adapter_AdapterInfo_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfo_Get"))
+                    {
+                        ADL2_Adapter_AdapterInfo_Get_ = ADLImport.ADL2_Adapter_AdapterInfo_Get;
+                    }
+                }
+                return ADL2_Adapter_AdapterInfo_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Adapter_AdapterInfo_Get_Check = false;
+        #endregion ADL2_Adapter_AdapterInfo_Get
+
+        #region ADL2_Adapter_AdapterInfoX2_Get
+        /// <summary> ADL2_Adapter_AdapterInfoX2_Get Delegates</summary>
+        internal static ADL2_Adapter_AdapterInfoX2_Get ADL2_Adapter_AdapterInfoX2_Get
+        {
+            get
+            {
+                if (!ADL2_Adapter_AdapterInfoX2_Get_Check && null == ADL2_Adapter_AdapterInfoX2_Get_)
+                {
+                    ADL2_Adapter_AdapterInfoX2_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfoX2_Get"))
+                    {
+                        ADL2_Adapter_AdapterInfoX2_Get_ = ADLImport.ADL2_Adapter_AdapterInfoX2_Get;
+                    }
+                }
+                return ADL2_Adapter_AdapterInfoX2_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Adapter_AdapterInfoX2_Get ADL2_Adapter_AdapterInfoX2_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Adapter_AdapterInfoX2_Get_Check = false;
+        #endregion ADL2_Adapter_AdapterInfoX2_Get
+
+        #region ADL2_Adapter_AdapterInfoX3_Get
+        /// <summary> ADL2_Adapter_AdapterInfoX3_Get Delegates</summary>
+        internal static ADL2_Adapter_AdapterInfoX3_Get ADL2_Adapter_AdapterInfoX3_Get
+        {
+            get
+            {
+                if (!ADL2_Adapter_AdapterInfoX3_Get_Check && null == ADL2_Adapter_AdapterInfoX3_Get_)
+                {
+                    ADL2_Adapter_AdapterInfoX3_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfoX3_Get"))
+                    {
+                        ADL2_Adapter_AdapterInfoX3_Get_ = ADLImport.ADL2_Adapter_AdapterInfoX3_Get;
+                    }
+                }
+                return ADL2_Adapter_AdapterInfoX3_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Adapter_AdapterInfoX3_Get ADL2_Adapter_AdapterInfoX3_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Adapter_AdapterInfoX3_Get_Check = false;
+        #endregion ADL2_Adapter_AdapterInfoX3_Get
+
+        #region ADL2_Adapter_AdapterInfoX4_Get
+        /// <summary> ADL2_Adapter_AdapterInfoX4_Get Delegates</summary>
+        internal static ADL2_Adapter_AdapterInfoX4_Get ADL2_Adapter_AdapterInfoX4_Get
+        {
+            get
+            {
+                if (!ADL2_Adapter_AdapterInfoX4_Get_Check && null == ADL2_Adapter_AdapterInfoX4_Get_)
+                {
+                    ADL2_Adapter_AdapterInfoX4_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfoX4_Get"))
+                    {
+                        ADL2_Adapter_AdapterInfoX4_Get_ = ADLImport.ADL2_Adapter_AdapterInfoX4_Get;
+                    }
+                }
+                return ADL2_Adapter_AdapterInfoX4_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Adapter_AdapterInfoX4_Get ADL2_Adapter_AdapterInfoX4_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Adapter_AdapterInfoX4_Get_Check = false;
+        #endregion ADL2_Adapter_AdapterInfoX4_Get
 
         #region ADL2_Display_DDCInfo2_Get
         /// <summary> ADL2_Display_DDCInfo2_Get Delegates</summary>
@@ -1240,32 +1465,8 @@ namespace ATI.ADL
         private static bool ADL_Adapter_NumberOfAdapters_Get_Check = false;
         #endregion ADL_Adapter_NumberOfAdapters_Get
 
-        #region ADL_Adapter_AdapterInfo_Get
-        /// <summary> ADL_Adapter_AdapterInfo_Get Delegates</summary>
-        internal static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get
-        {
-            get
-            {
-                if (!ADL_Adapter_AdapterInfo_Get_Check && null == ADL_Adapter_AdapterInfo_Get_)
-                {
-                    ADL_Adapter_AdapterInfo_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_AdapterInfo_Get"))
-                    {
-                        ADL_Adapter_AdapterInfo_Get_ = ADLImport.ADL_Adapter_AdapterInfo_Get;
-                    }
-                }
-                return ADL_Adapter_AdapterInfo_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Adapter_AdapterInfo_Get_Check = false;
-        #endregion ADL_Adapter_AdapterInfo_Get
-
         #region ADL_Adapter_ID_Get
-        #endregion ADL_Adapter_ID_Get
-
+        
         /// <summary> ADL_Adapter_Active_Get Delegates</summary>
         internal static ADL_Adapter_ID_Get ADL_Adapter_ID_Get
         {
@@ -1286,6 +1487,7 @@ namespace ATI.ADL
         private static ADL_Adapter_ID_Get ADL_Adapter_ID_Get_ = null;
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL_Adapter_ID_Get_Check = false;
+        #endregion ADL_Adapter_ID_Get
 
         #region ADL_AdapterX2_Caps
         /// <summary> ADL_AdapterX2_Caps Delegates</summary>
@@ -1309,6 +1511,29 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL_AdapterX2_Caps_Check = false;
         #endregion ADL_AdapterX2_Caps
+
+        #region ADL_Adapter_AdapterInfo_Get
+        /// <summary> ADL_Adapter_AdapterInfo_Get Delegates</summary>
+        internal static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get
+        {
+            get
+            {
+                if (!ADL_Adapter_AdapterInfo_Get_Check && null == ADL_Adapter_AdapterInfo_Get_)
+                {
+                    ADL_Adapter_AdapterInfo_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_AdapterInfo_Get"))
+                    {
+                        ADL_Adapter_AdapterInfo_Get_ = ADLImport.ADL_Adapter_AdapterInfo_Get;
+                    }
+                }
+                return ADL_Adapter_AdapterInfo_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL_Adapter_AdapterInfo_Get_Check = false;
+        #endregion ADL_Adapter_AdapterInfo_Get
 
         #region ADL_Adapter_Active_Get
         /// <summary> ADL_Adapter_Active_Get Delegates</summary>

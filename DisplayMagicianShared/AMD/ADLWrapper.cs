@@ -221,20 +221,20 @@ namespace DisplayMagicianShared.AMD
             }*/
 
 
-            if (null != ADL.ADL_Adapter_NumberOfAdapters_Get)
+            if (null != ADL.ADL2_Adapter_NumberOfAdapters_Get)
             {
-                ADL.ADL_Adapter_NumberOfAdapters_Get(ref NumberOfAdapters);
+                ADL.ADL2_Adapter_NumberOfAdapters_Get(_adlContextHandle, ref NumberOfAdapters);
                 SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Number Of Adapters: {NumberOfAdapters.ToString()} ");
             }
 
             if (NumberOfAdapters > 0)
             {
                 // Get OS adpater info from ADL
-                ADLAdapterInfoArray OSAdapterInfoData;
-                OSAdapterInfoData = new ADLAdapterInfoArray();
+                ADLAdapterInfoX2Array OSAdapterInfoData;
+                OSAdapterInfoData = new ADLAdapterInfoX2Array();
 
                 IntPtr AdapterBuffer = IntPtr.Zero;
-                if (ADL.ADL_Adapter_AdapterInfo_Get != null)
+                if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
                 {
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: ADL_Adapter_AdapterInfo_Get DLL function exists.");
                     // Figure out the size of the AdapterBuffer we need to build                    
@@ -244,11 +244,13 @@ namespace DisplayMagicianShared.AMD
 
                     // Get the Adapter info and put it in the AdapterBuffer
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Running ADL_Adapter_AdapterInfo_Get to find all known AMD adapters.");
-                    ADLRet = ADL.ADL_Adapter_AdapterInfo_Get(AdapterBuffer, size);
+                    //ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, AdapterBuffer, size);
+                    int numAdapters = 0;
+                    ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
                     if (ADLRet == ADL.ADL_OK)
                     {
                         // Use the AdapterBuffer pointer to marshal the OS Adapter Info into a structure
-                        OSAdapterInfoData = (ADLAdapterInfoArray)Marshal.PtrToStructure(AdapterBuffer, OSAdapterInfoData.GetType());
+                        OSAdapterInfoData = (ADLAdapterInfoX2Array)Marshal.PtrToStructure(AdapterBuffer, OSAdapterInfoData.GetType());
                         int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
 
                         SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Successfully run ADL_Adapter_AdapterInfo_Get to find information about all known AMD adapters.");
@@ -256,7 +258,7 @@ namespace DisplayMagicianShared.AMD
                         // Go through each adapter
                         for (int i = 0; i < NumberOfAdapters; i++)
                         {
-                            ADLAdapterInfo oneAdapter = OSAdapterInfoData.ADLAdapterInfo[i];
+                            ADLAdapterInfoX2 oneAdapter = OSAdapterInfoData.ADLAdapterInfoX2[i];
 
 
                             // Check if the adapter is active
@@ -562,7 +564,7 @@ namespace DisplayMagicianShared.AMD
                 OSAdapterInfoData = new ADLAdapterInfoArray();
 
                 IntPtr AdapterBuffer = IntPtr.Zero;
-                if (ADL.ADL_Adapter_AdapterInfo_Get != null)
+                if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
                 {
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: ADL_Adapter_AdapterInfo_Get DLL function exists.");
                     // Figure out the size of the AdapterBuffer we need to build                    
@@ -572,7 +574,7 @@ namespace DisplayMagicianShared.AMD
 
                     // Get the Adapter info and put it in the AdapterBuffer
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Running ADL_Adapter_AdapterInfo_Get to find all known AMD adapters.");
-                    ADLRet = ADL.ADL_Adapter_AdapterInfo_Get(AdapterBuffer, size);
+                    ADLRet = ADL.ADL_Adapter_AdapterInfo_Get(out AdapterBuffer, size);
                     if (ADLRet == ADL.ADL_OK)
                     {
                         // Use the AdapterBuffer pointer to marshal the OS Adapter Info into a structure
