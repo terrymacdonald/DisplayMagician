@@ -42,11 +42,11 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate IntPtr ADL_Main_Memory_Alloc (int size);
 
-    // ///// <summary> ADL2 Create Function to create ADL Data</summary>
+    /// <summary> ADL2 Create Function to create ADL Data</summary>
     /// <param name="callback">Call back functin pointer which is ised to allocate memory </param>
     /// <param name="numConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
     /// <param name="contextHandle">Handle to ADL client context.</param>
-    ///// <returns> retrun ADL Error Code</returns>
+    /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int numConnectedAdapters, out IntPtr contextHandle);
 
     /// <summary> ADL2 Destroy Function to free up ADL Data</summary>
@@ -54,12 +54,20 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL2_Main_Control_Destroy(IntPtr contextHandle);
 
-    ///// <summary> ADL2 Function to get the number of adapters</summary>
+    /// <summary> ADL2 Function to get the number of adapters</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="numAdapters">return number of adapters</param>
     internal delegate int ADL2_Adapter_NumberOfAdapters_Get(IntPtr ADLContextHandle, ref int numAdapters);
 
-    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <summary> ADL2 Function to determine if the adapter is active or not.</summary>
+    /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex"> Adapter Index.</param>
+    /// <param name="status"> Status of the adapter. True: Active; False: Disabled</param>
+    /// <returns>Non zero is successful</returns> 
+    internal delegate int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
+
+    /// <summary>ADL2 Function to retrieve all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="adapterInfoArray">return GPU adapter information</param>
@@ -67,14 +75,14 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr adapterInfoArray);
 
-    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="adapterInfoArray">return GPU adapter information. Is a pointer to the pointer of AdapterInfo array. Initialize to NULL before calling this API. ADL will allocate the necessary memory, using the user provided callback function.</param>
     /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr adapterInfoArray);
 
-    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="adapterIndex">The ADL index handle of the desired adapter or -1 if all adapters are desired</param>
@@ -83,7 +91,7 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate int  ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoArray);
 
-    /// <summary>Retrieves all OS-known adapter information.</summary>
+    /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="adapterIndex">The ADL index handle of the desired adapter or -1 if all adapters are desired</param>
@@ -92,19 +100,19 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate  int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoX2Array);
 
-    ///// <summary> ADL2 Create Function to create ADL Data</summary>
+    /// <summary> ADL2 Create Function to create ADL Data</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="adapterIndex">Adapter Index</param>
     /// <param name="displayIndex">Display Index</param>
     /// <param name="displayDDCInfo2">The ADLDDCInfo2 structure storing all DDC retrieved from the driver.</param>
-    ///// <returns> retrun ADL Error Code</returns>
+    /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL2_Display_DDCInfo2_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 displayDDCInfo2);
 
 
-    // ///// <summary> ADL Create Function to create ADL Data</summary>
+    /// <summary> ADL Create Function to create ADL Data</summary>
     /// <param name="callback">Call back functin pointer which is ised to allocate memeory </param>
     /// <param name="enumConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
-    ///// <returns> retrun ADL Error Code</returns>
+    /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);   
 
     /// <summary> ADL Destroy Function to free up ADL Data</summary>
@@ -147,7 +155,7 @@ namespace ATI.ADL
 
     /// <summary>Function to get the EDID data.</summary>
     /// <remarks>This function retrieves the EDID data for a specififed display.</remarks>  
-    /// /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="adapterIndex">Adapter Index</param>
     /// <param name="displayIndex">The desired display index. It can be retrieved from the ADLDisplayInfo data structure.</param>
     /// <param name="EDIDData">return the ADLDisplayEDIDData structure storing the retrieved EDID data.</param>
     /// <returns>return ADL Error Code</returns>
@@ -1026,6 +1034,9 @@ namespace ATI.ADL
             internal static extern int ADL2_Adapter_NumberOfAdapters_Get(IntPtr contextHandle, ref int numAdapters);
 
             [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
+
+            [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr AdapterInfoArray);
 
             [DllImport(Atiadlxx_FileName)]
@@ -1279,6 +1290,30 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL2_Adapter_NumberOfAdapters_Get_Check = false;
         #endregion ADL2_Adapter_NumberOfAdapters_Get
+
+        #region ADL2_Adapter_Active_Get
+        /// <summary> ADL2_Adapter_Active_Get Delegates</summary>
+        internal static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get
+        {
+            get
+            {
+                if (!ADL2_Adapter_Active_Get_Check && null == ADL2_Adapter_Active_Get_)
+                {
+                    ADL2_Adapter_Active_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_Active_Get"))
+                    {
+                        ADL2_Adapter_Active_Get_ = ADLImport.ADL2_Adapter_Active_Get;
+                    }
+                }
+                return ADL2_Adapter_Active_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Adapter_Active_Get_Check = false;
+        #endregion ADL2_Adapter_Active_Get
+
 
         #region ADL2_Adapter_AdapterInfo_Get
         /// <summary> ADL2_Adapter_AdapterInfo_Get Delegates</summary>

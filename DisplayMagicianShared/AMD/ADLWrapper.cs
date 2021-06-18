@@ -236,14 +236,14 @@ namespace DisplayMagicianShared.AMD
                 IntPtr AdapterBuffer = IntPtr.Zero;
                 if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
                 {
-                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: ADL_Adapter_AdapterInfo_Get DLL function exists.");
+                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: ADL2_Adapter_AdapterInfoX4_Get DLL function exists.");
                     // Figure out the size of the AdapterBuffer we need to build                    
                     int size = Marshal.SizeOf(OSAdapterInfoData);
                     AdapterBuffer = Marshal.AllocCoTaskMem((int)size);
                     Marshal.StructureToPtr(OSAdapterInfoData, AdapterBuffer, false);
 
                     // Get the Adapter info and put it in the AdapterBuffer
-                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Running ADL_Adapter_AdapterInfo_Get to find all known AMD adapters.");
+                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Running ADL2_Adapter_AdapterInfoX4_Get to find all known AMD adapters.");
                     //ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, AdapterBuffer, size);
                     int numAdapters = 0;
                     ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
@@ -253,7 +253,7 @@ namespace DisplayMagicianShared.AMD
                         OSAdapterInfoData = (ADLAdapterInfoX2Array)Marshal.PtrToStructure(AdapterBuffer, OSAdapterInfoData.GetType());
                         int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
 
-                        SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Successfully run ADL_Adapter_AdapterInfo_Get to find information about all known AMD adapters.");
+                        SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known AMD adapters.");
 
                         // Go through each adapter
                         for (int i = 0; i < NumberOfAdapters; i++)
@@ -262,8 +262,8 @@ namespace DisplayMagicianShared.AMD
 
 
                             // Check if the adapter is active
-                            if (ADL.ADL_Adapter_Active_Get != null)
-                                ADLRet = ADL.ADL_Adapter_Active_Get(oneAdapter.AdapterIndex, ref IsActive);
+                            if (ADL.ADL2_Adapter_Active_Get != null)
+                                ADLRet = ADL.ADL2_Adapter_Active_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref IsActive);
 
                             if (ADLRet == ADL.ADL_OK)
                             {
@@ -278,15 +278,6 @@ namespace DisplayMagicianShared.AMD
 
                                 Console.WriteLine($"### Adapter Info for Adapter #{oneAdapter.AdapterIndex} ###");
                                 Console.WriteLine($"Adapter ID = {oneAdapter}");
-
-
-                                // Get the unique identifier from the Adapter
-                                int AdapterID = 0;
-                                if (ADL.ADL_Adapter_ID_Get != null)
-                                {
-                                    ADLRet = ADL.ADL_Adapter_ID_Get(oneAdapter.AdapterIndex, ref AdapterID);
-                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID is {AdapterID.ToString()}");
-                                }
 
                                 // Get the Adapter Capabilities
                                 ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
@@ -451,7 +442,7 @@ namespace DisplayMagicianShared.AMD
 
                                                 try
                                                 {
-                                                    displayInfoIdentifierSection.Add(AdapterID.ToString());
+                                                    displayInfoIdentifierSection.Add(AdapterCapabilities.AdapterID.ToString());
                                                 }
                                                 catch (Exception ex)
                                                 {
