@@ -42,15 +42,36 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate IntPtr ADL_Main_Memory_Alloc (int size);
 
+    // ///// <summary> ADL2 Create Function to create ADL Data</summary>
+    /// <param name="callback">Call back functin pointer which is ised to allocate memory </param>
+    /// <param name="numConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
+    /// <param name="contextHandle">Handle to ADL client context.</param>
+    ///// <returns> retrun ADL Error Code</returns>
+    internal delegate int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int numConnectedAdapters, out IntPtr contextHandle);
+
+    /// <summary> ADL2 Destroy Function to free up ADL Data</summary>
+    /// <param name="contextHandle">Handle to ADL client context.</param>
+    /// <returns> retrun ADL Error Code</returns>
+    internal delegate int ADL2_Main_Control_Destroy(IntPtr contextHandle);
+
+    // ///// <summary> ADL2 Create Function to create ADL Data</summary>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="displayIndex">Display Index</param>
+    /// <param name="displayDDCInfo2">The ADLDDCInfo2 structure storing all DDC retrieved from the driver.</param>
+    ///// <returns> retrun ADL Error Code</returns>
+    internal delegate int ADL2_Display_DDCInfo2_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 displayDDCInfo2);
+
+
     // ///// <summary> ADL Create Function to create ADL Data</summary>
     /// <param name="callback">Call back functin pointer which is ised to allocate memeory </param>
     /// <param name="enumConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
     ///// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
+    internal delegate int ADL_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);   
 
     /// <summary> ADL Destroy Function to free up ADL Data</summary>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL_Main_Control_Destroy ();
+    internal delegate int ADL_Main_Control_Destroy ();  
 
     /// <summary> ADL Function to get the number of adapters</summary>
     /// <param name="numAdapters">return number of adapters</param>
@@ -83,6 +104,14 @@ namespace ATI.ADL
     /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
     /// <returns>return ADL Error Code</returns> 
     internal delegate int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+
+    /// <summary>Function to get the EDID data.</summary>
+    /// <remarks>This function retrieves the EDID data for a specififed display.</remarks>  
+    /// /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="displayIndex">The desired display index. It can be retrieved from the ADLDisplayInfo data structure.</param>
+    /// <param name="EDIDData">return the ADLDisplayEDIDData structure storing the retrieved EDID data.</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
 
     /// <summary>Get display information based on adapter index</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -258,8 +287,118 @@ namespace ATI.ADL
     }
     #endregion ADLAdapterInfo
 
-        
+
     #region ADLDisplayInfo
+
+    /// <summary> ADLDisplayEDIDData Structure</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLDisplayEDIDData
+    {
+        /// <summary> EDIDData [256] </summary>
+        [MarshalAs(UnmanagedType.LPStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
+        internal string EDIDData;
+        /// <summary> Block Index </summary>
+        internal int BlockIndex;
+        /// <summary> EDIDSize </summary>
+        internal int EDIDSize;
+        /// <summary> Flag</summary>
+        internal int Flag;
+        /// <summary> Reserved </summary>
+        internal int Reserved;
+        /// <summary> Size</summary>
+        internal int Size;
+    }
+
+
+    /// <summary> ADLDDCInfo2 Structure</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ADLDDCInfo2
+    {
+        /// <summary> Returns 1 if the display supported packed pixel, 0 otherwise. </summary>
+        internal int PackedPixelSupported;
+        /// <summary> Returns the name of the display device. Should be zeroed if this information is not available.</summary>
+        [MarshalAs(UnmanagedType.LPStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
+        internal string DisplayName ;
+        /// <summary> Display diffuse screen reflectance 0-1 (100%) in units of 0.01.</summary>
+        internal int DiffuseScreenReflectance;
+        /// <summary> Bit vector for freesync flags.</summary>
+        internal int FreesyncFlags;
+        /// <summary> Display Blue Chromaticity X coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityBlueX;
+        /// <summary> Display Blue Chromaticity Y coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityBlueY;
+        /// <summary> Display Green Chromaticity X coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityGreenX;
+        /// <summary> Display Green  Chromaticity Y coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityGreenY;
+        /// <summary> Display Red Chromaticity X coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityRedX;
+        /// <summary> Display Red Chromaticity Y coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityRedY;
+        /// <summary> Display White Chromaticity X coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityWhiteX;
+        /// <summary> Display White Chromaticity Y coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityWhiteY;
+        /// <summary> Returns the Pixel formats the display supports DDCInfo Pixel Formats.</summary>
+        internal int PanelPixelFormat;
+        /// <summary> Reserved1 </summary>
+        internal int Reserved1;
+        /// <summary> Reserved2 </summary>
+        internal int Reserved2;
+        /// <summary> Reserved3 </summary>
+        internal int Reserved3;
+        /// <summary> Reserved4 </summary>
+        internal int Reserved4;
+        /// <summary> Display specular screen reflectance 0-1 (100%) in units of 0.01.</summary>
+        internal int SpecularScreenReflectance;
+        /// <summary> Bit vector of supported color spaces ADLSourceContentAttributes color spaces.</summary>
+        internal int SupportedColorSpace;
+        /// <summary> Bit vector of supported color spaces ADLDDCInfo2 HDR support options.</summary>
+        internal int SupportedHDR;
+        /// <summary> Bit vector of supported transfer functions ADLSourceContentAttributes transfer functions (gamma). </summary>
+        internal int SupportedTransferFunction;
+        /// <summary> Return average monitor luminance data. </summary>
+        internal uint AvgLuminanceData;
+        /// <summary> Return EDID flags.</summary>
+        internal uint DDCInfoFlag;
+        /// <summary> Returns the manufacturer ID of the display device. Should be zeroed if this information is not available.</summary>
+        internal uint ManufacturerID;
+        /// <summary> Returns the maximum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
+        internal uint MaxBacklightMaxLuminanceData;
+        /// <summary> Returns the maximum backlight minimum luminance. Should be zeroed if this information is not available.</summary>
+        internal uint MaxBacklightMinLuminanceData;
+        /// <summary> Returns the maximum Horizontal supported resolution. Should be zeroed if this information is not available.</summary>
+        internal uint MaxHResolution;
+        /// <summary> Return maximum monitor luminance data.</summary>
+        internal uint MaxLuminanceData;
+        /// <summary> Returns the maximum supported refresh rate. Should be zeroed if this information is not available. </summary>
+        internal uint MaxRefresh;
+        /// <summary> Returns the maximum Vertical supported resolution. Should be zeroed if this information is not available. </summary>
+        internal uint MaxVResolution;
+        /// <summary> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
+        internal uint MinBacklightMaxLuminanceData;
+        /// <summary> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
+        internal uint MinBacklightMinLuminanceData;
+        /// <summary> Return minimum monitor luminance data.</summary>
+        internal uint MinLuminanceData;
+        /// <summary> Return minimum monitor luminance without dimming data.</summary>
+        internal uint MinLuminanceNoDimmingData;
+        /// <summary> Returns the product ID of the display device. Should be zeroed if this information is not available.</summary>
+        internal uint ProductID;
+        /// <summary> Returns the display device preferred timing mode's horizontal resolution.</summary>
+        internal uint PTMCx;
+        /// <summary> Returns the display device preferred timing mode's vertical resolution. </summary>
+        internal uint PTMCy;
+        /// <summary> Returns the display device preferred timing mode's refresh rate.</summary>
+        internal uint PTMRefreshRate;
+        /// <summary> Return EDID serial ID.</summary>
+        internal uint SerialID;
+        /// <summary> Size of the structure. </summary>
+        internal uint Size;
+        /// <summary> Whether this display device support DDC</summary>
+        internal uint SupportsDDC;
+    }
+
     /// <summary> ADLDisplayID Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLDisplayID
@@ -298,6 +437,46 @@ namespace ATI.ADL
         internal int DisplayInfoMask;
         ///<summary> Indicating the display info value.<summary>
         internal int DisplayInfoValue;
+    }
+
+    internal struct ConvertedDisplayInfoValue
+    {
+        /// <summary> Indicates the display is connected .</summary>
+        internal bool DISPLAYCONNECTED;
+        /// <summary> Indicates the display is mapped within OS </summary>
+        internal bool DISPLAYMAPPED;
+        /// <summary> Indicates the display can be forced </summary>
+        internal bool FORCIBLESUPPORTED;
+        /// <summary> Indicates the display supports genlock </summary>
+        internal bool GENLOCKSUPPORTED;
+        /// <summary> Indicates the display is an LDA display.</summary>
+        internal bool LDA_DISPLAY;
+        /// <summary> Indicates the display supports 2x Horizontal stretch </summary>
+        internal bool MANNER_SUPPORTED_2HSTRETCH;
+        /// <summIndicates the display supports 2x Vertical stretch </summary>
+        internal bool MANNER_SUPPORTED_2VSTRETCH;
+        /// <summary> Indicates the display supports cloned desktops </summary>
+        internal bool MANNER_SUPPORTED_CLONE;
+        /// <summary> Indicates the display supports extended desktops </summary>
+        internal bool MANNER_SUPPORTED_EXTENDED;
+        /// <summary> Indicates the display supports N Stretched on 1 GPU</summary>
+        internal bool MANNER_SUPPORTED_NSTRETCH1GPU;
+        /// <summary> Indicates the display supports N Stretched on N GPUs</summary>
+        internal bool MANNER_SUPPORTED_NSTRETCHNGPU;
+        /// <summary> Reserved display info flag #2</summary>
+        internal bool MANNER_SUPPORTED_RESERVED2;
+        /// <summary> Reserved display info flag #3</summary>
+        internal bool MANNER_SUPPORTED_RESERVED3;
+        /// <summary> Indicates the display supports single desktop </summary>
+        internal bool MANNER_SUPPORTED_SINGLE;
+        /// <summary> Indicates the display supports overriding the mode timing </summary>
+        internal bool MODETIMING_OVERRIDESSUPPORTED;
+        /// <summary> Indicates the display supports multi-vpu</summary>
+        internal bool MULTIVPU_SUPPORTED;
+        /// <summary> Indicates the display is non-local to this machine </summary>
+        internal bool NONLOCAL;
+        /// <summary> Indicates the display is a projector </summary>
+        internal bool SHOWTYPE_PROJECTOR;
     }
 
     /// <summary> ADLDisplayInfo Array</summary>
@@ -549,10 +728,50 @@ namespace ATI.ADL
         internal const int ADL_MAX_DISPLAYS = 40 /* 150 */;
         /// <summary> Define the maximum device name length</summary>
         internal const int ADL_MAX_DEVICENAME = 32;
-        /// <summary> Define the successful</summary>
-        internal const int ADL_SUCCESS = 0;
-        /// <summary> Define the failure</summary>
-        internal const int ADL_FAIL = -1;
+        /// <summary> Define the maximum EDID Data length</summary>
+        internal const int ADL_MAX_EDIDDATA_SIZE = 256;
+
+        // Result Codes
+        /// <summary> ADL function completed successfully. </summary>                
+        internal const int ADL_OK = 0;
+        /// <summary> Generic Error.Most likely one or more of the Escape calls to the driver failed!</summary>
+        internal const int ADL_ERR = -1;
+        /// <summary> Call can't be made due to disabled adapter. </summary>
+        internal const int ADL_ERR_DISABLED_ADAPTER = -10;
+        /// <summary> Invalid ADL index passed. </summary>
+        internal const int ADL_ERR_INVALID_ADL_IDX = -5;
+        /// <summary> Invalid Callback. </summary>
+        internal const int ADL_ERR_INVALID_CALLBACK = -11;
+        /// <summary> Invalid controller index passed.</summary>
+        internal const int ADL_ERR_INVALID_CONTROLLER_IDX = -6;
+        /// <summary> Invalid display index passed.</summary>
+        internal const int ADL_ERR_INVALID_DISPLAY_IDX = -7;
+        /// <summary> One of the parameter passed is invalid.</summary>
+        internal const int ADL_ERR_INVALID_PARAM = -3;
+        /// <summary> One of the parameter size is invalid.</summary>
+        internal const int ADL_ERR_INVALID_PARAM_SIZE = -4;
+        /// <summary> There's no Linux XDisplay in Linux Console environment.</summary>
+        internal const int ADL_ERR_NO_XDISPLAY = -21;
+        /// <summary> ADL not initialized.</summary>
+        internal const int ADL_ERR_NOT_INIT = -2;
+        /// <summary> Function not supported by the driver. </summary>
+        internal const int ADL_ERR_NOT_SUPPORTED = -8;
+        /// <summary> Null Pointer error.</summary>
+        internal const int ADL_ERR_NULL_POINTER = -9;
+        /// <summary> Display Resource conflict.</summary>
+        internal const int ADL_ERR_RESOURCE_CONFLICT = -12;
+        /// <summary> Err Set incomplete</summary>
+        internal const int ADL_ERR_SET_INCOMPLETE = -20;
+        /// <summary> All OK but need mode change. </summary>
+        internal const int ADL_OK_MODE_CHANGE = 2;
+        /// <summary> All OK, but need restart.</summary>
+        internal const int ADL_OK_RESTART = 3;
+        /// <summary> All OK, but need to wait</summary>
+        internal const int ADL_OK_WAIT = 4;
+        /// <summary> All OK, but with warning.</summary>
+        internal const int ADL_OK_WARNING = 1;
+
+
         /// <summary> Define the driver ok</summary>
         internal const int ADL_DRIVER_OK = 0;
         /// <summary> Maximum number of GL-Sync ports on the GL-Sync module </summary>
@@ -624,6 +843,45 @@ namespace ATI.ADL
         /// <summary> Indicates Virtual Connector type.</summary>
         internal const int ADL_CONNECTOR_TYPE_VIRTUAL = 13;
 
+        // Display Info Constants
+        /// <summary> Indicates the display is connected .</summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED = 0x00000001;
+        /// <summary> Indicates the display is mapped within OS </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED = 0x00000002;
+        /// <summary> Indicates the display can be forced </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED = 0x00000008;
+        /// <summary> Indicates the display supports genlock </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED = 0x00000010;
+        /// <summary> Indicates the display is an LDA display.</summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY = 0x00000040;
+        /// <summary> Indicates the display supports 2x Horizontal stretch </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH = 0x00000800;
+        /// <summary> Indicates the display supports 2x Vertical stretch </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH = 0x00000400;
+        /// <summary> Indicates the display supports cloned desktops </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE = 0x00000200;
+        /// <summary> Indicates the display supports extended desktops </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED = 0x00001000;
+        /// <summary> Indicates the display supports N Stretched on 1 GPU</summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU = 0x00010000;
+        /// <summary> Indicates the display supports N Stretched on N GPUs</summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU = 0x00020000;
+        /// <summary> Reserved display info flag #2</summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2 = 0x00040000;
+        /// <summary> Reserved display info flag #3</summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3 = 0x00080000;
+        /// <summary> Indicates the display supports single desktop </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE = 0x00000100;
+        /// <summary> Indicates the display supports overriding the mode timing </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED = 0x00000080;
+        /// <summary> Indicates the display supports multi-vpu</summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED = 0x00000020;
+        /// <summary> Indicates the display is non-local to this machine </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_NONLOCAL = 0x00000004;
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR = 0x00100000;
+
+
         #endregion Internal Constant
 
         #region Internal Enums
@@ -662,6 +920,15 @@ namespace ATI.ADL
             [DllImport(Kernel32_FileName)]
             internal static extern HMODULE GetModuleHandle (string moduleName);
 
+            [DllImport(Atiadlxx_FileName)] 
+            internal static extern int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters, out IntPtr contextHandle);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Main_Control_Destroy(IntPtr contextHandle);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_DDCInfo2_Get(IntPtr contextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 DDCInfo);
+
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
 
@@ -694,6 +961,9 @@ namespace ATI.ADL
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
@@ -829,6 +1099,77 @@ namespace ATI.ADL
             }
         }
         #endregion ADL_Main_Memory_Free
+
+        #region ADL2_Main_Control_Create
+        /// <summary> ADL2_Main_Control_Create Delegates</summary>
+        internal static ADL2_Main_Control_Create ADL2_Main_Control_Create
+        {
+            get
+            {
+                if (!ADL2_Main_Control_Create_Check && null == ADL2_Main_Control_Create_)
+                {
+                    ADL2_Main_Control_Create_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Main_Control_Create"))
+                    {
+                        ADL2_Main_Control_Create_ = ADLImport.ADL2_Main_Control_Create;
+                    }
+                }
+                return ADL2_Main_Control_Create_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Main_Control_Create ADL2_Main_Control_Create_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Main_Control_Create_Check = false;
+        #endregion ADL2_Main_Control_Create
+
+        #region ADL2_Main_Control_Destroy
+        /// <summary> ADL2_Main_Control_Destroy Delegates</summary>
+        internal static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy
+        {
+            get
+            {
+                if (!ADL2_Main_Control_Destroy_Check && null == ADL2_Main_Control_Destroy_)
+                {
+                    ADL2_Main_Control_Destroy_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Main_Control_Destroy"))
+                    {
+                        ADL2_Main_Control_Destroy_ = ADLImport.ADL2_Main_Control_Destroy;
+                    }
+                }
+                return ADL2_Main_Control_Destroy_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Main_Control_Destroy_Check = false;
+        #endregion ADL2_Main_Control_Destroy
+      
+
+        #region ADL2_Display_DDCInfo2_Get
+        /// <summary> ADL2_Display_DDCInfo2_Get Delegates</summary>
+        internal static ADL2_Display_DDCInfo2_Get ADL2_Display_DDCInfo2_Get
+        {
+            get
+            {
+                if (!ADL2_Display_DDCInfo2_Get_Check && null == ADL2_Display_DDCInfo2_Get_)
+                {
+                    ADL2_Display_DDCInfo2_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DDCInfo2_Get"))
+                    {
+                        ADL2_Display_DDCInfo2_Get_ = ADLImport.ADL2_Display_DDCInfo2_Get;
+                    }
+                }
+                return ADL2_Display_DDCInfo2_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Display_DDCInfo2_Get ADL2_Display_DDCInfo2_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Display_DDCInfo2_Get_Check = false;
+        #endregion ADL2_Display_DDCInfo2_Get
+
 
         #region ADL_Main_Control_Create
         /// <summary> ADL_Main_Control_Create Delegates</summary>
@@ -1061,6 +1402,31 @@ namespace ATI.ADL
         private static bool ADL_Display_DisplayMapConfig_PossibleAddAndRemove_Check = false;
         #endregion ADL_Display_DisplayMapConfig_PossibleAddAndRemove
 
+
+        #region ADL_Display_EdidData_Get
+        /// <summary> ADL_Display_EdidData_Get Delegates</summary>
+        internal static ADL_Display_EdidData_Get ADL_Display_EdidData_Get
+        {
+            get
+            {
+                if (!ADL_Display_EdidData_Get_Check && null == ADL_Display_EdidData_Get_)
+                {
+                    ADL_Display_EdidData_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_EdidData_Get"))
+                    {
+                        ADL_Display_EdidData_Get_ = ADLImport.ADL_Display_EdidData_Get;
+                    }
+                }
+                return ADL_Display_EdidData_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL_Display_EdidData_Get ADL_Display_EdidData_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL_Display_EdidData_Get_Check = false;
+        #endregion ADL_Display_EdidData_Get
+
+
         #region ADL_Display_DisplayInfo_Get
         /// <summary> ADL_Display_DisplayInfo_Get Delegates</summary>
         internal static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get
@@ -1107,9 +1473,122 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL_Display_SLSMapConfig_Get_Check = false;
         #endregion ADL_Display_SLSMapConfig_Get
-        
+
 
         #endregion Export Functions
+
+        #region ADL Helper Functions
+
+        internal static ConvertedDisplayInfoValue ConvertDisplayInfoValue(int displayInfoValue)
+        {
+            ConvertedDisplayInfoValue expandedDisplayInfoValue = new ConvertedDisplayInfoValue();
+
+            // Indicates the display is connected
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED) == ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED)           
+                expandedDisplayInfoValue.DISPLAYCONNECTED = true;
+            // Indicates the display is mapped within OS
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED) == ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED)           
+                expandedDisplayInfoValue.DISPLAYMAPPED = true;
+            // Indicates the display can be forced
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED)           
+                expandedDisplayInfoValue.FORCIBLESUPPORTED = true;
+            // Indicates the display supports genlock 
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED)           
+                expandedDisplayInfoValue.GENLOCKSUPPORTED = true;
+            // Indicates the display is an LDA display.
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY) == ADL.ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY)           
+                expandedDisplayInfoValue.LDA_DISPLAY = true;
+            // Indicates the display supports 2x Horizontal stretch
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_2HSTRETCH = true;
+            // Indicates the display supports 2x Vertical stretch
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_2VSTRETCH = true;
+            // Indicates the display supports cloned desktops 
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_CLONE = true;
+            // Indicates the display supports extended desktops
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_EXTENDED = true;
+            // Indicates the display supports N Stretched on 1 GPU
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_NSTRETCH1GPU = true;
+            // Indicates the display supports N Stretched on N GPUs
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_NSTRETCHNGPU = true;
+            // Reserved display info flag #2
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_RESERVED2 = true;
+            // Reserved display info flag #3
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_RESERVED3 = true;
+            // Indicates the display supports single desktop
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE)           
+                expandedDisplayInfoValue.MANNER_SUPPORTED_SINGLE = true;
+            // Indicates the display supports overriding the mode timing
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED)           
+                expandedDisplayInfoValue.MODETIMING_OVERRIDESSUPPORTED = true;
+            // Indicates the display supports multi-vpu
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED)           
+                expandedDisplayInfoValue.MULTIVPU_SUPPORTED = true;
+            // Indicates the display is non-local to this machine 
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_NONLOCAL) == ADL.ADL_DISPLAY_DISPLAYINFO_NONLOCAL)           
+                expandedDisplayInfoValue.NONLOCAL = true;
+            // Indicates the display is a projector
+            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR) == ADL.ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR)           
+                expandedDisplayInfoValue.SHOWTYPE_PROJECTOR = true;
+
+            return expandedDisplayInfoValue;
+
+        }
+
+        internal static string ConvertADLReturnValueIntoWords(int adlReturnValue)
+        {
+            if (adlReturnValue == ADL.ADL_OK)
+                return "Success. Function worked as intended.";
+            if (adlReturnValue == ADL.ADL_ERR)
+                return "Generic Error.Most likely one or more of the Escape calls to the driver failed!";
+            if (adlReturnValue == ADL.ADL_ERR_DISABLED_ADAPTER)
+                return "Call can't be made due to disabled adapter.";
+            if (adlReturnValue == ADL.ADL_ERR_INVALID_ADL_IDX)
+                return "Invalid ADL index passed.";
+            if (adlReturnValue == ADL.ADL_ERR_INVALID_CALLBACK)
+                return "Invalid Callback passed.";
+            if (adlReturnValue == ADL.ADL_ERR_INVALID_CONTROLLER_IDX)
+                return "Invalid controller index passed.";
+            if (adlReturnValue == ADL.ADL_ERR_INVALID_DISPLAY_IDX)
+                return "Invalid display index passed.";
+            if (adlReturnValue == ADL.ADL_ERR_INVALID_PARAM)
+                return "One of the parameter passed is invalid.";
+            if (adlReturnValue == ADL.ADL_ERR_INVALID_PARAM_SIZE)
+                return "One of the parameter size is invalid.";
+            if (adlReturnValue == ADL.ADL_ERR_NO_XDISPLAY)
+                return "There's no Linux XDisplay in Linux Console environment.";
+            if (adlReturnValue == ADL.ADL_ERR_NOT_INIT)
+                return "ADL not initialized. You need to run ADL_Main_Control_Create.";
+            if (adlReturnValue == ADL.ADL_ERR_NOT_SUPPORTED)
+                return "Function not supported by the driver.";
+            if (adlReturnValue == ADL.ADL_ERR_NULL_POINTER)
+                return "Null Pointer error.";
+            if (adlReturnValue == ADL.ADL_ERR_RESOURCE_CONFLICT)
+                return "Display Resource conflict.";
+            if (adlReturnValue == ADL.ADL_ERR_SET_INCOMPLETE)
+                return "Err Set incomplete";
+            if (adlReturnValue == ADL.ADL_OK_MODE_CHANGE)
+                return "All OK but need mode change.";
+            if (adlReturnValue == ADL.ADL_OK_RESTART)
+                return "All OK, but need to restart.";
+            if (adlReturnValue == ADL.ADL_OK_WAIT)
+                return "All OK, but need to wait.";
+            if (adlReturnValue == ADL.ADL_OK_WARNING)
+                return "All OK, but with warning..";
+            // If we get here, then we've got an ADL Return value that we don't understand!
+            return "ADL Return value not recognised. Your driver is likely newer than this code can understand.";
+    }
+
+
+        #endregion ADL Helper Functions
+
     }
     #endregion ADL Class
 }
