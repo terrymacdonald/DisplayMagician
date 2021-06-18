@@ -353,7 +353,7 @@ namespace DisplayMagicianShared.AMD
                                                 Console.WriteLine($"Display Info Value = {oneDisplayInfo.DisplayInfoValue}");
                                                 Console.WriteLine($"Display Manufacturer Name = {oneDisplayInfo.DisplayManufacturerName}");
                                                 Console.WriteLine($"Display Name = {oneDisplayInfo.DisplayName}");
-                                                Console.WriteLine($"Display Output Type = {oneDisplayInfo.DisplayOutputType}");
+                                                Console.WriteLine($"Display Output Type = {oneDisplayInfo.DisplayOutputType.ToString("G")}");
                                                 Console.WriteLine($"Display Type = {oneDisplayInfo.DisplayType}");
                                                 
                                                 Console.WriteLine($"Display Info Value DISPLAYCONNECTED = {displayInfoValue.DISPLAYCONNECTED}");
@@ -402,6 +402,13 @@ namespace DisplayMagicianShared.AMD
                                                     ADLRet = ADL.ADL2_Display_DDCInfo2_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayDDCInfo2);
                                                     if (ADLRet == ADL.ADL_OK)
                                                     {
+
+                                                        // Convert the DDCInfoFlag to something usable using a library function I made
+                                                        ConvertedDDCInfoFlag DDCInfoFlag = ADL.ConvertDDCInfoFlag(displayDDCInfo2.DDCInfoFlag);
+
+                                                        // Convert the DDCInfoFlag to something usable using a library function I made
+                                                        ConvertedSupportedHDR supportedHDR= ADL.ConvertSupportedHDR(displayDDCInfo2.SupportedHDR);
+
                                                         Console.WriteLine($"### Display DDCInfo2 for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
                                                         Console.WriteLine($"Display AvgLuminanceData = {displayDDCInfo2.AvgLuminanceData}");
                                                         Console.WriteLine($"Display DDCInfoFlag = {displayDDCInfo2.DDCInfoFlag}");
@@ -440,12 +447,35 @@ namespace DisplayMagicianShared.AMD
                                                         Console.WriteLine($"Display SupportedHDR = {displayDDCInfo2.SupportedHDR}");
                                                         Console.WriteLine($"Display SupportedTransferFunction = {displayDDCInfo2.SupportedTransferFunction}");
                                                         Console.WriteLine($"Display SupportsDDC = {displayDDCInfo2.SupportsDDC}");
+                                                        Console.WriteLine($"Display DDCInfoFlag Digital Device  = {DDCInfoFlag.DIGITALDEVICE}");
+                                                        Console.WriteLine($"Display DDCInfoFlag EDID Extension = {DDCInfoFlag.EDIDEXTENSION}");
+                                                        Console.WriteLine($"Display DDCInfoFlag HDMI Audio Device  = {DDCInfoFlag.HDMIAUDIODEVICE}");
+                                                        Console.WriteLine($"Display DDCInfoFlag Projector Device = {DDCInfoFlag.PROJECTORDEVICE}");
+                                                        Console.WriteLine($"Display DDCInfoFlag Supports AI = {DDCInfoFlag.SUPPORTS_AI}");
+                                                        Console.WriteLine($"Display DDCInfoFlag Supports xvYCC601 = {DDCInfoFlag.SUPPORT_xvYCC601}");
+                                                        Console.WriteLine($"Display DDCInfoFlag Supports xvYCC709 = {DDCInfoFlag.SUPPORT_xvYCC709}");
+                                                        Console.WriteLine($"Display SupportedHDR Supports CEA861_3 = {supportedHDR.CEA861_3}");
+                                                        Console.WriteLine($"Display SupportedHDR Supports DOLBYVISION = {supportedHDR.DOLBYVISION}");
+                                                        Console.WriteLine($"Display SupportedHDR Supports FREESYNC_HDR = {supportedHDR.FREESYNC_HDR}");
                                                     } else
                                                     {
                                                         Console.WriteLine($"Error running ADL_vDisplay_EdidData_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
                                                     }
                                                 }
 
+                                                int HDRSupported = 0;
+                                                int HDREnabled = 0;
+                                                if (ADL.ADL2_Display_HDRState_Get != null)
+                                                {
+                                                    // Get the HDR State from the Display
+                                                    ADLRet = ADL.ADL2_Display_HDRState_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID, out HDRSupported, out HDREnabled);
+                                                    if (ADLRet == ADL.ADL_OK)
+                                                    {
+                                                        Console.WriteLine($"### Display HDR State for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
+                                                        Console.WriteLine($"Display HDR Supported = {HDRSupported}");
+                                                        Console.WriteLine($"Display HDR Enabled = {HDREnabled}");
+                                                    }
+                                                }
 
 
                                                 // Create an array of all the important display info we need to record

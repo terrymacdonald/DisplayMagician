@@ -136,6 +136,16 @@ namespace ATI.ADL
     /// <returns>return ADL Error Code</returns>
     internal delegate int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
+    /// <summary>ADL2 function to query whether a display is HDR Supported and Enabled</summary>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="displayID">DisplayID for the desired display</param>
+    /// <param name="support">return a pointer to the int whose value is set to true if the display supports HDR</param>
+    /// <param name="enable">return a pointer to the int whose value is set to true if HDR is enabled on this display</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
+
+
     // ADL version of function delagates
 
     /// <summary> ADL Create Function to create ADL Data</summary>
@@ -368,7 +378,7 @@ namespace ATI.ADL
     internal struct ADLAdapterInfoX2
     {
         /// <summary>The size of the structure</summary>
-        int Size;
+        internal int Size;
         /// <summary> Adapter Index</summary>
         internal int AdapterIndex;
         /// <summary> Adapter UDID</summary>
@@ -383,10 +393,10 @@ namespace ATI.ADL
         /// <summary> Adapter Vendor ID</summary>
         internal int VendorID;
         /// <summary> Adapter Adapter name</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
         internal string AdapterName;
         /// <summary> Adapter Display name</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
         internal string DisplayName;
         /// <summary> Adapter Present status</summary>
         internal int Present;
@@ -526,6 +536,35 @@ namespace ATI.ADL
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         internal int[] Reserved;
     }
+
+    internal struct ConvertedDDCInfoFlag
+    {
+        /// <summary> Indicates the display is a projector .</summary>
+        internal bool PROJECTORDEVICE;
+        /// <summary> Indicates the display has an EDID extension</summary>
+        internal bool EDIDEXTENSION;
+        /// <summary> Indicates the display is a digital device</summary>
+        internal bool DIGITALDEVICE;
+        /// <summary> Indicates the display has HDMI audio capabilities</summary>
+        internal bool HDMIAUDIODEVICE;
+        /// <summary> Indicates the display supports AI</summary>
+        internal bool SUPPORTS_AI;
+        /// <summary> Indicates the display supports xvYCC601</summary>
+        internal bool SUPPORT_xvYCC601;
+        /// <summary> Indicates the display supports xvYCC709</summary>
+        internal bool SUPPORT_xvYCC709;
+    }
+
+    internal struct ConvertedSupportedHDR
+    {
+        /// <summary> HDR10/CEA861.3 HDR supported</summary>
+        internal bool CEA861_3;
+        /// <summary> DolbyVision HDR supported</summary>
+        internal bool DOLBYVISION;
+        /// <summary> FreeSync HDR supported.</summary>
+        internal bool FREESYNC_HDR;
+    }
+
 
     /// <summary> ADLDisplayID Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -1011,6 +1050,28 @@ namespace ATI.ADL
         /// <summary> Indicates the display is a projector </summary>
         internal const int ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR = 0x00100000;
 
+        // DDCInfoX2 DDCInfo Flag values
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE = (1 << 0);
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION = (1 << 1);
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE = (1 << 2);
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE = (1 << 3);
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI = (1 << 4);
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601 = (1 << 5);
+        /// <summary> Indicates the display is a projector </summary>
+        internal const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709 = (1 << 6);
+
+        /// <summary> HDR10/CEA861.3 HDR supported</summary>
+        internal const int ADL_HDR_CEA861_3 = 0x0001;
+        /// <summary> DolbyVision HDR supported</summary>
+        internal const int ADL_HDR_DOLBYVISION = 0x0002;
+        /// <summary> FreeSync HDR supported.</summary>
+        internal const int ADL_HDR_FREESYNC_HDR = 0x0004;
 
         #endregion Internal Constant
 
@@ -1085,6 +1146,9 @@ namespace ATI.ADL
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
@@ -1534,6 +1598,31 @@ namespace ATI.ADL
         private static bool ADL2_Display_DeviceConfig_Get_Check = false;
         #endregion ADL2_Display_DeviceConfig_Get
 
+        #region ADL2_Display_HDRState_Get
+        /// <summary> ADL2_Display_HDRState_Get Delegates</summary>
+        internal static ADL2_Display_HDRState_Get ADL2_Display_HDRState_Get
+        {
+            get
+            {
+                if (!ADL2_Display_HDRState_Get_Check && null == ADL2_Display_HDRState_Get_)
+                {
+                    ADL2_Display_HDRState_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_HDRState_Get"))
+                    {
+                        ADL2_Display_HDRState_Get_ = ADLImport.ADL2_Display_HDRState_Get;
+                    }
+                }
+                return ADL2_Display_HDRState_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Display_HDRState_Get ADL2_Display_HDRState_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Display_HDRState_Get_Check = false;
+        #endregion ADL2_Display_HDRState_Get
+
+        // ================================
+
         #region ADL_Main_Control_Create
         /// <summary> ADL_Main_Control_Create Delegates</summary>
         internal static ADL_Main_Control_Create ADL_Main_Control_Create
@@ -1841,6 +1930,54 @@ namespace ATI.ADL
         #endregion Export Functions
 
         #region ADL Helper Functions
+
+        internal static ConvertedDDCInfoFlag ConvertDDCInfoFlag(int DDCInfoValue)
+        {
+            ConvertedDDCInfoFlag expandedDDCInfoValue = new ConvertedDDCInfoFlag();
+
+            // Indicates the display is a digital device
+            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE)
+                expandedDDCInfoValue.DIGITALDEVICE = true;
+            // Indicates the display supports EDID queries
+            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION)
+                expandedDDCInfoValue.EDIDEXTENSION = true;
+            // Indicates the display suports HDMI Audio
+            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE)
+                expandedDDCInfoValue.HDMIAUDIODEVICE = true;
+            // Indicates the display is a projector
+            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE)
+                expandedDDCInfoValue.PROJECTORDEVICE = true;
+            // Indicates the display supports AI
+            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI)
+                expandedDDCInfoValue.SUPPORTS_AI = true;
+            // Indicates the display supports YCC601
+            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601)
+                expandedDDCInfoValue.SUPPORT_xvYCC601 = true;
+            // Indicates the display supports YCC709
+            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709)
+                expandedDDCInfoValue.SUPPORT_xvYCC709 = true;
+
+            return expandedDDCInfoValue;
+
+        }
+
+        internal static ConvertedSupportedHDR ConvertSupportedHDR(int supportedHDR)
+        {
+            ConvertedSupportedHDR expandedSupportedHDR = new ConvertedSupportedHDR();
+
+            // Indicates the display is a digital device
+            if ((supportedHDR & ADL.ADL_HDR_CEA861_3) == ADL.ADL_HDR_CEA861_3)
+                expandedSupportedHDR.CEA861_3 = true;
+            // Indicates the display supports EDID queries
+            if ((supportedHDR & ADL.ADL_HDR_DOLBYVISION) == ADL.ADL_HDR_DOLBYVISION)
+                expandedSupportedHDR.DOLBYVISION = true;
+            // Indicates the display suports HDMI Audio
+            if ((supportedHDR & ADL.ADL_HDR_FREESYNC_HDR) == ADL.ADL_HDR_FREESYNC_HDR)
+                expandedSupportedHDR.FREESYNC_HDR = true;
+
+            return expandedSupportedHDR;
+
+        }
 
         internal static ConvertedDisplayInfoValue ConvertDisplayInfoValue(int displayInfoValue)
         {
