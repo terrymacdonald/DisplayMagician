@@ -281,9 +281,9 @@ namespace DisplayMagicianShared.AMD
 
                                 // Get the Adapter Capabilities
                                 ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
-                                if (ADL.ADL_AdapterX2_Caps != null)
+                                if (ADL.ADL2_AdapterX2_Caps != null)
                                 {
-                                    ADLRet = ADL.ADL_AdapterX2_Caps(oneAdapter.AdapterIndex, out AdapterCapabilities);
+                                    ADLRet = ADL.ADL2_AdapterX2_Caps(_adlContextHandle, oneAdapter.AdapterIndex, out AdapterCapabilities);
                                 }
 
                                 //ADLAdapterCapsX2 AdapterCapabilities = (ADLAdapterCapsX2)Marshal.PtrToStructure(AdapterCapabilitiesBuffer, typeof(ADLAdapterCapsX2));
@@ -300,13 +300,13 @@ namespace DisplayMagicianShared.AMD
                                 // Obtain information about displays
                                 ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
 
-                                if (ADL.ADL_Display_DisplayInfo_Get != null)
+                                if (ADL.ADL2_Display_DisplayInfo_Get != null)
                                 {
                                     IntPtr DisplayBuffer = IntPtr.Zero;
                                     int j = 0;
 
                                     // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                    ADLRet = ADL.ADL_Display_DisplayInfo_Get(oneAdapter.AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 0);
+                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 0);
                                     if (ADLRet == ADL.ADL_OK)
                                     {
 
@@ -318,8 +318,30 @@ namespace DisplayMagicianShared.AMD
                                                 // Marshal the returned array of displayinfo into managed objects one by one
                                                 // NOTE: the ToInt64 work on 64 bit, need to change to ToInt32 for 32 bit OS
                                                 oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (j * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
-                                                // Skip non connected displays
 
+                                                if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex == -1)
+                                                {
+                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
+                                                    continue;
+                                                }
+
+                                                // Convert the displayInfoValue to something usable using a library function I made
+                                                ConvertedDisplayInfoValue displayInfoValue = ADL.ConvertDisplayInfoValue(oneDisplayInfo.DisplayInfoValue);
+
+                                                if (!displayInfoValue.DISPLAYCONNECTED)
+                                                {
+                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not connected");
+                                                    continue;
+                                                }
+
+                                                // Skip connected but non-mapped displays (not mapped in windows) - we want all displays currently visible in the OS
+                                                if (!displayInfoValue.DISPLAYMAPPED)
+                                                {
+                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not mapped in Windows OS");
+                                                    continue;
+                                                }
+
+                                                // Skip fake displays
                                                 Console.WriteLine($"### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
                                                 Console.WriteLine($"Display Connector = {oneDisplayInfo.DisplayConnector}");
                                                 Console.WriteLine($"Display Controller Index = {oneDisplayInfo.DisplayControllerIndex}");
@@ -333,44 +355,31 @@ namespace DisplayMagicianShared.AMD
                                                 Console.WriteLine($"Display Name = {oneDisplayInfo.DisplayName}");
                                                 Console.WriteLine($"Display Output Type = {oneDisplayInfo.DisplayOutputType}");
                                                 Console.WriteLine($"Display Type = {oneDisplayInfo.DisplayType}");
-
-                                                // Convert the displayInfoValue to something usable using a library function I made
-                                                ConvertedDisplayInfoValue displayInforValue = ADL.ConvertDisplayInfoValue(oneDisplayInfo.DisplayInfoValue);
-                                                Console.WriteLine($"Display Info Value DISPLAYCONNECTED = {displayInforValue.DISPLAYCONNECTED}");
-                                                Console.WriteLine($"Display Info Value DISPLAYMAPPED = {displayInforValue.DISPLAYMAPPED}");
-                                                Console.WriteLine($"Display Info Value FORCIBLESUPPORTED = {displayInforValue.FORCIBLESUPPORTED}");
-                                                Console.WriteLine($"Display Info Value GENLOCKSUPPORTED = {displayInforValue.GENLOCKSUPPORTED}");
-                                                Console.WriteLine($"Display Info Value LDA_DISPLAY = {displayInforValue.LDA_DISPLAY}");
-                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_2HSTRETCH = {displayInforValue.MANNER_SUPPORTED_2HSTRETCH}");
-                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_2VSTRETCH = {displayInforValue.MANNER_SUPPORTED_2VSTRETCH}");
-                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_CLONE = {displayInforValue.MANNER_SUPPORTED_CLONE}");
-                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_EXTENDED = {displayInforValue.MANNER_SUPPORTED_EXTENDED}");
-                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_NSTRETCH1GPU = {displayInforValue.MANNER_SUPPORTED_NSTRETCH1GPU}");
-                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_NSTRETCHNGPU = {displayInforValue.MANNER_SUPPORTED_NSTRETCHNGPU}");
-                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_SINGLE = {displayInforValue.MANNER_SUPPORTED_SINGLE}");
-                                                Console.WriteLine($"Display Info Value MODETIMING_OVERRIDESSUPPORTED = {displayInforValue.MODETIMING_OVERRIDESSUPPORTED}");
-                                                Console.WriteLine($"Display Info Value MULTIVPU_SUPPORTED = {displayInforValue.MULTIVPU_SUPPORTED}");
-                                                Console.WriteLine($"Display Info Value NONLOCAL = {displayInforValue.NONLOCAL}");
-                                                Console.WriteLine($"Display Info Value SHOWTYPE_PROJECTOR = {displayInforValue.SHOWTYPE_PROJECTOR}");
-
-                                                if ((oneDisplayInfo.DisplayInfoValue & 1) != 1)
-                                                {
-                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not connected");
-                                                    continue;
-                                                }
-
-                                                // Skip connected but non-mapped displays (not mapped in windows) - wae want all displays currently visible in the OS
-                                                if ((oneDisplayInfo.DisplayInfoValue & 2) != 2)
-                                                {
-                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not connected");
-                                                    continue;
-                                                }
+                                                
+                                                Console.WriteLine($"Display Info Value DISPLAYCONNECTED = {displayInfoValue.DISPLAYCONNECTED}");
+                                                Console.WriteLine($"Display Info Value DISPLAYMAPPED = {displayInfoValue.DISPLAYMAPPED}");
+                                                Console.WriteLine($"Display Info Value FORCIBLESUPPORTED = {displayInfoValue.FORCIBLESUPPORTED}");
+                                                Console.WriteLine($"Display Info Value GENLOCKSUPPORTED = {displayInfoValue.GENLOCKSUPPORTED}");
+                                                Console.WriteLine($"Display Info Value LDA_DISPLAY = {displayInfoValue.LDA_DISPLAY}");
+                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_2HSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2HSTRETCH}");
+                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_2VSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2VSTRETCH}");
+                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_CLONE = {displayInfoValue.MANNER_SUPPORTED_CLONE}");
+                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_EXTENDED = {displayInfoValue.MANNER_SUPPORTED_EXTENDED}");
+                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_NSTRETCH1GPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCH1GPU}");
+                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_NSTRETCHNGPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCHNGPU}");
+                                                Console.WriteLine($"Display Info Value MANNER_SUPPORTED_SINGLE = {displayInfoValue.MANNER_SUPPORTED_SINGLE}");
+                                                Console.WriteLine($"Display Info Value MODETIMING_OVERRIDESSUPPORTED = {displayInfoValue.MODETIMING_OVERRIDESSUPPORTED}");
+                                                Console.WriteLine($"Display Info Value MULTIVPU_SUPPORTED = {displayInfoValue.MULTIVPU_SUPPORTED}");
+                                                Console.WriteLine($"Display Info Value NONLOCAL = {displayInfoValue.NONLOCAL}");
+                                                Console.WriteLine($"Display Info Value SHOWTYPE_PROJECTOR = {displayInfoValue.SHOWTYPE_PROJECTOR}");
+                                                                                                
 
                                                 ADLDisplayConfig displayConfig = new ADLDisplayConfig();
-                                                if (ADL.ADL_Display_DeviceConfig_Get != null)
+                                                displayConfig.Size = Marshal.SizeOf(displayConfig);
+                                                if (ADL.ADL2_Display_DeviceConfig_Get != null)
                                                 {
                                                     // Get the DisplayConfig from the Display
-                                                    ADLRet = ADL.ADL_Display_DeviceConfig_Get(oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayLogicalIndex, out displayConfig);
+                                                    ADLRet = ADL.ADL2_Display_DeviceConfig_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayConfig);
                                                     if (ADLRet == ADL.ADL_OK)
                                                     {
                                                         Console.WriteLine($"### Display Device Config for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
@@ -383,6 +392,7 @@ namespace DisplayMagicianShared.AMD
                                                 }
 
                                                 ADLDDCInfo2 displayDDCInfo2 = new ADLDDCInfo2();
+                                                displayDDCInfo2.Size = Marshal.SizeOf(displayDDCInfo2);
                                                 // Create a stringbuilder buffer that EDID can be loaded into
                                                 //displayEDIDData.EDIDData = new StringBuilder(256);
 
@@ -392,16 +402,47 @@ namespace DisplayMagicianShared.AMD
                                                     ADLRet = ADL.ADL2_Display_DDCInfo2_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayDDCInfo2);
                                                     if (ADLRet == ADL.ADL_OK)
                                                     {
-                                                        Console.WriteLine($"### Display EDID Data for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        Console.WriteLine($"Display Manufacturer ID = {displayDDCInfo2.ManufacturerID}");
-                                                        /*Console.WriteLine($"Display EDID Data = {displayDDCInfo2.EDIDData}");
-                                                        Console.WriteLine($"Display EDID Size = {displayDDCInfo2.EDIDSize}");
-                                                        Console.WriteLine($"Display EDID Flag = {displayDDCInfo2.Flag}");
-                                                        Console.WriteLine($"Display EDID Reserved = {displayDDCInfo2.Reserved}");
-                                                        Console.WriteLine($"Display EDID Data Size = {displayDDCInfo2.Size}");*/
+                                                        Console.WriteLine($"### Display DDCInfo2 for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
+                                                        Console.WriteLine($"Display AvgLuminanceData = {displayDDCInfo2.AvgLuminanceData}");
+                                                        Console.WriteLine($"Display DDCInfoFlag = {displayDDCInfo2.DDCInfoFlag}");
+                                                        Console.WriteLine($"Display DiffuseScreenReflectance = {displayDDCInfo2.DiffuseScreenReflectance}");
+                                                        Console.WriteLine($"Display DisplayName = {displayDDCInfo2.DisplayName}");
+                                                        Console.WriteLine($"Display FreesyncFlags = {displayDDCInfo2.FreesyncFlags}");
+                                                        Console.WriteLine($"Display ManufacturerID = {displayDDCInfo2.ManufacturerID}");
+                                                        Console.WriteLine($"Display MaxBacklightMaxLuminanceData = {displayDDCInfo2.MaxBacklightMaxLuminanceData}");
+                                                        Console.WriteLine($"Display MaxBacklightMinLuminanceData = {displayDDCInfo2.MaxBacklightMinLuminanceData}");
+                                                        Console.WriteLine($"Display MaxHResolution = {displayDDCInfo2.MaxHResolution}");
+                                                        Console.WriteLine($"Display MaxLuminanceData = {displayDDCInfo2.MaxLuminanceData}");
+                                                        Console.WriteLine($"Display MaxRefresh = {displayDDCInfo2.MaxRefresh}");
+                                                        Console.WriteLine($"Display MaxVResolution = {displayDDCInfo2.MaxVResolution}");
+                                                        Console.WriteLine($"Display MinBacklightMaxLuminanceData = {displayDDCInfo2.MinBacklightMaxLuminanceData}");
+                                                        Console.WriteLine($"Display MinBacklightMinLuminanceData = {displayDDCInfo2.MinBacklightMinLuminanceData}");
+                                                        Console.WriteLine($"Display MinLuminanceData = {displayDDCInfo2.MinLuminanceData}");
+                                                        Console.WriteLine($"Display MinLuminanceNoDimmingData = {displayDDCInfo2.MinLuminanceNoDimmingData}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityBlueX = {displayDDCInfo2.NativeDisplayChromaticityBlueX}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityBlueY = {displayDDCInfo2.NativeDisplayChromaticityBlueY}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityGreenX = {displayDDCInfo2.NativeDisplayChromaticityGreenX}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityGreenY = {displayDDCInfo2.NativeDisplayChromaticityGreenY}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityRedX = {displayDDCInfo2.NativeDisplayChromaticityRedX}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityRedY = {displayDDCInfo2.NativeDisplayChromaticityRedY}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityWhiteX = {displayDDCInfo2.NativeDisplayChromaticityWhiteX}");
+                                                        Console.WriteLine($"Display NativeDisplayChromaticityWhiteY = {displayDDCInfo2.NativeDisplayChromaticityWhiteY}");
+                                                        Console.WriteLine($"Display PackedPixelSupported = {displayDDCInfo2.PackedPixelSupported}");
+                                                        Console.WriteLine($"Display PanelPixelFormat = {displayDDCInfo2.PanelPixelFormat}");
+                                                        Console.WriteLine($"Display ProductID = {displayDDCInfo2.ProductID}");
+                                                        Console.WriteLine($"Display PTMCx = {displayDDCInfo2.PTMCx}");
+                                                        Console.WriteLine($"Display PTMCy = {displayDDCInfo2.PTMCy}");
+                                                        Console.WriteLine($"Display PTMRefreshRate = {displayDDCInfo2.PTMRefreshRate}");
+                                                        Console.WriteLine($"Display SerialID = {displayDDCInfo2.SerialID}");
+                                                        Console.WriteLine($"Display Size = {displayDDCInfo2.Size}");
+                                                        Console.WriteLine($"Display SpecularScreenReflectance = {displayDDCInfo2.SpecularScreenReflectance}");
+                                                        Console.WriteLine($"Display SupportedColorSpace = {displayDDCInfo2.SupportedColorSpace}");
+                                                        Console.WriteLine($"Display SupportedHDR = {displayDDCInfo2.SupportedHDR}");
+                                                        Console.WriteLine($"Display SupportedTransferFunction = {displayDDCInfo2.SupportedTransferFunction}");
+                                                        Console.WriteLine($"Display SupportsDDC = {displayDDCInfo2.SupportsDDC}");
                                                     } else
                                                     {
-                                                        Console.WriteLine($"Error running ADL_Display_EdidData_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                                                        Console.WriteLine($"Error running ADL_vDisplay_EdidData_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
                                                     }
                                                 }
 

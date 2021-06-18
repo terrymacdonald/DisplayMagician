@@ -42,6 +42,8 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate IntPtr ADL_Main_Memory_Alloc (int size);
 
+    // ADL2 version of function delagates
+
     /// <summary> ADL2 Create Function to create ADL Data</summary>
     /// <param name="callback">Call back functin pointer which is ised to allocate memory </param>
     /// <param name="numConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
@@ -66,6 +68,15 @@ namespace ATI.ADL
     /// <param name="status"> Status of the adapter. True: Active; False: Disabled</param>
     /// <returns>Non zero is successful</returns> 
     internal delegate int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
+
+    /// <summary>ADL2 Function to retrieve adapter capability information.</summary>
+    /// <remarks>This function implements a DI call to retrieve adapter capability information .</remarks>  
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex"> Adapter Index.</param>
+    /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
+    /// <returns>return ADL Error Code</returns> 
+    internal delegate int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+
 
     /// <summary>ADL2 Function to retrieve all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
@@ -108,6 +119,24 @@ namespace ATI.ADL
     /// <returns> retrun ADL Error Code</returns>
     internal delegate int ADL2_Display_DDCInfo2_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 displayDDCInfo2);
 
+    /// <summary>ADL2 function to get display information based on adapter index</summary>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="numDisplays">return the total number of supported displays</param>
+    /// <param name="displayInfoArray">return ADLDisplayInfo Array for supported displays' information</param>
+    /// <param name="forceDetect">force detect or not</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+
+    /// <summary>This ADL2 function retrieves HDTV capability settings for a specified display.</summary>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="displayIndex">Display Index</param>
+    /// <param name="displayConfig">return ADLDisplayConfig with HDTV capability settings in it</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+
+    // ADL version of function delagates
 
     /// <summary> ADL Create Function to create ADL Data</summary>
     /// <param name="callback">Call back functin pointer which is ised to allocate memeory </param>
@@ -399,7 +428,7 @@ namespace ATI.ADL
     internal struct ADLDisplayEDIDData
     {
         /// <summary> EDIDData [256] </summary>
-        [MarshalAs(UnmanagedType.LPStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
         internal string EDIDData;
         /// <summary> Block Index </summary>
         internal int BlockIndex;
@@ -418,89 +447,84 @@ namespace ATI.ADL
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLDDCInfo2
     {
+        /// <summary> Size of the structure. </summary>
+        internal int Size;
+        /// <summary> Whether this display device support DDC</summary>
+        internal int SupportsDDC;
+        /// <summary> Returns the manufacturer ID of the display device. Should be zeroed if this information is not available.</summary>
+        internal int ManufacturerID;
+        /// <summary> Returns the product ID of the display device. Should be zeroed if this informatiadlon is not available.</summary>
+        internal int ProductID;
+        /// <summary> Returns the name of the display device. Should be zeroed if this information is not available.</summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
+        internal string DisplayName;
+        /// <summary> Returns the maximum Horizontal supported resolution. Should be zeroed if this information is not available.</summary>
+        internal int MaxHResolution;
+        /// <summary> Returns the maximum Vertical supported resolution. Should be zeroed if this information is not available. </summary>
+        internal int MaxVResolution;
+        /// <summary> Returns the maximum supported refresh rate. Should be zeroed if this information is not available. </summary>
+        internal int MaxRefresh;
+        /// <summary> Returns the display device preferred timing mode's horizontal resolution.</summary>
+        internal int PTMCx;
+        /// <summary> Returns the display device preferred timing mode's vertical resolution. </summary>
+        internal int PTMCy;
+        /// <summary> Returns the display device preferred timing mode's refresh rate.</summary>
+        internal int PTMRefreshRate;
+        /// <summary> Return EDID flags.</summary>
+        internal int DDCInfoFlag;
         /// <summary> Returns 1 if the display supported packed pixel, 0 otherwise. </summary>
         internal int PackedPixelSupported;
-        /// <summary> Returns the name of the display device. Should be zeroed if this information is not available.</summary>
-        [MarshalAs(UnmanagedType.LPStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
-        internal string DisplayName ;
-        /// <summary> Display diffuse screen reflectance 0-1 (100%) in units of 0.01.</summary>
-        internal int DiffuseScreenReflectance;
-        /// <summary> Bit vector for freesync flags.</summary>
-        internal int FreesyncFlags;
-        /// <summary> Display Blue Chromaticity X coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityBlueX;
-        /// <summary> Display Blue Chromaticity Y coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityBlueY;
-        /// <summary> Display Green Chromaticity X coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityGreenX;
-        /// <summary> Display Green  Chromaticity Y coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityGreenY;
+        /// <summary> Returns the Pixel formats the display supports DDCInfo Pixel Formats.</summary>
+        internal int PanelPixelFormat;
+        /// <summary> Return EDID serial ID.</summary>
+        internal int SerialID;
+        /// <summary> Return minimum monitor luminance data.</summary>
+        internal int MinLuminanceData;
+        /// <summary> Return average monitor luminance data. </summary>
+        internal int AvgLuminanceData;
+        /// <summary> Return maximum monitor luminance data.</summary>
+        internal int MaxLuminanceData;
+        /// <summary> Bit vector of supported transfer functions ADLSourceContentAttributes transfer functions (gamma). </summary>
+        internal int SupportedTransferFunction;
+        /// <summary> Bit vector of supported color spaces ADLSourceContentAttributes color spaces.</summary>
+        internal int SupportedColorSpace;
         /// <summary> Display Red Chromaticity X coordinate multiplied by 10000.</summary>
         internal int NativeDisplayChromaticityRedX;
         /// <summary> Display Red Chromaticity Y coordinate multiplied by 10000.</summary>
         internal int NativeDisplayChromaticityRedY;
+        /// <summary> Display Green Chromaticity X coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityGreenX;
+        /// <summary> Display Green  Chromaticity Y coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityGreenY;
+        /// <summary> Display Blue Chromaticity X coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityBlueX;
+        /// <summary> Display Blue Chromaticity Y coordinate multiplied by 10000.</summary>
+        internal int NativeDisplayChromaticityBlueY;
         /// <summary> Display White Chromaticity X coordinate multiplied by 10000.</summary>
         internal int NativeDisplayChromaticityWhiteX;
         /// <summary> Display White Chromaticity Y coordinate multiplied by 10000.</summary>
         internal int NativeDisplayChromaticityWhiteY;
-        /// <summary> Returns the Pixel formats the display supports DDCInfo Pixel Formats.</summary>
-        internal int PanelPixelFormat;
-        /// <summary> Reserved1 </summary>
-        internal int Reserved1;
-        /// <summary> Reserved2 </summary>
-        internal int Reserved2;
-        /// <summary> Reserved3 </summary>
-        internal int Reserved3;
-        /// <summary> Reserved4 </summary>
-        internal int Reserved4;
+        /// <summary> Display diffuse screen reflectance 0-1 (100%) in units of 0.01.</summary>
+        internal int DiffuseScreenReflectance;
         /// <summary> Display specular screen reflectance 0-1 (100%) in units of 0.01.</summary>
         internal int SpecularScreenReflectance;
-        /// <summary> Bit vector of supported color spaces ADLSourceContentAttributes color spaces.</summary>
-        internal int SupportedColorSpace;
         /// <summary> Bit vector of supported color spaces ADLDDCInfo2 HDR support options.</summary>
         internal int SupportedHDR;
-        /// <summary> Bit vector of supported transfer functions ADLSourceContentAttributes transfer functions (gamma). </summary>
-        internal int SupportedTransferFunction;
-        /// <summary> Return average monitor luminance data. </summary>
-        internal uint AvgLuminanceData;
-        /// <summary> Return EDID flags.</summary>
-        internal uint DDCInfoFlag;
-        /// <summary> Returns the manufacturer ID of the display device. Should be zeroed if this information is not available.</summary>
-        internal uint ManufacturerID;
-        /// <summary> Returns the maximum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
-        internal uint MaxBacklightMaxLuminanceData;
-        /// <summary> Returns the maximum backlight minimum luminance. Should be zeroed if this information is not available.</summary>
-        internal uint MaxBacklightMinLuminanceData;
-        /// <summary> Returns the maximum Horizontal supported resolution. Should be zeroed if this information is not available.</summary>
-        internal uint MaxHResolution;
-        /// <summary> Return maximum monitor luminance data.</summary>
-        internal uint MaxLuminanceData;
-        /// <summary> Returns the maximum supported refresh rate. Should be zeroed if this information is not available. </summary>
-        internal uint MaxRefresh;
-        /// <summary> Returns the maximum Vertical supported resolution. Should be zeroed if this information is not available. </summary>
-        internal uint MaxVResolution;
-        /// <summary> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
-        internal uint MinBacklightMaxLuminanceData;
-        /// <summary> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
-        internal uint MinBacklightMinLuminanceData;
-        /// <summary> Return minimum monitor luminance data.</summary>
-        internal uint MinLuminanceData;
+        /// <summary> Bit vector for freesync flags.</summary>
+        internal int FreesyncFlags;
         /// <summary> Return minimum monitor luminance without dimming data.</summary>
-        internal uint MinLuminanceNoDimmingData;
-        /// <summary> Returns the product ID of the display device. Should be zeroed if this information is not available.</summary>
-        internal uint ProductID;
-        /// <summary> Returns the display device preferred timing mode's horizontal resolution.</summary>
-        internal uint PTMCx;
-        /// <summary> Returns the display device preferred timing mode's vertical resolution. </summary>
-        internal uint PTMCy;
-        /// <summary> Returns the display device preferred timing mode's refresh rate.</summary>
-        internal uint PTMRefreshRate;
-        /// <summary> Return EDID serial ID.</summary>
-        internal uint SerialID;
-        /// <summary> Size of the structure. </summary>
-        internal uint Size;
-        /// <summary> Whether this display device support DDC</summary>
-        internal uint SupportsDDC;
+        internal int MinLuminanceNoDimmingData;
+        /// <summary> Returns the maximum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
+        internal int MaxBacklightMaxLuminanceData;
+        /// <summAry> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
+        internal int MinBacklightMaxLuminanceData;
+        /// <summary> Returns the maximum backlight minimum luminance. Should be zeroed if this information is not available.</summary>
+        internal int MaxBacklightMinLuminanceData;
+        /// <summary> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
+        internal int MinBacklightMinLuminanceData;
+        /// <summary> Reserved </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        internal int[] Reserved;
     }
 
     /// <summary> ADLDisplayID Structure</summary>
@@ -834,6 +858,8 @@ namespace ATI.ADL
         internal const int ADL_MAX_DEVICENAME = 32;
         /// <summary> Define the maximum EDID Data length</summary>
         internal const int ADL_MAX_EDIDDATA_SIZE = 256;
+        /// <summary> Define the maximum display names</summary>
+        internal const int ADL_MAX_DISPLAY_NAME = 256;
 
         // Result Codes
         /// <summary> ADL function completed successfully. </summary>                
@@ -1037,6 +1063,9 @@ namespace ATI.ADL
             internal static extern int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
 
             [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+
+            [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr AdapterInfoArray);
 
             [DllImport(Atiadlxx_FileName)]
@@ -1050,6 +1079,12 @@ namespace ATI.ADL
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL2_Display_DDCInfo2_Get(IntPtr contextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 DDCInfo);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+
+            [DllImport(Atiadlxx_FileName)]
+            internal static extern int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
@@ -1314,6 +1349,29 @@ namespace ATI.ADL
         private static bool ADL2_Adapter_Active_Get_Check = false;
         #endregion ADL2_Adapter_Active_Get
 
+        #region ADL2_AdapterX2_Caps
+        /// <summary> ADL2_AdapterX2_Caps Delegates</summary>
+        internal static ADL2_AdapterX2_Caps ADL2_AdapterX2_Caps
+        {
+            get
+            {
+                if (!ADL2_AdapterX2_Caps_Check && null == ADL2_AdapterX2_Caps_)
+                {
+                    ADL2_AdapterX2_Caps_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_AdapterX2_Caps"))
+                    {
+                        ADL2_AdapterX2_Caps_ = ADLImport.ADL2_AdapterX2_Caps;
+                    }
+                }
+                return ADL2_AdapterX2_Caps_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_AdapterX2_Caps ADL2_AdapterX2_Caps_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_AdapterX2_Caps_Check = false;
+        #endregion ADL2_AdapterX2_Caps
+
 
         #region ADL2_Adapter_AdapterInfo_Get
         /// <summary> ADL2_Adapter_AdapterInfo_Get Delegates</summary>
@@ -1430,6 +1488,51 @@ namespace ATI.ADL
         private static bool ADL2_Display_DDCInfo2_Get_Check = false;
         #endregion ADL2_Display_DDCInfo2_Get
 
+        #region ADL2_Display_DisplayInfo_Get
+        /// <summary> ADL2_Display_DisplayInfo_Get Delegates</summary>
+        internal static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get
+        {
+            get
+            {
+                if (!ADL2_Display_DisplayInfo_Get_Check && null == ADL2_Display_DisplayInfo_Get_)
+                {
+                    ADL2_Display_DisplayInfo_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayInfo_Get"))
+                    {
+                        ADL2_Display_DisplayInfo_Get_ = ADLImport.ADL2_Display_DisplayInfo_Get;
+                    }
+                }
+                return ADL2_Display_DisplayInfo_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Display_DisplayInfo_Get_Check = false;
+        #endregion ADL2_Display_DisplayInfo_Get
+
+        #region ADL2_Display_DeviceConfig_Get
+        /// <summary> ADL2_Display_DeviceConfig_Get Delegates</summary>
+        internal static ADL2_Display_DeviceConfig_Get ADL2_Display_DeviceConfig_Get
+        {
+            get
+            {
+                if (!ADL2_Display_DeviceConfig_Get_Check && null == ADL2_Display_DeviceConfig_Get_)
+                {
+                    ADL2_Display_DeviceConfig_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DeviceConfig_Get"))
+                    {
+                        ADL2_Display_DeviceConfig_Get_ = ADLImport.ADL2_Display_DeviceConfig_Get;
+                    }
+                }
+                return ADL2_Display_DeviceConfig_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Display_DeviceConfig_Get ADL2_Display_DeviceConfig_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Display_DeviceConfig_Get_Check = false;
+        #endregion ADL2_Display_DeviceConfig_Get
 
         #region ADL_Main_Control_Create
         /// <summary> ADL_Main_Control_Create Delegates</summary>
