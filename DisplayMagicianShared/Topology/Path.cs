@@ -77,32 +77,17 @@ namespace DisplayMagicianShared.Topology
 
             // Check whether the Profile Viewport properties are equal
             // Two profiles are equal only when they have the same viewport data exactly
-            /*if (PixelFormat == other.PixelFormat &&
-                Position.Equals(other.Position) &&
-                Resolution.Equals(other.Resolution) &&
-                SourceId == other.SourceId)*/
-            // Note: Removed the source ID as it changes on boot sometimes!
-            // It can change and the profiles can still be the same
             if (PixelFormat == other.PixelFormat &&
                 Position.Equals(other.Position) &&
                 Resolution.Equals(other.Resolution) &&
                 SourceId == other.SourceId)
             {
-                /*// If the above all match, then we need to check the DisplayTargets
-                if (other.TargetDisplays.SequenceEqual(TargetDisplays))
-                    return true;
-                else
-                    return false;*/
+                // If the above all match, then we need to check the DisplayTargets
                 foreach (PathTarget myTargetDisplay in TargetDisplays)
                 {
                     if (!other.TargetDisplays.Contains(myTargetDisplay))
                         return false;
-                }
-                /*foreach (PathTarget theirTargetDisplay in other.TargetDisplays)
-                {
-                    if (!TargetDisplays.Contains(theirTargetDisplay))
-                        return false;
-                }*/
+                }                
                 return true;
             }
             else

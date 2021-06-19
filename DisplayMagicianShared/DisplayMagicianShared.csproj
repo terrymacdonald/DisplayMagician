@@ -52,7 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AMD\ADL.cs" />
-    <Compile Include="AMD\ADLWrapper.cs" />
+    <Compile Include="AMD\AMDLibrary.cs" />
     <Compile Include="SharedLogger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

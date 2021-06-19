@@ -30,7 +30,7 @@ namespace DisplayMagicianShared
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;
-        private static ADLWrapper AMDLibrary;
+        private static AMDLibrary AMDLibrary;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -61,7 +61,7 @@ namespace DisplayMagicianShared
             try
             {
                 SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
-                AMDLibrary = new ADLWrapper();
+                AMDLibrary = new AMDLibrary();
             }
             catch (Exception ex)
             {
@@ -555,6 +555,13 @@ namespace DisplayMagicianShared
 
         public static void UpdateActiveProfile()
         {
+
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+
+            if (amdLibrary.IsInstalled)
+            {
+                amdLibrary.GetActiveProfile();
+            }
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
@@ -1156,7 +1163,7 @@ namespace DisplayMagicianShared
             }
 
             // If the Video Card is an AMD, then we should generate specific AMD displayIdentifiers
-            AMD.ADLWrapper thingy = new AMD.ADLWrapper();
+            AMD.AMDLibrary thingy = new AMD.AMDLibrary();
 
             if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
             //if (false)
