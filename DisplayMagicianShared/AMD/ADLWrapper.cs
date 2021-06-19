@@ -264,7 +264,7 @@ namespace DisplayMagicianShared.AMD
 
                                             for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
                                             {
-                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
+                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
 
                                                 if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex == -1)
                                                 {
@@ -723,7 +723,7 @@ namespace DisplayMagicianShared.AMD
 
                                             for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
                                             {
-                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
+                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
 
                                                 if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex == -1)
                                                 {
