@@ -282,12 +282,12 @@ namespace DisplayMagician.UIForms
             this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
             this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_save_profile.Location = new System.Drawing.Point(703, 88);
+            this.lbl_save_profile.Location = new System.Drawing.Point(668, 82);
             this.lbl_save_profile.Name = "lbl_save_profile";
-            this.lbl_save_profile.Size = new System.Drawing.Size(261, 102);
+            this.lbl_save_profile.Size = new System.Drawing.Size(296, 102);
             this.lbl_save_profile.TabIndex = 33;
-            this.lbl_save_profile.Text = "Setup your displays with Windows or NVIDIA Setup, then return to DisplayMagician " +
-    "and click \'Save As\' to save this Display Profile.";
+            this.lbl_save_profile.Text = "Setup your displays with NVIDIA Setup, AMD Setup or Windows Setup, then return to" +
+    " DisplayMagician and click \'Save As\' to save this Display Profile.";
             this.lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // dv_profile
