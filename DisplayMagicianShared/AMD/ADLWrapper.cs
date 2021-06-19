@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using ATI.ADL;
 using Microsoft.Win32.SafeHandles;
 using DisplayMagicianShared;
+using System.Threading;
 
 namespace DisplayMagicianShared.AMD
 {
@@ -138,7 +139,6 @@ namespace DisplayMagicianShared.AMD
 
             int ADLRet = ADL.ADL_ERR;
             int NumberOfAdapters = 0;
-            int NumberOfDisplays = 0;
 
             List<string> displayIdentifiers = new List<string>();
 
@@ -150,18 +150,11 @@ namespace DisplayMagicianShared.AMD
 
             if (NumberOfAdapters > 0)
             {
-                // Get OS adpater info from ADL
-                ADLAdapterInfoX2Array OSAdapterInfoData;
-                OSAdapterInfoData = new ADLAdapterInfoX2Array();
 
                 IntPtr AdapterBuffer = IntPtr.Zero;
                 if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
                 {
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: ADL2_Adapter_AdapterInfoX4_Get DLL function exists.");
-                    // Figure out the size of the AdapterBuffer we need to build                    
-                    int size = Marshal.SizeOf(OSAdapterInfoData);
-                    AdapterBuffer = Marshal.AllocCoTaskMem((int)size);
-                    Marshal.StructureToPtr(OSAdapterInfoData, AdapterBuffer, false);
 
                     // Get the Adapter info and put it in the AdapterBuffer
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Running ADL2_Adapter_AdapterInfoX4_Get to find all known AMD adapters.");
@@ -169,16 +162,18 @@ namespace DisplayMagicianShared.AMD
                     int numAdapters = 0;
                     ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
                     if (ADLRet == ADL.ADL_OK)
-                    {
-                        // Use the AdapterBuffer pointer to marshal the OS Adapter Info into a structure
-                        OSAdapterInfoData = (ADLAdapterInfoX2Array)Marshal.PtrToStructure(AdapterBuffer, OSAdapterInfoData.GetType());
+                    {                        
+
                         int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
 
                         SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known AMD adapters.");
 
+                        ADLAdapterInfoX2 oneAdapter = new ADLAdapterInfoX2();
                         // Go through each adapter
-                        foreach (ADLAdapterInfoX2 oneAdapter in OSAdapterInfoData.ADLAdapterInfoX2)
+                        for (int adapterLoop = 0; adapterLoop < numAdapters; adapterLoop++)
                         {
+                            oneAdapter = (ADLAdapterInfoX2)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (adapterLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
+
                             if (oneAdapter.Exist != 1)
                             {
                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
@@ -252,23 +247,24 @@ namespace DisplayMagicianShared.AMD
                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Adapter Num of Overlays = {AdapterCapabilities.NumOverlays}");
 
                                 // Obtain information about displays
-                                ADLDisplayInfoArray displayInfoArray = new ADLDisplayInfoArray();
+                                //ADLDisplayInfoArray displayInfoArray = new ADLDisplayInfoArray();
 
                                 if (ADL.ADL2_Display_DisplayInfo_Get != null)
                                 {
                                     IntPtr DisplayBuffer = IntPtr.Zero;
-
+                                    int numDisplays = 0;
                                     // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 0);
+                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 0);
                                     if (ADLRet == ADL.ADL_OK)
                                     {
 
                                         try
                                         {
-                                            displayInfoArray = (ADLDisplayInfoArray)Marshal.PtrToStructure(DisplayBuffer, displayInfoArray.GetType());
+                                            ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
 
-                                            foreach (ADLDisplayInfo oneDisplayInfo in displayInfoArray.ADLDisplayInfo)
+                                            for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
                                             {
+                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
 
                                                 if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex == -1)
                                                 {
@@ -602,7 +598,6 @@ namespace DisplayMagicianShared.AMD
 
             int ADLRet = ADL.ADL_ERR;
             int NumberOfAdapters = 0;
-            int NumberOfDisplays = 0;
 
             List<string> displayIdentifiers = new List<string>();
 
@@ -614,18 +609,11 @@ namespace DisplayMagicianShared.AMD
 
             if (NumberOfAdapters > 0)
             {
-                // Get OS adpater info from ADL
-                ADLAdapterInfoX2Array OSAdapterInfoData;
-                OSAdapterInfoData = new ADLAdapterInfoX2Array();
 
                 IntPtr AdapterBuffer = IntPtr.Zero;
                 if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
                 {
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateAllAvailableDisplayIdentifiers: ADL2_Adapter_AdapterInfoX4_Get DLL function exists.");
-                    // Figure out the size of the AdapterBuffer we need to build                    
-                    int size = Marshal.SizeOf(OSAdapterInfoData);
-                    AdapterBuffer = Marshal.AllocCoTaskMem((int)size);
-                    Marshal.StructureToPtr(OSAdapterInfoData, AdapterBuffer, false);
 
                     // Get the Adapter info and put it in the AdapterBuffer
                     SharedLogger.logger.Trace($"ADLWrapper/GenerateAllAvailableDisplayIdentifiers: Running ADL2_Adapter_AdapterInfoX4_Get to find all known AMD adapters.");
@@ -634,15 +622,17 @@ namespace DisplayMagicianShared.AMD
                     ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
                     if (ADLRet == ADL.ADL_OK)
                     {
-                        // Use the AdapterBuffer pointer to marshal the OS Adapter Info into a structure
-                        OSAdapterInfoData = (ADLAdapterInfoX2Array)Marshal.PtrToStructure(AdapterBuffer, OSAdapterInfoData.GetType());
+
                         int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
 
                         SharedLogger.logger.Trace($"ADLWrapper/GenerateAllAvailableDisplayIdentifiers: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known AMD adapters.");
 
+                        ADLAdapterInfoX2 oneAdapter = new ADLAdapterInfoX2();
                         // Go through each adapter
-                        foreach (ADLAdapterInfoX2 oneAdapter in OSAdapterInfoData.ADLAdapterInfoX2)
+                        for (int adapterLoop = 0; adapterLoop < numAdapters; adapterLoop++)
                         {
+                            oneAdapter = (ADLAdapterInfoX2)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (adapterLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
+
                             if (oneAdapter.Exist != 1)
                             {
                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateAllAvailableDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
@@ -716,23 +706,24 @@ namespace DisplayMagicianShared.AMD
                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateAllAvailableDisplayIdentifiers: Adapter Num of Overlays = {AdapterCapabilities.NumOverlays}");
 
                                 // Obtain information about displays
-                                ADLDisplayInfoArray displayInfoArray = new ADLDisplayInfoArray();
+                                //ADLDisplayInfoArray displayInfoArray = new ADLDisplayInfoArray();
 
                                 if (ADL.ADL2_Display_DisplayInfo_Get != null)
                                 {
                                     IntPtr DisplayBuffer = IntPtr.Zero;
-
+                                    int numDisplays = 0;
                                     // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 0);
+                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 0);
                                     if (ADLRet == ADL.ADL_OK)
                                     {
 
                                         try
                                         {
-                                            displayInfoArray = (ADLDisplayInfoArray)Marshal.PtrToStructure(DisplayBuffer, displayInfoArray.GetType());
+                                            ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
 
-                                            foreach (ADLDisplayInfo oneDisplayInfo in displayInfoArray.ADLDisplayInfo)
+                                            for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
                                             {
+                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
 
                                                 if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex == -1)
                                                 {
@@ -749,8 +740,7 @@ namespace DisplayMagicianShared.AMD
                                                     continue;
                                                 }
 
-                                                // We want any connected display, wheteher they are mapped or non-mapped displays in the OS
-                                                
+                                                // We want connected displays  whether they are mapped or not mapped in Windows OS
 
                                                 SharedLogger.logger.Trace($"ADLWrapper/GenerateAllAvailableDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is connected and mapped in Windows OS");
 

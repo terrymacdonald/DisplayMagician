@@ -1259,13 +1259,18 @@ namespace DisplayMagicianShared
                     }
                 }
             }
-            // else videocard is not NVIDIA so we just use the WindowsAPI access method
-            // Note: This won't support any special AMD EyeFinity profiles unfortunately.....
-            // TODO: Add the detection and generation of the device ids using an AMD library
-            //       so that we can match valid AMD Eyefinity profiles with valid AMD standard profiles.
+            // else if there is an AMD video card then we use that mode
+            else if (AMDLibrary.IsInstalled)
+            {
+                //isAMD = true;
+                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: The video card is an AMD video card.");
+                // Needs a lot of work here! We need to check if the AMD returned the right stuff, and then use Windows if there is an error.
+                return AMDLibrary.GenerateProfileDisplayIdentifiers();
+            }
+            // else video card is not NVIDIA or AMD so we just use the standard WindowsAPI access method
             else
             {
-                
+
                 // Then go through the adapters we have running using the WindowsDisplayAPI
                 List<Display> attachedDisplayDevices = Display.GetDisplays().ToList();
                 List<UnAttachedDisplay> unattachedDisplayDevices = UnAttachedDisplay.GetUnAttachedDisplays().ToList();

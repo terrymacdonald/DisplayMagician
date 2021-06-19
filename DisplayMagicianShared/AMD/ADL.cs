@@ -419,15 +419,6 @@ namespace ATI.ADL
         internal int InfoValue;
     }
 
-    /// <summary> ADLAdapterInfoX2 Array</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLAdapterInfoX2Array
-    {
-        /// <summary> ADLAdapterInfo Array </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_ADAPTERS)]
-        internal ADLAdapterInfoX2[] ADLAdapterInfoX2;
-    }
-
     #endregion ADLAdapterInfo
 
 
@@ -644,15 +635,6 @@ namespace ATI.ADL
         internal bool NONLOCAL;
         /// <summary> Indicates the display is a projector </summary>
         internal bool SHOWTYPE_PROJECTOR;
-    }
-
-    /// <summary> ADLDisplayInfo Array</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayInfoArray
-    {
-        /// <summary> ADLDisplayInfo Array </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
-        internal ADLDisplayInfo[] ADLDisplayInfo;
     }
 
     /// <summary> ADLDisplayConfig Structure</summary>
@@ -887,12 +869,14 @@ namespace ATI.ADL
         #region Internal Constant
         /// <summary> Selects all adapters instead of aparticular single adapter</summary>
         internal const int ADL_ADAPTER_INDEX_ALL = -1;
+        /// <summary> Define the maximum char</summary>
+        internal const int ADL_MAX_CHAR = 4096;
         /// <summary> Define the maximum path</summary>
         internal const int ADL_MAX_PATH = 256;
         /// <summary> Define the maximum adapters</summary>
-        internal const int ADL_MAX_ADAPTERS = 40 /* 150 */;
+        internal const int ADL_MAX_ADAPTERS = 250;
         /// <summary> Define the maximum displays</summary>
-        internal const int ADL_MAX_DISPLAYS = 40 /* 150 */;
+        internal const int ADL_MAX_DISPLAYS = 150;
         /// <summary> Define the maximum device name length</summary>
         internal const int ADL_MAX_DEVICENAME = 32;
         /// <summary> Define the maximum EDID Data length</summary>
