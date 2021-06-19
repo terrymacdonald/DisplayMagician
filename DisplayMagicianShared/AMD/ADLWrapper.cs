@@ -713,7 +713,7 @@ namespace DisplayMagicianShared.AMD
                                     IntPtr DisplayBuffer = IntPtr.Zero;
                                     int numDisplays = 0;
                                     // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 0);
+                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 1);
                                     if (ADLRet == ADL.ADL_OK)
                                     {
 
@@ -723,13 +723,7 @@ namespace DisplayMagicianShared.AMD
 
                                             for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
                                             {
-                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
-
-                                                if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex == -1)
-                                                {
-                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateAllAvailableDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
-                                                    continue;
-                                                }
+                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());                                              
 
                                                 // Convert the displayInfoValue to something usable using a library function I made
                                                 ConvertedDisplayInfoValue displayInfoValue = ADL.ConvertDisplayInfoValue(oneDisplayInfo.DisplayInfoValue);
