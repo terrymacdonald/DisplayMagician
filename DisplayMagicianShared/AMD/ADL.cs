@@ -896,7 +896,7 @@ namespace ATI.ADL
         /// <summary> Define the maximum device name length</summary>
         internal const int ADL_MAX_DEVICENAME = 32;
         /// <summary> Define the maximum EDID Data length</summary>
-        internal const int ADL_MAX_EDIDDATA_SIZE = 256;
+        internal const int ADL_MAX_EDIDDATA_SIZE = 256; // number of UCHAR
         /// <summary> Define the maximum display names</summary>
         internal const int ADL_MAX_DISPLAY_NAME = 256;
 
@@ -1012,6 +1012,44 @@ namespace ATI.ADL
         /// <summary> Indicates Virtual Connector type.</summary>
         internal const int ADL_CONNECTOR_TYPE_VIRTUAL = 13;
 
+        // ADL Display Connector Types
+        /// <summary> Indicates Unknown Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_UNKNOWN = 0;
+        /// <summary> Indicates VGA Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_VGA = 1;
+        /// <summary> Indicates DVI-D Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_DVI_D = 2;
+        /// <summary> Indicates DVI-I Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_DVI_I = 3;
+        /// <summary> Indicates ATICV NTSC Dongle Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC = 4;
+        /// <summary> Indicates ATICV Japanese Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN = 5;
+        /// <summary> Indicates ATICV non-I2C Japanese Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN = 6;
+        /// <summary> Indicates ATICV non-I2C NTSC Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC = 7;
+        /// <summary> Indicates Proprietary Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_PROPRIETARY = 8;
+        /// <summary> Indicates HDMI Type A Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_HDMI_TYPE_A = 10;
+        /// <summary> Indicates HDMI Type B Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_HDMI_TYPE_B = 11;
+        /// <summary> Indicates S-Video Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_SVIDEO = 12;
+        /// <summary> Indicates Composite Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_COMPOSITE = 13;
+        /// <summary> Indicates RCA 3-component Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_RCA_3COMPONENT = 14;
+        /// <summary> Indicates DisplayPort Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_DISPLAYPORT = 15;
+        /// <summary> Indicates EDP Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_EDP = 16;
+        /// <summary> Indicates Wireless Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY = 17;
+        /// <summary> Indicates USB Type-C Display Connector type.</summary>
+        internal const int ADL_DISPLAY_CONTYPE_USB_TYPE_C = 18;
+
         // Display Info Constants
         /// <summary> Indicates the display is connected .</summary>
         internal const int ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED = 0x00000001;
@@ -1079,7 +1117,7 @@ namespace ATI.ADL
 
         internal enum ADLConnectionType
         {
-            Unknown = 1, 
+            VGA = 0, 
             DVI = 1,
             DVI_SL = 2,
             HDMI = 4,
@@ -1094,6 +1132,30 @@ namespace ATI.ADL
             ActiveDongle = 12,
             Virtual = 13
         }
+
+        internal enum ADLDisplayConnectionType
+        {
+            Unknown = 0,
+            VGA = 1,
+            DVI_D = 2,
+            DVI_I = 3,
+            HDMI = 4,
+            ATICV_NTSC_Dongle = 4,
+            ATICV_JPN_Dongle = 5,
+            ATICV_NONI2C_NTSC_Dongle = 6,
+            ATICV_NONI2C_JPN_Dongle = 7,
+            Proprietary = 8,
+            HDMITypeA = 10,
+            HTMITypeB = 11,
+            SVideo = 12,
+            Composite = 13,
+            RCA_3Component = 14,
+            DisplayPort = 15,
+            EDP = 16,
+            WirelessDisplay = 17,
+            USBTypeC = 18
+        }
+
         #endregion Internal Enums
 
         #region Class ADLImport

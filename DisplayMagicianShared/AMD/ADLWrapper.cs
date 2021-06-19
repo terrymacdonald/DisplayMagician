@@ -256,10 +256,21 @@ namespace DisplayMagicianShared.AMD
                         SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known AMD adapters.");
 
                         // Go through each adapter
-                        for (int i = 0; i < NumberOfAdapters; i++)
-                        {
-                            ADLAdapterInfoX2 oneAdapter = OSAdapterInfoData.ADLAdapterInfoX2[i];
+                        foreach (ADLAdapterInfoX2 oneAdapter in OSAdapterInfoData.ADLAdapterInfoX2)
+                        {                            
+                            if (oneAdapter.Exist != 1)
+                            {
+                                SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
+                                Console.WriteLine($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
+                                continue;
+                            }
 
+                            if (oneAdapter.Present != 1)
+                            {
+                                SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} isn't enabled at present so skipping detection for this adapter.");
+                                Console.WriteLine($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} isn't enabled at present so skipping detection for this adapter.");
+                                continue;
+                            }
 
                             // Check if the adapter is active
                             if (ADL.ADL2_Adapter_Active_Get != null)
@@ -270,11 +281,18 @@ namespace DisplayMagicianShared.AMD
                                 // Only continue if the adapter is enabled
                                 if (IsActive != ADL.ADL_TRUE)
                                 {
-                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} isn't active ({oneAdapter.AdapterName}).");
+                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} isn't active ({oneAdapter.AdapterName}).");
                                     continue;
                                 }
 
-                                SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} is active! ({oneAdapter.AdapterName}).");
+                                // Only continue if the adapter index is > 0
+                                if (oneAdapter.AdapterIndex < 0)
+                                {
+                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter has an adapter index of {oneAdapter.AdapterIndex.ToString()} which indicates it is not a real adapter.");
+                                    continue;
+                                }
+
+                                SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} is active! ({oneAdapter.AdapterName}).");
 
                                 Console.WriteLine($"### Adapter Info for Adapter #{oneAdapter.AdapterIndex} ###");
                                 Console.WriteLine($"Adapter AdapterIndex = {oneAdapter.AdapterIndex}");
@@ -314,12 +332,11 @@ namespace DisplayMagicianShared.AMD
                                 Console.WriteLine($"Adapter Num of Overlays = {AdapterCapabilities.NumOverlays}");
 
                                 // Obtain information about displays
-                                ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
+                                ADLDisplayInfoArray displayInfoArray = new ADLDisplayInfoArray();
 
                                 if (ADL.ADL2_Display_DisplayInfo_Get != null)
                                 {
                                     IntPtr DisplayBuffer = IntPtr.Zero;
-                                    int j = 0;
 
                                     // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
                                     ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref NumberOfDisplays, out DisplayBuffer, 0);
@@ -328,16 +345,14 @@ namespace DisplayMagicianShared.AMD
 
                                         try
                                         {
+                                            displayInfoArray = (ADLDisplayInfoArray)Marshal.PtrToStructure(DisplayBuffer, displayInfoArray.GetType());
 
-                                            for (j = 0; j < NumberOfDisplays; j++)
+                                            foreach (ADLDisplayInfo oneDisplayInfo in displayInfoArray.ADLDisplayInfo)
                                             {
-                                                // Marshal the returned array of displayinfo into managed objects one by one
-                                                // NOTE: the ToInt64 work on 64 bit, need to change to ToInt32 for 32 bit OS
-                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (j * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
 
                                                 if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex == -1)
                                                 {
-                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
+                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
                                                     continue;
                                                 }
 
@@ -346,20 +361,21 @@ namespace DisplayMagicianShared.AMD
 
                                                 if (!displayInfoValue.DISPLAYCONNECTED)
                                                 {
-                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not connected");
+                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not connected");
                                                     continue;
                                                 }
 
                                                 // Skip connected but non-mapped displays (not mapped in windows) - we want all displays currently visible in the OS
                                                 if (!displayInfoValue.DISPLAYMAPPED)
                                                 {
-                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{i} ({oneAdapter.AdapterName}) AdapterID display ID#{j} is not mapped in Windows OS");
+                                                    SharedLogger.logger.Trace($"ADLWrapper/GenerateProfileDisplayIdentifiers: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not mapped in Windows OS");
                                                     continue;
                                                 }
+                                                
+                                                ADL.ADLDisplayConnectionType displayConnector = (ADL.ADLDisplayConnectionType)oneDisplayInfo.DisplayConnector;
 
-                                                // Skip fake displays
                                                 Console.WriteLine($"### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                Console.WriteLine($"Display Connector = {oneDisplayInfo.DisplayConnector}");
+                                                Console.WriteLine($"Display Connector = {displayConnector.ToString("G")}");
                                                 Console.WriteLine($"Display Controller Index = {oneDisplayInfo.DisplayControllerIndex}");
                                                 Console.WriteLine($"Display Logical Adapter Index = {oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex}");
                                                 Console.WriteLine($"Display Logical Index = {oneDisplayInfo.DisplayID.DisplayLogicalIndex}");
@@ -369,7 +385,7 @@ namespace DisplayMagicianShared.AMD
                                                 Console.WriteLine($"Display Info Value = {oneDisplayInfo.DisplayInfoValue}");
                                                 Console.WriteLine($"Display Manufacturer Name = {oneDisplayInfo.DisplayManufacturerName}");
                                                 Console.WriteLine($"Display Name = {oneDisplayInfo.DisplayName}");
-                                                Console.WriteLine($"Display Output Type = {oneDisplayInfo.DisplayOutputType.ToString("G")}");
+                                                Console.WriteLine($"Display Output Type = {oneDisplayInfo.DisplayOutputType}");
                                                 Console.WriteLine($"Display Type = {oneDisplayInfo.DisplayType}");
                                                 
                                                 Console.WriteLine($"Display Info Value DISPLAYCONNECTED = {displayInfoValue.DISPLAYCONNECTED}");
@@ -388,8 +404,8 @@ namespace DisplayMagicianShared.AMD
                                                 Console.WriteLine($"Display Info Value MULTIVPU_SUPPORTED = {displayInfoValue.MULTIVPU_SUPPORTED}");
                                                 Console.WriteLine($"Display Info Value NONLOCAL = {displayInfoValue.NONLOCAL}");
                                                 Console.WriteLine($"Display Info Value SHOWTYPE_PROJECTOR = {displayInfoValue.SHOWTYPE_PROJECTOR}");
-                                                                                                
 
+                                                ADL.ADLDisplayConnectionType displayConnectionType = ADL.ADLDisplayConnectionType.Unknown;
                                                 ADLDisplayConfig displayConfig = new ADLDisplayConfig();
                                                 displayConfig.Size = Marshal.SizeOf(displayConfig);
                                                 if (ADL.ADL2_Display_DeviceConfig_Get != null)
@@ -398,8 +414,10 @@ namespace DisplayMagicianShared.AMD
                                                     ADLRet = ADL.ADL2_Display_DeviceConfig_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayConfig);
                                                     if (ADLRet == ADL.ADL_OK)
                                                     {
+                                                        displayConnectionType = (ADL.ADLDisplayConnectionType)displayConfig.ConnectorType;
+
                                                         Console.WriteLine($"### Display Device Config for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        Console.WriteLine($"Display Connector Type = {displayConfig.ConnectorType}");
+                                                        Console.WriteLine($"Display Connector Type = {displayConnectionType.ToString("G")}");
                                                         Console.WriteLine($"Display Device Data = {displayConfig.DeviceData}");
                                                         Console.WriteLine($"Display Overridded Device Data = {displayConfig.OverriddedDeviceData}");
                                                         Console.WriteLine($"Display Reserved Data = {displayConfig.Reserved}");
@@ -499,6 +517,16 @@ namespace DisplayMagicianShared.AMD
                                                 displayInfoIdentifierSection.Add("AMD");
                                                 try
                                                 {
+                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting AMD Vendor ID from video card. Substituting with a # instead");
+                                                    displayInfoIdentifierSection.Add("#");
+                                                }
+                                                
+                                                try
+                                                {
                                                     displayInfoIdentifierSection.Add(oneAdapter.AdapterName);
                                                 }
                                                 catch (Exception ex)
@@ -538,9 +566,8 @@ namespace DisplayMagicianShared.AMD
                                                 }
 
                                                 try
-                                                {
-                                                    ADL.ADLConnectionType connector = (ADL.ADLConnectionType)oneDisplayInfo.DisplayOutputType;
-                                                    displayInfoIdentifierSection.Add(connector.ToString("G"));
+                                                {                                                  
+                                                    displayInfoIdentifierSection.Add(displayConnector.ToString("G"));
                                                 }
                                                 catch (Exception ex)
                                                 {
@@ -550,21 +577,41 @@ namespace DisplayMagicianShared.AMD
 
                                                 try
                                                 {
-                                                    displayInfoIdentifierSection.Add(oneDisplayInfo.DisplayManufacturerName);
+                                                    displayInfoIdentifierSection.Add(oneDisplayInfo.DisplayName);
                                                 }
                                                 catch (Exception ex)
                                                 {
-                                                    SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting Display manufacturer from AMD video card. Substituting with a # instead");
+                                                    SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting Display Name from display connected to AMD video card. Substituting with a # instead");
                                                     displayInfoIdentifierSection.Add("#");
                                                 }
 
                                                 try
                                                 {
-                                                    displayInfoIdentifierSection.Add(oneDisplayInfo.DisplayName);
+                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ManufacturerID.ToString());
                                                 }
                                                 catch (Exception ex)
                                                 {
-                                                    SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting Display Name from AMD video card. Substituting with a # instead");
+                                                    SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting Manufacturer ID from display connected to AMD video card. Substituting with a # instead");
+                                                    displayInfoIdentifierSection.Add("#");
+                                                }
+
+                                                try
+                                                {
+                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ProductID.ToString());
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting Product ID from display connected to AMD video card. Substituting with a # instead");
+                                                    displayInfoIdentifierSection.Add("#");
+                                                }
+
+                                                try
+                                                {
+                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.SerialID.ToString());
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    SharedLogger.logger.Warn(ex, $"ADLWrapper/GenerateProfileDisplayIdentifiers: Exception getting Serial ID from display connected to AMD video card. Substituting with a # instead");
                                                     displayInfoIdentifierSection.Add("#");
                                                 }
 
@@ -573,6 +620,7 @@ namespace DisplayMagicianShared.AMD
                                                 // Add it to the list of display identifiers so we can return it
                                                 displayIdentifiers.Add(displayIdentifier);
 
+                                                Console.WriteLine($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                                                 SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                                             }
                                         }
@@ -628,6 +676,7 @@ namespace DisplayMagicianShared.AMD
 
             List<string> displayIdentifiers = new List<string>();
 
+            return displayIdentifiers;
 
             if (null != ADL.ADL_Adapter_NumberOfAdapters_Get)
             {
