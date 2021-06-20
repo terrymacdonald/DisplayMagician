@@ -556,16 +556,27 @@ namespace DisplayMagicianShared
         public static void UpdateActiveProfile()
         {
 
-            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
 
+            ProfileItem activeProfile;
+
+            // If we're 
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
             if (amdLibrary.IsInstalled)
             {
-                amdLibrary.GetActiveProfile();
+                AMDLibrary.AMDProfile thisOne = amdLibrary.GetActiveProfile();
+                activeProfile = new ProfileItem
+                {
+                    Name = "Current Display Profile",
+                    //Driver = "AMD",
+                    //ProfileData = amdLibrary.GetActiveProfile()
+                //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
+            };
+                activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
             }
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
-            ProfileItem activeProfile = new ProfileItem
+            activeProfile = new ProfileItem
             {
                 Name = "Current Display Profile",
                 Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),

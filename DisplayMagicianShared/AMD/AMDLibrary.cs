@@ -28,13 +28,24 @@ namespace DisplayMagicianShared.AMD
         private IntPtr _adlContextHandle = IntPtr.Zero;
 
         // Struct to be used as the AMD Profile
-        public struct AMDProfile
+        internal struct AMDProfile
         {
-            ADLMode DisplayMode;
-
-            int XPos;
-            int YPos;
+            internal List<AMDAdapter> Adapters;            
         }
+
+        // Struct to store the Display
+        internal struct AMDAdapter
+        {
+            internal ADLAdapterInfoX2 AdapterInfoX2;
+            internal List<AMDDisplay> Displays;
+        }
+
+        // Struct to store the Display
+        internal struct AMDDisplay
+        {
+            internal List<ADLMode> DisplayModes;
+        }
+
 
         static AMDLibrary() { }
         public AMDLibrary()
@@ -1020,7 +1031,7 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
-        public AMDProfile GetActiveProfile()
+        internal AMDProfile GetActiveProfile()
         {
             SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: Getting AMD active adapter count");
 
@@ -1029,6 +1040,7 @@ namespace DisplayMagicianShared.AMD
 
             List<string> displayIdentifiers = new List<string>();
             AMDProfile profileToCreate = new AMDProfile();
+            
 
             if (null != ADL.ADL2_Adapter_NumberOfAdapters_Get)
             {
@@ -1038,7 +1050,7 @@ namespace DisplayMagicianShared.AMD
 
             if (NumberOfAdapters > 0)
             {
-
+                profileToCreate.Adapters = new List<AMDAdapter>();
                 IntPtr AdapterBuffer = IntPtr.Zero;
                 if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
                 {
@@ -1096,6 +1108,12 @@ namespace DisplayMagicianShared.AMD
 
                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} is active! ({oneAdapter.AdapterName}).");
 
+                                // Store the Adapter information for later
+                                AMDAdapter adapterToCreate = new AMDAdapter();
+                                adapterToCreate.AdapterInfoX2 = oneAdapter;
+                                adapterToCreate.Displays = new List<AMDDisplay>();
+
+
                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: ### Adapter Info for Adapter #{oneAdapter.AdapterIndex} ###");
                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: Adapter AdapterIndex = {oneAdapter.AdapterIndex}");
                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: Adapter AdapterName = {oneAdapter.AdapterName}");
@@ -1132,6 +1150,9 @@ namespace DisplayMagicianShared.AMD
                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: Adapter Num of GL Sync Connectors = {AdapterCapabilities.NumOfGLSyncConnectors}");
                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: Adapter Num of Overlays = {AdapterCapabilities.NumOverlays}");
 
+                                // Store the Adapters Info for later
+                                profileToCreate.Adapters.Add(adapterToCreate);
+
                                 if (ADL.ADL2_Display_DisplayInfo_Get != null)
                                 {
                                     IntPtr DisplayBuffer = IntPtr.Zero;
@@ -1142,11 +1163,11 @@ namespace DisplayMagicianShared.AMD
                                     {
 
                                         try
-                                        {
-                                            ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
+                                        {                                      
 
                                             for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
                                             {
+                                                ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
                                                 oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
 
                                                 // Is the display mapped to this adapter? If not we skip it!
@@ -1173,6 +1194,11 @@ namespace DisplayMagicianShared.AMD
                                                 }
 
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is connected and mapped in Windows OS");
+
+                                                // Store the Display information for later
+                                                
+                                                AMDDisplay displayToCreate = new AMDDisplay();                                                
+                                                displayToCreate.DisplayModes = new List<ADLMode>();
 
                                                 ADL.ADLDisplayConnectionType displayConnector = (ADL.ADLDisplayConnectionType)oneDisplayInfo.DisplayConnector;
 
@@ -1206,8 +1232,7 @@ namespace DisplayMagicianShared.AMD
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Info Value MULTIVPU_SUPPORTED = {displayInfoValue.MULTIVPU_SUPPORTED}");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Info Value NONLOCAL = {displayInfoValue.NONLOCAL}");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Info Value SHOWTYPE_PROJECTOR = {displayInfoValue.SHOWTYPE_PROJECTOR}");
-                                                
-                                                ADLMode oneDisplayMode = new ADLMode();
+                                                                                                
                                                 IntPtr displayModeBuffer = IntPtr.Zero;
                                                 int numModes = 0;
                                                 if (ADL.ADL2_Display_Modes_Get != null)
@@ -1216,9 +1241,12 @@ namespace DisplayMagicianShared.AMD
                                                     ADLRet = ADL.ADL2_Display_Modes_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out numModes, out displayModeBuffer);
                                                     if (ADLRet == ADL.ADL_OK)
                                                     {
-                                                        for (int displayModeLoop = 0; displayModeLoop < numDisplays; displayModeLoop++)
+                                                        for (int displayModeLoop = 0; displayModeLoop < numModes; displayModeLoop++)
                                                         {
+                                                            ADLMode oneDisplayMode = new ADLMode();
                                                             oneDisplayMode = (ADLMode)Marshal.PtrToStructure(new IntPtr(displayModeBuffer.ToInt64() + (displayModeLoop * Marshal.SizeOf(oneDisplayMode))), oneDisplayMode.GetType());
+
+                                                            displayToCreate.DisplayModes.Add(oneDisplayMode);
 
                                                             //displayConnectionType = (ADL.ADLDisplayConnectionType)displayConfig.ConnectorType;
                                                             ConvertedDisplayModeFlags displayModeFlag = ADL.ConvertDisplayModeFlags(oneDisplayMode.ModeFlag);
@@ -1323,6 +1351,10 @@ namespace DisplayMagicianShared.AMD
                                                     {
                                                         SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: Error running ADL2_Display_DDCInfo2_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
                                                     }
+
+
+                                                    // Add the things we learnt about the Display to the AMDProfile.
+                                                    adapterToCreate.Displays.Add(displayToCreate);
                                                 }
 
                                                 int HDRSupported = 0;
@@ -1498,19 +1530,19 @@ namespace DisplayMagicianShared.AMD
             return profileToCreate;
         }
 
-        public void SetActiveProfile(AMDProfile profileToUse)
+        internal bool SetActiveProfile(AMDProfile profileToUse)
         {
-
+            return true;
         }
 
-        public void IsActiveProfile(AMDProfile profileToTest)
+        internal bool IsActiveProfile(AMDProfile profileToTest)
         {
-
+            return true;
         }
 
-        public void IsValidProfile(AMDProfile profileToTest)
+        internal bool IsValidProfile(AMDProfile profileToTest)
         {
-
+            return true;
         }
     }
 }
