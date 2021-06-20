@@ -26,7 +26,7 @@ namespace DisplayMagicianShared
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
         public static Dictionary<string, bool> _profileWarningLookup = new Dictionary<string, bool>();
         private static bool _profilesLoaded = false;
-        public static Version _version = new Version(1, 0, 0);
+        public static Version _version = new Version(2, 0, 0);
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;

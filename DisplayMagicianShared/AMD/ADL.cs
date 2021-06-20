@@ -145,6 +145,15 @@ namespace ATI.ADL
     /// <returns>return ADL Error Code</returns>
     internal delegate int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
 
+    /// <summary>ADL2 function to retrieve the current display mode information</summary>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="displayIndex">Display Index</param>
+    /// <param name="numModes">return a pointer to the number of modes retrieved.</param>
+    /// <param name="modes">return a pointer to the array of retrieved ADLMode display modes.</param>
+    /// <returns>return ADL Error Code</returns>
+    internal delegate int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
+   
 
     // ADL version of function delagates
 
@@ -1072,6 +1081,28 @@ namespace ATI.ADL
         /// <summary> Indicates the display is a projector </summary>
         internal const int ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR = 0x00100000;
 
+        // Display Mode Constants
+        /// <summary> Indicates the display is in interlaced mode</summary>
+        internal const int ADL_DISPLAY_MODE_INTERLACED_FLAG = 2;
+        /// <summary> Indicates the display is in progressive mode </summary>
+        internal const int ADL_DISPLAY_MODE_PROGRESSIVE_FLAG = 0;
+        /// <summary> Indicates the display colour format is 565</summary>
+        internal const int ADL_DISPLAY_MODE_COLOURFORMAT_565 = 0x00000001;
+        /// <summary> Indicates the display colour format is 8888 </summary>
+        internal const int ADL_DISPLAY_MODE_COLOURFORMAT_8888 = 0x00000002;
+        /// <summary> Indicates the display orientation is normal position</summary>
+        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000 = 0x00000004;
+        /// <summary> Indicates the display is in the 90 degree position</summary>
+        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_090 = 0x00000008;
+        /// <summary> Indicates the display in the 180 degree position</summary>
+        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_180 = 0x00000010;
+        /// <summary> Indicates the display is in the 270 degree position</summary>
+        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_270 = 0x00000020;
+        /// <summary> Indicates the display refresh rate is exact </summary>
+        internal const int ADL_DISPLAY_MODE_REFRESHRATE_ONLY = 0x00000080;
+        /// <summary> Indicates the display refresh rate is rounded</summary>
+        internal const int ADL_DISPLAY_MODE_REFRESHRATE_ROUNDED = 0x00000040;
+
         // DDCInfoX2 DDCInfo Flag values
         /// <summary> Indicates the display is a projector </summary>
         internal const int ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE = (1 << 0);
@@ -1140,6 +1171,32 @@ namespace ATI.ADL
             USBTypeC = 18
         }
 
+        internal enum ADLDisplayModeColourFormat
+        {
+            ColourFormat565 = 1,
+            ColourFormat8888 = 2
+        }
+
+        internal enum ADLDisplayModeInterlacing
+        {
+            Progressive = 0,
+            Interlaced = 2
+        }
+
+        internal enum ADLDisplayModeOrientation
+        {
+            Degrees0 = 4,
+            Degrees90 = 8,
+            Degrees180 = 10,
+            Degrees270 = 20
+        }
+
+        internal enum ADLDisplayModeRefreshRate
+        {
+            ExactRefreshRate = 80,
+            RoundedRefreshRate = 40
+        }
+
         #endregion Internal Enums
 
         #region Class ADLImport
@@ -1195,6 +1252,10 @@ namespace ATI.ADL
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
+
+            [DllImport(Atiadlxx_FileName)] 
+            internal static extern int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
+
 
             [DllImport(Atiadlxx_FileName)]
             internal static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
@@ -1666,6 +1727,30 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL2_Display_HDRState_Get_Check = false;
         #endregion ADL2_Display_HDRState_Get
+
+        #region ADL2_Display_Modes_Get
+        /// <summary> ADL2_Display_Modes_Get Delegates</summary>
+        internal static ADL2_Display_Modes_Get ADL2_Display_Modes_Get
+        {
+            get
+            {
+                if (!ADL2_Display_Modes_Get_Check && null == ADL2_Display_Modes_Get_)
+                {
+                    ADL2_Display_Modes_Get_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_Modes_Get"))
+                    {
+                        ADL2_Display_Modes_Get_ = ADLImport.ADL2_Display_Modes_Get;
+                    }
+                }
+                return ADL2_Display_Modes_Get_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Display_Modes_Get ADL2_Display_Modes_Get_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Display_Modes_Get_Check = false;
+        #endregion ADL2_Display_Modes_Get
+
 
         // ================================
 
