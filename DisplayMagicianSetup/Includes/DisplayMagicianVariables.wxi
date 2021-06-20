@@ -4,8 +4,8 @@
   Versioning. These have to be changed for upgrades.
   It's not enough to just include newer files.
   -->
-	<?define MajorVersion="1" ?>
-	<?define MinorVersion="2" ?>
+	<?define MajorVersion="2" ?>
+	<?define MinorVersion="0" ?>
 	<?define PatchVersion="0" ?>
 	<!-- Revision is NOT used by WiX in the upgrade procedure -->
 	<!-- Full version number to display -->

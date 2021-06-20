@@ -30,6 +30,8 @@ namespace DisplayMagicianShared.AMD
         // Struct to be used as the AMD Profile
         public struct AMDProfile
         {
+            ADLMode DisplayMode;
+
             int XPos;
             int YPos;
         }
@@ -1204,8 +1206,7 @@ namespace DisplayMagicianShared.AMD
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Info Value MULTIVPU_SUPPORTED = {displayInfoValue.MULTIVPU_SUPPORTED}");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Info Value NONLOCAL = {displayInfoValue.NONLOCAL}");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Info Value SHOWTYPE_PROJECTOR = {displayInfoValue.SHOWTYPE_PROJECTOR}");
-
-                                                ADL.ADLDisplayConnectionType displayConnectionType = ADL.ADLDisplayConnectionType.Unknown;
+                                                
                                                 ADLMode oneDisplayMode = new ADLMode();
                                                 IntPtr displayModeBuffer = IntPtr.Zero;
                                                 int numModes = 0;
@@ -1220,10 +1221,21 @@ namespace DisplayMagicianShared.AMD
                                                             oneDisplayMode = (ADLMode)Marshal.PtrToStructure(new IntPtr(displayModeBuffer.ToInt64() + (displayModeLoop * Marshal.SizeOf(oneDisplayMode))), oneDisplayMode.GetType());
 
                                                             //displayConnectionType = (ADL.ADLDisplayConnectionType)displayConfig.ConnectorType;
+                                                            ConvertedDisplayModeFlags displayModeFlag = ADL.ConvertDisplayModeFlags(oneDisplayMode.ModeFlag);
+                                                            ConvertedDisplayModeFlags displayModeMask = ADL.ConvertDisplayModeFlags(oneDisplayMode.ModeMask);
+                                                            ConvertedDisplayModeFlags displayModeValue = ADL.ConvertDisplayModeFlags(oneDisplayMode.ModeValue);
 
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: ### Display Modes for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Colour Depth = {oneDisplayMode.ColourDepth}");
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag = {oneDisplayMode.ModeFlag}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag ColourFormat 565 = {displayModeFlag.COLOURFORMAT_565}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag ColourFormat 8888 = {displayModeFlag.COLOURFORMAT_8888}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_000 = {displayModeFlag.ORIENTATION_SUPPORTED_000}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_090 = {displayModeFlag.ORIENTATION_SUPPORTED_090}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_180 = {displayModeFlag.ORIENTATION_SUPPORTED_180}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_270 = {displayModeFlag.ORIENTATION_SUPPORTED_270}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag REFRESHRATE_ROUNDED = {displayModeFlag.REFRESHRATE_ROUNDED}");
+                                                            SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Flag REFRESHRATE_ONLY = {displayModeFlag.REFRESHRATE_ONLY}");
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Mask = {oneDisplayMode.ModeMask}");
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Mode Value = {oneDisplayMode.ModeValue}");
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Orientation = {oneDisplayMode.Orientation}");

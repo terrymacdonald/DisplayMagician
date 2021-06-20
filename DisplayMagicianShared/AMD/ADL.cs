@@ -302,6 +302,26 @@ namespace ATI.ADL
         /// <summary> Screen resolution Height. </summary>
         internal int YRes;
     }
+
+    internal struct ConvertedDisplayModeFlags
+    {
+        /// <summary> Indicates the display supports Colour Format 565.</summary>
+        internal bool COLOURFORMAT_565;
+        /// <summary> Indicates the display supports Colour Format 8888.</summary>
+        internal bool COLOURFORMAT_8888;
+        /// <summary> Indicates the display supports normal vertical orientation</summary>
+        internal bool ORIENTATION_SUPPORTED_000;
+        /// <summary> Indicates the display supports 90 degree orientation</summary>
+        internal bool ORIENTATION_SUPPORTED_090;
+        /// <summary> Indicates the display supports 180 degree orientation</summary>
+        internal bool ORIENTATION_SUPPORTED_180;
+        /// <summary> Indicates the display supports 270 degree orientation</summary>
+        internal bool ORIENTATION_SUPPORTED_270;
+        /// <summary> Indicates the display supports rounded refresh rates</summary>
+        internal bool REFRESHRATE_ROUNDED;
+        /// <summary> Indicates the display supports exact refresh rates</summary>
+        internal bool REFRESHRATE_ONLY;        
+    }
     #endregion ADLMode
 
     #region ADLDisplayTarget
@@ -1171,32 +1191,22 @@ namespace ATI.ADL
             USBTypeC = 18
         }
 
-        internal enum ADLDisplayModeColourFormat
+        internal enum ADLDisplayModeFlag
         {
             ColourFormat565 = 1,
-            ColourFormat8888 = 2
+            ColourFormat8888 = 2,
+            Degrees0 = 4,
+            Degrees90 = 8,
+            Degrees180 = 10,
+            Degrees270 = 20,
+            ExactRefreshRate = 80,
+            RoundedRefreshRate = 40
         }
-
         internal enum ADLDisplayModeInterlacing
         {
             Progressive = 0,
             Interlaced = 2
         }
-
-        internal enum ADLDisplayModeOrientation
-        {
-            Degrees0 = 4,
-            Degrees90 = 8,
-            Degrees180 = 10,
-            Degrees270 = 20
-        }
-
-        internal enum ADLDisplayModeRefreshRate
-        {
-            ExactRefreshRate = 80,
-            RoundedRefreshRate = 40
-        }
-
         #endregion Internal Enums
 
         #region Class ADLImport
@@ -2172,6 +2182,40 @@ namespace ATI.ADL
             return expandedDisplayInfoValue;
 
         }
+
+        internal static ConvertedDisplayModeFlags ConvertDisplayModeFlags(int displayModeFlag)
+        {
+            ConvertedDisplayModeFlags expandedDisplayModeFlags = new ConvertedDisplayModeFlags();
+
+            // Indicates the display is a digital device
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_COLOURFORMAT_565) == ADL.ADL_DISPLAY_MODE_COLOURFORMAT_565)
+                expandedDisplayModeFlags.COLOURFORMAT_565 = true;
+            // Indicates the display supports EDID queries
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_COLOURFORMAT_8888) == ADL.ADL_DISPLAY_MODE_COLOURFORMAT_8888)
+                expandedDisplayModeFlags.COLOURFORMAT_8888 = true;
+            // Indicates the display supports normal vertical orientation
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000)
+                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_000 = true;
+            // Indicates the display supports normal vertical orientation
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_090) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_090)
+                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_090 = true;
+            // Indicates the display supports normal vertical orientation
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_180) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_180)
+                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_180 = true;
+            // Indicates the display supports normal vertical orientation
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_270) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_270)
+                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_270 = true;
+            // Indicates the display supports normal vertical orientation
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_REFRESHRATE_ROUNDED) == ADL.ADL_DISPLAY_MODE_REFRESHRATE_ROUNDED)
+                expandedDisplayModeFlags.REFRESHRATE_ROUNDED = true;
+            // Indicates the display supports normal vertical orientation
+            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_REFRESHRATE_ONLY) == ADL.ADL_DISPLAY_MODE_REFRESHRATE_ONLY)
+                expandedDisplayModeFlags.REFRESHRATE_ONLY = true;
+
+            return expandedDisplayModeFlags;
+
+        }
+
 
         internal static string ConvertADLReturnValueIntoWords(int adlReturnValue)
         {
