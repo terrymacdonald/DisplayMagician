@@ -1,18 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using ATI.ADL;
 using Microsoft.Win32.SafeHandles;
-using DisplayMagicianShared;
-using System.Threading;
-using static DisplayMagicianShared.AMD.AMDProfileData;
 
 namespace DisplayMagicianShared.AMD
 {
-    internal class AMDLibrary : IDisposable
+    public  class AMDLibrary : IDisposable
     {
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
@@ -26,7 +20,27 @@ namespace DisplayMagicianShared.AMD
 
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
-        private IntPtr _adlContextHandle = IntPtr.Zero;      
+        private IntPtr _adlContextHandle = IntPtr.Zero;
+
+        // Struct to be used as the AMD Profile
+        public struct AMDProfile
+        {
+            public List<AMDAdapter> Adapters;
+        }
+
+        // Struct to store the Display
+        public struct AMDAdapter
+        {
+            internal ADLAdapterInfoX2 AdapterInfoX2;
+            internal List<AMDDisplay> Displays;
+        }
+
+        // Struct to store the Display
+        public struct AMDDisplay
+        {
+            internal List<ADLMode> DisplayModes;
+        }
+
 
         static AMDLibrary() { }
         public AMDLibrary()
@@ -1012,7 +1026,7 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
-        internal AMDProfile GetActiveProfile()
+        public AMDProfile GetActiveProfile()
         {
             SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: Getting AMD active adapter count");
 
@@ -1511,17 +1525,17 @@ namespace DisplayMagicianShared.AMD
             return profileToCreate;
         }
 
-        internal bool SetActiveProfile(AMDProfile profileToUse)
+        public bool SetActiveProfile(AMDProfile profileToUse)
         {
             return true;
         }
 
-        internal bool IsActiveProfile(AMDProfile profileToTest)
+        public bool IsActiveProfile(AMDProfile profileToTest)
         {
             return true;
         }
 
-        internal bool IsValidProfile(AMDProfile profileToTest)
+        public bool IsValidProfile(AMDProfile profileToTest)
         {
             return true;
         }

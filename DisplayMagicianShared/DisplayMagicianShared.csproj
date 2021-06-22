@@ -53,7 +53,9 @@
   <ItemGroup>
     <Compile Include="AMD\ADL.cs" />
     <Compile Include="AMD\AMDLibrary.cs" />
-    <Compile Include="AMD\AMDProfileData.cs" />
+    <Compile Include="AMD\AMDProfileItem.cs" />
+    <Compile Include="NVIDIA\NVIDIALibrary.cs" />
+    <Compile Include="NVIDIA\NVIDIAProfileItem.cs" />
     <Compile Include="SharedLogger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -88,7 +90,6 @@
     <Compile Include="UserControls\DisplayView.Designer.cs">
       <DependentUpon>DisplayView.cs</DependentUpon>
     </Compile>
-    <Compile Include="VideoLibraryProfileData.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -155,7 +156,9 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Windows\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

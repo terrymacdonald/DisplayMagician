@@ -114,7 +114,7 @@ namespace DisplayMagicianShared
         }
 
         [JsonIgnore]
-        public bool IsPossible
+        public virtual bool IsPossible
         {
             get
             {
@@ -128,7 +128,7 @@ namespace DisplayMagicianShared
         }
 
         [JsonIgnore]
-        public bool IsActive
+        public virtual bool IsActive
         {
             get
             {
@@ -141,6 +141,8 @@ namespace DisplayMagicianShared
             }
         }
 
+        public virtual string Driver { get; } = "Unknown";
+
         public Keys Hotkey {
             get 
             {
@@ -152,14 +154,14 @@ namespace DisplayMagicianShared
             }
         }
 
-        public string Name { get; set; }
+        public virtual string Name { get; set; }
 
-        public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
+        //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
-        internal VideoLibraryProfileData ProfileData { get; set; }
+        //public VideoLibraryProfileData ProfileData { get; set; }
         
         [JsonIgnore]
-        public ProfileIcon ProfileIcon
+        public virtual ProfileIcon ProfileIcon
         {
             get
             {
@@ -180,7 +182,7 @@ namespace DisplayMagicianShared
 
         public string SavedProfileIconCacheFilename { get; set; }
 
-        public List<string> ProfileDisplayIdentifiers
+        public virtual List<string> ProfileDisplayIdentifiers
         {
             get
             {
@@ -198,7 +200,7 @@ namespace DisplayMagicianShared
         }
 
         [JsonConverter(typeof(CustomBitmapConverter))]
-        public Bitmap ProfileBitmap
+        public virtual Bitmap ProfileBitmap
         {
             get
             {
@@ -261,9 +263,10 @@ namespace DisplayMagicianShared
                 return false;
         }
 
-        public bool IsValid()
+        public virtual bool IsValid()
         {
-
+            return false;
+            /*
             if (Paths != null &&
                 ProfileIcon is ProfileIcon &&
                 System.IO.File.Exists(SavedProfileIconCacheFilename) &&
@@ -272,12 +275,12 @@ namespace DisplayMagicianShared
                 ProfileDisplayIdentifiers.Count > 0)
                 return true;
             else 
-                return false;
+                return false;*/
         }
 
         
 
-        public bool CopyTo(ProfileItem profile, bool overwriteId = true)
+        public virtual bool CopyTo(ProfileItem profile, bool overwriteId = true)
         {
             if (!(profile is ProfileItem))
                 return false;
@@ -287,7 +290,7 @@ namespace DisplayMagicianShared
 
             // Copy all our profile data over to the other profile
             profile.Name = Name;
-            profile.Paths = Paths;
+            //profile.Paths = Paths;
             profile.ProfileIcon = ProfileIcon;
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
             profile.ProfileBitmap = ProfileBitmap;
@@ -296,7 +299,7 @@ namespace DisplayMagicianShared
             return true;
         }
 
-        public bool PreSave()
+        public virtual bool PreSave()
         {
             // Prepare our profile data for saving
             if (_profileDisplayIdentifiers.Count == 0)
@@ -316,7 +319,7 @@ namespace DisplayMagicianShared
         }
 
         // Profiles are equal if their Viewports are equal
-        public bool Equals(ProfileItem other)
+        public virtual bool Equals(ProfileItem other)
         {
 
             // If parameter is null, return false.
@@ -331,8 +334,8 @@ namespace DisplayMagicianShared
             if (this.GetType() != other.GetType())
                 return false;
 
-            if (Paths.Length != other.Paths.Length)
-                return false;
+            //if (Paths.Length != other.Paths.Length)
+            //    return false;
 
             // Check if the profile identifiers are not the same, then return false
             int foundDICount = 0;
@@ -373,7 +376,7 @@ namespace DisplayMagicianShared
 
             int foundPathsCount = 0;
             int foundOtherPathsCount = 0;
-            foreach (Topology.Path profilePath in Paths)
+            /*foreach (Topology.Path profilePath in Paths)
             {
                 if (other.Paths.Contains(profilePath))
                 {
@@ -389,7 +392,7 @@ namespace DisplayMagicianShared
                     foundOtherPathsCount++;
                     continue;
                 }
-            }
+            }*/
 
 
             if (foundPathsCount == foundOtherPathsCount)
@@ -417,7 +420,8 @@ namespace DisplayMagicianShared
             int hashIds = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
 
             // Get Paths too
-            int hashPaths = Paths == null ? 0 : Paths.GetHashCode();
+            //int hashPaths = Paths == null ? 0 : Paths.GetHashCode();
+            int hashPaths = 0;
 
             // Calculate the hash code for the product.
             return (hashIds, hashPaths).GetHashCode();
@@ -579,8 +583,8 @@ namespace DisplayMagicianShared
             if (x is null || y is null)
                 return false;
 
-            if (x.Paths.Length != y.Paths.Length)
-                return false;
+            //if (x.Paths.Length != y.Paths.Length)
+            //    return false;
 
             // Check if the profile identifiers are not the same, then return false
             int foundDICount = 0;
@@ -616,7 +620,7 @@ namespace DisplayMagicianShared
             // Two profiles are equal only when they have the same viewport data
             int foundPathsCount = 0;
             int foundOtherPathsCount = 0;
-            foreach (Topology.Path profilePath in x.Paths)
+            /*foreach (Topology.Path profilePath in x.Paths)
             {
                 if (y.Paths.Contains(profilePath))
                 {
@@ -632,7 +636,7 @@ namespace DisplayMagicianShared
                     foundOtherPathsCount++;
                     continue;
                 }
-            }
+            }*/
 
 
             if (foundPathsCount == foundOtherPathsCount)
@@ -667,7 +671,8 @@ namespace DisplayMagicianShared
             int hashIds = profile.ProfileDisplayIdentifiers == null ? 0 : profile.ProfileDisplayIdentifiers.GetHashCode();
 
             // Get hash code for the Paths
-            int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
+            //int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
+            int hashPaths = 0;
 
             //Calculate the hash code for the product.
             return (hashIds,hashPaths).GetHashCode();

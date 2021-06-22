@@ -13,8 +13,8 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using NvAPIWrapper.Native.GPU;
 using DisplayMagicianShared.AMD;
+using DisplayMagicianShared.NVIDIA;
 using System.Windows.Forms;
-using static DisplayMagicianShared.AMD.AMDProfileData;
 
 namespace DisplayMagicianShared
 {
@@ -560,24 +560,24 @@ namespace DisplayMagicianShared
 
             ProfileItem activeProfile;
 
-            // If we're 
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
+
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Trying to access things using the AMD video card driver");
+            // If we're using the AMD library
             AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
             if (amdLibrary.IsInstalled)
-            {
-                AMDProfile thisOne = amdLibrary.GetActiveProfile();
-                activeProfile = new ProfileItem
+            {                
+                activeProfile = new AMDProfileItem
                 {
                     Name = "Current Display Profile",
-                    //Driver = "AMD",
                     ProfileData = amdLibrary.GetActiveProfile()
                 //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
             };
                 activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
             }
 
-            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
-
-            activeProfile = new ProfileItem
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Trying to access things using the NVIDIA video card driver");
+            activeProfile = new NVIDIAProfileItem
             {
                 Name = "Current Display Profile",
                 Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),
@@ -673,7 +673,7 @@ namespace DisplayMagicianShared
                     }
 
 
-                    ProfileItem myCurrentProfile = new ProfileItem
+                    ProfileItem myCurrentProfile = new NVIDIAProfileItem
                     {
                         Name = "Current Display Profile",
                         Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
@@ -1501,11 +1501,11 @@ namespace DisplayMagicianShared
             return displayIdentifiers;
         }
 
-        public static bool ApplyNVIDIAGridTopology(ProfileItem profile)
+        public static bool ApplyNVIDIAGridTopology(NVIDIAProfileItem profile)
         {
             SharedLogger.logger.Debug($"ProfileRepository/ApplyNVIDIAGridTopology: Attempting to apply NVIDIA Grid Topology");
 
-            if (!(profile is ProfileItem))
+            if (!(profile is NVIDIAProfileItem))
                 return false;
 
             try
@@ -1551,7 +1551,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static bool ApplyWindowsDisplayPathInfo(ProfileItem profile)
+        public static bool ApplyWindowsDisplayPathInfo(NVIDIAProfileItem profile)
         {
             SharedLogger.logger.Debug($"ProfileRepository/ApplyWindowsDisplayPathInfo: Moving display screens to where they are supposed to be with this display profile");
             if (!(profile is ProfileItem))
