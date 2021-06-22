@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="AMD\ADL.cs" />
     <Compile Include="AMD\AMDLibrary.cs" />
+    <Compile Include="AMD\AMDProfileData.cs" />
     <Compile Include="SharedLogger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -87,6 +88,7 @@
     <Compile Include="UserControls\DisplayView.Designer.cs">
       <DependentUpon>DisplayView.cs</DependentUpon>
     </Compile>
+    <Compile Include="VideoLibraryProfileData.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

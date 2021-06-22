@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using NvAPIWrapper.Native.GPU;
 using DisplayMagicianShared.AMD;
 using System.Windows.Forms;
+using static DisplayMagicianShared.AMD.AMDProfileData;
 
 namespace DisplayMagicianShared
 {
@@ -563,12 +564,12 @@ namespace DisplayMagicianShared
             AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
             if (amdLibrary.IsInstalled)
             {
-                AMDLibrary.AMDProfile thisOne = amdLibrary.GetActiveProfile();
+                AMDProfile thisOne = amdLibrary.GetActiveProfile();
                 activeProfile = new ProfileItem
                 {
                     Name = "Current Display Profile",
                     //Driver = "AMD",
-                    //ProfileData = amdLibrary.GetActiveProfile()
+                    ProfileData = amdLibrary.GetActiveProfile()
                 //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
             };
                 activeProfile.ProfileIcon = new ProfileIcon(activeProfile);

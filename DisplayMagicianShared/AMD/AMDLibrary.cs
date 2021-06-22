@@ -8,10 +8,11 @@ using ATI.ADL;
 using Microsoft.Win32.SafeHandles;
 using DisplayMagicianShared;
 using System.Threading;
+using static DisplayMagicianShared.AMD.AMDProfileData;
 
 namespace DisplayMagicianShared.AMD
 {
-    public class AMDLibrary : IDisposable
+    internal class AMDLibrary : IDisposable
     {
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
@@ -25,27 +26,7 @@ namespace DisplayMagicianShared.AMD
 
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
-        private IntPtr _adlContextHandle = IntPtr.Zero;
-
-        // Struct to be used as the AMD Profile
-        internal struct AMDProfile
-        {
-            internal List<AMDAdapter> Adapters;            
-        }
-
-        // Struct to store the Display
-        internal struct AMDAdapter
-        {
-            internal ADLAdapterInfoX2 AdapterInfoX2;
-            internal List<AMDDisplay> Displays;
-        }
-
-        // Struct to store the Display
-        internal struct AMDDisplay
-        {
-            internal List<ADLMode> DisplayModes;
-        }
-
+        private IntPtr _adlContextHandle = IntPtr.Zero;      
 
         static AMDLibrary() { }
         public AMDLibrary()

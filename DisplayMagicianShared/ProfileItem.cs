@@ -155,6 +155,8 @@ namespace DisplayMagicianShared
         public string Name { get; set; }
 
         public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
+
+        internal VideoLibraryProfileData ProfileData { get; set; }
         
         [JsonIgnore]
         public ProfileIcon ProfileIcon
