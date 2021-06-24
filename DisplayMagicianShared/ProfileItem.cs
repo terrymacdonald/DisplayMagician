@@ -13,12 +13,27 @@ using IWshRuntimeLibrary;
 
 namespace DisplayMagicianShared
 {
+
+    public struct ScreenPosition
+    {
+        public int ScreenX;
+        public int ScreenY;
+        public int ScreenWidth;
+        public int ScreenHeight;
+        public Orientation ScreenOrientation;
+        public Rotation ScreenRotation;
+        public string Name;
+        public bool IsPrimary;
+        public bool Colour;
+    }
+
     public class ProfileItem : IComparable
     {
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
+        private List<ScreenPosition> _screens;
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
@@ -26,7 +41,7 @@ namespace DisplayMagicianShared
         private string _uuid = "";
         private bool _isPossible = false;
         private Keys _hotkey = Keys.None;
-
+       
 
         #region JsonConverterBitmap
         internal class CustomBitmapConverter : JsonConverter
@@ -178,6 +193,20 @@ namespace DisplayMagicianShared
                 _profileIcon = value;
             }
 
+        }
+
+
+        [JsonIgnore]
+        public virtual List<ScreenPosition> Screens
+        {
+            get
+            {
+                if (_screens.Count == 0)
+                {
+                    _screens = GetScreenPositions();
+                }
+                return _screens;
+            }
         }
 
         public string SavedProfileIconCacheFilename { get; set; }
@@ -545,6 +574,11 @@ namespace DisplayMagicianShared
                 _isPossible = false;
             }
 
+        }
+
+        public virtual List<ScreenPosition> GetScreenPositions()
+        {
+            return new List<ScreenPosition>();
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.IconLib;
@@ -6,6 +7,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
 using DisplayMagicianShared.Topology;
+//using static DisplayMagicianShared.ProfileItem;
 
 namespace DisplayMagicianShared
 {
@@ -28,7 +30,7 @@ namespace DisplayMagicianShared
 
         // ReSharper disable once TooManyArguments
         public static RectangleF CalculateViewSize(
-            Path[] paths,
+            List<ScreenPosition> screens,
             bool withPadding = false,
             int paddingX = 0,
             int paddingY = 0)
@@ -38,13 +40,13 @@ namespace DisplayMagicianShared
             var minY = 0;
             var maxY = 0;
 
-            foreach (var path in paths)
+            foreach (var screen in screens)
             {
-                var res = NormalizeResolution(path);
-                minX = Math.Min(minX, path.Position.X);
-                maxX = Math.Max(maxX, res.Width + path.Position.X);
-                minY = Math.Min(minY, path.Position.Y);
-                maxY = Math.Max(maxY, res.Height + path.Position.Y);
+                var res = NormalizeResolution(screens);
+                minX = Math.Min(minX, screen.ScreenX);
+                maxX = Math.Max(maxX, res.Width + screen.ScreenX);
+                minY = Math.Min(minY, screen.ScreenY);
+                maxY = Math.Max(maxY, res.Height + screen.ScreenY);
             }
 
             if (withPadding)
@@ -61,7 +63,7 @@ namespace DisplayMagicianShared
             return rect;
         }
 
-        public static Size NormalizeResolution(Size resolution, Rotation rotation)
+        /*public static Size NormalizeResolution(Size resolution, Rotation rotation)
         {
             if (rotation == Rotation.Rotate90 || rotation == Rotation.Rotate270)
             {
@@ -69,23 +71,35 @@ namespace DisplayMagicianShared
             }
 
             return resolution;
-        }
+        }*/
 
-        public static Size NormalizeResolution(Path path)
+        public static Size NormalizeResolution(List<ScreenPosition> screens)
         {
-            var biggest = Size.Empty;
+            Size biggest = Size.Empty;
 
-            foreach (var target in path.TargetDisplays)
+            foreach (ScreenPosition screen in screens)
             {
-                var res = NormalizeResolution(path.Resolution, target.Rotation);
-
-                if ((ulong) res.Width * (ulong) res.Height > (ulong) biggest.Width * (ulong) biggest.Height)
+                //var res = NormalizeResolution(screen.ScreenWidth, screen.ScreenHeight, screen.ScreenRotation);
+                int width = 0;
+                int height = 0;
+                if (screen.ScreenOrientation == Orientation.Vertical)
                 {
-                    biggest = res;
+                    width = screen.ScreenHeight;
+                    height = screen.ScreenWidth;
+                }
+                else
+                {
+                    width = screen.ScreenWidth;
+                    height = screen.ScreenHeight;
+                }
+
+                if ((ulong) width * (ulong) height > (ulong) biggest.Width * (ulong) biggest.Height)
+                {
+                    biggest = new Size(width,height);
                 }
             }
 
-            return biggest.IsEmpty ? path.Resolution : biggest;
+            return biggest;
         }
 
 
@@ -144,7 +158,7 @@ namespace DisplayMagicianShared
 
         public Bitmap ToTightestBitmap(int width = 256, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
         {
-            var viewSize = CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Screens, true, PaddingX, PaddingY);
             int viewSizeRatio = Convert.ToInt32(viewSize.Width / viewSize.Height);
 
             if (height == 0)
@@ -200,7 +214,7 @@ namespace DisplayMagicianShared
                         return bitmap;*/
 
 
-            var viewSize = CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Screens, true, PaddingX, PaddingY);
             var width = bitmap.Width * 0.7f;
             var height = width / viewSize.Width * viewSize.Height;
 
@@ -303,10 +317,10 @@ namespace DisplayMagicianShared
             return multiIcon;
         }
 
-        private void DrawPath(Graphics g, Path path)
+        private void DrawScreen(Graphics g, ScreenPosition screen)
         {
-            var res = NormalizeResolution(path);
-            var rect = new Rectangle(path.Position, res);
+            //var res = NormalizeResolution(screen);
+            var rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
             var rows = rect.Width < rect.Height ? path.TargetDisplays.Length : 1;
             var cols = rect.Width >= rect.Height ? path.TargetDisplays.Length : 1;
 
@@ -361,7 +375,7 @@ namespace DisplayMagicianShared
 
         private void DrawView(Graphics g, float width, float height)
         {
-            var viewSize = CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Screens, true, PaddingX, PaddingY);
             var standPadding = height * 0.005f;
             height -= standPadding * 8;
             var factor = Math.Min((width - 2 * standPadding - 1) / viewSize.Width,
@@ -398,9 +412,9 @@ namespace DisplayMagicianShared
                     viewSize.Width, viewSize.Height);
             }
 
-            foreach (var path in _profile.Paths)
+            foreach (ScreenPosition screen in _profile.Screens)
             {
-                DrawPath(g, path);
+                DrawScreen(g, screen);
             }
         }
     }

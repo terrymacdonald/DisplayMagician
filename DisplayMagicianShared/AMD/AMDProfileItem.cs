@@ -19,6 +19,7 @@ namespace DisplayMagicianShared.AMD
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
+        private List<ScreenPosition> _screens;
 
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
@@ -87,6 +88,20 @@ namespace DisplayMagicianShared.AMD
                     _profileDisplayIdentifiers = value;
             }
         }
+
+        [JsonIgnore]
+        public override List<ScreenPosition> Screens
+        {
+            get
+            {
+                if (_screens.Count == 0)
+                {
+                    _screens = GetScreenPositions();
+                }
+                return _screens;
+            }
+        }
+
 
         [JsonConverter(typeof(CustomBitmapConverter))]
         public new Bitmap ProfileBitmap
@@ -159,6 +174,12 @@ namespace DisplayMagicianShared.AMD
 
             // Return if it is valid and we should continue
             return IsValid();
+        }
+
+        public override List<ScreenPosition> GetScreenPositions()
+        {
+
+            return new List<ScreenPosition>();
         }
 
 

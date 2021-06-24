@@ -42,10 +42,10 @@ namespace DisplayMagicianShared.UserControls
             }
         }
 
-        private void DrawPath(Graphics g, Path path)
+        private virtual void DrawScreen(Graphics g, ScreenPosition screen)
         {
-            var res = ProfileIcon.NormalizeResolution(path);
-            var rect = new Rectangle(path.Position, res);
+            //var res = ProfileIcon.NormalizeResolution(screens);
+            var rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
             g.FillRectangle(new SolidBrush(Color.FromArgb(15, Color.White)), rect);
             g.DrawRectangle(Pens.Black, rect);
 
@@ -93,7 +93,7 @@ namespace DisplayMagicianShared.UserControls
             return new Size((int) stringSize.Width, (int) stringSize.Height);
         }
 
-        private void DrawSurroundTopology(Graphics g, PathTarget target, Rectangle rect)
+        private virtual void DrawSurroundTopology(Graphics g, PathTarget target, Rectangle rect)
         {
             g.DrawRectangle(Pens.Black, rect);
 
@@ -146,7 +146,7 @@ namespace DisplayMagicianShared.UserControls
             }
         }
 
-        private void DrawTarget(
+        private virtual void DrawTarget(
             Graphics g,
             Path path,
             PathTarget target,
@@ -224,7 +224,7 @@ namespace DisplayMagicianShared.UserControls
 
         private void DrawView(Graphics g)
         {
-            var viewSize = ProfileIcon.CalculateViewSize(_profile.Paths, true, PaddingX, PaddingY);
+            var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, true, PaddingX, PaddingY);
             var factor = Math.Min(Width / viewSize.Width, Height / viewSize.Height);
             g.ScaleTransform(factor, factor);
 
@@ -232,9 +232,9 @@ namespace DisplayMagicianShared.UserControls
             var yOffset = (Height / factor - viewSize.Height) / 2f;
             g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
 
-            foreach (var path in _profile.Paths)
+            foreach (ScreenPosition screen in _profile.Screens)
             {
-                DrawPath(g, path);
+                DrawScreen(g, screen);
             }
         }
 
