@@ -344,15 +344,20 @@ namespace DisplayMagician.UIForms
             ToolStripSeparator separator = new ToolStripSeparator();
             profileToolStripMenuItem.DropDownItems.Add(separator);
 
-            // Add the current slist of profiles into the NotifyIcon context menu
-            foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+            
+            if (ProfileRepository.AllProfiles.Count > 0)
             {
-                ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, profile.ProfileBitmap, runProfileToolStripMenuItem_Click);
-                if (profile.IsActive || !profile.IsPossible)
-                    profileMenuItem.Enabled = false;
-                else
-                    profileMenuItem.Enabled = true;
-                profileToolStripMenuItem.DropDownItems.Add(profileMenuItem);
+                // Add the current slist of profiles into the NotifyIcon context menu
+                foreach (ProfileItem profile in ProfileRepository.AllProfiles)
+                {
+                    ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, profile.ProfileBitmap, runProfileToolStripMenuItem_Click);
+                    if (profile.IsActive || !profile.IsPossible)
+                        profileMenuItem.Enabled = false;
+                    else
+                        profileMenuItem.Enabled = true;
+                    profileToolStripMenuItem.DropDownItems.Add(profileMenuItem);
+                }
+
             }
 
             // Clear all the shortcuts
@@ -365,16 +370,20 @@ namespace DisplayMagician.UIForms
             shortcutToolStripMenuItem.DropDownItems.Add(heading);
             separator = new ToolStripSeparator();
             shortcutToolStripMenuItem.DropDownItems.Add(separator);
-            // Add the current list of profiles into the NotifyIcon context menu
-            foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
+            if (ShortcutRepository.AllShortcuts.Count > 0)
             {
-                ToolStripMenuItem shortcutMenuItem = new ToolStripMenuItem(shortcut.Name, shortcut.ShortcutBitmap, runShortcutToolStripMenuItem_Click);
-                if (shortcut.IsValid == ShortcutValidity.Warning || shortcut.IsValid == ShortcutValidity.Error)
-                    shortcutMenuItem.Enabled = false;
-                else
-                    shortcutMenuItem.Enabled = true;
-                shortcutToolStripMenuItem.DropDownItems.Add(shortcutMenuItem);
+                // Add the current list of profiles into the NotifyIcon context menu
+                foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
+                {
+                    ToolStripMenuItem shortcutMenuItem = new ToolStripMenuItem(shortcut.Name, shortcut.ShortcutBitmap, runShortcutToolStripMenuItem_Click);
+                    if (shortcut.IsValid == ShortcutValidity.Warning || shortcut.IsValid == ShortcutValidity.Error)
+                        shortcutMenuItem.Enabled = false;
+                    else
+                        shortcutMenuItem.Enabled = true;
+                    shortcutToolStripMenuItem.DropDownItems.Add(shortcutMenuItem);
+                }
             }
+                
 
         }
 

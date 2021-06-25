@@ -587,7 +587,7 @@ namespace DisplayMagician {
                 return ApplyProfileResult.Successful;
             }
 
-            try
+            /*try
             {
                 // Now lets prepare changing the display topology task
                 Task applyTopologyTask = new Task(() =>
@@ -720,7 +720,7 @@ namespace DisplayMagician {
                     logger.Debug($"Program/ApplyProfile: Failed to complete changing the Windows Display layout");
                     return ApplyProfileResult.Error;
                 }
-            }
+            }*/
 
             ProfileRepository.UpdateActiveProfile();
 

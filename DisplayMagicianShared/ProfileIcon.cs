@@ -31,9 +31,8 @@ namespace DisplayMagicianShared
         // ReSharper disable once TooManyArguments
         public static RectangleF CalculateViewSize(
             List<ScreenPosition> screens,
-            bool withPadding = false,
-            int paddingX = 0,
-            int paddingY = 0)
+            int outsidePaddingSides = 0,
+            int outsidePaddingTopBottom = 0)
         {
             var minX = 0;
             var maxX = 0;
@@ -42,19 +41,19 @@ namespace DisplayMagicianShared
 
             foreach (var screen in screens)
             {
-                var res = NormalizeResolution(screens);
+                //var res = GetLargestResolution(screens);
                 minX = Math.Min(minX, screen.ScreenX);
-                maxX = Math.Max(maxX, res.Width + screen.ScreenX);
+                maxX = Math.Max(maxX, screen.ScreenX + screen.ScreenWidth);
                 minY = Math.Min(minY, screen.ScreenY);
-                maxY = Math.Max(maxY, res.Height + screen.ScreenY);
+                maxY = Math.Max(maxY, screen.ScreenY + screen.ScreenHeight);
             }
 
-            if (withPadding)
+            if (outsidePaddingSides != 0)
             {
-                minX -= paddingX;
-                maxX += paddingX;
-                minY -= paddingY;
-                maxY += paddingY;
+                minX -= outsidePaddingSides;
+                maxX += outsidePaddingSides;
+                minY -= outsidePaddingTopBottom;
+                maxY += outsidePaddingTopBottom;
             }
 
             var size = new SizeF(Math.Abs(minX) + maxX, Math.Abs(minY) + maxY);
@@ -63,44 +62,20 @@ namespace DisplayMagicianShared
             return rect;
         }
 
-        /*public static Size NormalizeResolution(Size resolution, Rotation rotation)
+        /*public static Size GetLargestResolution(List<ScreenPosition> screens)
         {
-            if (rotation == Rotation.Rotate90 || rotation == Rotation.Rotate270)
-            {
-                return new Size(resolution.Height, resolution.Width);
-            }
-
-            return resolution;
-        }*/
-
-        public static Size NormalizeResolution(List<ScreenPosition> screens)
-        {
-            Size biggest = Size.Empty;
+            Size largest = Size.Empty;
 
             foreach (ScreenPosition screen in screens)
             {
-                //var res = NormalizeResolution(screen.ScreenWidth, screen.ScreenHeight, screen.ScreenRotation);
-                int width = 0;
-                int height = 0;
-                if (screen.ScreenOrientation == Orientation.Vertical)
+                if ((ulong)screen.ScreenWidth * (ulong)screen.ScreenHeight > (ulong)largest.Width * (ulong)largest.Height)
                 {
-                    width = screen.ScreenHeight;
-                    height = screen.ScreenWidth;
-                }
-                else
-                {
-                    width = screen.ScreenWidth;
-                    height = screen.ScreenHeight;
-                }
-
-                if ((ulong) width * (ulong) height > (ulong) biggest.Width * (ulong) biggest.Height)
-                {
-                    biggest = new Size(width,height);
+                    largest = new Size(screen.ScreenWidth, screen.ScreenHeight);
                 }
             }
 
-            return biggest;
-        }
+            return largest;
+        }*/
 
 
         /// <summary>
@@ -158,7 +133,7 @@ namespace DisplayMagicianShared
 
         public Bitmap ToTightestBitmap(int width = 256, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
         {
-            var viewSize = CalculateViewSize(_profile.Screens, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Screens, 0, 0);
             int viewSizeRatio = Convert.ToInt32(viewSize.Width / viewSize.Height);
 
             if (height == 0)
@@ -214,7 +189,7 @@ namespace DisplayMagicianShared
                         return bitmap;*/
 
 
-            var viewSize = CalculateViewSize(_profile.Screens, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
             var width = bitmap.Width * 0.7f;
             var height = width / viewSize.Width * viewSize.Height;
 
@@ -317,16 +292,35 @@ namespace DisplayMagicianShared
             return multiIcon;
         }
 
-        private void DrawScreen(Graphics g, ScreenPosition screen)
+        /*private void DrawSingleScreen(Graphics g, ScreenPosition screen)
         {
             //var res = NormalizeResolution(screen);
-            var rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-            var rows = rect.Width < rect.Height ? path.TargetDisplays.Length : 1;
-            var cols = rect.Width >= rect.Height ? path.TargetDisplays.Length : 1;
+            Rectangle rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+            int rows = rect.Width < rect.Height ? path.TargetDisplays.Length : 1;
+            int cols = rect.Width >= rect.Height ? path.TargetDisplays.Length : 1;
 
             for (var i = 0; i < path.TargetDisplays.Length; i++)
             {
-                DrawTarget(g, path, path.TargetDisplays[i],
+                DrawTarget(g, screen, path.TargetDisplays[i],
+                    new Rectangle(
+                        rect.X + PaddingX,
+                        rect.Y + PaddingY,
+                        rect.Width - 2 * PaddingX,
+                        rect.Height - 2 * PaddingY),
+                    rows > 1 ? i : 0, cols > 1 ? i : 0, rows, cols);
+            }
+        }*/
+
+        private void DrawScreen(Graphics g, ScreenPosition screen)
+        {
+            //var res = NormalizeResolution(screen);
+            Rectangle rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+            int rows = rect.Width < rect.Height ? screen.SpannedScreens.Count : 1;
+            int cols = rect.Width >= rect.Height ? screen.SpannedScreens.Count : 1;
+
+            for(var i = 0; i < screen.SpannedScreens.Count ; i++)
+            {
+                DrawTarget(g, screen, 
                     new Rectangle(
                         rect.X + PaddingX,
                         rect.Y + PaddingY,
@@ -339,8 +333,7 @@ namespace DisplayMagicianShared
         // ReSharper disable once TooManyArguments
         private void DrawTarget(
             Graphics g,
-            Path path,
-            PathTarget target,
+            ScreenPosition screen,
             Rectangle rect,
             int row,
             int col,
@@ -351,17 +344,15 @@ namespace DisplayMagicianShared
             var targetPosition = new Point(targetSize.Width * col + rect.X, targetSize.Height * row + rect.Y);
             var targetRect = new Rectangle(targetPosition, targetSize);
 
-            if (target.SurroundTopology != null)
+            if (screen.IsSpanned)
             {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 106, 185, 0)), targetRect);
+                g.FillRectangle(new SolidBrush(screen.Colour), targetRect);
             }
-            //else if (target.EyefinityTopology != null)
-            //    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 99, 0, 0)), targetRect);
-            else if (path.TargetDisplays.Length > 1)
+            else if (screen.SpannedScreens.Count > 1)
             {
                 g.FillRectangle(new SolidBrush(Color.FromArgb(255, 255, 97, 27)), targetRect);
             }
-            else if (path.Position == Point.Empty)
+            else if (!screen.IsSpanned)
             {
                 g.FillRectangle(new SolidBrush(Color.FromArgb(255, 0, 174, 241)), targetRect);
             }
@@ -375,7 +366,7 @@ namespace DisplayMagicianShared
 
         private void DrawView(Graphics g, float width, float height)
         {
-            var viewSize = CalculateViewSize(_profile.Screens, true, PaddingX, PaddingY);
+            var viewSize = CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
             var standPadding = height * 0.005f;
             height -= standPadding * 8;
             var factor = Math.Min((width - 2 * standPadding - 1) / viewSize.Width,

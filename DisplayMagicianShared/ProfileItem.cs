@@ -15,16 +15,35 @@ namespace DisplayMagicianShared
 {
 
     public struct ScreenPosition
+    {        
+        public int ScreenX;
+        public int ScreenY;
+        public int ScreenWidth;
+        public int ScreenHeight;
+        public string Name;
+        public bool IsPrimary;
+        public Color Colour;
+        public List<string> Features;
+        // If the screen is AMD Eyefinity or NVIDIA Surround or similar, it has screens that are part of it
+        // These two fields indicate this. THe spanned screens are added to the SpannedScreens field
+        public bool IsSpanned;
+        public List<SpannedScreenPosition> SpannedScreens;
+        public int SpannedColumns;
+        public int SpannedRows;
+    }
+
+    public struct SpannedScreenPosition
     {
         public int ScreenX;
         public int ScreenY;
         public int ScreenWidth;
         public int ScreenHeight;
-        public Orientation ScreenOrientation;
-        public Rotation ScreenRotation;
         public string Name;
         public bool IsPrimary;
-        public bool Colour;
+        public Color Colour;
+        public List<string> Features;
+        public int Column;
+        public int Row;
     }
 
     public class ProfileItem : IComparable

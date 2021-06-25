@@ -1539,5 +1539,14 @@ namespace DisplayMagicianShared.AMD
         {
             return true;
         }
+
+        public List<ScreenPosition> GenerateScreenPositions()
+        {
+            List<ScreenPosition> screens = new List<ScreenPosition>();
+
+
+
+            return screens;
+        }
     }
 }

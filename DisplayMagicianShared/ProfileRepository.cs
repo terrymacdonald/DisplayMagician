@@ -572,20 +572,24 @@ namespace DisplayMagicianShared
                     Name = "Current Display Profile",
                     ProfileData = amdLibrary.GetActiveProfile()
                 //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
-            };
+                };
+                //activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
+                //activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
+            }
+            else {
+                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Trying to access things using the NVIDIA video card driver");
+                activeProfile = new NVIDIAProfileItem
+                {
+                    Name = "Current Display Profile",
+                    Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),
+                    //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
+                };
+
                 activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
+                activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
             }
 
-            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Trying to access things using the NVIDIA video card driver");
-            activeProfile = new NVIDIAProfileItem
-            {
-                Name = "Current Display Profile",
-                Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),
-                //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
-            };
-
-            activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
-            activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
+            
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {

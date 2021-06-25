@@ -58,7 +58,7 @@ namespace DisplayMagician
             //        .Select(grouping => grouping.First()).ToList();
             var displays = new List<DisplayRepresentation>();
 
-            if (profile != null)
+            /*if (profile != null)
             {
                 foreach (var target in profile.Paths.SelectMany(path => path.TargetDisplays))
                 {
@@ -67,7 +67,7 @@ namespace DisplayMagician
                         displays.Add(new DisplayRepresentation(target));
                     }
                 }
-            }
+            }*/
 
             return displays;
         }
@@ -77,7 +77,7 @@ namespace DisplayMagician
             return Display.GetDisplays().FirstOrDefault(display => display.DevicePath.StartsWith(Path));
         }
 
-        public Path GetPathSource(ProfileItem profile)
+        /*public Path GetPathSource(ProfileItem profile)
         {
             return profile.Paths.FirstOrDefault(path => path.TargetDisplays.Any(target => target.DevicePath == Path));
         }
@@ -85,7 +85,7 @@ namespace DisplayMagician
         public PathTarget GetPathTarget(ProfileItem profile)
         {
             return profile.Paths.SelectMany(path => path.TargetDisplays).FirstOrDefault(target => target.DevicePath == Path);
-        }
+        }*/
 
         public PathDisplayTarget GetTargetInfo()
         {
@@ -101,7 +101,7 @@ namespace DisplayMagician
             var targetInfo = GetTargetInfo();
             var resolution = Size.Empty;
 
-            if (targetInfo != null && targetInfo.IsAvailable)
+            /*if (targetInfo != null && targetInfo.IsAvailable)
             {
                 resolution = targetInfo.PreferredResolution;
             }
@@ -113,9 +113,11 @@ namespace DisplayMagician
                 {
                     resolution = targetPath.Resolution;
                 }
-            }
+            }*/
 
-            var p = new ProfileItem {Paths = new Path[1]};
+            var p = new ProfileItem();
+            /*var p = new ProfileItem {Paths = new Path[1]};
+
             p.Paths[0] = new Path
             {
                 Resolution = resolution,
@@ -132,7 +134,7 @@ namespace DisplayMagician
                 {
                     p.Paths[0].TargetDisplays[0].SurroundTopology = targetPath.SurroundTopology;
                 }
-            }
+            }*/
 
             return new ProfileIcon(p).ToBitmap(size.Width, size.Height);
         }
