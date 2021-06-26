@@ -59,6 +59,7 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
+            this.panel1 = new System.Windows.Forms.Panel();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -351,14 +352,22 @@ namespace DisplayMagician.UIForms
             this.dv_profile.BackColor = System.Drawing.Color.DimGray;
             this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 63);
+            this.dv_profile.Location = new System.Drawing.Point(0, 120);
             this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
             this.dv_profile.Name = "dv_profile";
             this.dv_profile.PaddingX = 100;
             this.dv_profile.PaddingY = 100;
             this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(976, 517);
+            this.dv_profile.Size = new System.Drawing.Size(976, 399);
             this.dv_profile.TabIndex = 4;
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.DimGray;
+            this.panel1.Location = new System.Drawing.Point(0, 61);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(976, 521);
+            this.panel1.TabIndex = 37;
             // 
             // DisplayProfileForm
             // 
@@ -385,6 +394,7 @@ namespace DisplayMagician.UIForms
             this.Controls.Add(this.btn_apply);
             this.Controls.Add(this.pb_down_arrow);
             this.Controls.Add(this.dv_profile);
+            this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -429,6 +439,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.SaveFileDialog dialog_save;
         private System.Windows.Forms.Button btn_hotkey;
         private System.Windows.Forms.Label lbl_hotkey_assigned;
+        private System.Windows.Forms.Panel panel1;
     }
 }
 

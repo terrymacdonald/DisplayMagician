@@ -228,8 +228,8 @@ namespace DisplayMagicianShared.AMD
                         {
                             ScreenPosition screen = new ScreenPosition();
                             screen.Library = "AMD";
-                            //screen.Colour = Color.FromArgb(255,237,28,36); // represents AMD Red
-                            screen.Colour = Color.FromArgb(200, 237, 28, 36); // represents AMD Red
+                            //screen.Colour = Color.FromArgb(200, 237, 28, 36); // represents AMD Red
+                            screen.Colour = Color.FromArgb(255, 195, 195, 195); // represents normal screen colour
                             screen.Name = display.DisplayName;
                             screen.DisplayConnector = display.DisplayConnector; 
                             screen.ScreenX = mode.XPos;
