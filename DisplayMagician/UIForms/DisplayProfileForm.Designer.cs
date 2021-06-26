@@ -54,11 +54,11 @@ namespace DisplayMagician.UIForms
             this.label1 = new System.Windows.Forms.Label();
             this.tt_selected = new System.Windows.Forms.ToolTip(this.components);
             this.lbl_save_profile = new System.Windows.Forms.Label();
-            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.btn_save = new System.Windows.Forms.Button();
             this.dialog_save = new System.Windows.Forms.SaveFileDialog();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -290,22 +290,6 @@ namespace DisplayMagician.UIForms
     " DisplayMagician and click \'Save As\' to save this Display Profile.";
             this.lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // dv_profile
-            // 
-            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 63);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(976, 517);
-            this.dv_profile.TabIndex = 4;
-            // 
             // btn_save
             // 
             this.btn_save.Anchor = System.Windows.Forms.AnchorStyles.None;
@@ -359,6 +343,22 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
+            // 
+            // dv_profile
+            // 
+            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
+            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.dv_profile.Location = new System.Drawing.Point(0, 63);
+            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
+            this.dv_profile.Name = "dv_profile";
+            this.dv_profile.PaddingX = 100;
+            this.dv_profile.PaddingY = 100;
+            this.dv_profile.Profile = null;
+            this.dv_profile.Size = new System.Drawing.Size(976, 517);
+            this.dv_profile.TabIndex = 4;
             // 
             // DisplayProfileForm
             // 

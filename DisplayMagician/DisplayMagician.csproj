@@ -340,6 +340,8 @@
     <None Include="Resources\Epic.png" />
     <None Include="Resources\Origin.png" />
     <None Include="Resources\GOG.png" />
+    <None Include="Resources\amdblack.png" />
+    <None Include="Resources\amdwhite.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

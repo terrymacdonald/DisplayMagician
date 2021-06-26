@@ -191,38 +191,66 @@ namespace DisplayMagicianShared.AMD
             return IsValid();
         }
 
+        public override bool CreateProfileFromCurrentDisplaySettings()
+        {
+
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            if (amdLibrary.IsInstalled)
+            {
+                // Create the profile data from the current config
+                _profileData = amdLibrary.GetActiveProfile();
+
+                // Now, since the ActiveProfile has changed, we need to regenerate screen positions
+                _screens = GetScreenPositions();
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
         public override List<ScreenPosition> GetScreenPositions()
         {
 
-            if (_screens.Count == 0)
+            // Now we create the screens structure from the AMD profile information
+            _screens = new List<ScreenPosition>();
+
+            if ( _profileData.Adapters.Count > 0)
             {
-                // Now we create the screens structure from the AMD profile information
-                _screens = new List<ScreenPosition>();
-
-                if ( _profileData.Adapters.Count > 0)
+                foreach ( var adapter in _profileData.Adapters)
                 {
-                    foreach ( var adapter in _profileData.Adapters)
+                    foreach (var display in adapter.Displays)
                     {
-                        foreach (var display in adapter.Displays)
+                        foreach (var mode in display.DisplayModes)
                         {
-                            foreach (var mode in display.DisplayModes)
-                            {
-                                ScreenPosition screen = new ScreenPosition();
-                                screen.Colour = Color.Red; // represents AMD
-                                screen.Name = mode.DisplayID.ToString();
-                                screen.ScreenX = mode.XPos;
-                                screen.ScreenY = mode.YPos;
-                                screen.ScreenWidth = mode.XRes;
-                                screen.ScreenHeight = mode.YRes;
-                                screen.IsSpanned = false;
-                                //screen.Features = mode.ModeValue;
+                            ScreenPosition screen = new ScreenPosition();
+                            screen.Library = "AMD";
+                            //screen.Colour = Color.FromArgb(255,237,28,36); // represents AMD Red
+                            screen.Colour = Color.FromArgb(200, 237, 28, 36); // represents AMD Red
+                            screen.Name = display.DisplayName;
+                            screen.DisplayConnector = display.DisplayConnector; 
+                            screen.ScreenX = mode.XPos;
+                            screen.ScreenY = mode.YPos;
+                            screen.ScreenWidth = mode.XRes;
+                            screen.ScreenHeight = mode.YRes;
+                            screen.IsSpanned = false;
+                            
+                            
+                            // Figure out features
 
-                                _screens.Add(screen);
-                            }
+                            //ATI.ADL.ADL.ConvertDisplayModeFlags(mode.ModeValue);
+                            
+                            //screen.Features = mode.ModeValue;
+
+                            _screens.Add(screen);
                         }
                     }
                 }
             }
+            
 
             return _screens;
         }

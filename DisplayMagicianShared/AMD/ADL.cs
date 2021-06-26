@@ -277,30 +277,30 @@ namespace ATI.ADL
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLMode
     {
-        /// <summary> Display IDs. </summary>
-        internal ADLDisplayID DisplayID;
-        /// <summary> Screen refresh rate. </summary>
-        internal float RefreshRate;
         /// <summary> Adapter index. </summary>
         internal int AdapterIndex;
+        /// <summary> Display IDs. </summary>
+        internal ADLDisplayID DisplayID;
+        /// <summary> Screen position X coordinate. </summary>
+        internal int XPos;
+        /// <summary> Screen position Y coordinate. </summary>
+        internal int YPos;
+        /// <summary> Screen resolution Width.  </summary>
+        internal int XRes;
+        /// <summary> Screen resolution Height. </summary>
+        internal int YRes;
         /// <summary> Screen Color Depth. E.g., 16, 32.  </summary>
         internal int ColourDepth;
+        /// <summary> Screen refresh rate. </summary>
+        internal float RefreshRate;
+        /// <summary> Screen orientation. E.g., 0, 90, 180, 270. </summary>
+        internal int Orientation;
         /// <summary> Vista mode flag indicating Progressive or Interlaced mode.  </summary>
         internal int ModeFlag;
         /// <summary> The bit mask identifying the number of bits this Mode is currently using. </summary>
         internal int ModeMask;
         /// <summary> The bit mask identifying the display status. </summary>
-        internal int ModeValue;
-        /// <summary> Screen orientation. E.g., 0, 90, 180, 270. </summary>
-        internal int Orientation;
-        /// <summary> Screen position X coordinate. </summary>
-        internal int XPos;
-        /// <summary> Screen resolution Width.  </summary>
-        internal int XRes;
-        /// <summary> Screen position Y coordinate. </summary>
-        internal int YPos;
-        /// <summary> Screen resolution Height. </summary>
-        internal int YRes;
+        internal int ModeValue;       
     }
 
     internal struct ConvertedDisplayModeFlags
@@ -457,19 +457,20 @@ namespace ATI.ADL
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLDisplayEDIDData
     {
+        /// <summary> Size</summary>
+        internal int Size;
+        /// <summary> Flag</summary>
+        internal int Flag;
+        /// <summary> EDIDSize </summary>
+        internal int EDIDSize;
+        /// <summary> Block Index </summary>
+        internal int BlockIndex;
         /// <summary> EDIDData [256] </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
         internal string EDIDData;
-        /// <summary> Block Index </summary>
-        internal int BlockIndex;
-        /// <summary> EDIDSize </summary>
-        internal int EDIDSize;
-        /// <summary> Flag</summary>
-        internal int Flag;
-        /// <summary> Reserved </summary>
-        internal int Reserved;
-        /// <summary> Size</summary>
-        internal int Size;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        internal int[] Reserved;
+
     }
 
 
@@ -670,6 +671,8 @@ namespace ATI.ADL
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLDisplayConfig
     {
+        /// <summary> Size of this data structure </summary>
+        internal long Size;
         /// <summary> HDTV Connector Type </summary>
         internal long ConnectorType;
         /// <summary> HDTV Capabilities themselves </summary>
@@ -678,26 +681,25 @@ namespace ATI.ADL
         internal long OverriddedDeviceData;
         /// <summary> Reserved for future use</summary>
         internal long Reserved;
-        /// <summary> Size of this data structure </summary>
-        internal long Size;
+        
     }
 
     /// <summary> ADLDisplayMap Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLDisplayMap
     {
-        /// <summary> The Display Mode for the current map.</summary>
-        internal ADLMode DisplayMode;
         /// <summary> The current display map index. It is the OS desktop index. For example, if the OS index 1 is showing clone mode, the display map will be 1. </summary>
         internal int DisplayMapIndex;
+        /// <summary> The Display Mode for the current map.</summary>
+        internal ADLMode DisplayMode;
+        /// <summary> The number of display targets belongs to this map </summary>
+        internal int NumDisplayTarget;
+        /// <summary> The first target array index in the Target array </summary>
+        internal int FirstDisplayTargetArrayIndex;
         /// <summary> The bit mask identifies the number of bits DisplayMap is currently using. It is the sum of all the bit definitions defined in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
         internal int DisplayMapMask;
         /// <summary> The bit mask identifies the display status. The detailed definition is in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
-        internal int DisplayMapValue;
-        /// <summary> The first target array index in the Target array </summary>
-        internal int FirstDisplayTargetArrayIndex;
-        /// <summary> The number of display targets belongs to this map </summary>
-        internal int NumDisplayTarget;
+        internal int DisplayMapValue;               
     }
 
     /// <summary> ADLDisplayMapArray Array</summary>
@@ -741,14 +743,14 @@ namespace ATI.ADL
     {
         /// <summary> The Adapter index </summary>
         internal int AdapterIndex;
-        /// <summary> The grid column </summary>
-        internal int SLSGridColumn;
         /// <summary> The grid index </summary>
         internal int SLSGridIndex;
-        /// <summary> The grid bit mask identifies the number of bits DisplayMap is currently using. </summary>
-        internal int SLSGridMask;
         /// <summary>The grid row. </summary>
         internal int SLSGridRow;
+        /// <summary> The grid column </summary>
+        internal int SLSGridColumn;
+        /// <summary> The grid bit mask identifies the number of bits DisplayMap is currently using. </summary>
+        internal int SLSGridMask;
         /// <summary> The grid bit value identifies the display status. </summary>
         internal int SLSGridValue;
     }
@@ -757,58 +759,59 @@ namespace ATI.ADL
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLSLSMap
     {
-        /// <summary> The current grid </summary>
-        internal ADLSLSGrid Grid;
         /// <summary> The Adapter Index </summary>
         internal int AdapterIndex;
-        /// <summary> The first bezel mode array index in the native mode array </summary>
-        internal int FirstBezelModeArrayIndex;
-        /// <summary> The first bezel offset array index in the native mode array </summary>
-        internal int FirstBezelOffsetArrayIndex;
-        /// <summary>The first native mode array index in the native mode array. </summary>
-        internal int FirstNativeModeArrayIndex;
-        /// <summary> The first target array index in the Target array. </summary>
-        internal int FirstSLSTargetArrayIndex;
-        /// <summary> The number of bezel modes belongs to this map. </summary>
-        internal int NumBezelMode;
-        /// <summary> The number of bezel offsets belongs to this map. </summary>
-        internal int NumBezelOffset;
-        /// <summary> The number of native modes belongs to this map. </summary>
-        internal int NumNativeMode;
-        /// <summary> The number of display targets belongs to this map. </summary>
-        internal int NumSLSTarget;
-        /// <summary> Screen orientation. E.g., 0, 90, 180, 270. </summary>
-        internal int Orientation;
         /// <summary> The current display map index. It is the OS Desktop index. </summary>
         internal int SLSMapIndex;
+        /// <summary> The current grid </summary>
+        internal ADLSLSGrid Grid;
+        /// <summary> OS Surface Index </summary>
+        internal int SurfaceMapIndex;
+        /// <summary> Screen orientation. E.g., 0, 90, 180, 270. </summary>
+        internal int Orientation;
+        /// <summary> The number of display targets belongs to this map. </summary>
+        internal int NumSLSTarget;
+        /// <summary> The first target array index in the Target array. </summary>
+        internal int FirstSLSTargetArrayIndex;
+        /// <summary> The number of native modes belongs to this map. </summary>
+        internal int NumNativeMode;
+        /// <summary>The first native mode array index in the native mode array. </summary>
+        internal int FirstNativeModeArrayIndex;
+        /// <summary> The number of bezel modes belongs to this map. </summary>
+        internal int NumBezelMode;
+        /// <summary> The first bezel mode array index in the native mode array </summary>
+        internal int FirstBezelModeArrayIndex;
+        /// <summary> The number of bezel offsets belongs to this map. </summary>
+        internal int NumBezelOffset;
+        /// <summary> The first bezel offset array index in the native mode array </summary>
+        internal int FirstBezelOffsetArrayIndex;
         /// <summary> Bitmask identifies display map status </summary>
         internal int SLSMapMask;
         /// <summary> Bitmask identifies display map status </summary>
         internal int SLSMapValue;
-        /// <summary> OS Surface Index </summary>
-        internal int SurfaceMapIndex;
+        
     }
 
     /// <summary> ADLSLSTarget Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLSLSTarget
     {
-        /// <summary> The target ID.  </summary>
-        internal ADLDisplayTarget DisplayTarget;
         /// <summary> The Adapter Index </summary>
         internal int AdapterIndex;
+        /// <summary> The SLS map index. </summary>
+        internal int SLSMapIndex;
+        /// <summary> The target ID.  </summary>
+        internal ADLDisplayTarget DisplayTarget;
         /// <summary> Target postion X in SLS grid </summary>
         internal int SLSGridPositionX;
         /// <summary> Target postion Y in SLS grid </summary>
         internal int SLSGridPositionY;
-        /// <summary> The SLS map index. </summary>
-        internal int SLSMapIndex;
+        /// <summary> The view size width, height and rotation angle per SLS Target.  </summary>
+        internal ADLMode ViewSize;
         /// <summary> The bit mask identifies the bits in iSLSTargetValue are currently used.  </summary>
         internal int SLSTargetMask;
         /// <summary> The bit mask identifies status info.  </summary>
-        internal int SLSTargetValue;
-        /// <summary> The view size width, height and rotation angle per SLS Target.  </summary>
-        internal ADLMode ViewSize;
+        internal int SLSTargetValue;        
     }
 
     /// <summary> ADLSLSTarget Array</summary>
@@ -824,14 +827,14 @@ namespace ATI.ADL
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLSLSMode
     {
-        /// <summary> The target ID.  </summary>
-        internal ADLMode DisplayMode;
         /// <summary> The Adapter Index </summary>
         internal int AdapterIndex;
         /// <summary> The current display map index. It is the OS Desktop index. </summary>
         internal int SLSMapIndex;
         /// <summary> The mode index. </summary>
         internal int SLSModeIndex;
+        /// <summary> The target ID.  </summary>
+        internal ADLMode DisplayMode;
         /// <summary> The bit mask identifies the number of bits Mode is currently using. </summary>
         internal int SLSNativeModeMask;
         /// <summary> The bit mask identifies the display status. </summary>
@@ -843,48 +846,49 @@ namespace ATI.ADL
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLBezelTransientMode
     {
-        /// <summary> The target ID.  </summary>
-        internal ADLMode DisplayMode;
         /// <summary> The Adapter Index </summary>
         internal int AdapterIndex;
-        /// <summary> The first bezel offset array index in the native mode array. </summary>
-        internal int FirstBezelOffsetArrayIndex;
-        /// <summary> The number of bezel offsets belongs to this map.  </summary>
-        internal int NumBezelOffset;
-        /// <summary> The bit mask identifies the bits this structure is currently using. </summary>
-        internal int SLSBezelTransientModeMask;
-        /// <summary> The bit mask identifies the display status.  </summary>
-        internal int SLSBezelTransientModeValue;
         /// <summary> SLS Map Index. </summary>
         internal int SLSMapIndex;
         /// <summary> SLS Mode Index. </summary>
         internal int SLSModeIndex;
+        /// <summary> The target ID.  </summary>
+        internal ADLMode DisplayMode;
+        /// <summary> The number of bezel offsets belongs to this map.  </summary>
+        internal int NumBezelOffset;
+        /// <summary> The first bezel offset array index in the native mode array. </summary>
+        internal int FirstBezelOffsetArrayIndex;
+        /// <summary> The bit mask identifies the bits this structure is currently using. </summary>
+        internal int SLSBezelTransientModeMask;
+        /// <summary> The bit mask identifies the display status.  </summary>
+        internal int SLSBezelTransientModeValue;
+        
     }
 
     /// <summary> ADLSLSOffset Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
     internal struct ADLSLSOffset
     {
-        /// <summary> The target ID.  </summary>
-        internal ADLMode DisplayMode;
         /// <summary> The Adapter Index </summary>
         internal int AdapterIndex;
-        /// <summary> The bit mask identifies the display status. </summary>
-        internal int BezelOffsetValue;
+        /// <summary> The current display map index. It is the OS Desktop index. </summary>
+        internal int SLSMapIndex;
+        /// <summary> The target ID.  </summary>
+        internal ADLDisplayID DisplayID;
         /// <summary> SLS Bezel Mode Index. </summary>
         internal int BezelModeIndex;
-        /// <summary> The bit mask identifies the number of bits Offset is currently using. </summary>
-        internal int BezelOffsetMask;
         /// <summary>SLS Bezel Offset X. </summary>
         internal int BezelOffsetX;
         /// <summary>SLS Bezel Offset Y. </summary>
         internal int BezelOffsetY;
-        /// <summary> SLS Display Height. </summary>
-        internal int DisplayHeight;
         /// <summary> SLS Display Width. </summary>
         internal int DisplayWidth;
-        /// <summary> The current display map index. It is the OS Desktop index. </summary>
-        internal int SLSMapIndex;
+        /// <summary> SLS Display Height. </summary>
+        internal int DisplayHeight;
+        /// <summary> The bit mask identifies the number of bits Offset is currently using. </summary>
+        internal int BezelOffsetMask;
+        /// <summary> The bit mask identifies the display status. </summary>
+        internal int BezelOffsetValue;
     }
 
     #endregion ADLSLS

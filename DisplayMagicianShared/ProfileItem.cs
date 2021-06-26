@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
+using DisplayMagicianShared.AMD;
 //using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagicianShared
@@ -21,6 +22,7 @@ namespace DisplayMagicianShared
         public int ScreenWidth;
         public int ScreenHeight;
         public string Name;
+        public string Library;
         public bool IsPrimary;
         public Color Colour;
         public List<string> Features;
@@ -30,6 +32,7 @@ namespace DisplayMagicianShared
         public List<SpannedScreenPosition> SpannedScreens;
         public int SpannedColumns;
         public int SpannedRows;
+        public string DisplayConnector;
     }
 
     public struct SpannedScreenPosition
@@ -192,7 +195,7 @@ namespace DisplayMagicianShared
 
         //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
-        //public VideoLibraryProfileData ProfileData { get; set; }
+        //public virtual object ProfileData { get; set; }
         
         [JsonIgnore]
         public virtual ProfileIcon ProfileIcon
@@ -357,6 +360,12 @@ namespace DisplayMagicianShared
 
             // Return if it is valid and we should continue
             return IsValid();
+        }
+
+
+        public virtual bool CreateProfileFromCurrentDisplaySettings()
+        {
+            return false;                
         }
 
 

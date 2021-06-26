@@ -567,14 +567,17 @@ namespace DisplayMagicianShared
             AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
             if (amdLibrary.IsInstalled)
             {                
-                activeProfile = new AMDProfileItem
+                AMDProfileItem amdProfile = new AMDProfileItem
                 {
-                    Name = "Current Display Profile",
-                    ProfileData = amdLibrary.GetActiveProfile()
+                    Name = "Current Display Profile" ,
+                    //ProfileData = amdLibrary.GetActiveProfile(),
+                    //Screens = amdLibrary.GenerateScreenPositions()
                 //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
                 };
                 //activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
                 //activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
+                amdProfile.CreateProfileFromCurrentDisplaySettings();
+                activeProfile = amdProfile;
             }
             else {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Trying to access things using the NVIDIA video card driver");

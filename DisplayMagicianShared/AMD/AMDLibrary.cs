@@ -38,6 +38,8 @@ namespace DisplayMagicianShared.AMD
         // Struct to store the Display
         public struct AMDDisplay
         {
+            internal string DisplayName;
+            internal string DisplayConnector;
             internal List<ADLMode> DisplayModes;
         }
 
@@ -1190,12 +1192,15 @@ namespace DisplayMagicianShared.AMD
 
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is connected and mapped in Windows OS");
 
-                                                // Store the Display information for later
-                                                
+                                                ADL.ADLDisplayConnectionType displayConnector = (ADL.ADLDisplayConnectionType)oneDisplayInfo.DisplayConnector;
+
+                                                // Store the Display information for later                                                
                                                 AMDDisplay displayToCreate = new AMDDisplay();                                                
                                                 displayToCreate.DisplayModes = new List<ADLMode>();
+                                                displayToCreate.DisplayName = oneDisplayInfo.DisplayName;
+                                                displayToCreate.DisplayConnector = displayConnector.ToString("G");
 
-                                                ADL.ADLDisplayConnectionType displayConnector = (ADL.ADLDisplayConnectionType)oneDisplayInfo.DisplayConnector;
+                                                
 
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: ### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Connector = {displayConnector.ToString("G")}");
@@ -1476,8 +1481,6 @@ namespace DisplayMagicianShared.AMD
                                                     continue;
                                                 }
 
-                                                // Add it to the list of display identifiers so we can return it
-                                                displayIdentifiers.Add(displayIdentifier);
 
                                                 SharedLogger.logger.Debug($"ProfileRepository/GetActiveprofile: DisplayIdentifier: {displayIdentifier}");
                                             }
@@ -1519,7 +1522,7 @@ namespace DisplayMagicianShared.AMD
             {
                 SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: There were no AMD adapters found by AMD ADL.");
                 
-            }
+            }          
 
             // Return the profile
             return profileToCreate;
@@ -1540,13 +1543,37 @@ namespace DisplayMagicianShared.AMD
             return true;
         }
 
-        public List<ScreenPosition> GenerateScreenPositions()
+        /*public List<ScreenPosition> GenerateScreenPositions(AMDProfile profileToCreate)
         {
             List<ScreenPosition> screens = new List<ScreenPosition>();
 
 
+            if (profileToCreate.Adapters.Count > 0)
+            {
+                foreach (var adapter in profileToCreate.Adapters)
+                {
+                    foreach (var display in adapter.Displays)
+                    {
+                        foreach (var mode in display.DisplayModes)
+                        {
+                            ScreenPosition screen = new ScreenPosition();
+                            screen.Colour = Color.Red; // represents AMD
+                            screen.Name = mode.DisplayID.ToString();
+                            screen.ScreenX = mode.XPos;
+                            screen.ScreenY = mode.YPos;
+                            screen.ScreenWidth = mode.XRes;
+                            screen.ScreenHeight = mode.YRes;
+                            screen.IsSpanned = false;
+                            //screen.Features = mode.ModeValue;
+
+                            screens.Add(screen);
+                        }
+                    }
+                }
+            }
+
 
             return screens;
-        }
+        }*/
     }
 }
