@@ -602,7 +602,7 @@ namespace DisplayMagician {
                     {
                         Console.WriteLine("Program/ApplyProfile : Applying AMD Profile " + profile.Name);
                         AMDProfileItem amdProfile = (AMDProfileItem)profile;
-                        if (AMDLibrary.GetLibrary().SetActiveProfile(amdProfile.ProfileData))
+                        if (!AMDLibrary.GetLibrary().SetActiveProfile(amdProfile.ProfileData))
                         {
                             // Somehow return that this profile topology didn't apply
                             throw new ApplyTopologyException("Program/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
