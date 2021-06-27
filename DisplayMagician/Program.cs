@@ -18,6 +18,7 @@ using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
 using System.Collections;
+using DisplayMagicianShared.AMD;
 
 namespace DisplayMagician {
 
@@ -587,9 +588,67 @@ namespace DisplayMagician {
                 return ApplyProfileResult.Successful;
             }
 
-            /*try
+            try
             {
-                // Now lets prepare changing the display topology task
+                // Set up some things to be used later
+                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Changing to '{profile.Name}' Profile", "Press ESC to cancel", Color.Orange, true);
+
+                // If this is an AMD profile, then we need to set it up as such
+                if (profile.Driver.Equals("AMD"))
+                {                   
+
+                    // Now lets prepare a task to apply the profile in a separate thread
+                    Task amdApplyProfileTask = new Task(() =>
+                    {
+                        Console.WriteLine("Program/ApplyProfile : Applying AMD Profile " + profile.Name);
+                        AMDProfileItem amdProfile = (AMDProfileItem)profile;
+                        if (AMDLibrary.GetLibrary().SetActiveProfile(amdProfile.ProfileData))
+                        {
+                            // Somehow return that this profile topology didn't apply
+                            throw new ApplyTopologyException("Program/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
+                        }
+                    });
+
+                    ApplyingProfileForm amdApplyProfileForm = new ApplyingProfileForm(amdApplyProfileTask, 30, $"Changing to '{profile.Name}' Profile", "Applying AMD configuration", Color.FromArgb(200, 237, 28, 36));
+
+                    if (timeoutForm.ShowDialog() == DialogResult.Cancel)
+                    {
+                        return ApplyProfileResult.Cancelled;
+                    }
+
+                    // We always want to do the WindowsDisplayAPI PathInfo part
+                    logger.Debug($"Program/ApplyProfile: Running the AMD ApplyProfile Task to change the screen layout");
+                    amdApplyProfileForm.ShowDialog();
+                    try
+                    {
+                        amdApplyProfileTask.Wait();
+                    }
+                    catch (AggregateException ae)
+                    {
+                        logger.Error(ae, $"Program/ApplyProfile exception during AMD ApplyProfile Task");
+                        foreach (var e in ae.InnerExceptions)
+                        {
+                            // Handle the custom exception.
+                            if (e is ApplyPathInfoException)
+                            {
+                                Console.WriteLine(e.Message);
+                            }
+                            // Rethrow any other exception.
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                    }
+
+                    if (amdApplyProfileTask.IsFaulted)
+                        logger.Debug($"Program/ApplyProfile: Applying AMD Profile failed to complete");
+
+                    if (!amdApplyProfileTask.IsCompleted)
+                        return ApplyProfileResult.Error;
+
+                }
+                /*// Now lets prepare changing the display topology task
                 Task applyTopologyTask = new Task(() =>
                 {
                     Console.WriteLine("Program/ApplyProfile : Applying Profile Topology " + profile.Name);
@@ -599,8 +658,8 @@ namespace DisplayMagician {
                         throw new ApplyTopologyException("Program/ApplyProfile: ApplyNVIDIAGridTopology: Error setting up the NVIDIA Surround Grid Topology");
                     }
                 });
-
-                Task applyPathInfoTask = new Task(() => {
+*/
+                /*Task applyPathInfoTask = new Task(() => {
                     Console.WriteLine("Program/ApplyProfile  : Applying Profile Path " + profile.Name);
                     if (!ProfileRepository.ApplyWindowsDisplayPathInfo(profile))
                     {
@@ -608,14 +667,10 @@ namespace DisplayMagician {
                         throw new ApplyPathInfoException("Program/ApplyProfile: ApplyWindowsDisplayPathInfo: Error configuring the Windows Display Devices");
                     }
 
-                });
+                });*/
 
-                // Set up the UI forms to show
-                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Changing to '{profile.Name}' Profile", "Press ESC to cancel", Color.Orange, true); 
-                ApplyingProfileForm topologyForm = new ApplyingProfileForm(applyTopologyTask, 30, $"Changing to '{profile.Name}' Profile", "Applying NVIDIA Grid Topology", Color.Aquamarine);
-                ApplyingProfileForm pathInfoForm = new ApplyingProfileForm(applyPathInfoTask, 15, $"Changing to '{profile.Name}' Profile", "Adjusting Windows Display Device positions", Color.LawnGreen);
-
-                if (timeoutForm.ShowDialog() == DialogResult.Cancel)
+                
+                /*if (timeoutForm.ShowDialog() == DialogResult.Cancel)
                 {
                     return ApplyProfileResult.Cancelled;
                 }
@@ -679,9 +734,9 @@ namespace DisplayMagician {
                         logger.Debug($"Program/ApplyProfile: Failed to complete applying or removing the NVIDIA Surround profile");
                         return ApplyProfileResult.Error;
                     }
-                }
+                }*/
 
-                // We always want to do the WindowsDisplayAPI PathInfo part
+                /*// We always want to do the WindowsDisplayAPI PathInfo part
                 logger.Debug($"Program/ApplyProfile: Changing the Windows Display Path Info to change the Windows Display layout");
                 pathInfoForm.ShowDialog();
                 try
@@ -710,7 +765,7 @@ namespace DisplayMagician {
                     logger.Debug($"Program/ApplyProfile: Applying Profile PathInfo stage failed to complete");
 
                 if (!applyPathInfoTask.IsCompleted)
-                    return ApplyProfileResult.Error;
+                    return ApplyProfileResult.Error;*/
 
             }
             catch (Exception ex)
@@ -720,7 +775,7 @@ namespace DisplayMagician {
                     logger.Debug($"Program/ApplyProfile: Failed to complete changing the Windows Display layout");
                     return ApplyProfileResult.Error;
                 }
-            }*/
+            }
 
             ProfileRepository.UpdateActiveProfile();
 

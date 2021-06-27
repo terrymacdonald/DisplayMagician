@@ -1407,10 +1407,10 @@ namespace DisplayMagicianShared.AMD
             return true;
         }
 
-        public bool IsActiveProfile(AMDProfile profileToTest)
+        /*public bool IsActiveProfile(AMDProfile profileToTest)
         {
             return true;
-        }
+        }*/
 
         public bool IsValidProfile(AMDProfile profileToTest)
         {
