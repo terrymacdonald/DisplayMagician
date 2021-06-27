@@ -26,6 +26,9 @@ namespace DisplayMagicianShared.AMD
     [JsonObject(MemberSerialization.Fields)]
     public struct AMDAdapter
     {
+        public int AdapterIndex;
+        public string AdapterName;
+        public string DisplayName;
         [JsonProperty]
         public ADLAdapterInfoX2 AdapterInfoX2;
         public List<AMDDisplay> Displays;
@@ -37,6 +40,7 @@ namespace DisplayMagicianShared.AMD
     {
         public string DisplayName;
         public string DisplayConnector;
+        public string UDID;
         [JsonRequired]
         public List<ADLMode> DisplayModes;
         public bool HDRSupported;

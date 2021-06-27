@@ -1402,8 +1402,331 @@ namespace DisplayMagicianShared.AMD
             return profileToCreate;
         }
 
-        public bool SetActiveProfile(AMDProfile profileToUse)
+        public bool SetActiveProfile(AMDProfile profileDataToUse)
         {
+            // Get the list of adapters
+            // Get the list of displays
+
+            // Look for the display and see if it is used in the profile
+            // If it is then set the display up
+            // if it is not, then disable the display
+
+            // Make the driver settign permanent
+
+            SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: Getting AMD active adapter count");
+
+            int ADLRet = ADL.ADL_ERR;
+            int NumberOfAdapters = 0;
+            List<AMDDisplay> UsedDisplays = new List<AMDDisplay>();
+
+            if (null != ADL.ADL2_Adapter_NumberOfAdapters_Get)
+            {
+                ADL.ADL2_Adapter_NumberOfAdapters_Get(_adlContextHandle, ref NumberOfAdapters);
+                SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: Number Of Adapters: {NumberOfAdapters.ToString()} ");
+            }
+
+            if (NumberOfAdapters > 0)
+            {
+                IntPtr AdapterBuffer = IntPtr.Zero;
+                if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
+                {
+                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: ADL2_Adapter_AdapterInfoX4_Get DLL function exists.");
+
+                    // Get the Adapter info and put it in the AdapterBuffer
+                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: Running ADL2_Adapter_AdapterInfoX4_Get to find all known AMD adapters.");
+                    //ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, AdapterBuffer, size);
+                    int numAdapters = 0;
+                    ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
+                    if (ADLRet == ADL.ADL_OK)
+                    {
+
+                        int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
+
+                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known AMD adapters.");
+
+                        ADLAdapterInfoX2 oneAdapter = new ADLAdapterInfoX2();
+                        // Go through each adapter
+                        for (int adapterLoop = 0; adapterLoop < numAdapters; adapterLoop++)
+                        {
+                            oneAdapter = (ADLAdapterInfoX2)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (adapterLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
+
+                            if (oneAdapter.Exist != 1)
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
+                                continue;
+                            }
+
+                            if (oneAdapter.Present != 1)
+                            {
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} isn't enabled at present so skipping detection for this adapter.");
+                                continue;
+                            }
+
+                            // Check if the adapter is active
+                            if (ADL.ADL2_Adapter_Active_Get != null)
+                                ADLRet = ADL.ADL2_Adapter_Active_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref IsActive);
+
+                            if (ADLRet == ADL.ADL_OK)
+                            {
+                                // Only continue if the adapter is enabled
+                                if (IsActive != ADL.ADL_TRUE)
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} isn't active ({oneAdapter.AdapterName}).");
+                                    continue;
+                                }
+
+                                // Only continue if the adapter index is > 0
+                                if (oneAdapter.AdapterIndex < 0)
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/GenerateAllASetActiveProfilevailableDisplayIdentifiers: AMD Adapter has an adapter index of {oneAdapter.AdapterIndex.ToString()} which indicates it is not a real adapter.");
+                                    continue;
+                                }
+
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} is active! ({oneAdapter.AdapterName}).");
+
+                                /*// Get the Adapter Capabilities
+                                ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
+                                if (ADL.ADL2_AdapterX2_Caps != null)
+                                {
+                                    ADLRet = ADL.ADL2_AdapterX2_Caps(_adlContextHandle, oneAdapter.AdapterIndex, out AdapterCapabilities);
+                                }*/
+                                
+                                if (ADL.ADL2_Display_DisplayInfo_Get != null)
+                                {
+                                    IntPtr DisplayBuffer = IntPtr.Zero;
+                                    int numDisplays = 0;
+                                    // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
+                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 1);
+                                    if (ADLRet == ADL.ADL_OK)
+                                    {                                       
+
+                                        try
+                                        {
+
+                                            for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
+                                            {
+                                                ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
+                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
+
+                                                // Is the display mapped to this adapter? If not we skip it!
+                                                if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex != oneAdapter.AdapterIndex)
+                                                {
+                                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
+                                                    continue;
+                                                }
+
+                                                // Convert the displayInfoValue to something usable using a library function I made
+                                                ConvertedDisplayInfoValue displayInfoValue = ADL.ConvertDisplayInfoValue(oneDisplayInfo.DisplayInfoValue);
+
+                                                if (!displayInfoValue.DISPLAYCONNECTED)
+                                                {
+                                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not connected");
+                                                    continue;
+                                                }
+
+                                                
+                                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveProfile: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is connected and mapped in Windows OS");
+
+                                                // At this point we have the basic information about the displays currently connected
+                                                // We need to check to see what we do in order to implement this profile
+
+                                                // We may need to disable profiles
+
+                                                // We may need to move windows
+                                                foreach (AMDAdapter storedAMDAdapter in profileDataToUse.Adapters)
+                                                {
+                                                    if (oneAdapter.AdapterIndex == storedAMDAdapter.AdapterIndex)
+                                                    {
+                                                        foreach (AMDDisplay storedAMDDisplay in storedAMDAdapter.Displays)
+                                                        {
+                                                            if (oneAdapter.UDID == storedAMDDisplay.UDID)
+                                                            {
+                                                                // Then this is one that we want to change and use
+
+                                                                // First step is to record the fact we used this one
+                                                                // This is used to figre out the displays we need to turn off later
+                                                                UsedDisplays.Add(storedAMDDisplay);
+
+                                                                // Set the basic display configuration 
+                                                                //ADL.ADL2_Display_Modes_Set
+                                                                IntPtr displayModeBuffer = IntPtr.Zero;
+                                                                int numModes = 0;
+                                                                if (ADL.ADL2_Display_Modes_Get != null)
+                                                                {
+                                                                    // Get the ADLModes from the Display
+                                                                    ADLRet = ADL.ADL2_Display_Modes_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out numModes, out displayModeBuffer);
+                                                                    if (ADLRet == ADL.ADL_OK)
+                                                                    {
+                                                                        for (int displayModeLoop = 0; displayModeLoop < numModes; displayModeLoop++)
+                                                                        {
+                                                                            ADLMode oneDisplayMode = new ADLMode();
+                                                                            oneDisplayMode = (ADLMode)Marshal.PtrToStructure(new IntPtr(displayModeBuffer.ToInt64() + (displayModeLoop * Marshal.SizeOf(oneDisplayMode))), oneDisplayMode.GetType());
+
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: Error running ADL2_Display_DeviceConfig_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                                                                    }
+                                                                }
+
+                                                                // Set the display color configuration 
+                                                                //ADL.ADL2_Display_Color_Set
+
+                                                                // Set the display mode timing override configuration 
+                                                                //ADL.ADL2_Display_ModeTimingOverride_Set
+
+
+                                                                // Set the HDR function if needed
+                                                                if (storedAMDDisplay.HDREnabled)
+                                                                {
+                                                                    //ADL.ADL2_Display_HDRState_Set
+                                                                }
+
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                
+
+                                                
+
+                                                ADLDDCInfo2 displayDDCInfo2 = new ADLDDCInfo2();
+                                                displayDDCInfo2.Size = Marshal.SizeOf(displayDDCInfo2);
+
+                                                if (ADL.ADL2_Display_DDCInfo2_Get != null)
+                                                {
+                                                    // Get the DDC Data from the Display
+                                                    ADLRet = ADL.ADL2_Display_DDCInfo2_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayDDCInfo2);
+                                                    if (ADLRet == ADL.ADL_OK)
+                                                    {
+
+                                                        // Convert the DDCInfoFlag to something usable using a library function I made
+                                                        ConvertedDDCInfoFlag DDCInfoFlag = ADL.ConvertDDCInfoFlag(displayDDCInfo2.DDCInfoFlag);
+
+                                                        // Convert the DDCInfoFlag to something usable using a library function I made
+                                                        ConvertedSupportedHDR supportedHDR = ADL.ConvertSupportedHDR(displayDDCInfo2.SupportedHDR);
+
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: ### Display DDCInfo2 for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display AvgLuminanceData = {displayDDCInfo2.AvgLuminanceData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag = {displayDDCInfo2.DDCInfoFlag}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DiffuseScreenReflectance = {displayDDCInfo2.DiffuseScreenReflectance}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DisplayName = {displayDDCInfo2.DisplayName}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display FreesyncFlags = {displayDDCInfo2.FreesyncFlags}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display ManufacturerID = {displayDDCInfo2.ManufacturerID}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MaxBacklightMaxLuminanceData = {displayDDCInfo2.MaxBacklightMaxLuminanceData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MaxBacklightMinLuminanceData = {displayDDCInfo2.MaxBacklightMinLuminanceData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MaxHResolution = {displayDDCInfo2.MaxHResolution}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MaxLuminanceData = {displayDDCInfo2.MaxLuminanceData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MaxRefresh = {displayDDCInfo2.MaxRefresh}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MaxVResolution = {displayDDCInfo2.MaxVResolution}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MinBacklightMaxLuminanceData = {displayDDCInfo2.MinBacklightMaxLuminanceData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MinBacklightMinLuminanceData = {displayDDCInfo2.MinBacklightMinLuminanceData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MinLuminanceData = {displayDDCInfo2.MinLuminanceData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display MinLuminanceNoDimmingData = {displayDDCInfo2.MinLuminanceNoDimmingData}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityBlueX = {displayDDCInfo2.NativeDisplayChromaticityBlueX}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityBlueY = {displayDDCInfo2.NativeDisplayChromaticityBlueY}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityGreenX = {displayDDCInfo2.NativeDisplayChromaticityGreenX}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityGreenY = {displayDDCInfo2.NativeDisplayChromaticityGreenY}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityRedX = {displayDDCInfo2.NativeDisplayChromaticityRedX}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityRedY = {displayDDCInfo2.NativeDisplayChromaticityRedY}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityWhiteX = {displayDDCInfo2.NativeDisplayChromaticityWhiteX}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display NativeDisplayChromaticityWhiteY = {displayDDCInfo2.NativeDisplayChromaticityWhiteY}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display PackedPixelSupported = {displayDDCInfo2.PackedPixelSupported}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display PanelPixelFormat = {displayDDCInfo2.PanelPixelFormat}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display ProductID = {displayDDCInfo2.ProductID}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display PTMCx = {displayDDCInfo2.PTMCx}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display PTMCy = {displayDDCInfo2.PTMCy}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display PTMRefreshRate = {displayDDCInfo2.PTMRefreshRate}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SerialID = {displayDDCInfo2.SerialID}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Size = {displayDDCInfo2.Size}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SpecularScreenReflectance = {displayDDCInfo2.SpecularScreenReflectance}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SupportedColorSpace = {displayDDCInfo2.SupportedColorSpace}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SupportedHDR = {displayDDCInfo2.SupportedHDR}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SupportedTransferFunction = {displayDDCInfo2.SupportedTransferFunction}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SupportsDDC = {displayDDCInfo2.SupportsDDC}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag Digital Device  = {DDCInfoFlag.DIGITALDEVICE}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag EDID Extension = {DDCInfoFlag.EDIDEXTENSION}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag HDMI Audio Device  = {DDCInfoFlag.HDMIAUDIODEVICE}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag Projector Device = {DDCInfoFlag.PROJECTORDEVICE}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag Supports AI = {DDCInfoFlag.SUPPORTS_AI}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag Supports xvYCC601 = {DDCInfoFlag.SUPPORT_xvYCC601}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display DDCInfoFlag Supports xvYCC709 = {DDCInfoFlag.SUPPORT_xvYCC709}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SupportedHDR Supports CEA861_3 = {supportedHDR.CEA861_3}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SupportedHDR Supports DOLBYVISION = {supportedHDR.DOLBYVISION}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display SupportedHDR Supports FREESYNC_HDR = {supportedHDR.FREESYNC_HDR}");
+                                                    }
+                                                    else
+                                                    {
+                                                        SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: Error running ADL2_Display_DDCInfo2_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                                                    }
+
+
+                                                }
+
+
+                                                // Add the HDR information to the profile display storage
+                                                int HDRSupported = 0;
+                                                int HDREnabled = 0;
+                                                if (ADL.ADL2_Display_HDRState_Get != null)
+                                                {
+                                                    // Get the HDR State from the Display
+                                                    ADLRet = ADL.ADL2_Display_HDRState_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID, out HDRSupported, out HDREnabled);
+                                                    if (ADLRet == ADL.ADL_OK)
+                                                    {
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: ### Display HDR State for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display HDR Supported = {HDRSupported}");
+                                                        SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display HDR Enabled = {HDREnabled}");
+                                                    }
+                                                    else
+                                                    {
+                                                        SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: Error running ADL2_Display_HDRState_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                                                    }
+                                                }
+
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GetActiveprofile: Exception caused trying to access attached displays");
+                                            continue;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: Error running ADL2_Display_DisplayInfo_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                                    }
+                                    // Release the memory for the DisplayInfo structure
+                                    if (IntPtr.Zero != DisplayBuffer)
+                                        Marshal.FreeCoTaskMem(DisplayBuffer);
+                                }
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: Error running ADL2_Adapter_Active_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: Error running ADL2_Adapter_AdapterInfoX4_Get on AMD Video card: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                    }
+                }
+                // Release the memory for the AdapterInfo structure
+                if (IntPtr.Zero != AdapterBuffer)
+                {
+                    Marshal.FreeCoTaskMem(AdapterBuffer);
+                }
+
+            }
+            else
+            {
+                SharedLogger.logger.Warn($"AMDLibrary/GetActiveprofile: There were no AMD adapters found by AMD ADL.");
+                return false;
+            }
+
+
+
             return true;
         }
 
