@@ -311,7 +311,7 @@ namespace DisplayMagicianShared
             }
         }*/
 
-        private void DrawScreen(Graphics g, ScreenPosition screen)
+        /*private void DrawScreen(Graphics g, ScreenPosition screen)
         {
             //var res = NormalizeResolution(screen);
             Rectangle rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
@@ -406,6 +406,115 @@ namespace DisplayMagicianShared
             foreach (ScreenPosition screen in _profile.Screens)
             {
                 DrawScreen(g, screen);
+            }
+        }*/
+
+        private void DrawView(Graphics g, float width, float height)
+        {
+            // Figure out the sizes we need based on the total size of the screens
+            var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
+            var standPadding = height * 0.005f;
+            height -= standPadding * 8;
+            var factor = Math.Min((width - 2 * standPadding - 1) / viewSize.Width,
+                (height - 2 * standPadding - 1) / viewSize.Height);
+            g.ScaleTransform(factor, factor);
+
+            // Make space for the stand
+            var xOffset = ((width - 1) / factor - viewSize.Width) / 2f;
+            var yOffset = ((height - 1) / factor - viewSize.Height) / 2f;
+            g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
+
+            // How wide the Bezel is on the screen graphics
+            int screenBezel = 60;
+            int screenWordBuffer = 30;
+
+            // Draw the stand
+            if (standPadding * 6 >= 1)
+            {
+                using (var boundRect = RoundedRect(viewSize, 2 * standPadding / factor))
+                {
+                    g.FillPath(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), boundRect);
+                    g.DrawPath(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), boundRect);
+                }
+
+                using (
+                    var boundRect =
+                        RoundedRect(
+                            new RectangleF(viewSize.Width * 0.375f + viewSize.X,
+                                viewSize.Height + standPadding / factor,
+                                viewSize.Width / 4, standPadding * 7 / factor), 2 * standPadding / factor))
+                {
+                    g.FillPath(new SolidBrush(Color.FromArgb(250, 50, 50, 50)), boundRect);
+                    g.DrawPath(new Pen(Color.FromArgb(50, 255, 255, 255), 2 / factor), boundRect);
+                }
+            }
+            else
+            {
+                g.FillRectangle(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), viewSize);
+                g.DrawRectangle(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), viewSize.X, viewSize.Y,
+                    viewSize.Width, viewSize.Height);
+            }
+
+            // Now go through and draw the screens
+            foreach (ScreenPosition screen in _profile.Screens)
+            {
+
+                Color screenBgColour;
+                Color lightTextColour = Color.White;
+                Color darkTextColour = Color.Black;
+
+                // draw the screen 
+                if (screen.IsSpanned)
+                {
+                    //g.FillRectangle(new SolidBrush(Color.FromArgb(150, 106, 185, 0)), targetRect);
+                }
+                else
+                {
+
+                    // Draw the outline of the monitor
+                    Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
+                    g.DrawRectangle(Pens.Black, outlineRect);
+
+                    // Draw the screen of the monitor
+                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                    if (screen.Colour != null)
+                    {
+                        screenBgColour = screen.Colour;
+                    }
+                    else
+                    {
+                        screenBgColour = Color.FromArgb(255, 155, 155, 155);
+                    }
+                    g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
+                    g.DrawRectangle(Pens.Black, screenRect);
+
+                }
+            }
+        }
+
+
+        private Color pickTextColorBasedOnBgColour(Color bgColour, Color lightColour, Color darkColour)
+        {
+            if ((bgColour.R * 0.299 + bgColour.G * 0.587 + bgColour.B * 0.114) > 186)
+            {
+                return darkColour;
+            }
+            else
+            {
+                return lightColour;
+            }
+        }
+
+        private Bitmap pickBitmapBasedOnBgColour(Color bgColour, Bitmap lightBitmap, Bitmap darkBitmap)
+        {
+            if ((bgColour.R * 0.299 + bgColour.G * 0.587 + bgColour.B * 0.114) > 186)
+            {
+                return darkBitmap;
+            }
+            else
+            {
+                return lightBitmap;
             }
         }
     }

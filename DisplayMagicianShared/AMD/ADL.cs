@@ -40,7 +40,7 @@ namespace ATI.ADL
     /// <summary> ADL Memory allocation function allows ADL to callback for memory allocation</summary>
     /// <param name="size">input size</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate IntPtr ADL_Main_Memory_Alloc (int size);
+    public delegate IntPtr ADL_Main_Memory_Alloc (int size);
 
     // ADL2 version of function delagates
 
@@ -49,17 +49,17 @@ namespace ATI.ADL
     /// <param name="numConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
     /// <param name="contextHandle">Handle to ADL client context.</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int numConnectedAdapters, out IntPtr contextHandle);
+    public delegate int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int numConnectedAdapters, out IntPtr contextHandle);
 
     /// <summary> ADL2 Destroy Function to free up ADL Data</summary>
     /// <param name="contextHandle">Handle to ADL client context.</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Main_Control_Destroy(IntPtr contextHandle);
+    public delegate int ADL2_Main_Control_Destroy(IntPtr contextHandle);
 
     /// <summary> ADL2 Function to get the number of adapters</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="numAdapters">return number of adapters</param>
-    internal delegate int ADL2_Adapter_NumberOfAdapters_Get(IntPtr ADLContextHandle, ref int numAdapters);
+    public delegate int ADL2_Adapter_NumberOfAdapters_Get(IntPtr ADLContextHandle, ref int numAdapters);
 
     /// <summary> ADL2 Function to determine if the adapter is active or not.</summary>
     /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
@@ -67,7 +67,7 @@ namespace ATI.ADL
     /// <param name="adapterIndex"> Adapter Index.</param>
     /// <param name="status"> Status of the adapter. True: Active; False: Disabled</param>
     /// <returns>Non zero is successful</returns> 
-    internal delegate int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
+    public delegate int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
 
     /// <summary>ADL2 Function to retrieve adapter capability information.</summary>
     /// <remarks>This function implements a DI call to retrieve adapter capability information .</remarks>  
@@ -75,7 +75,7 @@ namespace ATI.ADL
     /// <param name="adapterIndex"> Adapter Index.</param>
     /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
     /// <returns>return ADL Error Code</returns> 
-    internal delegate int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+    public delegate int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
 
 
     /// <summary>ADL2 Function to retrieve all OS-known adapter information.</summary>
@@ -84,14 +84,14 @@ namespace ATI.ADL
     /// <param name="adapterInfoArray">return GPU adapter information</param>
     /// <param name="inputSize">the size of the GPU adapter struct</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr adapterInfoArray);
+    public delegate int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr adapterInfoArray);
 
     /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
     /// <param name="adapterInfoArray">return GPU adapter information. Is a pointer to the pointer of AdapterInfo array. Initialize to NULL before calling this API. ADL will allocate the necessary memory, using the user provided callback function.</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr adapterInfoArray);
+    public delegate int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr adapterInfoArray);
 
     /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
@@ -100,7 +100,7 @@ namespace ATI.ADL
     /// <param name="numAdapters">Number of items in the AdapterInfo Array. Can pass NULL pointer if passign an adapter index (in which case only one AdapterInfo is returned)</param>
     /// <param name="adapterInfoArray">return GPU adapter information</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int  ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoArray);
+    public delegate int  ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoArray);
 
     /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
@@ -109,7 +109,7 @@ namespace ATI.ADL
     /// <param name="numAdapters">Number of items in the AdapterInfo Array. Can pass NULL pointer if passign an adapter index (in which case only one AdapterInfo is returned)</param>
     /// <param name="adapterInfoX2Array">return GPU adapter information in adapterInfoX2 array</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate  int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoX2Array);
+    public delegate  int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoX2Array);
 
     /// <summary> ADL2 Create Function to create ADL Data</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
@@ -117,7 +117,7 @@ namespace ATI.ADL
     /// <param name="displayIndex">Display Index</param>
     /// <param name="displayDDCInfo2">The ADLDDCInfo2 structure storing all DDC retrieved from the driver.</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL2_Display_DDCInfo2_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 displayDDCInfo2);
+    public delegate int ADL2_Display_DDCInfo2_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 displayDDCInfo2);
 
     /// <summary>ADL2 function to get display information based on adapter index</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
@@ -126,7 +126,7 @@ namespace ATI.ADL
     /// <param name="displayInfoArray">return ADLDisplayInfo Array for supported displays' information</param>
     /// <param name="forceDetect">force detect or not</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+    public delegate int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
     /// <summary>This ADL2 function retrieves HDTV capability settings for a specified display.</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
@@ -134,7 +134,7 @@ namespace ATI.ADL
     /// <param name="displayIndex">Display Index</param>
     /// <param name="displayConfig">return ADLDisplayConfig with HDTV capability settings in it</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+    public delegate int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
     /// <summary>ADL2 function to query whether a display is HDR Supported and Enabled</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
@@ -143,7 +143,7 @@ namespace ATI.ADL
     /// <param name="support">return a pointer to the int whose value is set to true if the display supports HDR</param>
     /// <param name="enable">return a pointer to the int whose value is set to true if HDR is enabled on this display</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
+    public delegate int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
 
     /// <summary>ADL2 function to retrieve the current display mode information</summary>
     /// <param name="ADLContextHandle">Handle to ADL client context.</param>
@@ -152,7 +152,7 @@ namespace ATI.ADL
     /// <param name="numModes">return a pointer to the number of modes retrieved.</param>
     /// <param name="modes">return a pointer to the array of retrieved ADLMode display modes.</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
+    public delegate int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
    
 
     // ADL version of function delagates
@@ -161,44 +161,44 @@ namespace ATI.ADL
     /// <param name="callback">Call back functin pointer which is ised to allocate memeory </param>
     /// <param name="enumConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);   
+    public delegate int ADL_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);   
 
     /// <summary> ADL Destroy Function to free up ADL Data</summary>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL_Main_Control_Destroy ();  
+    public delegate int ADL_Main_Control_Destroy ();  
 
     /// <summary> ADL Function to get the number of adapters</summary>
     /// <param name="numAdapters">return number of adapters</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
+    public delegate int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
 
     /// <summary> Function to determine if the adapter is active or not.</summary>
     /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
     /// <param name="adapterIndex"> Adapter Index.</param>
     /// <param name="status"> Status of the adapter. True: Active; False: Disabled</param>
     /// <returns>Non zero is successful</returns> 
-    internal delegate int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
+    public delegate int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
 
     /// <summary> Function to get the unique identifier of an adapter.</summary>
     /// <remarks>This function retrieves the unique identifier of a specified adapter. The adapter ID is a unique value and will be used to determine what other controllers share the same adapter. The desktop will use this to find which HDCs are associated with an adapter.</remarks>  
     /// <param name="adapterIndex"> Adapter Index.</param>
     /// <param name="adapterId"> The pointer to the adapter identifier. Zero means: The adapter is not AMD.</param>
     /// <returns>return ADL Error Code</returns> 
-    internal delegate int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
+    public delegate int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
 
     /// <summary>Function to retrieve adapter capability information.</summary>
     /// <remarks>This function implements a DI call to retrieve adapter capability information .</remarks>  
     /// <param name="adapterIndex"> Adapter Index.</param>
     /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
     /// <returns>return ADL Error Code</returns> 
-    internal delegate int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+    public delegate int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
 
     /// <summary>Retrieves all OS-known adapter information.</summary>
     /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
     /// <param name="adapterInfoArray">return GPU adapter information</param>
     /// <param name="inputSize">the size of the GPU adapter struct</param>
     /// <returns> retrun ADL Error Code</returns>
-    internal delegate int ADL_Adapter_AdapterInfo_Get(out IntPtr adapterInfoArray, int inputSize);
+    public delegate int ADL_Adapter_AdapterInfo_Get(out IntPtr adapterInfoArray, int inputSize);
 
 
     /// <summary>Function to get the EDID data.</summary>
@@ -207,7 +207,7 @@ namespace ATI.ADL
     /// <param name="displayIndex">The desired display index. It can be retrieved from the ADLDisplayInfo data structure.</param>
     /// <param name="EDIDData">return the ADLDisplayEDIDData structure storing the retrieved EDID data.</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
+    public delegate int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
 
     /// <summary>Get display information based on adapter index</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -215,14 +215,14 @@ namespace ATI.ADL
     /// <param name="displayInfoArray">return ADLDisplayInfo Array for supported displays' information</param>
     /// <param name="forceDetect">force detect or not</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+    public delegate int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
     /// <summary>This function retrieves HDTV capability settings for a specified display.</summary>
     /// <param name="adapterIndex">Adapter Index</param>
     /// <param name="displayIndex">Display Index</param>
     /// <param name="displayConfig">return ADLDisplayConfig with HDTV capability settings in it</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+    public delegate int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
     /// <summary>Function to retrieve current display map configurations.</summary>
     /// <remarks>This function retrieves the current display map configurations, including the controllers and adapters mapped to each display.</remarks>  
@@ -233,7 +233,7 @@ namespace ATI.ADL
     /// <param name="displayTarget">Array of ADLDisplayTarget objects</param>
     /// <param name="options">Options supplied</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
+    public delegate int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
 
     /// <summary>Function to validate a list of display configurations.</summary>
     /// <remarks>This function allows the user to input a potential displays map and its targets. The function can also be used to obtain a list of display targets that can be added to this given topology and a list of display targets that can be removed from this given topology.</remarks>  
@@ -247,7 +247,7 @@ namespace ATI.ADL
     /// <param name="numPossibleRemoveTarget">Number of Display Map</param>
     /// <param name="possibleRemoveTarget">Number of Display Map</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+    public delegate int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
 
     /// <summary>Function to retrieve an SLS configuration.</summary>
     /// <param name="adapterIndex">Adapter Index</param>
@@ -265,7 +265,7 @@ namespace ATI.ADL
     /// <param name="SLSOffset">return ADLSLSOffset Array that contains the SLS offsets</param>
     /// <param name="option">Specifies the layout type of SLS grid data. It is bit vector. There are two types of SLS layout:s, relative to landscape (ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE) and relative to current angle (ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE).</param>
     /// <returns>return ADL Error Code</returns>
-    internal delegate int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int numSLSTarget, out IntPtr SLSTargetArray, ref int numNativeMode, 
+    public delegate int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int numSLSTarget, out IntPtr SLSTargetArray, ref int numNativeMode, 
         out IntPtr SLSNativeMode, ref int numBezelMode, out IntPtr SLSBezelMode, ref int numTransientMode, out IntPtr SLSTransientMode, ref int numSLSOffset, out IntPtr SLSOffset, int option);
 
     #endregion Export Delegates
@@ -275,177 +275,177 @@ namespace ATI.ADL
     #region ADLMode
     /// <summary> ADLAdapterInfo Array</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLMode
+    public struct ADLMode
     {
         /// <summary> Adapter index. </summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> Display IDs. </summary>
-        internal ADLDisplayID DisplayID;
+        public ADLDisplayID DisplayID;
         /// <summary> Screen position X coordinate. </summary>
-        internal int XPos;
+        public int XPos;
         /// <summary> Screen position Y coordinate. </summary>
-        internal int YPos;
+        public int YPos;
         /// <summary> Screen resolution Width.  </summary>
-        internal int XRes;
+        public int XRes;
         /// <summary> Screen resolution Height. </summary>
-        internal int YRes;
+        public int YRes;
         /// <summary> Screen Color Depth. E.g., 16, 32.  </summary>
-        internal int ColourDepth;
+        public int ColourDepth;
         /// <summary> Screen refresh rate. </summary>
-        internal float RefreshRate;
+        public float RefreshRate;
         /// <summary> Screen orientation. E.g., 0, 90, 180, 270. </summary>
-        internal int Orientation;
+        public int Orientation;
         /// <summary> Vista mode flag indicating Progressive or Interlaced mode.  </summary>
-        internal int ModeFlag;
+        public int ModeFlag;
         /// <summary> The bit mask identifying the number of bits this Mode is currently using. </summary>
-        internal int ModeMask;
+        public int ModeMask;
         /// <summary> The bit mask identifying the display status. </summary>
-        internal int ModeValue;       
+        public int ModeValue;       
     }
 
-    internal struct ConvertedDisplayModeFlags
+    public struct ConvertedDisplayModeFlags
     {
         /// <summary> Indicates the display supports Colour Format 565.</summary>
-        internal bool COLOURFORMAT_565;
+        public bool COLOURFORMAT_565;
         /// <summary> Indicates the display supports Colour Format 8888.</summary>
-        internal bool COLOURFORMAT_8888;
+        public bool COLOURFORMAT_8888;
         /// <summary> Indicates the display supports normal vertical orientation</summary>
-        internal bool ORIENTATION_SUPPORTED_000;
+        public bool ORIENTATION_SUPPORTED_000;
         /// <summary> Indicates the display supports 90 degree orientation</summary>
-        internal bool ORIENTATION_SUPPORTED_090;
+        public bool ORIENTATION_SUPPORTED_090;
         /// <summary> Indicates the display supports 180 degree orientation</summary>
-        internal bool ORIENTATION_SUPPORTED_180;
+        public bool ORIENTATION_SUPPORTED_180;
         /// <summary> Indicates the display supports 270 degree orientation</summary>
-        internal bool ORIENTATION_SUPPORTED_270;
+        public bool ORIENTATION_SUPPORTED_270;
         /// <summary> Indicates the display supports rounded refresh rates</summary>
-        internal bool REFRESHRATE_ROUNDED;
+        public bool REFRESHRATE_ROUNDED;
         /// <summary> Indicates the display supports exact refresh rates</summary>
-        internal bool REFRESHRATE_ONLY;        
+        public bool REFRESHRATE_ONLY;        
     }
     #endregion ADLMode
 
     #region ADLDisplayTarget
     /// <summary> ADLDisplayTarget </summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayTarget
+    public struct ADLDisplayTarget
     {
         /// <summary> Display IDs. </summary>
-        internal ADLDisplayID DisplayID;
+        public ADLDisplayID DisplayID;
         /// <summary> The display map index identify this manner and the desktop surface. </summary>
-        internal int DisplayMapIndex;
+        public int DisplayMapIndex;
         /// <summary> The bit mask identifies the number of bits DisplayTarget is currently using. </summary>
-        internal int DisplayTargetMask;
+        public int DisplayTargetMask;
         /// <summary> The bit mask identifies the display status. </summary>
-        internal int DisplayTargetValue;
+        public int DisplayTargetValue;
     }
 
     /// <summary> ADLDisplayTargetArray Array</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayTargetArray
+    public struct ADLDisplayTargetArray
     {
         /// <summary> ADLDisplayTarget Array </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
-        internal ADLDisplayTarget[] ADLDisplayTarget;
+        public ADLDisplayTarget[] ADLDisplayTarget;
     }
     #endregion ADLDisplayTarget
 
     #region ADLAdapterInfo
     /// <summary> ADLAdapterInfo Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLAdapterInfo
+    public struct ADLAdapterInfo
     {
         /// <summary>The size of the structure</summary>
         int Size;
         /// <summary> Adapter Index</summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> Adapter UDID</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string UDID;
+        public string UDID;
         /// <summary> Adapter Bus Number</summary>
-        internal int BusNumber;
+        public int BusNumber;
         /// <summary> Adapter Driver Number</summary>
-        internal int DriverNumber;
+        public int DriverNumber;
         /// <summary> Adapter Function Number</summary>
-        internal int FunctionNumber;
+        public int FunctionNumber;
         /// <summary> Adapter Vendor ID</summary>
-        internal int VendorID;
+        public int VendorID;
         /// <summary> Adapter Adapter name</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string AdapterName;
+        public string AdapterName;
         /// <summary> Adapter Display name</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string DisplayName;
+        public string DisplayName;
         /// <summary> Adapter Present status</summary>
-        internal int Present;
+        public int Present;
         /// <summary> Adapter Exist status</summary>
-        internal int Exist;
+        public int Exist;
         /// <summary> Adapter Driver Path</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string DriverPath;
+        public string DriverPath;
         /// <summary> Adapter Driver Ext Path</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string DriverPathExt;
+        public string DriverPathExt;
         /// <summary> Adapter PNP String</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string PNPString;
+        public string PNPString;
         /// <summary> OS Display Index</summary>
-        internal int OSDisplayIndex;
+        public int OSDisplayIndex;
     }
 
 
     /// <summary> ADLAdapterInfo Array</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLAdapterInfoArray
+    public struct ADLAdapterInfoArray
     {
         /// <summary> ADLAdapterInfo Array </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_ADAPTERS)]
-        internal ADLAdapterInfo[] ADLAdapterInfo;
+        public ADLAdapterInfo[] ADLAdapterInfo;
     }
 
     /// <summary> ADLAdapterInfoX2 Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLAdapterInfoX2
+    public struct ADLAdapterInfoX2
     {
         /// <summary>The size of the structure</summary>
-        internal int Size;
+        public int Size;
         /// <summary> Adapter Index</summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> Adapter UDID</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string UDID;
+        public string UDID;
         /// <summary> Adapter Bus Number</summary>
-        internal int BusNumber;
+        public int BusNumber;
         /// <summary> Adapter Device Number</summary>
-        internal int DeviceNumber;
+        public int DeviceNumber;
         /// <summary> Adapter Function Number</summary>
-        internal int FunctionNumber;
+        public int FunctionNumber;
         /// <summary> Adapter Vendor ID</summary>
-        internal int VendorID;
+        public int VendorID;
         /// <summary> Adapter Adapter name</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
-        internal string AdapterName;
+        public string AdapterName;
         /// <summary> Adapter Display name</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
-        internal string DisplayName;
+        public string DisplayName;
         /// <summary> Adapter Present status</summary>
-        internal int Present;
+        public int Present;
         /// <summary> Adapter Exist status</summary>
-        internal int Exist;
+        public int Exist;
         /// <summary> Adapter Driver Path</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string DriverPath;
+        public string DriverPath;
         /// <summary> Adapter Driver Ext Path</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string DriverPathExt;
+        public string DriverPathExt;
         /// <summary> Adapter PNP String</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string PNPString;
+        public string PNPString;
         /// <summary> OS Display Index</summary>
-        internal int OSDisplayIndex;
+        public int OSDisplayIndex;
         /// <summary> Display Info Mask</summary>
-        internal int InfoMask;
+        public int InfoMask;
         /// <summary> Display Info Value</summary>
-        internal int InfoValue;
+        public int InfoValue;
     }
 
     #endregion ADLAdapterInfo
@@ -455,282 +455,282 @@ namespace ATI.ADL
 
     /// <summary> ADLDisplayEDIDData Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayEDIDData
+    public struct ADLDisplayEDIDData
     {
         /// <summary> Size</summary>
-        internal int Size;
+        public int Size;
         /// <summary> Flag</summary>
-        internal int Flag;
+        public int Flag;
         /// <summary> EDIDSize </summary>
-        internal int EDIDSize;
+        public int EDIDSize;
         /// <summary> Block Index </summary>
-        internal int BlockIndex;
+        public int BlockIndex;
         /// <summary> EDIDData [256] </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
-        internal string EDIDData;
+        public string EDIDData;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        internal int[] Reserved;
+        public int[] Reserved;
 
     }
 
 
     /// <summary> ADLDDCInfo2 Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDDCInfo2
+    public struct ADLDDCInfo2
     {
         /// <summary> Size of the structure. </summary>
-        internal int Size;
+        public int Size;
         /// <summary> Whether this display device support DDC</summary>
-        internal int SupportsDDC;
+        public int SupportsDDC;
         /// <summary> Returns the manufacturer ID of the display device. Should be zeroed if this information is not available.</summary>
-        internal int ManufacturerID;
+        public int ManufacturerID;
         /// <summary> Returns the product ID of the display device. Should be zeroed if this informatiadlon is not available.</summary>
-        internal int ProductID;
+        public int ProductID;
         /// <summary> Returns the name of the display device. Should be zeroed if this information is not available.</summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
-        internal string DisplayName;
+        public string DisplayName;
         /// <summary> Returns the maximum Horizontal supported resolution. Should be zeroed if this information is not available.</summary>
-        internal int MaxHResolution;
+        public int MaxHResolution;
         /// <summary> Returns the maximum Vertical supported resolution. Should be zeroed if this information is not available. </summary>
-        internal int MaxVResolution;
+        public int MaxVResolution;
         /// <summary> Returns the maximum supported refresh rate. Should be zeroed if this information is not available. </summary>
-        internal int MaxRefresh;
+        public int MaxRefresh;
         /// <summary> Returns the display device preferred timing mode's horizontal resolution.</summary>
-        internal int PTMCx;
+        public int PTMCx;
         /// <summary> Returns the display device preferred timing mode's vertical resolution. </summary>
-        internal int PTMCy;
+        public int PTMCy;
         /// <summary> Returns the display device preferred timing mode's refresh rate.</summary>
-        internal int PTMRefreshRate;
+        public int PTMRefreshRate;
         /// <summary> Return EDID flags.</summary>
-        internal int DDCInfoFlag;
+        public int DDCInfoFlag;
         /// <summary> Returns 1 if the display supported packed pixel, 0 otherwise. </summary>
-        internal int PackedPixelSupported;
+        public int PackedPixelSupported;
         /// <summary> Returns the Pixel formats the display supports DDCInfo Pixel Formats.</summary>
-        internal int PanelPixelFormat;
+        public int PanelPixelFormat;
         /// <summary> Return EDID serial ID.</summary>
-        internal int SerialID;
+        public int SerialID;
         /// <summary> Return minimum monitor luminance data.</summary>
-        internal int MinLuminanceData;
+        public int MinLuminanceData;
         /// <summary> Return average monitor luminance data. </summary>
-        internal int AvgLuminanceData;
+        public int AvgLuminanceData;
         /// <summary> Return maximum monitor luminance data.</summary>
-        internal int MaxLuminanceData;
+        public int MaxLuminanceData;
         /// <summary> Bit vector of supported transfer functions ADLSourceContentAttributes transfer functions (gamma). </summary>
-        internal int SupportedTransferFunction;
+        public int SupportedTransferFunction;
         /// <summary> Bit vector of supported color spaces ADLSourceContentAttributes color spaces.</summary>
-        internal int SupportedColorSpace;
+        public int SupportedColorSpace;
         /// <summary> Display Red Chromaticity X coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityRedX;
+        public int NativeDisplayChromaticityRedX;
         /// <summary> Display Red Chromaticity Y coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityRedY;
+        public int NativeDisplayChromaticityRedY;
         /// <summary> Display Green Chromaticity X coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityGreenX;
+        public int NativeDisplayChromaticityGreenX;
         /// <summary> Display Green  Chromaticity Y coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityGreenY;
+        public int NativeDisplayChromaticityGreenY;
         /// <summary> Display Blue Chromaticity X coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityBlueX;
+        public int NativeDisplayChromaticityBlueX;
         /// <summary> Display Blue Chromaticity Y coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityBlueY;
+        public int NativeDisplayChromaticityBlueY;
         /// <summary> Display White Chromaticity X coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityWhiteX;
+        public int NativeDisplayChromaticityWhiteX;
         /// <summary> Display White Chromaticity Y coordinate multiplied by 10000.</summary>
-        internal int NativeDisplayChromaticityWhiteY;
+        public int NativeDisplayChromaticityWhiteY;
         /// <summary> Display diffuse screen reflectance 0-1 (100%) in units of 0.01.</summary>
-        internal int DiffuseScreenReflectance;
+        public int DiffuseScreenReflectance;
         /// <summary> Display specular screen reflectance 0-1 (100%) in units of 0.01.</summary>
-        internal int SpecularScreenReflectance;
+        public int SpecularScreenReflectance;
         /// <summary> Bit vector of supported color spaces ADLDDCInfo2 HDR support options.</summary>
-        internal int SupportedHDR;
+        public int SupportedHDR;
         /// <summary> Bit vector for freesync flags.</summary>
-        internal int FreesyncFlags;
+        public int FreesyncFlags;
         /// <summary> Return minimum monitor luminance without dimming data.</summary>
-        internal int MinLuminanceNoDimmingData;
+        public int MinLuminanceNoDimmingData;
         /// <summary> Returns the maximum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
-        internal int MaxBacklightMaxLuminanceData;
+        public int MaxBacklightMaxLuminanceData;
         /// <summAry> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
-        internal int MinBacklightMaxLuminanceData;
+        public int MinBacklightMaxLuminanceData;
         /// <summary> Returns the maximum backlight minimum luminance. Should be zeroed if this information is not available.</summary>
-        internal int MaxBacklightMinLuminanceData;
+        public int MaxBacklightMinLuminanceData;
         /// <summary> Returns the minimum backlight maximum luminance. Should be zeroed if this information is not available.</summary>
-        internal int MinBacklightMinLuminanceData;
+        public int MinBacklightMinLuminanceData;
         /// <summary> Reserved </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        internal int[] Reserved;
+        public int[] Reserved;
     }
 
-    internal struct ConvertedDDCInfoFlag
+    public struct ConvertedDDCInfoFlag
     {
         /// <summary> Indicates the display is a projector .</summary>
-        internal bool PROJECTORDEVICE;
+        public bool PROJECTORDEVICE;
         /// <summary> Indicates the display has an EDID extension</summary>
-        internal bool EDIDEXTENSION;
+        public bool EDIDEXTENSION;
         /// <summary> Indicates the display is a digital device</summary>
-        internal bool DIGITALDEVICE;
+        public bool DIGITALDEVICE;
         /// <summary> Indicates the display has HDMI audio capabilities</summary>
-        internal bool HDMIAUDIODEVICE;
+        public bool HDMIAUDIODEVICE;
         /// <summary> Indicates the display supports AI</summary>
-        internal bool SUPPORTS_AI;
+        public bool SUPPORTS_AI;
         /// <summary> Indicates the display supports xvYCC601</summary>
-        internal bool SUPPORT_xvYCC601;
+        public bool SUPPORT_xvYCC601;
         /// <summary> Indicates the display supports xvYCC709</summary>
-        internal bool SUPPORT_xvYCC709;
+        public bool SUPPORT_xvYCC709;
     }
 
-    internal struct ConvertedSupportedHDR
+    public struct ConvertedSupportedHDR
     {
         /// <summary> HDR10/CEA861.3 HDR supported</summary>
-        internal bool CEA861_3;
+        public bool CEA861_3;
         /// <summary> DolbyVision HDR supported</summary>
-        internal bool DOLBYVISION;
+        public bool DOLBYVISION;
         /// <summary> FreeSync HDR supported.</summary>
-        internal bool FREESYNC_HDR;
+        public bool FREESYNC_HDR;
     }
 
 
     /// <summary> ADLDisplayID Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayID
+    public struct ADLDisplayID
     {
         /// <summary> Display Logical Index </summary>
-        internal int DisplayLogicalIndex;
+        public int DisplayLogicalIndex;
         /// <summary> Display Physical Index </summary>
-        internal int DisplayPhysicalIndex;
+        public int DisplayPhysicalIndex;
         /// <summary> Adapter Logical Index </summary>
-        internal int DisplayLogicalAdapterIndex;
+        public int DisplayLogicalAdapterIndex;
         /// <summary> Adapter Physical Index </summary>
-        internal int DisplayPhysicalAdapterIndex;
+        public int DisplayPhysicalAdapterIndex;
     }
 
     /// <summary> ADLDisplayInfo Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayInfo
+    public struct ADLDisplayInfo
     {
         /// <summary> Display Index </summary>
-        internal ADLDisplayID DisplayID;
+        public ADLDisplayID DisplayID;
         /// <summary> Display Controller Index </summary>
-        internal int DisplayControllerIndex;
+        public int DisplayControllerIndex;
         /// <summary> Display Name </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string DisplayName;
+        public string DisplayName;
         /// <summary> Display Manufacturer Name </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
-        internal string DisplayManufacturerName;
+        public string DisplayManufacturerName;
         /// <summary> Display Type : < The Display type. CRT, TV,CV,DFP are some of display types,</summary>
-        internal int DisplayType;
+        public int DisplayType;
         /// <summary> Display output type </summary>
-        internal int DisplayOutputType;
+        public int DisplayOutputType;
         /// <summary> Connector type</summary>
-        internal int DisplayConnector;
+        public int DisplayConnector;
         ///<summary> Indicating the display info bits' mask.<summary>
-        internal int DisplayInfoMask;
+        public int DisplayInfoMask;
         ///<summary> Indicating the display info value.<summary>
-        internal int DisplayInfoValue;
+        public int DisplayInfoValue;
     }
 
-    internal struct ConvertedDisplayInfoValue
+    public struct ConvertedDisplayInfoValue
     {
         /// <summary> Indicates the display is connected .</summary>
-        internal bool DISPLAYCONNECTED;
+        public bool DISPLAYCONNECTED;
         /// <summary> Indicates the display is mapped within OS </summary>
-        internal bool DISPLAYMAPPED;
+        public bool DISPLAYMAPPED;
         /// <summary> Indicates the display can be forced </summary>
-        internal bool FORCIBLESUPPORTED;
+        public bool FORCIBLESUPPORTED;
         /// <summary> Indicates the display supports genlock </summary>
-        internal bool GENLOCKSUPPORTED;
+        public bool GENLOCKSUPPORTED;
         /// <summary> Indicates the display is an LDA display.</summary>
-        internal bool LDA_DISPLAY;
+        public bool LDA_DISPLAY;
         /// <summary> Indicates the display supports 2x Horizontal stretch </summary>
-        internal bool MANNER_SUPPORTED_2HSTRETCH;
+        public bool MANNER_SUPPORTED_2HSTRETCH;
         /// <summIndicates the display supports 2x Vertical stretch </summary>
-        internal bool MANNER_SUPPORTED_2VSTRETCH;
+        public bool MANNER_SUPPORTED_2VSTRETCH;
         /// <summary> Indicates the display supports cloned desktops </summary>
-        internal bool MANNER_SUPPORTED_CLONE;
+        public bool MANNER_SUPPORTED_CLONE;
         /// <summary> Indicates the display supports extended desktops </summary>
-        internal bool MANNER_SUPPORTED_EXTENDED;
+        public bool MANNER_SUPPORTED_EXTENDED;
         /// <summary> Indicates the display supports N Stretched on 1 GPU</summary>
-        internal bool MANNER_SUPPORTED_NSTRETCH1GPU;
+        public bool MANNER_SUPPORTED_NSTRETCH1GPU;
         /// <summary> Indicates the display supports N Stretched on N GPUs</summary>
-        internal bool MANNER_SUPPORTED_NSTRETCHNGPU;
+        public bool MANNER_SUPPORTED_NSTRETCHNGPU;
         /// <summary> Reserved display info flag #2</summary>
-        internal bool MANNER_SUPPORTED_RESERVED2;
+        public bool MANNER_SUPPORTED_RESERVED2;
         /// <summary> Reserved display info flag #3</summary>
-        internal bool MANNER_SUPPORTED_RESERVED3;
+        public bool MANNER_SUPPORTED_RESERVED3;
         /// <summary> Indicates the display supports single desktop </summary>
-        internal bool MANNER_SUPPORTED_SINGLE;
+        public bool MANNER_SUPPORTED_SINGLE;
         /// <summary> Indicates the display supports overriding the mode timing </summary>
-        internal bool MODETIMING_OVERRIDESSUPPORTED;
+        public bool MODETIMING_OVERRIDESSUPPORTED;
         /// <summary> Indicates the display supports multi-vpu</summary>
-        internal bool MULTIVPU_SUPPORTED;
+        public bool MULTIVPU_SUPPORTED;
         /// <summary> Indicates the display is non-local to this machine </summary>
-        internal bool NONLOCAL;
+        public bool NONLOCAL;
         /// <summary> Indicates the display is a projector </summary>
-        internal bool SHOWTYPE_PROJECTOR;
+        public bool SHOWTYPE_PROJECTOR;
     }
 
     /// <summary> ADLDisplayConfig Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayConfig
+    public struct ADLDisplayConfig
     {
         /// <summary> Size of this data structure </summary>
-        internal long Size;
+        public long Size;
         /// <summary> HDTV Connector Type </summary>
-        internal long ConnectorType;
+        public long ConnectorType;
         /// <summary> HDTV Capabilities themselves </summary>
-        internal long DeviceData;
+        public long DeviceData;
         /// <summary> Overridden HDTV capabilities</summary>
-        internal long OverriddedDeviceData;
+        public long OverriddedDeviceData;
         /// <summary> Reserved for future use</summary>
-        internal long Reserved;
+        public long Reserved;
         
     }
 
     /// <summary> ADLDisplayMap Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayMap
+    public struct ADLDisplayMap
     {
         /// <summary> The current display map index. It is the OS desktop index. For example, if the OS index 1 is showing clone mode, the display map will be 1. </summary>
-        internal int DisplayMapIndex;
+        public int DisplayMapIndex;
         /// <summary> The Display Mode for the current map.</summary>
-        internal ADLMode DisplayMode;
+        public ADLMode DisplayMode;
         /// <summary> The number of display targets belongs to this map </summary>
-        internal int NumDisplayTarget;
+        public int NumDisplayTarget;
         /// <summary> The first target array index in the Target array </summary>
-        internal int FirstDisplayTargetArrayIndex;
+        public int FirstDisplayTargetArrayIndex;
         /// <summary> The bit mask identifies the number of bits DisplayMap is currently using. It is the sum of all the bit definitions defined in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
-        internal int DisplayMapMask;
+        public int DisplayMapMask;
         /// <summary> The bit mask identifies the display status. The detailed definition is in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
-        internal int DisplayMapValue;               
+        public int DisplayMapValue;               
     }
 
     /// <summary> ADLDisplayMapArray Array</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLDisplayMapArray
+    public struct ADLDisplayMapArray
     {
         /// <summary> ADLAdapterInfo Array </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
-        internal ADLDisplayMap[] ADLDisplayMap;
+        public ADLDisplayMap[] ADLDisplayMap;
     }
 
     /// <summary> ADLAdapterCaps Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLAdapterCapsX2
+    public struct ADLAdapterCapsX2
     {
         /// <summary> AdapterID for this adapter </summary>
-        internal int AdapterID;
+        public int AdapterID;
         /// <summary> Number of controllers for this adapter. </summary>
-        internal int NumControllers;
+        public int NumControllers;
         /// <summary> Number of displays for this adapter.</summary>
-        internal int NumDisplays;
+        public int NumDisplays;
         /// <summary> Number of overlays for this adapter.</summary>
-        internal int NumOverlays;
+        public int NumOverlays;
         /// <summary> Number of GLSyncConnectors. </summary>
-        internal int NumOfGLSyncConnectors;
+        public int NumOfGLSyncConnectors;
         /// <summary> The bit mask identifies the adapter caps. </summary>
-        internal int CapsMask;
+        public int CapsMask;
         /// <summary> The bit identifies the adapter caps define_adapter_caps. </summary>
-        internal int CapsValue;
+        public int CapsValue;
         /// <summary> Number of Connectors for this adapter. </summary>
-        internal int NumConnectors;
+        public int NumConnectors;
     }
 
     #endregion ADLDisplayInfo
@@ -739,156 +739,156 @@ namespace ATI.ADL
 
     /// <summary> ADLSLSGrid Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLSLSGrid
+    public struct ADLSLSGrid
     {
         /// <summary> The Adapter index </summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> The grid index </summary>
-        internal int SLSGridIndex;
+        public int SLSGridIndex;
         /// <summary>The grid row. </summary>
-        internal int SLSGridRow;
+        public int SLSGridRow;
         /// <summary> The grid column </summary>
-        internal int SLSGridColumn;
+        public int SLSGridColumn;
         /// <summary> The grid bit mask identifies the number of bits DisplayMap is currently using. </summary>
-        internal int SLSGridMask;
+        public int SLSGridMask;
         /// <summary> The grid bit value identifies the display status. </summary>
-        internal int SLSGridValue;
+        public int SLSGridValue;
     }
 
     /// <summary> ADLSLSMap Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLSLSMap
+    public struct ADLSLSMap
     {
         /// <summary> The Adapter Index </summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> The current display map index. It is the OS Desktop index. </summary>
-        internal int SLSMapIndex;
+        public int SLSMapIndex;
         /// <summary> The current grid </summary>
-        internal ADLSLSGrid Grid;
+        public ADLSLSGrid Grid;
         /// <summary> OS Surface Index </summary>
-        internal int SurfaceMapIndex;
+        public int SurfaceMapIndex;
         /// <summary> Screen orientation. E.g., 0, 90, 180, 270. </summary>
-        internal int Orientation;
+        public int Orientation;
         /// <summary> The number of display targets belongs to this map. </summary>
-        internal int NumSLSTarget;
+        public int NumSLSTarget;
         /// <summary> The first target array index in the Target array. </summary>
-        internal int FirstSLSTargetArrayIndex;
+        public int FirstSLSTargetArrayIndex;
         /// <summary> The number of native modes belongs to this map. </summary>
-        internal int NumNativeMode;
+        public int NumNativeMode;
         /// <summary>The first native mode array index in the native mode array. </summary>
-        internal int FirstNativeModeArrayIndex;
+        public int FirstNativeModeArrayIndex;
         /// <summary> The number of bezel modes belongs to this map. </summary>
-        internal int NumBezelMode;
+        public int NumBezelMode;
         /// <summary> The first bezel mode array index in the native mode array </summary>
-        internal int FirstBezelModeArrayIndex;
+        public int FirstBezelModeArrayIndex;
         /// <summary> The number of bezel offsets belongs to this map. </summary>
-        internal int NumBezelOffset;
+        public int NumBezelOffset;
         /// <summary> The first bezel offset array index in the native mode array </summary>
-        internal int FirstBezelOffsetArrayIndex;
+        public int FirstBezelOffsetArrayIndex;
         /// <summary> Bitmask identifies display map status </summary>
-        internal int SLSMapMask;
+        public int SLSMapMask;
         /// <summary> Bitmask identifies display map status </summary>
-        internal int SLSMapValue;
+        public int SLSMapValue;
         
     }
 
     /// <summary> ADLSLSTarget Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLSLSTarget
+    public struct ADLSLSTarget
     {
         /// <summary> The Adapter Index </summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> The SLS map index. </summary>
-        internal int SLSMapIndex;
+        public int SLSMapIndex;
         /// <summary> The target ID.  </summary>
-        internal ADLDisplayTarget DisplayTarget;
+        public ADLDisplayTarget DisplayTarget;
         /// <summary> Target postion X in SLS grid </summary>
-        internal int SLSGridPositionX;
+        public int SLSGridPositionX;
         /// <summary> Target postion Y in SLS grid </summary>
-        internal int SLSGridPositionY;
+        public int SLSGridPositionY;
         /// <summary> The view size width, height and rotation angle per SLS Target.  </summary>
-        internal ADLMode ViewSize;
+        public ADLMode ViewSize;
         /// <summary> The bit mask identifies the bits in iSLSTargetValue are currently used.  </summary>
-        internal int SLSTargetMask;
+        public int SLSTargetMask;
         /// <summary> The bit mask identifies status info.  </summary>
-        internal int SLSTargetValue;        
+        public int SLSTargetValue;        
     }
 
     /// <summary> ADLSLSTarget Array</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLSLSTargetArray
+    public struct ADLSLSTargetArray
     {
         /// <summary> ADLAdapterInfo Array </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_ADAPTERS)]
-        internal ADLSLSTarget[] ADLSLSTarget;
+        public ADLSLSTarget[] ADLSLSTarget;
     }
 
     /// <summary> ADLSLSMode Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLSLSMode
+    public struct ADLSLSMode
     {
         /// <summary> The Adapter Index </summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> The current display map index. It is the OS Desktop index. </summary>
-        internal int SLSMapIndex;
+        public int SLSMapIndex;
         /// <summary> The mode index. </summary>
-        internal int SLSModeIndex;
+        public int SLSModeIndex;
         /// <summary> The target ID.  </summary>
-        internal ADLMode DisplayMode;
+        public ADLMode DisplayMode;
         /// <summary> The bit mask identifies the number of bits Mode is currently using. </summary>
-        internal int SLSNativeModeMask;
+        public int SLSNativeModeMask;
         /// <summary> The bit mask identifies the display status. </summary>
-        internal int SLSNativeModeValue;
+        public int SLSNativeModeValue;
 
     }
 
     /// <summary> ADLBezelTransientMode Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLBezelTransientMode
+    public struct ADLBezelTransientMode
     {
         /// <summary> The Adapter Index </summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> SLS Map Index. </summary>
-        internal int SLSMapIndex;
+        public int SLSMapIndex;
         /// <summary> SLS Mode Index. </summary>
-        internal int SLSModeIndex;
+        public int SLSModeIndex;
         /// <summary> The target ID.  </summary>
-        internal ADLMode DisplayMode;
+        public ADLMode DisplayMode;
         /// <summary> The number of bezel offsets belongs to this map.  </summary>
-        internal int NumBezelOffset;
+        public int NumBezelOffset;
         /// <summary> The first bezel offset array index in the native mode array. </summary>
-        internal int FirstBezelOffsetArrayIndex;
+        public int FirstBezelOffsetArrayIndex;
         /// <summary> The bit mask identifies the bits this structure is currently using. </summary>
-        internal int SLSBezelTransientModeMask;
+        public int SLSBezelTransientModeMask;
         /// <summary> The bit mask identifies the display status.  </summary>
-        internal int SLSBezelTransientModeValue;
+        public int SLSBezelTransientModeValue;
         
     }
 
     /// <summary> ADLSLSOffset Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal struct ADLSLSOffset
+    public struct ADLSLSOffset
     {
         /// <summary> The Adapter Index </summary>
-        internal int AdapterIndex;
+        public int AdapterIndex;
         /// <summary> The current display map index. It is the OS Desktop index. </summary>
-        internal int SLSMapIndex;
+        public int SLSMapIndex;
         /// <summary> The target ID.  </summary>
-        internal ADLDisplayID DisplayID;
+        public ADLDisplayID DisplayID;
         /// <summary> SLS Bezel Mode Index. </summary>
-        internal int BezelModeIndex;
+        public int BezelModeIndex;
         /// <summary>SLS Bezel Offset X. </summary>
-        internal int BezelOffsetX;
+        public int BezelOffsetX;
         /// <summary>SLS Bezel Offset Y. </summary>
-        internal int BezelOffsetY;
+        public int BezelOffsetY;
         /// <summary> SLS Display Width. </summary>
-        internal int DisplayWidth;
+        public int DisplayWidth;
         /// <summary> SLS Display Height. </summary>
-        internal int DisplayHeight;
+        public int DisplayHeight;
         /// <summary> The bit mask identifies the number of bits Offset is currently using. </summary>
-        internal int BezelOffsetMask;
+        public int BezelOffsetMask;
         /// <summary> The bit mask identifies the display status. </summary>
-        internal int BezelOffsetValue;
+        public int BezelOffsetValue;
     }
 
     #endregion ADLSLS
@@ -897,264 +897,264 @@ namespace ATI.ADL
 
     #region ADL Class
     /// <summary> ADL Class</summary>
-    internal static class ADL
+    public static class ADL
     {
         #region Internal Constant
         /// <summary> Selects all adapters instead of aparticular single adapter</summary>
-        internal const int ADL_ADAPTER_INDEX_ALL = -1;
+        public const int ADL_ADAPTER_INDEX_ALL = -1;
         /// <summary> Define the maximum char</summary>
-        internal const int ADL_MAX_CHAR = 4096;
+        public const int ADL_MAX_CHAR = 4096;
         /// <summary> Define the maximum path</summary>
-        internal const int ADL_MAX_PATH = 256;
+        public const int ADL_MAX_PATH = 256;
         /// <summary> Define the maximum adapters</summary>
-        internal const int ADL_MAX_ADAPTERS = 250;
+        public const int ADL_MAX_ADAPTERS = 250;
         /// <summary> Define the maximum displays</summary>
-        internal const int ADL_MAX_DISPLAYS = 150;
+        public const int ADL_MAX_DISPLAYS = 150;
         /// <summary> Define the maximum device name length</summary>
-        internal const int ADL_MAX_DEVICENAME = 32;
+        public const int ADL_MAX_DEVICENAME = 32;
         /// <summary> Define the maximum EDID Data length</summary>
-        internal const int ADL_MAX_EDIDDATA_SIZE = 256; // number of UCHAR
+        public const int ADL_MAX_EDIDDATA_SIZE = 256; // number of UCHAR
         /// <summary> Define the maximum display names</summary>
-        internal const int ADL_MAX_DISPLAY_NAME = 256;
+        public const int ADL_MAX_DISPLAY_NAME = 256;
 
         // Result Codes
         /// <summary> ADL function completed successfully. </summary>                
-        internal const int ADL_OK = 0;
+        public const int ADL_OK = 0;
         /// <summary> Generic Error.Most likely one or more of the Escape calls to the driver failed!</summary>
-        internal const int ADL_ERR = -1;
+        public const int ADL_ERR = -1;
         /// <summary> Call can't be made due to disabled adapter. </summary>
-        internal const int ADL_ERR_DISABLED_ADAPTER = -10;
+        public const int ADL_ERR_DISABLED_ADAPTER = -10;
         /// <summary> Invalid ADL index passed. </summary>
-        internal const int ADL_ERR_INVALID_ADL_IDX = -5;
+        public const int ADL_ERR_INVALID_ADL_IDX = -5;
         /// <summary> Invalid Callback. </summary>
-        internal const int ADL_ERR_INVALID_CALLBACK = -11;
+        public const int ADL_ERR_INVALID_CALLBACK = -11;
         /// <summary> Invalid controller index passed.</summary>
-        internal const int ADL_ERR_INVALID_CONTROLLER_IDX = -6;
+        public const int ADL_ERR_INVALID_CONTROLLER_IDX = -6;
         /// <summary> Invalid display index passed.</summary>
-        internal const int ADL_ERR_INVALID_DISPLAY_IDX = -7;
+        public const int ADL_ERR_INVALID_DISPLAY_IDX = -7;
         /// <summary> One of the parameter passed is invalid.</summary>
-        internal const int ADL_ERR_INVALID_PARAM = -3;
+        public const int ADL_ERR_INVALID_PARAM = -3;
         /// <summary> One of the parameter size is invalid.</summary>
-        internal const int ADL_ERR_INVALID_PARAM_SIZE = -4;
+        public const int ADL_ERR_INVALID_PARAM_SIZE = -4;
         /// <summary> There's no Linux XDisplay in Linux Console environment.</summary>
-        internal const int ADL_ERR_NO_XDISPLAY = -21;
+        public const int ADL_ERR_NO_XDISPLAY = -21;
         /// <summary> ADL not initialized.</summary>
-        internal const int ADL_ERR_NOT_INIT = -2;
+        public const int ADL_ERR_NOT_INIT = -2;
         /// <summary> Function not supported by the driver. </summary>
-        internal const int ADL_ERR_NOT_SUPPORTED = -8;
+        public const int ADL_ERR_NOT_SUPPORTED = -8;
         /// <summary> Null Pointer error.</summary>
-        internal const int ADL_ERR_NULL_POINTER = -9;
+        public const int ADL_ERR_NULL_POINTER = -9;
         /// <summary> Display Resource conflict.</summary>
-        internal const int ADL_ERR_RESOURCE_CONFLICT = -12;
+        public const int ADL_ERR_RESOURCE_CONFLICT = -12;
         /// <summary> Err Set incomplete</summary>
-        internal const int ADL_ERR_SET_INCOMPLETE = -20;
+        public const int ADL_ERR_SET_INCOMPLETE = -20;
         /// <summary> All OK but need mode change. </summary>
-        internal const int ADL_OK_MODE_CHANGE = 2;
+        public const int ADL_OK_MODE_CHANGE = 2;
         /// <summary> All OK, but need restart.</summary>
-        internal const int ADL_OK_RESTART = 3;
+        public const int ADL_OK_RESTART = 3;
         /// <summary> All OK, but need to wait</summary>
-        internal const int ADL_OK_WAIT = 4;
+        public const int ADL_OK_WAIT = 4;
         /// <summary> All OK, but with warning.</summary>
-        internal const int ADL_OK_WARNING = 1;
+        public const int ADL_OK_WARNING = 1;
 
 
         /// <summary> Define the driver ok</summary>
-        internal const int ADL_DRIVER_OK = 0;
+        public const int ADL_DRIVER_OK = 0;
         /// <summary> Maximum number of GL-Sync ports on the GL-Sync module </summary>
-        internal const int ADL_MAX_GLSYNC_PORTS = 8;
+        public const int ADL_MAX_GLSYNC_PORTS = 8;
         /// <summary> Maximum number of GL-Sync ports on the GL-Sync module </summary>
-        internal const int ADL_MAX_GLSYNC_PORT_LEDS = 8;
+        public const int ADL_MAX_GLSYNC_PORT_LEDS = 8;
         /// <summary> Maximum number of ADLModes for the adapter </summary>
-        internal const int ADL_MAX_NUM_DISPLAYMODES = 1024;
+        public const int ADL_MAX_NUM_DISPLAYMODES = 1024;
         /// <summary> Define true </summary>
-        internal const int ADL_TRUE = 1;
+        public const int ADL_TRUE = 1;
         /// <summary> Maximum number of ADLModes for the adapter </summary>
-        internal const int ADL_FALSE = 0;
+        public const int ADL_FALSE = 0;
         /// <summary> Indicates the active dongle, all types </summary>
-        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE = 12;
+        public const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE = 12;
         /// <summary> Indicates the Active dongle DP->DVI(double link) connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL = 6;
+        public const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL = 6;
         /// <summary> Indicates the Active dongle DP->DVI(single link) connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL = 5;
+        public const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL = 5;
         /// <summary> Indicates the Active dongle DP->HDMI connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI = 7;
+        public const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI = 7;
         /// <summary> Indicates the Active dongle DP->VGA connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA = 8;
+        public const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA = 8;
         /// <summary> Indicates the DISPLAY PORT connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_DISPLAY_PORT = 4;
+        public const int ADL_CONNECTION_TYPE_DISPLAY_PORT = 4;
         /// <summary> Indicates the DVI_I connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_DVI = 1;
+        public const int ADL_CONNECTION_TYPE_DVI = 1;
         /// <summary> Indicates the DVI_SL connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_DVI_SL = 2;
+        public const int ADL_CONNECTION_TYPE_DVI_SL = 2;
         /// <summary> Indicates the HDMI connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_HDMI = 3;
+        public const int ADL_CONNECTION_TYPE_HDMI = 3;
         /// <summary> Indicates the MST type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_MST = 11;
+        public const int ADL_CONNECTION_TYPE_MST = 11;
         /// <summary> Indicates the Active dongle DP->VGA connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI = 10;
+        public const int ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI = 10;
         /// <summary> Indicates the Passive dongle DP->HDMI connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI = 9;
+        public const int ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI = 9;
         /// <summary> Indicates the VGA connection type is valid. </summary>
-        internal const int ADL_CONNECTION_TYPE_VGA = 0;
+        public const int ADL_CONNECTION_TYPE_VGA = 0;
         /// <summary> Indicates the Virtual Connection Type.</summary>
-        internal const int ADL_CONNECTION_TYPE_VIRTUAL = 13;
+        public const int ADL_CONNECTION_TYPE_VIRTUAL = 13;
         /// <summary> Indicates Active Dongle-JP Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_JP = 5;
+        public const int ADL_CONNECTOR_TYPE_ATICVDONGLE_JP = 5;
         /// <summary> Indicates Active Dongle-NA Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NA = 4;
+        public const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NA = 4;
         /// <summary> Indicates Active Dongle-NONI2C Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C = 6;
+        public const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C = 6;
         /// <summary> Indicates Active Dongle-NONI2C-D Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D = 7;
+        public const int ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D = 7;
         /// <summary> Indicates Display port Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_DISPLAYPORT = 10;
+        public const int ADL_CONNECTOR_TYPE_DISPLAYPORT = 10;
         /// <summary> Indicates DVI-D Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_DVI_D = 2;
+        public const int ADL_CONNECTOR_TYPE_DVI_D = 2;
         /// <summary> Indicates DVI-I Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_DVI_I = 3;
+        public const int ADL_CONNECTOR_TYPE_DVI_I = 3;
         /// <summary> Indicates EDP Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_EDP = 11;
+        public const int ADL_CONNECTOR_TYPE_EDP = 11;
         /// <summary> Indicates HDMI-Type A Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_HDMI_TYPE_A = 8;
+        public const int ADL_CONNECTOR_TYPE_HDMI_TYPE_A = 8;
         /// <summary> Indicates HDMI-Type B Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_HDMI_TYPE_B = 9;
+        public const int ADL_CONNECTOR_TYPE_HDMI_TYPE_B = 9;
         /// <summary> Indicates MiniDP Connector type. </summary>
-        internal const int ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT = 12;
+        public const int ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT = 12;
         /// <summary> Indicates Unknown Connector type. </summary>
-        internal const int ADL_CONNECTOR_TYPE_UNKNOWN = 0;
+        public const int ADL_CONNECTOR_TYPE_UNKNOWN = 0;
         /// <summary> Indicates USB type C Connector type. </summary>
-        internal const int ADL_CONNECTOR_TYPE_USB_TYPE_C = 14;
+        public const int ADL_CONNECTOR_TYPE_USB_TYPE_C = 14;
         /// <summary> Indicates VGA Connector type.  </summary>
-        internal const int ADL_CONNECTOR_TYPE_VGA = 1;
+        public const int ADL_CONNECTOR_TYPE_VGA = 1;
         /// <summary> Indicates Virtual Connector type.</summary>
-        internal const int ADL_CONNECTOR_TYPE_VIRTUAL = 13;
+        public const int ADL_CONNECTOR_TYPE_VIRTUAL = 13;
 
         // ADL Display Connector Types
         /// <summary> Indicates Unknown Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_UNKNOWN = 0;
+        public const int ADL_DISPLAY_CONTYPE_UNKNOWN = 0;
         /// <summary> Indicates VGA Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_VGA = 1;
+        public const int ADL_DISPLAY_CONTYPE_VGA = 1;
         /// <summary> Indicates DVI-D Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_DVI_D = 2;
+        public const int ADL_DISPLAY_CONTYPE_DVI_D = 2;
         /// <summary> Indicates DVI-I Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_DVI_I = 3;
+        public const int ADL_DISPLAY_CONTYPE_DVI_I = 3;
         /// <summary> Indicates ATICV NTSC Dongle Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC = 4;
+        public const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC = 4;
         /// <summary> Indicates ATICV Japanese Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN = 5;
+        public const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN = 5;
         /// <summary> Indicates ATICV non-I2C Japanese Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN = 6;
+        public const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN = 6;
         /// <summary> Indicates ATICV non-I2C NTSC Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC = 7;
+        public const int ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC = 7;
         /// <summary> Indicates Proprietary Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_PROPRIETARY = 8;
+        public const int ADL_DISPLAY_CONTYPE_PROPRIETARY = 8;
         /// <summary> Indicates HDMI Type A Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_HDMI_TYPE_A = 10;
+        public const int ADL_DISPLAY_CONTYPE_HDMI_TYPE_A = 10;
         /// <summary> Indicates HDMI Type B Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_HDMI_TYPE_B = 11;
+        public const int ADL_DISPLAY_CONTYPE_HDMI_TYPE_B = 11;
         /// <summary> Indicates S-Video Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_SVIDEO = 12;
+        public const int ADL_DISPLAY_CONTYPE_SVIDEO = 12;
         /// <summary> Indicates Composite Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_COMPOSITE = 13;
+        public const int ADL_DISPLAY_CONTYPE_COMPOSITE = 13;
         /// <summary> Indicates RCA 3-component Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_RCA_3COMPONENT = 14;
+        public const int ADL_DISPLAY_CONTYPE_RCA_3COMPONENT = 14;
         /// <summary> Indicates DisplayPort Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_DISPLAYPORT = 15;
+        public const int ADL_DISPLAY_CONTYPE_DISPLAYPORT = 15;
         /// <summary> Indicates EDP Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_EDP = 16;
+        public const int ADL_DISPLAY_CONTYPE_EDP = 16;
         /// <summary> Indicates Wireless Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY = 17;
+        public const int ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY = 17;
         /// <summary> Indicates USB Type-C Display Connector type.</summary>
-        internal const int ADL_DISPLAY_CONTYPE_USB_TYPE_C = 18;
+        public const int ADL_DISPLAY_CONTYPE_USB_TYPE_C = 18;
 
         // Display Info Constants
         /// <summary> Indicates the display is connected .</summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED = 0x00000001;
+        public const int ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED = 0x00000001;
         /// <summary> Indicates the display is mapped within OS </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED = 0x00000002;
+        public const int ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED = 0x00000002;
         /// <summary> Indicates the display can be forced </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED = 0x00000008;
+        public const int ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED = 0x00000008;
         /// <summary> Indicates the display supports genlock </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED = 0x00000010;
+        public const int ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED = 0x00000010;
         /// <summary> Indicates the display is an LDA display.</summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY = 0x00000040;
+        public const int ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY = 0x00000040;
         /// <summary> Indicates the display supports 2x Horizontal stretch </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH = 0x00000800;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH = 0x00000800;
         /// <summary> Indicates the display supports 2x Vertical stretch </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH = 0x00000400;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH = 0x00000400;
         /// <summary> Indicates the display supports cloned desktops </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE = 0x00000200;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE = 0x00000200;
         /// <summary> Indicates the display supports extended desktops </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED = 0x00001000;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED = 0x00001000;
         /// <summary> Indicates the display supports N Stretched on 1 GPU</summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU = 0x00010000;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU = 0x00010000;
         /// <summary> Indicates the display supports N Stretched on N GPUs</summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU = 0x00020000;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU = 0x00020000;
         /// <summary> Reserved display info flag #2</summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2 = 0x00040000;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2 = 0x00040000;
         /// <summary> Reserved display info flag #3</summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3 = 0x00080000;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3 = 0x00080000;
         /// <summary> Indicates the display supports single desktop </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE = 0x00000100;
+        public const int ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE = 0x00000100;
         /// <summary> Indicates the display supports overriding the mode timing </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED = 0x00000080;
+        public const int ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED = 0x00000080;
         /// <summary> Indicates the display supports multi-vpu</summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED = 0x00000020;
+        public const int ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED = 0x00000020;
         /// <summary> Indicates the display is non-local to this machine </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_NONLOCAL = 0x00000004;
+        public const int ADL_DISPLAY_DISPLAYINFO_NONLOCAL = 0x00000004;
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR = 0x00100000;
+        public const int ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR = 0x00100000;
 
         // Display Mode Constants
         /// <summary> Indicates the display is in interlaced mode</summary>
-        internal const int ADL_DISPLAY_MODE_INTERLACED_FLAG = 2;
+        public const int ADL_DISPLAY_MODE_INTERLACED_FLAG = 2;
         /// <summary> Indicates the display is in progressive mode </summary>
-        internal const int ADL_DISPLAY_MODE_PROGRESSIVE_FLAG = 0;
+        public const int ADL_DISPLAY_MODE_PROGRESSIVE_FLAG = 0;
         /// <summary> Indicates the display colour format is 565</summary>
-        internal const int ADL_DISPLAY_MODE_COLOURFORMAT_565 = 0x00000001;
+        public const int ADL_DISPLAY_MODE_COLOURFORMAT_565 = 0x00000001;
         /// <summary> Indicates the display colour format is 8888 </summary>
-        internal const int ADL_DISPLAY_MODE_COLOURFORMAT_8888 = 0x00000002;
+        public const int ADL_DISPLAY_MODE_COLOURFORMAT_8888 = 0x00000002;
         /// <summary> Indicates the display orientation is normal position</summary>
-        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000 = 0x00000004;
+        public const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000 = 0x00000004;
         /// <summary> Indicates the display is in the 90 degree position</summary>
-        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_090 = 0x00000008;
+        public const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_090 = 0x00000008;
         /// <summary> Indicates the display in the 180 degree position</summary>
-        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_180 = 0x00000010;
+        public const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_180 = 0x00000010;
         /// <summary> Indicates the display is in the 270 degree position</summary>
-        internal const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_270 = 0x00000020;
+        public const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_270 = 0x00000020;
         /// <summary> Indicates the display refresh rate is exact </summary>
-        internal const int ADL_DISPLAY_MODE_REFRESHRATE_ONLY = 0x00000080;
+        public const int ADL_DISPLAY_MODE_REFRESHRATE_ONLY = 0x00000080;
         /// <summary> Indicates the display refresh rate is rounded</summary>
-        internal const int ADL_DISPLAY_MODE_REFRESHRATE_ROUNDED = 0x00000040;
+        public const int ADL_DISPLAY_MODE_REFRESHRATE_ROUNDED = 0x00000040;
 
         // DDCInfoX2 DDCInfo Flag values
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE = (1 << 0);
+        public const int ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE = (1 << 0);
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION = (1 << 1);
+        public const int ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION = (1 << 1);
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE = (1 << 2);
+        public const int ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE = (1 << 2);
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE = (1 << 3);
+        public const int ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE = (1 << 3);
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI = (1 << 4);
+        public const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI = (1 << 4);
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601 = (1 << 5);
+        public const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601 = (1 << 5);
         /// <summary> Indicates the display is a projector </summary>
-        internal const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709 = (1 << 6);
+        public const int ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709 = (1 << 6);
 
         /// <summary> HDR10/CEA861.3 HDR supported</summary>
-        internal const int ADL_HDR_CEA861_3 = 0x0001;
+        public const int ADL_HDR_CEA861_3 = 0x0001;
         /// <summary> DolbyVision HDR supported</summary>
-        internal const int ADL_HDR_DOLBYVISION = 0x0002;
+        public const int ADL_HDR_DOLBYVISION = 0x0002;
         /// <summary> FreeSync HDR supported.</summary>
-        internal const int ADL_HDR_FREESYNC_HDR = 0x0004;
+        public const int ADL_HDR_FREESYNC_HDR = 0x0004;
 
         #endregion Internal Constant
 
         #region Internal Enums
 
-        internal enum ADLConnectionType
+        public enum ADLConnectionType
         {
             VGA = 0, 
             DVI = 1,
@@ -1172,7 +1172,7 @@ namespace ATI.ADL
             Virtual = 13
         }
 
-        internal enum ADLDisplayConnectionType
+        public enum ADLDisplayConnectionType
         {
             Unknown = 0,
             VGA = 1,
@@ -1195,7 +1195,7 @@ namespace ATI.ADL
             USBTypeC = 18
         }
 
-        internal enum ADLDisplayModeFlag
+        public enum ADLDisplayModeFlag
         {
             ColourFormat565 = 1,
             ColourFormat8888 = 2,
@@ -1206,7 +1206,7 @@ namespace ATI.ADL
             ExactRefreshRate = 80,
             RoundedRefreshRate = 40
         }
-        internal enum ADLDisplayModeInterlacing
+        public enum ADLDisplayModeInterlacing
         {
             Progressive = 0,
             Interlaced = 2
@@ -1219,121 +1219,121 @@ namespace ATI.ADL
         {
             #region Internal Constant
             /// <summary> Atiadlxx_FileName </summary>
-            internal const string Atiadlxx_FileName = "atiadlxx.dll";
+            public const string Atiadlxx_FileName = "atiadlxx.dll";
             /// <summary> Kernel32_FileName </summary>
-            internal const string Kernel32_FileName = "kernel32.dll";
+            public const string Kernel32_FileName = "kernel32.dll";
             #endregion Internal Constant
 
             #region DLLImport
             [DllImport(Kernel32_FileName)]
-            internal static extern HMODULE GetModuleHandle (string moduleName);
+            public static extern HMODULE GetModuleHandle (string moduleName);
 
             [DllImport(Atiadlxx_FileName)] 
-            internal static extern int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters, out IntPtr contextHandle);
+            public static extern int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters, out IntPtr contextHandle);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Main_Control_Destroy(IntPtr contextHandle);
+            public static extern int ADL2_Main_Control_Destroy(IntPtr contextHandle);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_NumberOfAdapters_Get(IntPtr contextHandle, ref int numAdapters);
+            public static extern int ADL2_Adapter_NumberOfAdapters_Get(IntPtr contextHandle, ref int numAdapters);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
+            public static extern int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+            public static extern int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr AdapterInfoArray);
+            public static extern int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr AdapterInfoArray);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr AdapterInfoArray);
+            public static extern int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr AdapterInfoArray);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoArray);
+            public static extern int ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoArray);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoX2Array);
+            public static extern int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoX2Array);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_DDCInfo2_Get(IntPtr contextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 DDCInfo);
+            public static extern int ADL2_Display_DDCInfo2_Get(IntPtr contextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 DDCInfo);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+            public static extern int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+            public static extern int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
+            public static extern int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
 
             [DllImport(Atiadlxx_FileName)] 
-            internal static extern int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
+            public static extern int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
 
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
+            public static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Main_Control_Destroy ();
+            public static extern int ADL_Main_Control_Destroy ();
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Main_Control_IsFunctionValid (HMODULE module, string procName);
+            public static extern int ADL_Main_Control_IsFunctionValid (HMODULE module, string procName);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern FARPROC ADL_Main_Control_GetProcAddress (HMODULE module, string procName);
+            public static extern FARPROC ADL_Main_Control_GetProcAddress (HMODULE module, string procName);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
+            public static extern int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Adapter_AdapterInfo_Get (out IntPtr info, int inputSize);
+            public static extern int ADL_Adapter_AdapterInfo_Get (out IntPtr info, int inputSize);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
+            public static extern int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
+            public static extern int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
             
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+            public static extern int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+            public static extern int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+            public static extern int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
+            public static extern int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
+            public static extern int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+            public static extern int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
 
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
+            public static extern int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
 
             // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_SLSMapConfig_SetState(int AdapterIndex, int SLSMapIndex, int State);
+            public static extern int ADL_Display_SLSMapConfig_SetState(int AdapterIndex, int SLSMapIndex, int State);
 
             // Function to get the current supported SLS grid patterns (MxN) for a GPU.
             // This function gets a list of supported SLS grids for a specified input adapter based on display devices currently connected to the GPU.
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_SLSGrid_Caps(int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
+            public static extern int ADL_Display_SLSGrid_Caps(int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
 
             // Function to get the active SLS map index list for a given GPU.
             // This function retrieves a list of active SLS map indexes for a specified input GPU.            
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_SLSMapIndexList_Get(int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int options);
+            public static extern int ADL_Display_SLSMapIndexList_Get(int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int options);
 
             // Function to get the active SLS map index list for a given GPU.
             // This function retrieves a list of active SLS map indexes for a specified input GPU.            
             [DllImport(Atiadlxx_FileName)]
-            internal static extern int ADL_Display_SLSMapIndex_Get(int adapterIndex, int ADLNumDisplayTarget, ref ADLDisplayTarget displayTarget, ref int SLSMapIndex);
+            public static extern int ADL_Display_SLSMapIndex_Get(int adapterIndex, int ADLNumDisplayTarget, ref ADLDisplayTarget displayTarget, ref int SLSMapIndex);
 
             #endregion DLLImport
         }
@@ -1384,7 +1384,7 @@ namespace ATI.ADL
             /// <summary> Check the import function to see it exists or not</summary>
             /// <param name="functionName"> function name</param>
             /// <returns>return true, if function exists</returns>
-            internal static bool IsFunctionValid (string functionName)
+            public static bool IsFunctionValid (string functionName)
             {
                 bool result = false;
                 if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
@@ -1402,7 +1402,7 @@ namespace ATI.ADL
             /// <summary> Get the unmanaged function pointer </summary>
             /// <param name="functionName"> function name</param>
             /// <returns>return function pointer, if function exists</returns>
-            internal static FARPROC GetProcAddress (string functionName)
+            public static FARPROC GetProcAddress (string functionName)
             {
                 FARPROC result = System.IntPtr.Zero;
                 if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
@@ -1419,7 +1419,7 @@ namespace ATI.ADL
 
         #region ADL_Main_Memory_Alloc
         /// <summary> Build in memory allocation function</summary>
-        internal static ADL_Main_Memory_Alloc ADL_Main_Memory_Alloc = ADL_Main_Memory_Alloc_;
+        public static ADL_Main_Memory_Alloc ADL_Main_Memory_Alloc = ADL_Main_Memory_Alloc_;
         /// <summary> Build in memory allocation function</summary>
         /// <param name="size">input size</param>
         /// <returns>return the memory buffer</returns>
@@ -1433,7 +1433,7 @@ namespace ATI.ADL
         #region ADL_Main_Memory_Free
         /// <summary> Build in memory free function</summary>
         /// <param name="buffer">input buffer</param>
-        internal static void ADL_Main_Memory_Free (IntPtr buffer)
+        public static void ADL_Main_Memory_Free (IntPtr buffer)
         {
             if (IntPtr.Zero != buffer)
             {
@@ -1444,7 +1444,7 @@ namespace ATI.ADL
 
         #region ADL2_Main_Control_Create
         /// <summary> ADL2_Main_Control_Create Delegates</summary>
-        internal static ADL2_Main_Control_Create ADL2_Main_Control_Create
+        public static ADL2_Main_Control_Create ADL2_Main_Control_Create
         {
             get
             {
@@ -1467,7 +1467,7 @@ namespace ATI.ADL
 
         #region ADL2_Main_Control_Destroy
         /// <summary> ADL2_Main_Control_Destroy Delegates</summary>
-        internal static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy
+        public static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy
         {
             get
             {
@@ -1490,7 +1490,7 @@ namespace ATI.ADL
 
         #region ADL2_Adapter_NumberOfAdapters_Get
         /// <summary> ADL2_Adapter_NumberOfAdapters_Get Delegates</summary>
-        internal static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get
+        public static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get
         {
             get
             {
@@ -1513,7 +1513,7 @@ namespace ATI.ADL
 
         #region ADL2_Adapter_Active_Get
         /// <summary> ADL2_Adapter_Active_Get Delegates</summary>
-        internal static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get
+        public static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get
         {
             get
             {
@@ -1536,7 +1536,7 @@ namespace ATI.ADL
 
         #region ADL2_AdapterX2_Caps
         /// <summary> ADL2_AdapterX2_Caps Delegates</summary>
-        internal static ADL2_AdapterX2_Caps ADL2_AdapterX2_Caps
+        public static ADL2_AdapterX2_Caps ADL2_AdapterX2_Caps
         {
             get
             {
@@ -1560,7 +1560,7 @@ namespace ATI.ADL
 
         #region ADL2_Adapter_AdapterInfo_Get
         /// <summary> ADL2_Adapter_AdapterInfo_Get Delegates</summary>
-        internal static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get
+        public static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get
         {
             get
             {
@@ -1583,7 +1583,7 @@ namespace ATI.ADL
 
         #region ADL2_Adapter_AdapterInfoX2_Get
         /// <summary> ADL2_Adapter_AdapterInfoX2_Get Delegates</summary>
-        internal static ADL2_Adapter_AdapterInfoX2_Get ADL2_Adapter_AdapterInfoX2_Get
+        public static ADL2_Adapter_AdapterInfoX2_Get ADL2_Adapter_AdapterInfoX2_Get
         {
             get
             {
@@ -1606,7 +1606,7 @@ namespace ATI.ADL
 
         #region ADL2_Adapter_AdapterInfoX3_Get
         /// <summary> ADL2_Adapter_AdapterInfoX3_Get Delegates</summary>
-        internal static ADL2_Adapter_AdapterInfoX3_Get ADL2_Adapter_AdapterInfoX3_Get
+        public static ADL2_Adapter_AdapterInfoX3_Get ADL2_Adapter_AdapterInfoX3_Get
         {
             get
             {
@@ -1629,7 +1629,7 @@ namespace ATI.ADL
 
         #region ADL2_Adapter_AdapterInfoX4_Get
         /// <summary> ADL2_Adapter_AdapterInfoX4_Get Delegates</summary>
-        internal static ADL2_Adapter_AdapterInfoX4_Get ADL2_Adapter_AdapterInfoX4_Get
+        public static ADL2_Adapter_AdapterInfoX4_Get ADL2_Adapter_AdapterInfoX4_Get
         {
             get
             {
@@ -1652,7 +1652,7 @@ namespace ATI.ADL
 
         #region ADL2_Display_DDCInfo2_Get
         /// <summary> ADL2_Display_DDCInfo2_Get Delegates</summary>
-        internal static ADL2_Display_DDCInfo2_Get ADL2_Display_DDCInfo2_Get
+        public static ADL2_Display_DDCInfo2_Get ADL2_Display_DDCInfo2_Get
         {
             get
             {
@@ -1675,7 +1675,7 @@ namespace ATI.ADL
 
         #region ADL2_Display_DisplayInfo_Get
         /// <summary> ADL2_Display_DisplayInfo_Get Delegates</summary>
-        internal static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get
+        public static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get
         {
             get
             {
@@ -1698,7 +1698,7 @@ namespace ATI.ADL
 
         #region ADL2_Display_DeviceConfig_Get
         /// <summary> ADL2_Display_DeviceConfig_Get Delegates</summary>
-        internal static ADL2_Display_DeviceConfig_Get ADL2_Display_DeviceConfig_Get
+        public static ADL2_Display_DeviceConfig_Get ADL2_Display_DeviceConfig_Get
         {
             get
             {
@@ -1721,7 +1721,7 @@ namespace ATI.ADL
 
         #region ADL2_Display_HDRState_Get
         /// <summary> ADL2_Display_HDRState_Get Delegates</summary>
-        internal static ADL2_Display_HDRState_Get ADL2_Display_HDRState_Get
+        public static ADL2_Display_HDRState_Get ADL2_Display_HDRState_Get
         {
             get
             {
@@ -1744,7 +1744,7 @@ namespace ATI.ADL
 
         #region ADL2_Display_Modes_Get
         /// <summary> ADL2_Display_Modes_Get Delegates</summary>
-        internal static ADL2_Display_Modes_Get ADL2_Display_Modes_Get
+        public static ADL2_Display_Modes_Get ADL2_Display_Modes_Get
         {
             get
             {
@@ -1770,7 +1770,7 @@ namespace ATI.ADL
 
         #region ADL_Main_Control_Create
         /// <summary> ADL_Main_Control_Create Delegates</summary>
-        internal static ADL_Main_Control_Create ADL_Main_Control_Create
+        public static ADL_Main_Control_Create ADL_Main_Control_Create
         {
             get
             {
@@ -1793,7 +1793,7 @@ namespace ATI.ADL
 
         #region ADL_Main_Control_Destroy
         /// <summary> ADL_Main_Control_Destroy Delegates</summary>
-        internal static ADL_Main_Control_Destroy ADL_Main_Control_Destroy
+        public static ADL_Main_Control_Destroy ADL_Main_Control_Destroy
         {
             get
             {
@@ -1816,7 +1816,7 @@ namespace ATI.ADL
 
         #region ADL_Adapter_NumberOfAdapters_Get
         /// <summary> ADL_Adapter_NumberOfAdapters_Get Delegates</summary>
-        internal static ADL_Adapter_NumberOfAdapters_Get ADL_Adapter_NumberOfAdapters_Get
+        public static ADL_Adapter_NumberOfAdapters_Get ADL_Adapter_NumberOfAdapters_Get
         {
             get
             {
@@ -1840,7 +1840,7 @@ namespace ATI.ADL
         #region ADL_Adapter_ID_Get
         
         /// <summary> ADL_Adapter_Active_Get Delegates</summary>
-        internal static ADL_Adapter_ID_Get ADL_Adapter_ID_Get
+        public static ADL_Adapter_ID_Get ADL_Adapter_ID_Get
         {
             get
             {
@@ -1863,7 +1863,7 @@ namespace ATI.ADL
 
         #region ADL_AdapterX2_Caps
         /// <summary> ADL_AdapterX2_Caps Delegates</summary>
-        internal static ADL_AdapterX2_Caps ADL_AdapterX2_Caps
+        public static ADL_AdapterX2_Caps ADL_AdapterX2_Caps
         {
             get
             {
@@ -1886,7 +1886,7 @@ namespace ATI.ADL
 
         #region ADL_Adapter_AdapterInfo_Get
         /// <summary> ADL_Adapter_AdapterInfo_Get Delegates</summary>
-        internal static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get
+        public static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get
         {
             get
             {
@@ -1909,7 +1909,7 @@ namespace ATI.ADL
 
         #region ADL_Adapter_Active_Get
         /// <summary> ADL_Adapter_Active_Get Delegates</summary>
-        internal static ADL_Adapter_Active_Get ADL_Adapter_Active_Get
+        public static ADL_Adapter_Active_Get ADL_Adapter_Active_Get
         {
             get
             {
@@ -1932,7 +1932,7 @@ namespace ATI.ADL
 
         #region ADL_Display_DeviceConfig_Get
         /// <summary> ADL_Display_DeviceConfig_Get Delegates</summary>
-        internal static ADL_Display_DeviceConfig_Get ADL_Display_DeviceConfig_Get
+        public static ADL_Display_DeviceConfig_Get ADL_Display_DeviceConfig_Get
         {
             get
             {
@@ -1955,7 +1955,7 @@ namespace ATI.ADL
 
         #region ADL_Display_DisplayMapConfig_Get
         /// <summary> ADL_Display_DisplayMapConfig_Get Delegates</summary>
-        internal static ADL_Display_DisplayMapConfig_Get ADL_Display_DisplayMapConfig_Get
+        public static ADL_Display_DisplayMapConfig_Get ADL_Display_DisplayMapConfig_Get
         {
             get
             {
@@ -1978,7 +1978,7 @@ namespace ATI.ADL
 
         #region ADL_Display_DisplayMapConfig_PossibleAddAndRemove
         /// <summary> ADL_Display_DisplayMapConfig_PossibleAddAndRemove Delegates</summary>
-        internal static ADL_Display_DisplayMapConfig_PossibleAddAndRemove ADL_Display_DisplayMapConfig_PossibleAddAndRemove
+        public static ADL_Display_DisplayMapConfig_PossibleAddAndRemove ADL_Display_DisplayMapConfig_PossibleAddAndRemove
         {
             get
             {
@@ -2002,7 +2002,7 @@ namespace ATI.ADL
 
         #region ADL_Display_EdidData_Get
         /// <summary> ADL_Display_EdidData_Get Delegates</summary>
-        internal static ADL_Display_EdidData_Get ADL_Display_EdidData_Get
+        public static ADL_Display_EdidData_Get ADL_Display_EdidData_Get
         {
             get
             {
@@ -2026,7 +2026,7 @@ namespace ATI.ADL
 
         #region ADL_Display_DisplayInfo_Get
         /// <summary> ADL_Display_DisplayInfo_Get Delegates</summary>
-        internal static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get
+        public static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get
         {
             get
             {
@@ -2050,7 +2050,7 @@ namespace ATI.ADL
 
         #region ADL_Display_SLSMapConfig_Get
         /// <summary> ADL_Display_SLSMapConfig_Get Delegates</summary>
-        internal static ADL_Display_SLSMapConfig_Get ADL_Display_SLSMapConfig_Get
+        public static ADL_Display_SLSMapConfig_Get ADL_Display_SLSMapConfig_Get
         {
             get
             {
@@ -2076,7 +2076,7 @@ namespace ATI.ADL
 
         #region ADL Helper Functions
 
-        internal static ConvertedDDCInfoFlag ConvertDDCInfoFlag(int DDCInfoValue)
+        public static ConvertedDDCInfoFlag ConvertDDCInfoFlag(int DDCInfoValue)
         {
             ConvertedDDCInfoFlag expandedDDCInfoValue = new ConvertedDDCInfoFlag();
 
@@ -2106,7 +2106,7 @@ namespace ATI.ADL
 
         }
 
-        internal static ConvertedSupportedHDR ConvertSupportedHDR(int supportedHDR)
+        public static ConvertedSupportedHDR ConvertSupportedHDR(int supportedHDR)
         {
             ConvertedSupportedHDR expandedSupportedHDR = new ConvertedSupportedHDR();
 
@@ -2124,7 +2124,7 @@ namespace ATI.ADL
 
         }
 
-        internal static ConvertedDisplayInfoValue ConvertDisplayInfoValue(int displayInfoValue)
+        public static ConvertedDisplayInfoValue ConvertDisplayInfoValue(int displayInfoValue)
         {
             ConvertedDisplayInfoValue expandedDisplayInfoValue = new ConvertedDisplayInfoValue();
 
@@ -2187,7 +2187,7 @@ namespace ATI.ADL
 
         }
 
-        internal static ConvertedDisplayModeFlags ConvertDisplayModeFlags(int displayModeFlag)
+        public static ConvertedDisplayModeFlags ConvertDisplayModeFlags(int displayModeFlag)
         {
             ConvertedDisplayModeFlags expandedDisplayModeFlags = new ConvertedDisplayModeFlags();
 
@@ -2221,7 +2221,7 @@ namespace ATI.ADL
         }
 
 
-        internal static string ConvertADLReturnValueIntoWords(int adlReturnValue)
+        public static string ConvertADLReturnValueIntoWords(int adlReturnValue)
         {
             if (adlReturnValue == ADL.ADL_OK)
                 return "Success. Function worked as intended.";

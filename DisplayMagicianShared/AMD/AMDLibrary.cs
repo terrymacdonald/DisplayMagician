@@ -21,29 +21,7 @@ namespace DisplayMagicianShared.AMD
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _adlContextHandle = IntPtr.Zero;
-
-        // Struct to be used as the AMD Profile
-        public struct AMDProfile
-        {
-            public List<AMDAdapter> Adapters;
-        }
-
-        // Struct to store the Display
-        public struct AMDAdapter
-        {
-            internal ADLAdapterInfoX2 AdapterInfoX2;
-            internal List<AMDDisplay> Displays;
-        }
-
-        // Struct to store the Display
-        public struct AMDDisplay
-        {
-            internal string DisplayName;
-            internal string DisplayConnector;
-            internal List<ADLMode> DisplayModes;
-        }
-
-
+        
         static AMDLibrary() { }
         public AMDLibrary()
         {
@@ -1199,8 +1177,10 @@ namespace DisplayMagicianShared.AMD
                                                 displayToCreate.DisplayModes = new List<ADLMode>();
                                                 displayToCreate.DisplayName = oneDisplayInfo.DisplayName;
                                                 displayToCreate.DisplayConnector = displayConnector.ToString("G");
+                                                displayToCreate.IsEyefinity = false;
+                                                displayToCreate.HDRSupported = false;
+                                                displayToCreate.HDREnabled = false;
 
-                                                
 
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: ### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Connector = {displayConnector.ToString("G")}");
@@ -1282,8 +1262,6 @@ namespace DisplayMagicianShared.AMD
 
                                                 ADLDDCInfo2 displayDDCInfo2 = new ADLDDCInfo2();
                                                 displayDDCInfo2.Size = Marshal.SizeOf(displayDDCInfo2);
-                                                // Create a stringbuilder buffer that EDID can be loaded into
-                                                //displayEDIDData.EDIDData = new StringBuilder(256);
 
                                                 if (ADL.ADL2_Display_DDCInfo2_Get != null)
                                                 {
@@ -1357,6 +1335,8 @@ namespace DisplayMagicianShared.AMD
                                                     adapterToCreate.Displays.Add(displayToCreate);
                                                 }
 
+
+                                                // Add the HDR information to the profile display storage
                                                 int HDRSupported = 0;
                                                 int HDREnabled = 0;
                                                 if (ADL.ADL2_Display_HDRState_Get != null)
@@ -1375,114 +1355,8 @@ namespace DisplayMagicianShared.AMD
                                                     }
                                                 }
 
-
-                                                // Create an array of all the important display info we need to record
-                                                List<string> displayInfoIdentifierSection = new List<string>();
-                                                displayInfoIdentifierSection.Add("AMD");
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting AMD Vendor ID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.AdapterName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting AMD Adapter Name from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting AMD VendorID  from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("1002");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(AdapterCapabilities.AdapterID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting AMD AdapterID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayConnector.ToString("G"));
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting AMD Display Connector from video card to display. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneDisplayInfo.DisplayName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting Display Name from display connected to AMD video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ManufacturerID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting Manufacturer ID from display connected to AMD video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ProductID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting Product ID from display connected to AMD video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.SerialID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/GetActiveprofile: Exception getting Serial ID from display connected to AMD video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                // Create a display identifier out of it
-                                                string displayIdentifier = String.Join("|", displayInfoIdentifierSection);
-
-                                                // Check first to see if there is already an existing display identifier the same!
-                                                // This appears to be a bug with the AMD driver, or with the install on my test machine
-                                                // Either way, it is potentially going to happen in the wild, so I will filter it out if it does
-                                                if (displayIdentifiers.Contains(displayIdentifier))
-                                                {
-                                                    SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Your AMD driver reported the following Display Identifier multiple times, so ignoring it as we already have it: {displayIdentifier}");
-                                                    continue;
-                                                }
-
-
-                                                SharedLogger.logger.Debug($"ProfileRepository/GetActiveprofile: DisplayIdentifier: {displayIdentifier}");
+                                                displayToCreate.HDREnabled = HDREnabled == 0 ? false : true;
+                                                displayToCreate.HDRSupported = HDRSupported == 0 ? false : true;
                                             }
                                         }
                                         catch (Exception ex)
@@ -1543,37 +1417,6 @@ namespace DisplayMagicianShared.AMD
             return true;
         }
 
-        /*public List<ScreenPosition> GenerateScreenPositions(AMDProfile profileToCreate)
-        {
-            List<ScreenPosition> screens = new List<ScreenPosition>();
-
-
-            if (profileToCreate.Adapters.Count > 0)
-            {
-                foreach (var adapter in profileToCreate.Adapters)
-                {
-                    foreach (var display in adapter.Displays)
-                    {
-                        foreach (var mode in display.DisplayModes)
-                        {
-                            ScreenPosition screen = new ScreenPosition();
-                            screen.Colour = Color.Red; // represents AMD
-                            screen.Name = mode.DisplayID.ToString();
-                            screen.ScreenX = mode.XPos;
-                            screen.ScreenY = mode.YPos;
-                            screen.ScreenWidth = mode.XRes;
-                            screen.ScreenHeight = mode.YRes;
-                            screen.IsSpanned = false;
-                            //screen.Features = mode.ModeValue;
-
-                            screens.Add(screen);
-                        }
-                    }
-                }
-            }
-
-
-            return screens;
-        }*/
+       
     }
 }

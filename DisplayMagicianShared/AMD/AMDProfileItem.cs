@@ -9,10 +9,42 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
+using ATI.ADL;
 //using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagicianShared.AMD
 {
+
+    // Struct to be used as the AMD Profile
+    [JsonObject(MemberSerialization.Fields)]
+    public struct AMDProfile
+    {
+        public List<AMDAdapter> Adapters;
+    }
+
+    // Struct to store the Display
+    [JsonObject(MemberSerialization.Fields)]
+    public struct AMDAdapter
+    {
+        [JsonProperty]
+        internal ADLAdapterInfoX2 AdapterInfoX2;
+        internal List<AMDDisplay> Displays;
+    }
+
+    // Struct to store the Display
+    [JsonObject(MemberSerialization.Fields)]
+    public struct AMDDisplay
+    {
+        internal string DisplayName;
+        internal string DisplayConnector;
+        [JsonRequired]
+        internal List<ADLMode> DisplayModes;
+        internal bool HDRSupported;
+        internal bool HDREnabled;
+        internal bool IsEyefinity;
+
+    }
+
     public class AMDProfileItem : ProfileItem, IComparable
     {
         private static List<AMDProfileItem> _allSavedProfiles = new List<AMDProfileItem>();
@@ -20,7 +52,7 @@ namespace DisplayMagicianShared.AMD
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
         private List<ScreenPosition> _screens;
-        private AMDLibrary.AMDProfile _profileData = new AMDLibrary.AMDProfile();
+        private AMDProfile _profileData = new AMDProfile();
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
@@ -70,7 +102,8 @@ namespace DisplayMagicianShared.AMD
 
         //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
-        public AMDLibrary.AMDProfile ProfileData
+        [JsonRequired]
+        public AMDProfile ProfileData
         {
             get
             {
@@ -78,11 +111,7 @@ namespace DisplayMagicianShared.AMD
             }
             set
             {
-                _profileData = new AMDLibrary.AMDProfile();
-
-                // We also update the screenPositions too so that
-                // the icons will work and graphics will display
-                //GetScreenPositions();
+                _profileData = value;
             }
         }
             
@@ -115,14 +144,23 @@ namespace DisplayMagicianShared.AMD
                 }
                 return _screens;
             }
+            set
+            {
+                _screens = value;
+            }
         }
 
 
-        [JsonConverter(typeof(CustomBitmapConverter))]
-        public new Bitmap ProfileBitmap
+
+        //[JsonConverter(typeof(CustomBitmapConverter))]
+        [JsonIgnore]
+        public override Bitmap ProfileBitmap
         {
             get
             {
+                /*if (!ProfileRepository.ProfilesLoaded)
+                    return null;*/
+
                 if (_profileBitmap != null)
                     return _profileBitmap;
                 else
@@ -134,6 +172,28 @@ namespace DisplayMagicianShared.AMD
             set
             {
                 _profileBitmap = value;
+            }
+
+        }
+
+
+        //[JsonConverter(typeof(CustomBitmapConverter))]
+        [JsonIgnore]
+        public override Bitmap ProfileTightestBitmap
+        {
+            get
+            {
+                if (_profileShortcutBitmap != null)
+                    return _profileShortcutBitmap;
+                else
+                {
+                    _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
+                    return _profileShortcutBitmap;
+                }
+            }
+            set
+            {
+                _profileShortcutBitmap = value;
             }
 
         }
@@ -211,6 +271,13 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
+        public virtual bool PerformPostLoadingTasks()
+        {
+            // First thing we do is to set up the Screens
+            _screens = GetScreenPositions();
+
+            return true;
+        }
 
         public override List<ScreenPosition> GetScreenPositions()
         {
@@ -228,21 +295,51 @@ namespace DisplayMagicianShared.AMD
                         {
                             ScreenPosition screen = new ScreenPosition();
                             screen.Library = "AMD";
-                            //screen.Colour = Color.FromArgb(200, 237, 28, 36); // represents AMD Red
-                            screen.Colour = Color.FromArgb(255, 195, 195, 195); // represents normal screen colour
                             screen.Name = display.DisplayName;
                             screen.DisplayConnector = display.DisplayConnector; 
                             screen.ScreenX = mode.XPos;
                             screen.ScreenY = mode.YPos;
                             screen.ScreenWidth = mode.XRes;
                             screen.ScreenHeight = mode.YRes;
-                            screen.IsSpanned = false;
+
+                            // HDR information
+                            if (display.HDRSupported)
+                            {
+                                screen.HDRSupported = true;
+                                if (display.HDREnabled)
+                                {
+                                    screen.HDREnabled = true;
+                                }
+                                else
+                                {
+                                    screen.HDREnabled = false;
+                                }
+                                
+                            }
+                            else
+                            {
+                                screen.HDRSupported = false;
+                                screen.HDREnabled = false;
+                            }
                             
-                            
+                            // Spanned screen options
+                            if (display.IsEyefinity)
+                            {
+                                screen.IsSpanned = true;
+                                screen.Colour = Color.FromArgb(200, 237, 28, 36); // represents AMD Red
+                                screen.SpannedName = "AMD Eyefinity";
+                            }
+                            else
+                            {                                
+                                screen.IsSpanned = false;
+                                screen.Colour = Color.FromArgb(255, 195, 195, 195); // represents normal screen colour
+                            }
+
+
                             // Figure out features
 
                             //ATI.ADL.ADL.ConvertDisplayModeFlags(mode.ModeValue);
-                            
+
                             //screen.Features = mode.ModeValue;
 
                             _screens.Add(screen);

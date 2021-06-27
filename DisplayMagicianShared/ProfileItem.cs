@@ -25,14 +25,17 @@ namespace DisplayMagicianShared
         public string Library;
         public bool IsPrimary;
         public Color Colour;
+        public string DisplayConnector;
+        internal bool HDRSupported;
+        internal bool HDREnabled;
         public List<string> Features;
         // If the screen is AMD Eyefinity or NVIDIA Surround or similar, it has screens that are part of it
-        // These two fields indicate this. THe spanned screens are added to the SpannedScreens field
+        // These fields indicate this. THe spanned screens are added to the SpannedScreens field
         public bool IsSpanned;
+        public string SpannedName;
         public List<SpannedScreenPosition> SpannedScreens;
         public int SpannedColumns;
         public int SpannedRows;
-        public string DisplayConnector;
     }
 
     public struct SpannedScreenPosition
@@ -178,7 +181,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public virtual string Driver { get; } = "Unknown";
+        public virtual  string Driver { get; } = "Unknown";
 
         public Keys Hotkey {
             get 
@@ -195,7 +198,7 @@ namespace DisplayMagicianShared
 
         //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
-        //public virtual object ProfileData { get; set; }
+        //public virtual ProfileData { get; set; }
         
         [JsonIgnore]
         public virtual ProfileIcon ProfileIcon
@@ -217,7 +220,6 @@ namespace DisplayMagicianShared
 
         }
 
-
         [JsonIgnore]
         public virtual List<ScreenPosition> Screens
         {
@@ -228,6 +230,10 @@ namespace DisplayMagicianShared
                     _screens = GetScreenPositions();
                 }
                 return _screens;
+            }
+            set
+            {
+                _screens = value;
             }
         }
 
@@ -250,7 +256,8 @@ namespace DisplayMagicianShared
             }
         }
 
-        [JsonConverter(typeof(CustomBitmapConverter))]
+        //[JsonConverter(typeof(CustomBitmapConverter))]
+        [JsonIgnore]
         public virtual Bitmap ProfileBitmap
         {
             get
@@ -270,8 +277,9 @@ namespace DisplayMagicianShared
 
         }
 
-        [JsonConverter(typeof(CustomBitmapConverter))]
-        public Bitmap ProfileTightestBitmap
+        //[JsonConverter(typeof(CustomBitmapConverter))]
+        [JsonIgnore]
+        public virtual Bitmap ProfileTightestBitmap
         {
             get
             {
@@ -366,6 +374,11 @@ namespace DisplayMagicianShared
         public virtual bool CreateProfileFromCurrentDisplaySettings()
         {
             return false;                
+        }
+
+        public virtual bool PerformPostLoadingTasks()
+        {
+            return false;
         }
 
 

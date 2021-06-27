@@ -32,6 +32,7 @@ namespace DisplayMagicianShared
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;
         private static AMDLibrary AMDLibrary;
+        //private static bool _isLoading = false;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -178,6 +179,17 @@ namespace DisplayMagicianShared
             }
         }
 
+
+        public static bool ProfilesLoaded { 
+            get 
+            {
+                return _profilesLoaded;
+            } 
+            set 
+            {
+                _profilesLoaded = value;
+            } 
+        }
 
         #endregion
 
@@ -633,7 +645,6 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
 
-            //if (profile.Paths.SequenceEqual(_currentProfile.Paths))
             if (profile.Equals(_currentProfile))
             {
                 SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is the currently active profile.");
@@ -679,7 +690,6 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
 
-
                     ProfileItem myCurrentProfile = new NVIDIAProfileItem
                     {
                         Name = "Current Display Profile",
@@ -690,9 +700,17 @@ namespace DisplayMagicianShared
 
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
 
-                    // Lookup all the Profile Names in the Saved Profiles
+                    // Go through all the  profiles and set up the needed structures (such as the Screens list)
+                    // and check if the current profile is used
                     foreach (ProfileItem loadedProfile in _allProfiles)
                     {
+                        if (loadedProfile.Driver.Equals("AMD"))
+                        {
+                            AMDProfileItem amdLoadedProfile = (AMDProfileItem) loadedProfile;
+                            amdLoadedProfile.PerformPostLoadingTasks();
+                        }
+                        
+                         
                         if (ProfileRepository.IsActiveProfile(loadedProfile))
                             _currentProfile = loadedProfile;
 
