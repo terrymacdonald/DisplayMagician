@@ -199,6 +199,20 @@ namespace ATI.ADL
     /// <returns>return ADL Error Code</returns>
     public delegate int ADL2_Display_DisplayMapConfig_Validate(IntPtr ADLContextHandle, int adapterIndex, int numPossibleMap, ref ADLPossibleMap possibleMaps, out int numPossibleMapResult, ref IntPtr possibleMapResult);
 
+    /// <summary>ADL2 function to set the current display mode information</summary>
+    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
+    /// <param name="adapterIndex">Adapter Index</param>
+    /// <param name="numDisplayMap">The number of display maps to set</param>
+    /// <param name="displayMap">The pointer to the display manner information. Refer to the ADLDisplayMap structure for more information.</param>
+    /// <param name="numDisplayTarget">The number of display targets to set</param>
+    /// <param name="displayTarget">The pointer to the display target object. Refer to the ADLDisplayTarget structure for more information.</param>
+    /// <param name="numPossibleAddTarget">The number of display targets that can be added</param>
+    /// <param name="possibleAddTarget">The list of display targets that can be added</param>
+    /// <param name="numPossibleRemoveTarget">The number of display targets that can be removed</param>
+    /// <param name="possibleRemoveTarget">The list of display targets that can be removed</param>
+    /// <returns>return ADL Error Code</returns>
+    public delegate int ADL2_Display_DisplayMapConfig_PossibleAddAndRemove(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, ref ADLDisplayMap displayMap, int numDisplayTarget, ref ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+
     // ADL version of function delegates
 
     /// <summary> ADL Create Function to create ADL Data</summary>
@@ -1420,6 +1434,10 @@ namespace ATI.ADL
             [DllImport(Atiadlxx_FileName)]
             public static extern int ADL2_Display_DisplayMapConfig_Validate(IntPtr ADLContextHandle, int adapterIndex, int numPossibleMap, ref ADLPossibleMap possibleMaps, out int numPossibleMapResult, ref IntPtr possibleMapResult);
 
+            [DllImport(Atiadlxx_FileName)]
+            public static extern int ADL2_Display_DisplayMapConfig_PossibleAddAndRemove(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, ref ADLDisplayMap displayMap, int numDisplayTarget, ref ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+
+
             // ======================================
 
 
@@ -2032,6 +2050,29 @@ namespace ATI.ADL
         /// <summary> check flag to indicate the delegate has been checked</summary>
         private static bool ADL2_Display_DisplayMapConfig_Validate_Check = false;
         #endregion ADL2_Display_DisplayMapConfig_Validate
+
+        #region ADL2_Display_DisplayMapConfig_PossibleAddAndRemove
+        /// <summary> ADL2_Display_DisplayMapConfig_PossibleAddAndRemove Delegates</summary>
+        public static ADL2_Display_DisplayMapConfig_PossibleAddAndRemove ADL2_Display_DisplayMapConfig_PossibleAddAndRemove
+        {
+            get
+            {
+                if (!ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_Check && null == ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_)
+                {
+                    ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_Check = true;
+                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayMapConfig_PossibleAddAndRemove"))
+                    {
+                        ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_ = ADLImport.ADL2_Display_DisplayMapConfig_PossibleAddAndRemove;
+                    }
+                }
+                return ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_;
+            }
+        }
+        /// <summary> Private Delegate</summary>
+        private static ADL2_Display_DisplayMapConfig_PossibleAddAndRemove ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_ = null;
+        /// <summary> check flag to indicate the delegate has been checked</summary>
+        private static bool ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_Check = false;
+        #endregion ADL2_Display_DisplayMapConfig_PossibleAddAndRemove
 
         // ================================
 
