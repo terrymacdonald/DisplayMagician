@@ -581,7 +581,7 @@ namespace DisplayMagicianShared
             return shortcutFileName != null && System.IO.File.Exists(shortcutFileName);
         }
 
-        public void RefreshPossbility()
+        public virtual void RefreshPossbility()
         {
             // Check each display in this profile and make sure it's currently available
             int validDisplayCount = 0;

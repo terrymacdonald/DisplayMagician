@@ -27,21 +27,21 @@ namespace DisplayMagicianShared.AMD
     public struct AMDAdapter
     {
         [JsonProperty]
-        internal ADLAdapterInfoX2 AdapterInfoX2;
-        internal List<AMDDisplay> Displays;
+        public ADLAdapterInfoX2 AdapterInfoX2;
+        public List<AMDDisplay> Displays;
     }
 
     // Struct to store the Display
     [JsonObject(MemberSerialization.Fields)]
     public struct AMDDisplay
     {
-        internal string DisplayName;
-        internal string DisplayConnector;
+        public string DisplayName;
+        public string DisplayConnector;
         [JsonRequired]
-        internal List<ADLMode> DisplayModes;
-        internal bool HDRSupported;
-        internal bool HDREnabled;
-        internal bool IsEyefinity;
+        public List<ADLMode> DisplayModes;
+        public bool HDRSupported;
+        public bool HDREnabled;
+        public bool IsEyefinity;
 
     }
 
@@ -236,6 +236,7 @@ namespace DisplayMagicianShared.AMD
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
+            //profile.Screens = Screens;
             return true;
         }
 
@@ -249,6 +250,42 @@ namespace DisplayMagicianShared.AMD
 
             // Return if it is valid and we should continue
             return IsValid();
+        }
+
+        public override void RefreshPossbility()
+        {
+            // Check each display in this profile and make sure it's currently available
+            int validDisplayCount = 0;
+
+            //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
+
+            foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
+            {
+                // If this profile has a display that isn't currently available then we need to say it's a no!
+                if (ProfileRepository.ConnectedDisplayIdentifiers.Any(s => profileDisplayIdentifier.Equals(s)))
+                {
+                    SharedLogger.logger.Trace($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is connected now.");
+                    validDisplayCount++;
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is NOT currently connected, so this profile cannot be used.");
+                }
+
+            }
+            if (validDisplayCount == ProfileDisplayIdentifiers.Count)
+            {
+
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
+                _isPossible = true;
+
+            }
+            else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is NOT possible!");
+                _isPossible = false;
+            }
+
         }
 
         public override bool CreateProfileFromCurrentDisplaySettings()
@@ -271,7 +308,7 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
-        public virtual bool PerformPostLoadingTasks()
+        public override bool PerformPostLoadingTasks()
         {
             // First thing we do is to set up the Screens
             _screens = GetScreenPositions();
