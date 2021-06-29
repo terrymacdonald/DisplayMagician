@@ -1181,7 +1181,6 @@ namespace DisplayMagicianShared.AMD
                                                 displayToCreate.HDRSupported = false;
                                                 displayToCreate.HDREnabled = false;
 
-
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: ### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Connector = {displayConnector.ToString("G")}");
                                                 SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: Display Controller Index = {oneDisplayInfo.DisplayControllerIndex}");
@@ -1252,6 +1251,9 @@ namespace DisplayMagicianShared.AMD
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode X Resolution = {oneDisplayMode.XRes}");
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Y Position = {oneDisplayMode.YPos}");
                                                             SharedLogger.logger.Trace($"AMDLibrary/GetActiveprofile: DisplayMode Y Resolution = {oneDisplayMode.YRes}");
+
+
+                                                            
                                                         }                                                            
                                                     }
                                                     else
@@ -1576,6 +1578,14 @@ namespace DisplayMagicianShared.AMD
                                                                 // Set the display mode timing override configuration 
                                                                 //ADL.ADL2_Display_ModeTimingOverride_Set
 
+                                                                // Validate the display map config we want to set
+                                                                //ADL.ADL2_Display_DisplayMapConfig_Validate
+
+                                                                // Figure out which display targets need to be added or removed in the display map config 
+                                                                //ADL.ADL2_Display_DisplayMapConfig_PossibleAddAndRemove
+
+                                                                // Set the display map config 
+                                                                //ADL.ADL2_Display_DisplayMapConfig_Set
 
                                                                 // Set the HDR function if needed
                                                                 if (storedAMDDisplay.HDREnabled)

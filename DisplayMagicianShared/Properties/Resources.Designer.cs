@@ -61,12 +61,52 @@ namespace DisplayMagicianShared.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap amdblack {
+            get {
+                object obj = ResourceManager.GetObject("amdblack", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap amdwhite {
+            get {
+                object obj = ResourceManager.GetObject("amdwhite", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon DisplayMagician {
             get {
                 object obj = ResourceManager.GetObject("DisplayMagician", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap nvidiablack {
+            get {
+                object obj = ResourceManager.GetObject("nvidiablack", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap nvidiawhite {
+            get {
+                object obj = ResourceManager.GetObject("nvidiawhite", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

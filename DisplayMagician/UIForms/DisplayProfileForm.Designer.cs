@@ -60,8 +60,11 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.pbLogo = new System.Windows.Forms.PictureBox();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
+            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_apply
@@ -364,10 +367,21 @@ namespace DisplayMagician.UIForms
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.DimGray;
+            this.panel1.Controls.Add(this.pbLogo);
             this.panel1.Location = new System.Drawing.Point(0, 61);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(976, 521);
             this.panel1.TabIndex = 37;
+            // 
+            // pbLogo
+            // 
+            this.pbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pbLogo.Location = new System.Drawing.Point(854, 14);
+            this.pbLogo.Name = "pbLogo";
+            this.pbLogo.Size = new System.Drawing.Size(100, 49);
+            this.pbLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pbLogo.TabIndex = 0;
+            this.pbLogo.TabStop = false;
             // 
             // DisplayProfileForm
             // 
@@ -407,6 +421,8 @@ namespace DisplayMagician.UIForms
             this.Load += new System.EventHandler(this.DisplayProfileForm_Load);
             this.menu_profiles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
+            this.panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -440,6 +456,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_hotkey;
         private System.Windows.Forms.Label lbl_hotkey_assigned;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.PictureBox pbLogo;
     }
 }
 

@@ -90,6 +90,8 @@
     <Compile Include="UserControls\DisplayView.Designer.cs">
       <DependentUpon>DisplayView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Windows\CCD.cs" />
+    <Compile Include="Windows\WindowsLibrary.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -156,8 +158,18 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Windows\" />
+    <None Include="Properties\amdblack.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\amdwhite.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\nvidiablack.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\nvidiawhite.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

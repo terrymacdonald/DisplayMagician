@@ -478,13 +478,21 @@ namespace DisplayMagicianShared
 
                     // Draw the screen of the monitor
                     Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                    if (screen.Colour != null)
+                    if (screen.IsPrimary)
                     {
-                        screenBgColour = screen.Colour;
+                        //screenBgColour = Color.FromArgb(255, 66, 173, 245);
+                        screenBgColour = Color.FromArgb(240, 116, 215, 255);
                     }
                     else
                     {
-                        screenBgColour = Color.FromArgb(255, 155, 155, 155);
+                        if (screen.Colour != null)
+                        {
+                            screenBgColour = screen.Colour;
+                        }
+                        else
+                        {
+                            screenBgColour = Color.FromArgb(255, 155, 155, 155);
+                        }
                     }
                     g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);

@@ -259,6 +259,12 @@ namespace DisplayMagician.UIForms
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _selectedProfile.Name;
 
+            // And show the logo for the driver
+            if (_selectedProfile.Driver == "AMD")
+            {
+                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.amdblack, Properties.Resources.amdwhite);
+            }
+
             // And update the save/rename textbox
             txt_profile_save_name.Text = _selectedProfile.Name;
 
@@ -464,6 +470,18 @@ namespace DisplayMagician.UIForms
             else
             {
                 tt_selected.RemoveAll();
+            }
+        }
+
+        private Bitmap PickBitmapBasedOnBgColour(Color bgColour, Bitmap lightBitmap, Bitmap darkBitmap)
+        {
+            if ((bgColour.R * 0.299 + bgColour.G * 0.587 + bgColour.B * 0.114) > 186)
+            {
+                return darkBitmap;
+            }
+            else
+            {
+                return lightBitmap;
             }
         }
 

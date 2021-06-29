@@ -200,7 +200,7 @@ namespace DisplayMagicianShared.AMD
                 _profileShortcutBitmap = value;
             }
 
-        }
+        }        
 
         #endregion
 
@@ -342,6 +342,12 @@ namespace DisplayMagicianShared.AMD
                             screen.ScreenY = mode.YPos;
                             screen.ScreenWidth = mode.XRes;
                             screen.ScreenHeight = mode.YRes;
+
+                            // If we're at the 0,0 coordinate then we're the primary monitor
+                            if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                            {
+                                screen.IsPrimary = true;
+                            }
 
                             // HDR information
                             if (display.HDRSupported)
@@ -589,33 +595,91 @@ namespace DisplayMagicianShared.AMD
             // We need to exclude the name as the name is solely for saving to disk
             // and displaying to the user. 
             // Two profiles are equal only when they have the same viewport data
-            int foundPathsCount = 0;
-            int foundOtherPathsCount = 0;
+            int foundDisplayCount = 0;
+            int foundOtherDisplayCount = 0;
 
-            // TODO: Fix this so it finds compares ProfileData
-            /*foreach (Topology.Path profilePath in x.Paths)
+            foreach (AMDAdapter xadapter in x.ProfileData.Adapters)
             {
-                if (y.Paths.Contains(profilePath))
+                foreach (AMDDisplay xdisplay in xadapter.Displays)
                 {
-                    foundPathsCount++;
-                    continue;
+                    foreach (AMDAdapter yadapter in y.ProfileData.Adapters)
+                    {
+                        foreach (AMDDisplay ydisplay in yadapter.Displays)
+                        {
+                            if (ydisplay.Equals(xdisplay))
+                            {
+                                foreach (var ydisplaymode in ydisplay.DisplayModes)
+                                {
+                                    foreach (var xdisplaymode in xdisplay.DisplayModes)
+                                    {
+                                        if (ydisplaymode.Equals(xdisplaymode))
+                                        {
+                                            foundDisplayCount++;
+                                            continue;
+                                        }
+                                    }
+                                }
+                                
+                            }
+                        }
+                    }
                 }
-
             }
-            foreach (Topology.Path otherPath in y.Paths)
+
+            foreach (AMDAdapter yadapter in y.ProfileData.Adapters)
             {
-                if (x.Paths.Contains(otherPath))
+                foreach (AMDDisplay ydisplay in yadapter.Displays)
                 {
-                    foundOtherPathsCount++;
-                    continue;
+                    foreach (AMDAdapter xadapter in x.ProfileData.Adapters)
+                    {
+                        foreach (AMDDisplay xdisplay in xadapter.Displays)
+                        {
+                            if (xdisplay.Equals(ydisplay))
+                            {
+                                foreach (var xdisplaymode in xdisplay.DisplayModes)
+                                {
+                                    foreach (var ydisplaymode in ydisplay.DisplayModes)
+                                    {
+                                        if (xdisplaymode.Equals(ydisplaymode))
+                                        {
+                                            foundOtherDisplayCount++;
+                                            continue;
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            /*foreach (AMDAdapter yadapter in y.ProfileData.Adapters)
+            {
+                foreach (AMDDisplay ydisplay in yadapter.Displays)
+                {
+                    foreach (AMDAdapter xadapter in x.ProfileData.Adapters)
+                    {
+                        if (xadapter.Displays.Contains(ydisplay))
+                        {
+                            foundOtherDisplayCount++;
+                            continue;
+                        }
+                    }
+
+
                 }
             }*/
 
-
-            if (foundPathsCount == foundOtherPathsCount)
-                return true;
-            else
+            // If this matches then there are an additional screen or not enough screens
+            if (foundDisplayCount != foundOtherDisplayCount)
                 return false;
+
+            // Now we need to check the location of the screens
+            if (!x.ProfileData.Equals(y.ProfileData))
+                return false;
+
+            return true;
         }
 
         // If Equals() returns true for a pair of objects
