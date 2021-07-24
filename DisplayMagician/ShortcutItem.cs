@@ -802,6 +802,7 @@ namespace DisplayMagician
             _gameArgumentsRequired = game.GameArgumentsRequired;
             _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
             _monitorDifferentGameExe = game.MonitorDifferentGameExe;
+            _processPriority = game.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -875,6 +876,7 @@ namespace DisplayMagician
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
+            _processPriority = executable.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -930,6 +932,7 @@ namespace DisplayMagician
             shortcut.ExecutableArguments = ExecutableArguments;
             shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
             shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
+            shortcut.ProcessPriority = ProcessPriority;
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
             shortcut.GameLibrary = GameLibrary;
