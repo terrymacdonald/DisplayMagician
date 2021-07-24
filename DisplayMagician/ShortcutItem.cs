@@ -19,26 +19,34 @@ using TsudaKageyu;
 
 namespace DisplayMagician
 {
-    public enum ShortcutPermanence
+    public enum ShortcutPermanence : int
     {
-        Permanent,
-        Temporary,
+        Permanent = 1,
+        Temporary = 2,
     }
 
-    public enum ShortcutCategory
+    public enum ShortcutCategory : int
     {
-        Application,
-        Game,
-        NoGame,
+        Application = 1,
+        Game = 2,
+        NoGame = 3,
     }
 
-    public enum ShortcutValidity
+    public enum ShortcutValidity : int
     {
-        Valid,
-        Warning,
-        Error,
+        Valid = 1,
+        Warning = 2,
+        Error =3,
     }
 
+    public enum ProcessPriority : int
+    {
+        High = 1,
+        AboveNormal = 2,
+        Normal = 3,
+        BelowNormal = 4,
+        Idle = 5,
+    }
 
 
     public struct StartProgram
@@ -50,6 +58,7 @@ namespace DisplayMagician
         public bool ExecutableArgumentsRequired;
         public bool CloseOnFinish;
         public bool DontStartIfAlreadyRunning;
+        public ProcessPriority ProcessPriority;
     }
 
     public struct Executable
@@ -60,6 +69,7 @@ namespace DisplayMagician
         public string ExecutableArguments;
         public bool ExecutableArgumentsRequired;
         public bool ProcessNameToMonitorUsesExecutable;
+        public ProcessPriority ProcessPriority;
     }
 
     public struct GameStruct
@@ -70,6 +80,7 @@ namespace DisplayMagician
         public bool GameArgumentsRequired;
         public string DifferentGameExeToMonitor;
         public bool MonitorDifferentGameExe;
+        public ProcessPriority ProcessPriority;
     }
 
     public struct ShortcutError
@@ -92,6 +103,7 @@ namespace DisplayMagician
         private string _executableArguments;
         private bool _executableArgumentsRequired = false;
         private bool _processNameToMonitorUsesExecutable = true;
+        private ProcessPriority _processPriority = ProcessPriority.Normal;
         private string _gameAppId;
         private string _gameName;
         private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
@@ -289,6 +301,19 @@ namespace DisplayMagician
             set
             {
                 _category = value;
+            }
+        }
+
+        public ProcessPriority ProcessPriority
+        {
+            get
+            {
+                return _processPriority;
+            }
+
+            set
+            {
+                _processPriority = value;
             }
         }
 

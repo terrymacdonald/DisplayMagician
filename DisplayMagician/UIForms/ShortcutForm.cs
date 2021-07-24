@@ -21,6 +21,7 @@ using NHotkey;
 
 namespace DisplayMagician.UIForms
 {
+
     public partial class ShortcutForm : Form
     {
 
@@ -28,6 +29,7 @@ namespace DisplayMagician.UIForms
         private GameAdaptor _gameAdaptor;
         //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
         private ProfileItem _profileToUse = null;
+        private string _gameLauncher = "";
         private GameStruct _gameToUse;
         private Executable _executableToUse;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
@@ -82,7 +84,7 @@ namespace DisplayMagician.UIForms
                 ilv_games.ThumbnailSize = new Size(100, 100);
                 ilv_games.AllowDrag = false;
                 ilv_games.AllowDrop = false;
-                ilv_games.SetRenderer(new GameILVRenderer());
+                ilv_games.SetRenderer(new GameILVRenderer());               
 
             }
             catch (Exception ex)
@@ -114,23 +116,23 @@ namespace DisplayMagician.UIForms
         {
             get
             {
-                if (txt_game_launcher.Text.Contains("Steam"))
+                if (_gameLauncher.Contains("Steam"))
                 {
                     return SupportedGameLibraryType.Steam;
                 }
-                else if (txt_game_launcher.Text.Contains("Uplay"))
+                else if (_gameLauncher.Contains("Uplay"))
                 {
                     return SupportedGameLibraryType.Uplay;
                 }
-                else if (txt_game_launcher.Text.Contains("Origin"))
+                else if (_gameLauncher.Contains("Origin"))
                 {
                     return SupportedGameLibraryType.Origin;
                 }
-                else if (txt_game_launcher.Text.Contains("Epic"))
+                else if (_gameLauncher.Contains("Epic"))
                 {
                     return SupportedGameLibraryType.Epic;
                 }
-                else if (txt_game_launcher.Text.Contains("GOG"))
+                else if (_gameLauncher.Contains("GOG"))
                 {
                     return SupportedGameLibraryType.GOG;
                 }
@@ -142,29 +144,28 @@ namespace DisplayMagician.UIForms
                 switch (value)
                 {
                     case SupportedGameLibraryType.Steam:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Steam);
+                        _gameLauncher = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Steam);
                         break;
 
                     case SupportedGameLibraryType.Uplay:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Uplay);
+                        _gameLauncher = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Uplay);
                         break;
 
                     case SupportedGameLibraryType.Origin:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Origin);
+                        _gameLauncher = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Origin);
                         break;
 
                     case SupportedGameLibraryType.Epic:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Epic);
+                        _gameLauncher = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.Epic);
                         break;
 
                     case SupportedGameLibraryType.GOG:
-                        txt_game_launcher.Text = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.GOG);
+                        _gameLauncher = Enum.GetName(typeof(SupportedGameLibraryType), SupportedGameLibraryType.GOG);
                         break;
 
                     case SupportedGameLibraryType.Unknown:
-                        txt_game_launcher.Text = "No supported Game Libraries found";
+                        _gameLauncher = "No supported Game Libraries found";
                         break;
-
                 }
 
             }
@@ -330,7 +331,7 @@ namespace DisplayMagician.UIForms
                 if (!gameStillInstalled)
                 {
                     DialogResult result = MessageBox.Show(
-                        $"This shortcut refers to the '{txt_game_name.Text}' game that was installed in your {txt_game_launcher.Text} library. This game is no longer installed, so the shortcut won't work. Do you still want to save the shortcut?",
+                        $"This shortcut refers to the '{txt_game_name.Text}' game that was installed in your {_gameLauncher} library. This game is no longer installed, so the shortcut won't work. Do you still want to save the shortcut?",
                         @"Game no longer exists",
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Exclamation);
@@ -505,7 +506,7 @@ namespace DisplayMagician.UIForms
                 };
 
                 // If the game is a SteamGame
-                if (txt_game_launcher.Text == SupportedGameLibraryType.Steam.ToString())
+                if (_gameLauncher == SupportedGameLibraryType.Steam.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
                     // Find the SteamGame
@@ -513,26 +514,26 @@ namespace DisplayMagician.UIForms
                     _gameToUse.GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).First();
                 }
                 // If the game is a UplayGame
-                else if (txt_game_launcher.Text == SupportedGameLibraryType.Uplay.ToString())
+                else if (_gameLauncher == SupportedGameLibraryType.Uplay.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
                     // Find the UplayGame
                     _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).First();
                 }
                 // If the game is an Origin Game
-                else if (txt_game_launcher.Text == SupportedGameLibraryType.Origin.ToString())
+                else if (_gameLauncher == SupportedGameLibraryType.Origin.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Origin game!");
                     _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).First();
                 }
                 // If the game is an Epic Game
-                else if (txt_game_launcher.Text == SupportedGameLibraryType.Epic.ToString())
+                else if (_gameLauncher == SupportedGameLibraryType.Epic.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Epic game!");
                     _gameToUse.GameToPlay = (from epicGame in EpicLibrary.GetLibrary().AllInstalledGames where epicGame.Id == _gameId select epicGame).First();
                 }
                 // If the game is an GOG Game
-                else if (txt_game_launcher.Text == SupportedGameLibraryType.GOG.ToString())
+                else if (_gameLauncher == SupportedGameLibraryType.GOG.ToString())
                 {
                     logger.Trace($"ShortcutForm/btn_save_Click: We're saving an GOG game!");
                     _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).First();
@@ -820,6 +821,19 @@ namespace DisplayMagician.UIForms
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
+
+            // Prepare the process priority combo box
+            cbx_game_priority.DataSource = new ComboItem[] {
+                    new ComboItem{ ID = 1, Text = "High" },
+                    new ComboItem{ ID = 2, Text = "Above Normal" },
+                    new ComboItem{ ID = 3, Text = "Normal" },
+                    new ComboItem{ ID = 4, Text = "Below Normal" },
+                    new ComboItem{ ID = 5, Text = "Idle" },
+                };
+            cbx_game_priority.ValueMember = "Text";
+            cbx_game_priority.DisplayMember = "Text";
+            cbx_game_priority.SelectedItem = "Normal";
+            cbx_game_priority.Enabled = true;
 
             // Populate all the Audio devices in the audio devices list.
             // Set the Audio device to the shortcut audio device only if 
@@ -1151,7 +1165,7 @@ namespace DisplayMagician.UIForms
                 if (DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
                 {
                     // Fill in the game library information to highliught there isn't one detected.
-                    txt_game_launcher.Text = "None detected";
+                    _gameLauncher = "None detected";
                     txt_game_name.Text = "No supported game libraries detected";
                     txt_args_game.Text = "";
 
@@ -1167,7 +1181,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                txt_game_launcher.Text = _shortcutToEdit.GameLibrary.ToString();
+                _gameLauncher = _shortcutToEdit.GameLibrary.ToString();
                 txt_game_name.Text = _shortcutToEdit.GameName;
                 _gameId = _shortcutToEdit.GameAppId;
                 nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
@@ -2257,7 +2271,7 @@ namespace DisplayMagician.UIForms
                     {
                         if (_loadedShortcut)
                             _isUnsaved = true;
-                        txt_game_launcher.Text = game.GameLibrary.ToString();
+                        _gameLauncher = game.GameLibrary.ToString();
                         _gameId = game.Id;
                     }
                 }
@@ -2278,5 +2292,12 @@ namespace DisplayMagician.UIForms
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Start-Program-Examples";
             System.Diagnostics.Process.Start(targetURL);
         }
+    }
+
+    // Class used to populate combo boxes
+    class ComboItem
+    {
+        public int ID { get; set; }
+        public string Text { get; set; }
     }
 }

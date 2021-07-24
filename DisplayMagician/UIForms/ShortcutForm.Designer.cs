@@ -32,7 +32,6 @@ namespace DisplayMagician.UIForms
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ShortcutForm));
             this.btn_save = new System.Windows.Forms.Button();
             this.btn_cancel = new System.Windows.Forms.Button();
             this.il_games = new System.Windows.Forms.ImageList(this.components);
@@ -68,6 +67,7 @@ namespace DisplayMagician.UIForms
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
+            this.btn_find_examples = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.btn_add_new_start_program = new System.Windows.Forms.Button();
             this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
@@ -88,13 +88,13 @@ namespace DisplayMagician.UIForms
             this.rb_standalone = new System.Windows.Forms.RadioButton();
             this.rb_no_game = new System.Windows.Forms.RadioButton();
             this.p_game = new System.Windows.Forms.Panel();
+            this.cbx_game_priority = new System.Windows.Forms.ComboBox();
             this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.cb_wait_alternative_game = new System.Windows.Forms.CheckBox();
             this.btn_choose_alternative_game = new System.Windows.Forms.Button();
             this.txt_alternative_game = new System.Windows.Forms.TextBox();
-            this.txt_game_launcher = new System.Windows.Forms.TextBox();
             this.txt_game_name = new System.Windows.Forms.TextBox();
-            this.lbl_game_library = new System.Windows.Forms.Label();
+            this.lbl_game_priority = new System.Windows.Forms.Label();
             this.lbl_game_name = new System.Windows.Forms.Label();
             this.txt_args_game = new System.Windows.Forms.TextBox();
             this.cb_args_game = new System.Windows.Forms.CheckBox();
@@ -117,7 +117,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.btn_find_examples = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -629,6 +628,22 @@ namespace DisplayMagician.UIForms
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
             // 
+            // btn_find_examples
+            // 
+            this.btn_find_examples.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_find_examples.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_find_examples.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_find_examples.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_find_examples.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_find_examples.ForeColor = System.Drawing.Color.White;
+            this.btn_find_examples.Location = new System.Drawing.Point(976, 72);
+            this.btn_find_examples.Name = "btn_find_examples";
+            this.btn_find_examples.Size = new System.Drawing.Size(94, 25);
+            this.btn_find_examples.TabIndex = 40;
+            this.btn_find_examples.Text = "Find &Examples";
+            this.btn_find_examples.UseVisualStyleBackColor = true;
+            this.btn_find_examples.Click += new System.EventHandler(this.btn_find_examples_Click);
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -879,13 +894,13 @@ namespace DisplayMagician.UIForms
             // 
             // p_game
             // 
+            this.p_game.Controls.Add(this.cbx_game_priority);
             this.p_game.Controls.Add(this.ilv_games);
             this.p_game.Controls.Add(this.cb_wait_alternative_game);
             this.p_game.Controls.Add(this.btn_choose_alternative_game);
             this.p_game.Controls.Add(this.txt_alternative_game);
-            this.p_game.Controls.Add(this.txt_game_launcher);
             this.p_game.Controls.Add(this.txt_game_name);
-            this.p_game.Controls.Add(this.lbl_game_library);
+            this.p_game.Controls.Add(this.lbl_game_priority);
             this.p_game.Controls.Add(this.lbl_game_name);
             this.p_game.Controls.Add(this.txt_args_game);
             this.p_game.Controls.Add(this.cb_args_game);
@@ -896,6 +911,16 @@ namespace DisplayMagician.UIForms
             this.p_game.Name = "p_game";
             this.p_game.Size = new System.Drawing.Size(1076, 323);
             this.p_game.TabIndex = 7;
+            // 
+            // cbx_game_priority
+            // 
+            this.cbx_game_priority.AllowDrop = true;
+            this.cbx_game_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbx_game_priority.FormattingEnabled = true;
+            this.cbx_game_priority.Location = new System.Drawing.Point(150, 43);
+            this.cbx_game_priority.Name = "cbx_game_priority";
+            this.cbx_game_priority.Size = new System.Drawing.Size(179, 28);
+            this.cbx_game_priority.TabIndex = 29;
             // 
             // ilv_games
             // 
@@ -945,14 +970,6 @@ namespace DisplayMagician.UIForms
             this.txt_alternative_game.Size = new System.Drawing.Size(193, 26);
             this.txt_alternative_game.TabIndex = 24;
             // 
-            // txt_game_launcher
-            // 
-            this.txt_game_launcher.Location = new System.Drawing.Point(150, 43);
-            this.txt_game_launcher.Name = "txt_game_launcher";
-            this.txt_game_launcher.ReadOnly = true;
-            this.txt_game_launcher.Size = new System.Drawing.Size(149, 26);
-            this.txt_game_launcher.TabIndex = 23;
-            // 
             // txt_game_name
             // 
             this.txt_game_name.Location = new System.Drawing.Point(150, 11);
@@ -961,16 +978,16 @@ namespace DisplayMagician.UIForms
             this.txt_game_name.Size = new System.Drawing.Size(385, 26);
             this.txt_game_name.TabIndex = 21;
             // 
-            // lbl_game_library
+            // lbl_game_priority
             // 
-            this.lbl_game_library.AutoSize = true;
-            this.lbl_game_library.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_library.Location = new System.Drawing.Point(36, 46);
-            this.lbl_game_library.Name = "lbl_game_library";
-            this.lbl_game_library.Size = new System.Drawing.Size(108, 20);
-            this.lbl_game_library.TabIndex = 18;
-            this.lbl_game_library.Text = "Game Library:";
-            this.lbl_game_library.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
+            this.lbl_game_priority.AutoSize = true;
+            this.lbl_game_priority.ForeColor = System.Drawing.Color.White;
+            this.lbl_game_priority.Location = new System.Drawing.Point(36, 46);
+            this.lbl_game_priority.Name = "lbl_game_priority";
+            this.lbl_game_priority.Size = new System.Drawing.Size(108, 20);
+            this.lbl_game_priority.TabIndex = 18;
+            this.lbl_game_priority.Text = "Game Priority:";
+            this.lbl_game_priority.Paint += new System.Windows.Forms.PaintEventHandler(this.label_Paint);
             // 
             // lbl_game_name
             // 
@@ -1263,22 +1280,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
-            // btn_find_examples
-            // 
-            this.btn_find_examples.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_find_examples.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_find_examples.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_find_examples.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_find_examples.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_find_examples.ForeColor = System.Drawing.Color.White;
-            this.btn_find_examples.Location = new System.Drawing.Point(976, 72);
-            this.btn_find_examples.Name = "btn_find_examples";
-            this.btn_find_examples.Size = new System.Drawing.Size(94, 25);
-            this.btn_find_examples.TabIndex = 40;
-            this.btn_find_examples.Text = "Find &Examples";
-            this.btn_find_examples.UseVisualStyleBackColor = true;
-            this.btn_find_examples.Click += new System.EventHandler(this.btn_find_examples_Click);
-            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1297,7 +1298,6 @@ namespace DisplayMagician.UIForms
             this.Controls.Add(this.btn_cancel);
             this.Controls.Add(this.btn_save);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "ShortcutForm";
@@ -1359,9 +1359,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TabPage tabp_after;
         private System.Windows.Forms.TextBox txt_shortcut_save_name;
         private System.Windows.Forms.Panel p_game;
-        private System.Windows.Forms.TextBox txt_game_launcher;
         private System.Windows.Forms.TextBox txt_game_name;
-        private System.Windows.Forms.Label lbl_game_library;
+        private System.Windows.Forms.Label lbl_game_priority;
         private System.Windows.Forms.Label lbl_game_name;
         private System.Windows.Forms.TextBox txt_args_game;
         private System.Windows.Forms.CheckBox cb_args_game;
@@ -1429,5 +1428,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label3;
         internal Manina.Windows.Forms.ImageListView ilv_games;
         private System.Windows.Forms.Button btn_find_examples;
+        private System.Windows.Forms.ComboBox cbx_game_priority;
     }
 }
