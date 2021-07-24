@@ -117,7 +117,7 @@ namespace DisplayMagicianShared.Windows
         QDC_ONLY_ACTIVE_PATHS = 0x00000002, // Get only the active paths currently in use
         QDC_DATABASE_CURRENT = 0x00000004, // Get the current paths in the display database
         QDC_VIRTUAL_MODE_AWARE = 0x00000010, // Get the virtual mode aware paths
-        QDC_INCLUDE_HMD = 0x00000020, 
+        QDC_INCLUDE_HMD = 0x00000020,
     }
 
     public enum DISPLAYCONFIG_SCANLINE_ORDERING
@@ -146,320 +146,638 @@ namespace DisplayMagicianShared.Windows
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_DEVICE_INFO_HEADER
+    public struct DISPLAYCONFIG_DEVICE_INFO_HEADER : IEquatable<DISPLAYCONFIG_DEVICE_INFO_HEADER>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_TYPE type;
-        public int size;
-        public LUID adapterId;
-        public uint id;
+        public DISPLAYCONFIG_DEVICE_INFO_TYPE Type;
+        public int Size;
+        public LUID AdapterId;
+        public uint Id;
+
+        public bool Equals(DISPLAYCONFIG_DEVICE_INFO_HEADER other)
+            => Type == other.Type &&
+                Size == other.Size &&
+                AdapterId.Equals(other.AdapterId) &&
+                Id == other.Id;
+
+        public override int GetHashCode()
+        {
+            return (Type, Size, AdapterId, Id).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO
+    public struct DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO : IEquatable<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
-        public uint value;
-        public DISPLAYCONFIG_COLOR_ENCODING colorEncoding;
-        public int bitsPerColorChannel;
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
+        public uint Value;
+        public DISPLAYCONFIG_COLOR_ENCODING ColorEncoding;
+        public int BitsPerColorChannel;
 
-        public bool advancedColorSupported => (value & 0x1) == 0x1;
-        public bool advancedColorEnabled => (value & 0x2) == 0x2;
-        public bool wideColorEnforced => (value & 0x4) == 0x4;
-        public bool advancedColorForceDisabled => (value & 0x8) == 0x8;
+        public bool AdvancedColorSupported => (Value & 0x1) == 0x1;
+        public bool AdvancedColorEnabled => (Value & 0x2) == 0x2;
+        public bool WideColorEnforced => (Value & 0x4) == 0x4;
+        public bool AdvancedColorForceDisabled => (Value & 0x8) == 0x8;
+
+        public bool Equals(DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO other)
+            => Header.Equals(other.Header) &&
+                Value == other.Value &&
+                ColorEncoding.Equals(other.ColorEncoding) &&
+                BitsPerColorChannel == other.BitsPerColorChannel;
+
+        public override int GetHashCode()
+        {
+            return (Header, Value, ColorEncoding, BitsPerColorChannel).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct POINTL
+    public struct POINTL : IEquatable<POINTL>
     {
-        public int x;
-        public int y;
+        public int X;
+        public int Y;
+
+        public bool Equals(POINTL other)
+            => X == other.X &&
+               Y == other.Y;
+
+        public override int GetHashCode()
+        {
+            return (X, Y).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct LUID
+    public struct LUID : IEquatable<LUID>
     {
         public uint LowPart;
         public int HighPart;
 
         public long Value => ((long)HighPart << 32) | LowPart;
+
+        public bool Equals(LUID other)
+            => Value == other.Value;
+
+        public override int GetHashCode()
+        {
+            return Value.GetHashCode();
+        }
+
         public override string ToString() => Value.ToString();
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_SOURCE_MODE
+    public struct DISPLAYCONFIG_SOURCE_MODE : IEquatable<DISPLAYCONFIG_SOURCE_MODE>
     {
-        public uint width;
-        public uint height;
-        public DISPLAYCONFIG_PIXELFORMAT pixelFormat;
-        public POINTL position;
+        public uint Width;
+        public uint Height;
+        public DISPLAYCONFIG_PIXELFORMAT PixelFormat;
+        public POINTL Position;
+
+        public bool Equals(DISPLAYCONFIG_SOURCE_MODE other)
+            => Width == other.Width &&
+                Height == other.Height &&
+                PixelFormat.Equals(other.PixelFormat) &&
+                Position.Equals(other.Position);
+
+        public override int GetHashCode()
+        {
+            return (Width, Height, PixelFormat, Position).GetHashCode();
+        }
+
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_RATIONAL
+    public struct DISPLAYCONFIG_RATIONAL : IEquatable<DISPLAYCONFIG_RATIONAL>
     {
         public uint Numerator;
         public uint Denominator;
+
+        public bool Equals(DISPLAYCONFIG_RATIONAL other)
+            => Numerator == other.Numerator &&
+                Denominator == other.Denominator;
+
+        public override int GetHashCode()
+        {
+            return (Numerator, Denominator).GetHashCode();
+        }
 
         public override string ToString() => Numerator + " / " + Denominator;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_2DREGION
+    public struct DISPLAYCONFIG_2DREGION : IEquatable<DISPLAYCONFIG_2DREGION>
     {
-        public uint cx;
-        public uint cy;
+        public uint Cx;
+        public uint Cy;
+
+        public bool Equals(DISPLAYCONFIG_2DREGION other)
+            => Cx == other.Cx &&
+               Cy == other.Cy;
+
+        public override int GetHashCode()
+        {
+            return (Cx, Cy).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_DESKTOP_IMAGE_INFO
+    public struct DISPLAYCONFIG_DESKTOP_IMAGE_INFO : IEquatable<DISPLAYCONFIG_DESKTOP_IMAGE_INFO>
     {
         public POINTL PathSourceSize;
         public RECT DesktopImageRegion;
         public RECT DesktopImageClip;
+
+        public bool Equals(DISPLAYCONFIG_DESKTOP_IMAGE_INFO other)
+            => PathSourceSize.Equals(other.PathSourceSize) &&
+               DesktopImageRegion.Equals(other.DesktopImageRegion) &&
+               DesktopImageClip.Equals(other.DesktopImageClip);
+
+        public override int GetHashCode()
+        {
+            return (PathSourceSize, DesktopImageRegion, DesktopImageClip).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_VIDEO_SIGNAL_INFO
+    public struct DISPLAYCONFIG_VIDEO_SIGNAL_INFO : IEquatable<DISPLAYCONFIG_VIDEO_SIGNAL_INFO>
     {
-        public ulong pixelRate;
-        public DISPLAYCONFIG_RATIONAL hSyncFreq;
-        public DISPLAYCONFIG_RATIONAL vSyncFreq;
-        public DISPLAYCONFIG_2DREGION activeSize;
-        public DISPLAYCONFIG_2DREGION totalSize;
-        public uint videoStandard;
-        public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
+        public ulong PixelRate;
+        public DISPLAYCONFIG_RATIONAL HSyncFreq;
+        public DISPLAYCONFIG_RATIONAL VSyncFreq;
+        public DISPLAYCONFIG_2DREGION ActiveSize;
+        public DISPLAYCONFIG_2DREGION TotalSize;
+        public uint VideoStandard;
+        public DISPLAYCONFIG_SCANLINE_ORDERING ScanLineOrdering;
+
+        public bool Equals(DISPLAYCONFIG_VIDEO_SIGNAL_INFO other)
+            => PixelRate == other.PixelRate &&
+                HSyncFreq.Equals(other.HSyncFreq) &&
+                VSyncFreq.Equals(other.VSyncFreq) &&
+                ActiveSize.Equals(other.ActiveSize) &&
+                TotalSize.Equals(other.TotalSize) &&
+                VideoStandard == other.VideoStandard &&
+                ScanLineOrdering.Equals(other.ScanLineOrdering);
+
+        public override int GetHashCode()
+        {
+            return (PixelRate, HSyncFreq, VSyncFreq, ActiveSize, TotalSize, VideoStandard, ScanLineOrdering).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_TARGET_MODE
+    public struct DISPLAYCONFIG_TARGET_MODE : IEquatable<DISPLAYCONFIG_TARGET_MODE>
     {
-        public DISPLAYCONFIG_VIDEO_SIGNAL_INFO targetVideoSignalInfo;
+        public DISPLAYCONFIG_VIDEO_SIGNAL_INFO TargetVideoSignalInfo;
+
+        public bool Equals(DISPLAYCONFIG_TARGET_MODE other)
+            => TargetVideoSignalInfo.Equals(other.TargetVideoSignalInfo);
+
+        public override int GetHashCode()
+        {
+            return (TargetVideoSignalInfo).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    public struct DISPLAYCONFIG_MODE_INFO_union
+    public struct DISPLAYCONFIG_MODE_INFO_union : IEquatable<DISPLAYCONFIG_MODE_INFO_union>
     {
         [FieldOffset(0)]
-        public DISPLAYCONFIG_TARGET_MODE targetMode;
+        public DISPLAYCONFIG_TARGET_MODE TargetMode;
 
         [FieldOffset(0)]
-        public DISPLAYCONFIG_SOURCE_MODE sourceMode;
+        public DISPLAYCONFIG_SOURCE_MODE SourceMode;
 
         [FieldOffset(0)]
-        public DISPLAYCONFIG_DESKTOP_IMAGE_INFO desktopImageInfo;
+        public DISPLAYCONFIG_DESKTOP_IMAGE_INFO DesktopImageInfo;
+
+        public bool Equals(DISPLAYCONFIG_MODE_INFO_union other)
+            => TargetMode.Equals(other.TargetMode) &&
+                SourceMode.Equals(other.SourceMode) &&
+                DesktopImageInfo.Equals(other.DesktopImageInfo);
+
+        public override int GetHashCode()
+        {
+            return (TargetMode, SourceMode, DesktopImageInfo).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_PATH_SOURCE_INFO
+    public struct DISPLAYCONFIG_PATH_SOURCE_INFO : IEquatable<DISPLAYCONFIG_PATH_SOURCE_INFO>
     {
-        public LUID adapterId;
-        public uint id;
-        public uint modeInfoIdx;
-        public DISPLAYCONFIG_SOURCE_FLAGS statusFlags;
+        public LUID AdapterId;
+        public uint Id;
+        public uint ModeInfoIdx;
+        public DISPLAYCONFIG_SOURCE_FLAGS StatusFlags;
+
+        public bool Equals(DISPLAYCONFIG_PATH_SOURCE_INFO other)
+            => AdapterId.Equals(other.AdapterId) &&
+                Id == other.Id &&
+                ModeInfoIdx == other.ModeInfoIdx &&
+                StatusFlags.Equals(other.StatusFlags);
+
+        public override int GetHashCode()
+        {
+            return (AdapterId, ModeInfoIdx, StatusFlags).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_PATH_TARGET_INFO
+    public struct DISPLAYCONFIG_PATH_TARGET_INFO : IEquatable<DISPLAYCONFIG_PATH_TARGET_INFO>
     {
-        public LUID adapterId;
-        public uint id;
-        public uint modeInfoIdx;
-        public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
-        public DISPLAYCONFIG_ROTATION rotation;
-        public DISPLAYCONFIG_SCALING scaling;
-        public DISPLAYCONFIG_RATIONAL refreshRate;
-        public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
-        public bool targetAvailable;
-        public DISPLAYCONFIG_TARGET_FLAGS statusFlags;
+        public LUID AdapterId;
+        public uint Id;
+        public uint ModeInfoIdx;
+        public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY OutputTechnology;
+        public DISPLAYCONFIG_ROTATION Rotation;
+        public DISPLAYCONFIG_SCALING Scaling;
+        public DISPLAYCONFIG_RATIONAL RefreshRate;
+        public DISPLAYCONFIG_SCANLINE_ORDERING ScanLineOrdering;
+        public bool TargetAvailable;
+        public DISPLAYCONFIG_TARGET_FLAGS StatusFlags;
+
+        public bool Equals(DISPLAYCONFIG_PATH_TARGET_INFO other)
+            => AdapterId.Equals(other.AdapterId) &&
+                Id == other.Id &&
+                ModeInfoIdx == other.ModeInfoIdx &&
+                OutputTechnology.Equals(other.OutputTechnology) &&
+                Rotation.Equals(other.Rotation) &&
+                Scaling.Equals(other.Scaling) &&
+                RefreshRate.Equals(other.RefreshRate) &&
+                ScanLineOrdering.Equals(other.ScanLineOrdering) &&
+                TargetAvailable == other.TargetAvailable &&
+                StatusFlags.Equals(StatusFlags);
+
+        public override int GetHashCode()
+        {
+            return (AdapterId, Id, ModeInfoIdx, OutputTechnology, Rotation, Scaling, RefreshRate, ScanLineOrdering, TargetAvailable, StatusFlags).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_PATH_INFO
+    public struct DISPLAYCONFIG_PATH_INFO : IEquatable<DISPLAYCONFIG_PATH_INFO>
     {
-        public DISPLAYCONFIG_PATH_SOURCE_INFO sourceInfo;
-        public DISPLAYCONFIG_PATH_TARGET_INFO targetInfo;
-        public DISPLAYCONFIG_PATH flags;
+        public DISPLAYCONFIG_PATH_SOURCE_INFO SourceInfo;
+        public DISPLAYCONFIG_PATH_TARGET_INFO TargetInfo;
+        public DISPLAYCONFIG_PATH Flags;
+
+        public bool Equals(DISPLAYCONFIG_PATH_INFO other)
+            => SourceInfo.Equals(other.SourceInfo) &&
+               TargetInfo.Equals(other.TargetInfo) &&
+               Flags.Equals(other.Flags);
+
+        public override int GetHashCode()
+        {
+            return (SourceInfo, TargetInfo, Flags).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct DISPLAYCONFIG_MODE_INFO
+    public struct DISPLAYCONFIG_MODE_INFO : IEquatable<DISPLAYCONFIG_MODE_INFO>
     {
-        public DISPLAYCONFIG_MODE_INFO_TYPE infoType;
-        public uint id;
-        public LUID adapterId;
-        public DISPLAYCONFIG_MODE_INFO_union info;
+        public DISPLAYCONFIG_MODE_INFO_TYPE InfoType;
+        public uint Id;
+        public LUID AdapterId;
+        public DISPLAYCONFIG_MODE_INFO_union Info;
+
+        public bool Equals(DISPLAYCONFIG_MODE_INFO other)
+            => InfoType == other.InfoType &&
+               Id == other.Id &&
+               AdapterId.Equals(other.AdapterId) &&
+               Info.Equals(other.Info);
+
+        public override int GetHashCode()
+        {
+            return (InfoType, Id, AdapterId, Info).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct DISPLAYCONFIG_GET_SOURCE_NAME
+    public struct DISPLAYCONFIG_GET_SOURCE_NAME : IEquatable<DISPLAYCONFIG_GET_SOURCE_NAME>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public string viewGdiDeviceName;
+        public string ViewGdiDeviceName;
+
+        public bool Equals(DISPLAYCONFIG_GET_SOURCE_NAME other)
+            => Header.Equals(other.Header) &&
+               ViewGdiDeviceName == other.ViewGdiDeviceName;
+
+        public override int GetHashCode()
+        {
+            return (Header, ViewGdiDeviceName).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS
+    public struct DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS : IEquatable<DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS>
     {
-        public uint value;
+        public uint Value;
+
+        public bool Equals(DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS other)
+            => Value == other.Value;
+
+        public bool FriendlyNameFromEdid => (Value & 0x1) == 0x1;
+        public bool FriendlyNameForced => (Value & 0x2) == 0x2;
+        public bool EdidIdsValid => (Value & 0x4) == 0x4;
+
+        public override int GetHashCode()
+        {
+            return Value.GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct DISPLAYCONFIG_GET_TARGET_NAME
+    public struct DISPLAYCONFIG_GET_TARGET_NAME : IEquatable<DISPLAYCONFIG_GET_TARGET_NAME>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
-        public DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS flags;
-        public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
-        public ushort edidManufactureId;
-        public ushort edidProductCodeId;
-        public uint connectorInstance;
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
+        public DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS Flags;
+        public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY OutputTechnology;
+        public ushort EdidManufactureId;
+        public ushort EdidProductCodeId;
+        public uint ConnectorInstance;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public string monitorFriendlyDeviceName;
+        public string MonitorFriendlyDeviceName;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-        public string monitorDevicePath;
+        public string MonitorDevicePath;
+
+        public bool Equals(DISPLAYCONFIG_GET_TARGET_NAME other)
+            => Header.Equals(other.Header) &&
+               Flags.Equals(other.Flags) &&
+               OutputTechnology.Equals(other.OutputTechnology) &&
+               EdidManufactureId == other.EdidManufactureId &&
+               EdidProductCodeId == other.EdidProductCodeId &&
+               ConnectorInstance == other.ConnectorInstance &&
+               MonitorFriendlyDeviceName == other.MonitorFriendlyDeviceName &&
+               MonitorDevicePath == other.MonitorDevicePath;
+
+        public override int GetHashCode()
+        {
+            return (Header, Flags, OutputTechnology, EdidManufactureId, EdidProductCodeId, ConnectorInstance, MonitorFriendlyDeviceName, MonitorDevicePath).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct DISPLAYCONFIG_GET_TARGET_PREFERRED_NAME
+    internal struct DISPLAYCONFIG_GET_TARGET_PREFERRED_NAME : IEquatable<DISPLAYCONFIG_GET_TARGET_PREFERRED_NAME>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
         public uint Width;
         public uint Height;
         public DISPLAYCONFIG_TARGET_MODE TargetMode;
+
+        public bool Equals(DISPLAYCONFIG_GET_TARGET_PREFERRED_NAME other)
+            => Header.Equals(other.Header) &&
+               Width == other.Width &&
+               Height == other.Height &&
+               TargetMode.Equals(other.TargetMode);
+
+        public override int GetHashCode()
+        {
+            return (Header, Width, Height, TargetMode).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct DISPLAYCONFIG_GET_ADAPTER_NAME
+    internal struct DISPLAYCONFIG_GET_ADAPTER_NAME : IEquatable<DISPLAYCONFIG_GET_ADAPTER_NAME>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         public string AdapterDevicePath;
+
+        public bool Equals(DISPLAYCONFIG_GET_ADAPTER_NAME other)
+            => Header.Equals(other.Header) &&
+               AdapterDevicePath == other.AdapterDevicePath;
+
+        public override int GetHashCode()
+        {
+            return (Header, AdapterDevicePath).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION
+    internal struct DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION : IEquatable<DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
         [MarshalAs(UnmanagedType.U4)]
-        private uint DisableMonitorVirtualResolution;
+        public uint DisableMonitorVirtualResolution;
 
         public bool IsMonitorVirtualResolutionDisabled
         {
-            get => DisableMonitorVirtualResolution > 0;
+            get => (DisableMonitorVirtualResolution & 0x1) == 0x1;
         }
+
+        public bool Equals(DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION other)
+            => Header.Equals(other.Header) &&
+               DisableMonitorVirtualResolution == other.DisableMonitorVirtualResolution;
+
+        public override int GetHashCode()
+        {
+            return (Header, DisableMonitorVirtualResolution).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
 
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct DISPLAYCONFIG_SET_TARGET_PERSISTENCE
+    internal struct DISPLAYCONFIG_SET_TARGET_PERSISTENCE : IEquatable<DISPLAYCONFIG_SET_TARGET_PERSISTENCE>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
-        [MarshalAs(UnmanagedType.U4)] 
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
+        [MarshalAs(UnmanagedType.U4)]
         public uint BootPersistenceOn;
 
         public bool IsBootPersistenceOn
         {
-            get => BootPersistenceOn > 0;
+            get => (BootPersistenceOn & 0x1) == 0x1;
         }
+
+        public bool Equals(DISPLAYCONFIG_SET_TARGET_PERSISTENCE other)
+            => Header.Equals(other.Header) &&
+               BootPersistenceOn == other.BootPersistenceOn;
+
+        public override int GetHashCode()
+        {
+            return (Header, BootPersistenceOn).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
 
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct DISPLAYCONFIG_GET_TARGET_BASE_TYPE
+    internal struct DISPLAYCONFIG_GET_TARGET_BASE_TYPE : IEquatable<DISPLAYCONFIG_GET_TARGET_BASE_TYPE>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
-        [MarshalAs(UnmanagedType.U4)] 
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
+        [MarshalAs(UnmanagedType.U4)]
         public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY BaseOutputTechnology;
 
-    }
+        public bool Equals(DISPLAYCONFIG_GET_TARGET_BASE_TYPE other)
+            => Header.Equals(other.Header) &&
+               BaseOutputTechnology == other.BaseOutputTechnology;
 
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE
-    {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
-        [MarshalAs(UnmanagedType.U4)]
-        public uint EnableAdvancedColor;
-
-        public bool IsAdvancedColorEnabled
+        public override int GetHashCode()
         {
-            get => EnableAdvancedColor > 0;
+            return (Header, BaseOutputTechnology).GetHashCode();
         }
 
+        //public override string ToString() => $"{type.ToString("G")}";
+    }
+
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE : IEquatable<DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE>
+    {
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
+        [MarshalAs(UnmanagedType.U4)]
+        public uint Value;
+
+        public bool EnableAdvancedColor
+        {
+            get => (Value & 0x1) == 0x1;
+        }
+
+        public bool Equals(DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE other)
+            => Header.Equals(other.Header) &&
+               Value == other.Value;
+
+        public override int GetHashCode()
+        {
+            return (Header, Value).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct DISPLAYCONFIG_SDR_WHITE_LEVEL
+    internal struct DISPLAYCONFIG_SDR_WHITE_LEVEL : IEquatable<DISPLAYCONFIG_SDR_WHITE_LEVEL>
     {
-        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER Header;
         // SDRWhiteLevel represents a multiplier for standard SDR white
         // peak value i.e. 80 nits represented as fixed point.
         // To get value in nits use the following conversion
         // SDRWhiteLevel in nits = (SDRWhiteLevel / 1000 ) * 80
-        public ulong SDRWhiteLevel;
+        public uint SDRWhiteLevel;
+
+        public bool Equals(DISPLAYCONFIG_SDR_WHITE_LEVEL other)
+            => Header.Equals(other.Header) &&
+               SDRWhiteLevel == other.SDRWhiteLevel;
+
+
+        public override int GetHashCode()
+        {
+            return (Header, SDRWhiteLevel).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct RECT
+    public struct RECT : IEquatable<RECT>
     {
-        public int left;
-        public int top;
-        public int right;
-        public int bottom;
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+
+        public bool Equals(RECT other)
+            => Left == other.Left &&
+               Top == other.Top &&
+               Right == other.Right &&
+               Bottom == other.Bottom;
+
+        public override int GetHashCode()
+        {
+            return (Left, Top, Right, Bottom).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
-    
+
     class CCDImport
     {
         // GetDisplayConfigBufferSizes
         [DllImport("user32")]
-        public static extern int GetDisplayConfigBufferSizes(QDC flags, out int numPathArrayElements, out int numModeInfoArrayElements);
+        public static extern WIN32STATUS GetDisplayConfigBufferSizes(QDC flags, out int numPathArrayElements, out int numModeInfoArrayElements);
 
         // QueryDisplayConfig
         [DllImport("user32")]
-        public static extern int QueryDisplayConfig(QDC flags, ref int numPathArrayElements, [In, Out] DISPLAYCONFIG_PATH_INFO[] pathArray, ref int numModeInfoArrayElements, [In, Out] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, out DISPLAYCONFIG_TOPOLOGY_ID currentTopologyId);
+        public static extern WIN32STATUS QueryDisplayConfig(QDC flags, ref int numPathArrayElements, [In, Out] DISPLAYCONFIG_PATH_INFO[] pathArray, ref int numModeInfoArrayElements, [In, Out] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, out DISPLAYCONFIG_TOPOLOGY_ID currentTopologyId);
 
         [DllImport("user32")]
-        public static extern int QueryDisplayConfig(QDC flags, ref int numPathArrayElements, [In, Out] DISPLAYCONFIG_PATH_INFO[] pathArray, ref int numModeInfoArrayElements, [In, Out] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, IntPtr currentTopologyId);
+        public static extern WIN32STATUS QueryDisplayConfig(QDC flags, ref int numPathArrayElements, [In, Out] DISPLAYCONFIG_PATH_INFO[] pathArray, ref int numModeInfoArrayElements, [In, Out] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, IntPtr currentTopologyId);
 
         // DisplayConfigGetDeviceInfo
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_SOURCE_NAME requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_SOURCE_NAME requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_TARGET_NAME requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_TARGET_NAME requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_TARGET_PREFERRED_NAME requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_TARGET_PREFERRED_NAME requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_ADAPTER_NAME requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_ADAPTER_NAME requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SET_TARGET_PERSISTENCE requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SET_TARGET_PERSISTENCE requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_TARGET_BASE_TYPE requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_TARGET_BASE_TYPE requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION requestPacket);
 
         /*[DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SET_SUPPORT_VIRTUAL_RESOLUTION requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SET_SUPPORT_VIRTUAL_RESOLUTION requestPacket);
 */
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE requestPacket);
 
         [DllImport("user32")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SDR_WHITE_LEVEL requestPacket);
+        public static extern WIN32STATUS DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SDR_WHITE_LEVEL requestPacket);
 
         // DisplayConfigSetDeviceInfo
         [DllImport("user32")]
-        public static extern int DisplayConfigSetDeviceInfo( ref DISPLAYCONFIG_SET_TARGET_PERSISTENCE targetPersistence );
+        public static extern WIN32STATUS DisplayConfigSetDeviceInfo(ref DISPLAYCONFIG_SET_TARGET_PERSISTENCE targetPersistence);
 
         // Have disabled the DisplayConfigSetDeviceInfo options except for SET_TARGET_PERSISTENCE, as per the note
         // from https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-displayconfigsetdeviceinfo
@@ -469,7 +787,7 @@ namespace DisplayMagicianShared.Windows
 
         // SetDisplayConfig
         [DllImport("user32")]
-        public static extern int SetDisplayConfig( [In] uint pathArrayElements, [In] DISPLAYCONFIG_PATH_INFO[] pathArray, [In] uint modeInfoArrayElements, [In] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, [In] QDC flags );
+        public static extern WIN32STATUS SetDisplayConfig([In] uint pathArrayElements, [In] DISPLAYCONFIG_PATH_INFO[] pathArray, [In] uint modeInfoArrayElements, [In] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, [In] QDC flags);
 
     }
 }

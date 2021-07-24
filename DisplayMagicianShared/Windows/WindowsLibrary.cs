@@ -13,40 +13,40 @@ namespace DisplayMagicianShared.Windows
     {
         static void Main()
         {
-            var err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out var pathCount, out var modeCount);
-            if (err != 0)
-                throw new Win32Exception(err);
+            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out var pathCount, out var modeCount);
+            if (err != WIN32STATUS.ERROR_SUCCESS)
+                throw new Win32Exception((int)err);
 
             var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
             var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
             err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
-            if (err != 0)
-                throw new Win32Exception(err);
+            if (err != WIN32STATUS.ERROR_SUCCESS)
+                throw new Win32Exception((int)err);
 
             foreach (var path in paths)
             {
                 // get display name
                 var info = new DISPLAYCONFIG_GET_TARGET_NAME();
-                info.header.type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
-                info.header.size = Marshal.SizeOf<DISPLAYCONFIG_GET_TARGET_NAME>();
-                info.header.adapterId = path.targetInfo.adapterId;
-                info.header.id = path.targetInfo.id;
+                info.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+                info.Header.Size = Marshal.SizeOf<DISPLAYCONFIG_GET_TARGET_NAME>();
+                info.Header.AdapterId = path.TargetInfo.AdapterId;
+                info.Header.Id = path.TargetInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref info);
-                if (err != 0)
-                    throw new Win32Exception(err);
+                if (err != WIN32STATUS.ERROR_SUCCESS)
+                    throw new Win32Exception((int)err);
 
                 var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
-                colorInfo.header.type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
-                colorInfo.header.size = Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
-                colorInfo.header.adapterId = path.targetInfo.adapterId;
-                colorInfo.header.id = path.targetInfo.id;
+                colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+                colorInfo.Header.Size = Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
+                colorInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                colorInfo.Header.Id = path.TargetInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
-                if (err != 0)
-                    throw new Win32Exception(err);
+                if (err != WIN32STATUS.ERROR_SUCCESS)
+                    throw new Win32Exception((int)err);
 
-                Console.WriteLine(info.monitorFriendlyDeviceName);
-                Console.WriteLine(" Advanced Color Supported: " + colorInfo.advancedColorSupported);
-                Console.WriteLine(" Advanced Color Enabled  : " + colorInfo.advancedColorEnabled);
+                Console.WriteLine(info.MonitorFriendlyDeviceName);
+                Console.WriteLine(" Advanced Color Supported: " + colorInfo.AdvancedColorSupported);
+                Console.WriteLine(" Advanced Color Enabled  : " + colorInfo.AdvancedColorEnabled);
                 Console.WriteLine();
             }
         }
