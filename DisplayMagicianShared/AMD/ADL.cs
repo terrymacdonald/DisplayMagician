@@ -1,344 +1,121 @@
-#region Copyright
-
-/*******************************************************************************
- Copyright(c) 2008 - 2009 Advanced Micro Devices, Inc. All Rights Reserved.
- Copyright (c) 2002 - 2006  ATI Technologies Inc. All Rights Reserved.
- 
- THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
- ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDED BUT NOT LIMITED TO
- THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A 
- PARTICULAR PURPOSE.
- 
- File:        ADL.cs
- 
- Purpose:     Implements ADL interface 
- 
- Description: Implements some of the methods defined in ADL interface.
-              
- ********************************************************************************/
-
-#endregion Copyright
-
-#region Using
-
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System.Threading;
 using FARPROC = System.IntPtr;
 using HMODULE = System.IntPtr;
 
-#endregion Using
-
-#region ATI.ADL
-
-namespace ATI.ADL
+namespace DisplayMagicianShared.AMD
 {
-    #region Export Delegates
-    /// <summary> ADL Memory allocation function allows ADL to callback for memory allocation</summary>
-    /// <param name="size">input size</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate IntPtr ADL_Main_Memory_Alloc (int size);
+    public delegate IntPtr ADL_Main_Memory_Alloc_Delegate(int size);
 
-    // ADL2 version of function delagates
+    public enum ADL_STATUS
+    {
+        // Result Codes
+        /// <summary> ADL function completed successfully. </summary>                
+        ADL_OK = 0,
+        /// <summary> Generic Error.Most likely one or more of the Escape calls to the driver failed!</summary>
+        ADL_ERR = -1,
+        /// <summary> Call can't be made due to disabled adapter. </summary>
+        ADL_ERR_DISABLED_ADAPTER = -10,
+        /// <summary> Invalid ADL index passed. </summary>
+        ADL_ERR_INVALID_ADL_IDX = -5,
+        /// <summary> Invalid Callback. </summary>
+        ADL_ERR_INVALID_CALLBACK = -11,
+        /// <summary> Invalid controller index passed.</summary>
+        ADL_ERR_INVALID_CONTROLLER_IDX = -6,
+        /// <summary> Invalid display index passed.</summary>
+        ADL_ERR_INVALID_DISPLAY_IDX = -7,
+        /// <summary> One of the parameter passed is invalid.</summary>
+        ADL_ERR_INVALID_PARAM = -3,
+        /// <summary> One of the parameter size is invalid.</summary>
+        ADL_ERR_INVALID_PARAM_SIZE = -4,
+        /// <summary> There's no Linux XDisplay in Linux Console environment.</summary>
+        ADL_ERR_NO_XDISPLAY = -21,
+        /// <summary> ADL not initialized.</summary>
+        ADL_ERR_NOT_INIT = -2,
+        /// <summary> Function not supported by the driver. </summary>
+        ADL_ERR_NOT_SUPPORTED = -8,
+        /// <summary> Null Pointer error.</summary>
+        ADL_ERR_NULL_POINTER = -9,
+        /// <summary> Display Resource conflict.</summary>
+        ADL_ERR_RESOURCE_CONFLICT = -12,
+        /// <summary> Err Set incomplete</summary>
+        ADL_ERR_SET_INCOMPLETE = -20,
+        /// <summary> All OK but need mode change. </summary>
+        ADL_OK_MODE_CHANGE = 2,
+        /// <summary> All OK, but need restart.</summary>
+        ADL_OK_RESTART = 3,
+        /// <summary> All OK, but need to wait</summary>
+        ADL_OK_WAIT = 4,
+        /// <summary> All OK, but with warning.</summary>
+        ADL_OK_WARNING = 1,
+    }
 
-    /// <summary> ADL2 Create Function to create ADL Data</summary>
-    /// <param name="callback">Call back functin pointer which is ised to allocate memory </param>
-    /// <param name="numConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
-    /// <param name="contextHandle">Handle to ADL client context.</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int numConnectedAdapters, out IntPtr contextHandle);
+    public enum ADL_CONNECTION_TYPE
+    {
+        VGA = 0,
+        DVI = 1,
+        DVI_SL = 2,
+        HDMI = 4,
+        DisplayPort = 4,
+        ActiveDongleDPToDVI_SL = 5,
+        ActiveDongleDPToDVI_DL = 6,
+        ActiveDongleDPToHDMI = 7,
+        ActiveDongleDPToVGA = 8,
+        PassiveDongleDPToHDMI = 9,
+        PassiveDongleDPToDVI = 10,
+        MST = 11,
+        ActiveDongle = 12,
+        Virtual = 13
+    }
 
-    /// <summary> ADL2 Destroy Function to free up ADL Data</summary>
-    /// <param name="contextHandle">Handle to ADL client context.</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL2_Main_Control_Destroy(IntPtr contextHandle);
+    public enum ADL_DISPLAY_CONNECTION_TYPE
+    {
+        Unknown = 0,
+        VGA = 1,
+        DVI_D = 2,
+        DVI_I = 3,
+        HDMI = 4,
+        ATICV_NTSC_Dongle = 4,
+        ATICV_JPN_Dongle = 5,
+        ATICV_NONI2C_NTSC_Dongle = 6,
+        ATICV_NONI2C_JPN_Dongle = 7,
+        Proprietary = 8,
+        HDMITypeA = 10,
+        HTMITypeB = 11,
+        SVideo = 12,
+        Composite = 13,
+        RCA_3Component = 14,
+        DisplayPort = 15,
+        EDP = 16,
+        WirelessDisplay = 17,
+        USBTypeC = 18
+    }
 
-    /// <summary> ADL2 Function to get the number of adapters</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="numAdapters">return number of adapters</param>
-    public delegate int ADL2_Adapter_NumberOfAdapters_Get(IntPtr ADLContextHandle, ref int numAdapters);
+    public enum ADL_DISPLAY_MODE_FLAG
+    {
+        ColourFormat565 = 1,
+        ColourFormat8888 = 2,
+        Degrees0 = 4,
+        Degrees90 = 8,
+        Degrees180 = 10,
+        Degrees270 = 20,
+        ExactRefreshRate = 80,
+        RoundedRefreshRate = 40
+    }
+    public enum ADL_DISPLAY_MODE_INTERLACING
+    {
+        Progressive = 0,
+        Interlaced = 2
+    }
 
-    /// <summary> ADL2 Function to save driver configuration so it survives a reboot</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex"> Adapter Index to save state.</param>
-    public delegate int ADL2_Flush_Driver_Data(IntPtr ADLContextHandle, int adapterIndex);
-
-    /// <summary> ADL2 Function to determine if the adapter is active or not.</summary>
-    /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex"> Adapter Index.</param>
-    /// <param name="status"> Status of the adapter. True: Active; False: Disabled</param>
-    /// <returns>Non zero is successful</returns> 
-    public delegate int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
-
-    /// <summary>ADL2 Function to retrieve adapter capability information.</summary>
-    /// <remarks>This function implements a DI call to retrieve adapter capability information .</remarks>  
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex"> Adapter Index.</param>
-    /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
-    /// <returns>return ADL Error Code</returns> 
-    public delegate int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
-
-
-    /// <summary>ADL2 Function to retrieve all OS-known adapter information.</summary>
-    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterInfoArray">return GPU adapter information</param>
-    /// <param name="inputSize">the size of the GPU adapter struct</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr adapterInfoArray);
-
-    /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
-    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterInfoArray">return GPU adapter information. Is a pointer to the pointer of AdapterInfo array. Initialize to NULL before calling this API. ADL will allocate the necessary memory, using the user provided callback function.</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr adapterInfoArray);
-
-    /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
-    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">The ADL index handle of the desired adapter or -1 if all adapters are desired</param>
-    /// <param name="numAdapters">Number of items in the AdapterInfo Array. Can pass NULL pointer if passign an adapter index (in which case only one AdapterInfo is returned)</param>
-    /// <param name="adapterInfoArray">return GPU adapter information</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int  ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoArray);
-
-    /// <summary>ADL2 function retrieves all OS-known adapter information.</summary>
-    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">The ADL index handle of the desired adapter or -1 if all adapters are desired</param>
-    /// <param name="numAdapters">Number of items in the AdapterInfo Array. Can pass NULL pointer if passign an adapter index (in which case only one AdapterInfo is returned)</param>
-    /// <param name="adapterInfoX2Array">return GPU adapter information in adapterInfoX2 array</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate  int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr adapterInfoX2Array);
-
-    /// <summary> ADL2 Create Function to create ADL Data</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="displayIndex">Display Index</param>
-    /// <param name="displayDDCInfo2">The ADLDDCInfo2 structure storing all DDC retrieved from the driver.</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL2_Display_DDCInfo2_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 displayDDCInfo2);
-
-    /// <summary>ADL2 function to get display information based on adapter index</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="numDisplays">return the total number of supported displays</param>
-    /// <param name="displayInfoArray">return ADLDisplayInfo Array for supported displays' information</param>
-    /// <param name="forceDetect">force detect or not</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
-
-    /// <summary>This ADL2 function retrieves HDTV capability settings for a specified display.</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="displayIndex">Display Index</param>
-    /// <param name="displayConfig">return ADLDisplayConfig with HDTV capability settings in it</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
-
-    /// <summary>ADL2 function to query whether a display is HDR Supported and Enabled</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="displayID">DisplayID for the desired display</param>
-    /// <param name="support">return a pointer to the int whose value is set to true if the display supports HDR</param>
-    /// <param name="enable">return a pointer to the int whose value is set to true if HDR is enabled on this display</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
-
-    /// <summary>ADL2 function to retrieve the current display mode information</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="displayIndex">Display Index</param>
-    /// <param name="numModes">return a pointer to the number of modes retrieved.</param>
-    /// <param name="modes">return a pointer to the array of retrieved ADLMode display modes.</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
-
-    /// <summary>ADL2 function to set display mode information</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="displayIndex">Display Index</param>
-    /// <param name="numModes">	The number of modes to be set.</param>
-    /// <param name="modes">The pointer to the display mode information to be set. Refer to the ADLMode structure for more information.</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_Modes_Set(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, int numModes, ref ADLMode modes);
-
-    /// <summary>ADL2 function to retrieve the current display mode information</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="numDisplayMap">The pointer to the number of retrieved display maps</param>
-    /// <param name="displayMap">The pointer to the pointer to the display manner information. Refer to the ADLDisplayMap structure for more information.</param>
-    /// <param name="numDisplayTarget">The pointer to the display target sets retrieved.</param>
-    /// <param name="displayTarget">The pointer to the pointer to the display target buffer. Refer to the ADLDisplayTarget structure for more information.</param>
-    /// <param name="options">The function option. ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO.</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_DisplayMapConfig_Get(IntPtr ADLContextHandle, int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
-
-    /// <summary>ADL2 function to set the current display mode information</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="numDisplayMap">The number of display maps to set</param>
-    /// <param name="displayMap">The pointer to the display manner information. Refer to the ADLDisplayMap structure for more information.</param>
-    /// <param name="numDisplayTarget">The number of display targets to set</param>
-    /// <param name="displayTarget">The pointer to the display target object. Refer to the ADLDisplayTarget structure for more information.</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_DisplayMapConfig_Set(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, ref ADLDisplayMap displayMap, int numDisplayTarget, ref ADLDisplayTarget displayTarget);
-
-    /// <summary>ADL2 function to set the current display mode information</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="numPossibleMap">The number of possible maps to be validated.</param>
-    /// <param name="possibleMaps">The list of possible maps to be validated. Refer to the ADLPossibleMap structure for more information.</param>
-    /// <param name="numPossibleMapResult">The pointer to the number of validated result list.</param>
-    /// <param name="possibleMapResult">The pointer to the pointer to validation result list. Refer to the ADLPossibleMapResult structure for more information.</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_DisplayMapConfig_Validate(IntPtr ADLContextHandle, int adapterIndex, int numPossibleMap, ref ADLPossibleMap possibleMaps, out int numPossibleMapResult, ref IntPtr possibleMapResult);
-
-    /// <summary>ADL2 function to set the current display mode information</summary>
-    /// <param name="ADLContextHandle">Handle to ADL client context.</param>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="numDisplayMap">The number of display maps to set</param>
-    /// <param name="displayMap">The pointer to the display manner information. Refer to the ADLDisplayMap structure for more information.</param>
-    /// <param name="numDisplayTarget">The number of display targets to set</param>
-    /// <param name="displayTarget">The pointer to the display target object. Refer to the ADLDisplayTarget structure for more information.</param>
-    /// <param name="numPossibleAddTarget">The number of display targets that can be added</param>
-    /// <param name="possibleAddTarget">The list of display targets that can be added</param>
-    /// <param name="numPossibleRemoveTarget">The number of display targets that can be removed</param>
-    /// <param name="possibleRemoveTarget">The list of display targets that can be removed</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL2_Display_DisplayMapConfig_PossibleAddAndRemove(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, ref ADLDisplayMap displayMap, int numDisplayTarget, ref ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
-
-    // ADL version of function delegates
-
-    /// <summary> ADL Create Function to create ADL Data</summary>
-    /// <param name="callback">Call back functin pointer which is ised to allocate memeory </param>
-    /// <param name="enumConnectedAdapters">If it is 1, then ADL will only retuen the physical exist adapters </param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);   
-
-    /// <summary> ADL Destroy Function to free up ADL Data</summary>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL_Main_Control_Destroy ();  
-
-    /// <summary> ADL Function to get the number of adapters</summary>
-    /// <param name="numAdapters">return number of adapters</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
-
-    /// <summary> Function to determine if the adapter is active or not.</summary>
-    /// <remarks>The function is used to check if the adapter associated with iAdapterIndex is active</remarks>  
-    /// <param name="adapterIndex"> Adapter Index.</param>
-    /// <param name="status"> Status of the adapter. True: Active; False: Disabled</param>
-    /// <returns>Non zero is successful</returns> 
-    public delegate int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
-
-    /// <summary> Function to get the unique identifier of an adapter.</summary>
-    /// <remarks>This function retrieves the unique identifier of a specified adapter. The adapter ID is a unique value and will be used to determine what other controllers share the same adapter. The desktop will use this to find which HDCs are associated with an adapter.</remarks>  
-    /// <param name="adapterIndex"> Adapter Index.</param>
-    /// <param name="adapterId"> The pointer to the adapter identifier. Zero means: The adapter is not AMD.</param>
-    /// <returns>return ADL Error Code</returns> 
-    public delegate int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
-
-    /// <summary>Function to retrieve adapter capability information.</summary>
-    /// <remarks>This function implements a DI call to retrieve adapter capability information .</remarks>  
-    /// <param name="adapterIndex"> Adapter Index.</param>
-    /// <param name="adapterCapabilities"> The pointer to the ADLAdapterCaps structure storing the retrieved adapter capability information.</param>
-    /// <returns>return ADL Error Code</returns> 
-    public delegate int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
-
-    /// <summary>Retrieves all OS-known adapter information.</summary>
-    /// <remarks>This function retrieves the adapter information of all OS-known adapters in the system. OS-known adapters can include adapters that are physically present in the system (logical adapters) as well as ones that are no longer present in the system but are still recognized by the OS.</remarks>
-    /// <param name="adapterInfoArray">return GPU adapter information</param>
-    /// <param name="inputSize">the size of the GPU adapter struct</param>
-    /// <returns> retrun ADL Error Code</returns>
-    public delegate int ADL_Adapter_AdapterInfo_Get(out IntPtr adapterInfoArray, int inputSize);
-
-
-    /// <summary>Function to get the EDID data.</summary>
-    /// <remarks>This function retrieves the EDID data for a specififed display.</remarks>  
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="displayIndex">The desired display index. It can be retrieved from the ADLDisplayInfo data structure.</param>
-    /// <param name="EDIDData">return the ADLDisplayEDIDData structure storing the retrieved EDID data.</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
-
-    /// <summary>Get display information based on adapter index</summary>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="numDisplays">return the total number of supported displays</param>
-    /// <param name="displayInfoArray">return ADLDisplayInfo Array for supported displays' information</param>
-    /// <param name="forceDetect">force detect or not</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
-
-    /// <summary>This function retrieves HDTV capability settings for a specified display.</summary>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="displayIndex">Display Index</param>
-    /// <param name="displayConfig">return ADLDisplayConfig with HDTV capability settings in it</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
-
-    /// <summary>Function to retrieve current display map configurations.</summary>
-    /// <remarks>This function retrieves the current display map configurations, including the controllers and adapters mapped to each display.</remarks>  
-    /// <param name="adapterIndex">	The ADL index handle of the desired adapter. A value of -1 returns all display configurations for the system across multiple GPUs.</param>
-    /// <param name="numDisplayMap">Number of returned Display Maps</param>
-    /// <param name="displayMap">Array of ADLDisplayMap objects</param>
-    /// <param name="numDisplayTarget">Number of Display Targets</param>
-    /// <param name="displayTarget">Array of ADLDisplayTarget objects</param>
-    /// <param name="options">Options supplied</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
-
-    /// <summary>Function to validate a list of display configurations.</summary>
-    /// <remarks>This function allows the user to input a potential displays map and its targets. The function can also be used to obtain a list of display targets that can be added to this given topology and a list of display targets that can be removed from this given topology.</remarks>  
-    /// <param name="adapterIndex">	The ADL index handle of the desired adapter. Cannot be set to -1 </param>
-    /// <param name="numDisplayMap">Number of Display Map</param>
-    /// <param name="displayMap">Number of Display Map</param>
-    /// <param name="numDisplayTarget">Number of Display Map</param>
-    /// <param name="displayTarget">Number of Display Map</param>
-    /// <param name="numPossibleAddTarget">Number of Display Map</param>
-    /// <param name="possibleAddTarget">Number of Display Map</param>
-    /// <param name="numPossibleRemoveTarget">Number of Display Map</param>
-    /// <param name="possibleRemoveTarget">Number of Display Map</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
-
-    /// <summary>Function to retrieve an SLS configuration.</summary>
-    /// <param name="adapterIndex">Adapter Index</param>
-    /// <param name="SLSMapIndex">Specifies the SLS map index to be queried.</param>
-    /// <param name="SLSMap">return ADLSLSMap Array for supported displays' information</param>
-    /// <param name="numSLSTarget">return number of targets in the SLS mapo</param>
-    /// <param name="SLSTargetArray">return ADLSLSTarget Array </param>
-    /// <param name="numNativeMode">return the number of native modes</param>
-    /// <param name="SLSNativeMode">return ADLSLSMode Array that contains the native modes</param>
-    /// <param name="numBezelMode">return the number of bezel modes</param>
-    /// <param name="SLSBezelMode">return ADLSLSMode Array that contains the bezel modes</param>
-    /// <param name="numTransientMode">return the number of transient modes</param>
-    /// <param name="SLSTransientMode">return ADLSLSMode Array that contains the transient modes</param>
-    /// <param name="numSLSOffset">return the number of SLS offsets</param>
-    /// <param name="SLSOffset">return ADLSLSOffset Array that contains the SLS offsets</param>
-    /// <param name="option">Specifies the layout type of SLS grid data. It is bit vector. There are two types of SLS layout:s, relative to landscape (ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE) and relative to current angle (ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE).</param>
-    /// <returns>return ADL Error Code</returns>
-    public delegate int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int numSLSTarget, out IntPtr SLSTargetArray, ref int numNativeMode, 
-        out IntPtr SLSNativeMode, ref int numBezelMode, out IntPtr SLSBezelMode, ref int numTransientMode, out IntPtr SLSTransientMode, ref int numSLSOffset, out IntPtr SLSOffset, int option);
-
-    #endregion Export Delegates
-
-    #region Export Struct
-
-    #region ADLMode
     /// <summary> ADLAdapterInfo Array</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLMode
+    public struct ADL_MODE : IEquatable<ADL_MODE>
     {
         /// <summary> Adapter index. </summary>
         public int AdapterIndex;
         /// <summary> Display IDs. </summary>
-        public ADLDisplayID DisplayID;
+        public ADL_DISPLAY_ID DisplayID;
         /// <summary> Screen position X coordinate. </summary>
         public int XPos;
         /// <summary> Screen position Y coordinate. </summary>
@@ -358,66 +135,159 @@ namespace ATI.ADL
         /// <summary> The bit mask identifying the number of bits this Mode is currently using. </summary>
         public int ModeMask;
         /// <summary> The bit mask identifying the display status. </summary>
-        public int ModeValue;       
+        public int ModeValue;
+
+        // Mode Mask settings
+        public bool ColourFormat565Supported => (ModeMask & 0x1) == 0x1;
+        public bool ColourFormat8888Supported => (ModeMask & 0x2) == 0x2;
+        public bool Orientation000Supported => (ModeMask & 0x4) == 0x4;
+        public bool Orientation090Supported => (ModeMask & 0x8) == 0x8;
+        public bool Orientation180Supported => (ModeMask & 0x10) == 0x10;
+        public bool Orientation270Supported => (ModeMask & 0x20) == 0x20;
+        public bool RefreshRateRoundedSupported => (ModeMask & 0x40) == 0x40;
+        public bool RefreshRateOnlySupported => (ModeMask & 0x80) == 0x80;
+
+        // Mode Value settings
+        public bool ColourFormat565Set => (ModeValue & 0x1) == 0x1;
+        public bool ColourFormat8888Set => (ModeValue & 0x2) == 0x2;
+        public bool Orientation000Set => (ModeValue & 0x4) == 0x4;
+        public bool Orientation090Set => (ModeValue & 0x8) == 0x8;
+        public bool Orientation180Set => (ModeValue & 0x10) == 0x10;
+        public bool Orientation270Set => (ModeValue & 0x20) == 0x20;
+        public bool RefreshRateRoundedSet => (ModeValue & 0x40) == 0x40;
+        public bool RefreshRateOnlySet => (ModeValue & 0x80) == 0x80;
+
+        // Mode Flag settings
+        public bool ProgressiveSet => ModeValue == 0x0;
+        public bool InterlacedSet => ModeValue == 0x2;
+
+        public bool Equals(ADL_MODE other)
+            => AdapterIndex == other.AdapterIndex &&
+                DisplayID.Equals(other.DisplayID) &&
+                XPos == other.XPos &&
+                YPos == other.YPos &&
+                XRes == other.XRes &&
+                YRes == other.YRes &&
+                ColourDepth == other.ColourDepth &&
+                RefreshRate == other.RefreshRate &&
+                Orientation == other.Orientation &&
+                ModeFlag == other.ModeFlag &&
+                ModeMask == other.ModeMask &&
+                ModeValue == other.ModeValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, DisplayID, XPos, YPos, XRes, YRes, ColourDepth, RefreshRate, Orientation, ModeFlag, ModeMask, ModeValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
-    public struct ConvertedDisplayModeFlags
-    {
-        /// <summary> Indicates the display supports Colour Format 565.</summary>
-        public bool COLOURFORMAT_565;
-        /// <summary> Indicates the display supports Colour Format 8888.</summary>
-        public bool COLOURFORMAT_8888;
-        /// <summary> Indicates the display supports normal vertical orientation</summary>
-        public bool ORIENTATION_SUPPORTED_000;
-        /// <summary> Indicates the display supports 90 degree orientation</summary>
-        public bool ORIENTATION_SUPPORTED_090;
-        /// <summary> Indicates the display supports 180 degree orientation</summary>
-        public bool ORIENTATION_SUPPORTED_180;
-        /// <summary> Indicates the display supports 270 degree orientation</summary>
-        public bool ORIENTATION_SUPPORTED_270;
-        /// <summary> Indicates the display supports rounded refresh rates</summary>
-        public bool REFRESHRATE_ROUNDED;
-        /// <summary> Indicates the display supports exact refresh rates</summary>
-        public bool REFRESHRATE_ONLY;        
-    }
-    #endregion ADLMode
-
-    #region ADLDisplayTarget
     /// <summary> ADLDisplayTarget </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayTarget
+    public struct ADL_DISPLAY_TARGET : IEquatable<ADL_DISPLAY_TARGET>
     {
         /// <summary> Display IDs. </summary>
-        public ADLDisplayID DisplayID;
+        public ADL_DISPLAY_ID DisplayID;
         /// <summary> The display map index identify this manner and the desktop surface. </summary>
         public int DisplayMapIndex;
         /// <summary> The bit mask identifies the number of bits DisplayTarget is currently using. </summary>
         public int DisplayTargetMask;
         /// <summary> The bit mask identifies the display status. </summary>
         public int DisplayTargetValue;
+
+        // DisplayTarget Mask settings
+        public bool DisplayTargetPreferredSupported => (DisplayTargetMask & 0x1) == 0x1;
+
+        // DisplayTarget Value settings
+        public bool DisplayTargetPreferredSet => (DisplayTargetValue & 0x1) == 0x1;
+
+        public bool Equals(ADL_DISPLAY_TARGET other)
+            => DisplayID.Equals(other.DisplayID) &&
+                DisplayMapIndex == other.DisplayMapIndex &&
+                DisplayTargetMask == other.DisplayTargetMask &&
+                DisplayTargetValue == other.DisplayTargetValue;
+
+        public override int GetHashCode()
+        {
+            return (DisplayID, DisplayMapIndex, DisplayTargetMask, DisplayTargetValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
-    /// <summary> ADLDisplayTargetArray Array</summary>
+    /// <summary> ADLAdapterDisplayCap </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayTargetArray
+    public struct ADL_ADAPTER_DISPLAY_CAP : IEquatable<ADL_ADAPTER_DISPLAY_CAP>
     {
-        /// <summary> ADLDisplayTarget Array </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
-        public ADLDisplayTarget[] ADLDisplayTarget;
-    }
-    #endregion ADLDisplayTarget
+        /// <summary> The Persistent logical Adapter Index </summary>
+        public int AdapterIndex;
+        /// <summary> The bit mask identifies the number of bits AdapterDisplayCap is currently using. Sum all the bits defined in ADL_ADAPTER_DISPLAYCAP_XXX </summary>
+        public int AdapterDisplayCapMask;
+        /// <summary> The bit mask identifies the status. Refer to ADL_ADAPTER_DISPLAYCAP_XXX </summary>
+        public int AdapterDisplayCapValue;
 
-    #region ADLAdapterInfo
+        // AdapterDisplayCap Mask settings
+        public bool NotActiveSupported => (AdapterDisplayCapMask & 0x1) == 0x1;
+        public bool SingleSupported => (AdapterDisplayCapMask & 0x1) == 0x2;
+        public bool CloneSupported => (AdapterDisplayCapMask & 0x1) == 0x4;
+        public bool NStretch1GPUSupported => (AdapterDisplayCapMask & 0x1) == 0x8;
+        public bool NStretchNGPUSupported => (AdapterDisplayCapMask & 0x1) == 0x10;
+        public bool TwoVStretchSupported => (AdapterDisplayCapMask & 0x1) == 0x20;
+        public bool TwoHStretchSupported => (AdapterDisplayCapMask & 0x1) == 0x40;
+        public bool ExtendedSupported => (AdapterDisplayCapMask & 0x1) == 0x80;
+        public bool PreferDisplaySupported => (AdapterDisplayCapMask & 0x1) == 0x100;
+        public bool BezelSupported => (AdapterDisplayCapMask & 0x1) == 0x200;
+
+
+        // AdapterDisplayCap Value settings
+        public bool NotActiveSet => (AdapterDisplayCapValue & 0x1) == 0x1;
+        public bool SingleSet => (AdapterDisplayCapValue & 0x1) == 0x2;
+        public bool CloneSet => (AdapterDisplayCapValue & 0x1) == 0x4;
+        public bool NStretch1GPUSet => (AdapterDisplayCapValue & 0x1) == 0x8;
+        public bool NStretchNGPUSet => (AdapterDisplayCapValue & 0x1) == 0x10;
+        public bool TwoVStretchSet => (AdapterDisplayCapValue & 0x1) == 0x20;
+        public bool TwoHStretchSet => (AdapterDisplayCapValue & 0x1) == 0x40;
+        public bool ExtendedSet => (AdapterDisplayCapValue & 0x1) == 0x80;
+        public bool PreferDisplaySet => (AdapterDisplayCapValue & 0x1) == 0x100;
+        public bool BezelSet => (AdapterDisplayCapValue & 0x1) == 0x200;
+
+        /*        #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_NOTACTIVE        0x00000001
+                #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_SINGLE            0x00000002
+                #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_CLONE            0x00000004
+                #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_NSTRETCH1GPU    0x00000008
+                #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_NSTRETCHNGPU    0x00000010
+
+                        /// Legacy support for XP
+                #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_2VSTRETCH        0x00000020
+                #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_2HSTRETCH        0x00000040
+                #define ADL_ADAPTER_DISPLAYCAP_MANNER_SUPPORTED_EXTENDED        0x00000080
+
+                #define ADL_ADAPTER_DISPLAYCAP_PREFERDISPLAY_SUPPORTED            0x00000100
+                #define ADL_ADAPTER_DISPLAYCAP_BEZEL_SUPPORTED                    0x00000200*/
+        public bool Equals(ADL_ADAPTER_DISPLAY_CAP other)
+            => AdapterIndex == other.AdapterIndex &&
+                AdapterDisplayCapMask == other.AdapterDisplayCapMask &&
+                AdapterDisplayCapValue == other.AdapterDisplayCapValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, AdapterDisplayCapMask, AdapterDisplayCapValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
+    }
+
     /// <summary> ADLAdapterInfo Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLAdapterInfo
+    public struct ADL_ADAPTER_INFO : IEquatable<ADL_ADAPTER_INFO>
     {
         /// <summary>The size of the structure</summary>
-        int Size;
+        public int Size;
         /// <summary> Adapter Index</summary>
         public int AdapterIndex;
         /// <summary> Adapter UDID</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string UDID;
         /// <summary> Adapter Bus Number</summary>
         public int BusNumber;
@@ -428,48 +298,63 @@ namespace ATI.ADL
         /// <summary> Adapter Vendor ID</summary>
         public int VendorID;
         /// <summary> Adapter Adapter name</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string AdapterName;
         /// <summary> Adapter Display name</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string DisplayName;
         /// <summary> Adapter Present status</summary>
         public int Present;
         /// <summary> Adapter Exist status</summary>
         public int Exist;
         /// <summary> Adapter Driver Path</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string DriverPath;
         /// <summary> Adapter Driver Ext Path</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string DriverPathExt;
         /// <summary> Adapter PNP String</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string PNPString;
         /// <summary> OS Display Index</summary>
         public int OSDisplayIndex;
+
+        public bool Equals(ADL_ADAPTER_INFO other)
+            => Size == other.Size &&
+                AdapterIndex == other.AdapterIndex &&
+                UDID.Equals(other.UDID) &&
+                BusNumber == other.BusNumber &&
+                DriverNumber == other.DriverNumber &&
+                FunctionNumber == other.FunctionNumber &&
+                VendorID == other.VendorID &&
+                AdapterName.Equals(other.AdapterName) &&
+                DisplayName.Equals(other.DisplayName) &&
+                Present == other.Present &&
+                Exist == other.Exist &&
+                DriverPath.Equals(other.DriverPath) &&
+                DriverPathExt.Equals(other.DriverPathExt) &&
+                PNPString.Equals(other.PNPString) &&
+                OSDisplayIndex == other.OSDisplayIndex;
+
+        public override int GetHashCode()
+        {
+            return (Size, AdapterIndex, UDID, BusNumber, DriverNumber, FunctionNumber, VendorID, AdapterName, DisplayName, Present, Exist, DriverPath, DriverPathExt, PNPString, OSDisplayIndex).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
-
-    /// <summary> ADLAdapterInfo Array</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct ADLAdapterInfoArray
-    {
-        /// <summary> ADLAdapterInfo Array </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_ADAPTERS)]
-        public ADLAdapterInfo[] ADLAdapterInfo;
-    }
 
     /// <summary> ADLAdapterInfoX2 Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLAdapterInfoX2
+    public struct ADL_ADAPTER_INFOX2 : IEquatable<ADL_ADAPTER_INFOX2>
     {
         /// <summary>The size of the structure</summary>
         public int Size;
         /// <summary> Adapter Index</summary>
         public int AdapterIndex;
         /// <summary> Adapter UDID</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string UDID;
         /// <summary> Adapter Bus Number</summary>
         public int BusNumber;
@@ -480,23 +365,23 @@ namespace ATI.ADL
         /// <summary> Adapter Vendor ID</summary>
         public int VendorID;
         /// <summary> Adapter Adapter name</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_DISPLAY_NAME)]
         public string AdapterName;
         /// <summary> Adapter Display name</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_DISPLAY_NAME)]
         public string DisplayName;
         /// <summary> Adapter Present status</summary>
         public int Present;
         /// <summary> Adapter Exist status</summary>
         public int Exist;
         /// <summary> Adapter Driver Path</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string DriverPath;
         /// <summary> Adapter Driver Ext Path</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string DriverPathExt;
         /// <summary> Adapter PNP String</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string PNPString;
         /// <summary> OS Display Index</summary>
         public int OSDisplayIndex;
@@ -504,16 +389,77 @@ namespace ATI.ADL
         public int InfoMask;
         /// <summary> Display Info Value</summary>
         public int InfoValue;
+
+        // Info Mask settings
+        public bool DisplayConnectedSupported => (InfoMask & 0x1) == 0x1;
+        public bool DisplayMappedSupported => (InfoMask & 0x2) == 0x2;
+        public bool NonLocalSupported => (InfoMask & 0x4) == 0x4;
+        public bool ForcibleSupported => (InfoMask & 0x8) == 0x8;
+        public bool GenLockSupported => (InfoMask & 0x10) == 0x10;
+        public bool MultiVPUSupported => (InfoMask & 0x20) == 0x20;
+        public bool LDADisplaySupported => (InfoMask & 0x40) == 0x40;
+        public bool ModeTimingOverrideSupported => (InfoMask & 0x80) == 0x80;
+        public bool MannerSingleSupported => (InfoMask & 0x100) == 0x100;
+        public bool MannerCloneSupported => (InfoMask & 0x200) == 0x200;
+        public bool Manner2VStretchSupported => (InfoMask & 0x400) == 0x400;
+        public bool Manner2HStretchSupported => (InfoMask & 0x800) == 0x800;
+        public bool MannerExtendedSupported => (InfoMask & 0x1000) == 0x1000;
+        public bool MannerNStretch1GPUSupported => (InfoMask & 0x10000) == 0x10000;
+        public bool MannerNStretchNGPUSupported => (InfoMask & 0x20000) == 0x20000;
+        public bool MannerReserved2Supported => (InfoMask & 0x40000) == 0x40000;
+        public bool MannerReserved3Supported => (InfoMask & 0x80000) == 0x80000;
+        public bool ShowTypeProjectorSupported => (InfoMask & 0x100000) == 0x100000;
+
+        // Info Value settings
+        public bool DisplayConnectedSet => (InfoValue & 0x1) == 0x1;
+        public bool DisplayMappedSet => (InfoValue & 0x2) == 0x2;
+        public bool NonLocalSet => (InfoValue & 0x4) == 0x4;
+        public bool ForcibleSet => (InfoValue & 0x8) == 0x8;
+        public bool GenLockSet => (InfoValue & 0x10) == 0x10;
+        public bool MultiVPUSet => (InfoValue & 0x20) == 0x20;
+        public bool LDADisplaySet => (InfoValue & 0x40) == 0x40;
+        public bool ModeTimingOverrideSet => (InfoValue & 0x80) == 0x80;
+        public bool MannerSingleSet => (InfoValue & 0x100) == 0x100;
+        public bool MannerCloneSet => (InfoValue & 0x200) == 0x200;
+        public bool Manner2VStretchSet => (InfoValue & 0x400) == 0x400;
+        public bool Manner2HStretchSet => (InfoValue & 0x800) == 0x800;
+        public bool MannerExtendedSet => (InfoValue & 0x1000) == 0x1000;
+        public bool MannerNStretch1GPUSet => (InfoValue & 0x10000) == 0x10000;
+        public bool MannerNStretchNGPUSet => (InfoValue & 0x20000) == 0x20000;
+        public bool MannerReserved2Set => (InfoValue & 0x40000) == 0x40000;
+        public bool MannerReserved3Set => (InfoValue & 0x80000) == 0x80000;
+        public bool ShowTypeProjectorSet => (InfoValue & 0x100000) == 0x100000;
+
+        public bool Equals(ADL_ADAPTER_INFOX2 other)
+            => Size == other.Size &&
+                AdapterIndex == other.AdapterIndex &&
+                UDID.Equals(other.UDID) &&
+                BusNumber == other.BusNumber &&
+                DeviceNumber == other.DeviceNumber &&
+                FunctionNumber == other.FunctionNumber &&
+                VendorID == other.VendorID &&
+                AdapterName.Equals(other.AdapterName) &&
+                DisplayName.Equals(other.DisplayName) &&
+                Present == other.Present &&
+                Exist == other.Exist &&
+                DriverPath.Equals(other.DriverPath) &&
+                DriverPathExt.Equals(other.DriverPathExt) &&
+                PNPString.Equals(other.PNPString) &&
+                OSDisplayIndex == other.OSDisplayIndex &&
+                InfoMask == other.InfoMask &&
+                InfoValue == other.InfoValue;
+
+        public override int GetHashCode()
+        {
+            return (Size, AdapterIndex, UDID, BusNumber, DeviceNumber, FunctionNumber, VendorID, AdapterName, DisplayName, Present, Exist, DriverPath, DriverPathExt, PNPString, OSDisplayIndex).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
-
-    #endregion ADLAdapterInfo
-
-
-    #region ADLDisplayInfo
 
     /// <summary> ADLDisplayEDIDData Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayEDIDData
+    public struct ADL_DISPLAY_EDID_DATA : IEquatable<ADL_DISPLAY_EDID_DATA>
     {
         /// <summary> Size</summary>
         public int Size;
@@ -524,17 +470,31 @@ namespace ATI.ADL
         /// <summary> Block Index </summary>
         public int BlockIndex;
         /// <summary> EDIDData [256] </summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_EDIDDATA_SIZE)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_EDIDDATA_SIZE)]
         public string EDIDData;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public int[] Reserved;
+
+        public bool Equals(ADL_DISPLAY_EDID_DATA other)
+            => Size == other.Size &&
+                Flag == other.Flag &&
+                EDIDSize == other.EDIDSize &&
+                BlockIndex == other.BlockIndex &&
+                EDIDData.Equals(other.EDIDData);
+
+        public override int GetHashCode()
+        {
+            return (Size, Flag, EDIDSize, BlockIndex, EDIDData).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
 
     }
 
 
     /// <summary> ADLDDCInfo2 Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDDCInfo2
+    public struct ADL_DDC_INFO2 : IEquatable<ADL_DDC_INFO2>
     {
         /// <summary> Size of the structure. </summary>
         public int Size;
@@ -545,7 +505,7 @@ namespace ATI.ADL
         /// <summary> Returns the product ID of the display device. Should be zeroed if this informatiadlon is not available.</summary>
         public int ProductID;
         /// <summary> Returns the name of the display device. Should be zeroed if this information is not available.</summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_DISPLAY_NAME)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_DISPLAY_NAME)]
         public string DisplayName;
         /// <summary> Returns the maximum Horizontal supported resolution. Should be zeroed if this information is not available.</summary>
         public int MaxHResolution;
@@ -614,40 +574,112 @@ namespace ATI.ADL
         /// <summary> Reserved </summary>
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public int[] Reserved;
-    }
 
-    public struct ConvertedDDCInfoFlag
-    {
-        /// <summary> Indicates the display is a projector .</summary>
-        public bool PROJECTORDEVICE;
-        /// <summary> Indicates the display has an EDID extension</summary>
-        public bool EDIDEXTENSION;
-        /// <summary> Indicates the display is a digital device</summary>
-        public bool DIGITALDEVICE;
-        /// <summary> Indicates the display has HDMI audio capabilities</summary>
-        public bool HDMIAUDIODEVICE;
-        /// <summary> Indicates the display supports AI</summary>
-        public bool SUPPORTS_AI;
-        /// <summary> Indicates the display supports xvYCC601</summary>
-        public bool SUPPORT_xvYCC601;
-        /// <summary> Indicates the display supports xvYCC709</summary>
-        public bool SUPPORT_xvYCC709;
-    }
+        // DDC Info Flag settings
+        public bool IsProjectorDevice => (DDCInfoFlag & 0x1) == 0x1;
+        public bool IsEDIDExtension => (DDCInfoFlag & 0x2) == 0x2;
+        public bool IsDigitalDevice => (DDCInfoFlag & 0x4) == 0x4;
+        public bool IsHDMIAudioDevice => (DDCInfoFlag & 0x8) == 0x8;
+        public bool SupportsAI => (DDCInfoFlag & 0x10) == 0x10;
+        public bool SupportsxvYCC601 => (DDCInfoFlag & 0x10) == 0x20;
+        public bool SupportsxvYCC709 => (DDCInfoFlag & 0x10) == 0x40;
 
-    public struct ConvertedSupportedHDR
-    {
-        /// <summary> HDR10/CEA861.3 HDR supported</summary>
-        public bool CEA861_3;
-        /// <summary> DolbyVision HDR supported</summary>
-        public bool DOLBYVISION;
-        /// <summary> FreeSync HDR supported.</summary>
-        public bool FREESYNC_HDR;
-    }
+        /*#define ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE       (1 << 0)
+        #define ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION         (1 << 1)
+        #define ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE         (1 << 2)
+        #define ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE       (1 << 3)
+        #define ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI           (1 << 4)
+        #define ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601      (1 << 5)
+        #define ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709      (1 << 6)*/
 
+        // Panel Pixel Format settings
+        public bool PixelFormatUnknown => (PanelPixelFormat & 0x1) == 0x1;
+        public bool PixelFormatRGB => (PanelPixelFormat & 0x2) == 0x2;
+        public bool PixelFormatYCRCB444 => (PanelPixelFormat & 0x4) == 0x4;
+        public bool PixelFormatYCRCB422 => (PanelPixelFormat & 0x8) == 0x8;
+        public bool PixelFormatLimitedRange => (PanelPixelFormat & 0x10) == 0x10;
+        public bool PixelFormatYCRCB420 => (PanelPixelFormat & 0x10) == 0x20;
+
+        // ADL_DISPLAY_ADJUSTMENT_PIXELFORMAT adjustment values
+        // (bit-vector)
+        /*#define ADL_DISPLAY_PIXELFORMAT_UNKNOWN             0
+        #define ADL_DISPLAY_PIXELFORMAT_RGB                       (1 << 0)
+        #define ADL_DISPLAY_PIXELFORMAT_YCRCB444                  (1 << 1)    //Limited range
+        #define ADL_DISPLAY_PIXELFORMAT_YCRCB422                 (1 << 2)    //Limited range
+        #define ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE      (1 << 3)
+        #define ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE    ADL_DISPLAY_PIXELFORMAT_RGB  //Full range
+        #define ADL_DISPLAY_PIXELFORMAT_YCRCB420              (1 << 4)*/
+
+        // Supported Transfer Function settings
+        //public bool DisplayConnectedSupported => (SupportedTransferFunction & 0x1) == 0x1;
+
+        // Supported Color Space settings
+        //public bool DisplayConnectedSupported => (SupportedColorSpace & 0x1) == 0x1;
+
+        // Supported HDR settings
+        public bool CEA861_3Supported => (SupportedHDR & 0x1) == 0x1;
+        public bool DolbyVisionSupported => (SupportedHDR & 0x2) == 0x2;
+        public bool FreeSyncHDRSupported => (SupportedHDR & 0x4) == 0x4;
+
+        // Freesync Flags settings
+        public bool FreeSyncHDRBacklightSupported => (SupportedHDR & 0x1) == 0x1;
+        public bool FreeSyncHDRLocalDimmingSupported => (SupportedHDR & 0x2) == 0x2;
+
+        public bool Equals(ADL_DDC_INFO2 other)
+            => Size == other.Size &&
+            SupportsDDC == other.SupportsDDC &&
+            ManufacturerID == other.ManufacturerID &&
+            ProductID == other.ProductID &&
+            DisplayName.Equals(other.DisplayName) &&
+            MaxHResolution == other.MaxHResolution &&
+            MaxVResolution == other.MaxVResolution &&
+            MaxRefresh == other.MaxRefresh &&
+            PTMCx == other.PTMCx &&
+            PTMCy == other.PTMCy &&
+            PTMRefreshRate == other.PTMRefreshRate &&
+            DDCInfoFlag == other.DDCInfoFlag &&
+            PackedPixelSupported == other.PackedPixelSupported &&
+            PanelPixelFormat == other.PanelPixelFormat &&
+            SerialID == other.SerialID &&
+            MinLuminanceData == other.MinLuminanceData &&
+            AvgLuminanceData == other.AvgLuminanceData &&
+            MaxLuminanceData == other.MaxLuminanceData &&
+            SupportedTransferFunction == other.SupportedTransferFunction &&
+            SupportedColorSpace == other.SupportedColorSpace &&
+            NativeDisplayChromaticityRedX == other.NativeDisplayChromaticityRedX &&
+            NativeDisplayChromaticityRedY == other.NativeDisplayChromaticityRedY &&
+            NativeDisplayChromaticityGreenX == other.NativeDisplayChromaticityGreenX &&
+            NativeDisplayChromaticityGreenY == other.NativeDisplayChromaticityGreenY &&
+            NativeDisplayChromaticityBlueX == other.NativeDisplayChromaticityBlueX &&
+            NativeDisplayChromaticityBlueY == other.NativeDisplayChromaticityBlueY &&
+            NativeDisplayChromaticityWhiteX == other.NativeDisplayChromaticityWhiteX &&
+            NativeDisplayChromaticityWhiteY == other.NativeDisplayChromaticityWhiteY &&
+            DiffuseScreenReflectance == other.DiffuseScreenReflectance &&
+            SpecularScreenReflectance == other.SpecularScreenReflectance &&
+            SupportedHDR == other.SupportedHDR &&
+            FreesyncFlags == other.FreesyncFlags &&
+            MinLuminanceNoDimmingData == other.MinLuminanceNoDimmingData &&
+            MaxBacklightMaxLuminanceData == other.MaxBacklightMaxLuminanceData &&
+            MinBacklightMaxLuminanceData == other.MinBacklightMaxLuminanceData &&
+            MaxBacklightMinLuminanceData == other.MaxBacklightMinLuminanceData &&
+            MinBacklightMinLuminanceData == other.MinBacklightMinLuminanceData;
+
+        public override int GetHashCode()
+        {
+            return (Size, SupportsDDC, ManufacturerID, ProductID, DisplayName, MaxHResolution, MaxVResolution, MaxRefresh, PTMCx, PTMCy, PTMRefreshRate, DDCInfoFlag,
+                PackedPixelSupported, PanelPixelFormat, SerialID, MinLuminanceData, AvgLuminanceData, MaxLuminanceData, SupportedTransferFunction, SupportedColorSpace,
+                NativeDisplayChromaticityRedX, NativeDisplayChromaticityRedY, NativeDisplayChromaticityGreenX, NativeDisplayChromaticityGreenY,
+                NativeDisplayChromaticityBlueX, NativeDisplayChromaticityBlueY, NativeDisplayChromaticityWhiteX, NativeDisplayChromaticityWhiteY,
+                DiffuseScreenReflectance, SpecularScreenReflectance, SupportedHDR, FreesyncFlags, MinLuminanceNoDimmingData, MaxBacklightMaxLuminanceData,
+                MinBacklightMaxLuminanceData, MaxBacklightMinLuminanceData, MinBacklightMinLuminanceData).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
+    }
 
     /// <summary> ADLDisplayID Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayID
+    public struct ADL_DISPLAY_ID : IEquatable<ADL_DISPLAY_ID>
     {
         /// <summary> Display Logical Index </summary>
         public int DisplayLogicalIndex;
@@ -657,21 +689,34 @@ namespace ATI.ADL
         public int DisplayLogicalAdapterIndex;
         /// <summary> Adapter Physical Index </summary>
         public int DisplayPhysicalAdapterIndex;
+
+        public bool Equals(ADL_DISPLAY_ID other)
+            => DisplayLogicalIndex == other.DisplayLogicalIndex &&
+                DisplayPhysicalIndex == other.DisplayPhysicalIndex &&
+                DisplayLogicalAdapterIndex == other.DisplayLogicalAdapterIndex &&
+                DisplayPhysicalAdapterIndex == other.DisplayPhysicalAdapterIndex;
+
+        public override int GetHashCode()
+        {
+            return (DisplayLogicalIndex, DisplayPhysicalIndex, DisplayLogicalAdapterIndex, DisplayPhysicalAdapterIndex).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLDisplayInfo Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayInfo
+    public struct ADL_DISPLAY_INFO : IEquatable<ADL_DISPLAY_INFO>
     {
         /// <summary> Display Index </summary>
-        public ADLDisplayID DisplayID;
+        public ADL_DISPLAY_ID DisplayID;
         /// <summary> Display Controller Index </summary>
         public int DisplayControllerIndex;
         /// <summary> Display Name </summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string DisplayName;
         /// <summary> Display Manufacturer Name </summary>
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADL.ADL_MAX_PATH)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)ADLImport.ADL_MAX_PATH)]
         public string DisplayManufacturerName;
         /// <summary> Display Type : The Display type. CRT, TV,CV,DFP are some of display types,</summary>
         public int DisplayType;
@@ -683,51 +728,145 @@ namespace ATI.ADL
         public int DisplayInfoMask;
         ///<summary> Indicating the display info value.<summary>
         public int DisplayInfoValue;
+
+        // Display Type - no idea what the settings are
+
+        // Display Output Type settings
+        public bool DisplayOutputTypeIsUnknown => DisplayOutputType == 0;
+        public bool DisplayOutputTypeIsVGA => DisplayOutputType == 1;
+        public bool DisplayOutputTypeIsDVI_D => DisplayOutputType == 2;
+        public bool DisplayOutputTypeIsDVI_I => DisplayOutputType == 3;
+        public bool DisplayOutputTypeIsATICVDongleNTSC => DisplayOutputType == 4;
+        public bool DisplayOutputTypeIsATICVDongleJPN => DisplayOutputType == 5;
+        public bool DisplayOutputTypeIsATICVDongleNonI2CJPN => DisplayOutputType == 6;
+        public bool DisplayOutputTypeIsATICVDongleNonI2CNTSC => DisplayOutputType == 7;
+        public bool DisplayOutputTypeIsProprietary => DisplayOutputType == 8;
+        public bool DisplayOutputTypeIsHDMITypeA => DisplayOutputType == 10;
+        public bool DisplayOutputTypeIsHDMITypeB => DisplayOutputType == 11;
+        public bool DisplayOutputTypeIsSVideo => DisplayOutputType == 12;
+        public bool DisplayOutputTypeIsComposite => DisplayOutputType == 13;
+        public bool DisplayOutputTypeIsRCA3Component => DisplayOutputType == 14;
+        public bool DisplayOutputTypeIsDisplayPort => DisplayOutputType == 15;
+        public bool DisplayOutputTypeIsEDP => DisplayOutputType == 16;
+        public bool DisplayOutputTypeIsWirelessDisplay => DisplayOutputType == 17;
+        public bool DisplayOutputTypeIsUSBTypeC => DisplayOutputType == 18;
+
+
+        /*#define ADL_DISPLAY_CONTYPE_UNKNOWN                 0
+        #define ADL_DISPLAY_CONTYPE_VGA                     1
+        #define ADL_DISPLAY_CONTYPE_DVI_D                   2
+        #define ADL_DISPLAY_CONTYPE_DVI_I                   3
+        #define ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC        4
+        #define ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN         5
+        #define ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN  6
+        #define ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC 7
+        #define ADL_DISPLAY_CONTYPE_PROPRIETARY                8
+        #define ADL_DISPLAY_CONTYPE_HDMI_TYPE_A             10
+        #define ADL_DISPLAY_CONTYPE_HDMI_TYPE_B             11
+        #define ADL_DISPLAY_CONTYPE_SVIDEO                   12
+        #define ADL_DISPLAY_CONTYPE_COMPOSITE               13
+        #define ADL_DISPLAY_CONTYPE_RCA_3COMPONENT          14
+        #define ADL_DISPLAY_CONTYPE_DISPLAYPORT             15
+        #define ADL_DISPLAY_CONTYPE_EDP                     16
+        #define ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY         17
+        #define ADL_DISPLAY_CONTYPE_USB_TYPE_C              18*/
+
+        // Display Connector
+
+        public bool DisplayConnectorIsVGA => DisplayConnector == 0;
+        public bool DisplayConnectorIsDVI => DisplayConnector == 1;
+        public bool DisplayConnectorIsDVI_SL => DisplayConnector == 2;
+        public bool DisplayConnectorIsHDMI => DisplayConnector == 3;
+        public bool DisplayConnectorIsDisplayPort => DisplayConnector == 4;
+        public bool DisplayConnectorIsActiveDongleDP_DVI_SL => DisplayConnector == 5;
+        public bool DisplayConnectorIsActiveDongleDP_DVI_DL => DisplayConnector == 6;
+        public bool DisplayConnectorIsActiveDongleDP_HDMI => DisplayConnector == 7;
+        public bool DisplayConnectorIsActiveDongleDP_VGA => DisplayConnector == 8;
+        public bool DisplayConnectorIsPassiveDongleDP_HDMI => DisplayConnector == 9;
+        public bool DisplayConnectorIsPassiveDongleDP_DVI => DisplayConnector == 10;
+        public bool DisplayConnectorIsMST => DisplayConnector == 11;
+        public bool DisplayConnectorIsActiveDongle => DisplayConnector == 12;
+        public bool DisplayConnectorIsVirtual => DisplayConnector == 13;
+
+        /*#define ADL_CONNECTION_TYPE_VGA 0
+        #define ADL_CONNECTION_TYPE_DVI 1
+        #define ADL_CONNECTION_TYPE_DVI_SL 2
+        #define ADL_CONNECTION_TYPE_HDMI 3
+        #define ADL_CONNECTION_TYPE_DISPLAY_PORT 4
+        #define ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL 5
+        #define ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL 6
+        #define ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI 7
+        #define ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA 8
+        #define ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI 9
+        #define ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI 10
+        #define ADL_CONNECTION_TYPE_MST 11
+        #define ADL_CONNECTION_TYPE_ACTIVE_DONGLE          12
+        #define ADL_CONNECTION_TYPE_VIRTUAL    13*/
+
+
+        // Display Info Mask settings
+        public bool DisplayConnectedSupported => (DisplayInfoMask & 0x1) == 0x1;
+        public bool DisplayMappedSupported => (DisplayInfoMask & 0x2) == 0x2;
+        public bool NonLocalSupported => (DisplayInfoMask & 0x4) == 0x4;
+        public bool ForcibleSupported => (DisplayInfoMask & 0x8) == 0x8;
+        public bool GenLockSupported => (DisplayInfoMask & 0x10) == 0x10;
+        public bool MultiVPUSupported => (DisplayInfoMask & 0x20) == 0x20;
+        public bool LDADisplaySupported => (DisplayInfoMask & 0x40) == 0x40;
+        public bool ModeTimingOverrideSupported => (DisplayInfoMask & 0x80) == 0x80;
+        public bool MannerSingleSupported => (DisplayInfoMask & 0x100) == 0x100;
+        public bool MannerCloneSupported => (DisplayInfoMask & 0x200) == 0x200;
+        public bool Manner2VStretchSupported => (DisplayInfoMask & 0x400) == 0x400;
+        public bool Manner2HStretchSupported => (DisplayInfoMask & 0x800) == 0x800;
+        public bool MannerExtendedSupported => (DisplayInfoMask & 0x1000) == 0x1000;
+        public bool MannerNStretch1GPUSupported => (DisplayInfoMask & 0x10000) == 0x10000;
+        public bool MannerNStretchNGPUSupported => (DisplayInfoMask & 0x20000) == 0x20000;
+        public bool MannerReserved2Supported => (DisplayInfoMask & 0x40000) == 0x40000;
+        public bool MannerReserved3Supported => (DisplayInfoMask & 0x80000) == 0x80000;
+        public bool ShowTypeProjectorSupported => (DisplayInfoMask & 0x100000) == 0x100000;
+
+        // Display Info Value settings
+        public bool DisplayConnectedSet => (DisplayInfoValue & 0x1) == 0x1;
+        public bool DisplayMappedSet => (DisplayInfoValue & 0x2) == 0x2;
+        public bool NonLocalSet => (DisplayInfoValue & 0x4) == 0x4;
+        public bool ForcibleSet => (DisplayInfoValue & 0x8) == 0x8;
+        public bool GenLockSet => (DisplayInfoValue & 0x10) == 0x10;
+        public bool MultiVPUSet => (DisplayInfoValue & 0x20) == 0x20;
+        public bool LDADisplaySet => (DisplayInfoValue & 0x40) == 0x40;
+        public bool ModeTimingOverrideSet => (DisplayInfoValue & 0x80) == 0x80;
+        public bool MannerSingleSet => (DisplayInfoValue & 0x100) == 0x100;
+        public bool MannerCloneSet => (DisplayInfoValue & 0x200) == 0x200;
+        public bool Manner2VStretchSet => (DisplayInfoValue & 0x400) == 0x400;
+        public bool Manner2HStretchSet => (DisplayInfoValue & 0x800) == 0x800;
+        public bool MannerExtendedSet => (DisplayInfoValue & 0x1000) == 0x1000;
+        public bool MannerNStretch1GPUSet => (DisplayInfoValue & 0x10000) == 0x10000;
+        public bool MannerNStretchNGPUSet => (DisplayInfoValue & 0x20000) == 0x20000;
+        public bool MannerReserved2Set => (DisplayInfoValue & 0x40000) == 0x40000;
+        public bool MannerReserved3Set => (DisplayInfoValue & 0x80000) == 0x80000;
+        public bool ShowTypeProjectorSet => (DisplayInfoValue & 0x100000) == 0x100000;
+
+        public bool Equals(ADL_DISPLAY_INFO other)
+            => DisplayID.Equals(other.DisplayID) &&
+                DisplayControllerIndex == other.DisplayControllerIndex &&
+                DisplayName.Equals(other.DisplayName) &&
+                DisplayID.Equals(other.DisplayID) &&
+                DisplayType == other.DisplayType &&
+                DisplayOutputType == other.DisplayOutputType &&
+                DisplayConnector == other.DisplayConnector &&
+                DisplayInfoMask == other.DisplayInfoMask &&
+                DisplayInfoValue == other.DisplayInfoValue;
+
+        public override int GetHashCode()
+        {
+            return (DisplayID, DisplayControllerIndex, DisplayName, DisplayID, DisplayType, DisplayOutputType, DisplayConnector, DisplayInfoMask, DisplayInfoValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
-    public struct ConvertedDisplayInfoValue
-    {
-        /// <summary> Indicates the display is connected .</summary>
-        public bool DISPLAYCONNECTED;
-        /// <summary> Indicates the display is mapped within OS </summary>
-        public bool DISPLAYMAPPED;
-        /// <summary> Indicates the display can be forced </summary>
-        public bool FORCIBLESUPPORTED;
-        /// <summary> Indicates the display supports genlock </summary>
-        public bool GENLOCKSUPPORTED;
-        /// <summary> Indicates the display is an LDA display.</summary>
-        public bool LDA_DISPLAY;
-        /// <summary> Indicates the display supports 2x Horizontal stretch </summary>
-        public bool MANNER_SUPPORTED_2HSTRETCH;
-        /// <summIndicates the display supports 2x Vertical stretch </summary>
-        public bool MANNER_SUPPORTED_2VSTRETCH;
-        /// <summary> Indicates the display supports cloned desktops </summary>
-        public bool MANNER_SUPPORTED_CLONE;
-        /// <summary> Indicates the display supports extended desktops </summary>
-        public bool MANNER_SUPPORTED_EXTENDED;
-        /// <summary> Indicates the display supports N Stretched on 1 GPU</summary>
-        public bool MANNER_SUPPORTED_NSTRETCH1GPU;
-        /// <summary> Indicates the display supports N Stretched on N GPUs</summary>
-        public bool MANNER_SUPPORTED_NSTRETCHNGPU;
-        /// <summary> Reserved display info flag #2</summary>
-        public bool MANNER_SUPPORTED_RESERVED2;
-        /// <summary> Reserved display info flag #3</summary>
-        public bool MANNER_SUPPORTED_RESERVED3;
-        /// <summary> Indicates the display supports single desktop </summary>
-        public bool MANNER_SUPPORTED_SINGLE;
-        /// <summary> Indicates the display supports overriding the mode timing </summary>
-        public bool MODETIMING_OVERRIDESSUPPORTED;
-        /// <summary> Indicates the display supports multi-vpu</summary>
-        public bool MULTIVPU_SUPPORTED;
-        /// <summary> Indicates the display is non-local to this machine </summary>
-        public bool NONLOCAL;
-        /// <summary> Indicates the display is a projector </summary>
-        public bool SHOWTYPE_PROJECTOR;
-    }
 
     /// <summary> ADLDisplayConfig Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayConfig
+    public struct ADL_DISPLAY_CONFIG : IEquatable<ADL_DISPLAY_CONFIG>
     {
         /// <summary> Size of this data structure </summary>
         public long Size;
@@ -739,17 +878,42 @@ namespace ATI.ADL
         public long OverriddedDeviceData;
         /// <summary> Reserved for future use</summary>
         public long Reserved;
-        
+
+        // Connector Type
+        public bool ConnectorTypeIsUnknown => ConnectorType == 0;
+        public bool ConnectorTypeIsCVNonI2CJP => ConnectorType == 1;
+        public bool ConnectorTypeIsCVJPN => ConnectorType == 2;
+        public bool ConnectorTypeIsCVNA => ConnectorType == 3;
+        public bool ConnectorTypeIsCVNonI2CNA => ConnectorType == 4;
+        public bool ConnectorTypeIsVGA => ConnectorType == 5;
+        public bool ConnectorTypeIsDVI_D => ConnectorType == 6;
+        public bool ConnectorTypeIsDVI_I => ConnectorType == 7;
+        public bool ConnectorTypeIsHDMITypeA => ConnectorType == 8;
+        public bool ConnectorTypeIsHDMITypeB => ConnectorType == 9;
+        public bool ConnectorTypeIsDisplayPort => ConnectorType == 10;
+
+        public bool Equals(ADL_DISPLAY_CONFIG other)
+            => Size == other.Size &&
+                ConnectorType == other.ConnectorType &&
+                DeviceData == other.DeviceData &&
+                OverriddedDeviceData == other.OverriddedDeviceData;
+
+        public override int GetHashCode()
+        {
+            return (Size, ConnectorType, DeviceData, OverriddedDeviceData).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLDisplayMap Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayMap
+    public struct ADL_DISPLAY_MAP : IEquatable<ADL_DISPLAY_MAP>
     {
         /// <summary> The current display map index. It is the OS desktop index. For example, if the OS index 1 is showing clone mode, the display map will be 1. </summary>
         public int DisplayMapIndex;
         /// <summary> The Display Mode for the current map.</summary>
-        public ADLMode DisplayMode;
+        public ADL_MODE DisplayMode;
         /// <summary> The number of display targets belongs to this map </summary>
         public int NumDisplayTarget;
         /// <summary> The first target array index in the Target array </summary>
@@ -757,21 +921,47 @@ namespace ATI.ADL
         /// <summary> The bit mask identifies the number of bits DisplayMap is currently using. It is the sum of all the bit definitions defined in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
         public int DisplayMapMask;
         /// <summary> The bit mask identifies the display status. The detailed definition is in ADL_DISPLAY_DISPLAYMAP_MANNER_xxx.</summary>
-        public int DisplayMapValue;               
-    }
+        public int DisplayMapValue;
 
-    /// <summary> ADLDisplayMapArray Array</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct ADLDisplayMapArray
-    {
-        /// <summary> ADLAdapterInfo Array </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_DISPLAYS)]
-        public ADLDisplayMap[] ADLDisplayMap;
+        // Display Map Mask settings
+        public bool DisplayMapReservedSupported => (DisplayMapMask & 0x1) == 0x1;
+        public bool DisplayMapNotActiveSupported => (DisplayMapMask & 0x2) == 0x2;
+        public bool DisplayMapSingleSupported => (DisplayMapMask & 0x4) == 0x4;
+        public bool DisplayMapCloneSupported => (DisplayMapMask & 0x8) == 0x8;
+        public bool DisplayMapReserved1Supported => (DisplayMapMask & 0x10) == 0x10;
+        public bool DisplayMapHStretchSupported => (DisplayMapMask & 0x20) == 0x20;
+        public bool DisplayMapVStretchSupported => (DisplayMapMask & 0x40) == 0x40;
+        public bool DisplayMapVLDSupported => (DisplayMapMask & 0x80) == 0x80;
+
+        // Display Map Value settings
+        public bool DisplayMapReservedSet => (DisplayMapValue & 0x1) == 0x1;
+        public bool DisplayMapNotActiveSet => (DisplayMapValue & 0x2) == 0x2;
+        public bool DisplayMapSingleSet => (DisplayMapValue & 0x4) == 0x4;
+        public bool DisplayMapCloneSet => (DisplayMapValue & 0x8) == 0x8;
+        public bool DisplayMapReserved1Set => (DisplayMapValue & 0x10) == 0x10;
+        public bool DisplayMapHStretchSet => (DisplayMapValue & 0x20) == 0x20;
+        public bool DisplayMapVStretchSet => (DisplayMapValue & 0x40) == 0x40;
+        public bool DisplayMapVLDSet => (DisplayMapValue & 0x80) == 0x80;
+
+        public bool Equals(ADL_DISPLAY_MAP other)
+            => DisplayMapIndex == other.DisplayMapIndex &&
+                DisplayMode.Equals(other.DisplayMode) &&
+                NumDisplayTarget == other.NumDisplayTarget &&
+                FirstDisplayTargetArrayIndex == other.FirstDisplayTargetArrayIndex &&
+                DisplayMapMask == other.DisplayMapMask &&
+                DisplayMapValue == other.DisplayMapValue;
+
+        public override int GetHashCode()
+        {
+            return (DisplayMapIndex, DisplayMode, NumDisplayTarget, FirstDisplayTargetArrayIndex, DisplayMapMask, DisplayMapValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLAdapterCaps Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLAdapterCapsX2
+    public struct ADL_ADAPTER_CAPSX2 : IEquatable<ADL_ADAPTER_CAPSX2>
     {
         /// <summary> AdapterID for this adapter </summary>
         public int AdapterID;
@@ -789,12 +979,53 @@ namespace ATI.ADL
         public int CapsValue;
         /// <summary> Number of Connectors for this adapter. </summary>
         public int NumConnectors;
+
+        // Caps Mask settings
+        public bool CapNotActiveSupported => (CapsMask & 0x1) == 0x1;
+        public bool CapSingleSupported => (CapsMask & 0x2) == 0x2;
+        public bool CapCloneSupported => (CapsMask & 0x4) == 0x4;
+        public bool CapNStretch1GPUSupported => (CapsMask & 0x8) == 0x8;
+        public bool CapNStretchNGPUSupported => (CapsMask & 0x10) == 0x10;
+        public bool Cap2VStretchSupported => (CapsMask & 0x20) == 0x20;
+        public bool Cap2HStretchSupported => (CapsMask & 0x40) == 0x40;
+        public bool CapExtendedSupported => (CapsMask & 0x80) == 0x80;
+        public bool CapPreferredDisplaySupported => (CapsMask & 0x100) == 0x100;
+        public bool CapBezelSupported => (CapsMask & 0x200) == 0x200;
+
+        // Caps Value settings
+        public bool CapNotActiveSet => (CapsValue & 0x1) == 0x1;
+        public bool CapSingleSet => (CapsValue & 0x2) == 0x2;
+        public bool CapCloneSet => (CapsValue & 0x4) == 0x4;
+        public bool CapNStretch1GPUSet => (CapsValue & 0x8) == 0x8;
+        public bool CapNStretchNGPUSet => (CapsValue & 0x10) == 0x10;
+        public bool Cap2VStretchSet => (CapsValue & 0x20) == 0x20;
+        public bool Cap2HStretchSet => (CapsValue & 0x40) == 0x40;
+        public bool CapExtendedSet => (CapsValue & 0x80) == 0x80;
+        public bool CapPreferredDisplaySet => (CapsValue & 0x100) == 0x100;
+        public bool CapBezelSet => (CapsValue & 0x200) == 0x200;
+
+        public bool Equals(ADL_ADAPTER_CAPSX2 other)
+            => AdapterID == other.AdapterID &&
+                NumControllers == other.NumControllers &&
+                NumDisplays == other.NumDisplays &&
+                NumOverlays == other.NumOverlays &&
+                NumOfGLSyncConnectors == other.NumOfGLSyncConnectors &&
+                CapsMask == other.CapsMask &&
+                CapsValue == other.CapsValue &&
+                NumConnectors == other.NumConnectors;
+
+        public override int GetHashCode()
+        {
+            return (AdapterID, NumControllers, NumDisplays, NumOverlays, NumOfGLSyncConnectors, CapsMask, CapsValue, NumConnectors).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLPossibleMap Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLPossibleMap
-    { 
+    public struct ADL_POSSIBLE_MAP : IEquatable<ADL_POSSIBLE_MAP>
+    {
         /// <summary> Index</summary>
         public int Index;
         /// <summary> Adapter Index. </summary>
@@ -802,16 +1033,31 @@ namespace ATI.ADL
         /// <summary> Display Map Number</summary>
         public int NumDisplayMap;
         /// <summary> The DisplayMaps being tested</summary>
-        public ADLDisplayMap DisplayMaps;
+        public ADL_DISPLAY_MAP DisplayMaps;
         /// <summary> Number of Display Targets</summary>
         public int NumDisplayTarget;
         /// <summary> The DisplayTargets being tested </summary>
-        public ADLDisplayTarget DisplayTargets;
+        public ADL_DISPLAY_TARGET DisplayTargets;
+
+        public bool Equals(ADL_POSSIBLE_MAP other)
+            => Index == other.Index &&
+                AdapterIndex == other.AdapterIndex &&
+                NumDisplayMap == other.NumDisplayMap &&
+                DisplayMaps.Equals(other.DisplayMaps) &&
+                NumDisplayTarget == other.NumDisplayTarget &&
+                DisplayTargets.Equals(other.DisplayTargets);
+
+        public override int GetHashCode()
+        {
+            return (Index, AdapterIndex, NumDisplayMap, DisplayMaps, NumDisplayTarget, DisplayTargets).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLPossibleMapping Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLPossibleMapping
+    public struct ADL_POSSIBLE_MAPPING : IEquatable<ADL_POSSIBLE_MAPPING>
     {
         /// <summary>Display Index</summary>
         public int DisplayIndex;
@@ -819,11 +1065,45 @@ namespace ATI.ADL
         public int DisplayControllerIndex;
         /// <summary> The display manner options supported</summary>
         public int DisplayMannerSupported;
+
+        // Display Manner Supported settings
+        public bool MapReservedSupported => (DisplayMannerSupported & 0x1) == 0x1;
+        public bool MapNotActiveSupported => (DisplayMannerSupported & 0x2) == 0x2;
+        public bool MapSingleSupported => (DisplayMannerSupported & 0x4) == 0x4;
+        public bool MapCloneSupported => (DisplayMannerSupported & 0x8) == 0x8;
+        public bool MapReserved1Supported => (DisplayMannerSupported & 0x10) == 0x10;
+        public bool MapHStretchSupported => (DisplayMannerSupported & 0x20) == 0x20;
+        public bool MapVStretchSupported => (DisplayMannerSupported & 0x40) == 0x40;
+        public bool MapVLDSupported => (DisplayMannerSupported & 0x80) == 0x80;
+
+        // ADL_DISPLAY_DISPLAYMAP_MANNER_ Definitions
+        // for ADLDisplayMap.iDisplayMapMask and ADLDisplayMap.iDisplayMapValue
+        // (bit-vector)
+        /*#define ADL_DISPLAY_DISPLAYMAP_MANNER_RESERVED            0x00000001
+        #define ADL_DISPLAY_DISPLAYMAP_MANNER_NOTACTIVE            0x00000002
+        #define ADL_DISPLAY_DISPLAYMAP_MANNER_SINGLE            0x00000004
+        #define ADL_DISPLAY_DISPLAYMAP_MANNER_CLONE                0x00000008
+        #define ADL_DISPLAY_DISPLAYMAP_MANNER_RESERVED1            0x00000010  // Removed NSTRETCH
+        #define ADL_DISPLAY_DISPLAYMAP_MANNER_HSTRETCH            0x00000020
+        #define ADL_DISPLAY_DISPLAYMAP_MANNER_VSTRETCH            0x00000040
+        #define ADL_DISPLAY_DISPLAYMAP_MANNER_VLD                0x00000080*/
+
+        public bool Equals(ADL_POSSIBLE_MAPPING other)
+            => DisplayIndex == other.DisplayIndex &&
+                DisplayControllerIndex == other.DisplayControllerIndex &&
+                DisplayMannerSupported == other.DisplayMannerSupported;
+
+        public override int GetHashCode()
+        {
+            return (DisplayIndex, DisplayControllerIndex, DisplayMannerSupported).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLPossibleMapResult Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLPossibleMapResult
+    public struct ADL_POSSIBLE_MAP_RESULT : IEquatable<ADL_POSSIBLE_MAP_RESULT>
     {
         /// <summary>Index</summary>
         public int Index;
@@ -831,16 +1111,42 @@ namespace ATI.ADL
         /// <summary> Display Controller Index</summary>
         public int PossibleMapResultMask;
         /// <summary> The display manner options supported</summary>
-        public int PossibleMapResulValue;
+        public int PossibleMapResultValue;
+
+        // Possible Map Result Mask settings
+        public bool MapResultValidSupported => (PossibleMapResultMask & 0x1) == 0x1;
+        public bool MapNotActiveSupported => (PossibleMapResultMask & 0x2) == 0x2;
+        public bool MapSingleSupported => (PossibleMapResultMask & 0x4) == 0x4;
+
+        // Possible Map Result Mask settings
+        public bool MapResultValidSet => (PossibleMapResultValue & 0x1) == 0x1;
+        public bool MapNotActiveSet => (PossibleMapResultValue & 0x2) == 0x2;
+        public bool MapSingleSet => (PossibleMapResultValue & 0x4) == 0x4;
+
+
+        // ADL_DISPLAY_POSSIBLEMAPRESULT_VALID Definitions
+        // for ADLPossibleMapResult.iPossibleMapResultMask and ADLPossibleMapResult.iPossibleMapResultValue
+        // (bit-vector)
+        /*#define ADL_DISPLAY_POSSIBLEMAPRESULT_VALID                0x00000001
+        #define ADL_DISPLAY_POSSIBLEMAPRESULT_BEZELSUPPORTED    0x00000002
+        #define ADL_DISPLAY_POSSIBLEMAPRESULT_OVERLAPSUPPORTED    0x00000004*/
+
+        public bool Equals(ADL_POSSIBLE_MAP_RESULT other)
+            => Index == other.Index &&
+                PossibleMapResultMask == other.PossibleMapResultMask &&
+                PossibleMapResultValue == other.PossibleMapResultValue;
+
+        public override int GetHashCode()
+        {
+            return (Index, PossibleMapResultMask, PossibleMapResultValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
-
-    #endregion ADLDisplayInfo
-
-    #region ADLSLS
 
     /// <summary> ADLSLSGrid Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLSLSGrid
+    public struct ADL_SLS_GRID : IEquatable<ADL_SLS_GRID>
     {
         /// <summary> The Adapter index </summary>
         public int AdapterIndex;
@@ -854,18 +1160,63 @@ namespace ATI.ADL
         public int SLSGridMask;
         /// <summary> The grid bit value identifies the display status. </summary>
         public int SLSGridValue;
+
+        // SLS Grid Mask settings
+        public bool SLSGridRelativeToLandscapeSupported => (SLSGridMask & 0x1) == 0x1;
+        public bool SLSGridRelativeToCurrentAngleSupported => (SLSGridMask & 0x2) == 0x2;
+        public bool SLSGridPortraitModeSupported => (SLSGridMask & 0x4) == 0x4;
+        public bool SLSGridKeepTargetRotationSupported => (SLSGridMask & 0x8) == 0x8;
+        public bool SLSGridSameModeSLSSupported => (SLSGridMask & 0x10) == 0x10;
+        public bool SLSGridMixModeSLSSupported => (SLSGridMask & 0x20) == 0x20;
+        public bool SLSGridDisplayRotationSupported => (SLSGridMask & 0x40) == 0x40;
+        public bool SLSGridDesktopRotationSupported => (SLSGridMask & 0x80) == 0x80;
+
+        // SLS Grid Value settings
+        public bool SLSGridRelativeToLandscapeSet => (SLSGridValue & 0x1) == 0x1;
+        public bool SLSGridRelativeToCurrentAngleSet => (SLSGridValue & 0x2) == 0x2;
+        public bool SLSGridPortraitModeSet => (SLSGridValue & 0x4) == 0x4;
+        public bool SLSGridKeepTargetRotationSet => (SLSGridValue & 0x8) == 0x8;
+        public bool SLSGridSameModeSLSSet => (SLSGridValue & 0x10) == 0x10;
+        public bool SLSGridMixModeSLSSet => (SLSGridValue & 0x20) == 0x20;
+        public bool SLSGridDisplayRotationSet => (SLSGridValue & 0x40) == 0x40;
+        public bool SLSGridDesktopRotationSet => (SLSGridValue & 0x80) == 0x80;
+
+        /*#define ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE     0x00000001
+        #define ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE     0x00000002
+        #define ADL_DISPLAY_SLSGRID_PORTAIT_MODE                         0x00000004
+        #define ADL_DISPLAY_SLSGRID_KEEPTARGETROTATION                  0x00000080
+
+        #define ADL_DISPLAY_SLSGRID_SAMEMODESLS_SUPPORT        0x00000010
+        #define ADL_DISPLAY_SLSGRID_MIXMODESLS_SUPPORT        0x00000020
+        #define ADL_DISPLAY_SLSGRID_DISPLAYROTATION_SUPPORT    0x00000040
+        #define ADL_DISPLAY_SLSGRID_DESKTOPROTATION_SUPPORT    0x00000080*/
+
+        public bool Equals(ADL_SLS_GRID other)
+            => AdapterIndex == other.AdapterIndex &&
+                SLSGridIndex == other.SLSGridIndex &&
+                SLSGridRow == other.SLSGridRow &&
+                SLSGridColumn == other.SLSGridColumn &&
+                SLSGridMask == other.SLSGridMask &&
+                SLSGridValue == other.SLSGridValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, SLSGridIndex, SLSGridRow, SLSGridColumn, SLSGridMask, SLSGridValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLSLSMap Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLSLSMap
+    public struct ADL_SLS_MAP : IEquatable<ADL_SLS_MAP>
     {
         /// <summary> The Adapter Index </summary>
         public int AdapterIndex;
         /// <summary> The current display map index. It is the OS Desktop index. </summary>
         public int SLSMapIndex;
         /// <summary> The current grid </summary>
-        public ADLSLSGrid Grid;
+        public ADL_SLS_GRID Grid;
         /// <summary> OS Surface Index </summary>
         public int SurfaceMapIndex;
         /// <summary> Screen orientation. E.g., 0, 90, 180, 270. </summary>
@@ -890,43 +1241,126 @@ namespace ATI.ADL
         public int SLSMapMask;
         /// <summary> Bitmask identifies display map status </summary>
         public int SLSMapValue;
-        
+
+        // SLS Orientation settings
+        /*public bool Orientation000 => (Orientation & 0x1) == 0x1;
+        public bool Orientation090 => (Orientation & 0x2) == 0x2;
+        public bool Orientation180 => (Orientation & 0x4) == 0x4;
+        public bool Orientation270 => (Orientation & 0x8) == 0x8;
+
+        *//*#define ADL_DISPLAY_SLSGRID_ORIENTATION_000        0x00000001
+        #define ADL_DISPLAY_SLSGRID_ORIENTATION_090        0x00000002
+        #define ADL_DISPLAY_SLSGRID_ORIENTATION_180        0x00000004
+        #define ADL_DISPLAY_SLSGRID_ORIENTATION_270        0x00000008*//*
+
+        // SLS Map Mask settings
+        public bool SLSMapDisplayArrangedSupported => (SLSMapMask & 0x2) == 0x2;
+        public bool SLSMapCurrentConfigSupported => (SLSMapMask & 0x4) == 0x4;
+        public bool SLSMapBezelModeSupported => (SLSMapMask & 0x10) == 0x10;
+        public bool SLSMapLayoutModeFitSupported => (SLSMapMask & 0x100) == 0x100;
+        public bool SLSMapLayoutModeFillSupported => (SLSMapMask & 0x200) == 0x200;
+        public bool SLSMapLayoutModeExpandSupported => (SLSMapMask & 0x400) == 0x400;
+        public bool SLSMapIsSLSSupported => (SLSMapMask & 0x1000) == 0x1000;
+        public bool SLSMapIsSLSBuilderSupported => (SLSMapMask & 0x2000) == 0x2000;
+        public bool SLSMapIsCloneVTSupported => (SLSMapMask & 0x4000) == 0x4000;
+
+        // SLS Map Value settings
+        public bool SLSMapDisplayArrangedSet => (SLSMapValue & 0x2) == 0x2;
+        public bool SLSMapCurrentConfigSet => (SLSMapValue & 0x4) == 0x4;
+        public bool SLSMapBezelModeSet => (SLSMapValue & 0x10) == 0x10;
+        public bool SLSMapLayoutModeFitSet => (SLSMapValue & 0x100) == 0x100;
+        public bool SLSMapLayoutModeFillSet => (SLSMapValue & 0x200) == 0x200;
+        public bool SLSMapLayoutModeExpandSet => (SLSMapValue & 0x400) == 0x400;
+        public bool SLSMapIsSLSSet => (SLSMapValue & 0x1000) == 0x1000;
+        public bool SLSMapIsSLSBuilderSet => (SLSMapValue & 0x2000) == 0x2000;
+        public bool SLSMapIsCloneVTSet => (SLSMapValue & 0x4000) == 0x4000;
+
+*/
+        /*#define ADL_DISPLAY_SLSMAP_DISPLAYARRANGED        0x0002
+        #define ADL_DISPLAY_SLSMAP_CURRENTCONFIG        0x0004
+        #define ADL_DISPLAY_SLSMAP_BEZELMODE            0x0010
+        #define ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_FIT        0x0100
+        #define ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_FILL       0x0200
+        #define ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_EXPAND     0x0400
+        #define ADL_DISPLAY_SLSMAP_IS_SLS        0x1000
+        #define ADL_DISPLAY_SLSMAP_IS_SLSBUILDER 0x2000
+        #define ADL_DISPLAY_SLSMAP_IS_CLONEVT     0x4000*/
+
+        public bool Equals(ADL_SLS_MAP other)
+            => AdapterIndex == other.AdapterIndex &&
+                SLSMapIndex == other.SLSMapIndex &&
+                Grid.Equals(other.Grid) &&
+                SurfaceMapIndex == other.SurfaceMapIndex &&
+                Orientation == other.Orientation &&
+                NumSLSTarget == other.NumSLSTarget &&
+                FirstSLSTargetArrayIndex == other.FirstSLSTargetArrayIndex &&
+                NumNativeMode == other.NumNativeMode &&
+                FirstNativeModeArrayIndex == other.FirstNativeModeArrayIndex &&
+                NumBezelMode == other.NumBezelMode &&
+                FirstBezelModeArrayIndex == other.FirstBezelModeArrayIndex &&
+                NumBezelOffset == other.NumBezelOffset &&
+                FirstBezelOffsetArrayIndex == other.FirstBezelOffsetArrayIndex &&
+                SLSMapMask == other.SLSMapMask &&
+                SLSMapValue == other.SLSMapValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, SLSMapIndex, Grid, SurfaceMapIndex, Orientation, NumSLSTarget, FirstSLSTargetArrayIndex, NumNativeMode, FirstNativeModeArrayIndex, NumBezelMode, FirstBezelModeArrayIndex,
+                NumBezelOffset, FirstBezelOffsetArrayIndex, SLSMapMask, SLSMapValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLSLSTarget Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLSLSTarget
+    public struct ADL_SLS_TARGET : IEquatable<ADL_SLS_TARGET>
     {
         /// <summary> The Adapter Index </summary>
         public int AdapterIndex;
         /// <summary> The SLS map index. </summary>
         public int SLSMapIndex;
         /// <summary> The target ID.  </summary>
-        public ADLDisplayTarget DisplayTarget;
+        public ADL_DISPLAY_TARGET DisplayTarget;
         /// <summary> Target postion X in SLS grid </summary>
         public int SLSGridPositionX;
         /// <summary> Target postion Y in SLS grid </summary>
         public int SLSGridPositionY;
         /// <summary> The view size width, height and rotation angle per SLS Target.  </summary>
-        public ADLMode ViewSize;
-        /// <summary> The bit mask identifies the bits in iSLSTargetValue are currently used.  </summary>
+        public ADL_MODE ViewSize;
+        /// <summary> The bit mask identifies the bits in iSLSTargetValue are currently used. Should be set to 1 unless you are using SLS Builder. </summary>
         public int SLSTargetMask;
-        /// <summary> The bit mask identifies status info.  </summary>
-        public int SLSTargetValue;        
-    }
+        /// <summary> The bit mask identifies status info. Should be set to 1 unless you are using SLS Builder.</summary>
+        public int SLSTargetValue;
 
-    /// <summary> ADLSLSTarget Array</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct ADLSLSTargetArray
-    {
-        /// <summary> ADLAdapterInfo Array </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)ADL.ADL_MAX_ADAPTERS)]
-        public ADLSLSTarget[] ADLSLSTarget;
+
+        // SLSTargetMask settings
+        public bool SLSTargetNotSLSBuilderSupported => (SLSTargetMask & 0x1) == 0x1;
+
+        // SLSTargetValue settings
+        public bool SLSTargetNotSLSBuilderSet => (SLSTargetValue & 0x1) == 0x1;
+
+        public bool Equals(ADL_SLS_TARGET other)
+            => AdapterIndex == other.AdapterIndex &&
+                SLSMapIndex == other.SLSMapIndex &&
+                DisplayTarget.Equals(other.DisplayTarget) &&
+                SLSGridPositionX == other.SLSGridPositionX &&
+                SLSGridPositionY == other.SLSGridPositionY &&
+                ViewSize.Equals(other.ViewSize) &&
+                SLSTargetMask == other.SLSTargetMask &&
+                SLSTargetValue == other.SLSTargetValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, SLSMapIndex, DisplayTarget, SLSGridPositionX, SLSGridPositionY, ViewSize, SLSTargetMask, SLSTargetValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLSLSMode Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLSLSMode
+    public struct ADL_SLS_MODE : IEquatable<ADL_SLS_MODE>
     {
         /// <summary> The Adapter Index </summary>
         public int AdapterIndex;
@@ -935,17 +1369,31 @@ namespace ATI.ADL
         /// <summary> The mode index. </summary>
         public int SLSModeIndex;
         /// <summary> The target ID.  </summary>
-        public ADLMode DisplayMode;
+        public ADL_MODE DisplayMode;
         /// <summary> The bit mask identifies the number of bits Mode is currently using. </summary>
         public int SLSNativeModeMask;
         /// <summary> The bit mask identifies the display status. </summary>
         public int SLSNativeModeValue;
 
+        public bool Equals(ADL_SLS_MODE other)
+            => AdapterIndex == other.AdapterIndex &&
+                SLSMapIndex == other.SLSMapIndex &&
+                SLSModeIndex == other.SLSModeIndex &&
+                DisplayMode.Equals(other.DisplayMode) &&
+                SLSNativeModeMask == other.SLSNativeModeMask &&
+                SLSNativeModeValue == other.SLSNativeModeValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, SLSMapIndex, SLSModeIndex, DisplayMode, SLSNativeModeMask, SLSNativeModeValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
     /// <summary> ADLBezelTransientMode Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLBezelTransientMode
+    public struct ADL_BEZEL_TRANSIENT_MODE : IEquatable<ADL_BEZEL_TRANSIENT_MODE>
     {
         /// <summary> The Adapter Index </summary>
         public int AdapterIndex;
@@ -954,7 +1402,7 @@ namespace ATI.ADL
         /// <summary> SLS Mode Index. </summary>
         public int SLSModeIndex;
         /// <summary> The target ID.  </summary>
-        public ADLMode DisplayMode;
+        public ADL_MODE DisplayMode;
         /// <summary> The number of bezel offsets belongs to this map.  </summary>
         public int NumBezelOffset;
         /// <summary> The first bezel offset array index in the native mode array. </summary>
@@ -963,19 +1411,66 @@ namespace ATI.ADL
         public int SLSBezelTransientModeMask;
         /// <summary> The bit mask identifies the display status.  </summary>
         public int SLSBezelTransientModeValue;
-        
+
+        public bool Equals(ADL_BEZEL_TRANSIENT_MODE other)
+            => AdapterIndex == other.AdapterIndex &&
+                SLSMapIndex == other.SLSMapIndex &&
+                SLSModeIndex == other.SLSModeIndex &&
+                DisplayMode.Equals(other.DisplayMode) &&
+                NumBezelOffset == other.NumBezelOffset &&
+                FirstBezelOffsetArrayIndex == other.FirstBezelOffsetArrayIndex &&
+                SLSBezelTransientModeMask == other.SLSBezelTransientModeMask &&
+                SLSBezelTransientModeValue == other.SLSBezelTransientModeValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, SLSMapIndex, SLSModeIndex, DisplayMode, NumBezelOffset, FirstBezelOffsetArrayIndex, SLSBezelTransientModeMask, SLSBezelTransientModeValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
+
+    /// <summary> ADLPossibleSLSMap Structure</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ADL_POSSIBLE_SLS_MAP : IEquatable<ADL_POSSIBLE_SLS_MAP>
+    {
+        /// <summary> SLS Map Index. </summary>
+        public int SLSMapIndex;
+        /// <summary> Num SLS Map. </summary>
+        public int NumSLSMap;
+        /// <summary> The SLS Map List.  </summary>
+        public ADL_SLS_MAP[] SLSMaps;  // Not quite sure this is right
+        /// <summary> The number of SLS Targets</summary>
+        public int NumSLSTarget;
+        /// <summary> The SLS Target List. </summary>
+        public ADL_SLS_TARGET[] SLSTargets; // Not quite sure this is right
+
+        public bool Equals(ADL_POSSIBLE_SLS_MAP other)
+            => SLSMapIndex == other.SLSMapIndex &&
+                NumSLSMap == other.NumSLSMap &&
+                SLSMaps.Equals(other.SLSMaps) &&
+                NumSLSTarget == other.NumSLSTarget &&
+                SLSTargets.Equals(other.SLSTargets);
+
+        public override int GetHashCode()
+        {
+            return (SLSMapIndex, NumSLSMap, SLSMaps, NumSLSTarget, SLSTargets).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
+    }
+
 
     /// <summary> ADLSLSOffset Structure</summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct ADLSLSOffset
+    public struct ADL_SLS_OFFSET : IEquatable<ADL_SLS_OFFSET>
     {
         /// <summary> The Adapter Index </summary>
         public int AdapterIndex;
         /// <summary> The current display map index. It is the OS Desktop index. </summary>
         public int SLSMapIndex;
         /// <summary> The target ID.  </summary>
-        public ADLDisplayID DisplayID;
+        public ADL_DISPLAY_ID DisplayID;
         /// <summary> SLS Bezel Mode Index. </summary>
         public int BezelModeIndex;
         /// <summary>SLS Bezel Offset X. </summary>
@@ -990,19 +1485,51 @@ namespace ATI.ADL
         public int BezelOffsetMask;
         /// <summary> The bit mask identifies the display status. </summary>
         public int BezelOffsetValue;
+
+        // BezelOffsetMask settings
+        public bool SLSBezelOffsetStepByStepSupported => (BezelOffsetMask & 0x4) == 0x4;
+        public bool SLSBezelOffsetCommitSupported => (BezelOffsetMask & 0x8) == 0x8;
+
+        // BezelOffsetValue settings
+        public bool SLSBezelOffsetStepByStepSet => (BezelOffsetValue & 0x4) == 0x4;
+        public bool SLSBezelOffsetCommitSet => (BezelOffsetValue & 0x8) == 0x8;
+
+        /*#define ADL_DISPLAY_BEZELOFFSET_STEPBYSTEPSET            0x00000004
+        #define ADL_DISPLAY_BEZELOFFSET_COMMIT                    0x00000008*/
+
+        public bool Equals(ADL_SLS_OFFSET other)
+            => AdapterIndex == other.AdapterIndex &&
+                SLSMapIndex == other.SLSMapIndex &&
+                DisplayID.Equals(other.DisplayID) &&
+                BezelModeIndex == other.BezelModeIndex &&
+                BezelOffsetX == other.BezelOffsetX &&
+                BezelOffsetY == other.BezelOffsetY &&
+                DisplayWidth == other.DisplayWidth &&
+                DisplayHeight == other.DisplayHeight &&
+                BezelOffsetMask == other.BezelOffsetMask &&
+                BezelOffsetValue == other.BezelOffsetValue;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, SLSMapIndex, DisplayID, BezelModeIndex, BezelOffsetX, BezelOffsetY, DisplayWidth, DisplayHeight, BezelOffsetMask, BezelOffsetValue).GetHashCode();
+        }
+
+        //public override string ToString() => $"{type.ToString("G")}";
     }
 
-    #endregion ADLSLS
 
-    #endregion Export Struct
-
-    #region ADL Class
-    /// <summary> ADL Class</summary>
-    public static class ADL
+    class ADLImport
     {
-        #region Internal Constant
+
+        /// <summary> Define false </summary>
+        public const int ADL_FALSE = 0;
+        /// <summary> Define true </summary>
+        public const int ADL_TRUE = 1;
+
         /// <summary> Selects all adapters instead of aparticular single adapter</summary>
         public const int ADL_ADAPTER_INDEX_ALL = -1;
+        ///    Defines APIs with iOption none
+        public const int ADL_MAIN_API_OPTION_NONE = 0;
         /// <summary> Define the maximum char</summary>
         public const int ADL_MAX_CHAR = 4096;
         /// <summary> Define the maximum path</summary>
@@ -1018,45 +1545,7 @@ namespace ATI.ADL
         /// <summary> Define the maximum display names</summary>
         public const int ADL_MAX_DISPLAY_NAME = 256;
 
-        // Result Codes
-        /// <summary> ADL function completed successfully. </summary>                
-        public const int ADL_OK = 0;
-        /// <summary> Generic Error.Most likely one or more of the Escape calls to the driver failed!</summary>
-        public const int ADL_ERR = -1;
-        /// <summary> Call can't be made due to disabled adapter. </summary>
-        public const int ADL_ERR_DISABLED_ADAPTER = -10;
-        /// <summary> Invalid ADL index passed. </summary>
-        public const int ADL_ERR_INVALID_ADL_IDX = -5;
-        /// <summary> Invalid Callback. </summary>
-        public const int ADL_ERR_INVALID_CALLBACK = -11;
-        /// <summary> Invalid controller index passed.</summary>
-        public const int ADL_ERR_INVALID_CONTROLLER_IDX = -6;
-        /// <summary> Invalid display index passed.</summary>
-        public const int ADL_ERR_INVALID_DISPLAY_IDX = -7;
-        /// <summary> One of the parameter passed is invalid.</summary>
-        public const int ADL_ERR_INVALID_PARAM = -3;
-        /// <summary> One of the parameter size is invalid.</summary>
-        public const int ADL_ERR_INVALID_PARAM_SIZE = -4;
-        /// <summary> There's no Linux XDisplay in Linux Console environment.</summary>
-        public const int ADL_ERR_NO_XDISPLAY = -21;
-        /// <summary> ADL not initialized.</summary>
-        public const int ADL_ERR_NOT_INIT = -2;
-        /// <summary> Function not supported by the driver. </summary>
-        public const int ADL_ERR_NOT_SUPPORTED = -8;
-        /// <summary> Null Pointer error.</summary>
-        public const int ADL_ERR_NULL_POINTER = -9;
-        /// <summary> Display Resource conflict.</summary>
-        public const int ADL_ERR_RESOURCE_CONFLICT = -12;
-        /// <summary> Err Set incomplete</summary>
-        public const int ADL_ERR_SET_INCOMPLETE = -20;
-        /// <summary> All OK but need mode change. </summary>
-        public const int ADL_OK_MODE_CHANGE = 2;
-        /// <summary> All OK, but need restart.</summary>
-        public const int ADL_OK_RESTART = 3;
-        /// <summary> All OK, but need to wait</summary>
-        public const int ADL_OK_WAIT = 4;
-        /// <summary> All OK, but with warning.</summary>
-        public const int ADL_OK_WARNING = 1;
+
 
 
         /// <summary> Define the driver ok</summary>
@@ -1067,10 +1556,6 @@ namespace ATI.ADL
         public const int ADL_MAX_GLSYNC_PORT_LEDS = 8;
         /// <summary> Maximum number of ADLModes for the adapter </summary>
         public const int ADL_MAX_NUM_DISPLAYMODES = 1024;
-        /// <summary> Define true </summary>
-        public const int ADL_TRUE = 1;
-        /// <summary> Maximum number of ADLModes for the adapter </summary>
-        public const int ADL_FALSE = 0;
         /// <summary> Indicates the active dongle, all types </summary>
         public const int ADL_CONNECTION_TYPE_ACTIVE_DONGLE = 12;
         /// <summary> Indicates the Active dongle DP->DVI(double link) connection type is valid. </summary>
@@ -1214,7 +1699,7 @@ namespace ATI.ADL
         /// <summary> Indicates the display colour format is 565</summary>
         public const int ADL_DISPLAY_MODE_COLOURFORMAT_565 = 0x00000001;
         /// <summary> Indicates the display colour format is 8888 </summary>
-        public const int ADL_DISPLAY_MODE_COLOURFORMAT_8888 = 0x00000002;
+        public const int ADL_DISPLAY_MODE_COLOURFORMAT_8888 = 0x00000002; // 
         /// <summary> Indicates the display orientation is normal position</summary>
         public const int ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000 = 0x00000004;
         /// <summary> Indicates the display is in the 90 degree position</summary>
@@ -1298,1286 +1783,310 @@ namespace ATI.ADL
         /// <summary> Indicates the display map result supports overlap</summary>
         public const int ADL_DISPLAY_POSSIBLEMAPRESULT_OVERLAPSUPPORTED = 0x00000004;
 
+
+        //#define ADL_DISPLAY_SLSMAPINDEXLIST_OPTION_ACTIVE        0x00000001
+        public const int ADL_DISPLAY_SLSMAPINDEXLIST_OPTION_ACTIVE = 0x00000001;
+
+
+        // ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE Definitions
+        // for ADL_SLS_MAP.iOption
+        // (bit-vector)
+        // Bit vector, specifies the layout type of SLS grid data and portrait flag.
+        // There are two types of SLS layouts: relative to landscape (ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE) and relative to current angle(ref \ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE).
+        // If the current desktop associated with the input adapter is rotated to 90 or 270 degree, set bit ref \ADL_DISPLAY_SLSGRID_PORTAIT_MODE to 1
+        public const int ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE = 0x00000001;
+        public const int ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE = 0x00000002;
+        public const int ADL_DISPLAY_SLSGRID_PORTAIT_MODE = 0x00000004;
+        public const int ADL_DISPLAY_SLSGRID_KEEPTARGETROTATION = 0x00000080;
+
+
+        public const int ADL_DISPLAY_SLSMAPCONFIG_GET_OPTION_RELATIVETO_LANDSCAPE = 0x00000001;
+        public const int ADL_DISPLAY_SLSMAPCONFIG_GET_OPTION_RELATIVETO_CURRENTANGLE = 0x00000002;
+
+
+        public const int ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_FIT = 0x0100;
+        public const int ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_FILL = 0x0200;
+        public const int ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_EXPAND = 0x0400;
+
+        public const int ADL_DISPLAY_SLSMAP_IS_SLS = 0x1000;
+        public const int ADL_DISPLAY_SLSMAP_IS_SLSBUILDER = 0x2000;
+        public const int ADL_DISPLAY_SLSMAP_IS_CLONEVT = 0x4000;
+
+
+        #region Internal Constant
+        /// <summary> Atiadlxx_FileName </summary>
+        public const string ATI_ADL_DLL = "atiadlxx.dll";
+        /// <summary> Kernel32_FileName </summary>
+        public const string Kernel32_FileName = "kernel32.dll";
         #endregion Internal Constant
 
-        #region Internal Enums
+        #region DLLImport
+        [DllImport(Kernel32_FileName)]
+        public static extern HMODULE GetModuleHandle(string moduleName);
 
-        public enum ADLConnectionType
-        {
-            VGA = 0, 
-            DVI = 1,
-            DVI_SL = 2,
-            HDMI = 4,
-            DisplayPort = 4,
-            ActiveDongleDPToDVI_SL = 5,
-            ActiveDongleDPToDVI_DL = 6,
-            ActiveDongleDPToHDMI = 7,
-            ActiveDongleDPToVGA = 8,
-            PassiveDongleDPToHDMI = 9,
-            PassiveDongleDPToDVI = 10,
-            MST = 11,
-            ActiveDongle = 12,
-            Virtual = 13
-        }
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Main_Control_Create(ADL_Main_Memory_Alloc_Delegate callback, int enumConnectedAdapters, out IntPtr contextHandle);
 
-        public enum ADLDisplayConnectionType
-        {
-            Unknown = 0,
-            VGA = 1,
-            DVI_D = 2,
-            DVI_I = 3,
-            HDMI = 4,
-            ATICV_NTSC_Dongle = 4,
-            ATICV_JPN_Dongle = 5,
-            ATICV_NONI2C_NTSC_Dongle = 6,
-            ATICV_NONI2C_JPN_Dongle = 7,
-            Proprietary = 8,
-            HDMITypeA = 10,
-            HTMITypeB = 11,
-            SVideo = 12,
-            Composite = 13,
-            RCA_3Component = 14,
-            DisplayPort = 15,
-            EDP = 16,
-            WirelessDisplay = 17,
-            USBTypeC = 18
-        }
+        //typedef int (* ADL2_MAIN_CONTROLX2_CREATE) (ADL_MAIN_MALLOC_CALLBACK, int iEnumConnectedAdapter_, ADL_CONTEXT_HANDLE* context_, ADLThreadingModel);
 
-        public enum ADLDisplayModeFlag
-        {
-            ColourFormat565 = 1,
-            ColourFormat8888 = 2,
-            Degrees0 = 4,
-            Degrees90 = 8,
-            Degrees180 = 10,
-            Degrees270 = 20,
-            ExactRefreshRate = 80,
-            RoundedRefreshRate = 40
-        }
-        public enum ADLDisplayModeInterlacing
-        {
-            Progressive = 0,
-            Interlaced = 2
-        }
-        #endregion Internal Enums
+        //typedef int (* ADL2_MAIN_CONTROL_DESTROY) (ADL_CONTEXT_HANDLE);
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Main_Control_Destroy(IntPtr contextHandle);
 
-        #region Class ADLImport
-        /// <summary> ADLImport class</summary>
-        private static class ADLImport
-        {
-            #region Internal Constant
-            /// <summary> Atiadlxx_FileName </summary>
-            public const string Atiadlxx_FileName = "atiadlxx.dll";
-            /// <summary> Kernel32_FileName </summary>
-            public const string Kernel32_FileName = "kernel32.dll";
-            #endregion Internal Constant
-
-            #region DLLImport
-            [DllImport(Kernel32_FileName)]
-            public static extern HMODULE GetModuleHandle (string moduleName);
-
-            [DllImport(Atiadlxx_FileName)] 
-            public static extern int ADL2_Main_Control_Create(ADL_Main_Memory_Alloc callback, int enumConnectedAdapters, out IntPtr contextHandle);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Main_Control_Destroy(IntPtr contextHandle);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Flush_Driver_Data(IntPtr ADLContextHandle, int adapterIndex);
+        // This is used to set the display settings permanently
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Flush_Driver_Data(IntPtr ADLContextHandle, int adapterIndex);
 
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Adapter_NumberOfAdapters_Get(IntPtr contextHandle, ref int numAdapters);
+        // adapter functions
+        //typedef int (* ADL2_DISPLAY_POSSIBLEMODE_GET) (ADL_CONTEXT_HANDLE, int, int*, ADLMode**);
+        // This function retrieves the OS possible modes list for a specified input adapter.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_PossibleMode_Get(IntPtr ADLContextHandle, int adapterIndex, out int numModes, out IntPtr modes);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, ref int status);
+        //typedef int (* ADL2_ADAPTER_PRIMARY_SET) (ADL_CONTEXT_HANDLE, int);
+        // This function sets the adapter index for a specified primary display adapter.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_Primary_Set(IntPtr ADLContextHandle, int primaryAdapterIndex);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+        //typedef int (* ADL2_ADAPTER_PRIMARY_GET) (ADL_CONTEXT_HANDLE, int*);
+        // This function retrieves the adapter index for the primary display adapter.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_Primary_Get(IntPtr ADLContextHandle, out int primaryAdapterIndex);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr AdapterInfoArray);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr AdapterInfoArray);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoArray);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoX2Array);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_DDCInfo2_Get(IntPtr contextHandle, int adapterIndex, int displayIndex, out ADLDDCInfo2 DDCInfo);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADLDisplayID displayID, out int support, out int enable);
-
-            [DllImport(Atiadlxx_FileName)] 
-            public static extern int ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_Modes_Set(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, int numModes, ref ADLMode modes);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_DisplayMapConfig_Get(IntPtr ADLContextHandle, int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_DisplayMapConfig_Set(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, ref ADLDisplayMap displayMap, int numDisplayTarget, ref ADLDisplayTarget displayTarget);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_DisplayMapConfig_Validate(IntPtr ADLContextHandle, int adapterIndex, int numPossibleMap, ref ADLPossibleMap possibleMaps, out int numPossibleMapResult, ref IntPtr possibleMapResult);
-
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL2_Display_DisplayMapConfig_PossibleAddAndRemove(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, ref ADLDisplayMap displayMap, int numDisplayTarget, ref ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+        //typedef int (* ADL2_ADAPTER_ACTIVE_SET) (ADL_CONTEXT_HANDLE, int, int, int*);
+        // This function enables or disables extended desktop mode for a specified display.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_Active_Set(IntPtr ADLContextHandle, int primaryAdapterIndex, int desiredStatus, out int newlyActivated);
 
 
-            // ======================================
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_NumberOfAdapters_Get(IntPtr contextHandle, out int numAdapters);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_Active_Get(IntPtr ADLContextHandle, int adapterIndex, out int status);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_AdapterX2_Caps(IntPtr ADLContextHandle, int adapterIndex, out ADL_ADAPTER_CAPSX2 adapterCapabilities);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_AdapterInfo_Get(IntPtr ADLContextHandle, int inputSize, out IntPtr AdapterInfoArray);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_AdapterInfoX2_Get(IntPtr ADLContextHandle, out IntPtr AdapterInfoArray);
+
+        //typedef int (* ADL2_ADAPTER_ADAPTERINFOX3_GET) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, int* numAdapters, AdapterInfo** lppAdapterInfo);
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_AdapterInfoX3_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoArray);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_AdapterInfoX4_Get(IntPtr ADLContextHandle, int adapterIndex, out int numAdapters, out IntPtr AdapterInfoX2Array);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_DDCInfo2_Get(IntPtr contextHandle, int adapterIndex, int displayIndex, out ADL_DDC_INFO2 DDCInfo);
+
+        //typedef int (* ADL2_DISPLAY_DISPLAYINFO_GET) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, int* lpNumDisplays, ADLDisplayInfo** lppInfo, int iForceDetect);
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_DisplayInfo_Get(IntPtr ADLContextHandle, int adapterIndex, out int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_DeviceConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out ADL_DISPLAY_CONFIG displayConfig);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_HDRState_Get(IntPtr ADLContextHandle, int adapterIndex, ADL_DISPLAY_ID displayID, out int support, out int enable);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_DisplayMapConfig_PossibleAddAndRemove(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, in ADL_DISPLAY_MAP displayMap, int numDisplayTarget, in ADL_DISPLAY_TARGET displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_Desktop_Caps(IntPtr ADLContextHandle, int adapterIndex, out int DesktopCapsValue, out int DesktopCapsMask);
+
+        // Function to retrieve active desktop supported SLS grid size.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Adapter_Desktop_SupportedSLSGridTypes_Get(IntPtr ADLContextHandle, int adapterIndex, int numDisplayTargetToUse, ref ADL_DISPLAY_TARGET displayTargetToUse, out int numSLSGrid, out ADL_DISPLAY_TARGET SLSGrid, out int option);
+
+        // Function to get the current supported SLS grid patterns (MxN) for a GPU.
+        // This function gets a list of supported SLS grids for a specified input adapter based on display devices currently connected to the GPU.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSGrid_Caps(IntPtr ADLContextHandle, int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
+
+        // Function to get the active SLS map index list for a given GPU.
+        // This function retrieves a list of active SLS map indexes for a specified input GPU.            
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapIndexList_Get(IntPtr ADLContextHandle, int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int option);
+
+        // Definitions of the used function pointers. Add more if you use other ADL APIs
+        // SLS functions
+        //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_VALID) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, ADLSLSMap slsMap, int iNumDisplayTarget, ADLSLSTarget* lpSLSTarget, int* lpSupportedSLSLayoutImageMode, int* lpReasonForNotSupportSLS, int iOption);
+        // Function to Set SLS configuration for each display index the controller and the adapter is being mapped to.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Valid(IntPtr ADLContextHandle, int adapterIndex, ADL_SLS_MAP SLSMap, int numDisplayTarget, ADL_DISPLAY_TARGET[] displayTarget, out int supportedSLSLayoutImageMode, out int reasonForNotSupportingSLS, int option);
+
+        //typedef int (* ADL2_DISPLAY_SLSMAPINDEX_GET) (ADL_CONTEXT_HANDLE, int, int, ADLDisplayTarget*, int*);
+        // Function to get a SLS map index based on a group of displays that are connected in the given adapter. The driver only searches the active SLS grid database.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapIndex_Get(IntPtr ADLContextHandle, int adapterIndex, int numDisplayTarget, ADL_DISPLAY_TARGET[] displayTarget, out int SLSMapIndex);
+
+        //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_GET) (ADL_CONTEXT_HANDLE, int, int, ADLSLSMap*, int*, ADLSLSTarget**, int*, ADLSLSMode**, int*, ADLBezelTransientMode**, int*, ADLBezelTransientMode**, int*, ADLSLSOffset**, int);
+        // This function retrieves an SLS configuration, which includes the, SLS map, SLS targets, SLS standard modes, bezel modes or a transient mode, and offsets.           
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Get(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex, out ADL_SLS_MAP SLSMap, out int NumSLSTarget, out IntPtr SLSTargetArray, out int lpNumNativeMode, out IntPtr NativeMode, out int NumBezelMode, out IntPtr BezelMode, out int NumTransientMode, out IntPtr TransientMode, out int NumSLSOffset, out IntPtr SLSOffset, int iOption);
+
+        // typedef int ADL2_Display_SLSMapConfigX2_Get(ADL_CONTEXT_HANDLE context, int iAdapterIndex, int iSLSMapIndex, ADLSLSMap* lpSLSMap, int* lpNumSLSTarget, ADLSLSTarget** lppSLSTarget, int* lpNumNativeMode, ADLSLSMode** lppNativeMode, int* lpNumNativeModeOffsets, ADLSLSOffset** lppNativeModeOffsets, int* lpNumBezelMode, ADLBezelTransientMode** lppBezelMode, int* lpNumTransientMode, ADLBezelTransientMode** lppTransientMode, int* lpNumSLSOffset, ADLSLSOffset** lppSLSOffset, int iOption)
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfigX2_Get(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex, out ADL_SLS_MAP SLSMap, out int NumSLSTarget, out IntPtr SLSTargetArray, out int lpNumNativeMode, out IntPtr NativeMode, out int NumNativeModeOffsets, out IntPtr NativeModeOffsets, out int NumBezelMode, out IntPtr BezelMode, out int NumTransientMode, out IntPtr TransientMode, out int NumSLSOffset, out IntPtr SLSOffset, int option);
+
+        //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_DELETE) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, int iSLSMapIndex);
+        // This function deletes an SLS map from the driver database based on the input SLS map index.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_SLSMapConfig_Delete(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex);
 
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Main_Control_Create (ADL_Main_Memory_Alloc callback, int enumConnectedAdapters);
+        //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_CREATE) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, ADLSLSMap SLSMap, int iNumTarget, ADLSLSTarget* lpSLSTarget, int iBezelModePercent, int* lpSLSMapIndex, int iOption);
+        // This function creates an SLS configuration with a given grid, targets, and bezel mode percent. It will output an SLS map index if the SLS map is successfully created.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Create(IntPtr ADLContextHandle, int adapterIndex, ADL_SLS_MAP[] SLSMap, int numDisplayTarget, ref ADL_DISPLAY_TARGET[] displayTarget, int bezelModePercent, out int SLSMapIndex, int option);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Main_Control_Destroy ();
-            
-            
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Main_Control_IsFunctionValid (HMODULE module, string procName);
+        //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_REARRANGE) (ADL_CONTEXT_HANDLE, int, int, int, ADLSLSTarget*, ADLSLSMap, int);
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Rearrange(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex, int numDisplayTarget, ref ADL_DISPLAY_TARGET[] displayTarget, ADL_SLS_MAP[] SLSMap, int option);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern FARPROC ADL_Main_Control_GetProcAddress (HMODULE module, string procName);
+        //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_SETSTATE) (ADL_CONTEXT_HANDLE, int, int, int);
+        // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_SetState(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex, int State);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Adapter_NumberOfAdapters_Get (ref int numAdapters);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Adapter_AdapterInfo_Get (out IntPtr info, int inputSize);
+        //typedef int 	ADL2_Display_SLSRecords_Get (ADL_CONTEXT_HANDLE context, int iAdapterIndex, ADLDisplayID displayID, int *lpNumOfRecords, int **lppGridIDList)
+        // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSRecords_Get(IntPtr ADLContextHandle, int adapterIndex, ADL_DISPLAY_ID displayID, out int numOfRecords, out IntPtr gridIDList);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Adapter_Active_Get(int adapterIndex, ref int status);
+        //typedef int (* ADL2_DISPLAY_SLSMAPINDEXLIST_GET) (ADL_CONTEXT_HANDLE, int, int*, int**, int);
+        // This function retrieves a list of active SLS map indexes for a specified input GPU.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_SLSMapIndexList_Get(IntPtr ADLContextHandle, int AdapterIndex, out int numSLSMapIndexList, IntPtr SLSMapIndexList, int option);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
-            
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_AdapterX2_Caps(int adapterIndex, out ADLAdapterCapsX2 adapterCapabilities);
+        //typedef int (* ADL2_DISPLAY_MODES_GET) (ADL_CONTEXT_HANDLE, int, int, int*, ADLMode**);
+        // This function retrieves the current display mode information.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_Modes_Get(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, out int numModes, out IntPtr modes);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADLDisplayConfig displayConfig);
+        //typedef int (* ADL2_DISPLAY_MODES_SET) (ADL_CONTEXT_HANDLE, int, int, int, ADLMode*);
+        // This function sets the current display mode information.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_Modes_Set(IntPtr ADLContextHandle, int adapterIndex, int displayIndex, int numModes, ref ADL_MODE modes);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADLDisplayEDIDData EDIDData);
+        //typedef int (* ADL2_DISPLAY_BEZELOFFSET_SET) (ADL_CONTEXT_HANDLE, int, int, int, LPADLSLSOffset, ADLSLSMap, int);
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_BezelOffset_Set(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex, int numBezelOffset, ref ADL_SLS_OFFSET displayTargetToUse, ADL_SLS_MAP SLSMap, int option);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
+        //display map functions
+        //typedef int (* ADL2_DISPLAY_DISPLAYMAPCONFIG_GET) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, int* lpNumDisplayMap, ADLDisplayMap** lppDisplayMap, int* lpNumDisplayTarget, ADLDisplayTarget** lppDisplayTarget, int iOptions);
+        // This function retrieves the current display map configurations, including the controllers and adapters mapped to each display.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_DisplayMapConfig_Get(IntPtr ADLContextHandle, int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADLDisplayMap displayMap, int numDisplayTarget, ADLDisplayTarget displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+        //typedef int (* ADL2_DISPLAY_DISPLAYMAPCONFIG_SET) (ADL_CONTEXT_HANDLE, int, int, ADLDisplayMap*, int, ADLDisplayTarget*);
+        // This function sets the current display configurations for each display, including the controller and adapter mapped to each display.
+        // Possible display configurations are single, clone, extended desktop, and stretch mode.
+        // If clone mode is desired and the current display configuration is extended desktop mode, the function disables extended desktop mode in order to enable clone mode.
+        // If extended display mode is desired and the current display configuration is single mode, this function enables extended desktop.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_DisplayMapConfig_Set(IntPtr ADLContextHandle, int adapterIndex, int numDisplayMap, ADL_DISPLAY_MAP[] displayMap, int numDisplayTarget, ADL_DISPLAY_TARGET[] displayTarget);
 
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, ref ADLSLSMap SLSMap, ref int NumSLSTarget, out IntPtr SLSTargetArray, ref int lpNumNativeMode, out IntPtr NativeMode, ref int NumBezelMode, out IntPtr BezelMode, ref int NumTransientMode, out IntPtr TransientMode, ref int NumSLSOffset, out IntPtr SLSOffset, int iOption);
+        // This function validate the list of the display configurations for a specified input adapter. This function is applicable to all OS platforms.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL2_Display_DisplayMapConfig_Validate(IntPtr ADLContextHandle, int adapterIndex, int numPossibleMap, ref ADL_POSSIBLE_MAP possibleMaps, out int numPossibleMapResult, out IntPtr possibleMapResult);
 
-            // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_SLSMapConfig_SetState(int AdapterIndex, int SLSMapIndex, int State);
 
-            // Function to get the current supported SLS grid patterns (MxN) for a GPU.
-            // This function gets a list of supported SLS grids for a specified input adapter based on display devices currently connected to the GPU.
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_SLSGrid_Caps(int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
+        // ======================================
 
-            // Function to get the active SLS map index list for a given GPU.
-            // This function retrieves a list of active SLS map indexes for a specified input GPU.            
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_SLSMapIndexList_Get(int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int options);
 
-            // Function to get the active SLS map index list for a given GPU.
-            // This function retrieves a list of active SLS map indexes for a specified input GPU.            
-            [DllImport(Atiadlxx_FileName)]
-            public static extern int ADL_Display_SLSMapIndex_Get(int adapterIndex, int ADLNumDisplayTarget, ref ADLDisplayTarget displayTarget, ref int SLSMapIndex);
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Main_Control_Create(ADL_Main_Memory_Alloc_Delegate callback, int enumConnectedAdapters);
 
-            #endregion DLLImport
-        }
-        #endregion Class ADLImport
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Main_Control_Destroy();
 
-        #region Class ADLCheckLibrary
-        /// <summary> ADLCheckLibrary class</summary>
-        private class ADLCheckLibrary
-        {
-            #region Private Members
-            private HMODULE ADLLibrary = System.IntPtr.Zero;
-            #endregion Private Members
 
-            #region Static Members
-            /// <summary> new a private instance</summary>
-            private static ADLCheckLibrary ADLCheckLibrary_ = new ADLCheckLibrary();
-            #endregion Static Members
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Main_Control_IsFunctionValid(HMODULE module, string procName);
 
-            #region Constructor
-            /// <summary> Constructor</summary>
-            private ADLCheckLibrary ()
-            {
-                try
-                {
-                    if (1 == ADLImport.ADL_Main_Control_IsFunctionValid(IntPtr.Zero, "ADL_Main_Control_Create"))
-                    {
-                        ADLLibrary = ADLImport.GetModuleHandle(ADLImport.Atiadlxx_FileName);
-                    }
-                }
-                catch (DllNotFoundException) { }
-                catch (EntryPointNotFoundException) { }
-                catch (Exception) { }
-            }
-            #endregion Constructor
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern FARPROC ADL_Main_Control_GetProcAddress(HMODULE module, string procName);
 
-            #region Destructor
-            /// <summary> Destructor to force calling ADL Destroy function before free up the ADL library</summary>
-            ~ADLCheckLibrary ()
-            {
-                if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
-                {
-                    ADLImport.ADL_Main_Control_Destroy();
-                }
-            }
-            #endregion Destructor
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Adapter_NumberOfAdapters_Get(ref int numAdapters);
 
-            #region Static IsFunctionValid
-            /// <summary> Check the import function to see it exists or not</summary>
-            /// <param name="functionName"> function name</param>
-            /// <returns>return true, if function exists</returns>
-            public static bool IsFunctionValid (string functionName)
-            {
-                bool result = false;
-                if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
-                {
-                    if (1 == ADLImport.ADL_Main_Control_IsFunctionValid(ADLCheckLibrary_.ADLLibrary, functionName))
-                    {
-                        result = true;
-                    }
-                }
-                return result;
-            }
-            #endregion Static IsFunctionValid
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Adapter_AdapterInfo_Get(out IntPtr info, int inputSize);
 
-            #region Static GetProcAddress
-            /// <summary> Get the unmanaged function pointer </summary>
-            /// <param name="functionName"> function name</param>
-            /// <returns>return function pointer, if function exists</returns>
-            public static FARPROC GetProcAddress (string functionName)
-            {
-                FARPROC result = System.IntPtr.Zero;
-                if (System.IntPtr.Zero != ADLCheckLibrary_.ADLLibrary)
-                {
-                    result = ADLImport.ADL_Main_Control_GetProcAddress(ADLCheckLibrary_.ADLLibrary, functionName);
-                }
-                return result;
-            }
-            #endregion Static GetProcAddress
-        }
-        #endregion Class ADLCheckLibrary
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Adapter_Active_Get(int adapterIndex, ref int status);
 
-        #region Export Functions
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Adapter_ID_Get(int adapterIndex, ref int adapterId);
 
-        #region ADL_Main_Memory_Alloc
-        /// <summary> Build in memory allocation function</summary>
-        public static ADL_Main_Memory_Alloc ADL_Main_Memory_Alloc = ADL_Main_Memory_Alloc_;
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_AdapterX2_Caps(int adapterIndex, out ADL_ADAPTER_CAPSX2 adapterCapabilities);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_DisplayInfo_Get(int adapterIndex, ref int numDisplays, out IntPtr displayInfoArray, int forceDetect);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_DeviceConfig_Get(int adapterIndex, int displayIndex, out ADL_DISPLAY_CONFIG displayConfig);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_EdidData_Get(int adapterIndex, int displayIndex, ref ADL_DISPLAY_EDID_DATA EDIDData);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_DisplayMapConfig_Get(int adapterIndex, out int numDisplayMap, out IntPtr displayMap, out int numDisplayTarget, out IntPtr displayTarget, int options);
+
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_DisplayMapConfig_PossibleAddAndRemove(int adapterIndex, int numDisplayMap, ADL_DISPLAY_MAP displayMap, int numDisplayTarget, ADL_DISPLAY_TARGET displayTarget, out int numPossibleAddTarget, out IntPtr possibleAddTarget, out int numPossibleRemoveTarget, out IntPtr possibleRemoveTarget);
+
+        //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_GET) (ADL_CONTEXT_HANDLE, int, int, ADLSLSMap*, int*, ADLSLSTarget**, int*, ADLSLSMode**, int*, ADLBezelTransientMode**, int*, ADLBezelTransientMode**, int*, ADLSLSOffset**, int);
+        // This function retrieves an SLS configuration, which includes the, SLS map, SLS targets, SLS standard modes, bezel modes or a transient mode, and offsets.           
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_SLSMapConfig_Get(int adapterIndex, int SLSMapIndex, out ADL_SLS_MAP SLSMap, out int NumSLSTarget, out IntPtr SLSTargetArray, out int lpNumNativeMode, out IntPtr NativeMode, out int NumBezelMode, out IntPtr BezelMode, out int NumTransientMode, out IntPtr TransientMode, out int NumSLSOffset, out IntPtr SLSOffset, int iOption);
+
+        // typedef int ADL2_Display_SLSMapConfigX2_Get(ADL_CONTEXT_HANDLE context, int iAdapterIndex, int iSLSMapIndex, ADLSLSMap* lpSLSMap, int* lpNumSLSTarget, ADLSLSTarget** lppSLSTarget, int* lpNumNativeMode, ADLSLSMode** lppNativeMode, int* lpNumNativeModeOffsets, ADLSLSOffset** lppNativeModeOffsets, int* lpNumBezelMode, ADLBezelTransientMode** lppBezelMode, int* lpNumTransientMode, ADLBezelTransientMode** lppTransientMode, int* lpNumSLSOffset, ADLSLSOffset** lppSLSOffset, int iOption)
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_SLSMapConfigX2_Get(int adapterIndex, int SLSMapIndex, out ADL_SLS_MAP SLSMap, out int NumSLSTarget, out IntPtr SLSTargetArray, out int lpNumNativeMode, out IntPtr NativeMode, out int NumNativeModeOffsets, out IntPtr NativeModeOffsets, out int NumBezelMode, out IntPtr BezelMode, out int NumTransientMode, out IntPtr TransientMode, out int NumSLSOffset, out IntPtr SLSOffset, int option);
+
+        // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_SLSMapConfig_SetState(int AdapterIndex, int SLSMapIndex, int State);
+
+        // Function to get the current supported SLS grid patterns (MxN) for a GPU.
+        // This function gets a list of supported SLS grids for a specified input adapter based on display devices currently connected to the GPU.
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_SLSGrid_Caps(int adapterIndex, ref int NumSLSGrid, out IntPtr SLSGrid, int option);
+
+        // Function to get the active SLS map index list for a given GPU.
+        // This function retrieves a list of active SLS map indexes for a specified input GPU.            
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_SLSMapIndexList_Get(int adapterIndex, ref int numSLSMapIndexList, out IntPtr SLSMapIndexList, int options);
+
+        // Function to get the active SLS map index list for a given GPU.
+        // This function retrieves a list of active SLS map indexes for a specified input GPU.            
+        [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ADL_STATUS ADL_Display_SLSMapIndex_Get(int adapterIndex, int ADLNumDisplayTarget, ref ADL_DISPLAY_TARGET displayTarget, ref int SLSMapIndex);
+
+        #endregion DLLImport
+
+        public static ADL_Main_Memory_Alloc_Delegate ADL_Main_Memory_Alloc = ADL_Main_Memory_Alloc_Function;
         /// <summary> Build in memory allocation function</summary>
         /// <param name="size">input size</param>
         /// <returns>return the memory buffer</returns>
-        private static IntPtr ADL_Main_Memory_Alloc_ (int size)
+        public static IntPtr ADL_Main_Memory_Alloc_Function(int size)
         {
+            //Console.WriteLine($"\nCallback called with param: {size}");
             IntPtr result = Marshal.AllocCoTaskMem(size);
             return result;
         }
-        #endregion ADL_Main_Memory_Alloc
-
-        #region ADL_Main_Memory_Free
-        /// <summary> Build in memory free function</summary>
-        /// <param name="buffer">input buffer</param>
-        public static void ADL_Main_Memory_Free (IntPtr buffer)
-        {
-            if (IntPtr.Zero != buffer)
-            {
-                Marshal.FreeCoTaskMem(buffer);
-            }
-        }
-        #endregion ADL_Main_Memory_Free
-
-        #region ADL2_Main_Control_Create
-        /// <summary> ADL2_Main_Control_Create Delegates</summary>
-        public static ADL2_Main_Control_Create ADL2_Main_Control_Create
-        {
-            get
-            {
-                if (!ADL2_Main_Control_Create_Check && null == ADL2_Main_Control_Create_)
-                {
-                    ADL2_Main_Control_Create_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Main_Control_Create"))
-                    {
-                        ADL2_Main_Control_Create_ = ADLImport.ADL2_Main_Control_Create;
-                    }
-                }
-                return ADL2_Main_Control_Create_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Main_Control_Create ADL2_Main_Control_Create_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Main_Control_Create_Check = false;
-        #endregion ADL2_Main_Control_Create
-
-        #region ADL2_Main_Control_Destroy
-        /// <summary> ADL2_Main_Control_Destroy Delegates</summary>
-        public static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy
-        {
-            get
-            {
-                if (!ADL2_Main_Control_Destroy_Check && null == ADL2_Main_Control_Destroy_)
-                {
-                    ADL2_Main_Control_Destroy_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Main_Control_Destroy"))
-                    {
-                        ADL2_Main_Control_Destroy_ = ADLImport.ADL2_Main_Control_Destroy;
-                    }
-                }
-                return ADL2_Main_Control_Destroy_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Main_Control_Destroy ADL2_Main_Control_Destroy_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Main_Control_Destroy_Check = false;
-        #endregion ADL2_Main_Control_Destroy
-
-        #region ADL2_Flush_Driver_Data
-        /// <summary> ADL2_Flush_Driver_Data Delegates</summary>
-        public static ADL2_Flush_Driver_Data ADL2_Flush_Driver_Data
-        {
-            get
-            {
-                if (!ADL2_Flush_Driver_Data_Check && null == ADL2_Flush_Driver_Data_)
-                {
-                    ADL2_Flush_Driver_Data_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Flush_Driver_Data"))
-                    {
-                        ADL2_Flush_Driver_Data_ = ADLImport.ADL2_Flush_Driver_Data;
-                    }
-                }
-                return ADL2_Flush_Driver_Data_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Flush_Driver_Data ADL2_Flush_Driver_Data_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Flush_Driver_Data_Check = false;
-        #endregion ADL2_Flush_Driver_Data
-
-
-        #region ADL2_Adapter_NumberOfAdapters_Get
-        /// <summary> ADL2_Adapter_NumberOfAdapters_Get Delegates</summary>
-        public static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get
-        {
-            get
-            {
-                if (!ADL2_Adapter_NumberOfAdapters_Get_Check && null == ADL2_Adapter_NumberOfAdapters_Get_)
-                {
-                    ADL2_Adapter_NumberOfAdapters_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_NumberOfAdapters_Get"))
-                    {
-                        ADL2_Adapter_NumberOfAdapters_Get_ = ADLImport.ADL2_Adapter_NumberOfAdapters_Get;
-                    }
-                }
-                return ADL2_Adapter_NumberOfAdapters_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_NumberOfAdapters_Get ADL2_Adapter_NumberOfAdapters_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_NumberOfAdapters_Get_Check = false;
-        #endregion ADL2_Adapter_NumberOfAdapters_Get
-
-        #region ADL2_Adapter_Active_Get
-        /// <summary> ADL2_Adapter_Active_Get Delegates</summary>
-        public static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get
-        {
-            get
-            {
-                if (!ADL2_Adapter_Active_Get_Check && null == ADL2_Adapter_Active_Get_)
-                {
-                    ADL2_Adapter_Active_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_Active_Get"))
-                    {
-                        ADL2_Adapter_Active_Get_ = ADLImport.ADL2_Adapter_Active_Get;
-                    }
-                }
-                return ADL2_Adapter_Active_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_Active_Get ADL2_Adapter_Active_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_Active_Get_Check = false;
-        #endregion ADL2_Adapter_Active_Get
-
-        #region ADL2_AdapterX2_Caps
-        /// <summary> ADL2_AdapterX2_Caps Delegates</summary>
-        public static ADL2_AdapterX2_Caps ADL2_AdapterX2_Caps
-        {
-            get
-            {
-                if (!ADL2_AdapterX2_Caps_Check && null == ADL2_AdapterX2_Caps_)
-                {
-                    ADL2_AdapterX2_Caps_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_AdapterX2_Caps"))
-                    {
-                        ADL2_AdapterX2_Caps_ = ADLImport.ADL2_AdapterX2_Caps;
-                    }
-                }
-                return ADL2_AdapterX2_Caps_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_AdapterX2_Caps ADL2_AdapterX2_Caps_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_AdapterX2_Caps_Check = false;
-        #endregion ADL2_AdapterX2_Caps
-
-
-        #region ADL2_Adapter_AdapterInfo_Get
-        /// <summary> ADL2_Adapter_AdapterInfo_Get Delegates</summary>
-        public static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get
-        {
-            get
-            {
-                if (!ADL2_Adapter_AdapterInfo_Get_Check && null == ADL2_Adapter_AdapterInfo_Get_)
-                {
-                    ADL2_Adapter_AdapterInfo_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfo_Get"))
-                    {
-                        ADL2_Adapter_AdapterInfo_Get_ = ADLImport.ADL2_Adapter_AdapterInfo_Get;
-                    }
-                }
-                return ADL2_Adapter_AdapterInfo_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_AdapterInfo_Get ADL2_Adapter_AdapterInfo_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_AdapterInfo_Get_Check = false;
-        #endregion ADL2_Adapter_AdapterInfo_Get
-
-        #region ADL2_Adapter_AdapterInfoX2_Get
-        /// <summary> ADL2_Adapter_AdapterInfoX2_Get Delegates</summary>
-        public static ADL2_Adapter_AdapterInfoX2_Get ADL2_Adapter_AdapterInfoX2_Get
-        {
-            get
-            {
-                if (!ADL2_Adapter_AdapterInfoX2_Get_Check && null == ADL2_Adapter_AdapterInfoX2_Get_)
-                {
-                    ADL2_Adapter_AdapterInfoX2_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfoX2_Get"))
-                    {
-                        ADL2_Adapter_AdapterInfoX2_Get_ = ADLImport.ADL2_Adapter_AdapterInfoX2_Get;
-                    }
-                }
-                return ADL2_Adapter_AdapterInfoX2_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_AdapterInfoX2_Get ADL2_Adapter_AdapterInfoX2_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_AdapterInfoX2_Get_Check = false;
-        #endregion ADL2_Adapter_AdapterInfoX2_Get
-
-        #region ADL2_Adapter_AdapterInfoX3_Get
-        /// <summary> ADL2_Adapter_AdapterInfoX3_Get Delegates</summary>
-        public static ADL2_Adapter_AdapterInfoX3_Get ADL2_Adapter_AdapterInfoX3_Get
-        {
-            get
-            {
-                if (!ADL2_Adapter_AdapterInfoX3_Get_Check && null == ADL2_Adapter_AdapterInfoX3_Get_)
-                {
-                    ADL2_Adapter_AdapterInfoX3_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfoX3_Get"))
-                    {
-                        ADL2_Adapter_AdapterInfoX3_Get_ = ADLImport.ADL2_Adapter_AdapterInfoX3_Get;
-                    }
-                }
-                return ADL2_Adapter_AdapterInfoX3_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_AdapterInfoX3_Get ADL2_Adapter_AdapterInfoX3_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_AdapterInfoX3_Get_Check = false;
-        #endregion ADL2_Adapter_AdapterInfoX3_Get
-
-        #region ADL2_Adapter_AdapterInfoX4_Get
-        /// <summary> ADL2_Adapter_AdapterInfoX4_Get Delegates</summary>
-        public static ADL2_Adapter_AdapterInfoX4_Get ADL2_Adapter_AdapterInfoX4_Get
-        {
-            get
-            {
-                if (!ADL2_Adapter_AdapterInfoX4_Get_Check && null == ADL2_Adapter_AdapterInfoX4_Get_)
-                {
-                    ADL2_Adapter_AdapterInfoX4_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Adapter_AdapterInfoX4_Get"))
-                    {
-                        ADL2_Adapter_AdapterInfoX4_Get_ = ADLImport.ADL2_Adapter_AdapterInfoX4_Get;
-                    }
-                }
-                return ADL2_Adapter_AdapterInfoX4_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Adapter_AdapterInfoX4_Get ADL2_Adapter_AdapterInfoX4_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Adapter_AdapterInfoX4_Get_Check = false;
-        #endregion ADL2_Adapter_AdapterInfoX4_Get
-
-        #region ADL2_Display_DDCInfo2_Get
-        /// <summary> ADL2_Display_DDCInfo2_Get Delegates</summary>
-        public static ADL2_Display_DDCInfo2_Get ADL2_Display_DDCInfo2_Get
-        {
-            get
-            {
-                if (!ADL2_Display_DDCInfo2_Get_Check && null == ADL2_Display_DDCInfo2_Get_)
-                {
-                    ADL2_Display_DDCInfo2_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DDCInfo2_Get"))
-                    {
-                        ADL2_Display_DDCInfo2_Get_ = ADLImport.ADL2_Display_DDCInfo2_Get;
-                    }
-                }
-                return ADL2_Display_DDCInfo2_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DDCInfo2_Get ADL2_Display_DDCInfo2_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DDCInfo2_Get_Check = false;
-        #endregion ADL2_Display_DDCInfo2_Get
-
-        #region ADL2_Display_DisplayInfo_Get
-        /// <summary> ADL2_Display_DisplayInfo_Get Delegates</summary>
-        public static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get
-        {
-            get
-            {
-                if (!ADL2_Display_DisplayInfo_Get_Check && null == ADL2_Display_DisplayInfo_Get_)
-                {
-                    ADL2_Display_DisplayInfo_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayInfo_Get"))
-                    {
-                        ADL2_Display_DisplayInfo_Get_ = ADLImport.ADL2_Display_DisplayInfo_Get;
-                    }
-                }
-                return ADL2_Display_DisplayInfo_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DisplayInfo_Get ADL2_Display_DisplayInfo_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DisplayInfo_Get_Check = false;
-        #endregion ADL2_Display_DisplayInfo_Get
-
-        #region ADL2_Display_DeviceConfig_Get
-        /// <summary> ADL2_Display_DeviceConfig_Get Delegates</summary>
-        public static ADL2_Display_DeviceConfig_Get ADL2_Display_DeviceConfig_Get
-        {
-            get
-            {
-                if (!ADL2_Display_DeviceConfig_Get_Check && null == ADL2_Display_DeviceConfig_Get_)
-                {
-                    ADL2_Display_DeviceConfig_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DeviceConfig_Get"))
-                    {
-                        ADL2_Display_DeviceConfig_Get_ = ADLImport.ADL2_Display_DeviceConfig_Get;
-                    }
-                }
-                return ADL2_Display_DeviceConfig_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DeviceConfig_Get ADL2_Display_DeviceConfig_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DeviceConfig_Get_Check = false;
-        #endregion ADL2_Display_DeviceConfig_Get
-
-        #region ADL2_Display_HDRState_Get
-        /// <summary> ADL2_Display_HDRState_Get Delegates</summary>
-        public static ADL2_Display_HDRState_Get ADL2_Display_HDRState_Get
-        {
-            get
-            {
-                if (!ADL2_Display_HDRState_Get_Check && null == ADL2_Display_HDRState_Get_)
-                {
-                    ADL2_Display_HDRState_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_HDRState_Get"))
-                    {
-                        ADL2_Display_HDRState_Get_ = ADLImport.ADL2_Display_HDRState_Get;
-                    }
-                }
-                return ADL2_Display_HDRState_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_HDRState_Get ADL2_Display_HDRState_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_HDRState_Get_Check = false;
-        #endregion ADL2_Display_HDRState_Get
-
-        #region ADL2_Display_Modes_Get
-        /// <summary> ADL2_Display_Modes_Get Delegates</summary>
-        public static ADL2_Display_Modes_Get ADL2_Display_Modes_Get
-        {
-            get
-            {
-                if (!ADL2_Display_Modes_Get_Check && null == ADL2_Display_Modes_Get_)
-                {
-                    ADL2_Display_Modes_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_Modes_Get"))
-                    {
-                        ADL2_Display_Modes_Get_ = ADLImport.ADL2_Display_Modes_Get;
-                    }
-                }
-                return ADL2_Display_Modes_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_Modes_Get ADL2_Display_Modes_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_Modes_Get_Check = false;
-        #endregion ADL2_Display_Modes_Get
-
-        #region ADL2_Display_Modes_Set
-        /// <summary> ADL2_Display_Modes_Set Delegates</summary>
-        public static ADL2_Display_Modes_Set ADL2_Display_Modes_Set
-        {
-            get
-            {
-                if (!ADL2_Display_Modes_Set_Check && null == ADL2_Display_Modes_Set_)
-                {
-                    ADL2_Display_Modes_Set_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_Modes_Set"))
-                    {
-                        ADL2_Display_Modes_Set_ = ADLImport.ADL2_Display_Modes_Set;
-                    }
-                }
-                return ADL2_Display_Modes_Set_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_Modes_Set ADL2_Display_Modes_Set_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_Modes_Set_Check = false;
-        #endregion ADL2_Display_Modes_Set
-
-        #region ADL2_Display_DisplayMapConfig_Get
-        public static ADL2_Display_DisplayMapConfig_Get ADL2_Display_DisplayMapConfig_Get
-        {
-            get
-            {
-                if (!ADL2_Display_DisplayMapConfig_Get_Check && null == ADL2_Display_DisplayMapConfig_Get_)
-                {
-                    ADL2_Display_DisplayMapConfig_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayMapConfig_Get"))
-                    {
-                        ADL2_Display_DisplayMapConfig_Get_ = ADLImport.ADL2_Display_DisplayMapConfig_Get;
-                    }
-                }
-                return ADL2_Display_DisplayMapConfig_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DisplayMapConfig_Get ADL2_Display_DisplayMapConfig_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DisplayMapConfig_Get_Check = false;
-        #endregion ADL2_Display_DisplayMapConfig_Get
-
-        #region ADL2_Display_DisplayMapConfig_Set
-        /// <summary> ADL2_Display_DisplayMapConfig_Set Delegates</summary>
-        public static ADL2_Display_DisplayMapConfig_Set ADL2_Display_DisplayMapConfig_Set
-        {
-            get
-            {
-                if (!ADL2_Display_DisplayMapConfig_Set_Check && null == ADL2_Display_DisplayMapConfig_Set_)
-                {
-                    ADL2_Display_DisplayMapConfig_Set_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayMapConfig_Set"))
-                    {
-                        ADL2_Display_DisplayMapConfig_Set_ = ADLImport.ADL2_Display_DisplayMapConfig_Set;
-                    }
-                }
-                return ADL2_Display_DisplayMapConfig_Set_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DisplayMapConfig_Set ADL2_Display_DisplayMapConfig_Set_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DisplayMapConfig_Set_Check = false;
-        #endregion ADL2_Display_DisplayMapConfig_Set
-
-        #region ADL2_Display_DisplayMapConfig_Validate
-        /// <summary> ADL2_Display_DisplayMapConfig_Validate Delegates</summary>
-        public static ADL2_Display_DisplayMapConfig_Validate ADL2_Display_DisplayMapConfig_Validate
-        {
-            get
-            {
-                if (!ADL2_Display_DisplayMapConfig_Validate_Check && null == ADL2_Display_DisplayMapConfig_Validate_)
-                {
-                    ADL2_Display_DisplayMapConfig_Validate_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayMapConfig_Validate"))
-                    {
-                        ADL2_Display_DisplayMapConfig_Validate_ = ADLImport.ADL2_Display_DisplayMapConfig_Validate;
-                    }
-                }
-                return ADL2_Display_DisplayMapConfig_Validate_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DisplayMapConfig_Validate ADL2_Display_DisplayMapConfig_Validate_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DisplayMapConfig_Validate_Check = false;
-        #endregion ADL2_Display_DisplayMapConfig_Validate
-
-        #region ADL2_Display_DisplayMapConfig_PossibleAddAndRemove
-        /// <summary> ADL2_Display_DisplayMapConfig_PossibleAddAndRemove Delegates</summary>
-        public static ADL2_Display_DisplayMapConfig_PossibleAddAndRemove ADL2_Display_DisplayMapConfig_PossibleAddAndRemove
-        {
-            get
-            {
-                if (!ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_Check && null == ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_)
-                {
-                    ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL2_Display_DisplayMapConfig_PossibleAddAndRemove"))
-                    {
-                        ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_ = ADLImport.ADL2_Display_DisplayMapConfig_PossibleAddAndRemove;
-                    }
-                }
-                return ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL2_Display_DisplayMapConfig_PossibleAddAndRemove ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL2_Display_DisplayMapConfig_PossibleAddAndRemove_Check = false;
-        #endregion ADL2_Display_DisplayMapConfig_PossibleAddAndRemove
-
-        // ================================
-
-        #region ADL_Main_Control_Create
-        /// <summary> ADL_Main_Control_Create Delegates</summary>
-        public static ADL_Main_Control_Create ADL_Main_Control_Create
-        {
-            get
-            {
-                if (!ADL_Main_Control_Create_Check && null == ADL_Main_Control_Create_)
-                {
-                    ADL_Main_Control_Create_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Main_Control_Create"))
-                    {
-                        ADL_Main_Control_Create_ = ADLImport.ADL_Main_Control_Create;
-                    }
-                }
-                return ADL_Main_Control_Create_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Main_Control_Create ADL_Main_Control_Create_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Main_Control_Create_Check = false;
-        #endregion ADL_Main_Control_Create
-
-        #region ADL_Main_Control_Destroy
-        /// <summary> ADL_Main_Control_Destroy Delegates</summary>
-        public static ADL_Main_Control_Destroy ADL_Main_Control_Destroy
-        {
-            get
-            {
-                if (!ADL_Main_Control_Destroy_Check && null == ADL_Main_Control_Destroy_)
-                {
-                    ADL_Main_Control_Destroy_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Main_Control_Destroy"))
-                    {
-                        ADL_Main_Control_Destroy_ = ADLImport.ADL_Main_Control_Destroy;
-                    }
-                }
-                return ADL_Main_Control_Destroy_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Main_Control_Destroy ADL_Main_Control_Destroy_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Main_Control_Destroy_Check = false;
-        #endregion ADL_Main_Control_Destroy
-
-        #region ADL_Adapter_NumberOfAdapters_Get
-        /// <summary> ADL_Adapter_NumberOfAdapters_Get Delegates</summary>
-        public static ADL_Adapter_NumberOfAdapters_Get ADL_Adapter_NumberOfAdapters_Get
-        {
-            get
-            {
-                if (!ADL_Adapter_NumberOfAdapters_Get_Check && null == ADL_Adapter_NumberOfAdapters_Get_)
-                {
-                    ADL_Adapter_NumberOfAdapters_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_NumberOfAdapters_Get"))
-                    {
-                        ADL_Adapter_NumberOfAdapters_Get_ = ADLImport.ADL_Adapter_NumberOfAdapters_Get;
-                    }
-                }
-                return ADL_Adapter_NumberOfAdapters_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Adapter_NumberOfAdapters_Get ADL_Adapter_NumberOfAdapters_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Adapter_NumberOfAdapters_Get_Check = false;
-        #endregion ADL_Adapter_NumberOfAdapters_Get
-
-        #region ADL_Adapter_ID_Get
-        
-        /// <summary> ADL_Adapter_Active_Get Delegates</summary>
-        public static ADL_Adapter_ID_Get ADL_Adapter_ID_Get
-        {
-            get
-            {
-                if (!ADL_Adapter_ID_Get_Check && null == ADL_Adapter_ID_Get_)
-                {
-                    ADL_Adapter_ID_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_ID_Get"))
-                    {
-                        ADL_Adapter_ID_Get_ = ADLImport.ADL_Adapter_ID_Get;
-                    }
-                }
-                return ADL_Adapter_ID_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Adapter_ID_Get ADL_Adapter_ID_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Adapter_ID_Get_Check = false;
-        #endregion ADL_Adapter_ID_Get
-
-        #region ADL_AdapterX2_Caps
-        /// <summary> ADL_AdapterX2_Caps Delegates</summary>
-        public static ADL_AdapterX2_Caps ADL_AdapterX2_Caps
-        {
-            get
-            {
-                if (!ADL_AdapterX2_Caps_Check && null == ADL_AdapterX2_Caps_)
-                {
-                    ADL_AdapterX2_Caps_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_AdapterX2_Caps"))
-                    {
-                        ADL_AdapterX2_Caps_ = ADLImport.ADL_AdapterX2_Caps;
-                    }
-                }
-                return ADL_AdapterX2_Caps_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_AdapterX2_Caps ADL_AdapterX2_Caps_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_AdapterX2_Caps_Check = false;
-        #endregion ADL_AdapterX2_Caps
-
-        #region ADL_Adapter_AdapterInfo_Get
-        /// <summary> ADL_Adapter_AdapterInfo_Get Delegates</summary>
-        public static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get
-        {
-            get
-            {
-                if (!ADL_Adapter_AdapterInfo_Get_Check && null == ADL_Adapter_AdapterInfo_Get_)
-                {
-                    ADL_Adapter_AdapterInfo_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_AdapterInfo_Get"))
-                    {
-                        ADL_Adapter_AdapterInfo_Get_ = ADLImport.ADL_Adapter_AdapterInfo_Get;
-                    }
-                }
-                return ADL_Adapter_AdapterInfo_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Adapter_AdapterInfo_Get ADL_Adapter_AdapterInfo_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Adapter_AdapterInfo_Get_Check = false;
-        #endregion ADL_Adapter_AdapterInfo_Get
-
-        #region ADL_Adapter_Active_Get
-        /// <summary> ADL_Adapter_Active_Get Delegates</summary>
-        public static ADL_Adapter_Active_Get ADL_Adapter_Active_Get
-        {
-            get
-            {
-                if (!ADL_Adapter_Active_Get_Check && null == ADL_Adapter_Active_Get_)
-                {
-                    ADL_Adapter_Active_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Adapter_Active_Get"))
-                    {
-                        ADL_Adapter_Active_Get_ = ADLImport.ADL_Adapter_Active_Get;
-                    }
-                }
-                return ADL_Adapter_Active_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Adapter_Active_Get ADL_Adapter_Active_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Adapter_Active_Get_Check = false;
-        #endregion ADL_Adapter_Active_Get
-
-        #region ADL_Display_DeviceConfig_Get
-        /// <summary> ADL_Display_DeviceConfig_Get Delegates</summary>
-        public static ADL_Display_DeviceConfig_Get ADL_Display_DeviceConfig_Get
-        {
-            get
-            {
-                if (!ADL_Display_DeviceConfig_Get_Check && null == ADL_Display_DeviceConfig_Get_)
-                {
-                    ADL_Display_DeviceConfig_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DeviceConfig_Get"))
-                    {
-                        ADL_Display_DeviceConfig_Get_ = ADLImport.ADL_Display_DeviceConfig_Get;
-                    }
-                }
-                return ADL_Display_DeviceConfig_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Display_DeviceConfig_Get ADL_Display_DeviceConfig_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Display_DeviceConfig_Get_Check = false;
-        #endregion ADL_Display_DeviceConfig_Get
-
-        #region ADL_Display_DisplayMapConfig_Get
-        /// <summary> ADL_Display_DisplayMapConfig_Get Delegates</summary>
-        public static ADL_Display_DisplayMapConfig_Get ADL_Display_DisplayMapConfig_Get
-        {
-            get
-            {
-                if (!ADL_Display_DisplayMapConfig_Get_Check && null == ADL_Display_DisplayMapConfig_Get_)
-                {
-                    ADL_Display_DisplayMapConfig_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DisplayMapConfig_Get"))
-                    {
-                        ADL_Display_DisplayMapConfig_Get_ = ADLImport.ADL_Display_DisplayMapConfig_Get;
-                    }
-                }
-                return ADL_Display_DisplayMapConfig_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Display_DisplayMapConfig_Get ADL_Display_DisplayMapConfig_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Display_DisplayMapConfig_Get_Check = false;
-        #endregion ADL_Display_DisplayMapConfig_Get
-
-        #region ADL_Display_DisplayMapConfig_PossibleAddAndRemove
-        /// <summary> ADL_Display_DisplayMapConfig_PossibleAddAndRemove Delegates</summary>
-        public static ADL_Display_DisplayMapConfig_PossibleAddAndRemove ADL_Display_DisplayMapConfig_PossibleAddAndRemove
-        {
-            get
-            {
-                if (!ADL_Display_DisplayMapConfig_PossibleAddAndRemove_Check && null == ADL_Display_DisplayMapConfig_PossibleAddAndRemove_)
-                {
-                    ADL_Display_DisplayMapConfig_PossibleAddAndRemove_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DisplayMapConfig_PossibleAddAndRemove"))
-                    {
-                        ADL_Display_DisplayMapConfig_PossibleAddAndRemove_ = ADLImport.ADL_Display_DisplayMapConfig_PossibleAddAndRemove;
-                    }
-                }
-                return ADL_Display_DisplayMapConfig_PossibleAddAndRemove_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Display_DisplayMapConfig_PossibleAddAndRemove ADL_Display_DisplayMapConfig_PossibleAddAndRemove_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Display_DisplayMapConfig_PossibleAddAndRemove_Check = false;
-        #endregion ADL_Display_DisplayMapConfig_PossibleAddAndRemove
-
-
-        #region ADL_Display_EdidData_Get
-        /// <summary> ADL_Display_EdidData_Get Delegates</summary>
-        public static ADL_Display_EdidData_Get ADL_Display_EdidData_Get
-        {
-            get
-            {
-                if (!ADL_Display_EdidData_Get_Check && null == ADL_Display_EdidData_Get_)
-                {
-                    ADL_Display_EdidData_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_EdidData_Get"))
-                    {
-                        ADL_Display_EdidData_Get_ = ADLImport.ADL_Display_EdidData_Get;
-                    }
-                }
-                return ADL_Display_EdidData_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Display_EdidData_Get ADL_Display_EdidData_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Display_EdidData_Get_Check = false;
-        #endregion ADL_Display_EdidData_Get
-
-
-        #region ADL_Display_DisplayInfo_Get
-        /// <summary> ADL_Display_DisplayInfo_Get Delegates</summary>
-        public static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get
-        {
-            get
-            {
-                if (!ADL_Display_DisplayInfo_Get_Check && null == ADL_Display_DisplayInfo_Get_)
-                {
-                    ADL_Display_DisplayInfo_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_DisplayInfo_Get"))
-                    {
-                        ADL_Display_DisplayInfo_Get_ = ADLImport.ADL_Display_DisplayInfo_Get;
-                    }
-                }
-                return ADL_Display_DisplayInfo_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Display_DisplayInfo_Get ADL_Display_DisplayInfo_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Display_DisplayInfo_Get_Check = false;
-        #endregion ADL_Display_DisplayInfo_Get
-
-
-        #region ADL_Display_SLSMapConfig_Get
-        /// <summary> ADL_Display_SLSMapConfig_Get Delegates</summary>
-        public static ADL_Display_SLSMapConfig_Get ADL_Display_SLSMapConfig_Get
-        {
-            get
-            {
-                if (!ADL_Display_SLSMapConfig_Get_Check && null == ADL_Display_SLSMapConfig_Get_)
-                {
-                    ADL_Display_SLSMapConfig_Get_Check = true;
-                    if (ADLCheckLibrary.IsFunctionValid("ADL_Display_SLSMapConfig_Get"))
-                    {
-                        ADL_Display_SLSMapConfig_Get_ = ADLImport.ADL_Display_SLSMapConfig_Get;
-                    }
-                }
-                return ADL_Display_SLSMapConfig_Get_;
-            }
-        }
-        /// <summary> Private Delegate</summary>
-        private static ADL_Display_SLSMapConfig_Get ADL_Display_SLSMapConfig_Get_ = null;
-        /// <summary> check flag to indicate the delegate has been checked</summary>
-        private static bool ADL_Display_SLSMapConfig_Get_Check = false;
-        #endregion ADL_Display_SLSMapConfig_Get
-
-
-        #endregion Export Functions
-
-        #region ADL Helper Functions
-
-        public static ConvertedDDCInfoFlag ConvertDDCInfoFlag(int DDCInfoValue)
-        {
-            ConvertedDDCInfoFlag expandedDDCInfoValue = new ConvertedDDCInfoFlag();
-
-            // Indicates the display is a digital device
-            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_DIGITALDEVICE)
-                expandedDDCInfoValue.DIGITALDEVICE = true;
-            // Indicates the display supports EDID queries
-            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_EDIDEXTENSION)
-                expandedDDCInfoValue.EDIDEXTENSION = true;
-            // Indicates the display suports HDMI Audio
-            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_HDMIAUDIODEVICE)
-                expandedDDCInfoValue.HDMIAUDIODEVICE = true;
-            // Indicates the display is a projector
-            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_PROJECTORDEVICE)
-                expandedDDCInfoValue.PROJECTORDEVICE = true;
-            // Indicates the display supports AI
-            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORTS_AI)
-                expandedDDCInfoValue.SUPPORTS_AI = true;
-            // Indicates the display supports YCC601
-            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC601)
-                expandedDDCInfoValue.SUPPORT_xvYCC601 = true;
-            // Indicates the display supports YCC709
-            if ((DDCInfoValue & ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709) == ADL.ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709)
-                expandedDDCInfoValue.SUPPORT_xvYCC709 = true;
-
-            return expandedDDCInfoValue;
-
-        }
-
-        public static ConvertedSupportedHDR ConvertSupportedHDR(int supportedHDR)
-        {
-            ConvertedSupportedHDR expandedSupportedHDR = new ConvertedSupportedHDR();
-
-            // Indicates the display is a digital device
-            if ((supportedHDR & ADL.ADL_HDR_CEA861_3) == ADL.ADL_HDR_CEA861_3)
-                expandedSupportedHDR.CEA861_3 = true;
-            // Indicates the display supports EDID queries
-            if ((supportedHDR & ADL.ADL_HDR_DOLBYVISION) == ADL.ADL_HDR_DOLBYVISION)
-                expandedSupportedHDR.DOLBYVISION = true;
-            // Indicates the display suports HDMI Audio
-            if ((supportedHDR & ADL.ADL_HDR_FREESYNC_HDR) == ADL.ADL_HDR_FREESYNC_HDR)
-                expandedSupportedHDR.FREESYNC_HDR = true;
-
-            return expandedSupportedHDR;
-
-        }
-
-        public static ConvertedDisplayInfoValue ConvertDisplayInfoValue(int displayInfoValue)
-        {
-            ConvertedDisplayInfoValue expandedDisplayInfoValue = new ConvertedDisplayInfoValue();
-
-            // Indicates the display is connected
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED) == ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED)           
-                expandedDisplayInfoValue.DISPLAYCONNECTED = true;
-            // Indicates the display is mapped within OS
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED) == ADL.ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED)           
-                expandedDisplayInfoValue.DISPLAYMAPPED = true;
-            // Indicates the display can be forced
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED)           
-                expandedDisplayInfoValue.FORCIBLESUPPORTED = true;
-            // Indicates the display supports genlock 
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED)           
-                expandedDisplayInfoValue.GENLOCKSUPPORTED = true;
-            // Indicates the display is an LDA display.
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY) == ADL.ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY)           
-                expandedDisplayInfoValue.LDA_DISPLAY = true;
-            // Indicates the display supports 2x Horizontal stretch
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_2HSTRETCH = true;
-            // Indicates the display supports 2x Vertical stretch
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_2VSTRETCH = true;
-            // Indicates the display supports cloned desktops 
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_CLONE = true;
-            // Indicates the display supports extended desktops
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_EXTENDED = true;
-            // Indicates the display supports N Stretched on 1 GPU
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_NSTRETCH1GPU = true;
-            // Indicates the display supports N Stretched on N GPUs
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_NSTRETCHNGPU = true;
-            // Reserved display info flag #2
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_RESERVED2 = true;
-            // Reserved display info flag #3
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_RESERVED3 = true;
-            // Indicates the display supports single desktop
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE) == ADL.ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE)           
-                expandedDisplayInfoValue.MANNER_SUPPORTED_SINGLE = true;
-            // Indicates the display supports overriding the mode timing
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED)           
-                expandedDisplayInfoValue.MODETIMING_OVERRIDESSUPPORTED = true;
-            // Indicates the display supports multi-vpu
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED) == ADL.ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED)           
-                expandedDisplayInfoValue.MULTIVPU_SUPPORTED = true;
-            // Indicates the display is non-local to this machine 
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_NONLOCAL) == ADL.ADL_DISPLAY_DISPLAYINFO_NONLOCAL)           
-                expandedDisplayInfoValue.NONLOCAL = true;
-            // Indicates the display is a projector
-            if ((displayInfoValue & ADL.ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR) == ADL.ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR)           
-                expandedDisplayInfoValue.SHOWTYPE_PROJECTOR = true;
-
-            return expandedDisplayInfoValue;
-
-        }
-
-        public static ConvertedDisplayModeFlags ConvertDisplayModeFlags(int displayModeFlag)
-        {
-            ConvertedDisplayModeFlags expandedDisplayModeFlags = new ConvertedDisplayModeFlags();
-
-            // Indicates the display is a digital device
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_COLOURFORMAT_565) == ADL.ADL_DISPLAY_MODE_COLOURFORMAT_565)
-                expandedDisplayModeFlags.COLOURFORMAT_565 = true;
-            // Indicates the display supports EDID queries
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_COLOURFORMAT_8888) == ADL.ADL_DISPLAY_MODE_COLOURFORMAT_8888)
-                expandedDisplayModeFlags.COLOURFORMAT_8888 = true;
-            // Indicates the display supports normal vertical orientation
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_000)
-                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_000 = true;
-            // Indicates the display supports normal vertical orientation
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_090) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_090)
-                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_090 = true;
-            // Indicates the display supports normal vertical orientation
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_180) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_180)
-                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_180 = true;
-            // Indicates the display supports normal vertical orientation
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_270) == ADL.ADL_DISPLAY_MODE_ORIENTATION_SUPPORTED_270)
-                expandedDisplayModeFlags.ORIENTATION_SUPPORTED_270 = true;
-            // Indicates the display supports normal vertical orientation
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_REFRESHRATE_ROUNDED) == ADL.ADL_DISPLAY_MODE_REFRESHRATE_ROUNDED)
-                expandedDisplayModeFlags.REFRESHRATE_ROUNDED = true;
-            // Indicates the display supports normal vertical orientation
-            if ((displayModeFlag & ADL.ADL_DISPLAY_MODE_REFRESHRATE_ONLY) == ADL.ADL_DISPLAY_MODE_REFRESHRATE_ONLY)
-                expandedDisplayModeFlags.REFRESHRATE_ONLY = true;
-
-            return expandedDisplayModeFlags;
-
-        }
-
-
-        public static string ConvertADLReturnValueIntoWords(int adlReturnValue)
-        {
-            if (adlReturnValue == ADL.ADL_OK)
-                return "Success. Function worked as intended.";
-            if (adlReturnValue == ADL.ADL_ERR)
-                return "Generic Error.Most likely one or more of the Escape calls to the driver failed!";
-            if (adlReturnValue == ADL.ADL_ERR_DISABLED_ADAPTER)
-                return "Call can't be made due to disabled adapter.";
-            if (adlReturnValue == ADL.ADL_ERR_INVALID_ADL_IDX)
-                return "Invalid ADL index passed.";
-            if (adlReturnValue == ADL.ADL_ERR_INVALID_CALLBACK)
-                return "Invalid Callback passed.";
-            if (adlReturnValue == ADL.ADL_ERR_INVALID_CONTROLLER_IDX)
-                return "Invalid controller index passed.";
-            if (adlReturnValue == ADL.ADL_ERR_INVALID_DISPLAY_IDX)
-                return "Invalid display index passed.";
-            if (adlReturnValue == ADL.ADL_ERR_INVALID_PARAM)
-                return "One of the parameter passed is invalid.";
-            if (adlReturnValue == ADL.ADL_ERR_INVALID_PARAM_SIZE)
-                return "One of the parameter size is invalid.";
-            if (adlReturnValue == ADL.ADL_ERR_NO_XDISPLAY)
-                return "There's no Linux XDisplay in Linux Console environment.";
-            if (adlReturnValue == ADL.ADL_ERR_NOT_INIT)
-                return "ADL not initialized. You need to run ADL_Main_Control_Create.";
-            if (adlReturnValue == ADL.ADL_ERR_NOT_SUPPORTED)
-                return "Function not supported by the driver.";
-            if (adlReturnValue == ADL.ADL_ERR_NULL_POINTER)
-                return "Null Pointer error.";
-            if (adlReturnValue == ADL.ADL_ERR_RESOURCE_CONFLICT)
-                return "Display Resource conflict.";
-            if (adlReturnValue == ADL.ADL_ERR_SET_INCOMPLETE)
-                return "Err Set incomplete";
-            if (adlReturnValue == ADL.ADL_OK_MODE_CHANGE)
-                return "All OK but need mode change.";
-            if (adlReturnValue == ADL.ADL_OK_RESTART)
-                return "All OK, but need to restart.";
-            if (adlReturnValue == ADL.ADL_OK_WAIT)
-                return "All OK, but need to wait.";
-            if (adlReturnValue == ADL.ADL_OK_WARNING)
-                return "All OK, but with warning..";
-            // If we get here, then we've got an ADL Return value that we don't understand!
-            return "ADL Return value not recognised. Your driver is likely newer than this code can understand.";
-    }
-
-
-        #endregion ADL Helper Functions
 
     }
-    #endregion ADL Class
 }
-
-#endregion ATI.ADL

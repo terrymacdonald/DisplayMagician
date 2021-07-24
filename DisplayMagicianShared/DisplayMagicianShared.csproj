@@ -54,6 +54,7 @@
     <Compile Include="AMD\ADL.cs" />
     <Compile Include="AMD\AMDLibrary.cs" />
     <Compile Include="AMD\AMDProfileItem.cs" />
+    <Compile Include="NVIDIA\NVAPI.cs" />
     <Compile Include="NVIDIA\NVIDIALibrary.cs" />
     <Compile Include="NVIDIA\NVIDIAProfileItem.cs" />
     <Compile Include="SharedLogger.cs" />
@@ -64,11 +65,11 @@
     </Compile>
     <Compile Include="ResizeDrawing.cs" />
     <Compile Include="ScanLineOrdering.cs" />
-    <Compile Include="NVIDIA\SurroundHelper.cs" />
-    <Compile Include="NVIDIA\SurroundTopologyDisplay.cs" />
+    <None Include="NVIDIA\SurroundHelper.cs" />
+    <None Include="NVIDIA\SurroundTopologyDisplay.cs" />
     <Compile Include="PixelShift.cs" />
     <Compile Include="ProfileItem.cs" />
-    <Compile Include="NVIDIA\SurroundTopology.cs" />
+    <None Include="NVIDIA\SurroundTopology.cs" />
     <Compile Include="DisplayMagicianStartupAction.cs" />
     <Compile Include="ProfileIcon.cs" />
     <Compile Include="Rotation.cs" />
@@ -90,8 +91,9 @@
     <Compile Include="UserControls\DisplayView.Designer.cs">
       <DependentUpon>DisplayView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Windows\WinProfileItem.cs" />
     <Compile Include="Windows\CCD.cs" />
-    <Compile Include="Windows\WindowsLibrary.cs" />
+    <Compile Include="Windows\WinLibrary.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using NvAPIWrapper.Native.GPU;
 using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
+using DisplayMagicianShared.Windows;
 using System.Windows.Forms;
 
 namespace DisplayMagicianShared
@@ -168,7 +169,7 @@ namespace DisplayMagicianShared
             {
                 if (_connectedDisplayIdentifiers.Count == 0)
                     // Load the Profiles from storage if they need to be
-                    _connectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
+                    _connectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
 
 
                 return _connectedDisplayIdentifiers;
@@ -574,14 +575,28 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
-            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Trying to access things using the AMD video card driver");
-            // If we're using the AMD library
-            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
-            if (amdLibrary.IsInstalled)
-            {                
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
+            if (NVIDIALibrary.GetLibrary().IsInstalled)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
+                NVIDIAProfileItem nvidiaProfile = new NVIDIAProfileItem
+                {
+                    Name = "Current NVIDIA Display Profile",
+                    //ProfileData = amdLibrary.GetActiveProfile(),
+                    //Screens = amdLibrary.GenerateScreenPositions()
+                    //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
+                };
+                //activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
+                //activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
+                nvidiaProfile.CreateProfileFromCurrentDisplaySettings();
+                activeProfile = nvidiaProfile;
+            }
+            else if (AMDLibrary.GetLibrary().IsInstalled)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
                 AMDProfileItem amdProfile = new AMDProfileItem
                 {
-                    Name = "Current Display Profile" ,
+                    Name = "Current AMD Display Profile" ,
                     //ProfileData = amdLibrary.GetActiveProfile(),
                     //Screens = amdLibrary.GenerateScreenPositions()
                 //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
@@ -592,16 +607,18 @@ namespace DisplayMagicianShared
                 activeProfile = amdProfile;
             }
             else {
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Trying to access things using the NVIDIA video card driver");
-                activeProfile = new NVIDIAProfileItem
+                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Neither NVIDIA NVAPI or AMD ADL Drivers are installed, so using the built in Windows CCD library interface for this display profile.");
+                WinProfileItem winProfile = new WinProfileItem
                 {
-                    Name = "Current Display Profile",
-                    Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),
+                    Name = "Current Windows Display Profile",
+                    //Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray(),
                     //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
                 };
 
-                activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
-                activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
+                //WinProfile.ProfileIcon = new ProfileIcon(activeProfile);
+                //activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
+                winProfile.CreateProfileFromCurrentDisplaySettings();
+                activeProfile = winProfile;
             }
 
             
@@ -826,7 +843,7 @@ namespace DisplayMagicianShared
         {
             // We need to refresh the cached answer
             // Get the list of connected devices
-            ConnectedDisplayIdentifiers = GenerateAllAvailableDisplayIdentifiers();
+            ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
@@ -837,696 +854,41 @@ namespace DisplayMagicianShared
         }
 
 
-        public static List<string> GenerateProfileDisplayIdentifiers()
+        public static List<string> GetAllConnectedDisplayIdentifiers()
         {
-            SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: Generating the unique Display Identifiers for the currently active profile");
-
-            List<string> displayIdentifiers = new List<string>();
-            bool isNvidia = false;
-            //bool isAMD = false;
-
-            // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
-           
-            NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = null;
-            try
+            if (NVIDIALibrary.GetLibrary().IsInstalled)
             {
-                myPhysicalGPUs = NvAPIWrapper.GPU.PhysicalGPU.GetPhysicalGPUs();
-                isNvidia = true;
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: The video card is a NVIDIA video card.");
+                return NVIDIALibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
             }
-            catch (Exception ex)
+            else if (AMDLibrary.GetLibrary().IsInstalled)
             {
-                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateProfileDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception. This means the video card isn't compatible with the NvAPIWrapper library we use. It is unlikely to be an NVIDIA video card.");
+                return AMDLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
             }
-            if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
-            //if (false)
+            else 
             {
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: We were able to GetPhysicalCPUs through NvAPIWrapper library. There are {myPhysicalGPUs.Length} Physical GPUs detected");
-
-                foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
-                {
-                    // get a list of all physical outputs attached to the GPUs
-                    NvAPIWrapper.GPU.GPUOutput[] myGPUOutputs = myPhysicalGPU.ActiveOutputs;
-                    foreach (NvAPIWrapper.GPU.GPUOutput aGPUOutput in myGPUOutputs)
-                    {
-                        SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: We were able to detect {myGPUOutputs.Length} outputs");
-                        // Figure out the displaydevice attached to the output
-                        NvAPIWrapper.Display.DisplayDevice aConnectedDisplayDevice = myPhysicalGPU.GetDisplayDeviceByOutput(aGPUOutput);
-
-                        // Create an array of all the important display info we need to record
-                        List<string> displayInfo = new List<string>();
-                        displayInfo.Add("NVIDIA");
-                        try 
-                        {
-                            displayInfo.Add(myPhysicalGPU.ArchitectInformation.ShortName.ToString());
-                        }
-                        catch(Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex,$"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Architecture ShortName from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-                        try
-                        {
-                            displayInfo.Add(myPhysicalGPU.ArchitectInformation.Revision.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Architecture Revision from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-                        try
-                        {
-                            displayInfo.Add(myPhysicalGPU.Board.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Board details from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-                        try
-                        {
-                            displayInfo.Add(myPhysicalGPU.Foundry.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Foundry from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-                        try
-                        {
-                            displayInfo.Add(myPhysicalGPU.GPUId.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA GPUId from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-                        try
-                        {
-                            displayInfo.Add(myPhysicalGPU.GPUType.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA GPUType from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-                        try
-                        {
-                            displayInfo.Add(aConnectedDisplayDevice.ConnectionType.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Connection from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-                        try
-                        {
-                            displayInfo.Add(aConnectedDisplayDevice.DisplayId.ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA DisplayID from video card. Substituting with a # instead");
-                            displayInfo.Add("#");
-                        }
-
-                        // Create a display identifier out of it
-                        string displayIdentifier = String.Join("|", displayInfo);
-                        // Add it to the list of display identifiers so we can return it
-                        displayIdentifiers.Add(displayIdentifier);
-
-                        SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
-                    }
-
-                }
+                return WinLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
             }
-            // else if there is an AMD video card then we use that mode
-            else if (AMDLibrary.IsInstalled)
-            {
-                //isAMD = true;
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: The video card is an AMD video card.");
-                // Needs a lot of work here! We need to check if the AMD returned the right stuff, and then use Windows if there is an error.
-                return AMDLibrary.GenerateProfileDisplayIdentifiers();
-            }
-            // else video card is not NVIDIA or AMD so we just use the standard WindowsAPI access method
-            else
-            {
-                // Then go through the adapters we have running using the WindowsDisplayAPI
-                List<Display> attachedDisplayDevices = Display.GetDisplays().ToList();
-
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: We are using the standard Windows Display API to figure out what display devices are attached and available. There are {attachedDisplayDevices.Count} display devices detected.");
-
-                foreach (Display attachedDisplay in attachedDisplayDevices)
-                {
-                    DisplayAdapter displayAdapter = null;
-                    PathDisplayAdapter pathDisplayAdapter = null;
-                    PathDisplaySource pathDisplaySource = null;
-                    PathDisplayTarget pathDisplayTarget = null;
-
-                    
-                    try
-                    {
-                        // We keep these lines here to detect if there is an exception so we can report it
-                        // nicely to the user.
-                        displayAdapter = attachedDisplay.Adapter;
-                        pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
-                        pathDisplaySource = attachedDisplay.ToPathDisplaySource();
-                        pathDisplayTarget = attachedDisplay.ToPathDisplayTarget();
-
-                        // This line is just to force an EDID lookup first up so that we can deterine if there is an issue 
-                        // with the Monitor, and then tell the user
-                        string EDIDManufacturerId = pathDisplayTarget.EDIDManufactureId.ToString();
-
-                        // print some trace messages so we can figure out issues if needed later
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDN : {attachedDisplay.DeviceName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDFN : {attachedDisplay.DisplayFullName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDIN : {attachedDisplay.DisplayName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDIN : {attachedDisplay.IsAvailable}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDIGP : {attachedDisplay.IsGDIPrimary}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADDIV : {attachedDisplay.IsValid}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSCD : {attachedDisplay.CurrentSetting.ColorDepth}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSP : {attachedDisplay.CurrentSetting.Position}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: DP : {displayAdapter.DevicePath}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: DN : {displayAdapter.DeviceName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: AI : {pathDisplayAdapter.AdapterId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: AIDP : {pathDisplayAdapter.DevicePath}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: AIII : {pathDisplayAdapter.IsInvalid}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: DDA : {displayAdapter.DeviceName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDSA : {pathDisplaySource.Adapter}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDSDN : {pathDisplaySource.DisplayName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDSSI : {pathDisplaySource.SourceId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTA : {pathDisplayTarget.Adapter}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTDP : {pathDisplayTarget.DevicePath}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTFN : {pathDisplayTarget.FriendlyName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTIA : {pathDisplayTarget.IsAvailable}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTPR : {pathDisplayTarget.PreferredResolution}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTTI : {pathDisplayTarget.TargetId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateProfileDisplayIdentifiers: PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
-                        if (!notifiedEDIDErrorToUser)
-                        {
-                            MessageBox.Show(
-                                $"Your monitor {attachedDisplay.DisplayFullName} is not responding when we ask about it's configuration. DisplayMagician may not be able to use this monitor!", @"DisplayMagician cannot talk to your monitor",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                            notifiedEDIDErrorToUser = true;
-                        }                            
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception accessing one of the WindowsDisplayAPI items to print it out during a TRACE session");
-                    }
-
-                    // Create an array of all the important display info we need to record
-                    List<string> displayInfo = new List<string>();
-                    displayInfo.Add("WINAPI");
-                    try
-                    {
-                        displayInfo.Add(displayAdapter.DeviceName.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display Adapter Device name from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayAdapter.AdapterId.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display Adapter ID from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.ConnectorInstance.ToString());
-                    }                    
-                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception2 while we were trying to access the DisplayTarget to gather information about your display configuration.");
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display Target Connector Instance from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.FriendlyName);
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display Target Friendly name from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.EDIDManufactureCode.ToString());
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers2: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers2: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers2: Exception getting Windows Display EDID Manufacturer Code from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.EDIDManufactureId.ToString());
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers3: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers3: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers3: Exception getting Windows Display EDID Manufacturer ID from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.EDIDProductCode.ToString());
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.InvalidEDIDInformation ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers4: Exception while trying to get information from your monitor {attachedDisplay.DisplayFullName} about it's configuration. DisplayMagician may not be able to use this monitor!");
-                    }
-                    catch (WindowsDisplayAPI.Exceptions.TargetNotAvailableException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers4: Exception while we were trying to access the DisplayTarget to gather information about your display configuration.");
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers4: Exception getting Windows Display EDID Product Code from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.TargetId.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting Windows Display Target ID from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-
-                    // Create a display identifier out of it
-                    string displayIdentifier = String.Join("|", displayInfo);
-                    // Add it to the list of display identifiers so we can return it
-                    displayIdentifiers.Add(displayIdentifier);
-                    SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
-                    
-                }
-
-            }
-
-            // Sort the display identifiers
-            displayIdentifiers.Sort();
-
-            return displayIdentifiers;
         }
 
-        public static List<string> GenerateAllAvailableDisplayIdentifiers()
+        public static List<string> GetCurrentDisplayIdentifiers()
         {
-            SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Generating all the Display Identifiers currently active now");
-
-            List<string> displayIdentifiers = new List<string>();
-
-            // If the Video Card is an NVidia, then we should generate specific NVidia displayIdentifiers
-            bool isNvidia = false;
-            NvAPIWrapper.GPU.PhysicalGPU[] myPhysicalGPUs = null;
-            try
+            if (NVIDIALibrary.GetLibrary().IsInstalled)
             {
-                myPhysicalGPUs = NvAPIWrapper.GPU.PhysicalGPU.GetPhysicalGPUs();
-                isNvidia = true;
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: The video card is a NVIDIA video card.");
+                return NVIDIALibrary.GetLibrary().GetCurrentDisplayIdentifiers();
             }
-            catch (Exception ex)
+            else if (AMDLibrary.GetLibrary().IsInstalled)
             {
-                SharedLogger.logger.Debug(ex, "ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attemped to get GetPhysicalCPUs through NvAPIWrapper library but got exception. This means the video card isn't compatible with the NvAPIWrapper library we use. It is unlikely to be an NVIDIA video card.");
+                return AMDLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
             }
-
-            // If the Video Card is an AMD, then we should generate specific AMD displayIdentifiers
-            AMD.AMDLibrary thingy = new AMD.AMDLibrary();
-
-            if (isNvidia && myPhysicalGPUs != null && myPhysicalGPUs.Length > 0)
-            //if (false)
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: We were able to GetPhysicalCPUs through NvAPIWrapper library. There are {myPhysicalGPUs.Length} Physical GPUs detected");
-
-                foreach (NvAPIWrapper.GPU.PhysicalGPU myPhysicalGPU in myPhysicalGPUs)
-                {
-                    // get a list of all physical outputs attached to the GPUs
-                    NvAPIWrapper.Display.DisplayDevice[] allDisplayDevices = myPhysicalGPU.GetConnectedDisplayDevices(ConnectedIdsFlag.None);
-
-                    SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: We were able to detect {allDisplayDevices.Length} connected devices");
-                    foreach (NvAPIWrapper.Display.DisplayDevice aDisplayDevice in allDisplayDevices)
-                    {
-
-                        if (aDisplayDevice.IsAvailable== true)
-                        {
-                            // Create an array of all the important display info we need to record
-                            List<string> displayInfo = new List<string>();
-                            displayInfo.Add("NVIDIA");
-                            try
-                            {
-                                displayInfo.Add(myPhysicalGPU.ArchitectInformation.ShortName.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Architecture ShortName from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-                            try
-                            {
-                                displayInfo.Add(myPhysicalGPU.ArchitectInformation.Revision.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Architecture Revision from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-                            try
-                            {
-                                displayInfo.Add(myPhysicalGPU.Board.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Board details from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-                            try
-                            {
-                                displayInfo.Add(myPhysicalGPU.Foundry.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Foundry from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-                            try
-                            {
-                                displayInfo.Add(myPhysicalGPU.GPUId.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA GPUId from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-                            try
-                            {
-                                displayInfo.Add(myPhysicalGPU.GPUType.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA GPUType from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-                            try
-                            {
-                                displayInfo.Add(aDisplayDevice.ConnectionType.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Connection from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-                            try
-                            {
-                                displayInfo.Add(aDisplayDevice.DisplayId.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA DisplayID from video card. Substituting with a # instead");
-                                displayInfo.Add("#");
-                            }
-
-                            // Create a display identifier out of it
-                            string displayIdentifier = String.Join("|", displayInfo);
-                            // Add it to the list of display identifiers so we can return it
-                            displayIdentifiers.Add(displayIdentifier);
-                            SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
-                        }
-                    }
-                }
-            }
-            // else if there is an AMD video card then we use that mode
-            else if (AMDLibrary.IsInstalled)
-            {
-                //isAMD = true;
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: The video card is an AMD video card.");
-                // Needs a lot of work here! We need to check if the AMD returned the right stuff, and then use Windows if there is an error.
-                return AMDLibrary.GenerateAllAvailableDisplayIdentifiers();
-            }
-            // else video card is not NVIDIA or AMD so we just use the standard WindowsAPI access method
             else
             {
-
-                // Then go through the adapters we have running using the WindowsDisplayAPI
-                List<Display> attachedDisplayDevices = Display.GetDisplays().ToList();
-                List<UnAttachedDisplay> unattachedDisplayDevices = UnAttachedDisplay.GetUnAttachedDisplays().ToList();
-
-                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: We are using the standard Windows Display API to figure out what display devices are attached and available. There are {attachedDisplayDevices.Count} display devices attached and {unattachedDisplayDevices.Count} devices unattached.");
-
-
-                foreach (Display attachedDisplay in attachedDisplayDevices)
-                {
-                    DisplayAdapter displayAdapter = attachedDisplay.Adapter;
-                    PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
-                    PathDisplaySource pathDisplaySource = attachedDisplay.ToPathDisplaySource();
-                    PathDisplayTarget pathDisplayTarget = attachedDisplay.ToPathDisplayTarget();
-
-                    try
-                    {
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDN : {attachedDisplay.DeviceName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDFN : {attachedDisplay.DisplayFullName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {attachedDisplay.DisplayName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {attachedDisplay.IsAvailable}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIGP : {attachedDisplay.IsGDIPrimary}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIV : {attachedDisplay.IsValid}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSCD : {attachedDisplay.CurrentSetting.ColorDepth}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSF : {attachedDisplay.CurrentSetting.Frequency}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSIE : {attachedDisplay.CurrentSetting.IsEnable}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSII : {attachedDisplay.CurrentSetting.IsInterlaced}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSO : {attachedDisplay.CurrentSetting.Orientation}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSOSM : {attachedDisplay.CurrentSetting.OutputScalingMode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSP : {attachedDisplay.CurrentSetting.Position}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADCSR : {attachedDisplay.CurrentSetting.Resolution}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DP : {displayAdapter.DevicePath}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DN : {displayAdapter.DeviceName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AI : {pathDisplayAdapter.AdapterId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIDP : {pathDisplayAdapter.DevicePath}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIII : {pathDisplayAdapter.IsInvalid}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DDA : {displayAdapter.DeviceName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSA : {pathDisplaySource.Adapter}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSDN : {pathDisplaySource.DisplayName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSSI : {pathDisplaySource.SourceId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTA : {pathDisplayTarget.Adapter}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTDP : {pathDisplayTarget.DevicePath}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTFN : {pathDisplayTarget.FriendlyName}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTIA : {pathDisplayTarget.IsAvailable}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPR : {pathDisplayTarget.PreferredResolution}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTTI : {pathDisplayTarget.TargetId}");
-                        SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception accessing one of the WindowsDisplayAPI items to print it out during a TRACE session");
-                    }
-
-                    // Create an array of all the important display info we need to record
-                    List<string> displayInfo = new List<string>();
-                    displayInfo.Add("WINAPI");
-                    try
-                    {
-                        displayInfo.Add(displayAdapter.DeviceName.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display Adapter Device name from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayAdapter.AdapterId.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display Adapter ID from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.ConnectorInstance.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display Target Connector Instance from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.FriendlyName);
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display Target Friendly name from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.EDIDManufactureCode.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display EDID Manufacturer Code from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.EDIDManufactureId.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display EDID Manufacturer ID from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.EDIDProductCode.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display EDID Product Code from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-                    try
-                    {
-                        displayInfo.Add(pathDisplayTarget.TargetId.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception getting Windows Display Target ID from video card. Substituting with a # instead");
-                        displayInfo.Add("#");
-                    }
-
-                    // Create a display identifier out of it
-                    string displayIdentifier = String.Join("|", displayInfo);
-                    // Add it to the list of display identifiers so we can return it
-                    displayIdentifiers.Add(displayIdentifier);
-                    SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Attached DisplayIdentifier: {displayIdentifier}");
-                }
-
-                foreach (UnAttachedDisplay unattachedDisplay in unattachedDisplayDevices)
-                {
-                    DisplayAdapter displayAdapter = unattachedDisplay.Adapter;
-                    PathDisplayAdapter pathDisplayAdapter = displayAdapter.ToPathDisplayAdapter();
-                    PathDisplaySource pathDisplaySource = unattachedDisplay.ToPathDisplaySource();
-                    PathDisplayTarget pathDisplayTarget = unattachedDisplay.ToPathDisplayTarget();
-
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDN : {unattachedDisplay.DeviceName}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDFN : {unattachedDisplay.DisplayFullName}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {unattachedDisplay.DisplayName}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIN : {unattachedDisplay.IsAvailable}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: ADDIV : {unattachedDisplay.IsValid}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DP : {displayAdapter.DevicePath}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DN : {displayAdapter.DeviceName}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DK : {displayAdapter.DeviceKey}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AI : {pathDisplayAdapter.AdapterId}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIDP : {pathDisplayAdapter.DevicePath}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: AIII : {pathDisplayAdapter.IsInvalid}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSA : {pathDisplaySource.Adapter}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSCDS : {pathDisplaySource.CurrentDPIScale}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSDN : {pathDisplaySource.DisplayName}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSMDS : {pathDisplaySource.MaximumDPIScale}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSRDS : {pathDisplaySource.RecommendedDPIScale}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDSSI : {pathDisplaySource.SourceId}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTA : {pathDisplayTarget.Adapter}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTCI : {pathDisplayTarget.ConnectorInstance}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTDP : {pathDisplayTarget.DevicePath}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMC : {pathDisplayTarget.EDIDManufactureCode}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEMI : {pathDisplayTarget.EDIDManufactureId}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTEPC : {pathDisplayTarget.EDIDProductCode}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTFN : {pathDisplayTarget.FriendlyName}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTIA : {pathDisplayTarget.IsAvailable}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPR : {pathDisplayTarget.PreferredResolution}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTPSM : {pathDisplayTarget.PreferredSignalMode}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTTI : {pathDisplayTarget.TargetId}");
-                    SharedLogger.logger.Trace($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: PDTVRS : {pathDisplayTarget.VirtualResolutionSupport}");
-
-                    // Create an array of all the important display info we need to record
-                    string[] displayInfo = {
-                                "WINAPI",
-                                displayAdapter.DeviceName.ToString(),
-                                pathDisplayAdapter.AdapterId.ToString(),
-                                pathDisplayTarget.ConnectorInstance.ToString(),
-                                pathDisplayTarget.FriendlyName,
-                                pathDisplayTarget.EDIDManufactureCode.ToString(),
-                                pathDisplayTarget.EDIDManufactureId.ToString(),
-                                pathDisplayTarget.EDIDProductCode.ToString(),
-                                pathDisplayTarget.TargetId.ToString(),
-                            };
-
-                    // Create a display identifier out of it
-                    string displayIdentifier = String.Join("|", displayInfo);
-                    // Add it to the list of display identifiers so we can return it
-                    displayIdentifiers.Add(displayIdentifier);
-                    SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Unattached DisplayIdentifier: {displayIdentifier}");
-                }
-
+                return WinLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
             }
-
-            // Sort the display identifiers
-            displayIdentifiers.Sort();
-
-            return displayIdentifiers;
         }
 
-        public static bool ApplyNVIDIAGridTopology(NVIDIAProfileItem profile)
+
+
+/*        public static bool ApplyNVIDIAGridTopology(NVIDIAProfileItem profile)
         {
             SharedLogger.logger.Debug($"ProfileRepository/ApplyNVIDIAGridTopology: Attempting to apply NVIDIA Grid Topology");
 
@@ -1595,7 +957,7 @@ namespace DisplayMagicianShared
                 return false;
             }
 
-        }
+        }*/
 
         public static bool IsValidFilename(string testName)
         {

@@ -1,85 +1,187 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
-using ATI.ADL;
+using System.Text;
 using Microsoft.Win32.SafeHandles;
+using DisplayMagicianShared;
+using System.ComponentModel;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared.NVIDIA
 {
-    public  class NVIDIALibrary : IDisposable
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NVIDIA_ADAPTER_CONFIG : IEquatable<NVIDIA_ADAPTER_CONFIG>
     {
+        public int AdapterDeviceNumber;
+        public int AdapterBusNumber;
+        public int AdapterIndex;
+        public bool IsPrimaryAdapter;
+        //public ADL_DISPLAY_MAP[] DisplayMaps;
+        //public ADL_DISPLAY_TARGET[] DisplayTargets;
+        public int SLSMapIndex;
+        public bool IsSLSEnabled;
+        //public ADL_SLS_MAP[] SLSMap;
+
+        public bool Equals(NVIDIA_ADAPTER_CONFIG other)
+        => AdapterIndex == other.AdapterIndex &&
+           AdapterBusNumber == other.AdapterBusNumber &&
+           AdapterDeviceNumber == other.AdapterDeviceNumber &&
+           IsPrimaryAdapter == other.IsPrimaryAdapter &&
+           //DisplayMaps.SequenceEqual(other.DisplayMaps) &&
+           //DisplayTargets.SequenceEqual(other.DisplayTargets);
+           SLSMapIndex == other.SLSMapIndex &&
+           IsSLSEnabled == other.IsSLSEnabled;
+
+        public override int GetHashCode()
+        {
+            return (AdapterIndex, AdapterBusNumber, AdapterDeviceNumber, IsPrimaryAdapter, SLSMapIndex, IsSLSEnabled).GetHashCode();
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NVIDIA_DISPLAY_CONFIG : IEquatable<NVIDIA_DISPLAY_CONFIG>
+    {
+        //public Dictionary<ulong, string> DisplayAdapters;
+        public List<NVIDIA_ADAPTER_CONFIG> AdapterConfigs;
+        //public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
+        //public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
+        public WINDOWS_DISPLAY_CONFIG WindowsDisplayConfig;
+
+        public bool Equals(NVIDIA_DISPLAY_CONFIG other)
+        => AdapterConfigs.SequenceEqual(other.AdapterConfigs) &&
+           //DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
+           //DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
+           //DisplayHDRStates.SequenceEqual(other.DisplayHDRStates) && 
+           WindowsDisplayConfig.Equals(other.WindowsDisplayConfig);
+
+        public override int GetHashCode()
+        {
+            return (AdapterConfigs, WindowsDisplayConfig).GetHashCode();
+        }
+    }
+
+    class NVIDIALibrary : IDisposable
+    {
+
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
         private static NVIDIALibrary _instance = new NVIDIALibrary();
 
+        private static WinLibrary _winLibrary = new WinLibrary();
+
         private bool _initialised = false;
+        private bool _haveSessionHandle = false;
 
         // To detect redundant calls
         private bool _disposed = false;
 
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
-        private IntPtr _adlContextHandle = IntPtr.Zero;
-
-        // Struct to be used as the NVIDIA Profile
-        public struct NVIDIAProfile
-        {
-            public List<NVIDIAAdapter> Adapters;
-        }
-
-        // Struct to store the Display
-        public struct NVIDIAAdapter
-        {
-            internal ADLAdapterInfoX2 AdapterInfoX2;
-            internal List<NVIDIADisplay> Displays;
-        }
-
-        // Struct to store the Display
-        public struct NVIDIADisplay
-        {
-            internal List<ADLMode> DisplayModes;
-        }
-
+        private IntPtr _nvapiSessionHandle = IntPtr.Zero;
 
         static NVIDIALibrary() { }
         public NVIDIALibrary()
         {
-            int ADLRet = ADL.ADL_ERR;
 
-            SharedLogger.logger.Trace("NVIDIALibrary/NVIDIALibrary: Intialising ADL2 library interface");
             try
             {
-                if (ADL.ADL2_Main_Control_Create != null)
+                SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: Attempting to load the NVIDIA NVAPI DLL {NVImport.NVAPI_DLL}");
+                // Attempt to prelink all of the NVAPI functions
+                Marshal.PrelinkAll(typeof(NVImport));
+
+                // If we get here then we definitely have the NVIDIA driver available.
+                NVAPI_STATUS NVStatus;
+                SharedLogger.logger.Trace("NVIDIALibrary/NVIDIALibrary: Intialising NVIDIA NVAPI library interface");
+                // Step 1: Initialise the NVAPI
+                try
                 {
-                    // Second parameter is 1: Get only the present adapters
-                    ADLRet = ADL.ADL2_Main_Control_Create(ADL.ADL_Main_Memory_Alloc, 1, out _adlContextHandle);
+                    NVStatus = NVImport.NvAPI_Initialize();
+                    if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                    {
+                        _initialised = true;
+                        SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: NVIDIA NVAPI library was initialised successfully");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: Error intialising NVIDIA NVAPI library. NvAPI_Initialize() returned error code {NVStatus}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Trace(ex, $"NVIDIALibrary/NVIDIALibrary: Exception intialising NVIDIA NVAPI library. NvAPI_Initialize() caused an exception.");
                 }
 
-                if (ADLRet == ADL.ADL_OK)
+                // Step 2: Get a session handle that we can use for all other interactions
+                try
                 {
-                    _initialised = true;
-                    SharedLogger.logger.Trace("NVIDIALibrary/NVIDIALibrary: ADL2 library was initialised successfully");
+                    NVStatus = NVImport.NvAPI_DRS_CreateSession(out _nvapiSessionHandle);
+                    if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                    {
+                        _haveSessionHandle = true;
+                        SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: NVIDIA NVAPI library DRS session handle was created successfully");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: Error creating a NVAPI library DRS session handle. NvAPI_DRS_CreateSession() returned error code {NVStatus}");
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    SharedLogger.logger.Error("NVIDIALibrary/NVIDIALibrary: Error intialising ADL2 library. ADL2_Main_Control_Create() returned error code " + ADL.ConvertADLReturnValueIntoWords(ADLRet));
+                    SharedLogger.logger.Trace(ex, $"NVIDIALibrary/NVIDIALibrary: Exception creating a NVAPI library DRS session handle. NvAPI_DRS_CreateSession() caused an exception.");
                 }
+
+                _winLibrary = WinLibrary.GetLibrary();
+
             }
-            catch (Exception ex)
+            catch (DllNotFoundException ex)
             {
-                SharedLogger.logger.Error(ex, "NVIDIALibrary/NVIDIALibrary: Exception intialising ADL2 library. ADL2_Main_Control_Create() caused an exception");
+                // If this fires, then the DLL isn't available, so we need don't try to do anything else
+                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL {NVImport.NVAPI_DLL}. This generally means you don't have the NVIDIA driver installed.");
             }
 
         }
 
         ~NVIDIALibrary()
         {
-            // If the ADL2 library was initialised, then we need to free it up.
+            SharedLogger.logger.Trace("NVIDIALibrary/~NVIDIALibrary: Destroying NVIDIA NVAPI library interface");
+            // If the NVAPI library was initialised, then we need to free it up.
             if (_initialised)
             {
-                if (null != ADL.ADL2_Main_Control_Destroy)
-                    ADL.ADL2_Main_Control_Destroy(_adlContextHandle);
+                NVAPI_STATUS NVStatus;
+                // If we have a session handle we need to free it up first
+                if (_haveSessionHandle)
+                {
+                    try
+                    {
+                        NVStatus = NVImport.NvAPI_DRS_DestorySession(_nvapiSessionHandle);
+                        if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                        {
+                            _haveSessionHandle = true;
+                            SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: NVIDIA NVAPI library DRS session handle was successfully destroyed");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: Error destroying the NVAPI library DRS session handle. NvAPI_DRS_DestorySession() returned error code {NVStatus}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        SharedLogger.logger.Trace(ex, $"NVIDIALibrary/NVIDIALibrary: Exception destroying the NVIDIA NVAPI library. NvAPI_DRS_DestorySession() caused an exception.");
+                    }
+                }
+
+                try
+                {
+                    NVImport.NvAPI_Unload();
+                    SharedLogger.logger.Trace($"NVIDIALibrary/NVIDIALibrary: NVIDIA NVAPI library was unloaded successfully");
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Trace(ex, $"NVIDIALibrary/NVIDIALibrary: Exception unloading the NVIDIA NVAPI library. NvAPI_Unload() caused an exception.");
+                }
+
             }
         }
 
@@ -96,8 +198,8 @@ namespace DisplayMagicianShared.NVIDIA
 
             if (disposing)
             {
-                if (null != ADL.ADL_Main_Control_Destroy)
-                    ADL.ADL_Main_Control_Destroy();
+
+                //NVImport.ADL_Main_Control_Destroy();
 
                 // Dispose managed state (managed objects).
                 _safeHandle?.Dispose();
@@ -109,7 +211,10 @@ namespace DisplayMagicianShared.NVIDIA
 
         public bool IsInstalled
         {
-            get { return _initialised; }
+            get
+            {
+                return _initialised;
+            }
         }
 
         public static NVIDIALibrary GetLibrary()
@@ -117,1427 +222,763 @@ namespace DisplayMagicianShared.NVIDIA
             return _instance;
         }
 
-        public List<string> GenerateProfileDisplayIdentifiers()
+
+
+        public NVIDIA_DISPLAY_CONFIG GetActiveConfig()
         {
-            SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Getting NVIDIA active adapter count");
+            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveConfig: Getting the currently active config");
+            bool allDisplays = true;
+            return GetNVIDIADisplayConfig(allDisplays);
+        }
 
-            int ADLRet = ADL.ADL_ERR;
-            int NumberOfAdapters = 0;
+        private NVIDIA_DISPLAY_CONFIG GetNVIDIADisplayConfig(bool allDisplays = false)
+        {
+            NVIDIA_DISPLAY_CONFIG myDisplayConfig = new NVIDIA_DISPLAY_CONFIG();
+            myDisplayConfig.AdapterConfigs = new List<NVIDIA_ADAPTER_CONFIG>();
 
-            List<string> displayIdentifiers = new List<string>();
-
-            if (null != ADL.ADL2_Adapter_NumberOfAdapters_Get)
+            if (_initialised)
             {
-                ADL.ADL2_Adapter_NumberOfAdapters_Get(_adlContextHandle, ref NumberOfAdapters);
-                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Number Of Adapters: {NumberOfAdapters.ToString()} ");
-            }
-
-            if (NumberOfAdapters > 0)
-            {
-
-                IntPtr AdapterBuffer = IntPtr.Zero;
-                if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
-                {
-                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: ADL2_Adapter_AdapterInfoX4_Get DLL function exists.");
-
-                    // Get the Adapter info and put it in the AdapterBuffer
-                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Running ADL2_Adapter_AdapterInfoX4_Get to find all known NVIDIA adapters.");
-                    //ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, AdapterBuffer, size);
-                    int numAdapters = 0;
-                    ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
-                    if (ADLRet == ADL.ADL_OK)
-                    {                        
-
-                        int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
-
-                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known NVIDIA adapters.");
-
-                        ADLAdapterInfoX2 oneAdapter = new ADLAdapterInfoX2();
-                        // Go through each adapter
-                        for (int adapterLoop = 0; adapterLoop < numAdapters; adapterLoop++)
-                        {
-                            oneAdapter = (ADLAdapterInfoX2)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (adapterLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
-
-                            if (oneAdapter.Exist != 1)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
-                                continue;
-                            }
-
-                            if (oneAdapter.Present != 1)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} isn't enabled at present so skipping detection for this adapter.");
-                                continue;
-                            }
-
-                            // Check if the adapter is active
-                            if (ADL.ADL2_Adapter_Active_Get != null)
-                                ADLRet = ADL.ADL2_Adapter_Active_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref IsActive);
-
-                            if (ADLRet == ADL.ADL_OK)
-                            {
-                                // Only continue if the adapter is enabled
-                                if (IsActive != ADL.ADL_TRUE)
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} isn't active ({oneAdapter.AdapterName}).");
-                                    continue;
-                                }
-
-                                // Only continue if the adapter index is > 0
-                                if (oneAdapter.AdapterIndex < 0)
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter has an adapter index of {oneAdapter.AdapterIndex.ToString()} which indicates it is not a real adapter.");
-                                    continue;
-                                }
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} is active! ({oneAdapter.AdapterName}).");
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: ### Adapter Info for Adapter #{oneAdapter.AdapterIndex} ###");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter AdapterIndex = {oneAdapter.AdapterIndex}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter AdapterName = {oneAdapter.AdapterName}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter BusNumber = {oneAdapter.BusNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter DeviceNumber = {oneAdapter.DeviceNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter DisplayName = {oneAdapter.DisplayName}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter DriverPath = {oneAdapter.DriverPath}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter DriverPathExt = {oneAdapter.DriverPathExt}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Exist = {oneAdapter.Exist}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter FunctionNumber = {oneAdapter.FunctionNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter InfoMask = {oneAdapter.InfoMask}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter InfoValue = {oneAdapter.InfoValue}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter OSDisplayIndex = {oneAdapter.OSDisplayIndex}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter PNPString = {oneAdapter.PNPString}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Present = {oneAdapter.Present}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Size = {oneAdapter.Size}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter UDID = {oneAdapter.UDID}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter VendorID = {oneAdapter.VendorID}");
-
-                                // Get the Adapter Capabilities
-                                ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
-                                if (ADL.ADL2_AdapterX2_Caps != null)
-                                {
-                                    ADLRet = ADL.ADL2_AdapterX2_Caps(_adlContextHandle, oneAdapter.AdapterIndex, out AdapterCapabilities);
-                                }
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: ### Adapter Capabilities for Adapter #{oneAdapter.AdapterIndex} ###");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter ID = {AdapterCapabilities.AdapterID}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Capabilities Mask = {AdapterCapabilities.CapsMask}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Capabilities Value = {AdapterCapabilities.CapsValue}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Num of Connectors = {AdapterCapabilities.NumConnectors}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Num of Controllers = {AdapterCapabilities.NumControllers}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Num of Displays = {AdapterCapabilities.NumDisplays}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Num of GL Sync Connectors = {AdapterCapabilities.NumOfGLSyncConnectors}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Adapter Num of Overlays = {AdapterCapabilities.NumOverlays}");
-
-                                // Obtain information about displays
-                                //ADLDisplayInfoArray displayInfoArray = new ADLDisplayInfoArray();
-
-                                if (ADL.ADL2_Display_DisplayInfo_Get != null)
-                                {
-                                    IntPtr DisplayBuffer = IntPtr.Zero;
-                                    int numDisplays = 0;
-                                    // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 0);
-                                    if (ADLRet == ADL.ADL_OK)
-                                    {
-
-                                        try
-                                        {
-                                            ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
-
-                                            for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
-                                            {
-                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
-
-                                                // Is the display mapped to this adapter? If not we skip it!
-                                                if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex != oneAdapter.AdapterIndex)
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
-                                                    continue;
-                                                }
-
-                                                // Convert the displayInfoValue to something usable using a library function I made
-                                                ConvertedDisplayInfoValue displayInfoValue = ADL.ConvertDisplayInfoValue(oneDisplayInfo.DisplayInfoValue);
-
-                                                if (!displayInfoValue.DISPLAYCONNECTED)
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not connected");
-                                                    continue;
-                                                }
-
-                                                // Skip connected but non-mapped displays (not mapped in windows) - we want all displays currently visible in the OS
-                                                if (!displayInfoValue.DISPLAYMAPPED)
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not mapped in Windows OS");
-                                                    continue;
-                                                }
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is connected and mapped in Windows OS");
-
-                                                ADL.ADLDisplayConnectionType displayConnector = (ADL.ADLDisplayConnectionType)oneDisplayInfo.DisplayConnector;
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: ### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Connector = {displayConnector.ToString("G")}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Controller Index = {oneDisplayInfo.DisplayControllerIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Logical Adapter Index = {oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Logical Index = {oneDisplayInfo.DisplayID.DisplayLogicalIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Physical Adapter Index = {oneDisplayInfo.DisplayID.DisplayPhysicalAdapterIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Physical Index = {oneDisplayInfo.DisplayID.DisplayPhysicalIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Mask = {oneDisplayInfo.DisplayInfoMask}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value = {oneDisplayInfo.DisplayInfoValue}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Manufacturer Name = {oneDisplayInfo.DisplayManufacturerName}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Name = {oneDisplayInfo.DisplayName}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Output Type = {oneDisplayInfo.DisplayOutputType}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Type = {oneDisplayInfo.DisplayType}");
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value DISPLAYCONNECTED = {displayInfoValue.DISPLAYCONNECTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value DISPLAYMAPPED = {displayInfoValue.DISPLAYMAPPED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value FORCIBLESUPPORTED = {displayInfoValue.FORCIBLESUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value GENLOCKSUPPORTED = {displayInfoValue.GENLOCKSUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value LDA_DISPLAY = {displayInfoValue.LDA_DISPLAY}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_2HSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2HSTRETCH}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_2VSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2VSTRETCH}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_CLONE = {displayInfoValue.MANNER_SUPPORTED_CLONE}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_EXTENDED = {displayInfoValue.MANNER_SUPPORTED_EXTENDED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_NSTRETCH1GPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCH1GPU}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_NSTRETCHNGPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCHNGPU}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_SINGLE = {displayInfoValue.MANNER_SUPPORTED_SINGLE}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MODETIMING_OVERRIDESSUPPORTED = {displayInfoValue.MODETIMING_OVERRIDESSUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value MULTIVPU_SUPPORTED = {displayInfoValue.MULTIVPU_SUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value NONLOCAL = {displayInfoValue.NONLOCAL}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Info Value SHOWTYPE_PROJECTOR = {displayInfoValue.SHOWTYPE_PROJECTOR}");
-
-                                                ADL.ADLDisplayConnectionType displayConnectionType = ADL.ADLDisplayConnectionType.Unknown;
-                                                ADLDisplayConfig displayConfig = new ADLDisplayConfig();
-                                                displayConfig.Size = Marshal.SizeOf(displayConfig);
-                                                if (ADL.ADL2_Display_DeviceConfig_Get != null)
-                                                {
-                                                    // Get the DisplayConfig from the Display
-                                                    ADLRet = ADL.ADL2_Display_DeviceConfig_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayConfig);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
-                                                        displayConnectionType = (ADL.ADLDisplayConnectionType)displayConfig.ConnectorType;
-
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: ### Display Device Config for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Connector Type = {displayConnectionType.ToString("G")}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Device Data = {displayConfig.DeviceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Overridded Device Data = {displayConfig.OverriddedDeviceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Reserved Data = {displayConfig.Reserved}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Size = {displayConfig.Size}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Error running ADL2_Display_DeviceConfig_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
-
-                                                ADLDDCInfo2 displayDDCInfo2 = new ADLDDCInfo2();
-                                                displayDDCInfo2.Size = Marshal.SizeOf(displayDDCInfo2);
-                                                // Create a stringbuilder buffer that EDID can be loaded into
-                                                //displayEDIDData.EDIDData = new StringBuilder(256);
-
-                                                if (ADL.ADL2_Display_DDCInfo2_Get != null)
-                                                {
-                                                    // Get the DDC Data from the Display
-                                                    ADLRet = ADL.ADL2_Display_DDCInfo2_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayDDCInfo2);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
-
-                                                        // Convert the DDCInfoFlag to something usable using a library function I made
-                                                        ConvertedDDCInfoFlag DDCInfoFlag = ADL.ConvertDDCInfoFlag(displayDDCInfo2.DDCInfoFlag);
-
-                                                        // Convert the DDCInfoFlag to something usable using a library function I made
-                                                        ConvertedSupportedHDR supportedHDR = ADL.ConvertSupportedHDR(displayDDCInfo2.SupportedHDR);
-
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: ### Display DDCInfo2 for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display AvgLuminanceData = {displayDDCInfo2.AvgLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag = {displayDDCInfo2.DDCInfoFlag}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DiffuseScreenReflectance = {displayDDCInfo2.DiffuseScreenReflectance}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DisplayName = {displayDDCInfo2.DisplayName}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display FreesyncFlags = {displayDDCInfo2.FreesyncFlags}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display ManufacturerID = {displayDDCInfo2.ManufacturerID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MaxBacklightMaxLuminanceData = {displayDDCInfo2.MaxBacklightMaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MaxBacklightMinLuminanceData = {displayDDCInfo2.MaxBacklightMinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MaxHResolution = {displayDDCInfo2.MaxHResolution}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MaxLuminanceData = {displayDDCInfo2.MaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MaxRefresh = {displayDDCInfo2.MaxRefresh}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MaxVResolution = {displayDDCInfo2.MaxVResolution}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MinBacklightMaxLuminanceData = {displayDDCInfo2.MinBacklightMaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MinBacklightMinLuminanceData = {displayDDCInfo2.MinBacklightMinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MinLuminanceData = {displayDDCInfo2.MinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display MinLuminanceNoDimmingData = {displayDDCInfo2.MinLuminanceNoDimmingData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityBlueX = {displayDDCInfo2.NativeDisplayChromaticityBlueX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityBlueY = {displayDDCInfo2.NativeDisplayChromaticityBlueY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityGreenX = {displayDDCInfo2.NativeDisplayChromaticityGreenX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityGreenY = {displayDDCInfo2.NativeDisplayChromaticityGreenY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityRedX = {displayDDCInfo2.NativeDisplayChromaticityRedX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityRedY = {displayDDCInfo2.NativeDisplayChromaticityRedY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityWhiteX = {displayDDCInfo2.NativeDisplayChromaticityWhiteX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display NativeDisplayChromaticityWhiteY = {displayDDCInfo2.NativeDisplayChromaticityWhiteY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display PackedPixelSupported = {displayDDCInfo2.PackedPixelSupported}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display PanelPixelFormat = {displayDDCInfo2.PanelPixelFormat}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display ProductID = {displayDDCInfo2.ProductID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display PTMCx = {displayDDCInfo2.PTMCx}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display PTMCy = {displayDDCInfo2.PTMCy}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display PTMRefreshRate = {displayDDCInfo2.PTMRefreshRate}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SerialID = {displayDDCInfo2.SerialID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display Size = {displayDDCInfo2.Size}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SpecularScreenReflectance = {displayDDCInfo2.SpecularScreenReflectance}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SupportedColorSpace = {displayDDCInfo2.SupportedColorSpace}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SupportedHDR = {displayDDCInfo2.SupportedHDR}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SupportedTransferFunction = {displayDDCInfo2.SupportedTransferFunction}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SupportsDDC = {displayDDCInfo2.SupportsDDC}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag Digital Device  = {DDCInfoFlag.DIGITALDEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag EDID Extension = {DDCInfoFlag.EDIDEXTENSION}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag HDMI Audio Device  = {DDCInfoFlag.HDMIAUDIODEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag Projector Device = {DDCInfoFlag.PROJECTORDEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag Supports AI = {DDCInfoFlag.SUPPORTS_AI}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag Supports xvYCC601 = {DDCInfoFlag.SUPPORT_xvYCC601}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display DDCInfoFlag Supports xvYCC709 = {DDCInfoFlag.SUPPORT_xvYCC709}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SupportedHDR Supports CEA861_3 = {supportedHDR.CEA861_3}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SupportedHDR Supports DOLBYVISION = {supportedHDR.DOLBYVISION}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display SupportedHDR Supports FREESYNC_HDR = {supportedHDR.FREESYNC_HDR}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Error running ADL2_Display_DDCInfo2_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
-
-                                                int HDRSupported = 0;
-                                                int HDREnabled = 0;
-                                                if (ADL.ADL2_Display_HDRState_Get != null)
-                                                {
-                                                    // Get the HDR State from the Display
-                                                    ADLRet = ADL.ADL2_Display_HDRState_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID, out HDRSupported, out HDREnabled);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: ### Display HDR State for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display HDR Supported = {HDRSupported}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Display HDR Enabled = {HDREnabled}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Error running ADL2_Display_HDRState_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
-
-
-                                                // Create an array of all the important display info we need to record
-                                                List<string> displayInfoIdentifierSection = new List<string>();
-                                                displayInfoIdentifierSection.Add("NVIDIA");
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Vendor ID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.AdapterName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Adapter Name from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA VendorID  from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("1002");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(AdapterCapabilities.AdapterID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA AdapterID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayConnector.ToString("G"));
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting NVIDIA Display Connector from video card to display. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneDisplayInfo.DisplayName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting Display Name from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ManufacturerID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting Manufacturer ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ProductID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting Product ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.SerialID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Exception getting Serial ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                // Create a display identifier out of it
-                                                string displayIdentifier = String.Join("|", displayInfoIdentifierSection);
-
-                                                // Check first to see if there is already an existing display identifier the same!
-                                                // This appears to be a bug with the NVIDIA driver, or with the install on my test machine
-                                                // Either way, it is potentially going to happen in the wild, so I will filter it out if it does
-                                                if (displayIdentifiers.Contains(displayIdentifier))
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Your NVIDIA driver reported the following Display Identifier multiple times, so ignoring it as we already have it: {displayIdentifier}");
-                                                    continue;
-                                                }
-
-                                                // Add it to the list of display identifiers so we can return it
-                                                displayIdentifiers.Add(displayIdentifier);
-
-                                                SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateProfileDisplayIdentifiers: Exception caused trying to access attached displays");
-                                            continue;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Error running ADL2_Display_DisplayInfo_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                    }
-                                    // Release the memory for the DisplayInfo structure
-                                    if (IntPtr.Zero != DisplayBuffer)
-                                        Marshal.FreeCoTaskMem(DisplayBuffer);
-                                }
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Error running ADL2_Adapter_Active_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: Error running ADL2_Adapter_AdapterInfoX4_Get on NVIDIA Video card: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                    }
-                }
-                // Release the memory for the AdapterInfo structure
-                if (IntPtr.Zero != AdapterBuffer)
-                {
-                    Marshal.FreeCoTaskMem(AdapterBuffer);
-                }
-
-                // Return all the identifiers we've found
-                return displayIdentifiers;
+                // We want to get the Windows CCD information and store it for later so that we record
+                // display sizes, and screen positions and the like.
+                //myDisplayConfig.WindowsDisplayConfig = _winLibrary.GetActiveConfig();
             }
             else
             {
-                SharedLogger.logger.Warn($"NVIDIALibrary/GenerateProfileDisplayIdentifiers: There were no NVIDIA adapters found by NVIDIA ADL.");
-                return null;
+                SharedLogger.logger.Error($"NVIDIALibrary/GetNVIDIADisplayConfig: ERROR - Tried to run GetNVIDIADisplayConfig but the NVIDIA ADL library isn't initialised!");
+                throw new NVIDIALibraryException($"Tried to run GetNVIDIADisplayConfig but the NVIDIA ADL library isn't initialised!");
             }
+
+            // Return the configuration
+            return myDisplayConfig;
         }
 
-        public List<string> GenerateAllAvailableDisplayIdentifiers()
+
+        public string PrintActiveConfig()
         {
-            SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Getting NVIDIA active adapter count");
+            string stringToReturn = "";
 
-            int ADLRet = ADL.ADL_ERR;
-            int NumberOfAdapters = 0;
-
-            List<string> displayIdentifiers = new List<string>();
-
-            if (null != ADL.ADL2_Adapter_NumberOfAdapters_Get)
+            // Get the size of the largest Active Paths and Modes arrays
+            int pathCount = 0;
+            int modeCount = 0;
+            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+            if (err != WIN32STATUS.ERROR_SUCCESS)
             {
-                ADL.ADL2_Adapter_NumberOfAdapters_Get(_adlContextHandle, ref NumberOfAdapters);
-                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Number Of Adapters: {NumberOfAdapters.ToString()} ");
+                SharedLogger.logger.Error($"NVIDIALibrary/PrintActiveConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+                throw new NVIDIALibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
             }
 
-            if (NumberOfAdapters > 0)
+            SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Getting the current Display Config path and mode arrays");
+            var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+            var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+            err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+            if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+            {
+                SharedLogger.logger.Warn($"NVIDIALibrary/PrintActiveConfig: The displays were modified between GetDisplayConfigBufferSizes and QueryDisplayConfig so we need to get the buffer sizes again.");
+                SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Getting the size of the largest Active Paths and Modes arrays");
+                // Screen changed in between GetDisplayConfigBufferSizes and QueryDisplayConfig, so we need to get buffer sizes again
+                // as per https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig 
+                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+                if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"NVIDIALibrary/PrintActiveConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                    throw new NVIDIALibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                }
+                SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Getting the current Display Config path and mode arrays");
+                paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+                modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+                err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+                if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    SharedLogger.logger.Error($"NVIDIALibrary/PrintActiveConfig: ERROR - The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                    throw new NVIDIALibraryException($"The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                }
+                else if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"NVIDIALibrary/PrintActiveConfig: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again");
+                    throw new NVIDIALibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again.");
+                }
+            }
+            else if (err != WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Error($"NVIDIALibrary/PrintActiveConfig: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays");
+                throw new NVIDIALibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
+            }
+
+            foreach (var path in paths)
+            {
+                stringToReturn += $"----++++==== Path ====++++----\n";
+
+                // get display source name
+                var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
+                sourceInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+                sourceInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SOURCE_DEVICE_NAME>();
+                sourceInfo.Header.AdapterId = path.SourceInfo.AdapterId;
+                sourceInfo.Header.Id = path.SourceInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
+                    stringToReturn += $"****** Interrogating Display Source {path.SourceInfo.Id} *******\n";
+                    stringToReturn += $"Found Display Source {sourceInfo.ViewGdiDeviceName}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/PrintActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the source info for source adapter #{path.SourceInfo.AdapterId}");
+                }
+
+
+                // get display target name
+                var targetInfo = new DISPLAYCONFIG_TARGET_DEVICE_NAME();
+                targetInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+                targetInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_TARGET_DEVICE_NAME>();
+                targetInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                targetInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref targetInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Connector Instance: {targetInfo.ConnectorInstance} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: EDID Manufacturer ID: {targetInfo.EdidManufactureId} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: EDID Product Code ID: {targetInfo.EdidProductCodeId} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Flags Friendly Name from EDID: {targetInfo.Flags.FriendlyNameFromEdid} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Flags Friendly Name Forced: {targetInfo.Flags.FriendlyNameForced} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Flags EDID ID is Valid: {targetInfo.Flags.EdidIdsValid} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Monitor Device Path: {targetInfo.MonitorDevicePath} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Monitor Friendly Device Name: {targetInfo.MonitorFriendlyDeviceName} for source {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Output Technology: {targetInfo.OutputTechnology} for source {path.TargetInfo.Id}.");
+
+                    stringToReturn += $"****** Interrogating Display Target {targetInfo.MonitorFriendlyDeviceName} *******\n";
+                    stringToReturn += $" Connector Instance: {targetInfo.ConnectorInstance}\n";
+                    stringToReturn += $" EDID Manufacturer ID: {targetInfo.EdidManufactureId}\n";
+                    stringToReturn += $" EDID Product Code ID: {targetInfo.EdidProductCodeId}\n";
+                    stringToReturn += $" Flags Friendly Name from EDID: {targetInfo.Flags.FriendlyNameFromEdid}\n";
+                    stringToReturn += $" Flags Friendly Name Forced: {targetInfo.Flags.FriendlyNameForced}\n";
+                    stringToReturn += $" Flags EDID ID is Valid: {targetInfo.Flags.EdidIdsValid}\n";
+                    stringToReturn += $" Monitor Device Path: {targetInfo.MonitorDevicePath}\n";
+                    stringToReturn += $" Monitor Friendly Device Name: {targetInfo.MonitorFriendlyDeviceName}\n";
+                    stringToReturn += $" Output Technology: {targetInfo.OutputTechnology}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/PrintActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
+                }
+
+
+                // get display adapter name
+                var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
+                adapterInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+                adapterInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_ADAPTER_NAME>();
+                adapterInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                adapterInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/PrintActiveConfig: Found Adapter Device Path {adapterInfo.AdapterDevicePath} for source {path.TargetInfo.AdapterId}.");
+                    stringToReturn += $"****** Interrogating Display Adapter {adapterInfo.AdapterDevicePath} *******\n";
+                    stringToReturn += $" Display Adapter {adapterInfo.AdapterDevicePath}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetWindowsDisplayConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the adapter device path for target #{path.TargetInfo.AdapterId}");
+                }
+
+                // get display target preferred mode
+                var targetPreferredInfo = new DISPLAYCONFIG_TARGET_PREFERRED_MODE();
+                targetPreferredInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
+                targetPreferredInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_TARGET_PREFERRED_MODE>();
+                targetPreferredInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                targetPreferredInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref targetPreferredInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Preferred Width {targetPreferredInfo.Width} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Preferred Height {targetPreferredInfo.Height} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Video Signal Info Active Size: ({targetPreferredInfo.TargetMode.TargetVideoSignalInfo.ActiveSize.Cx}x{targetPreferredInfo.TargetMode.TargetVideoSignalInfo.ActiveSize.Cy} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Video Signal Info Total Size: ({targetPreferredInfo.TargetMode.TargetVideoSignalInfo.TotalSize.Cx}x{targetPreferredInfo.TargetMode.TargetVideoSignalInfo.TotalSize.Cy} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Video Signal Info HSync Frequency: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.HSyncFreq} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Video Signal Info VSync Frequency: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.VSyncFreq} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Video Signal Info Pixel Rate: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.PixelRate} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Video Signal Info Scan Line Ordering: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.ScanLineOrdering} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Target Video Signal Info Video Standard: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.VideoStandard} for target {path.TargetInfo.Id}.");
+
+                    stringToReturn += $"****** Interrogating Target Preferred Mode for Display {path.TargetInfo.Id} *******\n";
+                    stringToReturn += $" Target Preferred Width {targetPreferredInfo.Width} for target {path.TargetInfo.Id}\n";
+                    stringToReturn += $" Target Preferred Height {targetPreferredInfo.Height} for target {path.TargetInfo.Id}\n";
+                    stringToReturn += $" Target Video Signal Info Active Size: ({targetPreferredInfo.TargetMode.TargetVideoSignalInfo.ActiveSize.Cx}x{targetPreferredInfo.TargetMode.TargetVideoSignalInfo.ActiveSize.Cy}\n";
+                    stringToReturn += $" Target Video Signal Info Total Size: ({targetPreferredInfo.TargetMode.TargetVideoSignalInfo.TotalSize.Cx}x{targetPreferredInfo.TargetMode.TargetVideoSignalInfo.TotalSize.Cy}\n";
+                    stringToReturn += $" Target Video Signal Info HSync Frequency: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.HSyncFreq}\n";
+                    stringToReturn += $" Target Video Signal Info VSync Frequency: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.VSyncFreq}\n";
+                    stringToReturn += $" Target Video Signal Info Pixel Rate: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.PixelRate}\n";
+                    stringToReturn += $" Target Video Signal Info Scan Line Ordering: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.ScanLineOrdering}\n";
+                    stringToReturn += $" Target Video Signal Info Video Standard: {targetPreferredInfo.TargetMode.TargetVideoSignalInfo.VideoStandard}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetWindowsDisplayConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the preferred target name for display #{path.TargetInfo.Id}");
+                }
+
+                // get display target base type
+                var targetBaseTypeInfo = new DISPLAYCONFIG_TARGET_BASE_TYPE();
+                targetBaseTypeInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE;
+                targetBaseTypeInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_TARGET_BASE_TYPE>();
+                targetBaseTypeInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                targetBaseTypeInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref targetBaseTypeInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Virtual Resolution is Disabled: {targetBaseTypeInfo.BaseOutputTechnology} for target {path.TargetInfo.Id}.");
+
+                    stringToReturn += $"****** Interrogating Target Base Type for Display {path.TargetInfo.Id} *******\n";
+                    stringToReturn += $" Base Output Technology: {targetBaseTypeInfo.BaseOutputTechnology}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetWindowsDisplayConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target base type for display #{path.TargetInfo.Id}");
+                }
+
+                // get display support virtual resolution
+                var supportVirtResInfo = new DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION();
+                supportVirtResInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION;
+                supportVirtResInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION>();
+                supportVirtResInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                supportVirtResInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref supportVirtResInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Base Output Technology: {supportVirtResInfo.IsMonitorVirtualResolutionDisabled} for target {path.TargetInfo.Id}.");
+                    stringToReturn += $"****** Interrogating Target Supporting virtual resolution for Display {path.TargetInfo.Id} *******\n";
+                    stringToReturn += $" Virtual Resolution is Disabled: {supportVirtResInfo.IsMonitorVirtualResolutionDisabled}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetWindowsDisplayConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out the virtual resolution support for display #{path.TargetInfo.Id}");
+                }
+
+                //get advanced color info
+                var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
+                colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+                colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
+                colorInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                colorInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Advanced Color Supported: {colorInfo.AdvancedColorSupported} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Advanced Color Enabled: {colorInfo.AdvancedColorEnabled} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Advanced Color Force Disabled: {colorInfo.AdvancedColorForceDisabled} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Bits per Color Channel: {colorInfo.BitsPerColorChannel} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Color Encoding: {colorInfo.ColorEncoding} for target {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found Wide Color Enforced: {colorInfo.WideColorEnforced} for target {path.TargetInfo.Id}.");
+
+                    stringToReturn += $"****** Interrogating Advanced Color Info for Display {path.TargetInfo.Id} *******\n";
+                    stringToReturn += $" Advanced Color Supported: {colorInfo.AdvancedColorSupported}\n";
+                    stringToReturn += $" Advanced Color Enabled: {colorInfo.AdvancedColorEnabled}\n";
+                    stringToReturn += $" Advanced Color Force Disabled: {colorInfo.AdvancedColorForceDisabled}\n";
+                    stringToReturn += $" Bits per Color Channel: {colorInfo.BitsPerColorChannel}\n";
+                    stringToReturn += $" Color Encoding: {colorInfo.ColorEncoding}\n";
+                    stringToReturn += $" Wide Color Enforced: {colorInfo.WideColorEnforced}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetWindowsDisplayConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out the virtual resolution support for display #{path.TargetInfo.Id}");
+                }
+
+                // get SDR white levels
+                var whiteLevelInfo = new DISPLAYCONFIG_SDR_WHITE_LEVEL();
+                whiteLevelInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
+                whiteLevelInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SDR_WHITE_LEVEL>();
+                whiteLevelInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                whiteLevelInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref whiteLevelInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetWindowsDisplayConfig: Found SDR White Level: {whiteLevelInfo.SDRWhiteLevel} for target {path.TargetInfo.Id}.");
+
+                    stringToReturn += $"****** Interrogating SDR Whilte Level for Display {path.TargetInfo.Id} *******\n";
+                    stringToReturn += $" SDR White Level: {whiteLevelInfo.SDRWhiteLevel}\n";
+                    stringToReturn += $"\n";
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetWindowsDisplayConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out the SDL white level for display #{path.TargetInfo.Id}");
+                }
+            }
+            return stringToReturn;
+        }
+
+        public bool SetActiveConfig(NVIDIA_DISPLAY_CONFIG displayConfig)
+        {
+
+            if (_initialised)
             {
 
-                IntPtr AdapterBuffer = IntPtr.Zero;
-                if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
+                NVAPI_STATUS NVStatus = 0;
+                // We want to get the current config
+                //NVIDIA_DISPLAY_CONFIG currentDisplayConfig = GetNVIDIADisplayConfig(QDC.QDC_ALL_PATHS);
+
+                // We want to check the NVIDIA Eyefinity (SLS) config is valid
+                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Testing whether the display configuration is valid");
+                //ADL2_Display_SLSMapConfig_Valid(ADL_CONTEXT_HANDLE context, int iAdapterIndex, ADLSLSMap slsMap, int iNumDisplayTarget, ADLSLSTarget * lpSLSTarget, int * lpSupportedSLSLayoutImageMode, int * lpReasonForNotSupportSLS, int iOption)
+                foreach (var adapter in displayConfig.AdapterConfigs)
                 {
-                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: ADL2_Adapter_AdapterInfoX4_Get DLL function exists.");
-
-                    // Get the Adapter info and put it in the AdapterBuffer
-                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Running ADL2_Adapter_AdapterInfoX4_Get to find all known NVIDIA adapters.");
-                    //ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, AdapterBuffer, size);
-                    int numAdapters = 0;
-                    ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
-                    if (ADLRet == ADL.ADL_OK)
+                    // set the display locations
+                    if (adapter.IsSLSEnabled)
                     {
-
-                        int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
-
-                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known NVIDIA adapters.");
-
-                        ADLAdapterInfoX2 oneAdapter = new ADLAdapterInfoX2();
-                        // Go through each adapter
-                        for (int adapterLoop = 0; adapterLoop < numAdapters; adapterLoop++)
+                        // Turn the SLS based display map on
+                        //NVStatus = NVImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, adapter.AdapterIndex, adapter.SLSMapIndex, NVImport.ADL_TRUE);
+                        if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                         {
-                            oneAdapter = (ADLAdapterInfoX2)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (adapterLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
-
-                            if (oneAdapter.Exist != 1)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
-                                continue;
-                            }
-
-                            if (oneAdapter.Present != 1)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} isn't enabled at present so skipping detection for this adapter.");
-                                continue;
-                            }
-
-                            // Check if the adapter is active
-                            if (ADL.ADL2_Adapter_Active_Get != null)
-                                ADLRet = ADL.ADL2_Adapter_Active_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref IsActive);
-
-                            if (ADLRet == ADL.ADL_OK)
-                            {
-                                // Only continue if the adapter is enabled
-                                if (IsActive != ADL.ADL_TRUE)
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} isn't active ({oneAdapter.AdapterName}).");
-                                    continue;
-                                }
-
-                                // Only continue if the adapter index is > 0
-                                if (oneAdapter.AdapterIndex < 0)
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter has an adapter index of {oneAdapter.AdapterIndex.ToString()} which indicates it is not a real adapter.");
-                                    continue;
-                                }
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} is active! ({oneAdapter.AdapterName}).");
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: ### Adapter Info for Adapter #{oneAdapter.AdapterIndex} ###");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter AdapterIndex = {oneAdapter.AdapterIndex}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter AdapterName = {oneAdapter.AdapterName}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter BusNumber = {oneAdapter.BusNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter DeviceNumber = {oneAdapter.DeviceNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter DisplayName = {oneAdapter.DisplayName}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter DriverPath = {oneAdapter.DriverPath}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter DriverPathExt = {oneAdapter.DriverPathExt}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Exist = {oneAdapter.Exist}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter FunctionNumber = {oneAdapter.FunctionNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter InfoMask = {oneAdapter.InfoMask}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter InfoValue = {oneAdapter.InfoValue}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter OSDisplayIndex = {oneAdapter.OSDisplayIndex}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter PNPString = {oneAdapter.PNPString}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Present = {oneAdapter.Present}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Size = {oneAdapter.Size}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter UDID = {oneAdapter.UDID}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter VendorID = {oneAdapter.VendorID}");
-
-                                // Get the Adapter Capabilities
-                                ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
-                                if (ADL.ADL2_AdapterX2_Caps != null)
-                                {
-                                    ADLRet = ADL.ADL2_AdapterX2_Caps(_adlContextHandle, oneAdapter.AdapterIndex, out AdapterCapabilities);
-                                }
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: ### Adapter Capabilities for Adapter #{oneAdapter.AdapterIndex} ###");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter ID = {AdapterCapabilities.AdapterID}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Capabilities Mask = {AdapterCapabilities.CapsMask}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Capabilities Value = {AdapterCapabilities.CapsValue}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Num of Connectors = {AdapterCapabilities.NumConnectors}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Num of Controllers = {AdapterCapabilities.NumControllers}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Num of Displays = {AdapterCapabilities.NumDisplays}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Num of GL Sync Connectors = {AdapterCapabilities.NumOfGLSyncConnectors}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Adapter Num of Overlays = {AdapterCapabilities.NumOverlays}");
-
-                                if (ADL.ADL2_Display_DisplayInfo_Get != null)
-                                {
-                                    IntPtr DisplayBuffer = IntPtr.Zero;
-                                    int numDisplays = 0;
-                                    // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 1);
-                                    if (ADLRet == ADL.ADL_OK)
-                                    {
-
-                                        try
-                                        {
-                                            ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
-
-                                            for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
-                                            {
-                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
-
-                                                // Is the display mapped to this adapter? If not we skip it!
-                                                if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex != oneAdapter.AdapterIndex)
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
-                                                    continue;
-                                                }
-
-                                                // Convert the displayInfoValue to something usable using a library function I made
-                                                ConvertedDisplayInfoValue displayInfoValue = ADL.ConvertDisplayInfoValue(oneDisplayInfo.DisplayInfoValue);
-
-                                                // Is the display mapped to this adapter? If not we skip it!
-                                                if (!displayInfoValue.DISPLAYCONNECTED)
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not connected");
-                                                    continue;
-                                                }
-
-                                                // We want connected displays  whether they are mapped or not mapped in Windows OS
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is connected and mapped in Windows OS");
-
-                                                ADL.ADLDisplayConnectionType displayConnector = (ADL.ADLDisplayConnectionType)oneDisplayInfo.DisplayConnector;
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: ### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Connector = {displayConnector.ToString("G")}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Controller Index = {oneDisplayInfo.DisplayControllerIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Logical Adapter Index = {oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Logical Index = {oneDisplayInfo.DisplayID.DisplayLogicalIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Physical Adapter Index = {oneDisplayInfo.DisplayID.DisplayPhysicalAdapterIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Physical Index = {oneDisplayInfo.DisplayID.DisplayPhysicalIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Mask = {oneDisplayInfo.DisplayInfoMask}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value = {oneDisplayInfo.DisplayInfoValue}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Manufacturer Name = {oneDisplayInfo.DisplayManufacturerName}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Name = {oneDisplayInfo.DisplayName}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Output Type = {oneDisplayInfo.DisplayOutputType}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Type = {oneDisplayInfo.DisplayType}");
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value DISPLAYCONNECTED = {displayInfoValue.DISPLAYCONNECTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value DISPLAYMAPPED = {displayInfoValue.DISPLAYMAPPED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value FORCIBLESUPPORTED = {displayInfoValue.FORCIBLESUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value GENLOCKSUPPORTED = {displayInfoValue.GENLOCKSUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value LDA_DISPLAY = {displayInfoValue.LDA_DISPLAY}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_2HSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2HSTRETCH}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_2VSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2VSTRETCH}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_CLONE = {displayInfoValue.MANNER_SUPPORTED_CLONE}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_EXTENDED = {displayInfoValue.MANNER_SUPPORTED_EXTENDED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_NSTRETCH1GPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCH1GPU}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_NSTRETCHNGPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCHNGPU}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MANNER_SUPPORTED_SINGLE = {displayInfoValue.MANNER_SUPPORTED_SINGLE}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MODETIMING_OVERRIDESSUPPORTED = {displayInfoValue.MODETIMING_OVERRIDESSUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value MULTIVPU_SUPPORTED = {displayInfoValue.MULTIVPU_SUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value NONLOCAL = {displayInfoValue.NONLOCAL}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Info Value SHOWTYPE_PROJECTOR = {displayInfoValue.SHOWTYPE_PROJECTOR}");
-
-                                                ADL.ADLDisplayConnectionType displayConnectionType = ADL.ADLDisplayConnectionType.Unknown;
-                                                ADLDisplayConfig displayConfig = new ADLDisplayConfig();
-                                                displayConfig.Size = Marshal.SizeOf(displayConfig);
-                                                if (ADL.ADL2_Display_DeviceConfig_Get != null)
-                                                {
-                                                    // Get the DisplayConfig from the Display
-                                                    ADLRet = ADL.ADL2_Display_DeviceConfig_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayConfig);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
-                                                        displayConnectionType = (ADL.ADLDisplayConnectionType)displayConfig.ConnectorType;
-
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: ### Display Device Config for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Connector Type = {displayConnectionType.ToString("G")}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Device Data = {displayConfig.DeviceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Overridded Device Data = {displayConfig.OverriddedDeviceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Reserved Data = {displayConfig.Reserved}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Size = {displayConfig.Size}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Error running ADL2_Display_DeviceConfig_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
-
-                                                ADLDDCInfo2 displayDDCInfo2 = new ADLDDCInfo2();
-                                                displayDDCInfo2.Size = Marshal.SizeOf(displayDDCInfo2);
-                                                // Create a stringbuilder buffer that EDID can be loaded into
-                                                //displayEDIDData.EDIDData = new StringBuilder(256);
-
-                                                if (ADL.ADL2_Display_DDCInfo2_Get != null)
-                                                {
-                                                    // Get the DDC Data from the Display
-                                                    ADLRet = ADL.ADL2_Display_DDCInfo2_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayDDCInfo2);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
-
-                                                        // Convert the DDCInfoFlag to something usable using a library function I made
-                                                        ConvertedDDCInfoFlag DDCInfoFlag = ADL.ConvertDDCInfoFlag(displayDDCInfo2.DDCInfoFlag);
-
-                                                        // Convert the DDCInfoFlag to something usable using a library function I made
-                                                        ConvertedSupportedHDR supportedHDR = ADL.ConvertSupportedHDR(displayDDCInfo2.SupportedHDR);
-
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: ### Display DDCInfo2 for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display AvgLuminanceData = {displayDDCInfo2.AvgLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag = {displayDDCInfo2.DDCInfoFlag}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DiffuseScreenReflectance = {displayDDCInfo2.DiffuseScreenReflectance}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DisplayName = {displayDDCInfo2.DisplayName}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display FreesyncFlags = {displayDDCInfo2.FreesyncFlags}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display ManufacturerID = {displayDDCInfo2.ManufacturerID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MaxBacklightMaxLuminanceData = {displayDDCInfo2.MaxBacklightMaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MaxBacklightMinLuminanceData = {displayDDCInfo2.MaxBacklightMinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MaxHResolution = {displayDDCInfo2.MaxHResolution}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MaxLuminanceData = {displayDDCInfo2.MaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MaxRefresh = {displayDDCInfo2.MaxRefresh}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MaxVResolution = {displayDDCInfo2.MaxVResolution}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MinBacklightMaxLuminanceData = {displayDDCInfo2.MinBacklightMaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MinBacklightMinLuminanceData = {displayDDCInfo2.MinBacklightMinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MinLuminanceData = {displayDDCInfo2.MinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display MinLuminanceNoDimmingData = {displayDDCInfo2.MinLuminanceNoDimmingData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityBlueX = {displayDDCInfo2.NativeDisplayChromaticityBlueX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityBlueY = {displayDDCInfo2.NativeDisplayChromaticityBlueY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityGreenX = {displayDDCInfo2.NativeDisplayChromaticityGreenX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityGreenY = {displayDDCInfo2.NativeDisplayChromaticityGreenY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityRedX = {displayDDCInfo2.NativeDisplayChromaticityRedX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityRedY = {displayDDCInfo2.NativeDisplayChromaticityRedY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityWhiteX = {displayDDCInfo2.NativeDisplayChromaticityWhiteX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display NativeDisplayChromaticityWhiteY = {displayDDCInfo2.NativeDisplayChromaticityWhiteY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display PackedPixelSupported = {displayDDCInfo2.PackedPixelSupported}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display PanelPixelFormat = {displayDDCInfo2.PanelPixelFormat}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display ProductID = {displayDDCInfo2.ProductID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display PTMCx = {displayDDCInfo2.PTMCx}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display PTMCy = {displayDDCInfo2.PTMCy}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display PTMRefreshRate = {displayDDCInfo2.PTMRefreshRate}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SerialID = {displayDDCInfo2.SerialID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display Size = {displayDDCInfo2.Size}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SpecularScreenReflectance = {displayDDCInfo2.SpecularScreenReflectance}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SupportedColorSpace = {displayDDCInfo2.SupportedColorSpace}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SupportedHDR = {displayDDCInfo2.SupportedHDR}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SupportedTransferFunction = {displayDDCInfo2.SupportedTransferFunction}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SupportsDDC = {displayDDCInfo2.SupportsDDC}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag Digital Device  = {DDCInfoFlag.DIGITALDEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag EDID Extension = {DDCInfoFlag.EDIDEXTENSION}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag HDMI Audio Device  = {DDCInfoFlag.HDMIAUDIODEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag Projector Device = {DDCInfoFlag.PROJECTORDEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag Supports AI = {DDCInfoFlag.SUPPORTS_AI}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag Supports xvYCC601 = {DDCInfoFlag.SUPPORT_xvYCC601}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display DDCInfoFlag Supports xvYCC709 = {DDCInfoFlag.SUPPORT_xvYCC709}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SupportedHDR Supports CEA861_3 = {supportedHDR.CEA861_3}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SupportedHDR Supports DOLBYVISION = {supportedHDR.DOLBYVISION}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display SupportedHDR Supports FREESYNC_HDR = {supportedHDR.FREESYNC_HDR}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Error running ADL2_Display_DDCInfo2_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
-
-                                                int HDRSupported = 0;
-                                                int HDREnabled = 0;
-                                                if (ADL.ADL2_Display_HDRState_Get != null)
-                                                {
-                                                    // Get the HDR State from the Display
-                                                    ADLRet = ADL.ADL2_Display_HDRState_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID, out HDRSupported, out HDREnabled);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: ### Display HDR State for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display HDR Supported = {HDRSupported}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Display HDR Enabled = {HDREnabled}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Error running ADL2_Display_HDRState_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
-
-
-                                                // Create an array of all the important display info we need to record
-                                                List<string> displayInfoIdentifierSection = new List<string>();
-                                                displayInfoIdentifierSection.Add("NVIDIA");
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting NVIDIA Vendor ID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.AdapterName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting NVIDIA Adapter Name from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting NVIDIA VendorID  from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("1002");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(AdapterCapabilities.AdapterID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting NVIDIA AdapterID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayConnector.ToString("G"));
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting NVIDIA Display Connector from video card to display. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneDisplayInfo.DisplayName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting Display Name from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ManufacturerID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting Manufacturer ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ProductID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting Product ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.SerialID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Exception getting Serial ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                // Create a display identifier out of it
-                                                string displayIdentifier = String.Join("|", displayInfoIdentifierSection);
-
-                                                // Check first to see if there is already an existing display identifier the same!
-                                                // This appears to be a bug with the NVIDIA driver, or with the install on my test machine
-                                                // Either way, it is potentially going to happen in the wild, so I will filter it out if it does
-                                                if (displayIdentifiers.Contains(displayIdentifier))
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Your NVIDIA driver reported the following Display Identifier multiple times, so ignoring it as we already have it: {displayIdentifier}");
-                                                    continue;
-                                                }
-
-                                                // Add it to the list of display identifiers so we can return it
-                                                displayIdentifiers.Add(displayIdentifier);
-
-                                                SharedLogger.logger.Debug($"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GenerateAllAvailableDisplayIdentifiers: Exception caused trying to access attached displays");
-                                            continue;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Error running ADL2_Display_DisplayInfo_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                    }
-                                    // Release the memory for the DisplayInfo structure
-                                    if (IntPtr.Zero != DisplayBuffer)
-                                        Marshal.FreeCoTaskMem(DisplayBuffer);
-                                }
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Error running ADL2_Adapter_Active_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                            }
+                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully set the SLSMAP with index {adapter.SLSMapIndex} to TRUE for adapter {adapter.AdapterIndex}.");
                         }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Warn($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: Error running ADL2_Adapter_AdapterInfoX4_Get on NVIDIA Video card: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                    }
-                }
-                // Release the memory for the AdapterInfo structure
-                if (IntPtr.Zero != AdapterBuffer)
-                {
-                    Marshal.FreeCoTaskMem(AdapterBuffer);
-                }
-
-                // Return all the identifiers we've found
-                return displayIdentifiers;
-            }
-            else
-            {
-                SharedLogger.logger.Warn($"NVIDIALibrary/GenerateAllAvailableDisplayIdentifiers: There were no NVIDIA adapters found by NVIDIA ADL.");
-                return null;
-            }
-        }
-
-        public NVIDIAProfile GetActiveProfile()
-        {
-            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Getting NVIDIA active adapter count");
-
-            int ADLRet = ADL.ADL_ERR;
-            int NumberOfAdapters = 0;
-
-            List<string> displayIdentifiers = new List<string>();
-            NVIDIAProfile profileToCreate = new NVIDIAProfile();
-            
-
-            if (null != ADL.ADL2_Adapter_NumberOfAdapters_Get)
-            {
-                ADL.ADL2_Adapter_NumberOfAdapters_Get(_adlContextHandle, ref NumberOfAdapters);
-                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Number Of Adapters: {NumberOfAdapters.ToString()} ");
-            }
-
-            if (NumberOfAdapters > 0)
-            {
-                profileToCreate.Adapters = new List<NVIDIAAdapter>();
-                IntPtr AdapterBuffer = IntPtr.Zero;
-                if (ADL.ADL2_Adapter_AdapterInfoX4_Get != null)
-                {
-                    SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: ADL2_Adapter_AdapterInfoX4_Get DLL function exists.");
-
-                    // Get the Adapter info and put it in the AdapterBuffer
-                    SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Running ADL2_Adapter_AdapterInfoX4_Get to find all known NVIDIA adapters.");
-                    //ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, AdapterBuffer, size);
-                    int numAdapters = 0;
-                    ADLRet = ADL.ADL2_Adapter_AdapterInfoX4_Get(_adlContextHandle, ADL.ADL_ADAPTER_INDEX_ALL, out numAdapters, out AdapterBuffer);
-                    if (ADLRet == ADL.ADL_OK)
-                    {
-
-                        int IsActive = ADL.ADL_TRUE; // We only want to search for active adapters
-
-                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Successfully run ADL2_Adapter_AdapterInfoX4_Get to find information about all known NVIDIA adapters.");
-
-                        ADLAdapterInfoX2 oneAdapter = new ADLAdapterInfoX2();
-                        // Go through each adapter
-                        for (int adapterLoop = 0; adapterLoop < numAdapters; adapterLoop++)
+                        else
                         {
-                            oneAdapter = (ADLAdapterInfoX2)Marshal.PtrToStructure(new IntPtr(AdapterBuffer.ToInt64() + (adapterLoop * Marshal.SizeOf(oneAdapter))), oneAdapter.GetType());
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: ERROR - ADL2_Display_SLSMapConfig_SetState returned NVAPI_STATUS {NVStatus} when trying to set the SLSMAP with index {adapter.SLSMapIndex} to TRUE for adapter {adapter.AdapterIndex}.");
+                            throw new NVIDIALibraryException($"ADL2_Display_SLSMapConfig_SetState returned NVAPI_STATUS {NVStatus} when trying to set the SLSMAP with index {adapter.SLSMapIndex} to TRUE for adapter {adapter.AdapterIndex}");
+                        }
+                        /*
 
-                            if (oneAdapter.Exist != 1)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} doesn't exist at present so skipping detection for this adapter.");
-                                continue;
-                            }
-
-                            if (oneAdapter.Present != 1)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} isn't enabled at present so skipping detection for this adapter.");
-                                continue;
-                            }
-
-                            // Check if the adapter is active
-                            if (ADL.ADL2_Adapter_Active_Get != null)
-                                ADLRet = ADL.ADL2_Adapter_Active_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref IsActive);
-
-                            if (ADLRet == ADL.ADL_OK)
-                            {
-                                // Only continue if the adapter is enabled
-                                if (IsActive != ADL.ADL_TRUE)
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} isn't active ({oneAdapter.AdapterName}).");
-                                    continue;
-                                }
-
-                                // Only continue if the adapter index is > 0
-                                if (oneAdapter.AdapterIndex < 0)
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GenerateAllAGetActiveProfilevailableDisplayIdentifiers: NVIDIA Adapter has an adapter index of {oneAdapter.AdapterIndex.ToString()} which indicates it is not a real adapter.");
-                                    continue;
-                                }
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} is active! ({oneAdapter.AdapterName}).");
-
-                                // Store the Adapter information for later
-                                NVIDIAAdapter adapterToCreate = new NVIDIAAdapter();
-                                adapterToCreate.AdapterInfoX2 = oneAdapter;
-                                adapterToCreate.Displays = new List<NVIDIADisplay>();
-
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: ### Adapter Info for Adapter #{oneAdapter.AdapterIndex} ###");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter AdapterIndex = {oneAdapter.AdapterIndex}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter AdapterName = {oneAdapter.AdapterName}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter BusNumber = {oneAdapter.BusNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter DeviceNumber = {oneAdapter.DeviceNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter DisplayName = {oneAdapter.DisplayName}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter DriverPath = {oneAdapter.DriverPath}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter DriverPathExt = {oneAdapter.DriverPathExt}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Exist = {oneAdapter.Exist}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter FunctionNumber = {oneAdapter.FunctionNumber}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter InfoMask = {oneAdapter.InfoMask}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter InfoValue = {oneAdapter.InfoValue}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter OSDisplayIndex = {oneAdapter.OSDisplayIndex}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter PNPString = {oneAdapter.PNPString}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Present = {oneAdapter.Present}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Size = {oneAdapter.Size}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter UDID = {oneAdapter.UDID}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter VendorID = {oneAdapter.VendorID}");
-
-                                // Get the Adapter Capabilities
-                                ADLAdapterCapsX2 AdapterCapabilities = new ADLAdapterCapsX2();
-                                if (ADL.ADL2_AdapterX2_Caps != null)
-                                {
-                                    ADLRet = ADL.ADL2_AdapterX2_Caps(_adlContextHandle, oneAdapter.AdapterIndex, out AdapterCapabilities);
-                                }
-
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: ### Adapter Capabilities for Adapter #{oneAdapter.AdapterIndex} ###");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter ID = {AdapterCapabilities.AdapterID}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Capabilities Mask = {AdapterCapabilities.CapsMask}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Capabilities Value = {AdapterCapabilities.CapsValue}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Num of Connectors = {AdapterCapabilities.NumConnectors}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Num of Controllers = {AdapterCapabilities.NumControllers}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Num of Displays = {AdapterCapabilities.NumDisplays}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Num of GL Sync Connectors = {AdapterCapabilities.NumOfGLSyncConnectors}");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: Adapter Num of Overlays = {AdapterCapabilities.NumOverlays}");
-
-                                // Store the Adapters Info for later
-                                profileToCreate.Adapters.Add(adapterToCreate);
-
-                                if (ADL.ADL2_Display_DisplayInfo_Get != null)
-                                {
-                                    IntPtr DisplayBuffer = IntPtr.Zero;
-                                    int numDisplays = 0;
-                                    // Force the display detection and get the Display Info. Use 0 as last parameter to NOT force detection
-                                    ADLRet = ADL.ADL2_Display_DisplayInfo_Get(_adlContextHandle, oneAdapter.AdapterIndex, ref numDisplays, out DisplayBuffer, 1);
-                                    if (ADLRet == ADL.ADL_OK)
-                                    {
-
-                                        try
-                                        {                                      
-
-                                            for (int displayLoop = 0; displayLoop < numDisplays; displayLoop++)
-                                            {
-                                                ADLDisplayInfo oneDisplayInfo = new ADLDisplayInfo();
-                                                oneDisplayInfo = (ADLDisplayInfo)Marshal.PtrToStructure(new IntPtr(DisplayBuffer.ToInt64() + (displayLoop * Marshal.SizeOf(oneDisplayInfo))), oneDisplayInfo.GetType());
-
-                                                // Is the display mapped to this adapter? If not we skip it!
-                                                if (oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex != oneAdapter.AdapterIndex)
+                                                foreach (var slsMap in adapter.SLSMap)
                                                 {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not a real display as its DisplayID.DisplayLogicalAdapterIndex is -1");
-                                                    continue;
-                                                }
-
-                                                // Convert the displayInfoValue to something usable using a library function I made
-                                                ConvertedDisplayInfoValue displayInfoValue = ADL.ConvertDisplayInfoValue(oneDisplayInfo.DisplayInfoValue);
-
-                                                if (!displayInfoValue.DISPLAYCONNECTED)
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not connected");
-                                                    continue;
-                                                }
-
-                                                // Skip connected but non-mapped displays (not mapped in windows) - we only want displays currently visible in the OS because they're in use
-                                                if (!displayInfoValue.DISPLAYMAPPED)
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is not mapped in Windows OS");
-                                                    continue;
-                                                }
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveProfile: NVIDIA Adapter #{oneAdapter.AdapterIndex.ToString()} ({oneAdapter.AdapterName}) AdapterID display ID#{oneDisplayInfo.DisplayID.DisplayLogicalIndex} is connected and mapped in Windows OS");
-
-                                                // Store the Display information for later
-                                                
-                                                NVIDIADisplay displayToCreate = new NVIDIADisplay();                                                
-                                                displayToCreate.DisplayModes = new List<ADLMode>();
-
-                                                ADL.ADLDisplayConnectionType displayConnector = (ADL.ADLDisplayConnectionType)oneDisplayInfo.DisplayConnector;
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: ### Display Info for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Connector = {displayConnector.ToString("G")}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Controller Index = {oneDisplayInfo.DisplayControllerIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Logical Adapter Index = {oneDisplayInfo.DisplayID.DisplayLogicalAdapterIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Logical Index = {oneDisplayInfo.DisplayID.DisplayLogicalIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Physical Adapter Index = {oneDisplayInfo.DisplayID.DisplayPhysicalAdapterIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Physical Index = {oneDisplayInfo.DisplayID.DisplayPhysicalIndex}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Mask = {oneDisplayInfo.DisplayInfoMask}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value = {oneDisplayInfo.DisplayInfoValue}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Manufacturer Name = {oneDisplayInfo.DisplayManufacturerName}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Name = {oneDisplayInfo.DisplayName}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Output Type = {oneDisplayInfo.DisplayOutputType}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Type = {oneDisplayInfo.DisplayType}");
-
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value DISPLAYCONNECTED = {displayInfoValue.DISPLAYCONNECTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value DISPLAYMAPPED = {displayInfoValue.DISPLAYMAPPED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value FORCIBLESUPPORTED = {displayInfoValue.FORCIBLESUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value GENLOCKSUPPORTED = {displayInfoValue.GENLOCKSUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value LDA_DISPLAY = {displayInfoValue.LDA_DISPLAY}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MANNER_SUPPORTED_2HSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2HSTRETCH}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MANNER_SUPPORTED_2VSTRETCH = {displayInfoValue.MANNER_SUPPORTED_2VSTRETCH}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MANNER_SUPPORTED_CLONE = {displayInfoValue.MANNER_SUPPORTED_CLONE}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MANNER_SUPPORTED_EXTENDED = {displayInfoValue.MANNER_SUPPORTED_EXTENDED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MANNER_SUPPORTED_NSTRETCH1GPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCH1GPU}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MANNER_SUPPORTED_NSTRETCHNGPU = {displayInfoValue.MANNER_SUPPORTED_NSTRETCHNGPU}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MANNER_SUPPORTED_SINGLE = {displayInfoValue.MANNER_SUPPORTED_SINGLE}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MODETIMING_OVERRIDESSUPPORTED = {displayInfoValue.MODETIMING_OVERRIDESSUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value MULTIVPU_SUPPORTED = {displayInfoValue.MULTIVPU_SUPPORTED}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value NONLOCAL = {displayInfoValue.NONLOCAL}");
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Info Value SHOWTYPE_PROJECTOR = {displayInfoValue.SHOWTYPE_PROJECTOR}");
-                                                                                                
-                                                IntPtr displayModeBuffer = IntPtr.Zero;
-                                                int numModes = 0;
-                                                if (ADL.ADL2_Display_Modes_Get != null)
-                                                {
-                                                    // Get the ADLModes from the Display
-                                                    ADLRet = ADL.ADL2_Display_Modes_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out numModes, out displayModeBuffer);
-                                                    if (ADLRet == ADL.ADL_OK)
+                                                    // Check the SLS config is valid
+                                                    int numDisplayTargets = 0;
+                                                    int supportedSLSLayoutImageMode = 0;
+                                                    int reasonForNotSupportingSLS = 0;
+                                                    ADL_DISPLAY_TARGET[] displayTargetArray = { new ADL_DISPLAY_TARGET() };
+                                                    IntPtr displayTargetBuffer = IntPtr.Zero;
+                                                    int option = NVImport.ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_LANDSCAPE;
+                                                    NVStatus = NVImport.ADL2_Display_SLSMapConfig_Valid(_adlContextHandle, adapter.AdapterIndex, slsMap, slsMap.NumSLSTarget, displayTargetArray, out supportedSLSLayoutImageMode, out reasonForNotSupportingSLS, option);
+                                                    if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                                                     {
-                                                        for (int displayModeLoop = 0; displayModeLoop < numModes; displayModeLoop++)
+                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: ADL2_Display_SLSMapConfig_Valid confirmed the SLS configuration is valid for NVIDIA adapter {adapter.AdapterIndex}.");
+                                                    }
+                                                    else
+                                                    {
+                                                        SharedLogger.logger.Error($"NVIDIALibrary/GetNVIDIADisplayConfig: ERROR - ADL2_Display_SLSMapConfig_Valid returned NVAPI_STATUS {NVStatus} when trying to validate the SLS configuration for NVIDIA adapter {adapter.AdapterIndex} in the computer.");
+                                                        throw new NVIDIALibraryException($"ADL2_Display_SLSMapConfig_Valid returned NVAPI_STATUS {NVStatus}when trying to validate the SLS configuration for NVIDIA adapter {adapter.AdapterIndex} in the computer");
+                                                    }
+
+                                                    if (numDisplayTargets > 0)
+                                                    {
+                                                        IntPtr currentDisplayTargetBuffer = displayTargetBuffer;
+                                                        displayTargetArray = new ADL_DISPLAY_TARGET[numDisplayTargets];
+                                                        for (int i = 0; i < numDisplayTargets; i++)
                                                         {
-                                                            ADLMode oneDisplayMode = new ADLMode();
-                                                            oneDisplayMode = (ADLMode)Marshal.PtrToStructure(new IntPtr(displayModeBuffer.ToInt64() + (displayModeLoop * Marshal.SizeOf(oneDisplayMode))), oneDisplayMode.GetType());
-
-                                                            displayToCreate.DisplayModes.Add(oneDisplayMode);
-
-                                                            //displayConnectionType = (ADL.ADLDisplayConnectionType)displayConfig.ConnectorType;
-                                                            ConvertedDisplayModeFlags displayModeFlag = ADL.ConvertDisplayModeFlags(oneDisplayMode.ModeFlag);
-                                                            ConvertedDisplayModeFlags displayModeMask = ADL.ConvertDisplayModeFlags(oneDisplayMode.ModeMask);
-                                                            ConvertedDisplayModeFlags displayModeValue = ADL.ConvertDisplayModeFlags(oneDisplayMode.ModeValue);
-
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: ### Display Modes for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Colour Depth = {oneDisplayMode.ColourDepth}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag = {oneDisplayMode.ModeFlag}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag ColourFormat 565 = {displayModeFlag.COLOURFORMAT_565}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag ColourFormat 8888 = {displayModeFlag.COLOURFORMAT_8888}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_000 = {displayModeFlag.ORIENTATION_SUPPORTED_000}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_090 = {displayModeFlag.ORIENTATION_SUPPORTED_090}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_180 = {displayModeFlag.ORIENTATION_SUPPORTED_180}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag ORIENTATION_SUPPORTED_270 = {displayModeFlag.ORIENTATION_SUPPORTED_270}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag REFRESHRATE_ROUNDED = {displayModeFlag.REFRESHRATE_ROUNDED}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Flag REFRESHRATE_ONLY = {displayModeFlag.REFRESHRATE_ONLY}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Mask = {oneDisplayMode.ModeMask}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Mode Value = {oneDisplayMode.ModeValue}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Orientation = {oneDisplayMode.Orientation}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Refresh Rate = {oneDisplayMode.RefreshRate}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode X Position = {oneDisplayMode.XPos}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode X Resolution = {oneDisplayMode.XRes}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Y Position = {oneDisplayMode.YPos}");
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: DisplayMode Y Resolution = {oneDisplayMode.YRes}");
-                                                        }                                                            
+                                                            // build a structure in the array slot
+                                                            displayTargetArray[i] = new ADL_DISPLAY_TARGET();
+                                                            // fill the array slot structure with the data from the buffer
+                                                            displayTargetArray[i] = (ADL_DISPLAY_TARGET)Marshal.PtrToStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
+                                                            // destroy the bit of memory we no longer need
+                                                            Marshal.DestroyStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
+                                                            // advance the buffer forwards to the next object
+                                                            currentDisplayTargetBuffer = (IntPtr)((long)currentDisplayTargetBuffer + Marshal.SizeOf(displayTargetArray[i]));
+                                                        }
+                                                        // Free the memory used by the buffer                        
+                                                        Marshal.FreeCoTaskMem(displayTargetBuffer);
                                                     }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GetActiveprofile: Error running ADL2_Display_DeviceConfig_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
+                                                }*/
 
-                                                ADLDDCInfo2 displayDDCInfo2 = new ADLDDCInfo2();
-                                                displayDDCInfo2.Size = Marshal.SizeOf(displayDDCInfo2);
-                                                // Create a stringbuilder buffer that EDID can be loaded into
-                                                //displayEDIDData.EDIDData = new StringBuilder(256);
+                    }
+                    /*else
+                    {
+                        *//*// Do the non-SLS based display setup
+                        NVIDIA_ADAPTER_CONFIG NVIDIAAdapterConfig = adapter;
+                        //int numPossibleMapResult = 0;
+                        //IntPtr possibleMapResultBuffer = IntPtr.Zero;
+                        NVStatus = NVImport.ADL2_Display_DisplayMapConfig_Set(_adlContextHandle, NVIDIAAdapterConfig.AdapterIndex, NVIDIAAdapterConfig.DisplayMaps.Length, NVIDIAAdapterConfig.DisplayMaps, NVIDIAAdapterConfig.DisplayTargets.Length, NVIDIAAdapterConfig.DisplayTargets);
+                        if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                        {
+                            SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: ADL2_Display_DisplayMapConfig_Set returned information about all displaytargets connected to NVIDIA adapter {NVIDIAAdapterConfig.AdapterIndex}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error($"NVIDIALibrary/GetNVIDIADisplayConfig: ERROR - ADL2_Display_DisplayMapConfig_Get returned NVAPI_STATUS {NVStatus} when trying to get the display target info from NVIDIA adapter {NVIDIAAdapterConfig.AdapterIndex} in the computer.");
+                            throw new NVIDIALibraryException($"ADL2_Display_DisplayMapConfig_Get returned NVAPI_STATUS {NVStatus} when trying to get the display target info from NVIDIA adapter {NVIDIAAdapterConfig.AdapterIndex} in the computer");
+                        }*//*
+                    }*/
+                    else
+                    {
+                        // Turn the SLS based display map off
+                        //NVStatus = NVImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, adapter.AdapterIndex, adapter.SLSMapIndex, NVImport.ADL_FALSE);
+                        if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                        {
+                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully set the SLSMAP with index {adapter.SLSMapIndex} to FALSE for adapter {adapter.AdapterIndex}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: ERROR - ADL2_Display_SLSMapConfig_SetState returned NVAPI_STATUS {NVStatus} when trying to set the SLSMAP with index {adapter.SLSMapIndex} to FALSE for adapter {adapter.AdapterIndex}.");
+                            throw new NVIDIALibraryException($"ADL2_Display_SLSMapConfig_SetState returned NVAPI_STATUS {NVStatus} when trying to set the SLSMAP with index {adapter.SLSMapIndex} to FALSE for adapter {adapter.AdapterIndex}");
+                        }
+                    }
 
-                                                if (ADL.ADL2_Display_DDCInfo2_Get != null)
-                                                {
-                                                    // Get the DDC Data from the Display
-                                                    ADLRet = ADL.ADL2_Display_DDCInfo2_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID.DisplayPhysicalIndex, out displayDDCInfo2);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
+                }
 
-                                                        // Convert the DDCInfoFlag to something usable using a library function I made
-                                                        ConvertedDDCInfoFlag DDCInfoFlag = ADL.ConvertDDCInfoFlag(displayDDCInfo2.DDCInfoFlag);
+                // We want to set the NVIDIA HDR settings
 
-                                                        // Convert the DDCInfoFlag to something usable using a library function I made
-                                                        ConvertedSupportedHDR supportedHDR = ADL.ConvertSupportedHDR(displayDDCInfo2.SupportedHDR);
-
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: ### Display DDCInfo2 for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display AvgLuminanceData = {displayDDCInfo2.AvgLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag = {displayDDCInfo2.DDCInfoFlag}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DiffuseScreenReflectance = {displayDDCInfo2.DiffuseScreenReflectance}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DisplayName = {displayDDCInfo2.DisplayName}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display FreesyncFlags = {displayDDCInfo2.FreesyncFlags}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display ManufacturerID = {displayDDCInfo2.ManufacturerID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MaxBacklightMaxLuminanceData = {displayDDCInfo2.MaxBacklightMaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MaxBacklightMinLuminanceData = {displayDDCInfo2.MaxBacklightMinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MaxHResolution = {displayDDCInfo2.MaxHResolution}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MaxLuminanceData = {displayDDCInfo2.MaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MaxRefresh = {displayDDCInfo2.MaxRefresh}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MaxVResolution = {displayDDCInfo2.MaxVResolution}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MinBacklightMaxLuminanceData = {displayDDCInfo2.MinBacklightMaxLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MinBacklightMinLuminanceData = {displayDDCInfo2.MinBacklightMinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MinLuminanceData = {displayDDCInfo2.MinLuminanceData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display MinLuminanceNoDimmingData = {displayDDCInfo2.MinLuminanceNoDimmingData}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityBlueX = {displayDDCInfo2.NativeDisplayChromaticityBlueX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityBlueY = {displayDDCInfo2.NativeDisplayChromaticityBlueY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityGreenX = {displayDDCInfo2.NativeDisplayChromaticityGreenX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityGreenY = {displayDDCInfo2.NativeDisplayChromaticityGreenY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityRedX = {displayDDCInfo2.NativeDisplayChromaticityRedX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityRedY = {displayDDCInfo2.NativeDisplayChromaticityRedY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityWhiteX = {displayDDCInfo2.NativeDisplayChromaticityWhiteX}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display NativeDisplayChromaticityWhiteY = {displayDDCInfo2.NativeDisplayChromaticityWhiteY}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display PackedPixelSupported = {displayDDCInfo2.PackedPixelSupported}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display PanelPixelFormat = {displayDDCInfo2.PanelPixelFormat}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display ProductID = {displayDDCInfo2.ProductID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display PTMCx = {displayDDCInfo2.PTMCx}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display PTMCy = {displayDDCInfo2.PTMCy}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display PTMRefreshRate = {displayDDCInfo2.PTMRefreshRate}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SerialID = {displayDDCInfo2.SerialID}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display Size = {displayDDCInfo2.Size}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SpecularScreenReflectance = {displayDDCInfo2.SpecularScreenReflectance}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SupportedColorSpace = {displayDDCInfo2.SupportedColorSpace}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SupportedHDR = {displayDDCInfo2.SupportedHDR}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SupportedTransferFunction = {displayDDCInfo2.SupportedTransferFunction}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SupportsDDC = {displayDDCInfo2.SupportsDDC}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag Digital Device  = {DDCInfoFlag.DIGITALDEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag EDID Extension = {DDCInfoFlag.EDIDEXTENSION}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag HDMI Audio Device  = {DDCInfoFlag.HDMIAUDIODEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag Projector Device = {DDCInfoFlag.PROJECTORDEVICE}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag Supports AI = {DDCInfoFlag.SUPPORTS_AI}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag Supports xvYCC601 = {DDCInfoFlag.SUPPORT_xvYCC601}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display DDCInfoFlag Supports xvYCC709 = {DDCInfoFlag.SUPPORT_xvYCC709}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SupportedHDR Supports CEA861_3 = {supportedHDR.CEA861_3}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SupportedHDR Supports DOLBYVISION = {supportedHDR.DOLBYVISION}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display SupportedHDR Supports FREESYNC_HDR = {supportedHDR.FREESYNC_HDR}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GetActiveprofile: Error running ADL2_Display_DDCInfo2_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
+                // We want to apply the Windows CCD layout info and HDR
+            }
+            else
+            {
+                SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfig but the NVIDIA ADL library isn't initialised!");
+                throw new NVIDIALibraryException($"Tried to run SetActiveConfig but the NVIDIA ADL library isn't initialised!");
+            }
 
 
-                                                    // Add the things we learnt about the Display to the NVIDIAProfile.
-                                                    adapterToCreate.Displays.Add(displayToCreate);
-                                                }
+            /*
+                        // Get the all possible windows display configs
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Generating a list of all the current display configs");
+                        WINDOWS_DISPLAY_CONFIG allWindowsDisplayConfig = GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS);
 
-                                                int HDRSupported = 0;
-                                                int HDREnabled = 0;
-                                                if (ADL.ADL2_Display_HDRState_Get != null)
-                                                {
-                                                    // Get the HDR State from the Display
-                                                    ADLRet = ADL.ADL2_Display_HDRState_Get(_adlContextHandle, oneAdapter.AdapterIndex, oneDisplayInfo.DisplayID, out HDRSupported, out HDREnabled);
-                                                    if (ADLRet == ADL.ADL_OK)
-                                                    {
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: ### Display HDR State for Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex} ###");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display HDR Supported = {HDRSupported}");
-                                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Display HDR Enabled = {HDREnabled}");
-                                                    }
-                                                    else
-                                                    {
-                                                        SharedLogger.logger.Warn($"NVIDIALibrary/GetActiveprofile: Error running ADL2_Display_HDRState_Get on Display #{oneDisplayInfo.DisplayID.DisplayLogicalIndex} on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                                                    }
-                                                }
+                        // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
+                        PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.displayAdapters);
 
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Testing whether the display configuration is valid");
+                        // Test whether a specified display configuration is supported on the computer                    
+                        uint myPathsCount = (uint)displayConfig.displayConfigPaths.Length;
+                        uint myModesCount = (uint)displayConfig.displayConfigModes.Length;
+                        WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.displayConfigPaths, myModesCount, displayConfig.displayConfigModes, SDC.DISPLAYMAGICIAN_VALIDATE);
+                        if (err == WIN32STATUS.ERROR_SUCCESS)
+                        {
+                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Successfully validated that the display configuration supplied would work!");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: ERROR - SetDisplayConfig couldn't validate the display configuration supplied. This display configuration wouldn't work.");
+                            return false;
+                        }
 
-                                                // Create an array of all the important display info we need to record
-                                                List<string> displayInfoIdentifierSection = new List<string>();
-                                                displayInfoIdentifierSection.Add("NVIDIA");
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting NVIDIA Vendor ID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Yay! The display configuration is valid! Attempting to set the Display Config now");
+                        // Now set the specified display configuration for this computer                    
+                        err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.displayConfigPaths, myModesCount, displayConfig.displayConfigModes, SDC.DISPLAYMAGICIAN_SET);
+                        if (err == WIN32STATUS.ERROR_SUCCESS)
+                        {
+                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Successfully set the display configuration to the settings supplied!");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: ERROR - SetDisplayConfig couldn't set the display configuration using the settings supplied. Something is wrong.");
+                            throw new NVIDIALibraryException($"SetDisplayConfig couldn't set the display configuration using the settings supplied. Something is wrong.");
+                        }
 
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.AdapterName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting NVIDIA Adapter Name from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
 
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneAdapter.VendorID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting NVIDIA VendorID  from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("1002");
-                                                }
+                        foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.displayHDRStates)
+                        {
+                            SharedLogger.logger.Trace($"Trying to get information whether HDR color is in use now on Display {myHDRstate.Id}.");
+                            // Get advanced HDR info
+                            var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
+                            colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+                            colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
+                            colorInfo.Header.AdapterId = myHDRstate.AdapterId;
+                            colorInfo.Header.Id = myHDRstate.Id;
+                            err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
+                            if (err == WIN32STATUS.ERROR_SUCCESS)
+                            {
+                                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Advanced Color Info gathered from Display {myHDRstate.Id}");
 
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(AdapterCapabilities.AdapterID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting NVIDIA AdapterID from video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
+                                if (myHDRstate.AdvancedColorInfo.AdvancedColorSupported && colorInfo.AdvancedColorEnabled != myHDRstate.AdvancedColorInfo.AdvancedColorEnabled)
+                                {
+                                    SharedLogger.logger.Trace($"HDR is available for use on Display {myHDRstate.Id}, and we want it set to {myHDRstate.AdvancedColorInfo.AdvancedColorEnabled} but is currently {colorInfo.AdvancedColorEnabled}.");
 
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayConnector.ToString("G"));
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting NVIDIA Display Connector from video card to display. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(oneDisplayInfo.DisplayName);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting Display Name from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ManufacturerID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting Manufacturer ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.ProductID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting Product ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                try
-                                                {
-                                                    displayInfoIdentifierSection.Add(displayDDCInfo2.SerialID.ToString());
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetActiveprofile: Exception getting Serial ID from display connected to NVIDIA video card. Substituting with a # instead");
-                                                    displayInfoIdentifierSection.Add("#");
-                                                }
-
-                                                // Create a display identifier out of it
-                                                string displayIdentifier = String.Join("|", displayInfoIdentifierSection);
-
-                                                // Check first to see if there is already an existing display identifier the same!
-                                                // This appears to be a bug with the NVIDIA driver, or with the install on my test machine
-                                                // Either way, it is potentially going to happen in the wild, so I will filter it out if it does
-                                                if (displayIdentifiers.Contains(displayIdentifier))
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetActiveprofile: Your NVIDIA driver reported the following Display Identifier multiple times, so ignoring it as we already have it: {displayIdentifier}");
-                                                    continue;
-                                                }
-
-                                                // Add it to the list of display identifiers so we can return it
-                                                displayIdentifiers.Add(displayIdentifier);
-
-                                                SharedLogger.logger.Debug($"ProfileRepository/GetActiveprofile: DisplayIdentifier: {displayIdentifier}");
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            SharedLogger.logger.Warn(ex, $"ProfileRepository/GetActiveprofile: Exception caused trying to access attached displays");
-                                            continue;
-                                        }
+                                    var setColorState = new DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE();
+                                    setColorState.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE;
+                                    setColorState.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE>();
+                                    setColorState.Header.AdapterId = myHDRstate.AdapterId;
+                                    setColorState.Header.Id = myHDRstate.Id;
+                                    setColorState.EnableAdvancedColor = myHDRstate.AdvancedColorInfo.AdvancedColorEnabled;
+                                    err = CCDImport.DisplayConfigSetDeviceInfo(ref setColorState);
+                                    if (err == WIN32STATUS.ERROR_SUCCESS)
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: SUCCESS! Set HDR successfully to {myHDRstate.AdvancedColorInfo.AdvancedColorEnabled} on Display {myHDRstate.Id}");
                                     }
                                     else
                                     {
-                                        SharedLogger.logger.Warn($"NVIDIALibrary/GetActiveprofile: Error running ADL2_Display_DisplayInfo_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                                        SharedLogger.logger.Error($"NVIDIALibrary/SetActiveConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to set the HDR settings for display #{myHDRstate.Id}");
+                                        return false;
                                     }
-                                    // Release the memory for the DisplayInfo structure
-                                    if (IntPtr.Zero != DisplayBuffer)
-                                        Marshal.FreeCoTaskMem(DisplayBuffer);
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Skipping setting HDR on Display {myHDRstate.Id} as it does not support HDR");
                                 }
                             }
                             else
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetActiveprofile: Error running ADL2_Adapter_Active_Get on Adapter #{oneAdapter.AdapterIndex}: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetWindowsDisplayConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out if HDR is supported for display #{myHDRstate.Id}");
                             }
-                        }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Warn($"NVIDIALibrary/GetActiveprofile: Error running ADL2_Adapter_AdapterInfoX4_Get on NVIDIA Video card: {ADL.ConvertADLReturnValueIntoWords(ADLRet)}");
-                    }
-                }
-                // Release the memory for the AdapterInfo structure
-                if (IntPtr.Zero != AdapterBuffer)
-                {
-                    Marshal.FreeCoTaskMem(AdapterBuffer);
-                }
 
+                        }*/
+            return true;
+        }
+
+        public bool IsActiveConfig(NVIDIA_DISPLAY_CONFIG displayConfig)
+        {
+            // Get the current windows display configs to compare to the one we loaded
+            bool allDisplays = false;
+            NVIDIA_DISPLAY_CONFIG currentWindowsDisplayConfig = GetNVIDIADisplayConfig(allDisplays);
+
+            // Check whether the display config is in use now
+            SharedLogger.logger.Trace($"NVIDIALibrary/IsActiveConfig: Checking whether the display configuration is already being used.");
+            if (displayConfig.Equals(currentWindowsDisplayConfig))
+            {
+                SharedLogger.logger.Trace($"NVIDIALibrary/IsActiveConfig: The display configuration is already being used (supplied displayConfig Equals currentWindowsDisplayConfig");
+                return true;
             }
             else
             {
-                SharedLogger.logger.Warn($"NVIDIALibrary/GetActiveprofile: There were no NVIDIA adapters found by NVIDIA ADL.");
-                
+                SharedLogger.logger.Trace($"NVIDIALibrary/IsActiveConfig: The display configuration is NOT currently in use (supplied displayConfig Equals currentWindowsDisplayConfig");
+                return false;
             }
 
-            // Return the profile
-            return profileToCreate;
         }
 
-        public bool SetActiveProfile(NVIDIAProfile profileToUse)
+        public bool IsPossibleConfig(NVIDIA_DISPLAY_CONFIG displayConfig)
         {
+            /*// Get the all possible windows display configs
+            NVIDIA_DISPLAY_CONFIG allWindowsDisplayConfig = GetNVIDIADisplayConfig(QDC.QDC_ALL_PATHS);
+
+            SharedLogger.logger.Trace("NVIDIALibrary/PatchAdapterIDs: Going through the list of adapters we stored in the config to make sure they still exist");
+            // Firstly check that the Adapter Names are still currently available (i.e. the adapter hasn't been replaced).
+            foreach (string savedAdapterName in displayConfig.displayAdapters.Values)
+            {
+                // If there is even one of the saved adapters that has changed, then it's no longer possible
+                // to use this display config!
+                if (!allWindowsDisplayConfig.displayAdapters.Values.Contains(savedAdapterName))
+                {
+                    SharedLogger.logger.Error($"NVIDIALibrary/PatchAdapterIDs: ERROR - Saved adapter {savedAdapterName} is not available right now! This display configuration won't work!");
+                    return false;
+                }
+            }
+            SharedLogger.logger.Trace($"NVIDIALibrary/PatchAdapterIDs: All teh adapters that the display configuration uses are still avilable to use now!");
+
+            // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
+            SharedLogger.logger.Trace($"NVIDIALibrary/IsPossibleConfig: Attemptong to patch the saved display configuration's adapter IDs so that it will still work (these change at each boot)");
+            PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.displayAdapters);
+
+            SharedLogger.logger.Trace($"NVIDIALibrary/IsPossibleConfig: Testing whether the display configuration is valid ");
+            // Test whether a specified display configuration is supported on the computer                    
+            uint myPathsCount = (uint)displayConfig.displayConfigPaths.Length;
+            uint myModesCount = (uint)displayConfig.displayConfigModes.Length;
+            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.displayConfigPaths, myModesCount, displayConfig.displayConfigModes, SDC.DISPLAYMAGICIAN_VALIDATE);
+            if (err == WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Trace($"NVIDIALibrary/IsPossibleConfig: SetDisplayConfig validated that the display configuration is valid and can be used!");
+                return true;
+            }
+            else
+            {
+                SharedLogger.logger.Trace($"NVIDIALibrary/IsPossibleConfig: SetDisplayConfig confirmed that the display configuration is invalid and cannot be used!");
+                return false;
+            }*/
             return true;
         }
 
-        public bool IsActiveProfile(NVIDIAProfile profileToTest)
+        public List<string> GetCurrentDisplayIdentifiers()
         {
-            return true;
+            SharedLogger.logger.Error($"NVIDIALibrary/GetCurrentDisplayIdentifiers: Getting the current display identifiers for the displays in use now");
+            return GetSomeDisplayIdentifiers(QDC.QDC_ONLY_ACTIVE_PATHS);
         }
 
-        public bool IsValidProfile(NVIDIAProfile profileToTest)
+        public List<string> GetAllConnectedDisplayIdentifiers()
         {
-            return true;
+            SharedLogger.logger.Error($"NVIDIALibrary/GetAllConnectedDisplayIdentifiers: Getting all the display identifiers that can possibly be used");
+            return GetSomeDisplayIdentifiers(QDC.QDC_ALL_PATHS);
         }
+
+        private List<string> GetSomeDisplayIdentifiers(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS)
+        {
+            SharedLogger.logger.Debug($"NVIDIALibrary/GetCurrentDisplayIdentifiers: Generating the unique Display Identifiers for the currently active configuration");
+
+            List<string> displayIdentifiers = new List<string>();
+
+            SharedLogger.logger.Trace($"NVIDIALibrary/GetCurrentDisplayIdentifiers: Testing whether the display configuration is valid (allowing tweaks).");
+            // Get the size of the largest Active Paths and Modes arrays
+            int pathCount = 0;
+            int modeCount = 0;
+            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+            if (err != WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Error($"NVIDIALibrary/PrintActiveConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+                throw new NVIDIALibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+            }
+
+            SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
+            var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+            var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+            err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+            if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+            {
+                SharedLogger.logger.Warn($"NVIDIALibrary/GetSomeDisplayIdentifiers: The displays were modified between GetDisplayConfigBufferSizes and QueryDisplayConfig so we need to get the buffer sizes again.");
+                SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Getting the size of the largest Active Paths and Modes arrays");
+                // Screen changed in between GetDisplayConfigBufferSizes and QueryDisplayConfig, so we need to get buffer sizes again
+                // as per https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig 
+                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+                if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"NVIDIALibrary/GetSomeDisplayIdentifiers: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                    throw new NVIDIALibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                }
+                SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
+                paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+                modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+                err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+                if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    SharedLogger.logger.Error($"NVIDIALibrary/GetSomeDisplayIdentifiers: ERROR - The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                    throw new NVIDIALibraryException($"The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                }
+                else if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"NVIDIALibrary/GetSomeDisplayIdentifiers: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again");
+                    throw new NVIDIALibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again.");
+                }
+            }
+            else if (err != WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Error($"NVIDIALibrary/GetSomeDisplayIdentifiers: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays");
+                throw new NVIDIALibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
+            }
+
+            foreach (var path in paths)
+            {
+                if (path.TargetInfo.TargetAvailable == false)
+                {
+                    // We want to skip this one cause it's not valid
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Skipping path due to TargetAvailable not existing in display #{path.TargetInfo.Id}");
+                    continue;
+                }
+
+                // get display source name
+                var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
+                sourceInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+                sourceInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SOURCE_DEVICE_NAME>();
+                sourceInfo.Header.AdapterId = path.SourceInfo.AdapterId;
+                sourceInfo.Header.Id = path.SourceInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Successfully got the source info from {path.SourceInfo.Id}.");
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetSomeDisplayIdentifiers: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.SourceInfo.Id}");
+                }
+
+                // get display target name
+                var targetInfo = new DISPLAYCONFIG_TARGET_DEVICE_NAME();
+                targetInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+                targetInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_TARGET_DEVICE_NAME>();
+                targetInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                targetInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref targetInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Successfully got the target info from {path.TargetInfo.Id}.");
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetSomeDisplayIdentifiers: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
+                }
+
+                // get display adapter name
+                var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
+                adapterInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+                adapterInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_ADAPTER_NAME>();
+                adapterInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                adapterInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/GetSomeDisplayIdentifiers: Successfully got the display name info from {path.TargetInfo.Id}.");
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"NVIDIALibrary/GetSomeDisplayIdentifiers: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
+                }
+
+                // Create an array of all the important display info we need to record
+                List<string> displayInfo = new List<string>();
+                displayInfo.Add("WINAPI");
+                try
+                {
+                    displayInfo.Add(adapterInfo.AdapterDevicePath.ToString());
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetSomeDisplayIdentifiers: Exception getting Windows Display Adapter Device Path from video card. Substituting with a # instead");
+                    displayInfo.Add("#");
+                }
+                try
+                {
+                    displayInfo.Add(targetInfo.OutputTechnology.ToString());
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetSomeDisplayIdentifiers: Exception getting Windows Display Connector Instance from video card. Substituting with a # instead");
+                    displayInfo.Add("#");
+                }
+                try
+                {
+                    displayInfo.Add(targetInfo.EdidManufactureId.ToString());
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetSomeDisplayIdentifiers: Exception getting Windows Display EDID Manufacturer Code from video card. Substituting with a # instead");
+                    displayInfo.Add("#");
+                }
+                try
+                {
+                    displayInfo.Add(targetInfo.EdidProductCodeId.ToString());
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetSomeDisplayIdentifiers: Exception getting Windows Display EDID Product Code from video card. Substituting with a # instead");
+                    displayInfo.Add("#");
+                }
+                try
+                {
+                    displayInfo.Add(targetInfo.MonitorFriendlyDeviceName.ToString());
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"NVIDIALibrary/GetSomeDisplayIdentifiers: Exception getting Windows Display Target Friendly name from video card. Substituting with a # instead");
+                    displayInfo.Add("#");
+                }
+
+                // Create a display identifier out of it
+                string displayIdentifier = String.Join("|", displayInfo);
+                // Add it to the list of display identifiers so we can return it
+                // but only add it if it doesn't already exist. Otherwise we get duplicates :/
+                if (!displayIdentifiers.Contains(displayIdentifier))
+                {
+                    displayIdentifiers.Add(displayIdentifier);
+                    SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
+                }
+
+            }
+
+            // Sort the display identifiers
+            displayIdentifiers.Sort();
+
+            return displayIdentifiers;
+        }
+
+    }
+
+    [global::System.Serializable]
+    public class NVIDIALibraryException : Exception
+    {
+        public NVIDIALibraryException() { }
+        public NVIDIALibraryException(string message) : base(message) { }
+        public NVIDIALibraryException(string message, Exception inner) : base(message, inner) { }
+        protected NVIDIALibraryException(
+            System.Runtime.Serialization.SerializationInfo info,
+            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 }

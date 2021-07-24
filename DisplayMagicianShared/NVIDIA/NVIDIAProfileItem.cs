@@ -95,7 +95,7 @@ namespace DisplayMagicianShared.NVIDIA
             {
                 if (_profileDisplayIdentifiers.Count == 0)
                 {
-                    _profileDisplayIdentifiers = NVIDIALibrary.GetLibrary().GenerateProfileDisplayIdentifiers();
+                    _profileDisplayIdentifiers = NVIDIALibrary.GetLibrary().GetCurrentDisplayIdentifiers();
                 }
                 return _profileDisplayIdentifiers;
             }
@@ -168,7 +168,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Prepare our profile data for saving
             if (_profileDisplayIdentifiers.Count == 0)
             {
-                _profileDisplayIdentifiers = NVIDIALibrary.GetLibrary().GenerateProfileDisplayIdentifiers();
+                _profileDisplayIdentifiers = NVIDIALibrary.GetLibrary().GetCurrentDisplayIdentifiers();
             }
 
             // Return if it is valid and we should continue

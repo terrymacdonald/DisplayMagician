@@ -12,7 +12,7 @@ using IWshRuntimeLibrary;
 //using ATI.ADL;
 //using WK.Libraries.HotkeyListenerNS;
 
-namespace DisplayMagicianShared.AMD
+namespace DisplayMagicianShared.Windows
 {
 
     /*// Struct to be used as the AMD Profile
@@ -49,14 +49,14 @@ namespace DisplayMagicianShared.AMD
 
     }*/
 
-    public class AMDProfileItem : ProfileItem, IComparable
+    public class WinProfileItem : ProfileItem, IComparable
     {
-        private static List<AMDProfileItem> _allSavedProfiles = new List<AMDProfileItem>();
+        private static List<WinProfileItem> _allSavedProfiles = new List<WinProfileItem>();
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
         private List<ScreenPosition> _screens;
-        private AMD_DISPLAY_CONFIG _displayConfig = new AMD_DISPLAY_CONFIG();
+        private WINDOWS_DISPLAY_CONFIG _displayConfig = new WINDOWS_DISPLAY_CONFIG();
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
@@ -64,7 +64,7 @@ namespace DisplayMagicianShared.AMD
         private Keys _hotkey = Keys.None;
 
                 
-        public AMDProfileItem()
+        public WinProfileItem()
         {
         }
 
@@ -107,7 +107,7 @@ namespace DisplayMagicianShared.AMD
         //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
         [JsonRequired]
-        public AMD_DISPLAY_CONFIG DisplayConfig
+        public WINDOWS_DISPLAY_CONFIG DisplayConfig
         {
             get
             {
@@ -126,7 +126,7 @@ namespace DisplayMagicianShared.AMD
             {
                 if (_profileDisplayIdentifiers.Count == 0)
                 {
-                    _profileDisplayIdentifiers = AMDLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                    _profileDisplayIdentifiers = WinLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
                 }
                 return _profileDisplayIdentifiers;
             }
@@ -213,7 +213,7 @@ namespace DisplayMagicianShared.AMD
                 ProfileTightestBitmap is Bitmap &&
                 ProfileDisplayIdentifiers.Count > 0)
             {
-                if (DisplayConfig.AdapterConfigs.Count > 0)
+                if (DisplayConfig.displayConfigModes.Length > 0 && DisplayConfig.displayConfigPaths.Length > 0)
                     return true;
                 else
                     return false;
@@ -224,9 +224,9 @@ namespace DisplayMagicianShared.AMD
 
 
 
-        public bool CopyTo(AMDProfileItem profile, bool overwriteId = true)
+        public bool CopyTo(WinProfileItem profile, bool overwriteId = true)
         {
-            if (!(profile is AMDProfileItem))
+            if (!(profile is WinProfileItem))
                 return false;
 
             if (overwriteId == true)
@@ -249,7 +249,7 @@ namespace DisplayMagicianShared.AMD
             // Prepare our profile data for saving
             if (_profileDisplayIdentifiers.Count == 0)
             {
-                _profileDisplayIdentifiers = AMDLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                _profileDisplayIdentifiers = WinLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
             }
 
             // Return if it is valid and we should continue
@@ -295,11 +295,11 @@ namespace DisplayMagicianShared.AMD
         public override bool CreateProfileFromCurrentDisplaySettings()
         {
 
-            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
-            if (amdLibrary.IsInstalled)
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+            if (winLibrary.IsInstalled)
             {
                 // Create the profile data from the current config
-                _displayConfig = amdLibrary.GetActiveConfig();
+                _displayConfig = winLibrary.GetActiveConfig();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
@@ -326,7 +326,7 @@ namespace DisplayMagicianShared.AMD
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
-            if ( _displayConfig.AdapterConfigs.Count > 0)
+            if ( _displayConfig.displayConfigModes.Length > 0 && _displayConfig.displayConfigPaths.Length > 0)
             {
                 foreach ( var adapter in _displayConfig.AdapterConfigs)
                 {
@@ -403,11 +403,11 @@ namespace DisplayMagicianShared.AMD
         // The public override for the Object.Equals
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as AMDProfileItem);
+            return this.Equals(obj as WinProfileItem);
         }
 
         // Profiles are equal if their Viewports are equal
-        public bool Equals(AMDProfileItem other)
+        public bool Equals(WinProfileItem other)
         {
 
             // If parameter is null, return false.
@@ -528,7 +528,7 @@ namespace DisplayMagicianShared.AMD
 
     // Custom Equality comparer for the Profile class
     // Allows us to use 'Contains'
-    class AMDProfileComparer : IEqualityComparer<AMDProfileItem>
+    class AMDProfileComparer : IEqualityComparer<WinProfileItem>
     {
         // Products are equal if their names and product numbers are equal.
         /*public bool Equals(AMDProfileItem x, AMDProfileItem y)
@@ -551,7 +551,7 @@ namespace DisplayMagicianShared.AMD
                 return false;
         }*/
 
-        public bool Equals(AMDProfileItem x, AMDProfileItem y)
+        public bool Equals(WinProfileItem x, WinProfileItem y)
         {
 
             //Check whether the compared objects reference the same data.
@@ -612,7 +612,7 @@ namespace DisplayMagicianShared.AMD
 
         }*/
         // Modified the GetHashCode to compare the displayidentifier
-        public int GetHashCode(AMDProfileItem profile)
+        public int GetHashCode(WinProfileItem profile)
         {
 
             // Check whether the object is null

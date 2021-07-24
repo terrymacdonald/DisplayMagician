@@ -245,7 +245,7 @@ namespace DisplayMagicianShared
             {
                 if (_profileDisplayIdentifiers.Count == 0)
                 {
-                    _profileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers(); 
+                    _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers(); 
                 }
                 return _profileDisplayIdentifiers;
             }
@@ -363,7 +363,7 @@ namespace DisplayMagicianShared
             // Prepare our profile data for saving
             if (_profileDisplayIdentifiers.Count == 0)
             {
-                _profileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers();
+                _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers();
             }
 
             // Return if it is valid and we should continue
