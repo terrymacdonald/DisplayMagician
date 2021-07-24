@@ -732,13 +732,8 @@ namespace DisplayMagician
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
-
             _originalBitmap = profile.ProfileBitmap;
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = profile.ProfileBitmap;
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
