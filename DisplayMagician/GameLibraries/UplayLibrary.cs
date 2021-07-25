@@ -719,10 +719,10 @@ namespace DisplayMagician.GameLibraries
 
         public override Process StartGame(Game game, string gameArguments = "")
         {
-            string address = $"uplay://launch/{game.Id}";
+            string address = $@"uplay://launch/{game.Id}";
             if (String.IsNullOrWhiteSpace(gameArguments))
             {
-                address += "/" + gameArguments;
+                address += @"/" + gameArguments;
             }
             else
             {

@@ -757,10 +757,10 @@ namespace DisplayMagician.GameLibraries
 
         public override Process StartGame(Game game, string gameArguments = "")
         {
-            string address = $"steam://rungameid/{game.Id}";
+            string address = $@"steam://rungameid/{game.Id}";
             if (!String.IsNullOrWhiteSpace(gameArguments))
             {
-                address += "/" + gameArguments;
+                address += @"//" + gameArguments;
             }
             Process gameProcess = Process.Start(address);
             return gameProcess;
