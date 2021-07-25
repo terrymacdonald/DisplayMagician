@@ -544,6 +544,35 @@ namespace DisplayMagician
             }
         }
 
+        private static ProcessPriorityClass TranslatePriorityClass(ProcessPriority processPriority)
+        {
+            ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
+            switch (processPriority.ToString("G"))
+            {
+                case "High":
+                    wantedPriorityClass = ProcessPriorityClass.High;
+                    break;
+                case "AboveNormal":
+                    wantedPriorityClass = ProcessPriorityClass.AboveNormal;
+                    break;
+                case "Normal":
+                    wantedPriorityClass = ProcessPriorityClass.Normal;
+                    break;
+                case "BelowNormal":
+                    wantedPriorityClass = ProcessPriorityClass.BelowNormal;
+                    break;
+                case "Idle":
+                    wantedPriorityClass = ProcessPriorityClass.Idle;
+                    break;
+                default:
+                    wantedPriorityClass = ProcessPriorityClass.Normal;
+                    break;
+            }
+            return wantedPriorityClass;
+
+        }
+
+
 
         // ReSharper disable once CyclomaticComplexity
         public static void RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
@@ -786,6 +815,12 @@ namespace DisplayMagician
                         if (alreadyRunningProcesses.Length > 0)
                         {
                             logger.Info($"ShortcutRepository/RunShortcut: Process {processToStart.Executable} is already running, so we won't start a new one, and we won't stop it later");
+
+                            foreach (Process runningProcess in alreadyRunningProcesses)
+                            {
+                                logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of already running process {processToStart.Executable} to {processToStart.ProcessPriority.ToString("G")}");
+                                runningProcess.PriorityClass = TranslatePriorityClass(processToStart.ProcessPriority);
+                            }                          
                             continue;
                         }
                             
@@ -797,10 +832,19 @@ namespace DisplayMagician
                     try
                     {
                         if (processToStart.ExecutableArgumentsRequired)
+                        {
                             process = System.Diagnostics.Process.Start(processToStart.Executable, processToStart.Arguments);
+                        }                            
                         else
+                        {
                             process = System.Diagnostics.Process.Start(processToStart.Executable);
-                        // Record t
+                        }
+
+                        // Set the process priority to whatever the user wanted
+                        logger.Trace($"ShortcutRepository/RunShortcut: Setting the start program process priority of start program we started to {shortcutToUse.ProcessPriority.ToString("G")}");
+                        process.PriorityClass = TranslatePriorityClass(processToStart.ProcessPriority);
+
+                        // Record the program we started so we can close it later
                         if (processToStart.CloseOnFinish)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {processToStart.Executable} after the main game or executable is closed.");
@@ -904,9 +948,14 @@ namespace DisplayMagician
                 {
                     Process process = null;
                     if (shortcutToUse.ExecutableArgumentsRequired)
+                    {
                         process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
+                    }
                     else
+                    {
                         process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
+                    }
+                    
                 }
                 catch (Win32Exception ex)
                 {
@@ -952,6 +1001,14 @@ namespace DisplayMagician
                     if (processesToMonitor.Count > 0)
                     {
                         logger.Debug($"ShortcutRepository/RunShortcut: Found {processesToMonitor.Count} '{processNameToLookFor}' processes to monitor");
+
+
+                        foreach (Process monitoredProcess in processesToMonitor)
+                        {
+                            logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of monitored executable process {processNameToLookFor} to {shortcutToUse.ProcessPriority.ToString("G")}");
+                            monitoredProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
+                        }
+
                         break;
                     }
 
@@ -1251,6 +1308,13 @@ namespace DisplayMagician
                             if (processesToMonitor.Count > 0)
                             {
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found {processesToMonitor.Count} '{altGameProcessToMonitor}' processes to monitor");
+
+                                foreach (Process monitoredProcess in processesToMonitor)
+                                {
+                                    logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of alternative game monitored process {altGameProcessToMonitor} to {shortcutToUse.ProcessPriority.ToString("G")}");
+                                    monitoredProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
+                                }
+
                                 break;
                             }
 
@@ -1264,6 +1328,10 @@ namespace DisplayMagician
                             // if we didn't find an alternative game exectuable to monitor, then we need to go for the game executable itself as a fall back
                             logger.Error($"ShortcutRepository/RunShortcut: No Alternative Game Executable '{altGameProcessToMonitor}' processes found before waiting timeout. DisplayMagician was unable to find any alternative processes before the {shortcutToUse.StartTimeout} second timeout");
                             logger.Info($"ShortcutRepository/RunShortcut: Ignoring monitoring Alternative Game Executable '{altGameProcessToMonitor}' processes. Reverting back to monitoring Game executables '{gameToRun.ProcessName}' instead.");
+
+                            // First up we want to set the game process priority                                
+                            logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of standard game monitored process {gameToRun.ExePath} to {shortcutToUse.ProcessPriority.ToString("G")}");
+                            gameProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
 
                             // we wait until the game has started running (*allows for updates to occur)
                             for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
@@ -1308,7 +1376,7 @@ namespace DisplayMagician
                             else
                             {
                                 // The game has started correctly so we continue to monitor it!
-
+                                
                                 // Tell the user
                                 // Now we want to tell the user we're running a game!
                                 // Construct the Windows toast content
@@ -1430,6 +1498,8 @@ namespace DisplayMagician
                     else
                     {
                         // we are monitoring the game thats actually running (the most common scenario)
+                        logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of standard game monitored process {gameToRun.Executable} to {shortcutToUse.ProcessPriority.ToString("G")}");
+                        gameProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
 
                         // Add a status notification icon in the status area
                         if (gameToRun.Name.Length <= 41)
