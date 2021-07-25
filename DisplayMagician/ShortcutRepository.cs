@@ -388,7 +388,15 @@ namespace DisplayMagician
                         // Replace any "Enabled": true with "Disabled": false
                         json = Regex.Replace(json, @"        ""Enabled"": true,", @"        ""Disabled"": false,");
                         // Replace any "Enabled": false with "Disabled": true
-                        json = Regex.Replace(json, @"        ""Enabled"": false,", @"        ""Disabled"": true,");                        
+                        json = Regex.Replace(json, @"        ""Enabled"": false,", @"        ""Disabled"": true,");
+
+                        // If the shortcuts file doesn't have "ProcessPriority" in it, then we need to add it
+                        if (!Regex.Match(json, @"""ProcessPriority""").Success)
+                        {
+                            // Add the ProcessPriority line as null so its in there at least and won't stop the json load
+                            json = Regex.Replace(json, "    \"DifferentExecutableToMonitor\"", "    \"ProcessPriority\": null,\n    \"DifferentExecutableToMonitor\"");
+                        }
+                        
                     }
                     catch(Exception ex)
                     {
@@ -411,7 +419,8 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception.");
+                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the SHortcut JSON file!");
+                        throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the SHortcut JSON file!");
                     }
 
                     // Lookup all the Profile Names in the Saved Profiles

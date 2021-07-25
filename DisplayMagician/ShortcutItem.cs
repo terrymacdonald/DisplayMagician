@@ -21,31 +21,31 @@ namespace DisplayMagician
 {
     public enum ShortcutPermanence : int
     {
-        Permanent = 1,
-        Temporary = 2,
+        Permanent = 0,
+        Temporary = 1,
     }
 
     public enum ShortcutCategory : int
     {
-        Application = 1,
-        Game = 2,
-        NoGame = 3,
+        Application = 0,
+        Game = 1,
+        NoGame = 2,
     }
 
     public enum ShortcutValidity : int
     {
-        Valid = 1,
-        Warning = 2,
-        Error =3,
+        Valid = 0,
+        Warning = 1,
+        Error = 2,
     }
 
     public enum ProcessPriority : int
     {
-        High = 1,
-        AboveNormal = 2,
-        Normal = 3,
-        BelowNormal = 4,
-        Idle = 5,
+        High = 2,
+        AboveNormal = 1,
+        Normal = 0,
+        BelowNormal =-1,
+        Idle = -24,
     }
 
 
@@ -53,12 +53,12 @@ namespace DisplayMagician
     {
         public int Priority;
         public bool Disabled;
+        public ProcessPriority ProcessPriority;
         public string Executable;
         public string Arguments;
         public bool ExecutableArgumentsRequired;
         public bool CloseOnFinish;
         public bool DontStartIfAlreadyRunning;
-        public ProcessPriority ProcessPriority;
     }
 
     public struct Executable
@@ -1527,14 +1527,7 @@ namespace DisplayMagician
         {
             if (AutoName && _profileToUse is ProfileItem)
             {
-                if (Category.Equals(ShortcutCategory.NoGame))
-                {
-                    if (DisplayPermanence.Equals(ShortcutPermanence.Permanent))
-                        _name = $"{_profileToUse.Name}";
-                    else if (DisplayPermanence.Equals(ShortcutPermanence.Temporary))
-                        _name = $"{_profileToUse.Name} (Temporary)";
-                }
-                else if (Category.Equals(ShortcutCategory.Game) && GameName.Length > 0)
+               if (Category.Equals(ShortcutCategory.Game) && GameName.Length > 0)
                 {
                     _name = $"{GameName} ({_profileToUse.Name})";
                 }
@@ -1542,6 +1535,13 @@ namespace DisplayMagician
                 {
                     string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
                     _name = $"{baseName} ({_profileToUse.Name})";
+                }
+                else
+                {
+                    if (DisplayPermanence.Equals(ShortcutPermanence.Permanent))
+                        _name = $"{_profileToUse.Name}";
+                    else if (DisplayPermanence.Equals(ShortcutPermanence.Temporary))
+                        _name = $"{_profileToUse.Name} (Temporary)";
                 }
             }
         }

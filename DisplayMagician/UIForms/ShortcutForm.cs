@@ -495,14 +495,15 @@ namespace DisplayMagician.UIForms
             if (rb_launcher.Checked)
             {
                 logger.Trace($"ShortcutForm/btn_save_Click: We're saving a game!");
-
+                
                 _gameToUse = new GameStruct
-                {                    
+                {
                     StartTimeout = Convert.ToInt32(nud_timeout_game.Value),
                     GameArguments = txt_args_game.Text,
                     GameArgumentsRequired = cb_args_game.Checked,
                     DifferentGameExeToMonitor = txt_alternative_game.Text,
-                    MonitorDifferentGameExe = cb_wait_alternative_game.Checked
+                    MonitorDifferentGameExe = cb_wait_alternative_game.Checked,
+                    ProcessPriority = (ProcessPriority)cbx_game_priority.SelectedValue,
                 };
 
                 // If the game is a SteamGame
@@ -597,7 +598,8 @@ namespace DisplayMagician.UIForms
                     ExecutableArguments = txt_args_executable.Text,
                     ExecutableArgumentsRequired = cb_args_executable.Checked,
                     ExecutableNameAndPath = txt_executable.Text,
-                    ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value)
+                    ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value),
+                    ProcessPriority = (ProcessPriority)cbx_exe_priority.SelectedValue,
                 };
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
@@ -822,18 +824,31 @@ namespace DisplayMagician.UIForms
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
 
-            // Prepare the process priority combo box
+            // Prepare the Game process priority combo box
             cbx_game_priority.DataSource = new ComboItem[] {
-                    new ComboItem{ ID = 1, Text = "High" },
-                    new ComboItem{ ID = 2, Text = "Above Normal" },
-                    new ComboItem{ ID = 3, Text = "Normal" },
-                    new ComboItem{ ID = 4, Text = "Below Normal" },
-                    new ComboItem{ ID = 5, Text = "Idle" },
+                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
+                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
+                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
+                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
+                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
                 };
-            cbx_game_priority.ValueMember = "Text";
+            cbx_game_priority.ValueMember = "Value";
             cbx_game_priority.DisplayMember = "Text";
             cbx_game_priority.SelectedItem = "Normal";
             cbx_game_priority.Enabled = true;
+
+            // Prepare the exe process priority combo box
+            cbx_exe_priority.DataSource = new ComboItem[] {
+                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
+                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
+                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
+                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
+                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
+                };
+            cbx_exe_priority.ValueMember = "Value";
+            cbx_exe_priority.DisplayMember = "Text";
+            cbx_exe_priority.SelectedItem = "Normal";
+            cbx_exe_priority.Enabled = true;
 
             // Populate all the Audio devices in the audio devices list.
             // Set the Audio device to the shortcut audio device only if 
@@ -1186,6 +1201,7 @@ namespace DisplayMagician.UIForms
                 _gameId = _shortcutToEdit.GameAppId;
                 nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
                 txt_args_game.Text = _shortcutToEdit.GameArguments;
+                cbx_game_priority.SelectedItem = _shortcutToEdit.ProcessPriority;
                 if (_shortcutToEdit.GameArgumentsRequired)
                 {
                     cb_args_game.Checked = true;
@@ -1198,6 +1214,7 @@ namespace DisplayMagician.UIForms
             txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
             nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
             txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
+            cbx_exe_priority.SelectedItem = _shortcutToEdit.ProcessPriority;
             if (_shortcutToEdit.ExecutableArgumentsRequired)
             {
                 cb_args_executable.Checked = true;
@@ -2297,7 +2314,7 @@ namespace DisplayMagician.UIForms
     // Class used to populate combo boxes
     class ComboItem
     {
-        public int ID { get; set; }
+        public ProcessPriority Value { get; set; }
         public string Text { get; set; }
     }
 }

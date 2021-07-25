@@ -117,6 +117,8 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.cbx_exe_priority = new System.Windows.Forms.ComboBox();
+            this.lbl_exe_priority = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -720,6 +722,8 @@ namespace DisplayMagician.UIForms
             // 
             // p_standalone
             // 
+            this.p_standalone.Controls.Add(this.cbx_exe_priority);
+            this.p_standalone.Controls.Add(this.lbl_exe_priority);
             this.p_standalone.Controls.Add(this.btn_exe_to_start);
             this.p_standalone.Controls.Add(this.txt_args_executable);
             this.p_standalone.Controls.Add(this.cb_args_executable);
@@ -775,7 +779,7 @@ namespace DisplayMagician.UIForms
             // 
             this.btn_choose_alternative_executable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_choose_alternative_executable.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_alternative_executable.Location = new System.Drawing.Point(877, 115);
+            this.btn_choose_alternative_executable.Location = new System.Drawing.Point(880, 121);
             this.btn_choose_alternative_executable.Name = "btn_choose_alternative_executable";
             this.btn_choose_alternative_executable.Size = new System.Drawing.Size(85, 27);
             this.btn_choose_alternative_executable.TabIndex = 9;
@@ -786,7 +790,7 @@ namespace DisplayMagician.UIForms
             // txt_alternative_executable
             // 
             this.txt_alternative_executable.Enabled = false;
-            this.txt_alternative_executable.Location = new System.Drawing.Point(493, 116);
+            this.txt_alternative_executable.Location = new System.Drawing.Point(496, 122);
             this.txt_alternative_executable.Name = "txt_alternative_executable";
             this.txt_alternative_executable.Size = new System.Drawing.Size(378, 26);
             this.txt_alternative_executable.TabIndex = 4;
@@ -796,7 +800,7 @@ namespace DisplayMagician.UIForms
             // 
             this.rb_wait_alternative_executable.AutoSize = true;
             this.rb_wait_alternative_executable.ForeColor = System.Drawing.Color.White;
-            this.rb_wait_alternative_executable.Location = new System.Drawing.Point(23, 118);
+            this.rb_wait_alternative_executable.Location = new System.Drawing.Point(23, 122);
             this.rb_wait_alternative_executable.Name = "rb_wait_alternative_executable";
             this.rb_wait_alternative_executable.Size = new System.Drawing.Size(468, 24);
             this.rb_wait_alternative_executable.TabIndex = 8;
@@ -810,7 +814,7 @@ namespace DisplayMagician.UIForms
             this.rb_wait_executable.AutoSize = true;
             this.rb_wait_executable.Checked = true;
             this.rb_wait_executable.ForeColor = System.Drawing.Color.White;
-            this.rb_wait_executable.Location = new System.Drawing.Point(23, 87);
+            this.rb_wait_executable.Location = new System.Drawing.Point(23, 83);
             this.rb_wait_executable.Name = "rb_wait_executable";
             this.rb_wait_executable.Size = new System.Drawing.Size(439, 24);
             this.rb_wait_executable.TabIndex = 7;
@@ -1280,6 +1284,26 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
+            // cbx_exe_priority
+            // 
+            this.cbx_exe_priority.AllowDrop = true;
+            this.cbx_exe_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbx_exe_priority.FormattingEnabled = true;
+            this.cbx_exe_priority.Location = new System.Drawing.Point(786, 83);
+            this.cbx_exe_priority.Name = "cbx_exe_priority";
+            this.cbx_exe_priority.Size = new System.Drawing.Size(179, 28);
+            this.cbx_exe_priority.TabIndex = 31;
+            // 
+            // lbl_exe_priority
+            // 
+            this.lbl_exe_priority.AutoSize = true;
+            this.lbl_exe_priority.ForeColor = System.Drawing.Color.White;
+            this.lbl_exe_priority.Location = new System.Drawing.Point(642, 86);
+            this.lbl_exe_priority.Name = "lbl_exe_priority";
+            this.lbl_exe_priority.Size = new System.Drawing.Size(143, 20);
+            this.lbl_exe_priority.TabIndex = 30;
+            this.lbl_exe_priority.Text = "Executable Priority:";
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1429,5 +1453,7 @@ namespace DisplayMagician.UIForms
         internal Manina.Windows.Forms.ImageListView ilv_games;
         private System.Windows.Forms.Button btn_find_examples;
         private System.Windows.Forms.ComboBox cbx_game_priority;
+        private System.Windows.Forms.ComboBox cbx_exe_priority;
+        private System.Windows.Forms.Label lbl_exe_priority;
     }
 }
