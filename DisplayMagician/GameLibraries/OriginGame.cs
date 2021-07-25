@@ -16,6 +16,7 @@ namespace DisplayMagician.GameLibraries
         private string _originGameDir;
         private string _originGameExe;
         private string _originGameProcessName;
+        private List<Process> _originGameProcesses = new List<Process>();
         private string _originGameIconPath;
         //private string _originURI;
         private static readonly OriginLibrary _originGameLibrary = OriginLibrary.GetLibrary();
@@ -89,13 +90,19 @@ namespace DisplayMagician.GameLibraries
             set => _originGameProcessName = value;
         }
 
+        public override List<Process> Processes
+        {
+            get => _originGameProcesses;
+            set => _originGameProcesses = value;
+        }
+
         public override bool IsRunning
         {
             get
             {
                 int numGameProcesses = 0;
-                List<Process> gameProcesses = Process.GetProcessesByName(_originGameProcessName).ToList();
-                foreach (Process gameProcess in gameProcesses)
+                _originGameProcesses = Process.GetProcessesByName(_originGameProcessName).ToList();
+                foreach (Process gameProcess in _originGameProcesses)
                 {
                     try
                     {                       

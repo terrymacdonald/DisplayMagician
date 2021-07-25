@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 
 namespace DisplayMagician.GameLibraries
@@ -28,6 +30,8 @@ namespace DisplayMagician.GameLibraries
         public virtual string Executable { get; set; }
 
         public virtual string ProcessName { get; set; }
+
+        public virtual List<Process> Processes { get; set; }
 
         public Bitmap GameBitmap { get; set; }
 

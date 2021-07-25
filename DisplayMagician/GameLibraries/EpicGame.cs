@@ -16,6 +16,7 @@ namespace DisplayMagician.GameLibraries
         private string _epicGameDir;
         private string _epicGameExe;
         private string _epicGameProcessName;
+        private List<Process> _epicGameProcesses = new List<Process>();
         private string _epicGameIconPath;
         //private string _epicURI;
         private static readonly EpicLibrary _epicGameLibrary = EpicLibrary.GetLibrary();
@@ -90,13 +91,19 @@ namespace DisplayMagician.GameLibraries
             set => _epicGameProcessName = value;
         }
 
+        public override List<Process> Processes
+        {
+            get => _epicGameProcesses;
+            set => _epicGameProcesses = value;
+        }
+
         public override bool IsRunning
         {
             get
             {
                 int numGameProcesses = 0;
-                List<Process> gameProcesses = Process.GetProcessesByName(_epicGameProcessName).ToList();
-                foreach (Process gameProcess in gameProcesses)
+                _epicGameProcesses = Process.GetProcessesByName(_epicGameProcessName).ToList();
+                foreach (Process gameProcess in _epicGameProcesses)
                 {
                     try
                     {                       

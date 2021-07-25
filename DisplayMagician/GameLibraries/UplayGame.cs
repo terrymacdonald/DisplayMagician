@@ -17,6 +17,7 @@ namespace DisplayMagician.GameLibraries
         private string _uplayGameDir;
         private string _uplayGameExe;
         private string _uplayGameProcessName;
+        private List<Process> _uplayGameProcesses = new List<Process>();
         private string _uplayGameIconPath;
         private static readonly UplayLibrary _uplayGameLibrary = UplayLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -88,13 +89,19 @@ namespace DisplayMagician.GameLibraries
             set => _uplayGameProcessName = value;
         }
 
+        public override List<Process> Processes
+        {
+            get => _uplayGameProcesses;
+            set => _uplayGameProcesses = value;
+        }
+
         public override bool IsRunning
         {
             get
             {
                 int numGameProcesses = 0;
-                List<Process> gameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
-                foreach (Process gameProcess in gameProcesses)
+                _uplayGameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
+                foreach (Process gameProcess in _uplayGameProcesses)
                 {
                     try
                     {                       

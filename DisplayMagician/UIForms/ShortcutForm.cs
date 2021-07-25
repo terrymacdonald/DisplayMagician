@@ -1201,7 +1201,7 @@ namespace DisplayMagician.UIForms
                 _gameId = _shortcutToEdit.GameAppId;
                 nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
                 txt_args_game.Text = _shortcutToEdit.GameArguments;
-                cbx_game_priority.SelectedItem = _shortcutToEdit.ProcessPriority;
+                cbx_game_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
                 if (_shortcutToEdit.GameArgumentsRequired)
                 {
                     cb_args_game.Checked = true;
@@ -1214,7 +1214,7 @@ namespace DisplayMagician.UIForms
             txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
             nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
             txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
-            cbx_exe_priority.SelectedItem = _shortcutToEdit.ProcessPriority;
+            cbx_exe_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
             if (_shortcutToEdit.ExecutableArgumentsRequired)
             {
                 cb_args_executable.Checked = true;
@@ -1239,7 +1239,6 @@ namespace DisplayMagician.UIForms
             txt_shortcut_save_name.Text = _shortcutToEdit.Name;
 
             // Set up the start programs
-
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
                 flp_start_programs.Controls.Clear();

@@ -16,6 +16,7 @@ namespace DisplayMagician.GameLibraries
         private string _gogGameDir;
         private string _gogGameExe;
         private string _gogGameProcessName;
+        private List<Process> _gogGameProcesses = new List<Process>();
         private string _gogGameIconPath;
         //private string _gogURI;
         private static readonly GogLibrary _gogGameLibrary = GogLibrary.GetLibrary();
@@ -90,13 +91,19 @@ namespace DisplayMagician.GameLibraries
             set => _gogGameProcessName = value;
         }
 
+        public override List<Process> Processes
+        {
+            get => _gogGameProcesses;
+            set => _gogGameProcesses = value;
+        }
+
         public override bool IsRunning
         {
             get
             {
                 int numGameProcesses = 0;
-                List<Process> gameProcesses = Process.GetProcessesByName(_gogGameProcessName).ToList();
-                foreach (Process gameProcess in gameProcesses)
+                _gogGameProcesses = Process.GetProcessesByName(_gogGameProcessName).ToList();
+                foreach (Process gameProcess in _gogGameProcesses)
                 {
                     try
                     {                       
