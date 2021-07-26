@@ -104,7 +104,6 @@ namespace DisplayMagicianShared.NVIDIA
                 SharedLogger.logger.Warn(ex, $"SurroundTopology/FromPathTargetInfo: Exception trying to access friendlyName.");
             }
 
-
             /*try
             {
                 devicePathContainsUID5120 = pathTargetInfo.DisplayTarget.DevicePath.ToLower().Contains("&UID5120".ToLower());
