@@ -61,10 +61,10 @@ namespace DisplayMagicianShared.NVIDIA
 
             string EDIDManufactureCode = "";
             string friendlyName = "";
-            bool devicePathContainsUID5120 = false;
+            //bool devicePathContainsUID5120 = false;
             bool isNvidiaEDID = false;
             bool isNvidiaDeviceName = false;
-            bool isNvidiaDevicePath = false;
+            //bool isNvidiaDevicePath = false;
 
             try
             {
@@ -74,6 +74,10 @@ namespace DisplayMagicianShared.NVIDIA
                 {
                     SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The EDIDManufactureCode of {EDIDManufactureCode} matches 'NVS', so this is an NVIDIA surround topology.");
                     isNvidiaEDID = true;
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The EDIDManufactureCode of {EDIDManufactureCode} does NOT match 'NVS', so this is NOT a NVIDIA surround topology.");
                 }
             }
             catch (Exception ex)
@@ -90,13 +94,17 @@ namespace DisplayMagicianShared.NVIDIA
                     SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The Display FriendlyName of {friendlyName} matches 'NV Surround', so this is an NVIDIA surround topology.");
                     isNvidiaDeviceName = true;
                 }
+                else
+                {
+                    SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The Display FriendlyName of {friendlyName} does NOT match 'NV Surround', so this is NOT a NVIDIA surround topology.");
+                }
             }
             catch (Exception ex)
             {
                 SharedLogger.logger.Warn(ex, $"SurroundTopology/FromPathTargetInfo: Exception trying to access friendlyName.");
             }
 
-            try
+            /*try
             {
                 devicePathContainsUID5120 = pathTargetInfo.DisplayTarget.DevicePath.ToLower().Contains("&UID5120".ToLower());
                 SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: Testing if the Display DevicePath contains UID5120 = {devicePathContainsUID5120}.");
@@ -105,14 +113,19 @@ namespace DisplayMagicianShared.NVIDIA
                     SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The Device Path contains UID5120, so this is an NVIDIA surround topology.");
                     isNvidiaDevicePath = true;
                 }
+                else
+                {
+                    SharedLogger.logger.Trace($"SurroundTopology/FromPathTargetInfo: The Device Path does not contains UID5120, so this is an NVIDIA surround topology.");
+                }
             }
             catch (Exception ex)
             {
                 SharedLogger.logger.Warn(ex, $"SurroundTopology/FromPathTargetInfo: Exception trying to access friendlyName.");
-            }
+            }*/
 
             // If the checks haven't passed, then we return null
-            if (!isNvidiaEDID && !isNvidiaDeviceName && !isNvidiaDevicePath)
+            //if (!isNvidiaEDID && !isNvidiaDeviceName && !isNvidiaDevicePath)
+            if (!isNvidiaEDID && !isNvidiaDeviceName)
             {
                 SharedLogger.logger.Warn($"SurroundTopology/FromPathTargetInfo: As far as we can tell, this isn't an NVIDIA Surround window, so we're returning null.");
                 return null;
