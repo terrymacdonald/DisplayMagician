@@ -74,6 +74,8 @@ namespace DisplayMagician.UIForms
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.p_standalone = new System.Windows.Forms.Panel();
+            this.cbx_exe_priority = new System.Windows.Forms.ComboBox();
+            this.lbl_exe_priority = new System.Windows.Forms.Label();
             this.btn_exe_to_start = new System.Windows.Forms.Button();
             this.txt_args_executable = new System.Windows.Forms.TextBox();
             this.cb_args_executable = new System.Windows.Forms.CheckBox();
@@ -117,8 +119,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.cbx_exe_priority = new System.Windows.Forms.ComboBox();
-            this.lbl_exe_priority = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.tabp_audio.SuspendLayout();
@@ -741,6 +741,26 @@ namespace DisplayMagician.UIForms
             this.p_standalone.Size = new System.Drawing.Size(1006, 160);
             this.p_standalone.TabIndex = 10;
             // 
+            // cbx_exe_priority
+            // 
+            this.cbx_exe_priority.AllowDrop = true;
+            this.cbx_exe_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbx_exe_priority.FormattingEnabled = true;
+            this.cbx_exe_priority.Location = new System.Drawing.Point(786, 83);
+            this.cbx_exe_priority.Name = "cbx_exe_priority";
+            this.cbx_exe_priority.Size = new System.Drawing.Size(179, 28);
+            this.cbx_exe_priority.TabIndex = 31;
+            // 
+            // lbl_exe_priority
+            // 
+            this.lbl_exe_priority.AutoSize = true;
+            this.lbl_exe_priority.ForeColor = System.Drawing.Color.White;
+            this.lbl_exe_priority.Location = new System.Drawing.Point(642, 86);
+            this.lbl_exe_priority.Name = "lbl_exe_priority";
+            this.lbl_exe_priority.Size = new System.Drawing.Size(143, 20);
+            this.lbl_exe_priority.TabIndex = 30;
+            this.lbl_exe_priority.Text = "Executable Priority:";
+            // 
             // btn_exe_to_start
             // 
             this.btn_exe_to_start.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1062,10 +1082,10 @@ namespace DisplayMagician.UIForms
             this.rb_launcher.ForeColor = System.Drawing.Color.White;
             this.rb_launcher.Location = new System.Drawing.Point(15, 262);
             this.rb_launcher.Name = "rb_launcher";
-            this.rb_launcher.Size = new System.Drawing.Size(332, 24);
+            this.rb_launcher.Size = new System.Drawing.Size(417, 24);
             this.rb_launcher.TabIndex = 6;
             this.rb_launcher.TabStop = true;
-            this.rb_launcher.Text = "Launch a Game installed in Steam or Uplay";
+            this.rb_launcher.Text = "Launch a Game installed in Steam, Uplay, Epic or GOG";
             this.rb_launcher.UseVisualStyleBackColor = true;
             this.rb_launcher.CheckedChanged += new System.EventHandler(this.rb_launcher_CheckedChanged);
             // 
@@ -1283,26 +1303,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
-            // 
-            // cbx_exe_priority
-            // 
-            this.cbx_exe_priority.AllowDrop = true;
-            this.cbx_exe_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbx_exe_priority.FormattingEnabled = true;
-            this.cbx_exe_priority.Location = new System.Drawing.Point(786, 83);
-            this.cbx_exe_priority.Name = "cbx_exe_priority";
-            this.cbx_exe_priority.Size = new System.Drawing.Size(179, 28);
-            this.cbx_exe_priority.TabIndex = 31;
-            // 
-            // lbl_exe_priority
-            // 
-            this.lbl_exe_priority.AutoSize = true;
-            this.lbl_exe_priority.ForeColor = System.Drawing.Color.White;
-            this.lbl_exe_priority.Location = new System.Drawing.Point(642, 86);
-            this.lbl_exe_priority.Name = "lbl_exe_priority";
-            this.lbl_exe_priority.Size = new System.Drawing.Size(143, 20);
-            this.lbl_exe_priority.TabIndex = 30;
-            this.lbl_exe_priority.Text = "Executable Priority:";
             // 
             // ShortcutForm
             // 
