@@ -247,11 +247,11 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool CreateProfileFromCurrentDisplaySettings()
         {
 
-            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
-            if (amdLibrary.IsInstalled)
+            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+            if (nvidiaLibrary.IsInstalled)
             {
                 // Create the profile data from the current config
-                _displayConfig = amdLibrary.GetActiveConfig();
+                _displayConfig = nvidiaLibrary.GetActiveConfig();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();

@@ -41,17 +41,7 @@ namespace DisplayMagician
 
         #region Class Constructors
         static ShortcutRepository()
-        {
-
-            try
-            {
-                NvAPIWrapper.NVIDIA.Initialize();
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutRepository/ShortcutRepository: Initialising NVIDIA NvAPIWrapper or CoreAudioController caused an exception.");
-            }
-
+        {            
             try
             {
                 _audioController = new CoreAudioController();
@@ -63,7 +53,6 @@ namespace DisplayMagician
 
             // Load the Shortcuts from storage
             LoadShortcuts();
-
         }
 
         #endregion

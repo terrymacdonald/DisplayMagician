@@ -5,17 +5,11 @@ using System.Drawing.IconLib;
 using System.IO;
 using System.Linq;
 using System.Text;
-using WindowsDisplayAPI.DisplayConfig;
-using NvAPIWrapper.Mosaic;
-using NvAPIWrapper.Native.Mosaic;
-using WindowsDisplayAPI;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using NvAPIWrapper.Native.GPU;
 using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
-using System.Windows.Forms;
 
 namespace DisplayMagicianShared
 {
@@ -33,6 +27,7 @@ namespace DisplayMagicianShared
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;
         private static AMDLibrary AMDLibrary;
+        private static NVIDIALibrary NVIDIALibrary;
         //private static bool _isLoading = false;
 
         // Other constants that are useful
@@ -52,12 +47,12 @@ namespace DisplayMagicianShared
             // Initialise the the NVIDIA NvAPIWrapper
             try
             {
-                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NvAPIWrapper.NVIDIA library.");
-                NvAPIWrapper.NVIDIA.Initialize();
+                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
+                NVIDIALibrary = new NVIDIALibrary();
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NvAPIWrapper caused an exception.");
+                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NVAPI caused an exception.");
             }
 
             // Initialise the the AMD ADLWrapper
