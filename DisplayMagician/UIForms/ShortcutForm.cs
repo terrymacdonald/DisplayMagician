@@ -834,7 +834,7 @@ namespace DisplayMagician.UIForms
                 };
             cbx_game_priority.ValueMember = "Value";
             cbx_game_priority.DisplayMember = "Text";
-            cbx_game_priority.SelectedItem = "Normal";
+            cbx_game_priority.SelectedIndex = 2; //Normal
             cbx_game_priority.Enabled = true;
 
             // Prepare the exe process priority combo box
@@ -847,7 +847,7 @@ namespace DisplayMagician.UIForms
                 };
             cbx_exe_priority.ValueMember = "Value";
             cbx_exe_priority.DisplayMember = "Text";
-            cbx_exe_priority.SelectedItem = "Normal";
+            cbx_exe_priority.SelectedIndex = 2; //Normal
             cbx_exe_priority.Enabled = true;
 
             // Populate all the Audio devices in the audio devices list.
@@ -2303,9 +2303,15 @@ namespace DisplayMagician.UIForms
                 SelectGameInImageListView();
         }
 
-        private void btn_find_examples_Click(object sender, EventArgs e)
+        private void btn_find_examples_startprograms_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Start-Program-Examples";
+            System.Diagnostics.Process.Start(targetURL);
+        }
+
+        private void btn_find_examples_game_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Main-Game-and-Application-Examples";
             System.Diagnostics.Process.Start(targetURL);
         }
     }

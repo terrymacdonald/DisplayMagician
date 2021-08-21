@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using DisplayMagician;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -102,7 +103,7 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
-        public virtual Process StartGame(Game game, string gameArguments = "")
+        public virtual Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
         {
             return null;
         }

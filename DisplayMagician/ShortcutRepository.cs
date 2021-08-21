@@ -544,7 +544,7 @@ namespace DisplayMagician
             }
         }
 
-        private static ProcessPriorityClass TranslatePriorityClass(ProcessPriority processPriority)
+        private static ProcessPriorityClass TranslatePriorityClassToClass(ProcessPriority processPriority)
         {
             ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
             switch (processPriority.ToString("G"))
@@ -571,7 +571,6 @@ namespace DisplayMagician
             return wantedPriorityClass;
 
         }
-
 
 
         // ReSharper disable once CyclomaticComplexity
@@ -821,7 +820,7 @@ namespace DisplayMagician
                                 foreach (Process runningProcess in alreadyRunningProcesses)
                                 {
                                     logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of already running process {processToStart.Executable} to {processToStart.ProcessPriority.ToString("G")}");
-                                    runningProcess.PriorityClass = TranslatePriorityClass(processToStart.ProcessPriority);
+                                    runningProcess.PriorityClass = TranslatePriorityClassToClass(processToStart.ProcessPriority);
                                 }
                             }
                             catch (Exception ex)
@@ -839,16 +838,23 @@ namespace DisplayMagician
                     Process process = null;
                     try
                     {
-                        if (processToStart.ExecutableArgumentsRequired)
+                        uint processID = 0;
+                        if (ProcessUtils.LaunchProcessWithPriority(processToStart.Executable, processToStart.Arguments, ProcessUtils.TranslatePriorityToClass(processToStart.ProcessPriority), out processID))
+                        {
+                            process = Process.GetProcessById((int)processID);
+                        }
+                        
+                        /*if (processToStart.ExecutableArgumentsRequired)
                         {
                             process = System.Diagnostics.Process.Start(processToStart.Executable, processToStart.Arguments);
+                            
                         }                            
                         else
                         {
                             process = System.Diagnostics.Process.Start(processToStart.Executable);
-                        }
+                        }*/
 
-                        try 
+                        /*try 
                         {
                             // Attempt to set the process priority to whatever the user wanted
                             logger.Trace($"ShortcutRepository/RunShortcut: Setting the start program process priority of start program we started to {shortcutToUse.ProcessPriority.ToString("G")}");
@@ -857,7 +863,7 @@ namespace DisplayMagician
                         catch (Exception ex)
                         {
                             logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting the start program process priority of start program we started to {shortcutToUse.ProcessPriority.ToString("G")}");
-                        }
+                        }*/
                         
 
                         // Record the program we started so we can close it later
@@ -963,15 +969,20 @@ namespace DisplayMagician
                 try
                 {
                     Process process = null;
-                    if (shortcutToUse.ExecutableArgumentsRequired)
+                    /*if (shortcutToUse.ExecutableArgumentsRequired)
                     {
                         process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
                     }
                     else
                     {
                         process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
+                    }*/
+                    uint processID = 0;
+                    if (ProcessUtils.LaunchProcessWithPriority(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, ProcessUtils.TranslatePriorityToClass(shortcutToUse.ProcessPriority), out processID))
+                    {
+                        process = Process.GetProcessById((int)processID);
                     }
-                    
+
                 }
                 catch (Win32Exception ex)
                 {
@@ -1023,7 +1034,7 @@ namespace DisplayMagician
                             foreach (Process monitoredProcess in processesToMonitor)
                             {
                                 logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of monitored executable process {processNameToLookFor} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                monitoredProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
+                                monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
                             }
                         }
                         catch(Exception ex)
@@ -1190,7 +1201,7 @@ namespace DisplayMagician
                     Process gameProcess;
                     //string gameRunCmd = gameLibraryToUse.GetRunCmd(gameToRun, shortcutToUse.GameArguments);
                     //gameProcess = Process.Start(gameRunCmd);                    
-                    gameProcess = gameLibraryToUse.StartGame(gameToRun, shortcutToUse.GameArguments);
+                    gameProcess = gameLibraryToUse.StartGame(gameToRun, shortcutToUse.GameArguments, ProcessUtils.TranslatePriorityToClass(shortcutToUse.ProcessPriority));
 
                     // Delay 500ms
                     Thread.Sleep(500);
@@ -1338,7 +1349,7 @@ namespace DisplayMagician
                                     foreach (Process monitoredProcess in processesToMonitor)
                                     {
                                         logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of alternative game monitored process {altGameProcessToMonitor} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                        monitoredProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
+                                        monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
                                     }
                                 }
                                 catch (Exception ex)
@@ -1374,7 +1385,7 @@ namespace DisplayMagician
                                         foreach (Process monitoredProcess in gameToRun.Processes)
                                         {
                                             logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of fallback game monitored process {gameToRun.ProcessName} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                            monitoredProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
+                                            monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
                                         }
                                     }
                                     catch (Exception ex)
@@ -1582,7 +1593,7 @@ namespace DisplayMagician
                                     foreach (Process monitoredProcess in gameToRun.Processes)
                                     {
                                         logger.Trace($"ShortcutRepository/RunShortcut: Setting priority of fallback game monitored process {gameToRun.ProcessName} to {shortcutToUse.ProcessPriority.ToString("G")}");
-                                        monitoredProcess.PriorityClass = TranslatePriorityClass(shortcutToUse.ProcessPriority);
+                                        monitoredProcess.PriorityClass = TranslatePriorityClassToClass(shortcutToUse.ProcessPriority);
                                     }
                                 }
                                 catch(Exception ex)
