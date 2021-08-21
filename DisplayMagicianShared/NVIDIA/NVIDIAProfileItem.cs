@@ -18,7 +18,8 @@ namespace DisplayMagicianShared.NVIDIA
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
-
+        private List<ScreenPosition> _screens;
+        private NVIDIA_DISPLAY_CONFIG _displayConfig = new NVIDIA_DISPLAY_CONFIG();
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
@@ -65,9 +66,23 @@ namespace DisplayMagicianShared.NVIDIA
 
         public override string Name { get; set; }
 
-        public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
+        //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
         //public NVIDIALibrary.NVIDIAProfile ProfileData { get; set; } = new NVIDIALibrary.NVIDIAProfile();
+
+        [JsonRequired]
+        public NVIDIA_DISPLAY_CONFIG DisplayConfig
+        {
+            get
+            {
+                return _displayConfig;
+            }
+            set
+            {
+                _displayConfig = value;
+            }
+        }
+
 
         [JsonIgnore]
         public override ProfileIcon ProfileIcon
@@ -105,6 +120,24 @@ namespace DisplayMagicianShared.NVIDIA
                     _profileDisplayIdentifiers = value;
             }
         }
+
+        [JsonIgnore]
+        public override List<ScreenPosition> Screens
+        {
+            get
+            {
+                if (_screens.Count == 0)
+                {
+                    _screens = GetScreenPositions();
+                }
+                return _screens;
+            }
+            set
+            {
+                _screens = value;
+            }
+        }
+
 
         [JsonConverter(typeof(CustomBitmapConverter))]
         public new Bitmap ProfileBitmap
@@ -173,6 +206,149 @@ namespace DisplayMagicianShared.NVIDIA
 
             // Return if it is valid and we should continue
             return IsValid();
+        }
+
+        public override void RefreshPossbility()
+        {
+            // Check each display in this profile and make sure it's currently available
+            int validDisplayCount = 0;
+
+            //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
+
+            foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
+            {
+                // If this profile has a display that isn't currently available then we need to say it's a no!
+                if (ProfileRepository.ConnectedDisplayIdentifiers.Any(s => profileDisplayIdentifier.Equals(s)))
+                {
+                    SharedLogger.logger.Trace($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is connected now.");
+                    validDisplayCount++;
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is NOT currently connected, so this profile cannot be used.");
+                }
+
+            }
+            if (validDisplayCount == ProfileDisplayIdentifiers.Count)
+            {
+
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
+                _isPossible = true;
+
+            }
+            else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is NOT possible!");
+                _isPossible = false;
+            }
+
+        }
+
+        public override bool CreateProfileFromCurrentDisplaySettings()
+        {
+
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            if (amdLibrary.IsInstalled)
+            {
+                // Create the profile data from the current config
+                _displayConfig = amdLibrary.GetActiveConfig();
+
+                // Now, since the ActiveProfile has changed, we need to regenerate screen positions
+                _screens = GetScreenPositions();
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override bool PerformPostLoadingTasks()
+        {
+            // First thing we do is to set up the Screens
+            _screens = GetScreenPositions();
+
+            return true;
+        }
+
+        public override List<ScreenPosition> GetScreenPositions()
+        {
+
+            // Now we create the screens structure from the AMD profile information
+            _screens = new List<ScreenPosition>();
+
+            if (_displayConfig.AdapterConfigs.Count > 0)
+            {
+                foreach (var adapter in _displayConfig.AdapterConfigs)
+                {
+                    foreach (var display in adapter.Displays)
+                    {
+                        foreach (var mode in display.DisplayModes)
+                        {
+                            ScreenPosition screen = new ScreenPosition();
+                            screen.Library = "AMD";
+                            screen.Name = display.DisplayName;
+                            screen.DisplayConnector = display.DisplayConnector;
+                            screen.ScreenX = mode.XPos;
+                            screen.ScreenY = mode.YPos;
+                            screen.ScreenWidth = mode.XRes;
+                            screen.ScreenHeight = mode.YRes;
+
+                            // If we're at the 0,0 coordinate then we're the primary monitor
+                            if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                            {
+                                screen.IsPrimary = true;
+                            }
+
+                            // HDR information
+                            if (display.HDRSupported)
+                            {
+                                screen.HDRSupported = true;
+                                if (display.HDREnabled)
+                                {
+                                    screen.HDREnabled = true;
+                                }
+                                else
+                                {
+                                    screen.HDREnabled = false;
+                                }
+
+                            }
+                            else
+                            {
+                                screen.HDRSupported = false;
+                                screen.HDREnabled = false;
+                            }
+
+                            // Spanned screen options
+                            if (display.IsEyefinity)
+                            {
+                                screen.IsSpanned = true;
+                                screen.Colour = Color.FromArgb(200, 237, 28, 36); // represents AMD Red
+                                screen.SpannedName = "AMD Eyefinity";
+                            }
+                            else
+                            {
+                                screen.IsSpanned = false;
+                                screen.Colour = Color.FromArgb(255, 195, 195, 195); // represents normal screen colour
+                            }
+
+
+                            // Figure out features
+
+                            //ATI.ADL.ADL.ConvertDisplayModeFlags(mode.ModeValue);
+
+                            //screen.Features = mode.ModeValue;
+
+                            _screens.Add(screen);
+                        }
+                    }
+                }
+            }
+
+
+            return _screens;
         }
 
 
