@@ -42,26 +42,18 @@ namespace DisplayMagicianShared.AMD
     [StructLayout(LayoutKind.Sequential)]
     public struct AMD_DISPLAY_CONFIG : IEquatable<AMD_DISPLAY_CONFIG>
     {
-        //public Dictionary<ulong, string> DisplayAdapters;
         public List<AMD_ADAPTER_CONFIG> AdapterConfigs;
-        //public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
-        //public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
-        public WINDOWS_DISPLAY_CONFIG WindowsDisplayConfig;
 
         public bool Equals(AMD_DISPLAY_CONFIG other)
-        => AdapterConfigs.SequenceEqual(other.AdapterConfigs) &&
-           //DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
-           //DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
-           //DisplayHDRStates.SequenceEqual(other.DisplayHDRStates) && 
-           WindowsDisplayConfig.Equals(other.WindowsDisplayConfig);
+        => AdapterConfigs.SequenceEqual(other.AdapterConfigs);
 
         public override int GetHashCode()
         {
-            return (AdapterConfigs, WindowsDisplayConfig).GetHashCode();
+            return (AdapterConfigs).GetHashCode();
         }
     }
 
-    public class AMDLibrary : IDisposable
+    class AMDLibrary : IDisposable
     {
 
         // Static members are 'eagerly initialized', that is, 
@@ -169,6 +161,15 @@ namespace DisplayMagicianShared.AMD
             get
             {
                 return _initialised;
+            }
+        }
+
+        public List<string> PCIVendorIDs
+        {
+            get
+            {
+                // A list of all the matching PCI Vendor IDs are per https://www.pcilookup.com/?ven=amd&dev=&action=submit
+                return new List<string>() { "1002" };
             }
         }
 
@@ -556,10 +557,6 @@ namespace DisplayMagicianShared.AMD
                     }
 
                 }
-
-                // We want to get the Windows CCD information and store it for later so that we record
-                // display sizes, and screen positions and the like.
-                myDisplayConfig.WindowsDisplayConfig = _winLibrary.GetActiveConfig();
             }
             else
             {

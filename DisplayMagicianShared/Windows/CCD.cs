@@ -237,7 +237,7 @@ namespace DisplayMagicianShared.Windows
         PalN = 15,
         PalNc = 16,
         SecamB = 17,
-        SecamD = 18,
+        SecNVIDIA = 18,
         SecamG = 19,
         SecamH = 20,
         SecamK = 21,

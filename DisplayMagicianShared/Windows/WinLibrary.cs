@@ -6,6 +6,7 @@ using System.Text;
 using Microsoft.Win32.SafeHandles;
 using DisplayMagicianShared;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 
 namespace DisplayMagicianShared.Windows
 {
@@ -31,23 +32,24 @@ namespace DisplayMagicianShared.Windows
     [StructLayout(LayoutKind.Sequential)]
     public struct WINDOWS_DISPLAY_CONFIG : IEquatable<WINDOWS_DISPLAY_CONFIG>
     {
-        public Dictionary<ulong, string> displayAdapters;
-        public DISPLAYCONFIG_PATH_INFO[] displayConfigPaths;
-        public DISPLAYCONFIG_MODE_INFO[] displayConfigModes;
-        public ADVANCED_HDR_INFO_PER_PATH[] displayHDRStates;
+        public Dictionary<ulong, string> DisplayAdapters;
+        public DISPLAYCONFIG_PATH_INFO[] DisplayConfigPaths;
+        public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
+        public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
+        public List<string> DisplayIdentifiers;
 
         public bool Equals(WINDOWS_DISPLAY_CONFIG other)
-        => displayConfigPaths.SequenceEqual(other.displayConfigPaths) &&
-           displayConfigModes.SequenceEqual(other.displayConfigModes) &&
-           displayHDRStates.SequenceEqual(other.displayHDRStates);
+        => DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
+           DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
+           DisplayHDRStates.SequenceEqual(other.DisplayHDRStates);
 
         public override int GetHashCode()
         {
-            return (displayConfigPaths, displayConfigModes, displayHDRStates).GetHashCode();
+            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates).GetHashCode();
         }
     }
 
-    public class WinLibrary : IDisposable
+    class WinLibrary : IDisposable
     {
 
         // Static members are 'eagerly initialized', that is, 
@@ -69,7 +71,6 @@ namespace DisplayMagicianShared.Windows
         {
             SharedLogger.logger.Trace("WinLibrary/WinLibrary: Intialising Windows CCD library interface");
             _initialised = true;
-            SharedLogger.logger.Trace("WinLibrary/WinLibrary: ADL2 library was initialised successfully");
 
         }
 
@@ -119,7 +120,7 @@ namespace DisplayMagicianShared.Windows
             Dictionary<ulong, ulong> adapterOldToNewMap = new Dictionary<ulong, ulong>();
 
             SharedLogger.logger.Trace("WinLibrary/PatchAdapterIDs: Going through the list of adapters we stored in the config to figure out the old adapterIDs");
-            foreach (KeyValuePair<ulong, string> savedAdapter in savedDisplayConfig.displayAdapters)
+            foreach (KeyValuePair<ulong, string> savedAdapter in savedDisplayConfig.DisplayAdapters)
             {
                 foreach (KeyValuePair<ulong, string> currentAdapter in currentAdapterMap)
                 {
@@ -136,73 +137,73 @@ namespace DisplayMagicianShared.Windows
             ulong newAdapterValue = 0;
             // Update the paths with the current adapter id
             SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Going through the display config paths to update the adapter id");
-            for (int i = 0; i < savedDisplayConfig.displayConfigPaths.Length; i++)
+            for (int i = 0; i < savedDisplayConfig.DisplayConfigPaths.Length; i++)
             {
                 // Change the Path SourceInfo and TargetInfo AdapterIDs
-                if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.displayConfigPaths[i].SourceInfo.AdapterId.Value))
+                if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value))
                 {
                     // We get here if there is a matching adapter
-                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.displayConfigPaths[i].SourceInfo.AdapterId.Value];
-                    savedDisplayConfig.displayConfigPaths[i].SourceInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
-                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.displayConfigPaths[i].TargetInfo.AdapterId.Value];
-                    savedDisplayConfig.displayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value];
+                    savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId.Value];
+                    savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
                 else
                 {
                     // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                     // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
                     newAdapterValue = currentAdapterMap.First().Key;
-                    SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.displayConfigPaths[i].SourceInfo.AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                    savedDisplayConfig.displayConfigPaths[i].SourceInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
-                    savedDisplayConfig.displayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
+                    savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    savedDisplayConfig.DisplayConfigPaths[i].TargetInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
             }
 
             SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Going through the display config modes to update the adapter id");
             // Update the modes with the current adapter id
-            for (int i = 0; i < savedDisplayConfig.displayConfigModes.Length; i++)
+            for (int i = 0; i < savedDisplayConfig.DisplayConfigModes.Length; i++)
             {
                 // Change the Mode AdapterID
-                if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.displayConfigModes[i].AdapterId.Value))
+                if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value))
                 {
                     // We get here if there is a matching adapter
-                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.displayConfigModes[i].AdapterId.Value];
-                    savedDisplayConfig.displayConfigModes[i].AdapterId = AdapterValueToLUID(newAdapterValue);
+                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value];
+                    savedDisplayConfig.DisplayConfigModes[i].AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
                 else
                 {
                     // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                     // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
                     newAdapterValue = currentAdapterMap.First().Key;
-                    SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.displayConfigModes[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                    savedDisplayConfig.displayConfigModes[i].AdapterId = AdapterValueToLUID(newAdapterValue);
+                    SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
+                    savedDisplayConfig.DisplayConfigModes[i].AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
             }
 
             SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Going through the display config HDR info to update the adapter id");
             // Update the HDRInfo with the current adapter id
-            for (int i = 0; i < savedDisplayConfig.displayHDRStates.Length; i++)
+            for (int i = 0; i < savedDisplayConfig.DisplayHDRStates.Length; i++)
             {
                 // Change the Mode AdapterID
-                if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.displayHDRStates[i].AdapterId.Value))
+                if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value))
                 {
                     // We get here if there is a matching adapter
-                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.displayHDRStates[i].AdapterId.Value];
-                    savedDisplayConfig.displayHDRStates[i].AdapterId = AdapterValueToLUID(newAdapterValue);
-                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.displayHDRStates[i].AdvancedColorInfo.Header.AdapterId.Value];
-                    savedDisplayConfig.displayHDRStates[i].AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
-                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.displayHDRStates[i].SDRWhiteLevel.Header.AdapterId.Value];
-                    savedDisplayConfig.displayHDRStates[i].SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value];
+                    savedDisplayConfig.DisplayHDRStates[i].AdapterId = AdapterValueToLUID(newAdapterValue);
+                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdvancedColorInfo.Header.AdapterId.Value];
+                    savedDisplayConfig.DisplayHDRStates[i].AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId.Value];
+                    savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
                 else
                 {
                     // if there isn't a matching adapter, then we just pick the first current one and hope that works!
                     // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
                     newAdapterValue = currentAdapterMap.First().Key;
-                    SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.displayHDRStates[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                    savedDisplayConfig.displayHDRStates[i].AdapterId = AdapterValueToLUID(newAdapterValue);
-                    savedDisplayConfig.displayHDRStates[i].AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
-                    savedDisplayConfig.displayHDRStates[i].SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
+                    savedDisplayConfig.DisplayHDRStates[i].AdapterId = AdapterValueToLUID(newAdapterValue);
+                    savedDisplayConfig.DisplayHDRStates[i].AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
             }
 
@@ -266,8 +267,8 @@ namespace DisplayMagicianShared.Windows
 
             // Prepare the empty windows display config
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
-            windowsDisplayConfig.displayAdapters = new Dictionary<ulong, string>();
-            windowsDisplayConfig.displayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
+            windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
+            windowsDisplayConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
@@ -277,7 +278,7 @@ namespace DisplayMagicianShared.Windows
             {
                 // Get adapter ID for later
                 SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get adapter name for adapter {path.TargetInfo.AdapterId.Value}.");
-                if (!windowsDisplayConfig.displayAdapters.ContainsKey(path.TargetInfo.AdapterId.Value))
+                if (!windowsDisplayConfig.DisplayAdapters.ContainsKey(path.TargetInfo.AdapterId.Value))
                 {
                     var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
                     adapterInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
@@ -288,7 +289,7 @@ namespace DisplayMagicianShared.Windows
                     if (err == WIN32STATUS.ERROR_SUCCESS)
                     {
                         // Store it for later
-                        windowsDisplayConfig.displayAdapters.Add(path.TargetInfo.AdapterId.Value, adapterInfo.AdapterDevicePath);
+                        windowsDisplayConfig.DisplayAdapters.Add(path.TargetInfo.AdapterId.Value, adapterInfo.AdapterDevicePath);
                         SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found adapter name {adapterInfo.AdapterDevicePath} for adapter {path.TargetInfo.AdapterId.Value}.");
                     }
                     else
@@ -356,9 +357,10 @@ namespace DisplayMagicianShared.Windows
             }
 
             // Store the active paths and modes in our display config object
-            windowsDisplayConfig.displayConfigPaths = paths;
-            windowsDisplayConfig.displayConfigModes = modes;
-            windowsDisplayConfig.displayHDRStates = hdrInfos;
+            windowsDisplayConfig.DisplayConfigPaths = paths;
+            windowsDisplayConfig.DisplayConfigModes = modes;
+            windowsDisplayConfig.DisplayHDRStates = hdrInfos;
+            windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
 
             return windowsDisplayConfig;
         }
@@ -375,7 +377,7 @@ namespace DisplayMagicianShared.Windows
         public string PrintActiveConfig()
         {
             string stringToReturn = "";
-
+            stringToReturn += $"****** WINDOWS CCD CONFIGURATION *******\n";
             // Get the size of the largest Active Paths and Modes arrays
             int pathCount = 0;
             int modeCount = 0;
@@ -639,13 +641,13 @@ namespace DisplayMagicianShared.Windows
 
             // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
-            PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.displayAdapters);
+            PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.DisplayAdapters);
 
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Testing whether the display configuration is valid");
             // Test whether a specified display configuration is supported on the computer                    
-            uint myPathsCount = (uint)displayConfig.displayConfigPaths.Length;
-            uint myModesCount = (uint)displayConfig.displayConfigModes.Length;
-            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.displayConfigPaths, myModesCount, displayConfig.displayConfigModes, SDC.DISPLAYMAGICIAN_VALIDATE);
+            uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
+            uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
+            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_VALIDATE);
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully validated that the display configuration supplied would work!");
@@ -658,7 +660,7 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Yay! The display configuration is valid! Attempting to set the Display Config now");
             // Now set the specified display configuration for this computer                    
-            err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.displayConfigPaths, myModesCount, displayConfig.displayConfigModes, SDC.DISPLAYMAGICIAN_SET);
+            err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET);
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully set the display configuration to the settings supplied!");
@@ -671,7 +673,7 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
 
-            foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.displayHDRStates)
+            foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.DisplayHDRStates)
             {
                 SharedLogger.logger.Trace($"Trying to get information whether HDR color is in use now on Display {myHDRstate.Id}.");
                 // Get advanced HDR info
@@ -740,18 +742,18 @@ namespace DisplayMagicianShared.Windows
 
         }
 
-        public bool IsPossibleConfig(WINDOWS_DISPLAY_CONFIG displayConfig)
+        public bool IsValidConfig(WINDOWS_DISPLAY_CONFIG displayConfig)
         {
-            // Get the all possible windows display configs
+            // Get the current windows display configs
             WINDOWS_DISPLAY_CONFIG allWindowsDisplayConfig = GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS);
 
             SharedLogger.logger.Trace("WinLibrary/PatchAdapterIDs: Going through the list of adapters we stored in the config to make sure they still exist");
             // Firstly check that the Adapter Names are still currently available (i.e. the adapter hasn't been replaced).
-            foreach (string savedAdapterName in displayConfig.displayAdapters.Values)
+            foreach (string savedAdapterName in displayConfig.DisplayAdapters.Values)
             {
                 // If there is even one of the saved adapters that has changed, then it's no longer possible
                 // to use this display config!
-                if (!allWindowsDisplayConfig.displayAdapters.Values.Contains(savedAdapterName))
+                if (!allWindowsDisplayConfig.DisplayAdapters.Values.Contains(savedAdapterName))
                 {
                     SharedLogger.logger.Error($"WinLibrary/PatchAdapterIDs: ERROR - Saved adapter {savedAdapterName} is not available right now! This display configuration won't work!");
                     return false;
@@ -761,13 +763,13 @@ namespace DisplayMagicianShared.Windows
 
             // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
             SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Attemptong to patch the saved display configuration's adapter IDs so that it will still work (these change at each boot)");
-            PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.displayAdapters);
+            PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.DisplayAdapters);
 
             SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Testing whether the display configuration is valid ");
             // Test whether a specified display configuration is supported on the computer                    
-            uint myPathsCount = (uint)displayConfig.displayConfigPaths.Length;
-            uint myModesCount = (uint)displayConfig.displayConfigModes.Length;
-            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.displayConfigPaths, myModesCount, displayConfig.displayConfigModes, SDC.DISPLAYMAGICIAN_VALIDATE);
+            uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
+            uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
+            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_VALIDATE);
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {
                 SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: SetDisplayConfig validated that the display configuration is valid and can be used!");
@@ -776,6 +778,29 @@ namespace DisplayMagicianShared.Windows
             else
             {
                 SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: SetDisplayConfig confirmed that the display configuration is invalid and cannot be used!");
+                return false;
+            }
+
+        }
+
+        public bool IsPossibleConfig(WINDOWS_DISPLAY_CONFIG displayConfig)
+        {
+            // We want to check the Windows Display profile can be used now
+            SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Testing whether the Windows display configuration is possible to be used now");
+
+            // check what the currently available displays are (include the ones not active)
+            List<string> currentAllIds = GetAllConnectedDisplayIdentifiers();
+
+            // CHeck that we have all the displayConfig DisplayIdentifiers we need available now
+            //if (currentAllIds.Intersect(displayConfig.DisplayIdentifiers).Count() == displayConfig.DisplayIdentifiers.Count)
+            if (displayConfig.DisplayIdentifiers.All(value => currentAllIds.Contains(value)))
+            {
+                SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Success! THe Windows display configuration is possible to be used now");
+                return true;
+            }
+            else
+            {
+                SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Uh oh! THe Windows display configuration is possible cannot be used now");
                 return false;
             }
 
@@ -803,7 +828,7 @@ namespace DisplayMagicianShared.Windows
             // Get the size of the largest Active Paths and Modes arrays
             int pathCount = 0;
             int modeCount = 0;
-            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(selector, out pathCount, out modeCount);
             if (err != WIN32STATUS.ERROR_SUCCESS)
             {
                 SharedLogger.logger.Error($"WinLibrary/PrintActiveConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
@@ -813,14 +838,14 @@ namespace DisplayMagicianShared.Windows
             SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
             var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
             var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
-            err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+            err = CCDImport.QueryDisplayConfig(selector, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
             if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
             {
                 SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: The displays were modified between GetDisplayConfigBufferSizes and QueryDisplayConfig so we need to get the buffer sizes again.");
                 SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the size of the largest Active Paths and Modes arrays");
                 // Screen changed in between GetDisplayConfigBufferSizes and QueryDisplayConfig, so we need to get buffer sizes again
                 // as per https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig 
-                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+                err = CCDImport.GetDisplayConfigBufferSizes(selector, out pathCount, out modeCount);
                 if (err != WIN32STATUS.ERROR_SUCCESS)
                 {
                     SharedLogger.logger.Error($"WinLibrary/GetSomeDisplayIdentifiers: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
@@ -829,7 +854,7 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
                 paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
                 modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
-                err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+                err = CCDImport.QueryDisplayConfig(selector, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
                 if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
                 {
                     SharedLogger.logger.Error($"WinLibrary/GetSomeDisplayIdentifiers: ERROR - The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
@@ -969,6 +994,120 @@ namespace DisplayMagicianShared.Windows
             displayIdentifiers.Sort();
 
             return displayIdentifiers;
+        }
+
+        public List<string> GetCurrentPCIVideoCardVendors()
+        {
+            SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the current PCI vendor ids for the videocards reported to Windows");
+            List<string> videoCardVendorIds = new List<string>();
+
+
+            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Testing whether the display configuration is valid (allowing tweaks).");
+            // Get the size of the largest Active Paths and Modes arrays
+            int pathCount = 0;
+            int modeCount = 0;
+            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+            if (err != WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+                throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+            }
+
+            SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
+            var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+            var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+            err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+            if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+            {
+                SharedLogger.logger.Warn($"WinLibrary/GetCurrentPCIVideoCardVendors: The displays were modified between GetDisplayConfigBufferSizes and QueryDisplayConfig so we need to get the buffer sizes again.");
+                SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the size of the largest Active Paths and Modes arrays");
+                // Screen changed in between GetDisplayConfigBufferSizes and QueryDisplayConfig, so we need to get buffer sizes again
+                // as per https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig 
+                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+                if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                    throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                }
+                SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
+                paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+                modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+                err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+                if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                    throw new WinLibraryException($"The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                }
+                else if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again");
+                    throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again.");
+                }
+            }
+            else if (err != WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays");
+                throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
+            }
+
+            foreach (var path in paths)
+            {
+                if (path.TargetInfo.TargetAvailable == false)
+                {
+                    // We want to skip this one cause it's not valid
+                    SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Skipping path due to TargetAvailable not existing in display #{path.TargetInfo.Id}");
+                    continue;
+                }
+
+                // get display adapter name
+                var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
+                adapterInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+                adapterInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_ADAPTER_NAME>();
+                adapterInfo.Header.AdapterId = path.TargetInfo.AdapterId;
+                adapterInfo.Header.Id = path.TargetInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Successfully got the display name info from {path.TargetInfo.Id}.");
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/GetCurrentPCIVideoCardVendors: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{path.TargetInfo.Id}");
+                }
+
+                try
+                {
+                    // The AdapterDevicePath is something like "\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"
+                    // We only want the vendor ID
+                    SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The AdapterDevicePath for this path is :{adapterInfo.AdapterDevicePath}");
+                    // Match against the vendor ID
+                    string pattern = @"VEN_([\d\w]{4})&";
+                    Match match = Regex.Match(adapterInfo.AdapterDevicePath, pattern);
+                    if (match.Success)
+                    {
+                        string VendorId = match.Groups[1].Value;
+                        SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The matched PCI Vendor ID is :{VendorId }");
+                        if (!videoCardVendorIds.Contains(VendorId))
+                        {
+                            videoCardVendorIds.Add(VendorId);
+                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Stored PCI vendor ID {VendorId} as we haven't already got it");
+                        }
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The PCI Vendor ID pattern wasn't matched so we didn't record a vendor ID.");
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"WinLibrary/GetCurrentPCIVideoCardVendors: Exception getting PCI Vendor ID from Display Adapter {path.SourceInfo.AdapterId}.");
+                }
+
+            }
+
+            return videoCardVendorIds;
+
         }
 
     }
