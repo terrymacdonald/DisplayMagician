@@ -525,42 +525,7 @@ namespace DisplayMagicianShared
             }
 
 
-        }
-
-
-        /*public static void UpdateActiveProfile()
-        {
-
-            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
-
-            ProfileItem activeProfile = new ProfileItem
-            {
-                Name = "Current Display Profile",
-                Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
-            };
-
-            activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
-            activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
-
-            if (_profilesLoaded && _allProfiles.Count > 0)
-            {
-                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
-                {
-                    if (activeProfile.Paths.SequenceEqual(loadedProfile.Paths))
-                    {
-                        _currentProfile = loadedProfile;
-                        SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The profile {loadedProfile.Name} is currently active (in use now).");
-                        return;
-                    }
-                }
-            }
-            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
-            _currentProfile = activeProfile;
-
-            //IsPossibleRefresh();
-
-        }*/
-
+        }      
 
         public static void UpdateActiveProfile()
         {
