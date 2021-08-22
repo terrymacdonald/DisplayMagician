@@ -13,7 +13,16 @@ using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared
 {
-
+    // This enum sets the video card mode used within DisplayMagician
+    // It effectively controls what video card library is used to store profiles on the computer
+    // We look up the PCI vendor ID for the video cards, and then we look for them in the order from most commonly
+    // sold video card to the least, followed by the generic 'catch-all' windows mode.
+    public enum VIDEO_MODE : Int32
+    {
+        WINDOWS = 0,
+        NVIDIA = 1,
+        AMD = 2,
+    }
 
     public static class ProfileRepository
     {
@@ -26,9 +35,11 @@ namespace DisplayMagicianShared
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;
-        private static AMDLibrary AMDLibrary;
-        private static NVIDIALibrary NVIDIALibrary;
-        //private static bool _isLoading = false;
+        private static AMDLibrary amdLibrary;
+        private static NVIDIALibrary nvidiaLibrary;
+        private static WinLibrary winLibrary;
+        // Make th default video mode Windows
+        public static VIDEO_MODE _videoMode = VIDEO_MODE.WINDOWS;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -43,29 +54,41 @@ namespace DisplayMagicianShared
         #region Class Constructors
         static ProfileRepository()
         {
-
-            // Initialise the the NVIDIA NvAPIWrapper
-            try
+            // Figure out the Video Cards and see what mode we want
+            // Get a list of all the PCI Vendor IDs
+            List<string> videoCardVendors = WinLibrary.GetLibrary().GetCurrentPCIVideoCardVendors();
+            // This sets the order in which the different modes have been chosen.
+            // NVIDIA Video cards are the most common, so go first
+            _videoMode = VIDEO_MODE.WINDOWS;
+            if (!NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
             {
-                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
-                NVIDIALibrary = new NVIDIALibrary();
+                // Initialise the the NVIDIA NvAPI Library
+                try
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
+                    nvidiaLibrary = new NVIDIALibrary();
+                    _videoMode = VIDEO_MODE.NVIDIA;
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NVAPI caused an exception.");
+                }
             }
-            catch (Exception ex)
+            else if (!NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
             {
-                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NVAPI caused an exception.");
+                // Initialise the the AMD ADL Library
+                try
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
+                    amdLibrary = new AMDLibrary();
+                    _videoMode = VIDEO_MODE.AMD;
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising AMD ADL caused an exception.");
+                }
             }
-
-            // Initialise the the AMD ADLWrapper
-            try
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
-                AMDLibrary = new AMDLibrary();
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising AMD ADL caused an exception.");
-            }
-
+               
             try
             {
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
@@ -154,6 +177,18 @@ namespace DisplayMagicianShared
 
 
                 return _allProfiles.Count;
+            }
+        }
+
+        public static VIDEO_MODE VideoMode
+        {
+            get
+            {                
+                return _videoMode;
+            }
+            set
+            {
+                _videoMode = value;
             }
         }
 
@@ -667,12 +702,12 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
 
+                    // Populate the Current Profile now so we have stuff to compare against
                     ProfileItem myCurrentProfile = new NVIDIAProfileItem
                     {
                         Name = "Current Display Profile",
-                        Paths = PathInfo.GetActivePaths().Select(info => new DisplayMagicianShared.Topology.Path(info)).ToArray()
                     };
-
+                    myCurrentProfile.CreateProfileFromCurrentDisplaySettings();
                     _currentProfile = myCurrentProfile;
 
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
@@ -683,14 +718,28 @@ namespace DisplayMagicianShared
                     {
                         if (loadedProfile.Driver.Equals("AMD"))
                         {
+                            // NVIDIA config!
+                            NVIDIAProfileItem nvidiaLoadedProfile = (NVIDIAProfileItem)loadedProfile;
+                            nvidiaLoadedProfile.PerformPostLoadingTasks();
+                            if (ProfileRepository.IsActiveProfile(nvidiaLoadedProfile))
+                                _currentProfile = nvidiaLoadedProfile;
+                        }
+                        else if (loadedProfile.Driver.Equals("AMD"))
+                        {
+                            // AMD config!
                             AMDProfileItem amdLoadedProfile = (AMDProfileItem) loadedProfile;
                             amdLoadedProfile.PerformPostLoadingTasks();
+                            if (ProfileRepository.IsActiveProfile(amdLoadedProfile))
+                                _currentProfile = amdLoadedProfile;
                         }
-                        
-                         
-                        if (ProfileRepository.IsActiveProfile(loadedProfile))
-                            _currentProfile = loadedProfile;
-
+                        else
+                        {
+                            // Windows CCD config!
+                            WinProfileItem winLoadedProfile = (WinProfileItem)loadedProfile;
+                            winLoadedProfile.PerformPostLoadingTasks();
+                            if (ProfileRepository.IsActiveProfile(winLoadedProfile))
+                                _currentProfile = winLoadedProfile;
+                        }                                                
                     }
 
                     // Sort the profiles alphabetically

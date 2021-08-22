@@ -235,35 +235,17 @@ namespace DisplayMagicianShared.AMD
 
         public override void RefreshPossbility()
         {
-            // Check each display in this profile and make sure it's currently available
-            int validDisplayCount = 0;
-
-            //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
-
-            foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
-            {
-                // If this profile has a display that isn't currently available then we need to say it's a no!
-                if (ProfileRepository.ConnectedDisplayIdentifiers.Any(s => profileDisplayIdentifier.Equals(s)))
-                {
-                    SharedLogger.logger.Trace($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is connected now.");
-                    validDisplayCount++;
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is NOT currently connected, so this profile cannot be used.");
-                }
-
-            }
-            if (validDisplayCount == ProfileDisplayIdentifiers.Count)
+            // Check whether this profile is possible
+            if (AMDLibrary.GetLibrary().IsPossibleConfig(_amdDisplayConfig))
             {
 
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The AMD profile {Name} is possible!");
                 _isPossible = true;
 
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is NOT possible!");
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The AMD profile {Name} is NOT possible!");
                 _isPossible = false;
             }
 
@@ -304,11 +286,11 @@ namespace DisplayMagicianShared.AMD
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
-            if ( _displayConfig.W.Count > 0)
+            if ( _amdDisplayConfig.AdapterConfigs.Count > 0)
             {
-                foreach ( var adapter in _displayConfig.AdapterConfigs)
+                foreach ( var adapter in _amdDisplayConfig.AdapterConfigs)
                 {
-                    foreach (var display in adapter.SLSMapIndex)
+                    foreach (var display in adapter)
                     {
                         foreach (var mode in display.DisplayModes)
                         {
@@ -515,26 +497,6 @@ namespace DisplayMagicianShared.AMD
     // Allows us to use 'Contains'
     class AMDProfileComparer : IEqualityComparer<AMDProfileItem>
     {
-        // Products are equal if their names and product numbers are equal.
-        /*public bool Equals(AMDProfileItem x, AMDProfileItem y)
-        {
-
-            //Check whether the compared objects reference the same data.
-            if (Object.ReferenceEquals(x, y)) return true;
-
-            //Check whether any of the compared objects is null.
-            if (x is null || y is null)
-                return false;
-
-            // Check whether the profiles' properties are equal
-            // We need to exclude the name as the name is solely for saving to disk
-            // and displaying to the user. 
-            // Two profiles are equal only when they have the same viewport data
-            if (x.Paths.SequenceEqual(y.Paths))
-                return true;
-            else
-                return false;
-        }*/
 
         public bool Equals(AMDProfileItem x, AMDProfileItem y)
         {
@@ -585,21 +547,6 @@ namespace DisplayMagicianShared.AMD
             return true;
         }
 
-        // If Equals() returns true for a pair of objects
-        // then GetHashCode() must return the same value for these objects.
-        /*public int GetHashCode(AMDProfileItem profile)
-        {
-
-            // Check whether the object is null
-            if (profile is null) return 0;
-
-            // Get hash code for the Viewports field if it is not null.
-            int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
-
-            //Calculate the hash code for the product.
-            return hashPaths;
-
-        }*/
         // Modified the GetHashCode to compare the displayidentifier
         public int GetHashCode(AMDProfileItem profile)
         {

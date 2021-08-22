@@ -68,10 +68,6 @@ namespace DisplayMagicianShared.NVIDIA
 
         public override string Name { get; set; }
 
-        //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
-
-        //public NVIDIALibrary.NVIDIAProfile ProfileData { get; set; } = new NVIDIALibrary.NVIDIAProfile();
-
         [JsonRequired]
         public NVIDIA_DISPLAY_CONFIG NVIDIADisplayConfig
         {
@@ -225,35 +221,17 @@ namespace DisplayMagicianShared.NVIDIA
 
         public override void RefreshPossbility()
         {
-            // Check each display in this profile and make sure it's currently available
-            int validDisplayCount = 0;
-
-            //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
-
-            foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
-            {
-                // If this profile has a display that isn't currently available then we need to say it's a no!
-                if (ProfileRepository.ConnectedDisplayIdentifiers.Any(s => profileDisplayIdentifier.Equals(s)))
-                {
-                    SharedLogger.logger.Trace($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is connected now.");
-                    validDisplayCount++;
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is NOT currently connected, so this profile cannot be used.");
-                }
-
-            }
-            if (validDisplayCount == ProfileDisplayIdentifiers.Count)
+            // Check whether this profile is possible
+            if (NVIDIALibrary.GetLibrary().IsPossibleConfig(_nvidiaDisplayConfig))
             {
 
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is possible!");
                 _isPossible = true;
 
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is NOT possible!");
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
                 _isPossible = false;
             }
 
@@ -294,7 +272,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
-            if (_displayConfig. .Count > 0)
+            if (_displayConfig.Count > 0)
             {
                 foreach (var adapter in _displayConfig.AdapterConfigs)
                 {
@@ -390,7 +368,12 @@ namespace DisplayMagicianShared.NVIDIA
             if (this.GetType() != other.GetType())
                 return false;
 
-            if (Paths.Length != other.Paths.Length)
+            // If NVIDIA Display Config is different then return false.
+            if (!NVIDIADisplayConfig.Equals(other.NVIDIADisplayConfig))
+                return false;
+
+            // If Windows Display Config is different then return false.
+            if (!WindowsDisplayConfig.Equals(other.WindowsDisplayConfig))
                 return false;
 
             // Check if the profile identifiers are not the same, then return false
