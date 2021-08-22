@@ -132,7 +132,7 @@ namespace DisplayMagicianShared.NVIDIA
             }
         }
 
-        [JsonRequired]
+        /*[JsonRequired]
         public override List<ScreenPosition> Screens
         {
             get
@@ -169,6 +169,26 @@ namespace DisplayMagicianShared.NVIDIA
             }
 
         }
+
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public override Bitmap ProfileTightestBitmap
+        {
+            get
+            {
+                if (_profileShortcutBitmap != null)
+                    return _profileShortcutBitmap;
+                else
+                {
+                    _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
+                    return _profileShortcutBitmap;
+                }
+            }
+            set
+            {
+                _profileShortcutBitmap = value;
+            }
+
+        }*/
 
         #endregion
 

@@ -111,7 +111,7 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
-        [JsonRequired]
+        /*[JsonRequired]
         public override List<ScreenPosition> Screens
         {
             get
@@ -135,8 +135,8 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
-                /*if (!ProfileRepository.ProfilesLoaded)
-                    return null;*/
+                *//*if (!ProfileRepository.ProfilesLoaded)
+                    return null;*//*
 
                 if (_profileBitmap != null)
                     return _profileBitmap;
@@ -154,9 +154,8 @@ namespace DisplayMagicianShared.AMD
         }
 
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-
-        /*public override Bitmap ProfileTightestBitmap
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public override Bitmap ProfileTightestBitmap
         {
             get
             {

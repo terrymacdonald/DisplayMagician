@@ -96,7 +96,7 @@ namespace DisplayMagicianShared.Windows
             }
         }
 
-        [JsonRequired]
+        /*[JsonRequired]
         public override List<ScreenPosition> Screens
         {
             get
@@ -120,8 +120,8 @@ namespace DisplayMagicianShared.Windows
         {
             get
             {
-                /*if (!ProfileRepository.ProfilesLoaded)
-                    return null;*/
+                *//*if (!ProfileRepository.ProfilesLoaded)
+                    return null;*//*
 
                 if (_profileBitmap != null)
                     return _profileBitmap;
@@ -137,7 +137,7 @@ namespace DisplayMagicianShared.Windows
             }
 
         }
-
+*/
 
         /*[JsonConverter(typeof(CustomBitmapConverter))]
         public override Bitmap ProfileTightestBitmap

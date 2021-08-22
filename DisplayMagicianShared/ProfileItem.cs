@@ -58,7 +58,7 @@ namespace DisplayMagicianShared
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
-        private List<ScreenPosition> _screens;
+        private List<ScreenPosition> _screens = new List<ScreenPosition>();
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
@@ -196,9 +196,6 @@ namespace DisplayMagicianShared
 
         public virtual string Name { get; set; }
 
-        //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
-
-        //public virtual ProfileData { get; set; }
         
         [JsonIgnore]
         public virtual ProfileIcon ProfileIcon
@@ -220,7 +217,7 @@ namespace DisplayMagicianShared
 
         }
 
-        [JsonRequired]
+        [JsonIgnore]
         public virtual List<ScreenPosition> Screens
         {
             get
