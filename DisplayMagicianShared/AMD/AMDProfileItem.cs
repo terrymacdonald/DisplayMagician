@@ -63,7 +63,7 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
-        public override string VideoMode { get; } = "AMD";
+        public override VIDEO_MODE VideoMode { get; } = VIDEO_MODE.AMD;
 
         public override string Name { get; set; }
 
@@ -359,8 +359,8 @@ namespace DisplayMagicianShared.AMD
                     /*if (_amdDisplayConfig)
                     {
                         screen.IsSpanned = true;
-                        screen.Colour = Color.FromArgb(118, 185, 0); // represents NVIDIA Green
-                        screen.SpannedName = "NVIDIA Surround/Mosaic";
+                        screen.Colour = Color.FromArgb(221,0,49); // represents AMD Red
+                        screen.SpannedName = "AMD Eyefinity";
                     }
                     else
                     {

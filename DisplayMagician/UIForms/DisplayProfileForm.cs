@@ -260,7 +260,7 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown.Text = _selectedProfile.Name;
 
             // And show the logo for the driver
-            if (_selectedProfile.VideoMode == "AMD")
+            if (_selectedProfile.VideoMode == VIDEO_MODE.AMD)
             {
                 pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.amdblack, Properties.Resources.amdwhite);
             }

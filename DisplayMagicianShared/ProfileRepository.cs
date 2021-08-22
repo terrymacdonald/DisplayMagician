@@ -39,7 +39,7 @@ namespace DisplayMagicianShared
         private static NVIDIALibrary nvidiaLibrary;
         private static WinLibrary winLibrary;
         // Make th default video mode Windows
-        public static VIDEO_MODE _videoMode = VIDEO_MODE.WINDOWS;
+        public static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -59,29 +59,29 @@ namespace DisplayMagicianShared
             List<string> videoCardVendors = WinLibrary.GetLibrary().GetCurrentPCIVideoCardVendors();
             // This sets the order in which the different modes have been chosen.
             // NVIDIA Video cards are the most common, so go first
-            _videoMode = VIDEO_MODE.WINDOWS;
-            if (!NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
+            _currentVideoMode = VIDEO_MODE.WINDOWS;
+            if (NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
             {
                 // Initialise the the NVIDIA NvAPI Library
                 try
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
                     nvidiaLibrary = new NVIDIALibrary();
-                    _videoMode = VIDEO_MODE.NVIDIA;
+                    _currentVideoMode = VIDEO_MODE.NVIDIA;
                 }
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NVAPI caused an exception.");
                 }
             }
-            else if (!NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
+            else if (AMDLibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
             {
                 // Initialise the the AMD ADL Library
                 try
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
                     amdLibrary = new AMDLibrary();
-                    _videoMode = VIDEO_MODE.AMD;
+                    _currentVideoMode = VIDEO_MODE.AMD;
                 }
                 catch (Exception ex)
                 {
@@ -180,15 +180,15 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static VIDEO_MODE VideoMode
+        public static VIDEO_MODE CurrentVideoMode
         {
             get
             {                
-                return _videoMode;
+                return _currentVideoMode;
             }
             set
             {
-                _videoMode = value;
+                _currentVideoMode = value;
             }
         }
 
@@ -571,7 +571,7 @@ namespace DisplayMagicianShared
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
-            if (_videoMode == VIDEO_MODE.NVIDIA)
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
                 NVIDIAProfileItem nvidiaProfile = new NVIDIAProfileItem
@@ -586,7 +586,7 @@ namespace DisplayMagicianShared
                 nvidiaProfile.CreateProfileFromCurrentDisplaySettings();
                 activeProfile = nvidiaProfile;
             }
-            else if (_videoMode == VIDEO_MODE.AMD)
+            else if (_currentVideoMode == VIDEO_MODE.AMD)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
                 AMDProfileItem amdProfile = new AMDProfileItem
@@ -712,7 +712,7 @@ namespace DisplayMagicianShared
                     // and check if the current profile is used
                     foreach (ProfileItem loadedProfile in _allProfiles)
                     {
-                        if (loadedProfile is NVIDIAProfileItem)
+                        if (loadedProfile.VideoMode == VIDEO_MODE.NVIDIA)
                         {
                             // NVIDIA config!
                             SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is a NVIDIA Profile");

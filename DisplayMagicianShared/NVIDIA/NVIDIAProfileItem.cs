@@ -64,7 +64,7 @@ namespace DisplayMagicianShared.NVIDIA
             }
         }
 
-        public override string VideoMode { get; } = "NVIDIA";
+        public override VIDEO_MODE VideoMode { get; } = VIDEO_MODE.NVIDIA;
 
         public override string Name { get; set; }
 

@@ -181,7 +181,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public virtual  string VideoMode { get; } = "Unknown";
+        public virtual VIDEO_MODE VideoMode { get; } = VIDEO_MODE.WINDOWS;
 
         public Keys Hotkey {
             get 
@@ -325,16 +325,6 @@ namespace DisplayMagicianShared
         public virtual bool IsValid()
         {
             return false;
-            /*
-            if (Paths != null &&
-                ProfileIcon is ProfileIcon &&
-                System.IO.File.Exists(SavedProfileIconCacheFilename) &&
-                ProfileBitmap is Bitmap &&
-                ProfileTightestBitmap is Bitmap &&
-                ProfileDisplayIdentifiers.Count > 0)
-                return true;
-            else 
-                return false;*/
         }
 
         

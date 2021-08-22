@@ -6,48 +6,9 @@ using System.Windows.Forms;
 using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.Text.RegularExpressions;
-using IWshRuntimeLibrary;
-//using ATI.ADL;
-//using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagicianShared.Windows
-{
-
-    /*// Struct to be used as the AMD Profile
-    [JsonObject(MemberSerialization.Fields)]
-    public struct AMDProfile
-    {
-        public List<AMDAdapter> Adapters;
-    }
-
-    // Struct to store the Display
-    [JsonObject(MemberSerialization.Fields)]
-    public struct AMDAdapter
-    {
-        public int AdapterIndex;
-        public string AdapterName;
-        public string DisplayName;
-        [JsonProperty]
-        public ADLAdapterInfoX2 AdapterInfoX2;
-        public List<AMDDisplay> Displays;
-    }
-
-    // Struct to store the Display
-    [JsonObject(MemberSerialization.Fields)]
-    public struct AMDDisplay
-    {
-        public string DisplayName;
-        public string DisplayConnector;
-        public string UDID;
-        [JsonRequired]
-        public List<ADLMode> DisplayModes;
-        public bool HDRSupported;
-        public bool HDREnabled;
-        public bool IsEyefinity;
-
-    }*/
+{    
 
     public class WinProfileItem : ProfileItem, IComparable
     {
@@ -56,7 +17,7 @@ namespace DisplayMagicianShared.Windows
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
         private List<ScreenPosition> _screens;
-        private WINDOWS_DISPLAY_CONFIG _displayConfig = new WINDOWS_DISPLAY_CONFIG();
+        private WINDOWS_DISPLAY_CONFIG _windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
@@ -100,22 +61,20 @@ namespace DisplayMagicianShared.Windows
             }
         }
 
-        public override string VideoMode { get; } = "AMD";
+        public override VIDEO_MODE VideoMode { get; } = VIDEO_MODE.WINDOWS;
 
         public override string Name { get; set; }
 
-        //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
-
         [JsonRequired]
-        public WINDOWS_DISPLAY_CONFIG DisplayConfig
+        public WINDOWS_DISPLAY_CONFIG WindowsDisplayConfig
         {
             get
             {
-                return _displayConfig;
+                return _windowsDisplayConfig;
             }
             set
             {
-                _displayConfig = value;
+                _windowsDisplayConfig = value;
             }
         }
             
@@ -207,16 +166,14 @@ namespace DisplayMagicianShared.Windows
         public override bool IsValid()
         {
 
-            if (ProfileIcon is ProfileIcon &&
+            if (
+                ProfileIcon is ProfileIcon &&
                 System.IO.File.Exists(SavedProfileIconCacheFilename) &&
                 ProfileBitmap is Bitmap &&
                 ProfileTightestBitmap is Bitmap &&
                 ProfileDisplayIdentifiers.Count > 0)
             {
-                if (DisplayConfig.displayConfigModes.Length > 0 && DisplayConfig.displayConfigPaths.Length > 0)
-                    return true;
-                else
-                    return false;
+               return true;               
             }
             else
                 return false;
@@ -234,13 +191,13 @@ namespace DisplayMagicianShared.Windows
 
             // Copy all our profile data over to the other profile
             profile.Name = Name;
-            profile.DisplayConfig = DisplayConfig;
+            profile.WindowsDisplayConfig = WindowsDisplayConfig;
             profile.ProfileIcon = ProfileIcon;
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
-            //profile.Screens = Screens;
+            profile.Screens = Screens;
             return true;
         }
 
@@ -258,35 +215,17 @@ namespace DisplayMagicianShared.Windows
 
         public override void RefreshPossbility()
         {
-            // Check each display in this profile and make sure it's currently available
-            int validDisplayCount = 0;
-
-            //validDisplayCount = (from connectedDisplay in ProfileRepository.ConnectedDisplayIdentifiers select connectedDisplay == profileDisplayIdentifier).Count();
-
-            foreach (string profileDisplayIdentifier in ProfileDisplayIdentifiers)
-            {
-                // If this profile has a display that isn't currently available then we need to say it's a no!
-                if (ProfileRepository.ConnectedDisplayIdentifiers.Any(s => profileDisplayIdentifier.Equals(s)))
-                {
-                    SharedLogger.logger.Trace($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is connected now.");
-                    validDisplayCount++;
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"ProfileItem/RefreshPossbility: We found the display in the profile {Name} with profileDisplayIdentifier {profileDisplayIdentifier} is NOT currently connected, so this profile cannot be used.");
-                }
-
-            }
-            if (validDisplayCount == ProfileDisplayIdentifiers.Count)
+            // Check whether this profile is possible
+            if (WinLibrary.GetLibrary().IsPossibleConfig(_windowsDisplayConfig))
             {
 
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is possible!");
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
                 _isPossible = true;
 
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The profile {Name} is NOT possible!");
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
                 _isPossible = false;
             }
 
@@ -299,7 +238,7 @@ namespace DisplayMagicianShared.Windows
             if (winLibrary.IsInstalled)
             {
                 // Create the profile data from the current config
-                _displayConfig = winLibrary.GetActiveConfig();
+                _windowsDisplayConfig = winLibrary.GetActiveConfig();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
@@ -322,38 +261,58 @@ namespace DisplayMagicianShared.Windows
 
         public override List<ScreenPosition> GetScreenPositions()
         {
-
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
-            if ( _displayConfig.displayConfigModes.Length > 0 && _displayConfig.displayConfigPaths.Length > 0)
+            int pathCount = _windowsDisplayConfig.DisplayConfigPaths.Length;
+            // First of all we need to figure out how many display paths we have.
+            if (pathCount < 1)
             {
-                foreach ( var adapter in _displayConfig.AdapterConfigs)
+                // Return an empty screen if we have no Display Config Paths to use!
+                return _screens;
+            }
+
+            foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
+            {
+                // For each path we go through and get the relevant info we need.
+                if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
                 {
-                    foreach (var display in adapter.Displays)
+                    // Set some basics about the screen
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "WINDOWS";
+
+                    UInt32 targetId = path.TargetInfo.Id;
+
+                    foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
-                        foreach (var mode in display.DisplayModes)
+                        // Find the matching Display Config Source Mode
+                        if (displayMode.InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == targetId)
                         {
-                            ScreenPosition screen = new ScreenPosition();
-                            screen.Library = "AMD";
-                            screen.Name = display.DisplayName;
-                            screen.DisplayConnector = display.DisplayConnector; 
-                            screen.ScreenX = mode.XPos;
-                            screen.ScreenY = mode.YPos;
-                            screen.ScreenWidth = mode.XRes;
-                            screen.ScreenHeight = mode.YRes;
+                            screen.Name = targetId.ToString();
+                            //screen.DisplayConnector = displayMode.DisplayConnector;
+                            screen.ScreenX = displayMode.SourceMode.Position.X;
+                            screen.ScreenY = displayMode.SourceMode.Position.Y;
+                            screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                            screen.ScreenHeight = (int)displayMode.SourceMode.Height;
 
                             // If we're at the 0,0 coordinate then we're the primary monitor
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
                             {
                                 screen.IsPrimary = true;
                             }
+                        }
+                    }
 
+                    foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                    {
+                        // Find the matching HDR information
+                        if (hdrInfo.Id == targetId)
+                        {
                             // HDR information
-                            if (display.HDRSupported)
+                            if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
                             {
                                 screen.HDRSupported = true;
-                                if (display.HDREnabled)
+                                if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
                                 {
                                     screen.HDREnabled = true;
                                 }
@@ -361,40 +320,25 @@ namespace DisplayMagicianShared.Windows
                                 {
                                     screen.HDREnabled = false;
                                 }
-                                
+
                             }
                             else
                             {
                                 screen.HDRSupported = false;
                                 screen.HDREnabled = false;
                             }
-                            
-                            // Spanned screen options
-                            if (display.IsEyefinity)
-                            {
-                                screen.IsSpanned = true;
-                                screen.Colour = Color.FromArgb(200, 237, 28, 36); // represents AMD Red
-                                screen.SpannedName = "AMD Eyefinity";
-                            }
-                            else
-                            {                                
-                                screen.IsSpanned = false;
-                                screen.Colour = Color.FromArgb(255, 195, 195, 195); // represents normal screen colour
-                            }
 
-
-                            // Figure out features
-
-                            //ATI.ADL.ADL.ConvertDisplayModeFlags(mode.ModeValue);
-
-                            //screen.Features = mode.ModeValue;
-
-                            _screens.Add(screen);
                         }
                     }
+
+                    // No spanning in a windows ccd system
+                    screen.IsSpanned = false;
+                    screen.Colour = Color.FromArgb(195, 195, 195); // represents normal screen colour
+
+
+                    _screens.Add(screen);
                 }
             }
-            
 
             return _screens;
         }
@@ -422,211 +366,27 @@ namespace DisplayMagicianShared.Windows
             if (this.GetType() != other.GetType())
                 return false;
 
-            // If the DisplayConfig's equal each other
-            if (DisplayConfig.Equals(other.DisplayConfig))
+            // If Windows Display Config is different then return false.
+            if (!WindowsDisplayConfig.Equals(other.WindowsDisplayConfig))
                 return false;
 
-            // Check if the profile identifiers are not the same, then return false
-            int foundDICount = 0;
-            foreach (string profileDI in ProfileDisplayIdentifiers)
-            {
-
-                if (other.ProfileDisplayIdentifiers.Contains(profileDI))
-                {
-                    foundDICount++;
-                    continue;
-                }
-
-            }
-
-            if (foundDICount != other.ProfileDisplayIdentifiers.Count)
+            // If Display Identifiers are different then return false.
+            if (!ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
                 return false;
 
-            foundDICount = 0;
-            foreach (string profileDI in other.ProfileDisplayIdentifiers)
-            {
-
-                if (ProfileDisplayIdentifiers.Contains(profileDI))
-                {
-                    foundDICount++;
-                    continue;
-                }
-
-            }
-
-            if (foundDICount != ProfileDisplayIdentifiers.Count)
-                return false;
-
-            // Check whether the profiles' properties are equal
-            // We need to exclude the name as the name is solely for saving to disk
-            // and displaying to the user. 
-            // Two profiles are equal only when they have the same viewport data
-            // The data may be in different orders each run, so we need to compare them one by one
-
-            int foundPathsCount = 0;
-            int foundOtherPathsCount = 0;
-
-            // TODO: Make this work in AMD land
-            /*foreach (Topology.Path profilePath in Paths)
-            {
-                if (other.Paths.Contains(profilePath))
-                {
-                    foundPathsCount++;
-                    continue;
-                }
-                
-            }
-            foreach (Topology.Path otherPath in other.Paths)
-            {
-                if (Paths.Contains(otherPath))
-                {
-                    foundOtherPathsCount++;
-                    continue;
-                }
-            }*/
-
-
-            if (foundPathsCount == foundOtherPathsCount)
-                return true;
-            else
-                return false;
+            // Otherwise if all the tests work, then we're good!
+            return true;
         }
 
         // If Equals() returns true for this object compared to  another
         // then GetHashCode() must return the same value for these objects.
-        /*public override int GetHashCode()
-        {
-
-            // Get hash code for the Viewports field if it is not null.
-            int hashPaths = Paths == null ? 0 : Paths.GetHashCode();
-
-            //Calculate the hash code for the product.
-            return hashPaths;
-
-        }*/
         public override int GetHashCode()
         {
-
-            // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
-            int hashIds = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
-
-            // Get ProfileData too
-            int hashProfileData = DisplayConfig.GetHashCode();
-
             // Calculate the hash code for the product.
-            return (hashIds, hashProfileData).GetHashCode();
+            return (WindowsDisplayConfig, ProfileDisplayIdentifiers).GetHashCode();
 
-        }
-
-
-        public override string ToString()
-        {
-            return (Name ?? Language.UN_TITLED_PROFILE);
         }
 
     }
-
-    // Custom Equality comparer for the Profile class
-    // Allows us to use 'Contains'
-    class AMDProfileComparer : IEqualityComparer<WinProfileItem>
-    {
-        // Products are equal if their names and product numbers are equal.
-        /*public bool Equals(AMDProfileItem x, AMDProfileItem y)
-        {
-
-            //Check whether the compared objects reference the same data.
-            if (Object.ReferenceEquals(x, y)) return true;
-
-            //Check whether any of the compared objects is null.
-            if (x is null || y is null)
-                return false;
-
-            // Check whether the profiles' properties are equal
-            // We need to exclude the name as the name is solely for saving to disk
-            // and displaying to the user. 
-            // Two profiles are equal only when they have the same viewport data
-            if (x.Paths.SequenceEqual(y.Paths))
-                return true;
-            else
-                return false;
-        }*/
-
-        public bool Equals(WinProfileItem x, WinProfileItem y)
-        {
-
-            //Check whether the compared objects reference the same data.
-            if (Object.ReferenceEquals(x, y)) return true;
-
-            //Check whether any of the compared objects is null.
-            if (x is null || y is null)
-                return false;
-            
-            // Check if the profile identifiers are not the same, then return false
-            int foundDICount = 0;
-            foreach (string profileDI in x.ProfileDisplayIdentifiers)
-            {
-                if (y.ProfileDisplayIdentifiers.Contains(profileDI))
-                {
-                    foundDICount++;
-                    continue;
-                }
-
-            }
-            if (foundDICount != x.ProfileDisplayIdentifiers.Count)
-                return false;
-
-            foundDICount = 0;
-            foreach (string profileDI in y.ProfileDisplayIdentifiers)
-            {
-                if (x.ProfileDisplayIdentifiers.Contains(profileDI))
-                {
-                    foundDICount++;
-                    continue;
-                }
-
-            }
-            if (foundDICount != y.ProfileDisplayIdentifiers.Count)
-                return false;
-
-
-            // Now we need to check the Display Configs themselves
-            if (x.DisplayConfig.Equals(y.DisplayConfig))
-                return false;
-
-            return true;
-        }
-
-        // If Equals() returns true for a pair of objects
-        // then GetHashCode() must return the same value for these objects.
-        /*public int GetHashCode(AMDProfileItem profile)
-        {
-
-            // Check whether the object is null
-            if (profile is null) return 0;
-
-            // Get hash code for the Viewports field if it is not null.
-            int hashPaths = profile.Paths == null ? 0 : profile.Paths.GetHashCode();
-
-            //Calculate the hash code for the product.
-            return hashPaths;
-
-        }*/
-        // Modified the GetHashCode to compare the displayidentifier
-        public int GetHashCode(WinProfileItem profile)
-        {
-
-            // Check whether the object is null
-            if (profile is null) return 0;
-
-            // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
-            int hashIds = profile.ProfileDisplayIdentifiers == null ? 0 : profile.ProfileDisplayIdentifiers.GetHashCode();
-
-            // Get hash code for the Paths
-            int hashProfileData = profile.DisplayConfig.GetHashCode();
-
-            //Calculate the hash code for the product.
-            return (hashIds, hashProfileData).GetHashCode();
-
-        }
-    }
+    
 }
