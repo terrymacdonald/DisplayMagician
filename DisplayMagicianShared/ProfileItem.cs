@@ -181,7 +181,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public virtual  string Driver { get; } = "Unknown";
+        public virtual  string VideoMode { get; } = "Unknown";
 
         public Keys Hotkey {
             get 

@@ -5,9 +5,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
-using System.Windows.Forms;
-using DisplayMagicianShared.Topology;
-//using static DisplayMagicianShared.ProfileItem;
 
 namespace DisplayMagicianShared
 {

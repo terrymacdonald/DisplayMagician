@@ -100,7 +100,7 @@ namespace DisplayMagicianShared.Windows
             }
         }
 
-        public override string Driver { get; } = "AMD";
+        public override string VideoMode { get; } = "AMD";
 
         public override string Name { get; set; }
 

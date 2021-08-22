@@ -175,7 +175,6 @@
       <DependentUpon>StartProgramControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Validators.cs" />
-    <Compile Include="DisplayRepresentation.cs" />
     <Compile Include="InterProcess\IPCClient.cs" />
     <Compile Include="InterProcess\InstanceStatus.cs" />
     <Compile Include="InterProcess\IService.cs" />
@@ -314,9 +313,6 @@
     </PackageReference>
     <PackageReference Include="WinCopies.IconExtractor">
       <Version>1.0.3-rc</Version>
-    </PackageReference>
-    <PackageReference Include="WindowsDisplayAPI">
-      <Version>1.3.0.13</Version>
     </PackageReference>
     <PackageReference Include="WinFormAnimation">
       <Version>1.6.0.4</Version>

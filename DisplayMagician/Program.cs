@@ -594,7 +594,7 @@ namespace DisplayMagician {
                 ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Changing to '{profile.Name}' Profile", "Press ESC to cancel", Color.Orange, true);
 
                 // If this is an AMD profile, then we need to set it up as such
-                if (profile.Driver.Equals("AMD"))
+                if (profile.VideoMode.Equals("AMD"))
                 {                   
 
                     // Now lets prepare a task to apply the profile in a separate thread
