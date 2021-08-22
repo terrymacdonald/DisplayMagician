@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
 using IWshRuntimeLibrary;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared.NVIDIA
 {
@@ -19,7 +20,8 @@ namespace DisplayMagicianShared.NVIDIA
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
         private List<ScreenPosition> _screens;
-        private NVIDIA_DISPLAY_CONFIG _displayConfig = new NVIDIA_DISPLAY_CONFIG();
+        private NVIDIA_DISPLAY_CONFIG _nvidiaDisplayConfig = new NVIDIA_DISPLAY_CONFIG();
+        private WINDOWS_DISPLAY_CONFIG _windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
@@ -71,15 +73,28 @@ namespace DisplayMagicianShared.NVIDIA
         //public NVIDIALibrary.NVIDIAProfile ProfileData { get; set; } = new NVIDIALibrary.NVIDIAProfile();
 
         [JsonRequired]
-        public NVIDIA_DISPLAY_CONFIG DisplayConfig
+        public NVIDIA_DISPLAY_CONFIG NVIDIADisplayConfig
         {
             get
             {
-                return _displayConfig;
+                return _nvidiaDisplayConfig;
             }
             set
             {
-                _displayConfig = value;
+                _nvidiaDisplayConfig = value;
+            }
+        }
+
+        [JsonRequired]
+        public WINDOWS_DISPLAY_CONFIG WindowsDisplayConfig
+        {
+            get
+            {
+                return _windowsDisplayConfig;
+            }
+            set
+            {
+                _windowsDisplayConfig = value;
             }
         }
 
@@ -121,7 +136,7 @@ namespace DisplayMagicianShared.NVIDIA
             }
         }
 
-        [JsonIgnore]
+        [JsonRequired]
         public override List<ScreenPosition> Screens
         {
             get
@@ -251,7 +266,8 @@ namespace DisplayMagicianShared.NVIDIA
             if (nvidiaLibrary.IsInstalled)
             {
                 // Create the profile data from the current config
-                _displayConfig = nvidiaLibrary.GetActiveConfig();
+                _nvidiaDisplayConfig = nvidiaLibrary.GetActiveConfig();
+                _windowsDisplayConfig= WinLibrary.GetLibrary().GetActiveConfig();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
@@ -278,7 +294,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
-            if (_displayConfig.AdapterConfigs.Count > 0)
+            if (_displayConfig. .Count > 0)
             {
                 foreach (var adapter in _displayConfig.AdapterConfigs)
                 {

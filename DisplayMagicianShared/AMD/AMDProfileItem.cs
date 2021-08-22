@@ -6,48 +6,10 @@ using System.Windows.Forms;
 using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.Text.RegularExpressions;
-using IWshRuntimeLibrary;
-//using ATI.ADL;
-//using WK.Libraries.HotkeyListenerNS;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared.AMD
 {
-
-    /*// Struct to be used as the AMD Profile
-    [JsonObject(MemberSerialization.Fields)]
-    public struct AMDProfile
-    {
-        public List<AMDAdapter> Adapters;
-    }
-
-    // Struct to store the Display
-    [JsonObject(MemberSerialization.Fields)]
-    public struct AMDAdapter
-    {
-        public int AdapterIndex;
-        public string AdapterName;
-        public string DisplayName;
-        [JsonProperty]
-        public ADLAdapterInfoX2 AdapterInfoX2;
-        public List<AMDDisplay> Displays;
-    }
-
-    // Struct to store the Display
-    [JsonObject(MemberSerialization.Fields)]
-    public struct AMDDisplay
-    {
-        public string DisplayName;
-        public string DisplayConnector;
-        public string UDID;
-        [JsonRequired]
-        public List<ADLMode> DisplayModes;
-        public bool HDRSupported;
-        public bool HDREnabled;
-        public bool IsEyefinity;
-
-    }*/
 
     public class AMDProfileItem : ProfileItem, IComparable
     {
@@ -56,7 +18,8 @@ namespace DisplayMagicianShared.AMD
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
         private List<ScreenPosition> _screens;
-        private AMD_DISPLAY_CONFIG _displayConfig = new AMD_DISPLAY_CONFIG();
+        private AMD_DISPLAY_CONFIG _amdDisplayConfig = new AMD_DISPLAY_CONFIG();
+        private WINDOWS_DISPLAY_CONFIG _windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
@@ -107,18 +70,31 @@ namespace DisplayMagicianShared.AMD
         //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
         [JsonRequired]
-        public AMD_DISPLAY_CONFIG DisplayConfig
+        public AMD_DISPLAY_CONFIG AMDDisplayConfig
         {
             get
             {
-                return _displayConfig;
+                return _amdDisplayConfig;
             }
             set
             {
-                _displayConfig = value;
+                _amdDisplayConfig = value;
             }
         }
-            
+
+        [JsonRequired]
+        public WINDOWS_DISPLAY_CONFIG WindowsDisplayConfig
+        {
+            get
+            {
+                return _windowsDisplayConfig;
+            }
+            set
+            {
+                _windowsDisplayConfig = value;
+            }
+        }
+
 
         public override List<string> ProfileDisplayIdentifiers
         {
@@ -137,7 +113,7 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
-        [JsonIgnore]
+        [JsonRequired]
         public override List<ScreenPosition> Screens
         {
             get
@@ -213,7 +189,7 @@ namespace DisplayMagicianShared.AMD
                 ProfileTightestBitmap is Bitmap &&
                 ProfileDisplayIdentifiers.Count > 0)
             {
-                if (DisplayConfig.AdapterConfigs.Count > 0)
+                if (AMDDisplayConfig.AdapterConfigs.Count > 0)
                     return true;
                 else
                     return false;
@@ -234,7 +210,8 @@ namespace DisplayMagicianShared.AMD
 
             // Copy all our profile data over to the other profile
             profile.Name = Name;
-            profile.DisplayConfig = DisplayConfig;
+            profile.AMDDisplayConfig = AMDDisplayConfig;
+            profile.WindowsDisplayConfig = WindowsDisplayConfig;
             profile.ProfileIcon = ProfileIcon;
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
             profile.ProfileBitmap = ProfileBitmap;
@@ -299,7 +276,8 @@ namespace DisplayMagicianShared.AMD
             if (amdLibrary.IsInstalled)
             {
                 // Create the profile data from the current config
-                _displayConfig = amdLibrary.GetActiveConfig();
+                _amdDisplayConfig = amdLibrary.GetActiveConfig();
+                _windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
@@ -326,11 +304,11 @@ namespace DisplayMagicianShared.AMD
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
-            if ( _displayConfig.AdapterConfigs.Count > 0)
+            if ( _displayConfig.W.Count > 0)
             {
                 foreach ( var adapter in _displayConfig.AdapterConfigs)
                 {
-                    foreach (var display in adapter.Displays)
+                    foreach (var display in adapter.SLSMapIndex)
                     {
                         foreach (var mode in display.DisplayModes)
                         {
@@ -422,8 +400,12 @@ namespace DisplayMagicianShared.AMD
             if (this.GetType() != other.GetType())
                 return false;
 
-            // If the DisplayConfig's equal each other
-            if (DisplayConfig.Equals(other.DisplayConfig))
+            // If the AMDDisplayConfig's do not equal each other
+            if (!AMDDisplayConfig.Equals(other.AMDDisplayConfig))
+                return false;
+
+            // If the WindowsDisplayConfig's equal each other
+            if (!WindowsDisplayConfig.Equals(other.WindowsDisplayConfig))
                 return false;
 
             // Check if the profile identifiers are not the same, then return false
@@ -510,11 +492,14 @@ namespace DisplayMagicianShared.AMD
             // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
             int hashIds = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
 
-            // Get ProfileData too
-            int hashProfileData = DisplayConfig.GetHashCode();
+            // Get AMD Profile Data too
+            int hashProfileAMDData = AMDDisplayConfig.GetHashCode();
+
+            // Get AMD Profile Data too
+            int hashProfileWindowsData = WindowsDisplayConfig.GetHashCode();
 
             // Calculate the hash code for the product.
-            return (hashIds, hashProfileData).GetHashCode();
+            return (hashIds, hashProfileAMDData, hashProfileWindowsData).GetHashCode();
 
         }
 
@@ -589,8 +574,12 @@ namespace DisplayMagicianShared.AMD
                 return false;
 
 
-            // Now we need to check the Display Configs themselves
-            if (x.DisplayConfig.Equals(y.DisplayConfig))
+            // Now we need to check the AMD Display Configs themselves
+            if (!x.AMDDisplayConfig.Equals(y.AMDDisplayConfig))
+                return false;
+
+            // Now we need to check the AMD Display Configs themselves
+            if (!x.WindowsDisplayConfig.Equals(y.WindowsDisplayConfig))
                 return false;
 
             return true;
@@ -621,11 +610,14 @@ namespace DisplayMagicianShared.AMD
             // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
             int hashIds = profile.ProfileDisplayIdentifiers == null ? 0 : profile.ProfileDisplayIdentifiers.GetHashCode();
 
-            // Get hash code for the Paths
-            int hashProfileData = profile.DisplayConfig.GetHashCode();
+            // Get hash code for the AMD Display Config
+            int hashProfileAMDData = profile.AMDDisplayConfig.GetHashCode();
+
+            // Get hash code for the Windows Display Config
+            int hashProfileWinData = profile.WindowsDisplayConfig.GetHashCode();
 
             //Calculate the hash code for the product.
-            return (hashIds, hashProfileData).GetHashCode();
+            return (hashIds, hashProfileAMDData, hashProfileWinData).GetHashCode();
 
         }
     }

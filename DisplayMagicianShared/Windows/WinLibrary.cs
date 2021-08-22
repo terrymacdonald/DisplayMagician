@@ -49,7 +49,7 @@ namespace DisplayMagicianShared.Windows
         }
     }
 
-    class WinLibrary : IDisposable
+    public class WinLibrary : IDisposable
     {
 
         // Static members are 'eagerly initialized', that is, 

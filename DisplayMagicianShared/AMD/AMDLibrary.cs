@@ -53,7 +53,7 @@ namespace DisplayMagicianShared.AMD
         }
     }
 
-    class AMDLibrary : IDisposable
+    public class AMDLibrary : IDisposable
     {
 
         // Static members are 'eagerly initialized', that is, 

@@ -77,7 +77,7 @@ namespace DisplayMagicianShared.NVIDIA
         }
     }
 
-    class NVIDIALibrary : IDisposable
+    public class NVIDIALibrary : IDisposable
     {
 
         // Static members are 'eagerly initialized', that is, 
