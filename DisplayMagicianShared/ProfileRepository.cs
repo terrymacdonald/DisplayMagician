@@ -571,7 +571,7 @@ namespace DisplayMagicianShared
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
-            if (NVIDIALibrary.GetLibrary().IsInstalled)
+            if (_videoMode == VIDEO_MODE.NVIDIA)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
                 NVIDIAProfileItem nvidiaProfile = new NVIDIAProfileItem
@@ -586,7 +586,7 @@ namespace DisplayMagicianShared
                 nvidiaProfile.CreateProfileFromCurrentDisplaySettings();
                 activeProfile = nvidiaProfile;
             }
-            else if (AMDLibrary.GetLibrary().IsInstalled)
+            else if (_videoMode == VIDEO_MODE.AMD)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
                 AMDProfileItem amdProfile = new AMDProfileItem
@@ -616,8 +616,6 @@ namespace DisplayMagicianShared
                 activeProfile = winProfile;
             }
 
-            
-
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
@@ -632,8 +630,6 @@ namespace DisplayMagicianShared
             }
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
             _currentProfile = activeProfile;
-
-            //IsPossibleRefresh();
 
         }
 
@@ -716,30 +712,37 @@ namespace DisplayMagicianShared
                     // and check if the current profile is used
                     foreach (ProfileItem loadedProfile in _allProfiles)
                     {
-                        if (loadedProfile.Driver.Equals("AMD"))
+                        if (loadedProfile is NVIDIAProfileItem)
                         {
                             // NVIDIA config!
+                            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is a NVIDIA Profile");
                             NVIDIAProfileItem nvidiaLoadedProfile = (NVIDIAProfileItem)loadedProfile;
                             nvidiaLoadedProfile.PerformPostLoadingTasks();
                             if (ProfileRepository.IsActiveProfile(nvidiaLoadedProfile))
                                 _currentProfile = nvidiaLoadedProfile;
                         }
-                        else if (loadedProfile.Driver.Equals("AMD"))
+                        else if (loadedProfile is AMDProfileItem)
                         {
                             // AMD config!
+                            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is an AMD Profile");
                             AMDProfileItem amdLoadedProfile = (AMDProfileItem) loadedProfile;
                             amdLoadedProfile.PerformPostLoadingTasks();
                             if (ProfileRepository.IsActiveProfile(amdLoadedProfile))
                                 _currentProfile = amdLoadedProfile;
                         }
-                        else
+                        else if (loadedProfile is WinProfileItem)
                         {
                             // Windows CCD config!
+                            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is a Windows Profile");
                             WinProfileItem winLoadedProfile = (WinProfileItem)loadedProfile;
                             winLoadedProfile.PerformPostLoadingTasks();
                             if (ProfileRepository.IsActiveProfile(winLoadedProfile))
                                 _currentProfile = winLoadedProfile;
-                        }                                                
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: ERROR - Profile {loadedProfile.Name} is not a recognised profile!");
+                        }
                     }
 
                     // Sort the profiles alphabetically

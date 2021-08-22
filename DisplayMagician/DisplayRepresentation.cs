@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using WindowsDisplayAPI;
-using WindowsDisplayAPI.DisplayConfig;
 using DisplayMagicianShared;
 using DisplayMagicianShared.Topology;
 
