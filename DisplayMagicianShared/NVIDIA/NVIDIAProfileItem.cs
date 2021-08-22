@@ -27,7 +27,7 @@ namespace DisplayMagicianShared.NVIDIA
         private string _uuid = "";
         private bool _isPossible = false;
         private Keys _hotkey = Keys.None;
-
+        
         public NVIDIAProfileItem()
         {
         }
@@ -151,7 +151,7 @@ namespace DisplayMagicianShared.NVIDIA
 
 
         [JsonConverter(typeof(CustomBitmapConverter))]
-        public new Bitmap ProfileBitmap
+        public override Bitmap ProfileBitmap
         {
             get
             {
@@ -288,12 +288,13 @@ namespace DisplayMagicianShared.NVIDIA
                     ScreenPosition screen = new ScreenPosition();
                     screen.Library = "NVIDIA";
 
+                    UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
 
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
                         // Find the matching Display Config Source Mode
-                        if (displayMode.InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == targetId)
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
                         {
                             screen.Name = targetId.ToString();
                             //screen.DisplayConnector = displayMode.DisplayConnector;
@@ -307,6 +308,8 @@ namespace DisplayMagicianShared.NVIDIA
                             {
                                 screen.IsPrimary = true;
                             }
+
+                            break;
                         }
                     }
 
@@ -334,7 +337,7 @@ namespace DisplayMagicianShared.NVIDIA
                                 screen.HDRSupported = false;
                                 screen.HDREnabled = false;
                             }
-
+                            break;
                         }
                     }
 

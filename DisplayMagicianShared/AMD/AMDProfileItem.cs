@@ -7,6 +7,7 @@ using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
 using System.Drawing;
 using DisplayMagicianShared.Windows;
+using System.Drawing.Imaging;
 
 namespace DisplayMagicianShared.AMD
 {
@@ -26,7 +27,6 @@ namespace DisplayMagicianShared.AMD
         private bool _isPossible = false;
         private Keys _hotkey = Keys.None;
 
-                
         public AMDProfileItem()
         {
         }
@@ -66,8 +66,6 @@ namespace DisplayMagicianShared.AMD
         public override VIDEO_MODE VideoMode { get; } = VIDEO_MODE.AMD;
 
         public override string Name { get; set; }
-
-        //public Topology.Path[] Paths { get; set; } = new Topology.Path[0];
 
         [JsonRequired]
         public AMD_DISPLAY_CONFIG AMDDisplayConfig
@@ -132,8 +130,7 @@ namespace DisplayMagicianShared.AMD
 
 
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
+        [JsonConverter(typeof(CustomBitmapConverter))]
         public override Bitmap ProfileBitmap
         {
             get
@@ -158,8 +155,8 @@ namespace DisplayMagicianShared.AMD
 
 
         //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
-        public override Bitmap ProfileTightestBitmap
+
+        /*public override Bitmap ProfileTightestBitmap
         {
             get
             {
@@ -176,7 +173,7 @@ namespace DisplayMagicianShared.AMD
                 _profileShortcutBitmap = value;
             }
 
-        }        
+        }        */
 
         #endregion
 

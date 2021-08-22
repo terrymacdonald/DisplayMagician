@@ -147,7 +147,7 @@ namespace DisplayMagicianShared.UserControls
             }
         }
 
-        private void DrawTarget(
+ /*       private void DrawTarget(
             Graphics g,
             ScreenPosition screen,
             Rectangle rect,
@@ -181,7 +181,7 @@ namespace DisplayMagicianShared.UserControls
 
             g.DrawRectangle(Pens.Black, targetRect);
             var str = $"{screen.Name}{Environment.NewLine}{screen.ScreenWidth}×{screen.ScreenHeight}";
-
+*/
 /*            switch (target.Rotation)
             {
                 case Rotation.Rotate90:
@@ -220,23 +220,8 @@ namespace DisplayMagicianShared.UserControls
             {
                 DrawString(g, str, targetRect.Size, targetRect.Location);
             }*/
-        }
+        //}
 
-        /*private void DrawView(Graphics g)
-        {
-            var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
-            var factor = Math.Min(Width / viewSize.Width, Height / viewSize.Height);
-            g.ScaleTransform(factor, factor);
-
-            var xOffset = (Width / factor - viewSize.Width) / 2f;
-            var yOffset = (Height / factor - viewSize.Height) / 2f;
-            g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
-
-            foreach (ScreenPosition screen in _profile.Screens)
-            {
-                DrawScreen(g, screen);
-            }
-        }*/
 
         private void DrawView(Graphics g)
         {
@@ -287,7 +272,7 @@ namespace DisplayMagicianShared.UserControls
                         }
                         else
                         {
-                            screenBgColour = Color.FromArgb(255, 155, 155, 155);
+                            screenBgColour = Color.FromArgb(255, 195, 195, 195);
                         }
                     }
                     

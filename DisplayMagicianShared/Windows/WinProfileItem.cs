@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace DisplayMagicianShared.Windows
 {    
@@ -24,7 +25,6 @@ namespace DisplayMagicianShared.Windows
         private bool _isPossible = false;
         private Keys _hotkey = Keys.None;
 
-                
         public WinProfileItem()
         {
         }
@@ -96,7 +96,7 @@ namespace DisplayMagicianShared.Windows
             }
         }
 
-        [JsonIgnore]
+        [JsonRequired]
         public override List<ScreenPosition> Screens
         {
             get
@@ -115,8 +115,7 @@ namespace DisplayMagicianShared.Windows
 
 
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
+        [JsonConverter(typeof(CustomBitmapConverter))]
         public override Bitmap ProfileBitmap
         {
             get
@@ -140,8 +139,7 @@ namespace DisplayMagicianShared.Windows
         }
 
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
+        /*[JsonConverter(typeof(CustomBitmapConverter))]
         public override Bitmap ProfileTightestBitmap
         {
             get
@@ -159,7 +157,7 @@ namespace DisplayMagicianShared.Windows
                 _profileShortcutBitmap = value;
             }
 
-        }        
+        }        */
 
         #endregion
 

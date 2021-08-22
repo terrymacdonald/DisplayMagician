@@ -220,7 +220,7 @@ namespace DisplayMagicianShared
 
         }
 
-        [JsonIgnore]
+        [JsonRequired]
         public virtual List<ScreenPosition> Screens
         {
             get
@@ -256,8 +256,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
+        [JsonConverter(typeof(CustomBitmapConverter))]
         public virtual Bitmap ProfileBitmap
         {
             get
@@ -277,8 +276,8 @@ namespace DisplayMagicianShared
 
         }
 
-        //[JsonConverter(typeof(CustomBitmapConverter))]
-        [JsonIgnore]
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        //[JsonIgnore]
         public virtual Bitmap ProfileTightestBitmap
         {
             get
