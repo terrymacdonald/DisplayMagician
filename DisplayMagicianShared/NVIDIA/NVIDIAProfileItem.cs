@@ -95,7 +95,7 @@ namespace DisplayMagicianShared.NVIDIA
         }
 
 
-        [JsonIgnore]
+        /*[JsonIgnore]
         public override ProfileIcon ProfileIcon
         {
             get
@@ -113,7 +113,7 @@ namespace DisplayMagicianShared.NVIDIA
                 _profileIcon = value;
             }
 
-        }
+        }*/
 
         public override List<string> ProfileDisplayIdentifiers
         {
