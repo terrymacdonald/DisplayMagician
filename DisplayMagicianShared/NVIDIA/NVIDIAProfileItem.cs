@@ -13,6 +13,7 @@ using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared.NVIDIA
 {
+
     public class NVIDIAProfileItem : ProfileItem, IComparable
     {
         private static List<NVIDIAProfileItem> _allSavedProfiles = new List<NVIDIAProfileItem>();
@@ -220,6 +221,17 @@ namespace DisplayMagicianShared.NVIDIA
                 return _screens;
             }
 
+            // TODO: Make the NVIDIA displays show the individual screens and overlap!
+            /*// Create a dictionary of all the screen sizes we want
+            Dictionary<string,SpannedScreenPosition> MosaicScreens = new Dictionary<string,SpannedScreenPosition>();
+            for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
+            {               
+                for (int j = 0; j < _nvidiaDisplayConfig.MosaicConfig.MosaicViewports.Where(item => item); j++)
+                {
+
+                }
+            }*/
+
             foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
             {
                 // For each path we go through and get the relevant info we need.
@@ -231,7 +243,9 @@ namespace DisplayMagicianShared.NVIDIA
 
                     UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
+                    
 
+                    // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
                         // Find the matching Display Config Source Mode
@@ -248,6 +262,12 @@ namespace DisplayMagicianShared.NVIDIA
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
                             {
                                 screen.IsPrimary = true;
+                            }
+
+                            // Figure out if this is a spanned screen, and if so, record this info
+                            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
+                            {
+
                             }
 
                             break;
@@ -299,6 +319,42 @@ namespace DisplayMagicianShared.NVIDIA
                     _screens.Add(screen);
                 }                        
             }
+
+            /*
+            // Go through the screens, and update the Mosaic screens with their info (if there are any)
+            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
+            {
+                // *** Enum values for the mosaic topology type ***
+                // NV_MOSAIC_TOPO_1x2_BASIC = 1
+                // NV_MOSAIC_TOPO_2x1_BASIC = 2,
+                // NV_MOSAIC_TOPO_1x3_BASIC = 3,
+                // NV_MOSAIC_TOPO_3x1_BASIC = 4,
+                // NV_MOSAIC_TOPO_1x4_BASIC = 5,
+                // NV_MOSAIC_TOPO_4x1_BASIC = 6,
+                // NV_MOSAIC_TOPO_2x2_BASIC = 7,
+                // NV_MOSAIC_TOPO_2x3_BASIC = 8,
+                // NV_MOSAIC_TOPO_2x4_BASIC = 9,
+                // NV_MOSAIC_TOPO_3x2_BASIC = 10,
+                // NV_MOSAIC_TOPO_4x2_BASIC = 11,
+                // NV_MOSAIC_TOPO_1x5_BASIC = 12,
+                // NV_MOSAIC_TOPO_1x6_BASIC = 13,
+                // NV_MOSAIC_TOPO_7x1_BASIC = 14,
+
+                // *** Enum values for the mosaic topology type ***
+                // NV_MOSAIC_TOPO_1x2_PASSIVE_STEREO = 23,
+                // NV_MOSAIC_TOPO_2x1_PASSIVE_STEREO = 24,
+                // NV_MOSAIC_TOPO_1x3_PASSIVE_STEREO = 25,
+                // NV_MOSAIC_TOPO_3x1_PASSIVE_STEREO = 26,
+                // NV_MOSAIC_TOPO_1x4_PASSIVE_STEREO = 27,
+                // NV_MOSAIC_TOPO_4x1_PASSIVE_STEREO = 28,
+                // NV_MOSAIC_TOPO_2x2_PASSIVE_STEREO = 29,
+                for (int screenIndex = 0; screenIndex < _screens.Count; screenIndex++)
+                {
+                    // go through each screen, and check if it matches a mosaic screen
+                    
+                }
+            }*/
+
 
             return _screens;
         }

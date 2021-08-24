@@ -247,7 +247,18 @@ namespace DisplayMagicianShared.UserControls
                 // draw the screen 
                 if (screen.IsSpanned)
                 {
-                    //g.FillRectangle(new SolidBrush(Color.FromArgb(150, 106, 185, 0)), targetRect);
+                    // We do these things only if the screen IS spanned!
+                    // Draw the outline of the spanned monitor
+                    Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
+                    g.DrawRectangle(Pens.Black, outlineRect);
+
+                    // Draw the screen of the monitor
+                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                    screenBgColour = screen.Colour;
+
+                    g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
+                    g.DrawRectangle(Pens.Black, screenRect);
                 }
                 else
                 {                   
@@ -257,8 +268,6 @@ namespace DisplayMagicianShared.UserControls
                     g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
                     g.DrawRectangle(Pens.Black, outlineRect);
 
-                    // Draw the screen of the monitor
-                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
                     if (screen.IsPrimary)
                     {
                         //screenBgColour = Color.FromArgb(255, 66, 173, 245);
@@ -275,26 +284,27 @@ namespace DisplayMagicianShared.UserControls
                             screenBgColour = Color.FromArgb(255, 195, 195, 195);
                         }
                     }
-                    
+
+                    // Draw the screen of the monitor
+                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+
                     g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
-
-                    Rectangle wordRect = new Rectangle(screen.ScreenX + screenBezel + screenWordBuffer, screen.ScreenY + screenBezel + screenWordBuffer, screen.ScreenWidth - (screenBezel * 2) - (screenWordBuffer * 2), screen.ScreenHeight - (screenBezel * 2) - (screenWordBuffer * 2));
-                    Color wordTextColour = pickTextColorBasedOnBgColour(screenBgColour, lightTextColour, darkTextColour);
-                    // Draw the name of the screen and the size of it
-                    string str = $"{screen.Name}{Environment.NewLine}{screen.ScreenWidth}×{screen.ScreenHeight}{Environment.NewLine}{screen.DisplayConnector}";
-                    if (screen.IsPrimary)
-                    {
-                        str = $"Primary Display{Environment.NewLine}" + str;
-                    }
-                    DrawString(g, str, wordTextColour, wordRect.Size, wordRect.Location);
-
-                    // Draw the position of the screen
-                    str = $"[{screen.ScreenX},{screen.ScreenY}]";
-                    DrawString(g, str, wordTextColour, wordRect.Size, wordRect.Location, StringAlignment.Near, StringAlignment.Near);
                 }                
-                
 
+                Rectangle wordRect = new Rectangle(screen.ScreenX + screenBezel + screenWordBuffer, screen.ScreenY + screenBezel + screenWordBuffer, screen.ScreenWidth - (screenBezel * 2) - (screenWordBuffer * 2), screen.ScreenHeight - (screenBezel * 2) - (screenWordBuffer * 2));
+                Color wordTextColour = pickTextColorBasedOnBgColour(screenBgColour, lightTextColour, darkTextColour);
+                // Draw the name of the screen and the size of it
+                string str = $"{screen.Name}{Environment.NewLine}{screen.ScreenWidth}×{screen.ScreenHeight}{Environment.NewLine}{screen.DisplayConnector}";
+                if (screen.IsPrimary)
+                {
+                    str = $"Primary Display{Environment.NewLine}" + str;
+                }
+                DrawString(g, str, wordTextColour, wordRect.Size, wordRect.Location);
+
+                // Draw the position of the screen
+                str = $"[{screen.ScreenX},{screen.ScreenY}]";
+                DrawString(g, str, wordTextColour, wordRect.Size, wordRect.Location, StringAlignment.Near, StringAlignment.Near);
             }
         }
 

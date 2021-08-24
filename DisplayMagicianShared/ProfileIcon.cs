@@ -463,7 +463,18 @@ namespace DisplayMagicianShared
                 // draw the screen 
                 if (screen.IsSpanned)
                 {
-                    //g.FillRectangle(new SolidBrush(Color.FromArgb(150, 106, 185, 0)), targetRect);
+                    // We do these things only if the screen IS spanned!
+                    // Draw the outline of the spanned monitor
+                    Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                    g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
+                    g.DrawRectangle(Pens.Black, outlineRect);
+
+                    // Draw the screen of the monitor
+                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                    screenBgColour = screen.Colour;
+
+                    g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
+                    g.DrawRectangle(Pens.Black, screenRect);
                 }
                 else
                 {
