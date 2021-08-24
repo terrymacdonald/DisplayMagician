@@ -94,27 +94,6 @@ namespace DisplayMagicianShared.NVIDIA
             }
         }
 
-
-        /*[JsonIgnore]
-        public override ProfileIcon ProfileIcon
-        {
-            get
-            {
-                if (_profileIcon != null)
-                    return _profileIcon;
-                else
-                {
-                    _profileIcon = new ProfileIcon(this);
-                    return _profileIcon;
-                }
-            }
-            set
-            {
-                _profileIcon = value;
-            }
-
-        }*/
-
         public override List<string> ProfileDisplayIdentifiers
         {
             get
@@ -131,64 +110,6 @@ namespace DisplayMagicianShared.NVIDIA
                     _profileDisplayIdentifiers = value;
             }
         }
-
-        /*[JsonRequired]
-        public override List<ScreenPosition> Screens
-        {
-            get
-            {
-                if (_screens.Count == 0)
-                {
-                    _screens = GetScreenPositions();
-                }
-                return _screens;
-            }
-            set
-            {
-                _screens = value;
-            }
-        }
-
-
-        [JsonConverter(typeof(CustomBitmapConverter))]
-        public override Bitmap ProfileBitmap
-        {
-            get
-            {
-                if (_profileBitmap != null)
-                    return _profileBitmap;
-                else
-                {
-                    _profileBitmap = this.ProfileIcon.ToBitmap(256, 256);
-                    return _profileBitmap;
-                }
-            }
-            set
-            {
-                _profileBitmap = value;
-            }
-
-        }
-
-        [JsonConverter(typeof(CustomBitmapConverter))]
-        public override Bitmap ProfileTightestBitmap
-        {
-            get
-            {
-                if (_profileShortcutBitmap != null)
-                    return _profileShortcutBitmap;
-                else
-                {
-                    _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
-                    return _profileShortcutBitmap;
-                }
-            }
-            set
-            {
-                _profileShortcutBitmap = value;
-            }
-
-        }*/
 
         #endregion
 

@@ -88,7 +88,7 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising AMD ADL caused an exception.");
                 }
             }
-               
+
             try
             {
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
@@ -149,7 +149,7 @@ namespace DisplayMagicianShared
 
         public static ProfileItem CurrentProfile
         {
-            get 
+            get
             {
                 if (_currentProfile == null)
                     UpdateActiveProfile();
@@ -183,7 +183,7 @@ namespace DisplayMagicianShared
         public static VIDEO_MODE CurrentVideoMode
         {
             get
-            {                
+            {
                 return _currentVideoMode;
             }
             set
@@ -192,7 +192,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        
+
         public static List<string> ConnectedDisplayIdentifiers
         {
             get
@@ -211,15 +211,15 @@ namespace DisplayMagicianShared
         }
 
 
-        public static bool ProfilesLoaded { 
-            get 
+        public static bool ProfilesLoaded {
+            get
             {
                 return _profilesLoaded;
-            } 
-            set 
+            }
+            set
             {
                 _profilesLoaded = value;
-            } 
+            }
         }
 
         #endregion
@@ -314,7 +314,7 @@ namespace DisplayMagicianShared
 
         public static bool RemoveProfile(string profileName)
         {
-            
+
             if (String.IsNullOrWhiteSpace(profileName))
                 return false;
 
@@ -403,7 +403,7 @@ namespace DisplayMagicianShared
                 SaveProfiles();
                 IsPossibleRefresh();
                 return true;
-            }    
+            }
             else if (numRemoved == 0)
                 return false;
             else
@@ -425,7 +425,7 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {Profile.Name}");
                     return true;
                 }
-                    
+
             }
             SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository doesn't contain a profile called {Profile.Name}");
             return false;
@@ -446,7 +446,7 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile2: Our profile repository does contain a profile with UUID {ProfileNameOrId}");
                         return true;
                     }
-                        
+
                 }
             else
                 foreach (ProfileItem testProfile in _allProfiles)
@@ -456,7 +456,7 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile2: Our profile repository does contain a profile with Name {ProfileNameOrId}");
                         return true;
                     }
-                        
+
                 }
 
             SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile2: Our profile repository doesn't contain a profile with a UUID or Name {ProfileNameOrId}");
@@ -479,7 +479,7 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Our profile repository does contain the display profile currently in use");
                     return true;
                 }
-                    
+
             }
 
             SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Our profile repository doesn't contain the display profile currently in use");
@@ -496,7 +496,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error($"ProfileRepository/GetProfile: Profile to get was empty or only whitespace");
                 return null;
             }
-                
+
 
             if (ProfileItem.IsValidUUID(ProfileNameOrId))
                 foreach (ProfileItem testProfile in _allProfiles)
@@ -506,7 +506,7 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Returning profile with UUID {ProfileNameOrId}");
                         return testProfile;
                     }
-                        
+
                 }
             else
                 foreach (ProfileItem testProfile in _allProfiles)
@@ -516,7 +516,7 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Returning profile with Name {ProfileNameOrId}");
                         return testProfile;
                     }
-                        
+
                 }
 
             SharedLogger.logger.Debug($"ProfileRepository/GetProfile: Didn't match any profiles with UUD or Name {ProfileNameOrId}");
@@ -530,7 +530,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error($"ProfileRepository/RenameProfile: Profile to rename was empty or only whitespace");
                 return false;
             }
-                
+
 
             SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: Attempting to rename profile {profile.Name} to {renamedName}");
 
@@ -539,7 +539,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error($"ProfileRepository/RenameProfile: The name the user wanted to renamed to profile to is not a valid filename");
                 return false;
             }
-                
+
             profile.Name = GetValidFilename(renamedName);
 
             IsPossibleRefresh();
@@ -560,7 +560,7 @@ namespace DisplayMagicianShared
             }
 
 
-        }      
+        }
 
         public static void UpdateActiveProfile()
         {
@@ -591,10 +591,10 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
                 AMDProfileItem amdProfile = new AMDProfileItem
                 {
-                    Name = "Current AMD Display Profile" ,
+                    Name = "Current AMD Display Profile",
                     //ProfileData = amdLibrary.GetActiveProfile(),
                     //Screens = amdLibrary.GenerateScreenPositions()
-                //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
+                    //ProfileDisplayIdentifiers = ProfileRepository.GenerateProfileDisplayIdentifiers()
                 };
                 //activeProfile.ProfileIcon = new ProfileIcon(activeProfile);
                 //activeProfile.ProfileBitmap = activeProfile.ProfileIcon.ToBitmap(256, 256);
@@ -653,14 +653,26 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
 
-            if (profile.Equals(_currentProfile))
+            if (profile is NVIDIAProfileItem && profile.Equals((NVIDIAProfileItem)_currentProfile))
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is the currently active profile.");
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The NVIDIA profile {profile.Name} is the currently active profile.");
                 return true;
             }
-
-            SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is not the currently active profile.");
-            return false;
+            else if (profile is AMDProfileItem && profile.Equals((AMDProfileItem)_currentProfile))
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The AMD profile {profile.Name} is the currently active profile.");
+                return true;
+            }
+            else if (profile is WinProfileItem && profile.Equals((WinProfileItem)_currentProfile))
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The Windows CCD profile {profile.Name} is the currently active profile.");
+                return true;
+            }      
+            else
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is not the currently active profile.");
+                return false;
+            }
         }
 
         

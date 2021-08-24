@@ -368,7 +368,7 @@ namespace DisplayMagicianShared
         }
 
 
-        // The public override for the Object.Equals
+       /* // The public override for the Object.Equals
         public override bool Equals(object obj)
         {
             return this.Equals(obj as ProfileItem);
@@ -432,7 +432,7 @@ namespace DisplayMagicianShared
 
             int foundPathsCount = 0;
             int foundOtherPathsCount = 0;
-            /*foreach (Topology.Path profilePath in Paths)
+            *//*foreach (Topology.Path profilePath in Paths)
             {
                 if (other.Paths.Contains(profilePath))
                 {
@@ -448,14 +448,14 @@ namespace DisplayMagicianShared
                     foundOtherPathsCount++;
                     continue;
                 }
-            }*/
+            }*//*
 
 
             if (foundPathsCount == foundOtherPathsCount)
                 return true;
             else
                 return false;
-        }
+        }*/
 
         // If Equals() returns true for this object compared to  another
         // then GetHashCode() must return the same value for these objects.
@@ -609,12 +609,12 @@ namespace DisplayMagicianShared
         }
     }
 
-    // Custom Equality comparer for the Profile class
+    /*// Custom Equality comparer for the Profile class
     // Allows us to use 'Contains'
     class ProfileComparer : IEqualityComparer<ProfileItem>
     {
         // Products are equal if their names and product numbers are equal.
-        /*public bool Equals(ProfileItem x, ProfileItem y)
+        *//*public bool Equals(ProfileItem x, ProfileItem y)
         {
 
             //Check whether the compared objects reference the same data.
@@ -632,7 +632,7 @@ namespace DisplayMagicianShared
                 return true;
             else
                 return false;
-        }*/
+        }*//*
 
         public bool Equals(ProfileItem x, ProfileItem y)
         {
@@ -681,7 +681,7 @@ namespace DisplayMagicianShared
             // Two profiles are equal only when they have the same viewport data
             int foundPathsCount = 0;
             int foundOtherPathsCount = 0;
-            /*foreach (Topology.Path profilePath in x.Paths)
+            *//*foreach (Topology.Path profilePath in x.Paths)
             {
                 if (y.Paths.Contains(profilePath))
                 {
@@ -697,7 +697,7 @@ namespace DisplayMagicianShared
                     foundOtherPathsCount++;
                     continue;
                 }
-            }*/
+            }*//*
 
 
             if (foundPathsCount == foundOtherPathsCount)
@@ -708,7 +708,7 @@ namespace DisplayMagicianShared
 
         // If Equals() returns true for a pair of objects
         // then GetHashCode() must return the same value for these objects.
-        /*public int GetHashCode(ProfileItem profile)
+        *//*public int GetHashCode(ProfileItem profile)
         {
 
             // Check whether the object is null
@@ -720,7 +720,7 @@ namespace DisplayMagicianShared
             //Calculate the hash code for the product.
             return hashPaths;
 
-        }*/
+        }*//*
         // Modified the GetHashCode to compare the displayidentifier
         public int GetHashCode(ProfileItem profile)
         {
@@ -739,5 +739,5 @@ namespace DisplayMagicianShared
             return (hashIds,hashPaths).GetHashCode();
 
         }
-    }
+    }*/
 }
