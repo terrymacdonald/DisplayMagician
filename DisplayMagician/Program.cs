@@ -19,6 +19,8 @@ using NLog.Config;
 using System.Collections.Generic;
 using System.Collections;
 using DisplayMagicianShared.AMD;
+using DisplayMagicianShared.NVIDIA;
+using DisplayMagicianShared.Windows;
 
 namespace DisplayMagician {
 
@@ -569,203 +571,55 @@ namespace DisplayMagician {
         // ApplyProfile lives here so that the UI works.
         public static ApplyProfileResult ApplyProfile(ProfileItem profile)
         {
-            logger.Debug($"Program/ApplyProfile: Starting");
+            logger.Trace($"Program/ApplyProfile: Starting");
+            NVIDIAProfileItem nvidiaProfile = null;
+            AMDProfileItem amdProfile = null;
+            WinProfileItem winProfile = null;
 
-            profile.RefreshPossbility();          
-
-            // We need to check if the profile is valid
-            if (!profile.IsPossible)
+            if (profile == null)
             {
-                logger.Debug($"Program/ApplyProfile: The supplied profile {profile.Name} isn't currently possible to use, so we can't apply it. This means a display that existed before has been removed, or moved.");
+                logger.Debug($"Program/ApplyProfile: The supplied profile is null! Can't be used.");
                 return ApplyProfileResult.Error;
-            }
-
-
-            // We need to check if the profile is the same one that we're on
-            if (profile.UUID == ProfileRepository.GetActiveProfile().UUID)
-            {
-                logger.Debug($"Program/ApplyProfile: The supplied profile {profile.Name} is currently in use, so we don't need to apply it.");
-                return ApplyProfileResult.Successful;
             }
 
             try
             {
-                // Set up some things to be used later
-                ApplyingProfileForm timeoutForm = new ApplyingProfileForm(null, 3, $"Changing to '{profile.Name}' Profile", "Press ESC to cancel", Color.Orange, true);
-
-                // If this is an AMD profile, then we need to set it up as such
-                if (profile.VideoMode.Equals("AMD"))
-                {                   
-
-                    // Now lets prepare a task to apply the profile in a separate thread
-                    Task amdApplyProfileTask = new Task(() =>
-                    {
-                        Console.WriteLine("Program/ApplyProfile : Applying AMD Profile " + profile.Name);
-                        AMDProfileItem amdProfile = (AMDProfileItem)profile;
-                        if (!AMDLibrary.GetLibrary().SetActiveConfig(amdProfile.AMDDisplayConfig))
-                        {
-                            // Somehow return that this profile topology didn't apply
-                            throw new ApplyTopologyException("Program/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
-                        }
-                    });
-
-                    ApplyingProfileForm amdApplyProfileForm = new ApplyingProfileForm(amdApplyProfileTask, 30, $"Changing to '{profile.Name}' Profile", "Applying AMD configuration", Color.FromArgb(200, 237, 28, 36));
-
-                    if (timeoutForm.ShowDialog() == DialogResult.Cancel)
-                    {
-                        return ApplyProfileResult.Cancelled;
-                    }
-
-                    // We always want to do the WindowsDisplayAPI PathInfo part
-                    logger.Debug($"Program/ApplyProfile: Running the AMD ApplyProfile Task to change the screen layout");
-                    amdApplyProfileForm.ShowDialog();
-                    try
-                    {
-                        amdApplyProfileTask.Wait();
-                    }
-                    catch (AggregateException ae)
-                    {
-                        logger.Error(ae, $"Program/ApplyProfile exception during AMD ApplyProfile Task");
-                        foreach (var e in ae.InnerExceptions)
-                        {
-                            // Handle the custom exception.
-                            if (e is ApplyPathInfoException)
-                            {
-                                Console.WriteLine(e.Message);
-                            }
-                            // Rethrow any other exception.
-                            else
-                            {
-                                throw;
-                            }
-                        }
-                    }
-
-                    if (amdApplyProfileTask.IsFaulted)
-                        logger.Debug($"Program/ApplyProfile: Applying AMD Profile failed to complete");
-
-                    if (!amdApplyProfileTask.IsCompleted)
-                        return ApplyProfileResult.Error;
-
-                }
-                /*// Now lets prepare changing the display topology task
-                Task applyTopologyTask = new Task(() =>
+                // We try to swap profiles. The profiles have checking logic in them
+                if (profile is NVIDIAProfileItem)
                 {
-                    Console.WriteLine("Program/ApplyProfile : Applying Profile Topology " + profile.Name);
-                    if (!ProfileRepository.ApplyNVIDIAGridTopology(profile))
+                    logger.Trace($"Program/ApplyProfile: Profile is an NVIDIA Profile, so changing type to NVIDIAProfileItem");
+                    nvidiaProfile = (NVIDIAProfileItem)profile;
+                    if (!nvidiaProfile.SetActive())
+                    {
+                        logger.Error($"Program/ApplyProfile: Error applying the NVIDIA Profile!");
+                        return ApplyProfileResult.Error;
+                    }
+                }
+                else if (profile is AMDProfileItem)
+                {
+                    logger.Trace($"Program/ApplyProfile: Profile is an AMD Profile, so changing type to AMDProfileItem");
+                    amdProfile = (AMDProfileItem)profile;
+                    if (!amdProfile.SetActive())
+                    {
+                        logger.Error($"Program/ApplyProfile: Error applying the AMD Profile!");
+                        return ApplyProfileResult.Error;
+                    }
+                }
+                else if (profile is WinProfileItem)
+                {
+                    logger.Trace($"Program/ApplyProfile: Profile is a Windows CCD Profile, so changing type to WinProfileItem");
+                    winProfile = (WinProfileItem)profile;
+                    if (!winProfile.SetActive())
                     {
                         // Somehow return that this profile topology didn't apply
-                        throw new ApplyTopologyException("Program/ApplyProfile: ApplyNVIDIAGridTopology: Error setting up the NVIDIA Surround Grid Topology");
+                        throw new ApplyTopologyException("Program/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
                     }
-                });
-*/
-                /*Task applyPathInfoTask = new Task(() => {
-                    Console.WriteLine("Program/ApplyProfile  : Applying Profile Path " + profile.Name);
-                    if (!ProfileRepository.ApplyWindowsDisplayPathInfo(profile))
-                    {
-                        // Somehow return that this profile path info didn't apply
-                        throw new ApplyPathInfoException("Program/ApplyProfile: ApplyWindowsDisplayPathInfo: Error configuring the Windows Display Devices");
-                    }
-
-                });*/
-
-                
-                /*if (timeoutForm.ShowDialog() == DialogResult.Cancel)
-                {
-                    return ApplyProfileResult.Cancelled;
                 }
-
-                // We only want to do the topology change if the profile we're on now
-                // or the profile we're going to are NVIDIA surround profiles
-                int toProfileSurroundTopologyCount =
-                    profile.Paths.SelectMany(paths => paths.TargetDisplays)
-                        .Select(target => target.SurroundTopology)
-                        .Where(topology => topology != null)
-                        .Select(topology => topology.ToGridTopology())
-                        .Count();
-                if (toProfileSurroundTopologyCount > 0)
-                    logger.Debug($"Program/ApplyProfile: {profile.Name} profile we want to use is a NVIDIA Surround profile, so we need to change the NVIDIA GRID topology.");
                 else
-                    logger.Debug($"Program/ApplyProfile: {profile.Name} profile we want to use does not use NVIDIA Surround.");
-
-                int fromProfileSurroundTopologyCount =
-                    ProfileRepository.CurrentProfile.Paths.SelectMany(paths => paths.TargetDisplays)
-                        .Select(target => target.SurroundTopology)
-                        .Where(topology => topology != null)
-                        .Select(topology => topology.ToGridTopology())
-                        .Count();
-                if (fromProfileSurroundTopologyCount > 0)
-                    logger.Debug($"Program/ApplyProfile: {ProfileRepository.CurrentProfile} profile currently in use is a NVIDIA Surround profile, so we need to change the NVIDIA GRID topology.");
-                else
-                    logger.Debug($"Program/ApplyProfile: {ProfileRepository.CurrentProfile} profile currently in use does not use NVIDIA Surround.");
-
-                if (toProfileSurroundTopologyCount > 0 || fromProfileSurroundTopologyCount > 0)
                 {
-                    logger.Debug($"Program/ApplyProfile: Changing the NVIDIA GRID topology to apply or remove a NVIDIA Surround profile");
-                    topologyForm.ShowDialog();
-
-                    try
-                    {
-                        applyTopologyTask.Wait();
-                    }
-                    catch (AggregateException ae)
-                    {
-                        logger.Error(ae, $"Program/ApplyProfile exception during applyTopologyTask");
-                        foreach (var e in ae.InnerExceptions)
-                        {
-                            // Handle the custom exception.
-                            if (e is ApplyTopologyException)
-                            {
-                                Console.WriteLine(e.Message);
-                            }
-                            // Rethrow any other exception.
-                            else
-                            {
-                                throw;
-                            }
-                        }
-                    }
-
-                    if (applyTopologyTask.IsFaulted)
-                        Console.WriteLine("Program/ApplyProfile : Applying Profile Topology stage failed to complete");
-
-                    if (!applyTopologyTask.IsCompleted)
-                    {
-                        logger.Debug($"Program/ApplyProfile: Failed to complete applying or removing the NVIDIA Surround profile");
-                        return ApplyProfileResult.Error;
-                    }
-                }*/
-
-                /*// We always want to do the WindowsDisplayAPI PathInfo part
-                logger.Debug($"Program/ApplyProfile: Changing the Windows Display Path Info to change the Windows Display layout");
-                pathInfoForm.ShowDialog();
-                try
-                {
-                    applyPathInfoTask.Wait();
+                    logger.Trace($"Program/ApplyProfile: Profile type is not one that is supported by DisplayMagician, so returning an ApplyProfileResult error");
+                    return ApplyProfileResult.Error;
                 }
-                catch (AggregateException ae)
-                {
-                    logger.Error(ae, $"Program/ApplyProfile exception during applyPathInfoTask");
-                    foreach (var e in ae.InnerExceptions)
-                    {
-                        // Handle the custom exception.
-                        if (e is ApplyPathInfoException)
-                        {
-                            Console.WriteLine(e.Message);
-                        }
-                        // Rethrow any other exception.
-                        else
-                        {
-                            throw;
-                        }
-                    }
-                }
-
-                if (applyPathInfoTask.IsFaulted)
-                    logger.Debug($"Program/ApplyProfile: Applying Profile PathInfo stage failed to complete");
-
-                if (!applyPathInfoTask.IsCompleted)
-                    return ApplyProfileResult.Error;*/
 
             }
             catch (Exception ex)

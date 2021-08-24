@@ -167,6 +167,32 @@ namespace DisplayMagicianShared.Windows
 
         }
 
+        // Actually set this profile active
+        public override bool SetActive()
+        {
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+            if (winLibrary.IsInstalled)
+            {
+                if (!winLibrary.IsActiveConfig(_windowsDisplayConfig))
+                {
+                    if (winLibrary.SetActiveConfig(_windowsDisplayConfig))
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
+                        return true;
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
+                    }                    
+                }
+                else
+                {
+                    SharedLogger.logger.Info($"ProfileRepository/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
+                }
+            }
+            return false;
+        }
+
         public override bool CreateProfileFromCurrentDisplaySettings()
         {
 

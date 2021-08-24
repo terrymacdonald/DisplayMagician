@@ -501,6 +501,13 @@ namespace DisplayMagicianShared
 
         }
 
+        // Actually set this profile active
+        public virtual bool SetActive()
+        {
+            return false;
+        }
+
+
         public virtual List<ScreenPosition> GetScreenPositions()
         {
             return new List<ScreenPosition>();

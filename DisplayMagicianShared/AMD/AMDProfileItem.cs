@@ -185,6 +185,57 @@ namespace DisplayMagicianShared.AMD
 
         }
 
+        // Actually set this profile active
+        public override bool SetActive()
+        {
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+            if (amdLibrary.IsInstalled)
+            {
+                if (!amdLibrary.IsActiveConfig(_amdDisplayConfig) && !winLibrary.IsActiveConfig(_windowsDisplayConfig))
+                {
+                    if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
+                        bool itWorkedforAMD = amdLibrary.SetActiveConfig(_amdDisplayConfig);
+
+                        if (itWorkedforAMD)
+                        {
+                            SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings within profile {Name} were successfully applied.");
+                            // Then let's try to also apply the windows changes
+                            // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a ADL config,
+                            // or if the display config we want to change to is a ADL config. So we just have to assume that it will work!
+                            bool itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig);
+                            if (itWorkedforWindows)
+                            {
+                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
+                                return true;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
+                            }
+
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings within profile {Name} were NOT applied correctly.");
+                        }
+
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Error($"ProfileRepository/SetActive: ERROR - Cannot apply the AMD display config in profile {Name} as it is not currently possible to use it.");
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Info($"ProfileRepository/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
+                }
+            }
+            return false;
+        }
+
         public override bool CreateProfileFromCurrentDisplaySettings()
         {
 
