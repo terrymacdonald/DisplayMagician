@@ -65,11 +65,8 @@
     </Compile>
     <Compile Include="ResizeDrawing.cs" />
     <Compile Include="ScanLineOrdering.cs" />
-    <None Include="NVIDIA\SurroundHelper.cs" />
-    <None Include="NVIDIA\SurroundTopologyDisplay.cs" />
     <Compile Include="PixelShift.cs" />
     <Compile Include="ProfileItem.cs" />
-    <None Include="NVIDIA\SurroundTopology.cs" />
     <Compile Include="DisplayMagicianStartupAction.cs" />
     <Compile Include="ProfileIcon.cs" />
     <Compile Include="Rotation.cs" />
