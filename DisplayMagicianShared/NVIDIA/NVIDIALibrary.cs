@@ -31,9 +31,9 @@ namespace DisplayMagicianShared.NVIDIA
            MosaicDisplaySettings.Equals(other.MosaicDisplaySettings) &&
            OverlapX == other.OverlapX &&
            OverlapY == other.OverlapY &&
-           MosaicGridTopos.Equals(other.MosaicGridTopos) &&
+           MosaicGridTopos.SequenceEqual(other.MosaicGridTopos) &&
            MosaicGridCount == other.MosaicGridCount &&
-           MosaicViewports.Equals(other.MosaicViewports) &&
+           MosaicViewports.SequenceEqual(other.MosaicViewports) &&
            PrimaryDisplayId == other.PrimaryDisplayId;
 
         public override int GetHashCode()
@@ -69,11 +69,12 @@ namespace DisplayMagicianShared.NVIDIA
 
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
         => MosaicConfig.Equals(other.MosaicConfig) &&
-           HdrConfig.Equals(other.HdrConfig);
+           HdrConfig.Equals(other.HdrConfig) &&
+           DisplayIdentifiers.Equals(other.DisplayIdentifiers);
 
         public override int GetHashCode()
         {
-            return (MosaicConfig, HdrConfig).GetHashCode();
+            return (MosaicConfig, HdrConfig, DisplayIdentifiers).GetHashCode();
         }
     }
 

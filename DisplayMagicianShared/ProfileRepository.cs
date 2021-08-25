@@ -645,32 +645,66 @@ namespace DisplayMagicianShared
 
         public static bool IsActiveProfile(ProfileItem profile)
         {
-            if (!(_currentProfile is ProfileItem))
+            SharedLogger.logger.Trace($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
+            if (profile == null){
+                SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is null. Not changing anything, and reporting an error");
                 return false;
-
-            if (!(profile is ProfileItem))
-                return false;
-
-            SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: Checking whether the profile {profile.Name} is the currently active profile.");
-
-            if (profile is NVIDIAProfileItem && profile.Equals((NVIDIAProfileItem)_currentProfile))
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The NVIDIA profile {profile.Name} is the currently active profile.");
-                return true;
             }
-            else if (profile is AMDProfileItem && profile.Equals((AMDProfileItem)_currentProfile))
+
+            if (Object.ReferenceEquals(_currentProfile, profile))
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The AMD profile {profile.Name} is the currently active profile.");
+                SharedLogger.logger.Trace($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is the currently active profile. Not changing anything.");
                 return true;
+            }                
+            
+            if (profile is NVIDIAProfileItem && _currentProfile is NVIDIAProfileItem)
+            {
+                NVIDIAProfileItem nvidiaNewProfile = (NVIDIAProfileItem)profile;
+                NVIDIAProfileItem nvidiaCurrentProfile = (NVIDIAProfileItem)_currentProfile;
+                if (nvidiaNewProfile.Equals(nvidiaCurrentProfile))
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The NVIDIA profile {profile.Name} is the currently active profile.");
+                    return true;
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The NVIDIA profile {profile.Name} is the not currently active profile.");
+                    return false;
+                }
             }
-            else if (profile is WinProfileItem && profile.Equals((WinProfileItem)_currentProfile))
+            else if (profile is AMDProfileItem && _currentProfile is AMDProfileItem)
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The Windows CCD profile {profile.Name} is the currently active profile.");
-                return true;
+                AMDProfileItem amdNewProfile = (AMDProfileItem)profile;
+                AMDProfileItem amdCurrentProfile = (AMDProfileItem)_currentProfile;
+                if (amdNewProfile.Equals(amdCurrentProfile))
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The AMD profile {profile.Name} is the currently active profile.");
+                    return true;
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The AMD profile {profile.Name} is the not currently active profile.");
+                    return false;
+                }
+            }
+            else if (profile is WinProfileItem && _currentProfile is WinProfileItem)
+            {
+                WinProfileItem winNewProfile = (WinProfileItem)profile;
+                WinProfileItem winCurrentProfile = (WinProfileItem)_currentProfile;
+                if (winNewProfile.Equals(winCurrentProfile))
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The Windows CCD profile {profile.Name} is the currently active profile.");
+                    return true;
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The Windows CCD profile {profile.Name} is the not currently active profile.");
+                    return false;
+                }
             }      
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is not the currently active profile.");
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is a different video library to the current profile, so can't possibly be the same one.");
                 return false;
             }
         }

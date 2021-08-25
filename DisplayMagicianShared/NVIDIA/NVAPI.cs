@@ -689,7 +689,7 @@ namespace DisplayMagicianShared.NVIDIA
 
         public bool Equals(NV_BOARD_INFO_V1 other)
         => Version == other.Version &&
-           BoardNum.Equals(other.BoardNum);
+           BoardNum.SequenceEqual(other.BoardNum);
 
         public override Int32 GetHashCode()
         {
@@ -714,7 +714,7 @@ namespace DisplayMagicianShared.NVIDIA
 
         public bool Equals(NV_EDID_V3 other)
         => Version == other.Version &&
-           EDID_Data.Equals(other.EDID_Data) &&
+           EDID_Data.SequenceEqual(other.EDID_Data) &&
            SizeofEDID == other.SizeofEDID &&
            EdidId == other.EdidId &&
            Offset.Equals(other.Offset);
@@ -727,7 +727,7 @@ namespace DisplayMagicianShared.NVIDIA
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-    public struct NV_TIMINGEXT
+    public struct NV_TIMINGEXT : IEquatable<NV_TIMINGEXT> 
     {
         public UInt32 Flag;          //!< Reserved for NVIDIA hardware-based enhancement, such as double-scan.
         public ushort Rr;            //!< Logical refresh rate to present
@@ -737,10 +737,24 @@ namespace DisplayMagicianShared.NVIDIA
         public UInt32 Status;        //!< Timing standard
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
         public string Name;      //!< Timing name
+
+        public bool Equals(NV_TIMINGEXT other)
+        => Flag == other.Flag &&
+           Rr == other.Rr &&
+           Rrx1k == other.Rrx1k &&
+           Aspect == other.Aspect &&
+           Rep == other.Rep &&
+           Status == other.Status &&
+           Name == other.Name;
+
+        public override Int32 GetHashCode()
+        {
+            return (Flag, Rr, Rrx1k, Aspect, Rep, Status, Name).GetHashCode();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_TIMING
+    public struct NV_TIMING : IEquatable<NV_TIMING> 
     {
         // VESA scan out timing parameters:
         public ushort HVisible;         //!< horizontal visible
@@ -757,50 +771,113 @@ namespace DisplayMagicianShared.NVIDIA
         public ushort VTotal;           //!< vertical total
         public byte VSyncPol;         //!< vertical sync polarity: 1-negative, 0-positive
 
-        public ushort Int32erlaced;       //!< 1-Int32erlaced, 0-progressive
+        public ushort Interlaced;       //!< 1-Int32erlaced, 0-progressive
         public UInt32 Pclk;             //!< pixel clock in 10 kHz
 
         //other timing related extras
         NV_TIMINGEXT Etc;
+
+        public bool Equals(NV_TIMING other)
+        => HVisible == other.HVisible &&
+           HBorder == other.HBorder &&
+           HFrontPorch == other.HFrontPorch &&
+           HSyncWidth == other.HSyncWidth &&
+           HTotal == other.HTotal &&
+           HSyncPol == other.HSyncPol &&
+           VVisible == other.VVisible &&
+           VBorder == other.VBorder &&
+           VFrontPorch == other.VFrontPorch &&
+           VSyncWidth == other.VSyncWidth &&
+           VTotal == other.VTotal &&
+           VSyncPol == other.VSyncPol &&
+           Interlaced == other.Interlaced &&
+           Pclk == other.Pclk &&
+           Etc.Equals(other.Etc);
+
+        public override Int32 GetHashCode()
+        {
+            return (HVisible, HBorder, HFrontPorch, HSyncWidth, HTotal, HSyncPol, VVisible, VBorder, VFrontPorch, VSyncWidth, VTotal, VSyncPol, Interlaced, Pclk, Etc).GetHashCode();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_RECT
+    public struct NV_RECT : IEquatable<NV_RECT>
     {
         public UInt32 Left;
         public UInt32 Top;
         public UInt32 Right;
         public UInt32 Bottom;
+
+        public bool Equals(NV_RECT other)
+        => Left == other.Left &&
+           Top == other.Top &&
+           Right == other.Right &&
+           Bottom == other.Bottom;
+
+        public override Int32 GetHashCode()
+        {
+            return (Left, Top, Right, Bottom).GetHashCode();
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_POSITION
+    public struct NV_POSITION : IEquatable<NV_POSITION>
     {
         public Int32 X;
         public Int32 Y;
+
+        public bool Equals(NV_POSITION other)
+        => X == other.X &&
+           Y == other.Y;
+
+        public override Int32 GetHashCode()
+        {
+            return (X, Y).GetHashCode();
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_RESOLUTION
+    public struct NV_RESOLUTION : IEquatable<NV_RESOLUTION>
     {
         public UInt32 Width;
         public UInt32 Height;
         public UInt32 ColorDepth;
+
+        public bool Equals(NV_RESOLUTION other)
+        => Width == other.Width &&
+           Height == other.Height &&
+           ColorDepth == other.ColorDepth;
+
+        public override Int32 GetHashCode()
+        {
+            return (Width, Height, ColorDepth).GetHashCode();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_VIEWPORTF
+    public struct NV_VIEWPORTF : IEquatable<NV_VIEWPORTF>
     {
         public float X;    //!<  x-coordinate of the viewport top-left poInt32
         public float Y;    //!<  y-coordinate of the viewport top-left poInt32
         public float W;    //!<  Width of the viewport
         public float H;    //!<  Height of the viewport
+
+        public bool Equals(NV_VIEWPORTF other)
+        => X == other.X &&
+           Y == other.Y &&
+           W == other.W &&
+           H == other.H;
+
+        public override Int32 GetHashCode()
+        {
+            return (X, Y, W, H).GetHashCode();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO
+    public struct NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO : IEquatable<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO> // Requires Version 1
     {
         public UInt32 Version;
 
@@ -834,18 +911,43 @@ namespace DisplayMagicianShared.NVIDIA
         public NV_TIMING Timing;             //!< Scan out timing, valid only if timingOverride == NV_TIMING_OVERRIDE_CUST
                                              //!< The value NV_TIMING::NV_TIMINGEXT::rrx1k is obtained from the EDID. The driver may
                                              //!< tweak this value for HDTV, stereo, etc., before reporting it to the OS.
+
+        public bool Equals(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO other)
+        => Version == other.Version &&
+           Rotation == other.Rotation &&
+           Scaling == other.Scaling &&
+           RefreshRate1K == other.RefreshRate1K &&
+           Connector == other.Connector &&
+           TvFormat == other.TvFormat &&
+           TimingOverride == other.TimingOverride &&
+           Timing.Equals(other.Timing);
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, Rotation, Scaling, RefreshRate1K, Connector, TvFormat, TimingOverride, Timing).GetHashCode();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2
+    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>
     {
         public UInt32 DisplayId;  //!< Display ID
         NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO[] Details;    //!< May be NULL if no advanced settings are required
         public UInt32 TargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
+
+        public bool Equals(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 other)
+        => DisplayId == other.DisplayId &&
+           Details.SequenceEqual(other.Details) &&
+           TargetId == other.TargetId;
+
+        public override Int32 GetHashCode()
+        {
+            return (DisplayId, Details, TargetId).GetHashCode();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct NV_DISPLAYCONFIG_PATH_INFO_V2
+    public struct NV_DISPLAYCONFIG_PATH_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V2> // Version is 2
     {
         public UInt32 Version;
         public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
@@ -857,10 +959,22 @@ namespace DisplayMagicianShared.NVIDIA
                                                                                   //public UInt32 reserved : 31;              //!< Must be 0
                                                                                   //public LUID pOSAdapterID;              //!< Used by Non-NVIDIA adapter for poInt32er to OS Adapter of LUID
                                                                                   //!< type, type casted to void *.
+
+        public bool Equals(NV_DISPLAYCONFIG_PATH_INFO_V2 other)
+        => Version == other.Version &&
+           SourceId == other.SourceId &&
+           TargetInfoCount == other.TargetInfoCount &&
+           TargetInfo.Equals(other.TargetInfo) &&
+           sourceModeInfo.Equals(other.sourceModeInfo);
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, SourceId, TargetInfoCount, TargetInfo, sourceModeInfo).GetHashCode();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1
+    public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1>
     {
         public NV_RESOLUTION Resolution;
         public NV_FORMAT ColorFormat;                //!< Ignored at present, must be NV_FORMAT_UNKNOWN (0)
@@ -871,15 +985,35 @@ namespace DisplayMagicianShared.NVIDIA
                                                        //public UInt32 bGDIPrimary : 1;
                                                        //public UInt32 bSLIFocus : 1;
                                                        //public UInt32 reserved : 30;              //!< Must be 0
+
+        public bool Equals(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 other)
+        => Resolution.Equals(other.Resolution) &&
+           ColorFormat == other.ColorFormat &&
+           Position.Equals(other.Position);
+
+        public override Int32 GetHashCode()
+        {
+            return (Resolution, ColorFormat, Position).GetHashCode();
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO
+    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO>
     {
         public UInt32 DisplayId;  //!< Display ID
         public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO[] Details;    //!< May be NULL if no advanced settings are required
         public UInt32 TargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
+
+        public bool Equals(NV_DISPLAYCONFIG_PATH_TARGET_INFO other)
+        => DisplayId == other.DisplayId &&
+           Details.SequenceEqual(other.Details) &&
+           TargetId == other.TargetId;
+
+        public override Int32 GetHashCode()
+        {
+            return (DisplayId, Details, TargetId).GetHashCode();
+        }
     }
 
 
