@@ -73,9 +73,6 @@
     <Compile Include="Scaling.cs" />
     <Compile Include="ProfileRepository.cs" />
     <Compile Include="ShellUtils.cs" />
-    <Compile Include="Topology\Path.cs" />
-    <Compile Include="Topology\PathHelper.cs" />
-    <Compile Include="Topology\PathTarget.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\Language.Designer.cs">
       <DependentUpon>Language.resx</DependentUpon>
