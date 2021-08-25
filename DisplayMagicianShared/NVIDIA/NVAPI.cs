@@ -1346,9 +1346,9 @@ namespace DisplayMagicianShared.NVIDIA
         public bool Equals(NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 other)
         => Version == other.Version &&
            TopoBriefsCount == other.TopoBriefsCount &&
-           TopoBriefs.Equals(other.TopoBriefs) &&
+           TopoBriefs.SequenceEqual(other.TopoBriefs) &&
            DisplaySettingsCount == other.DisplaySettingsCount &&
-           DisplaySettings.Equals(other.DisplaySettings);
+           DisplaySettings.SequenceEqual(other.DisplaySettings);
 
         public override Int32 GetHashCode()
         {
@@ -1370,9 +1370,9 @@ namespace DisplayMagicianShared.NVIDIA
         public bool Equals(NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 other)
         => Version == other.Version &&
            TopoBriefsCount == other.TopoBriefsCount &&
-           TopoBriefs.Equals(other.TopoBriefs) &&
+           TopoBriefs.SequenceEqual(other.TopoBriefs) &&
            DisplaySettingsCount == other.DisplaySettingsCount &&
-           DisplaySettings.Equals(other.DisplaySettings);
+           DisplaySettings.SequenceEqual(other.DisplaySettings);
 
         public override Int32 GetHashCode()
         {

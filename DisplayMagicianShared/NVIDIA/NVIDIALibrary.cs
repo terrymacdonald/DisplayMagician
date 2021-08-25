@@ -50,8 +50,8 @@ namespace DisplayMagicianShared.NVIDIA
         public bool IsNvHdrEnabled;
 
         public bool Equals(NVIDIA_HDR_CONFIG other)
-        => HdrCapabilities == other.HdrCapabilities &&
-           HdrColorData == other.HdrColorData &&
+        => HdrCapabilities.SequenceEqual(other.HdrCapabilities) &&
+           HdrColorData.SequenceEqual(other.HdrColorData) &&
            IsNvHdrEnabled == other.IsNvHdrEnabled;
 
         public override int GetHashCode()
@@ -70,7 +70,7 @@ namespace DisplayMagicianShared.NVIDIA
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
         => MosaicConfig.Equals(other.MosaicConfig) &&
            HdrConfig.Equals(other.HdrConfig) &&
-           DisplayIdentifiers.Equals(other.DisplayIdentifiers);
+           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
 
         public override int GetHashCode()
         {
