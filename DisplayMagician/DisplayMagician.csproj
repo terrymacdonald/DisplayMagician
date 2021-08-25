@@ -134,12 +134,6 @@
     </Compile>
     <Compile Include="ShortcutItem.cs" />
     <Compile Include="ShortcutRepository.cs" />
-    <Compile Include="UIForms\ApplyingProfileForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UIForms\ApplyingProfileForm.Designer.cs">
-      <DependentUpon>ApplyingProfileForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
       <SubType>Form</SubType>
@@ -204,9 +198,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Language.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UIForms\ApplyingProfileForm.resx">
-      <DependentUpon>ApplyingProfileForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\HotkeyForm.resx">
       <DependentUpon>HotkeyForm.cs</DependentUpon>
@@ -325,6 +316,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\winwhite.png" />
+    <None Include="Resources\winblack.png" />
     <None Include="Resources\Steam.png" />
     <None Include="Resources\Uplay.png" />
     <None Include="Resources\whitearrowsup.png" />
@@ -338,6 +331,9 @@
     <None Include="Resources\GOG.png" />
     <None Include="Resources\amdblack.png" />
     <None Include="Resources\amdwhite.png" />
+    <None Include="Resources\nvidiablack.png" />
+    <None Include="Resources\nvidiawhitee.png" />
+    <None Include="Resources\nvidiawhite.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

@@ -262,7 +262,7 @@ namespace DisplayMagician.UIForms
             // And show the logo for the driver
             if (_selectedProfile.VideoMode == VIDEO_MODE.NVIDIA)
             {
-                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.amdblack, Properties.Resources.amdwhite);
+                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.nvidiablack, Properties.Resources.nvidiawhite);
             }
             else if (_selectedProfile.VideoMode == VIDEO_MODE.AMD)
             {
@@ -270,7 +270,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.amdblack, Properties.Resources.amdwhite);
+                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.winblack, Properties.Resources.winwhite);
             }
 
             // And update the save/rename textbox

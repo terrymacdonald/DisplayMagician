@@ -123,6 +123,26 @@ namespace DisplayMagician.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        public static System.Drawing.Bitmap nvidiablack {
+            get {
+                object obj = ResourceManager.GetObject("nvidiablack", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap nvidiawhite {
+            get {
+                object obj = ResourceManager.GetObject("nvidiawhite", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         public static System.Drawing.Bitmap Origin {
             get {
                 object obj = ResourceManager.GetObject("Origin", resourceCulture);
@@ -196,6 +216,26 @@ namespace DisplayMagician.Properties {
         public static System.Drawing.Bitmap whitearrowsup {
             get {
                 object obj = ResourceManager.GetObject("whitearrowsup", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap winblack {
+            get {
+                object obj = ResourceManager.GetObject("winblack", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap winwhite {
+            get {
+                object obj = ResourceManager.GetObject("winwhite", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
