@@ -57,6 +57,7 @@
     <Compile Include="NVIDIA\NVAPI.cs" />
     <Compile Include="NVIDIA\NVIDIALibrary.cs" />
     <Compile Include="NVIDIA\NVIDIAProfileItem.cs" />
+    <Compile Include="NVIDIA\PInvokeDelegateFactory.cs" />
     <Compile Include="SharedLogger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

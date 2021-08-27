@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
+using System.Runtime.Serialization;
 
 namespace DisplayMagicianShared
 {
@@ -22,6 +23,13 @@ namespace DisplayMagicianShared
         WINDOWS = 0,
         NVIDIA = 1,
         AMD = 2,
+    }
+
+    public enum ApplyProfileResult
+    {
+        Successful,
+        Cancelled,
+        Error
     }
 
     public static class ProfileRepository
@@ -973,6 +981,74 @@ namespace DisplayMagicianShared
             return uncheckedFilename;
         }
 
+        // ApplyProfile lives here so that the UI works.
+        public static ApplyProfileResult ApplyProfile(ProfileItem profile)
+        {
+            SharedLogger.logger.Trace($"Program/ApplyProfile: Starting");
+            NVIDIAProfileItem nvidiaProfile = null;
+            AMDProfileItem amdProfile = null;
+            WinProfileItem winProfile = null;
+
+            if (profile == null)
+            {
+                SharedLogger.logger.Debug($"Program/ApplyProfile: The supplied profile is null! Can't be used.");
+                return ApplyProfileResult.Error;
+            }
+
+            try
+            {
+                // We try to swap profiles. The profiles have checking logic in them
+                if (profile is NVIDIAProfileItem)
+                {
+                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile is an NVIDIA Profile, so changing type to NVIDIAProfileItem");
+                    nvidiaProfile = (NVIDIAProfileItem)profile;
+                    if (!nvidiaProfile.SetActive())
+                    {
+                        SharedLogger.logger.Error($"Program/ApplyProfile: Error applying the NVIDIA Profile!");
+                        return ApplyProfileResult.Error;
+                    }
+                }
+                else if (profile is AMDProfileItem)
+                {
+                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile is an AMD Profile, so changing type to AMDProfileItem");
+                    amdProfile = (AMDProfileItem)profile;
+                    if (!amdProfile.SetActive())
+                    {
+                        SharedLogger.logger.Error($"Program/ApplyProfile: Error applying the AMD Profile!");
+                        return ApplyProfileResult.Error;
+                    }
+                }
+                else if (profile is WinProfileItem)
+                {
+                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile is a Windows CCD Profile, so changing type to WinProfileItem");
+                    winProfile = (WinProfileItem)profile;
+                    if (!winProfile.SetActive())
+                    {
+                        // Somehow return that this profile topology didn't apply
+                        throw new ApplyTopologyException("Program/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile type is not one that is supported by DisplayMagician, so returning an ApplyProfileResult error");
+                    return ApplyProfileResult.Error;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                {
+                    SharedLogger.logger.Debug($"Program/ApplyProfile: Failed to complete changing the Windows Display layout");
+                    return ApplyProfileResult.Error;
+                }
+            }
+
+            ProfileRepository.UpdateActiveProfile();
+
+            return ApplyProfileResult.Successful;
+        }
+
         #endregion
 
     }
@@ -990,5 +1066,18 @@ namespace DisplayMagicianShared
     }
 
 
+    public class ApplyTopologyException : Exception
+    {
+        public ApplyTopologyException()
+        { }
+
+        public ApplyTopologyException(string message) : base(message)
+        { }
+
+        public ApplyTopologyException(string message, Exception innerException) : base(message, innerException)
+        { }
+        public ApplyTopologyException(SerializationInfo info, StreamingContext context) : base(info, context)
+        { }
+    }
 }
 

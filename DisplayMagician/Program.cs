@@ -24,13 +24,6 @@ using DisplayMagicianShared.Windows;
 
 namespace DisplayMagician {
 
-    public enum ApplyProfileResult
-    {
-        Successful,
-        Cancelled,
-        Error
-    }
-
     internal static class Program
     {
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -295,10 +288,7 @@ namespace DisplayMagician {
 
                     try
                     {
-                        // Lookup the profile
-                        ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(argumentProfile.Value)).First();
-
-                        ApplyProfile(profileToUse);
+                        RunProfile(argumentProfile.Value);
                         return 0;
                     }
                     catch (Exception ex)
@@ -568,72 +558,16 @@ namespace DisplayMagician {
             return true;
         }
 
-        // ApplyProfile lives here so that the UI works.
-        public static ApplyProfileResult ApplyProfile(ProfileItem profile)
+        public static void RunProfile(string profileName)
         {
-            logger.Trace($"Program/ApplyProfile: Starting");
-            NVIDIAProfileItem nvidiaProfile = null;
-            AMDProfileItem amdProfile = null;
-            WinProfileItem winProfile = null;
+            logger.Trace($"Program/RunProfile: Starting");
 
-            if (profile == null)
-            {
-                logger.Debug($"Program/ApplyProfile: The supplied profile is null! Can't be used.");
-                return ApplyProfileResult.Error;
-            }
+            // Lookup the profile
+            ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
+            logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
 
-            try
-            {
-                // We try to swap profiles. The profiles have checking logic in them
-                if (profile is NVIDIAProfileItem)
-                {
-                    logger.Trace($"Program/ApplyProfile: Profile is an NVIDIA Profile, so changing type to NVIDIAProfileItem");
-                    nvidiaProfile = (NVIDIAProfileItem)profile;
-                    if (!nvidiaProfile.SetActive())
-                    {
-                        logger.Error($"Program/ApplyProfile: Error applying the NVIDIA Profile!");
-                        return ApplyProfileResult.Error;
-                    }
-                }
-                else if (profile is AMDProfileItem)
-                {
-                    logger.Trace($"Program/ApplyProfile: Profile is an AMD Profile, so changing type to AMDProfileItem");
-                    amdProfile = (AMDProfileItem)profile;
-                    if (!amdProfile.SetActive())
-                    {
-                        logger.Error($"Program/ApplyProfile: Error applying the AMD Profile!");
-                        return ApplyProfileResult.Error;
-                    }
-                }
-                else if (profile is WinProfileItem)
-                {
-                    logger.Trace($"Program/ApplyProfile: Profile is a Windows CCD Profile, so changing type to WinProfileItem");
-                    winProfile = (WinProfileItem)profile;
-                    if (!winProfile.SetActive())
-                    {
-                        // Somehow return that this profile topology didn't apply
-                        throw new ApplyTopologyException("Program/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
-                    }
-                }
-                else
-                {
-                    logger.Trace($"Program/ApplyProfile: Profile type is not one that is supported by DisplayMagician, so returning an ApplyProfileResult error");
-                    return ApplyProfileResult.Error;
-                }
+            ProfileRepository.ApplyProfile(profileToUse);
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                {
-                    logger.Debug($"Program/ApplyProfile: Failed to complete changing the Windows Display layout");
-                    return ApplyProfileResult.Error;
-                }
-            }
-
-            ProfileRepository.UpdateActiveProfile();
-
-            return ApplyProfileResult.Successful;
         }
 
         public static bool LoadGamesInBackground()
@@ -865,34 +799,7 @@ namespace DisplayMagician {
         }
 
     }
-
-
-    public class ApplyTopologyException : Exception
-    {
-        public ApplyTopologyException()
-        { }
-
-        public ApplyTopologyException(string message) : base(message)
-        { }
-
-        public ApplyTopologyException(string message, Exception innerException) : base(message, innerException)
-        { }
-        public ApplyTopologyException(SerializationInfo info, StreamingContext context) : base(info, context)
-        { }
-    }
-
-    public class ApplyPathInfoException : Exception
-    {
-        public ApplyPathInfoException()
-        { }
-        
-        public ApplyPathInfoException(string message) : base(message)
-        { }
-        public ApplyPathInfoException(string message, Exception innerException) : base(message, innerException)
-        { }
-        public ApplyPathInfoException(SerializationInfo info, StreamingContext context) : base(info, context)
-        { }
-    }
+   
 
     public class LoadingInstalledGamesException : Exception
     {

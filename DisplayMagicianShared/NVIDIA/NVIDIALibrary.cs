@@ -1086,7 +1086,7 @@ namespace DisplayMagicianShared.NVIDIA
                 // Now, we have the current HDR settings, and the existing HDR settings, so we go through and we attempt to set each display color settings
                 foreach (var wantedHdrColorData in displayConfig.HdrConfig.HdrColorData)
                 {
-                    // If we have HDR settings for the display, then attempt to set them
+                    // If we have HDR settings stored for the display, then attempt to set them
                     if (currentDisplayConfig.HdrConfig.HdrColorData.ContainsKey(wantedHdrColorData.Key))
                     {
                         // Now we set the HDR colour settings of the display

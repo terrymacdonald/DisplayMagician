@@ -573,7 +573,7 @@ namespace DisplayMagician
             {
                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {rollbackProfile.Name} profile.");
                 // Apply the Profile!
-                ApplyProfileResult result = Program.ApplyProfile(shortcutToUse.ProfileToUse);
+                ApplyProfileResult result = ProfileRepository.ApplyProfile(shortcutToUse.ProfileToUse);
                 if (result == ApplyProfileResult.Error)
                 {
                     Console.WriteLine($"ERROR - Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
@@ -1724,7 +1724,7 @@ namespace DisplayMagician
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 
-                ApplyProfileResult result = Program.ApplyProfile(rollbackProfile);
+                ApplyProfileResult result = ProfileRepository.ApplyProfile(rollbackProfile);
                                 
                 if (result == ApplyProfileResult.Error)
                 {

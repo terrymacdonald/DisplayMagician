@@ -404,7 +404,7 @@ namespace DisplayMagician.UIForms
 
                 // Run the shortcut if it's still there
                 if (profileToRun != null)
-                    Program.ApplyProfile(profileToRun);
+                    ProfileRepository.ApplyProfile(profileToRun);
             }
         }
 
@@ -652,7 +652,7 @@ namespace DisplayMagician.UIForms
                 string displayProfileUUID = e.Name;
                 ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
                 if (chosenProfile is ProfileItem)
-                    Program.ApplyProfile(chosenProfile);
+                    ProfileRepository.ApplyProfile(chosenProfile);
             }
             else if (hotkeyShortcuts.Contains(e.Name))
             {
