@@ -21,11 +21,13 @@ namespace DisplayMagicianShared
         private List<string> _profileDisplayIdentifiers = new List<string>();
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
+        private static string AppWallpaperPath = Path.Combine(AppDataPath, $"Wallpaper");
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
         private bool _isPossible = false;
         private Keys _hotkey = Keys.None;
+        private string _wallpaperBitmapFilename = "";
 
 
         #region JsonConverterBitmap
@@ -178,6 +180,19 @@ namespace DisplayMagicianShared
 
         public string SavedProfileIconCacheFilename { get; set; }
 
+        public bool SetWallpaper { get; set; }
+
+        public string WallpaperBitmapFilename{ 
+            get
+            {
+                return _wallpaperBitmapFilename;
+            }
+            set
+            {
+                _wallpaperBitmapFilename = value;
+            }
+        }
+
         public List<string> ProfileDisplayIdentifiers
         {
             get
@@ -268,7 +283,13 @@ namespace DisplayMagicianShared
                 ProfileBitmap is Bitmap &&
                 ProfileTightestBitmap is Bitmap &&
                 ProfileDisplayIdentifiers.Count > 0)
+            {
+                if (SetWallpaper && WallpaperBitmapFilename == "")
+                    return false;
+
                 return true;
+            }
+                
             else 
                 return false;
         }
@@ -291,6 +312,8 @@ namespace DisplayMagicianShared
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
+            profile.SetWallpaper = SetWallpaper;
+            profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
             return true;
         }
 
