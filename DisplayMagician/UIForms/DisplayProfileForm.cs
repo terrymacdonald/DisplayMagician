@@ -6,8 +6,6 @@ using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System.Drawing;
-using System.Collections.Generic;
-//using WK.Libraries.HotkeyListenerNS;
 using NHotkey.WindowsForms;
 using NHotkey;
 

@@ -260,9 +260,6 @@
     <PackageReference Include="CircularProgressBar">
       <Version>2.8.0.16</Version>
     </PackageReference>
-    <PackageReference Include="EDIDParser">
-      <Version>1.2.5.4</Version>
-    </PackageReference>
     <PackageReference Include="HtmlAgilityPack">
       <Version>1.11.36</Version>
     </PackageReference>

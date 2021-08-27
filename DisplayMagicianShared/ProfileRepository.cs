@@ -428,7 +428,7 @@ namespace DisplayMagicianShared
 
             foreach (ProfileItem testProfile in _allProfiles)
             {
-                if (testProfile.UUID.Equals(Profile.UUID))
+                if (testProfile.Equals(Profile))
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {Profile.Name}");
                     return true;
@@ -752,14 +752,14 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
 
-                    // Populate the Current Profile now so we have stuff to compare against
+                    /*// Populate the Current Profile now so we have stuff to compare against
                     ProfileItem myCurrentProfile = new NVIDIAProfileItem
                     {
                         Name = "Current Display Profile",
                     };
                     myCurrentProfile.CreateProfileFromCurrentDisplaySettings();
                     _currentProfile = myCurrentProfile;
-
+*/
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
 
                     // Go through all the  profiles and set up the needed structures (such as the Screens list)
@@ -988,61 +988,80 @@ namespace DisplayMagicianShared
             NVIDIAProfileItem nvidiaProfile = null;
             AMDProfileItem amdProfile = null;
             WinProfileItem winProfile = null;
+            // We try to time the profile display swap
+            Stopwatch stopWatch = new Stopwatch();
+            bool wasDisplayChangeSuccessful = true;
 
             if (profile == null)
             {
-                SharedLogger.logger.Debug($"Program/ApplyProfile: The supplied profile is null! Can't be used.");
+                SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: The supplied profile is null! Can't be used.");
                 return ApplyProfileResult.Error;
             }
 
             try
             {
+                // We start the timer just before we attempt the display change
+                stopWatch.Start();
+
                 // We try to swap profiles. The profiles have checking logic in them
                 if (profile is NVIDIAProfileItem)
                 {
-                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile is an NVIDIA Profile, so changing type to NVIDIAProfileItem");
+                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile is an NVIDIA Profile, so changing type to NVIDIAProfileItem");
                     nvidiaProfile = (NVIDIAProfileItem)profile;
                     if (!nvidiaProfile.SetActive())
                     {
-                        SharedLogger.logger.Error($"Program/ApplyProfile: Error applying the NVIDIA Profile!");
+                        SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the NVIDIA Profile!");
                         return ApplyProfileResult.Error;
                     }
                 }
                 else if (profile is AMDProfileItem)
                 {
-                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile is an AMD Profile, so changing type to AMDProfileItem");
+                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile is an AMD Profile, so changing type to AMDProfileItem");
                     amdProfile = (AMDProfileItem)profile;
                     if (!amdProfile.SetActive())
                     {
-                        SharedLogger.logger.Error($"Program/ApplyProfile: Error applying the AMD Profile!");
+                        SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the AMD Profile!");
                         return ApplyProfileResult.Error;
                     }
                 }
                 else if (profile is WinProfileItem)
                 {
-                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile is a Windows CCD Profile, so changing type to WinProfileItem");
+                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile is a Windows CCD Profile, so changing type to WinProfileItem");
                     winProfile = (WinProfileItem)profile;
                     if (!winProfile.SetActive())
                     {
                         // Somehow return that this profile topology didn't apply
-                        throw new ApplyTopologyException("Program/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
+                        throw new ApplyTopologyException("ProfileRepository/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
                     }
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"Program/ApplyProfile: Profile type is not one that is supported by DisplayMagician, so returning an ApplyProfileResult error");
+                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile type is not one that is supported by DisplayMagician, so returning an ApplyProfileResult error");
                     return ApplyProfileResult.Error;
                 }
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ProfileRepository/ApplyTopology exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                {
-                    SharedLogger.logger.Debug($"Program/ApplyProfile: Failed to complete changing the Windows Display layout");
-                    return ApplyProfileResult.Error;
-                }
+                SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Failed to complete changing the Windows Display layout");
+                wasDisplayChangeSuccessful = false;
+                return ApplyProfileResult.Error;
             }
+            finally
+            {
+                // We stop the stop watch
+                stopWatch.Stop();
+                // Get the elapsed time as a TimeSpan value.
+                TimeSpan ts = stopWatch.Elapsed;
+                string result = "failed";
+                if (wasDisplayChangeSuccessful)
+                {
+                    result = "was successful";
+                }
+                // Display the TimeSpan time and result.
+                SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
+            }
+
 
             ProfileRepository.UpdateActiveProfile();
 
