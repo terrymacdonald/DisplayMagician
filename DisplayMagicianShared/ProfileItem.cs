@@ -182,6 +182,8 @@ namespace DisplayMagicianShared
 
         public bool SetWallpaper { get; set; }
 
+        public Wallpaper.Style WallpaperStyle { get; set; }
+
         public string WallpaperBitmapFilename{ 
             get
             {
@@ -314,6 +316,7 @@ namespace DisplayMagicianShared
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
             profile.SetWallpaper = SetWallpaper;
             profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
+            profile.WallpaperStyle = WallpaperStyle;
             return true;
         }
 

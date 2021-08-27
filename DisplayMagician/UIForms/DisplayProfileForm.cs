@@ -534,5 +534,12 @@ namespace DisplayMagician.UIForms
             
         }
 
+        private void btn_profile_settings_Click(object sender, EventArgs e)
+        {
+            ProfileSettingsForm profileSettingsForm = new ProfileSettingsForm();
+            profileSettingsForm.Profile = _selectedProfile;
+            profileSettingsForm.ShowDialog(this);
+            //_selectedProfile = profileSettingsForm.Profile;
+        }
     }
 }
