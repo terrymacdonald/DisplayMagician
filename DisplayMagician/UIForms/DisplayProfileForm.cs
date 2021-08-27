@@ -54,7 +54,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Apply the Profile
-            if (Program.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
+            if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             {
                 ChangeSelectedProfile(_selectedProfile);
             }
@@ -555,7 +555,7 @@ namespace DisplayMagician.UIForms
                 string displayProfileUUID = e.Name;
                 ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
                 if (chosenProfile is ProfileItem)
-                    Program.ApplyProfile(chosenProfile);
+                    ProfileRepository.ApplyProfile(chosenProfile);
             }
             
         }
