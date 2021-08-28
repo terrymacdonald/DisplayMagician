@@ -539,7 +539,11 @@ namespace DisplayMagician.UIForms
             ProfileSettingsForm profileSettingsForm = new ProfileSettingsForm();
             profileSettingsForm.Profile = _selectedProfile;
             profileSettingsForm.ShowDialog(this);
-            //_selectedProfile = profileSettingsForm.Profile;
+            // If the profile was changed then save all the profiles
+            if (profileSettingsForm.ProfileSettingChanged)
+            {
+                ProfileRepository.SaveProfiles();
+            }                
         }
     }
 }

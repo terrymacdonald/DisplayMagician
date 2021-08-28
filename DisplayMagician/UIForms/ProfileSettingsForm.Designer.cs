@@ -86,6 +86,7 @@ namespace DisplayMagician.UIForms
             this.btn_select_wallpaper.TabIndex = 16;
             this.btn_select_wallpaper.Text = "&Select";
             this.btn_select_wallpaper.UseVisualStyleBackColor = true;
+            this.btn_select_wallpaper.Click += new System.EventHandler(this.btn_select_wallpaper_Click);
             // 
             // txt_wallpaper_filename
             // 
@@ -107,6 +108,7 @@ namespace DisplayMagician.UIForms
             this.cb_set_wallpaper.TabIndex = 14;
             this.cb_set_wallpaper.Text = "Set wallpaper when applying this profile";
             this.cb_set_wallpaper.UseVisualStyleBackColor = true;
+            this.cb_set_wallpaper.CheckedChanged += new System.EventHandler(this.cb_set_wallpaper_CheckedChanged);
             // 
             // label1
             // 
@@ -123,10 +125,6 @@ namespace DisplayMagician.UIForms
             // 
             this.cmb_wallpaper_display_mode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmb_wallpaper_display_mode.FormattingEnabled = true;
-            this.cmb_wallpaper_display_mode.Items.AddRange(new object[] {
-            "Centered",
-            "Stretched",
-            "Tiled"});
             this.cmb_wallpaper_display_mode.Location = new System.Drawing.Point(203, 108);
             this.cmb_wallpaper_display_mode.Name = "cmb_wallpaper_display_mode";
             this.cmb_wallpaper_display_mode.Size = new System.Drawing.Size(219, 24);
