@@ -60,10 +60,10 @@ namespace DisplayMagician.UIForms
                 logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} has loaded with Set Wallpaper enabled and Wallpaper Style {Profile.WallpaperStyle.ToString("G")} and Wallpaper Filename of {Profile.WallpaperBitmapFilename}.");
                 cb_set_wallpaper.Checked = true;
                 cmb_wallpaper_display_mode.SelectedIndex = cmb_wallpaper_display_mode.FindStringExact(wallpaperStyleText[Profile.WallpaperStyle]);
-                if (Profile.WallpaperBitmapFilename != "")
+                /*if (Profile.WallpaperBitmapFilename != "")
                 {
                     txt_wallpaper_filename.Text = Profile.WallpaperBitmapFilename;
-                }
+                }*/
             }
             else
             {
@@ -76,7 +76,7 @@ namespace DisplayMagician.UIForms
         {
             Profile.SetWallpaper = cb_set_wallpaper.Checked;
             Profile.WallpaperStyle = ((KeyValuePair<Wallpaper.Style, string>)cmb_wallpaper_display_mode.SelectedItem).Key;
-            Profile.WallpaperBitmapFilename = txt_wallpaper_filename.Text;
+            //Profile.WallpaperBitmapFilename = txt_wallpaper_filename.Text;
         }
 
         private void btn_back_Click(object sender, EventArgs e)
