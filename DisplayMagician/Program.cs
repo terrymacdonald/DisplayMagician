@@ -189,6 +189,17 @@ namespace DisplayMagician {
                     logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
                 }
             }
+            if (!Directory.Exists(AppWallpaperPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppWallpaperPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
+                }
+            }
 
             // Write the Application Name
             Console.WriteLine($"{Application.ProductName} v{Application.ProductVersion}");

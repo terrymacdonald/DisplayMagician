@@ -31,15 +31,15 @@ namespace DisplayMagician.UIForms
         {
             this.btn_back = new System.Windows.Forms.Button();
             this.gb_general = new System.Windows.Forms.GroupBox();
+            this.btn_current = new System.Windows.Forms.Button();
             this.btn_clear = new System.Windows.Forms.Button();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.pb_wallpaper = new System.Windows.Forms.PictureBox();
             this.btn_select = new System.Windows.Forms.Button();
             this.cb_set_wallpaper = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.cmb_wallpaper_display_mode = new System.Windows.Forms.ComboBox();
-            this.btn_current = new System.Windows.Forms.Button();
             this.gb_general.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pb_wallpaper)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_back
@@ -62,7 +62,7 @@ namespace DisplayMagician.UIForms
             // 
             this.gb_general.Controls.Add(this.btn_current);
             this.gb_general.Controls.Add(this.btn_clear);
-            this.gb_general.Controls.Add(this.pictureBox1);
+            this.gb_general.Controls.Add(this.pb_wallpaper);
             this.gb_general.Controls.Add(this.btn_select);
             this.gb_general.Controls.Add(this.cb_set_wallpaper);
             this.gb_general.Controls.Add(this.label1);
@@ -75,6 +75,22 @@ namespace DisplayMagician.UIForms
             this.gb_general.TabIndex = 11;
             this.gb_general.TabStop = false;
             this.gb_general.Text = "Wallpaper Settings";
+            // 
+            // btn_current
+            // 
+            this.btn_current.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_current.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_current.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_current.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_current.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_current.ForeColor = System.Drawing.Color.White;
+            this.btn_current.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.btn_current.Location = new System.Drawing.Point(417, 158);
+            this.btn_current.Name = "btn_current";
+            this.btn_current.Size = new System.Drawing.Size(75, 23);
+            this.btn_current.TabIndex = 19;
+            this.btn_current.Text = "&Use Current";
+            this.btn_current.UseVisualStyleBackColor = true;
             // 
             // btn_clear
             // 
@@ -92,13 +108,17 @@ namespace DisplayMagician.UIForms
             this.btn_clear.Text = "&Clear";
             this.btn_clear.UseVisualStyleBackColor = true;
             // 
-            // pictureBox1
+            // pb_wallpaper
             // 
-            this.pictureBox1.Location = new System.Drawing.Point(28, 68);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(381, 212);
-            this.pictureBox1.TabIndex = 17;
-            this.pictureBox1.TabStop = false;
+            this.pb_wallpaper.BackColor = System.Drawing.Color.White;
+            this.pb_wallpaper.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.pb_wallpaper.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pb_wallpaper.Location = new System.Drawing.Point(28, 68);
+            this.pb_wallpaper.Name = "pb_wallpaper";
+            this.pb_wallpaper.Size = new System.Drawing.Size(381, 212);
+            this.pb_wallpaper.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pb_wallpaper.TabIndex = 17;
+            this.pb_wallpaper.TabStop = false;
             // 
             // btn_select
             // 
@@ -153,22 +173,6 @@ namespace DisplayMagician.UIForms
             this.cmb_wallpaper_display_mode.TabIndex = 12;
             this.cmb_wallpaper_display_mode.SelectedIndexChanged += new System.EventHandler(this.cmb_wallpaper_display_mode_SelectedIndexChanged);
             // 
-            // btn_current
-            // 
-            this.btn_current.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_current.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_current.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_current.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_current.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_current.ForeColor = System.Drawing.Color.White;
-            this.btn_current.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.btn_current.Location = new System.Drawing.Point(417, 158);
-            this.btn_current.Name = "btn_current";
-            this.btn_current.Size = new System.Drawing.Size(75, 23);
-            this.btn_current.TabIndex = 19;
-            this.btn_current.Text = "&Use Current";
-            this.btn_current.UseVisualStyleBackColor = true;
-            // 
             // ProfileSettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -190,7 +194,7 @@ namespace DisplayMagician.UIForms
             this.Load += new System.EventHandler(this.ProfileSettingsForm_Load);
             this.gb_general.ResumeLayout(false);
             this.gb_general.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pb_wallpaper)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -203,7 +207,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ComboBox cmb_wallpaper_display_mode;
         private System.Windows.Forms.Button btn_select;
         private System.Windows.Forms.Button btn_clear;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox pb_wallpaper;
         private System.Windows.Forms.Button btn_current;
     }
 }

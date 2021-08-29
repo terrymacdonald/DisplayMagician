@@ -3,6 +3,9 @@ using NHotkey;
 using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using WK.Libraries.BootMeUpNS;
@@ -16,6 +19,7 @@ namespace DisplayMagician.UIForms
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private Dictionary<Wallpaper.Style, string> wallpaperStyleText = new Dictionary<Wallpaper.Style, string>();
+        Bitmap wallpaperImage = null;
         private bool _profileSettingChanged = false;
 
         public ProfileSettingsForm()
@@ -60,10 +64,16 @@ namespace DisplayMagician.UIForms
                 logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} has loaded with Set Wallpaper enabled and Wallpaper Style {Profile.WallpaperStyle.ToString("G")} and Wallpaper Filename of {Profile.WallpaperBitmapFilename}.");
                 cb_set_wallpaper.Checked = true;
                 cmb_wallpaper_display_mode.SelectedIndex = cmb_wallpaper_display_mode.FindStringExact(wallpaperStyleText[Profile.WallpaperStyle]);
-                /*if (Profile.WallpaperBitmapFilename != "")
+                if (Profile.WallpaperBitmapFilename != "" && File.Exists(Profile.WallpaperBitmapFilename))
                 {
-                    txt_wallpaper_filename.Text = Profile.WallpaperBitmapFilename;
-                }*/
+                    // Load the existing Wallpaper into the PictureBox
+                    //Read the contents of the file into a stream
+                    //StreamReader streamReader = new StreamReader(Profile.WallpaperBitmapFilename);
+                    FileStream fileStream = new FileStream(Profile.WallpaperBitmapFilename,FileMode.Open);
+
+                    wallpaperImage = new Bitmap(fileStream);                    
+                    pb_wallpaper.Image = wallpaperImage;
+                }
             }
             else
             {
@@ -81,6 +91,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_back_Click(object sender, EventArgs e)
         {
+            wallpaperImage.Dispose();
             this.Close();
         }
 
@@ -96,7 +107,45 @@ namespace DisplayMagician.UIForms
 
         private void btn_select_wallpaper_Click(object sender, EventArgs e)
         {
-            _profileSettingChanged = true;
+            _profileSettingChanged = true;            
+            string filePath = string.Empty;
+            string wallpaperPath = string.Empty;
+
+            try
+            {
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                {
+                    openFileDialog.InitialDirectory = "c:\\";
+                    openFileDialog.Filter = "Image Files(*.bmp; *.jpg; *.gif; *.png; *.tiff)| *.bmp; *.jpg; *.gif; *.png; *.tiff | All files(*.*) | *.*";
+                    openFileDialog.FilterIndex = 2;
+                    openFileDialog.RestoreDirectory = true;
+
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        //Get the path of specified file
+                        filePath = openFileDialog.FileName;
+
+                        // If The user selected a photo then we need to set the set wallpaper to yes
+                        cb_set_wallpaper.Checked = true;
+                        
+                        //Read the contents of the file into a stream
+                        Stream fileStream = openFileDialog.OpenFile();
+
+                        wallpaperImage = new Bitmap(fileStream);
+                        wallpaperPath = Path.Combine(Program.AppWallpaperPath, $"wallpaper-{Profile.UUID}.jpg");
+
+                        wallpaperImage.Save(wallpaperPath, ImageFormat.Png);
+
+                        Profile.WallpaperBitmapFilename = wallpaperPath;
+
+                        pb_wallpaper.Image = wallpaperImage;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // TODO: handle the exceptions
+            }
         }
     }
 }
