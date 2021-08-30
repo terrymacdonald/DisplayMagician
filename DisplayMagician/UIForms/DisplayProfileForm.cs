@@ -570,5 +570,6 @@ namespace DisplayMagician.UIForms
                 ProfileRepository.SaveProfiles();
             }                
         }
+
     }
 }

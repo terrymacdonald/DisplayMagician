@@ -569,6 +569,7 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {profile.Name} to {renamedName}");
                 return false;
             }
+        }
 
         public static void UpdateActiveProfile()
         {
@@ -609,7 +610,8 @@ namespace DisplayMagicianShared
                 amdProfile.CreateProfileFromCurrentDisplaySettings();
                 activeProfile = amdProfile;
             }
-            else {
+            else 
+            {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Neither NVIDIA NVAPI or AMD ADL Drivers are installed, so using the built in Windows CCD library interface for this display profile.");
                 WinProfileItem winProfile = new WinProfileItem
                 {
@@ -1054,11 +1056,11 @@ namespace DisplayMagicianShared
                 {
                     if (Wallpaper.Set(profile.SavedProfileIconCacheFilename, profile.WallpaperStyle))
                     {
-                        logger.Trace($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it worked!");
+                        SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it worked!");
                     }
                     else
                     {
-                        logger.Warn($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it failed :(");
+                        SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it failed :(");
                     }
                 }
                 // We stop the stop watch

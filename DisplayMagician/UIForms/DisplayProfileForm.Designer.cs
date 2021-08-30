@@ -61,6 +61,7 @@ namespace DisplayMagician.UIForms
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.panel1 = new System.Windows.Forms.Panel();
             this.pbLogo = new System.Windows.Forms.PictureBox();
+            this.btn_profile_settings = new System.Windows.Forms.Button();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.panel1.SuspendLayout();
@@ -367,6 +368,7 @@ namespace DisplayMagician.UIForms
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.DimGray;
+            this.panel1.Controls.Add(this.btn_profile_settings);
             this.panel1.Controls.Add(this.pbLogo);
             this.panel1.Location = new System.Drawing.Point(0, 61);
             this.panel1.Name = "panel1";
@@ -383,6 +385,23 @@ namespace DisplayMagician.UIForms
             this.pbLogo.TabIndex = 0;
             this.pbLogo.TabStop = false;
             // 
+            // btn_profile_settings
+            // 
+            this.btn_profile_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btn_profile_settings.BackColor = System.Drawing.Color.Black;
+            this.btn_profile_settings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_profile_settings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_profile_settings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_profile_settings.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_profile_settings.ForeColor = System.Drawing.Color.White;
+            this.btn_profile_settings.Location = new System.Drawing.Point(780, 452);
+            this.btn_profile_settings.Name = "btn_profile_settings";
+            this.btn_profile_settings.Size = new System.Drawing.Size(118, 40);
+            this.btn_profile_settings.TabIndex = 38;
+            this.btn_profile_settings.Text = "&Profile Settings";
+            this.btn_profile_settings.UseVisualStyleBackColor = false;
+            this.btn_profile_settings.Click += new System.EventHandler(this.btn_profile_settings_Click);
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -392,7 +411,6 @@ namespace DisplayMagician.UIForms
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 829);
-            this.Controls.Add(this.btn_profile_settings);
             this.Controls.Add(this.lbl_hotkey_assigned);
             this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.btn_save);
@@ -458,6 +476,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_hotkey_assigned;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.PictureBox pbLogo;
+        private System.Windows.Forms.Button btn_profile_settings;
     }
 }
 
