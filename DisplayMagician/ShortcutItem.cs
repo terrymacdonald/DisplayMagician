@@ -19,32 +19,41 @@ using TsudaKageyu;
 
 namespace DisplayMagician
 {
-    public enum ShortcutPermanence
+    public enum ShortcutPermanence : int
     {
-        Permanent,
-        Temporary,
+        Permanent = 0,
+        Temporary = 1,
     }
 
-    public enum ShortcutCategory
+    public enum ShortcutCategory : int
     {
-        Application,
-        Game,
-        NoGame,
+        Application = 0,
+        Game = 1,
+        NoGame = 2,
     }
 
-    public enum ShortcutValidity
+    public enum ShortcutValidity : int
     {
-        Valid,
-        Warning,
-        Error,
+        Valid = 0,
+        Warning = 1,
+        Error = 2,
     }
 
+    public enum ProcessPriority : int
+    {
+        High = 2,
+        AboveNormal = 1,
+        Normal = 0,
+        BelowNormal =-1,
+        Idle = -24,
+    }
 
 
     public struct StartProgram
     {
         public int Priority;
         public bool Disabled;
+        public ProcessPriority ProcessPriority;
         public string Executable;
         public string Arguments;
         public bool ExecutableArgumentsRequired;
@@ -60,6 +69,7 @@ namespace DisplayMagician
         public string ExecutableArguments;
         public bool ExecutableArgumentsRequired;
         public bool ProcessNameToMonitorUsesExecutable;
+        public ProcessPriority ProcessPriority;
     }
 
     public struct GameStruct
@@ -70,6 +80,7 @@ namespace DisplayMagician
         public bool GameArgumentsRequired;
         public string DifferentGameExeToMonitor;
         public bool MonitorDifferentGameExe;
+        public ProcessPriority ProcessPriority;
     }
 
     public struct ShortcutError
@@ -92,6 +103,7 @@ namespace DisplayMagician
         private string _executableArguments;
         private bool _executableArgumentsRequired = false;
         private bool _processNameToMonitorUsesExecutable = true;
+        private ProcessPriority _processPriority = ProcessPriority.Normal;
         private string _gameAppId;
         private string _gameName;
         private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
@@ -289,6 +301,19 @@ namespace DisplayMagician
             set
             {
                 _category = value;
+            }
+        }
+
+        public ProcessPriority ProcessPriority
+        {
+            get
+            {
+                return _processPriority;
+            }
+
+            set
+            {
+                _processPriority = value;
             }
         }
 
@@ -732,13 +757,8 @@ namespace DisplayMagician
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
-
             _originalBitmap = profile.ProfileBitmap;
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = profile.ProfileBitmap;
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -782,6 +802,7 @@ namespace DisplayMagician
             _gameArgumentsRequired = game.GameArgumentsRequired;
             _differentGameExeToMonitor = game.DifferentGameExeToMonitor;
             _monitorDifferentGameExe = game.MonitorDifferentGameExe;
+            _processPriority = game.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -855,6 +876,7 @@ namespace DisplayMagician
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
             _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
+            _processPriority = executable.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
             _setAudioVolume = setAudioVolume;
@@ -910,6 +932,7 @@ namespace DisplayMagician
             shortcut.ExecutableArguments = ExecutableArguments;
             shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
             shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
+            shortcut.ProcessPriority = ProcessPriority;
             shortcut.GameAppId = GameAppId;
             shortcut.GameName = GameName;
             shortcut.GameLibrary = GameLibrary;
@@ -1504,14 +1527,7 @@ namespace DisplayMagician
         {
             if (AutoName && _profileToUse is ProfileItem)
             {
-                if (Category.Equals(ShortcutCategory.NoGame))
-                {
-                    if (DisplayPermanence.Equals(ShortcutPermanence.Permanent))
-                        _name = $"{_profileToUse.Name}";
-                    else if (DisplayPermanence.Equals(ShortcutPermanence.Temporary))
-                        _name = $"{_profileToUse.Name} (Temporary)";
-                }
-                else if (Category.Equals(ShortcutCategory.Game) && GameName.Length > 0)
+               if (Category.Equals(ShortcutCategory.Game) && GameName.Length > 0)
                 {
                     _name = $"{GameName} ({_profileToUse.Name})";
                 }
@@ -1519,6 +1535,13 @@ namespace DisplayMagician
                 {
                     string baseName = Path.GetFileNameWithoutExtension(ExecutableNameAndPath);
                     _name = $"{baseName} ({_profileToUse.Name})";
+                }
+                else
+                {
+                    if (DisplayPermanence.Equals(ShortcutPermanence.Permanent))
+                        _name = $"{_profileToUse.Name}";
+                    else if (DisplayPermanence.Equals(ShortcutPermanence.Temporary))
+                        _name = $"{_profileToUse.Name} (Temporary)";
                 }
             }
         }

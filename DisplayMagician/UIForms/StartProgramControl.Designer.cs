@@ -41,6 +41,8 @@ namespace DisplayMagician.UIForms
             this.lbl_priority = new System.Windows.Forms.Label();
             this.pb_up_arrow = new System.Windows.Forms.PictureBox();
             this.pb_down_arrow = new System.Windows.Forms.PictureBox();
+            this.cbx_start_program_priority = new System.Windows.Forms.ComboBox();
+            this.lbl_start_program_priority = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pb_up_arrow)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -50,7 +52,7 @@ namespace DisplayMagician.UIForms
             this.cb_dont_start_if_running.AutoSize = true;
             this.cb_dont_start_if_running.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_dont_start_if_running.ForeColor = System.Drawing.Color.White;
-            this.cb_dont_start_if_running.Location = new System.Drawing.Point(160, 86);
+            this.cb_dont_start_if_running.Location = new System.Drawing.Point(160, 83);
             this.cb_dont_start_if_running.Name = "cb_dont_start_if_running";
             this.cb_dont_start_if_running.Size = new System.Drawing.Size(289, 24);
             this.cb_dont_start_if_running.TabIndex = 26;
@@ -77,7 +79,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_close.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_start_program_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_start_program_close.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_close.Location = new System.Drawing.Point(506, 86);
+            this.cb_start_program_close.Location = new System.Drawing.Point(506, 115);
             this.cb_start_program_close.Name = "cb_start_program_close";
             this.cb_start_program_close.Size = new System.Drawing.Size(458, 24);
             this.cb_start_program_close.TabIndex = 24;
@@ -104,7 +106,7 @@ namespace DisplayMagician.UIForms
             this.txt_start_program_args.BackColor = System.Drawing.Color.White;
             this.txt_start_program_args.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_start_program_args.ForeColor = System.Drawing.Color.Black;
-            this.txt_start_program_args.Location = new System.Drawing.Point(398, 56);
+            this.txt_start_program_args.Location = new System.Drawing.Point(398, 50);
             this.txt_start_program_args.Name = "txt_start_program_args";
             this.txt_start_program_args.Size = new System.Drawing.Size(506, 26);
             this.txt_start_program_args.TabIndex = 22;
@@ -115,7 +117,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_pass_args.AutoSize = true;
             this.cb_start_program_pass_args.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_start_program_pass_args.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_pass_args.Location = new System.Drawing.Point(160, 56);
+            this.cb_start_program_pass_args.Location = new System.Drawing.Point(160, 50);
             this.cb_start_program_pass_args.Name = "cb_start_program_pass_args";
             this.cb_start_program_pass_args.Size = new System.Drawing.Size(228, 24);
             this.cb_start_program_pass_args.TabIndex = 21;
@@ -143,7 +145,7 @@ namespace DisplayMagician.UIForms
             this.cb_disable_start_program.AutoSize = true;
             this.cb_disable_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_disable_start_program.ForeColor = System.Drawing.Color.White;
-            this.cb_disable_start_program.Location = new System.Drawing.Point(160, 114);
+            this.cb_disable_start_program.Location = new System.Drawing.Point(159, 115);
             this.cb_disable_start_program.Name = "cb_disable_start_program";
             this.cb_disable_start_program.Size = new System.Drawing.Size(312, 24);
             this.cb_disable_start_program.TabIndex = 28;
@@ -198,12 +200,37 @@ namespace DisplayMagician.UIForms
             this.pb_down_arrow.MouseEnter += new System.EventHandler(this.pb_down_arrow_MouseEnter);
             this.pb_down_arrow.MouseLeave += new System.EventHandler(this.pb_down_arrow_MouseLeave);
             // 
+            // cbx_start_program_priority
+            // 
+            this.cbx_start_program_priority.AllowDrop = true;
+            this.cbx_start_program_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbx_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbx_start_program_priority.FormattingEnabled = true;
+            this.cbx_start_program_priority.Location = new System.Drawing.Point(725, 84);
+            this.cbx_start_program_priority.Name = "cbx_start_program_priority";
+            this.cbx_start_program_priority.Size = new System.Drawing.Size(179, 28);
+            this.cbx_start_program_priority.TabIndex = 34;
+            this.cbx_start_program_priority.SelectedIndexChanged += new System.EventHandler(this.cbx_start_program_priority_SelectedIndexChanged);
+            // 
+            // lbl_start_program_priority
+            // 
+            this.lbl_start_program_priority.AutoSize = true;
+            this.lbl_start_program_priority.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_start_program_priority.ForeColor = System.Drawing.Color.White;
+            this.lbl_start_program_priority.Location = new System.Drawing.Point(563, 87);
+            this.lbl_start_program_priority.Name = "lbl_start_program_priority";
+            this.lbl_start_program_priority.Size = new System.Drawing.Size(163, 20);
+            this.lbl_start_program_priority.TabIndex = 33;
+            this.lbl_start_program_priority.Text = "Start Program Priority:";
+            // 
             // StartProgramControl
             // 
             this.AllowDrop = true;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoSize = true;
             this.BackColor = System.Drawing.Color.Black;
+            this.Controls.Add(this.cbx_start_program_priority);
+            this.Controls.Add(this.lbl_start_program_priority);
             this.Controls.Add(this.pb_up_arrow);
             this.Controls.Add(this.pb_down_arrow);
             this.Controls.Add(this.lbl_priority);
@@ -241,5 +268,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_priority;
         private System.Windows.Forms.PictureBox pb_down_arrow;
         private System.Windows.Forms.PictureBox pb_up_arrow;
+        private System.Windows.Forms.ComboBox cbx_start_program_priority;
+        private System.Windows.Forms.Label lbl_start_program_priority;
     }
 }

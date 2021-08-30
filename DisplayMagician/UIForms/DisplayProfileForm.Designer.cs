@@ -392,6 +392,7 @@ namespace DisplayMagician.UIForms
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
             this.ClientSize = new System.Drawing.Size(976, 829);
+            this.Controls.Add(this.btn_profile_settings);
             this.Controls.Add(this.lbl_hotkey_assigned);
             this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.btn_save);

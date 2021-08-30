@@ -284,6 +284,7 @@ namespace DisplayMagicianShared
                 try
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                    File.Delete(ProfileToRemove.WallpaperBitmapFilename);
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -335,6 +336,7 @@ namespace DisplayMagicianShared
                 try
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                    File.Delete(ProfileToRemove.WallpaperBitmapFilename);
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -384,6 +386,7 @@ namespace DisplayMagicianShared
                 try
                 {
                     File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                    File.Delete(ProfileToRemove.WallpaperBitmapFilename);
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -566,9 +569,6 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {profile.Name} to {renamedName}");
                 return false;
             }
-
-
-        }
 
         public static void UpdateActiveProfile()
         {
@@ -1049,6 +1049,18 @@ namespace DisplayMagicianShared
             }
             finally
             {
+                // If the applying path info worked, then we attempt to set the desktop background
+                if (profile.SetWallpaper)
+                {
+                    if (Wallpaper.Set(profile.SavedProfileIconCacheFilename, profile.WallpaperStyle))
+                    {
+                        logger.Trace($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it worked!");
+                    }
+                    else
+                    {
+                        logger.Warn($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it failed :(");
+                    }
+                }
                 // We stop the stop watch
                 stopWatch.Stop();
                 // Get the elapsed time as a TimeSpan value.

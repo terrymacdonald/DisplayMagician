@@ -31,6 +31,7 @@ namespace DisplayMagician {
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
         public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
         public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
+        public static string AppWallpaperPath = Path.Combine(Program.AppDataPath, $"Wallpaper");
         public static string AppLogPath = Path.Combine(Program.AppDataPath, $"Logs");
         public static string AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, @"DisplayMagician.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
@@ -182,6 +183,17 @@ namespace DisplayMagician {
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
+                }
+            }
+            if (!Directory.Exists(AppWallpaperPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(AppWallpaperPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
                 }
             }
 

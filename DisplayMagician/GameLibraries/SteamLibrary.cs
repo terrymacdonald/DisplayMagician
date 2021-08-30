@@ -755,14 +755,15 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override Process StartGame(Game game, string gameArguments = "")
+        public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
         {
-            string address = $"steam://rungameid/{game.Id}";
+            string address = $@"steam://rungameid/{game.Id}";
             if (!String.IsNullOrWhiteSpace(gameArguments))
             {
-                address += "/" + gameArguments;
+                address += @"//" + gameArguments;
             }
             Process gameProcess = Process.Start(address);
+            gameProcess.PriorityClass = processPriority;
             return gameProcess;
         }
         #endregion

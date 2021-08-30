@@ -50,6 +50,20 @@ namespace DisplayMagician.UIForms
             // Update the text with the start program info
             myStartProgram = startProgram;
             myStartProgram.Priority = startProgramOrder;
+
+            // Prepare the start program process priority combo box
+            cbx_start_program_priority.DataSource = new ComboItem[] {
+                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
+                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
+                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
+                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
+                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
+                };
+            cbx_start_program_priority.ValueMember = "Value";
+            cbx_start_program_priority.DisplayMember = "Text";
+            cbx_start_program_priority.SelectedItem = "Normal";
+            cbx_start_program_priority.Enabled = true;
+
             UpdateUI();
         }
 
@@ -63,6 +77,7 @@ namespace DisplayMagician.UIForms
             txt_start_program_args.Text = myStartProgram.Arguments;
             cb_start_program_close.Checked = myStartProgram.CloseOnFinish;
             cb_dont_start_if_running.Checked = myStartProgram.DontStartIfAlreadyRunning;
+            cbx_start_program_priority.SelectedValue = myStartProgram.ProcessPriority;
 
         }
 
@@ -92,6 +107,7 @@ namespace DisplayMagician.UIForms
                 cb_start_program_pass_args.Enabled = false;
                 cb_start_program_close.Enabled = false;
                 cb_dont_start_if_running.Enabled = false;
+                cbx_start_program_priority.Enabled = false;
             }
             else
             {
@@ -103,6 +119,7 @@ namespace DisplayMagician.UIForms
                 cb_start_program_pass_args.Enabled = true;
                 cb_start_program_close.Enabled = true;
                 cb_dont_start_if_running.Enabled = true;
+                cbx_start_program_priority.Enabled = true;
             }            
         }
 
@@ -214,6 +231,11 @@ namespace DisplayMagician.UIForms
         private void txt_start_program_args_TextChanged(object sender, EventArgs e)
         {
             myStartProgram.Arguments = txt_start_program_args.Text;
+        }
+
+        private void cbx_start_program_priority_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            myStartProgram.ProcessPriority = (ProcessPriority)cbx_start_program_priority.SelectedValue;
         }
     }    
 }

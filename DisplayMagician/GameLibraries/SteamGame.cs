@@ -19,6 +19,7 @@ namespace DisplayMagician.GameLibraries
         private string _steamGameDir;
         private string _steamGameExe;
         private string _steamGameProcessName;
+        private List<Process> _steamGameProcesses = new List<Process>();
         private string _steamGameIconPath;
         private static readonly SteamLibrary _steamGameLibrary = SteamLibrary.GetLibrary();
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -88,13 +89,19 @@ namespace DisplayMagician.GameLibraries
             set => _steamGameProcessName = value;
         }
 
+        public override List<Process> Processes
+        {
+            get => _steamGameProcesses;
+            set => _steamGameProcesses = value;
+        }
+
         public override bool IsRunning
         {
             get
             {
                 int numGameProcesses = 0;
-                List<Process> gameProcesses = Process.GetProcessesByName(_steamGameProcessName).ToList();
-                foreach (Process gameProcess in gameProcesses)
+                _steamGameProcesses = Process.GetProcessesByName(_steamGameProcessName).ToList();
+                foreach (Process gameProcess in _steamGameProcesses)
                 {
                     try
                     {

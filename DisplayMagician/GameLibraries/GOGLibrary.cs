@@ -551,15 +551,20 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
-        public override Process StartGame(Game game, string gameArguments = "")
-        {
 
+        public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
+        {
             string args = $@"/command=runGame /gameId={game.Id} /path=""{game.Directory}""";
             if (String.IsNullOrWhiteSpace(gameArguments))
             {
                 args += gameArguments;
             }
-            Process gameProcess = Process.Start(_gogExe,args);
+            Process gameProcess = null;
+            uint processID = 0;
+            if (ProcessUtils.LaunchProcessWithPriority(_gogExe, args, processPriority, out processID))
+            {
+                gameProcess = Process.GetProcessById((int)processID);
+            }
             return gameProcess;
         }
         #endregion

@@ -142,6 +142,12 @@
       <DependentUpon>HotkeyForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UIForms\ImageListViewRenderers.cs" />
+    <Compile Include="UIForms\ProfileSettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\ProfileSettingsForm.Designer.cs">
+      <DependentUpon>ProfileSettingsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="UIForms\SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -205,6 +211,9 @@
     <EmbeddedResource Include="UIForms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\ProfileSettingsForm.resx">
+      <DependentUpon>ProfileSettingsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>

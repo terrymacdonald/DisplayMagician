@@ -61,12 +61,14 @@ namespace DisplayMagicianShared
         private List<ScreenPosition> _screens = new List<ScreenPosition>();
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
+        private static string AppWallpaperPath = Path.Combine(AppDataPath, $"Wallpaper");
         private static readonly string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
 
         private string _uuid = "";
         private bool _isPossible = false;
         private Keys _hotkey = Keys.None;
-       
+        private string _wallpaperBitmapFilename = "";
+
 
         #region JsonConverterBitmap
         internal class CustomBitmapConverter : JsonConverter
@@ -236,6 +238,21 @@ namespace DisplayMagicianShared
 
         public string SavedProfileIconCacheFilename { get; set; }
 
+        public bool SetWallpaper { get; set; }
+
+        public Wallpaper.Style WallpaperStyle { get; set; }
+
+        public string WallpaperBitmapFilename{ 
+            get
+            {
+                return _wallpaperBitmapFilename;
+            }
+            set
+            {
+                _wallpaperBitmapFilename = value;
+            }
+        }
+
         public virtual List<string> ProfileDisplayIdentifiers
         {
             get
@@ -341,6 +358,9 @@ namespace DisplayMagicianShared
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
+            profile.SetWallpaper = SetWallpaper;
+            profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
+            profile.WallpaperStyle = WallpaperStyle;
             return true;
         }
 
