@@ -539,8 +539,9 @@ namespace DisplayMagician.UIForms
             ProfileSettingsForm profileSettingsForm = new ProfileSettingsForm();
             profileSettingsForm.Profile = _selectedProfile;
             profileSettingsForm.ShowDialog(this);
-            // If the profile was changed then save all the profiles
-            if (profileSettingsForm.ProfileSettingChanged)
+            // If the profile was previously saved and is now changed then save all the profiles
+            // otherwise we'll save it only when the user wants to save this profile.
+            if (_saveOrRenameMode == "rename" && profileSettingsForm.ProfileSettingChanged)
             {
                 ProfileRepository.SaveProfiles();
             }                

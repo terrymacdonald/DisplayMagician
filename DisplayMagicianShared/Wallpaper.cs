@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -22,41 +23,65 @@ namespace DisplayMagicianShared
 
         public enum Style : int
         {
-            Tiled,
-            Centered,
-            Stretched
+            Tile,
+            Center,
+            Stretch,
+            Fill,
+            Fit,
+            Span
         }
 
-        public static void SetAndSave(Uri uri, Style style, string filename)
+        public static bool Set(String filename, Style style)
         {
-            System.IO.Stream s = new System.Net.WebClient().OpenRead(uri.ToString());
+            //System.IO.Stream s = new System.Net.WebClient().OpenRead(uri.ToString());
 
-            System.Drawing.Image img = System.Drawing.Image.FromStream(s);            
-            img.Save(filename, System.Drawing.Imaging.ImageFormat.Bmp);
+            Bitmap img = new Bitmap(filename);            
 
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
-            if (style == Style.Stretched)
+            if (style == Style.Fill)
+            {
+                key.SetValue(@"WallpaperStyle", 10.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+            if (style == Style.Fit)
+            {
+                key.SetValue(@"WallpaperStyle", 6.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+            if (style == Style.Span) // Windows 8 or newer only!
+            {
+                key.SetValue(@"WallpaperStyle", 22.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+            if (style == Style.Stretch)
             {
                 key.SetValue(@"WallpaperStyle", 2.ToString());
                 key.SetValue(@"TileWallpaper", 0.ToString());
             }
-
-            if (style == Style.Centered)
+            if (style == Style.Tile)
             {
-                key.SetValue(@"WallpaperStyle", 1.ToString());
+                key.SetValue(@"WallpaperStyle", 0.ToString());
+                key.SetValue(@"TileWallpaper", 1.ToString());
+            }
+            if (style == Style.Center)
+            {
+                key.SetValue(@"WallpaperStyle", 0.ToString());
                 key.SetValue(@"TileWallpaper", 0.ToString());
             }
 
-            if (style == Style.Tiled)
-            {
-                key.SetValue(@"WallpaperStyle", 1.ToString());
-                key.SetValue(@"TileWallpaper", 1.ToString());
-            }
-
-            SystemParametersInfo(SPI_SETDESKWALLPAPER,
+            if (SystemParametersInfo(SPI_SETDESKWALLPAPER,
                 0,
                 filename,
-                SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+                SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE) > 0)
+            {
+                // applying desktop wallpaper worked!
+                return true;
+            }
+            else
+            {
+                // applying desktop wallpaper failed!
+                return false;
+            }
         }
     }
 }
