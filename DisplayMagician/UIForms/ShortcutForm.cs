@@ -1059,6 +1059,7 @@ namespace DisplayMagician.UIForms
                 rb_set_capture_volume.Checked = false;
             }
             
+
             // Load all the Games into the Games ListView
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
@@ -1196,12 +1197,13 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                _gameLauncher = _shortcutToEdit.GameLibrary.ToString();
+                _gameLauncher = _shortcutToEdit.GameLibrary.ToString("G");
                 txt_game_name.Text = _shortcutToEdit.GameName;
                 _gameId = _shortcutToEdit.GameAppId;
                 nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
                 txt_args_game.Text = _shortcutToEdit.GameArguments;
                 cbx_game_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
+                lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                 if (_shortcutToEdit.GameArgumentsRequired)
                 {
                     cb_args_game.Checked = true;
@@ -2287,8 +2289,10 @@ namespace DisplayMagician.UIForms
                     {
                         if (_loadedShortcut)
                             _isUnsaved = true;
-                        _gameLauncher = game.GameLibrary.ToString();
+                        _gameLauncher = game.GameLibrary.ToString("G");
+                        lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                         _gameId = game.Id;
+
                     }
                 }
             }
