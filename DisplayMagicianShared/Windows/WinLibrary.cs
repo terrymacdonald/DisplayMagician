@@ -18,6 +18,7 @@ namespace DisplayMagicianShared.Windows
         public DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO AdvancedColorInfo;
         public DISPLAYCONFIG_SDR_WHITE_LEVEL SDRWhiteLevel;
 
+        public override bool Equals(object obj) => obj is ADVANCED_HDR_INFO_PER_PATH other && this.Equals(other);
         public bool Equals(ADVANCED_HDR_INFO_PER_PATH other)
         => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
             Id == other.Id &&
@@ -27,6 +28,10 @@ namespace DisplayMagicianShared.Windows
         {
             return (Id, AdvancedColorInfo, SDRWhiteLevel).GetHashCode();
         }
+
+        public static bool operator ==(ADVANCED_HDR_INFO_PER_PATH lhs, ADVANCED_HDR_INFO_PER_PATH rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(ADVANCED_HDR_INFO_PER_PATH lhs, ADVANCED_HDR_INFO_PER_PATH rhs) => !(lhs == rhs);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -38,6 +43,7 @@ namespace DisplayMagicianShared.Windows
         public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
         public List<string> DisplayIdentifiers;
 
+        public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(WINDOWS_DISPLAY_CONFIG other)
         => DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
            DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
@@ -47,6 +53,9 @@ namespace DisplayMagicianShared.Windows
         {
             return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates).GetHashCode();
         }
+        public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => !(lhs == rhs);
     }
 
     public class WinLibrary : IDisposable

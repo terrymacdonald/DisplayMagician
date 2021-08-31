@@ -22,8 +22,11 @@ namespace DisplayMagicianShared.NVIDIA
         public Int32 OverlapY;
         public NV_MOSAIC_GRID_TOPO_V2[] MosaicGridTopos;
         public UInt32 MosaicGridCount;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_MOSAIC_MAX_DISPLAYS)]
         public List<NV_RECT[]> MosaicViewports;
         public UInt32 PrimaryDisplayId;
+
+        public override bool Equals(object obj) => obj is NVIDIA_MOSAIC_CONFIG other && this.Equals(other);
 
         public bool Equals(NVIDIA_MOSAIC_CONFIG other)
         => IsMosaicEnabled == other.IsMosaicEnabled &&
@@ -33,13 +36,16 @@ namespace DisplayMagicianShared.NVIDIA
            OverlapY == other.OverlapY &&
            MosaicGridTopos.SequenceEqual(other.MosaicGridTopos) &&
            MosaicGridCount == other.MosaicGridCount &&
-           MosaicViewports.SequenceEqual(other.MosaicViewports) &&
+           NVIDIALibrary.ListOfArraysEqual(MosaicViewports, other.MosaicViewports) &&
            PrimaryDisplayId == other.PrimaryDisplayId;
 
         public override int GetHashCode()
         {
             return (IsMosaicEnabled, MosaicTopologyBrief, MosaicDisplaySettings, OverlapX, OverlapY, MosaicGridTopos, MosaicGridCount, MosaicViewports, PrimaryDisplayId).GetHashCode();
         }
+        public static bool operator ==(NVIDIA_MOSAIC_CONFIG lhs, NVIDIA_MOSAIC_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVIDIA_MOSAIC_CONFIG lhs, NVIDIA_MOSAIC_CONFIG rhs) => !(lhs == rhs);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -49,6 +55,7 @@ namespace DisplayMagicianShared.NVIDIA
         public Dictionary<UInt32, NV_HDR_COLOR_DATA_V2> HdrColorData;
         public bool IsNvHdrEnabled;
 
+        public override bool Equals(object obj) => obj is NVIDIA_HDR_CONFIG other && this.Equals(other);
         public bool Equals(NVIDIA_HDR_CONFIG other)
         => HdrCapabilities.SequenceEqual(other.HdrCapabilities) &&
            HdrColorData.SequenceEqual(other.HdrColorData) &&
@@ -58,6 +65,9 @@ namespace DisplayMagicianShared.NVIDIA
         {
             return (HdrCapabilities, HdrColorData, IsNvHdrEnabled).GetHashCode();
         }
+        public static bool operator ==(NVIDIA_HDR_CONFIG lhs, NVIDIA_HDR_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVIDIA_HDR_CONFIG lhs, NVIDIA_HDR_CONFIG rhs) => !(lhs == rhs);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -67,6 +77,7 @@ namespace DisplayMagicianShared.NVIDIA
         public NVIDIA_HDR_CONFIG HdrConfig;
         public List<string> DisplayIdentifiers;
 
+        public override bool Equals(object obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
         => MosaicConfig.Equals(other.MosaicConfig) &&
            HdrConfig.Equals(other.HdrConfig) &&
@@ -76,6 +87,9 @@ namespace DisplayMagicianShared.NVIDIA
         {
             return (MosaicConfig, HdrConfig, DisplayIdentifiers).GetHashCode();
         }
+        public static bool operator ==(NVIDIA_DISPLAY_CONFIG lhs, NVIDIA_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVIDIA_DISPLAY_CONFIG lhs, NVIDIA_DISPLAY_CONFIG rhs) => !(lhs == rhs);
     }
 
     public class NVIDIALibrary : IDisposable
@@ -428,7 +442,7 @@ namespace DisplayMagicianShared.NVIDIA
                     myDisplayConfig.MosaicConfig.MosaicGridTopos = mosaicGridTopos;
                     myDisplayConfig.MosaicConfig.MosaicGridCount = mosaicGridCount;
 
-                    List<NV_RECT[]> allViewports = new List<NV_RECT[]> { };
+                    List<NV_RECT[]> allViewports = new List<NV_RECT[]>();
                     foreach (NV_MOSAIC_GRID_TOPO_V2 gridTopo in mosaicGridTopos)
                     {
                         // Get Current Mosaic Grid settings using the Grid topologies numbers we got before
@@ -1382,6 +1396,47 @@ namespace DisplayMagicianShared.NVIDIA
 
         }
 
+        public bool IsEquivalentConfig(NVIDIA_DISPLAY_CONFIG displayConfig, NVIDIA_DISPLAY_CONFIG otherDisplayConfig)
+        {
+            // We want to check if the NVIDIA configurations are the equiavalent of each other
+            // IMPORTANT: This function differs from Equals in that Equivalent allows some fields to differ in order to still match.
+            // The goal is to identify when two display configurations would be the same if they were applied.
+
+            SharedLogger.logger.Trace($"NVIDIALibrary/IsEquivalentConfig: Testing whether the NVIDIA display configuration is equivalent to another");
+            if (_initialised)
+            {
+                NVAPI_STATUS NVStatus = NVAPI_STATUS.NVAPI_ERROR;
+
+                // Check that displayConfig DisplayIdentifiers match
+                if (!displayConfig.DisplayIdentifiers.All(value => otherDisplayConfig.DisplayIdentifiers.Contains(value)))
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/IsEquivalentConfig: Uh oh! The NVIDIA display identifiers don't match so NVIDIA Config is not equivalent to the other one.");
+                    return false;
+                }
+
+                // Check that displayConfig Mosaic Configs match
+                if (!displayConfig.MosaicConfig.Equals(otherDisplayConfig.MosaicConfig))
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/IsEquivalentConfig: Uh oh! The NVIDIA Mosaic Configs don't match so NVIDIA Config is not equivalent to the other one.");
+                    return false;
+                }
+
+                // Check that displayConfig Hdr Configs match
+                if (!displayConfig.HdrConfig.Equals(otherDisplayConfig.HdrConfig))
+                {
+                    SharedLogger.logger.Trace($"NVIDIALibrary/IsEquivalentConfig: Uh oh! The NVIDIA Hdr Configs don't match so NVIDIA Config is not equivalent to the other one.");
+                    return false;
+                }
+
+                SharedLogger.logger.Trace($"NVIDIALibrary/IsEquivalentConfig: Success! The NVIDIA display configuration is possible to be used now");
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public List<string> GetCurrentDisplayIdentifiers()
         {
             SharedLogger.logger.Error($"NVIDIALibrary/GetCurrentDisplayIdentifiers: Getting the current display identifiers for the displays in use now");
@@ -1768,6 +1823,55 @@ namespace DisplayMagicianShared.NVIDIA
             return displayIdentifiers;
         }
 
+        public static bool ListOfArraysEqual(List<NV_RECT[]> a1, List<NV_RECT[]> a2)
+        {
+            if (a1.Count == a2.Count)
+            {
+                for (int i = 0; i < a1.Count; i++)
+                {
+                    if (a1[i].Length == a2[i].Length)
+                    {
+                        for (int j = 0; j < a1[i].Length; j++)
+                        {
+                            if (a1[i][j] != a2[i][j])
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool Arrays2DEqual(int[][] a1, int[][] a2)
+        {
+            if (a1.Length == a2.Length)
+            {
+                for (int i = 0; i < a1.Length; i++)
+                {
+                    if (a1[i].Length == a2[i].Length)
+                    {
+                        for (int j = 0; j < a1[i].Length; j++)
+                        {
+                            if (a1[i][j] != a2[i][j])
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 
 
