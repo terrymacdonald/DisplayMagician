@@ -41,7 +41,7 @@ namespace DisplayMagicianShared.Windows
         public DISPLAYCONFIG_PATH_INFO[] DisplayConfigPaths;
         public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
         public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
-        public Dictionary<uint, string> DisplaySources;
+        public Dictionary<string, uint> DisplaySources;
         public List<string> DisplayIdentifiers;
 
         public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
@@ -279,7 +279,7 @@ namespace DisplayMagicianShared.Windows
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
             windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
             windowsDisplayConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
-            windowsDisplayConfig.DisplaySources = new Dictionary<uint, string>();
+            windowsDisplayConfig.DisplaySources = new Dictionary<string, uint>();
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
@@ -297,7 +297,7 @@ namespace DisplayMagicianShared.Windows
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
                     // Store it for later
-                    windowsDisplayConfig.DisplaySources.Add(path.SourceInfo.Id, sourceInfo.ViewGdiDeviceName);
+                    windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, path.SourceInfo.Id);
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
                 }
                 else
@@ -394,7 +394,7 @@ namespace DisplayMagicianShared.Windows
             return windowsDisplayConfig;
         }
 
-        public static Dictionary<uint, string> GetDisplaySourceNames()
+        public static Dictionary<string, uint> GetDisplaySourceNames()
         {
             // Get the size of the largest Active Paths and Modes arrays
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the size of the largest Active Paths and Modes arrays");
@@ -445,7 +445,7 @@ namespace DisplayMagicianShared.Windows
             }
 
             // Prepare the empty DisplaySources dictionary
-            Dictionary<uint, string> DisplaySources = new Dictionary<uint, string>();
+            Dictionary<string, uint> DisplaySources = new Dictionary<string, uint>();
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
@@ -463,7 +463,7 @@ namespace DisplayMagicianShared.Windows
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
                     // Store it for later
-                    DisplaySources.Add(path.SourceInfo.Id, sourceInfo.ViewGdiDeviceName);
+                    DisplaySources.Add(sourceInfo.ViewGdiDeviceName, path.SourceInfo.Id);
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
                 }
                 else

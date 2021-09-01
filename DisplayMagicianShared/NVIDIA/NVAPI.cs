@@ -2074,8 +2074,8 @@ namespace DisplayMagicianShared.NVIDIA
                 GetDelegate(NvId_DISP_GetGDIPrimaryDisplayId, out DISP_GetGDIPrimaryDisplayIdInternal);
                 GetDelegate(NvId_Disp_GetHdrCapabilities, out Disp_GetHdrCapabilitiesInternal);
                 GetDelegate(NvId_Disp_HdrColorControl, out Disp_HdrColorControlInternal);
-                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
-                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission
+                /*GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
+                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission*/
                 GetDelegate(NvId_DISP_GetDisplayIdByDisplayName, out DISP_GetDisplayIdByDisplayNameInternal);
 
                 // GPUs

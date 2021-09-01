@@ -135,42 +135,6 @@ namespace DisplayMagicianShared
 
         public Bitmap ToBitmapOverlay(Bitmap bitmap)
         {
-
-            /*            if (width == 0)
-                            width = bitmap.Width;
-
-                        if (height == 0)
-                            height = bitmap.Height;
-
-                        var viewSize = CalculateViewSize(_profile.Viewports, true, PaddingX, PaddingY);
-                        int viewSizeRatio = (int) Math.Round(viewSize.Width / viewSize.Height);
-                        int overlayWidth = (int) Math.Round(width * 0.7f,0);
-                        int overlayHeight = overlayWidth / viewSizeRatio;
-                        int overlayX = width - overlayWidth;
-                        int overlayY = height - overlayHeight;
-                        Point overlayPosition = new Point(overlayX, overlayY);
-                        Size overlaySize = new Size(overlayWidth, overlayHeight);
-                        Rectangle overlayRect = new Rectangle(overlayPosition, overlaySize);
-                        //var width = bitmap.Width * 0.7f;
-                        //var height = width / viewSize.Width * viewSize.Height;
-
-                        var combinedBitmap = new Bitmap(width, height, format);
-                        combinedBitmap.MakeTransparent();
-
-                        using (var g = Graphics.FromImage(combinedBitmap))
-                        {
-                            g.SmoothingMode = SmoothingMode.HighQuality;
-                            //g.DrawImage(bitmap, 0, 0, width, height);
-                            g.TranslateTransform(overlayX, overlayY);
-                            //Rectangle compressionRectangle = new Rectangle(300, 10,
-                            //myBitmap.Width / 2, myBitmap.Height / 2);
-                            g.DrawRectangle(new Pen(Color.FromArgb(125, 50, 50, 50), 2f), overlayRect);
-
-                            DrawView(g, overlayWidth, overlayHeight);
-                        }
-                        return bitmap;*/
-
-
             var viewSize = CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
             var width = bitmap.Width * 0.7f;
             var height = width / viewSize.Width * viewSize.Height;
@@ -274,122 +238,6 @@ namespace DisplayMagicianShared
             return multiIcon;
         }
 
-        /*private void DrawSingleScreen(Graphics g, ScreenPosition screen)
-        {
-            //var res = NormalizeResolution(screen);
-            Rectangle rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-            int rows = rect.Width < rect.Height ? path.TargetDisplays.Length : 1;
-            int cols = rect.Width >= rect.Height ? path.TargetDisplays.Length : 1;
-
-            for (var i = 0; i < path.TargetDisplays.Length; i++)
-            {
-                DrawTarget(g, screen, path.TargetDisplays[i],
-                    new Rectangle(
-                        rect.X + PaddingX,
-                        rect.Y + PaddingY,
-                        rect.Width - 2 * PaddingX,
-                        rect.Height - 2 * PaddingY),
-                    rows > 1 ? i : 0, cols > 1 ? i : 0, rows, cols);
-            }
-        }*/
-
-        /*private void DrawScreen(Graphics g, ScreenPosition screen)
-        {
-            //var res = NormalizeResolution(screen);
-            Rectangle rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-            int rows = rect.Width < rect.Height ? screen.SpannedScreens.Count : 1;
-            int cols = rect.Width >= rect.Height ? screen.SpannedScreens.Count : 1;
-
-            for(var i = 0; i < screen.SpannedScreens.Count ; i++)
-            {
-                DrawTarget(g, screen, 
-                    new Rectangle(
-                        rect.X + PaddingX,
-                        rect.Y + PaddingY,
-                        rect.Width - 2 * PaddingX,
-                        rect.Height - 2 * PaddingY),
-                    rows > 1 ? i : 0, cols > 1 ? i : 0, rows, cols);
-            }
-        }
-
-        // ReSharper disable once TooManyArguments
-        private void DrawTarget(
-            Graphics g,
-            ScreenPosition screen,
-            Rectangle rect,
-            int row,
-            int col,
-            int rows,
-            int cols)
-        {
-            var targetSize = new Size(rect.Width / cols, rect.Height / rows);
-            var targetPosition = new Point(targetSize.Width * col + rect.X, targetSize.Height * row + rect.Y);
-            var targetRect = new Rectangle(targetPosition, targetSize);
-
-            if (screen.IsSpanned)
-            {
-                g.FillRectangle(new SolidBrush(screen.Colour), targetRect);
-            }
-            else if (screen.SpannedScreens.Count > 1)
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 255, 97, 27)), targetRect);
-            }
-            else if (!screen.IsSpanned)
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 0, 174, 241)), targetRect);
-            }
-            else
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 155, 155, 155)), targetRect);
-            }
-
-            g.DrawRectangle(new Pen(Color.FromArgb(125, 50, 50, 50), 2f), targetRect);
-        }
-
-        private void DrawView(Graphics g, float width, float height)
-        {
-            var viewSize = CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
-            var standPadding = height * 0.005f;
-            height -= standPadding * 8;
-            var factor = Math.Min((width - 2 * standPadding - 1) / viewSize.Width,
-                (height - 2 * standPadding - 1) / viewSize.Height);
-            g.ScaleTransform(factor, factor);
-
-            var xOffset = ((width - 1) / factor - viewSize.Width) / 2f;
-            var yOffset = ((height - 1) / factor - viewSize.Height) / 2f;
-            g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
-
-            if (standPadding * 6 >= 1)
-            {
-                using (var boundRect = RoundedRect(viewSize, 2 * standPadding / factor))
-                {
-                    g.FillPath(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), boundRect);
-                    g.DrawPath(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), boundRect);
-                }
-
-                using (
-                    var boundRect =
-                        RoundedRect(
-                            new RectangleF(viewSize.Width * 0.375f + viewSize.X,
-                                viewSize.Height + standPadding / factor,
-                                viewSize.Width / 4, standPadding * 7 / factor), 2 * standPadding / factor))
-                {
-                    g.FillPath(new SolidBrush(Color.FromArgb(250, 50, 50, 50)), boundRect);
-                    g.DrawPath(new Pen(Color.FromArgb(50, 255, 255, 255), 2 / factor), boundRect);
-                }
-            }
-            else
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), viewSize);
-                g.DrawRectangle(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), viewSize.X, viewSize.Y,
-                    viewSize.Width, viewSize.Height);
-            }
-
-            foreach (ScreenPosition screen in _profile.Screens)
-            {
-                DrawScreen(g, screen);
-            }
-        }*/
 
         private void DrawView(Graphics g, float width, float height)
         {
@@ -408,17 +256,11 @@ namespace DisplayMagicianShared
 
             // How wide the Bezel is on the screen graphics
             int screenBezel = 60;
-            int screenWordBuffer = 30;
+            //int screenWordBuffer = 30;
 
             // Draw the stand
             if (standPadding * 6 >= 1)
             {
-                using (var boundRect = RoundedRect(viewSize, 2 * standPadding / factor))
-                {
-                    g.FillPath(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), boundRect);
-                    g.DrawPath(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), boundRect);
-                }
-
                 using (
                     var boundRect =
                         RoundedRect(
@@ -441,10 +283,6 @@ namespace DisplayMagicianShared
             foreach (ScreenPosition screen in _profile.Screens)
             {
 
-                Color screenBgColour;
-                Color lightTextColour = Color.White;
-                Color darkTextColour = Color.Black;
-
                 // draw the screen 
                 if (screen.IsSpanned)
                 {
@@ -456,9 +294,8 @@ namespace DisplayMagicianShared
 
                     // Draw the screen of the monitor
                     Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                    screenBgColour = screen.Colour;
 
-                    g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
+                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
                 }
                 else
@@ -471,23 +308,8 @@ namespace DisplayMagicianShared
 
                     // Draw the screen of the monitor
                     Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                    if (screen.IsPrimary)
-                    {
-                        //screenBgColour = Color.FromArgb(255, 66, 173, 245);
-                        screenBgColour = Color.FromArgb(240, 116, 215, 255);
-                    }
-                    else
-                    {
-                        if (screen.Colour != null)
-                        {
-                            screenBgColour = screen.Colour;
-                        }
-                        else
-                        {
-                            screenBgColour = Color.FromArgb(255, 155, 155, 155);
-                        }
-                    }
-                    g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
+                    
+                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
 
                 }

@@ -94,7 +94,7 @@ namespace DisplayMagicianShared.NVIDIA
     {
         public NVIDIA_MOSAIC_CONFIG MosaicConfig;
         public NVIDIA_HDR_CONFIG HdrConfig;
-        public Dictionary<string, UInt32> DisplayNames;
+        public Dictionary<UInt32, string> DisplayNames;
         public List<string> DisplayIdentifiers;
 
         public override bool Equals(object obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
@@ -102,7 +102,7 @@ namespace DisplayMagicianShared.NVIDIA
         => MosaicConfig.Equals(other.MosaicConfig) &&
            HdrConfig.Equals(other.HdrConfig) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers) &&
-           DisplayNames.Equals(other.DisplayNames);
+           DisplayNames.SequenceEqual(other.DisplayNames);
 
         public override int GetHashCode()
         {
@@ -873,17 +873,17 @@ namespace DisplayMagicianShared.NVIDIA
 
                 // Now we need to loop through each of the windows paths so we can record the Windows DisplayName to DisplayID mapping
                 // This is needed for us to piece together the Screen layout for when we draw the NVIDIA screens!
-                myDisplayConfig.DisplayNames = new Dictionary<string, uint>();
-                foreach (KeyValuePair<uint, string> displaySource in WinLibrary.GetDisplaySourceNames())
+                myDisplayConfig.DisplayNames = new Dictionary<uint, string>();
+                foreach (KeyValuePair<string, uint> displaySource in WinLibrary.GetDisplaySourceNames())
                 {
                     // Now we try to get the information about the displayIDs and map them to windows \\DISPLAY names e.g. \\DISPLAY1
-                    string displayName = displaySource.Value;
+                    string displayName = displaySource.Key;
                     UInt32 displayId = 0;
                     NVStatus = NVImport.NvAPI_DISP_GetDisplayIdByDisplayName(displayName, out displayId);
                     if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                     {
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_DISP_GetDisplayIdByDisplayName returned OK. The display {displayName} has NVIDIA DisplayID {displayId}");
-                        myDisplayConfig.DisplayNames.Add(displayName, displayId);
+                        myDisplayConfig.DisplayNames.Add(displayId, displayName);
                     }
                     else if (NVStatus == NVAPI_STATUS.NVAPI_NVIDIA_DEVICE_NOT_FOUND)
                     {

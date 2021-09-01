@@ -262,9 +262,9 @@ namespace DisplayMagicianShared.NVIDIA
         public override List<ScreenPosition> GetScreenPositions()
         {
             // Set up some colours
-            Color primaryScreenColor = Color.FromArgb(150, 255, 97, 27); // represents Primary screen blue
+            Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
             Color spannedScreenColor = Color.FromArgb(118, 185, 0); // represents NVIDIA Green
-            Color normalScreenColor = Color.FromArgb(195, 195, 195); // represents normal screen colour (gray)
+            Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
 
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
@@ -280,12 +280,16 @@ namespace DisplayMagicianShared.NVIDIA
             if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
             {
                 // TODO: Make the NVIDIA displays show the individual screens and overlap!
+                
+
+
                 // Create a dictionary of all the screen sizes we want
                 //Dictionary<string,SpannedScreenPosition> MosaicScreens = new Dictionary<string,SpannedScreenPosition>();
                 for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
                 {
                     ScreenPosition screen = new ScreenPosition();
                     screen.Library = "NVIDIA";
+                    screen.Colour = normalScreenColor;
                     if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount > 1)
                     {
                         // Set some basics about the screen                        
@@ -380,12 +384,31 @@ namespace DisplayMagicianShared.NVIDIA
                     else if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount == 1)
                     {
                         // This is a single screen
-                        // Set some basics about the screen                        
-                        NV_MOSAIC_DISPLAY_SETTING_V1 viewDisplaySettings = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplaySettings;
-                        screen.ScreenX = (int)viewDisplaySettings.;
-                        screen.ScreenY = (int)viewDisplaySettings.Top;
-                        screen.ScreenWidth = (int)viewDisplaySettings.Width;
-                        screen.ScreenHeight = (int)viewDisplaySettings.Height;
+                        // Set some basics about the screen
+                        uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
+                        string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
+                        uint sourceIndex = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
+                        for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
+                        {
+                            // Skip this if its not a source info config type
+                            if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
+                            {
+                                continue;
+                            }
+
+                            // If the source index matches the index of the source info object we're  looking at, then process it!
+                            if (_windowsDisplayConfig.DisplayConfigModes[x].Id == sourceIndex)
+                            {
+                                screen.Name = displayId.ToString();
+
+                                screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
+                                screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
+                                screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
+                                screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
+                                break;
+                            }
+                        }
+                                                
 
                         // If we're at the 0,0 coordinate then we're the primary monitor
                         if (screen.ScreenX == 0 && screen.ScreenY == 0)

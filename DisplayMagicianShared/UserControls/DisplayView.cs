@@ -41,37 +41,11 @@ namespace DisplayMagicianShared.UserControls
             }
         }
 
-        /*private void DrawScreen(Graphics g, ScreenPosition screen)
-        {
-            //var res = ProfileIcon.NormalizeResolution(screens);
-            var rect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
-            g.FillRectangle(new SolidBrush(Color.FromArgb(15, Color.White)), rect);
-            g.DrawRectangle(Pens.Black, rect);
-
-            *//*DrawString(g, path.Position.IsEmpty ? "[Primary]" : $"[{path.Position.X}, {path.Position.Y}]", rect.Size,
-                new PointF(rect.X + PaddingY / 2, rect.Y + PaddingY / 2), StringAlignment.Near, StringAlignment.Near);*//*
-
-            var str = $"DISPLAY {screen.Name}{Environment.NewLine}{rect.Width}×{rect.Height}";
-            var strSize = DrawString(g, str, rect.Size, new PointF(rect.X - PaddingX / 2, rect.Y + PaddingY / 2),
-                StringAlignment.Near, StringAlignment.Far);
-
-
-            var rows = rect.Width < rect.Height ? screen.Count : 1;
-            var cols = rect.Width >= rect.Height ? screen.Count : 1;
-
-            for (var i = 0; i < screen.Count; i++)
-            {
-                DrawTarget(g, screen,
-                    new Rectangle(rect.X + PaddingX, rect.Y + strSize.Height + PaddingY, rect.Width - 2 * PaddingX,
-                        rect.Height - strSize.Height - 2 * PaddingY),
-                    rows > 1 ? i : 0, cols > 1 ? i : 0, rows, cols);
-            }
-        }*/
-
         private Size DrawString(
             Graphics g,
             string str,
             Color colour,
+            Font font,
             SizeF drawingSize = default(SizeF),
             PointF? drawingPoint = null,
             StringAlignment vertical = StringAlignment.Center,
@@ -87,7 +61,7 @@ namespace DisplayMagicianShared.UserControls
 
             if (drawingPoint != null)
             {
-                g.DrawString(str, Font, new SolidBrush(colour), new RectangleF(drawingPoint.Value, drawingSize),
+                g.DrawString(str, font, new SolidBrush(colour), new RectangleF(drawingPoint.Value, drawingSize),
                     format);
             }
 
@@ -147,82 +121,6 @@ namespace DisplayMagicianShared.UserControls
             }
         }
 
- /*       private void DrawTarget(
-            Graphics g,
-            ScreenPosition screen,
-            Rectangle rect,
-            int row,
-            int col,
-            int rows,
-            int cols)
-        {
-            var targetSize = new Size(rect.Width / cols, rect.Height / rows);
-            var targetPosition = new Point(targetSize.Width * col + rect.X, targetSize.Height * row + rect.Y);
-            var targetRect = new Rectangle(targetPosition, targetSize);
-
-            if (screen.IsSpanned)
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(150, 106, 185, 0)), targetRect);
-            }
-            //else if (target.EyefinityTopology != null)
-            //    g.FillRectangle(new SolidBrush(Color.FromArgb(150, 99, 0, 0)), targetRect);
-            else if (screen.SpannedScreens.Count > 1)
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(150, 255, 97, 27)), targetRect);
-            }
-            else if (!screen.IsSpanned)
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(150, 0, 174, 241)), targetRect);
-            }
-            else
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 155, 155, 155)), targetRect);
-            }
-
-            g.DrawRectangle(Pens.Black, targetRect);
-            var str = $"{screen.Name}{Environment.NewLine}{screen.ScreenWidth}×{screen.ScreenHeight}";
-*/
-/*            switch (target.Rotation)
-            {
-                case Rotation.Rotate90:
-                    DrawString(g, "90°", targetRect.Size,
-                        new PointF(targetRect.X - PaddingX / 2, targetRect.Y + PaddingY / 2), StringAlignment.Near,
-                        StringAlignment.Far);
-
-                    break;
-                case Rotation.Rotate180:
-                    DrawString(g, "180°", targetRect.Size,
-                        new PointF(targetRect.X - PaddingX / 2, targetRect.Y + PaddingY / 2), StringAlignment.Near,
-                        StringAlignment.Far);
-
-                    break;
-                case Rotation.Rotate270:
-                    DrawString(g, "270°", targetRect.Size,
-                        new PointF(targetRect.X - PaddingX / 2, targetRect.Y + PaddingY / 2), StringAlignment.Near,
-                        StringAlignment.Far);
-
-                    break;
-            }
-*//*
-            if (screen.IsSpanned)
-            {
-                var strSize = DrawString(g, str, targetRect.Size,
-                    new PointF(targetRect.X + PaddingX / 2, targetRect.Y + PaddingY / 2),
-                    StringAlignment.Near, StringAlignment.Near);
-                DrawSpannedTopology(g, screen,
-                    new Rectangle(
-                        targetRect.X + PaddingX,
-                        targetRect.Y + strSize.Height + PaddingY,
-                        targetRect.Width - 2 * PaddingX,
-                        targetRect.Height - strSize.Height - 2 * PaddingY));
-            }
-            else
-            {
-                DrawString(g, str, targetRect.Size, targetRect.Location);
-            }*/
-        //}
-
-
         private void DrawView(Graphics g)
         {
             var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
@@ -237,28 +135,55 @@ namespace DisplayMagicianShared.UserControls
             int screenBezel = 60;
             int screenWordBuffer = 30;
 
+            Color lightTextColour = Color.White;
+            Color darkTextColour = Color.Black;
+
+            Font selectedWordFont;
+            Font normalWordFont = new Font(Font.FontFamily, 55);
+            Font bigWordFont = new Font(Font.FontFamily, 80);
+            Font hugeWordFont = new Font(Font.FontFamily, 110);
+
+
+            // Figure out the sized font we need
+            if (g.VisibleClipBounds.Width > 10000 || g.VisibleClipBounds.Height > 4000)
+            {
+                selectedWordFont = hugeWordFont;
+            }
+            else if (g.VisibleClipBounds.Width > 6000 || g.VisibleClipBounds.Height > 3500)
+            {
+                selectedWordFont = bigWordFont;
+            }
+            else
+            {
+                selectedWordFont = normalWordFont;
+            }
+
             foreach (ScreenPosition screen in _profile.Screens)
             {
-
-                Color screenBgColour;
-                Color lightTextColour = Color.White;
-                Color darkTextColour = Color.Black;
-
+                
                 // draw the screen 
                 if (screen.IsSpanned)
                 {
-                    // We do these things only if the screen IS spanned!
+                    // We do these things only if the screen IS spanned!                    
                     // Draw the outline of the spanned monitor
                     Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
                     g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
                     g.DrawRectangle(Pens.Black, outlineRect);
 
                     // Draw the screen of the monitor
-                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-                    screenBgColour = screen.Colour;
-
-                    g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
+                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));                   
+                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
+
+                    // Temporarily disabling this dotted line as it really isn't great visually.
+                    /*foreach (SpannedScreenPosition subScreen in screen.SpannedScreens)
+                    {
+                        Rectangle spannedScreenRect = new Rectangle(subScreen.ScreenX, subScreen.ScreenY, subScreen.ScreenWidth, subScreen.ScreenHeight);
+                        Pen dashedLine = new Pen(Color.Black);
+                        dashedLine.DashStyle = System.Drawing.Drawing2D.DashStyle.DashDotDot;
+                        g.DrawRectangle(dashedLine, spannedScreenRect);
+                    }*/
+
                 }
                 else
                 {                   
@@ -268,43 +193,26 @@ namespace DisplayMagicianShared.UserControls
                     g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
                     g.DrawRectangle(Pens.Black, outlineRect);
 
-                    if (screen.IsPrimary)
-                    {
-                        //screenBgColour = Color.FromArgb(255, 66, 173, 245);
-                        screenBgColour = Color.FromArgb(240, 116, 215, 255);
-                    }
-                    else
-                    {
-                        if (screen.Colour != null)
-                        {
-                            screenBgColour = screen.Colour;
-                        }
-                        else
-                        {
-                            screenBgColour = Color.FromArgb(255, 195, 195, 195);
-                        }
-                    }
-
                     // Draw the screen of the monitor
                     Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
-
-                    g.FillRectangle(new SolidBrush(screenBgColour), screenRect);
+                    g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
                 }                
 
                 Rectangle wordRect = new Rectangle(screen.ScreenX + screenBezel + screenWordBuffer, screen.ScreenY + screenBezel + screenWordBuffer, screen.ScreenWidth - (screenBezel * 2) - (screenWordBuffer * 2), screen.ScreenHeight - (screenBezel * 2) - (screenWordBuffer * 2));
-                Color wordTextColour = pickTextColorBasedOnBgColour(screenBgColour, lightTextColour, darkTextColour);
+                Color wordTextColour = pickTextColorBasedOnBgColour(screen.Colour, lightTextColour, darkTextColour);
                 // Draw the name of the screen and the size of it
                 string str = $"{screen.Name}{Environment.NewLine}{screen.ScreenWidth}×{screen.ScreenHeight}{Environment.NewLine}{screen.DisplayConnector}";
                 if (screen.IsPrimary)
                 {
                     str = $"Primary Display{Environment.NewLine}" + str;
                 }
-                DrawString(g, str, wordTextColour, wordRect.Size, wordRect.Location);
+                
+                DrawString(g, str, wordTextColour, selectedWordFont, wordRect.Size, wordRect.Location);
 
                 // Draw the position of the screen
                 str = $"[{screen.ScreenX},{screen.ScreenY}]";
-                DrawString(g, str, wordTextColour, wordRect.Size, wordRect.Location, StringAlignment.Near, StringAlignment.Near);
+                DrawString(g, str, wordTextColour, selectedWordFont, wordRect.Size, wordRect.Location, StringAlignment.Near, StringAlignment.Near);
             }
         }
 
