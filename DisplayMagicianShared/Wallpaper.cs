@@ -23,12 +23,19 @@ namespace DisplayMagicianShared
 
         public enum Style : int
         {
-            Tile,
-            Center,
-            Stretch,
-            Fill,
-            Fit,
-            Span
+            Fill = 0,
+            Fit = 1,
+            Stretch = 2,
+            Tile = 3,
+            Center = 4,            
+            Span = 5
+        }
+
+        public enum Mode : int
+        {
+            DoNothing = 0,
+            Clear = 1,
+            Apply = 2
         }
 
         public static bool Set(String filename, Style style)
@@ -82,6 +89,30 @@ namespace DisplayMagicianShared
                 // applying desktop wallpaper failed!
                 return false;
             }
+        }
+
+        public static bool Clear()
+        {
+            RegistryKey desktopKey = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
+            desktopKey.SetValue(@"WallPaper", "");
+
+            RegistryKey explorerKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers", true);
+            explorerKey.SetValue(@"BackgroundType", 1);
+
+            if (SystemParametersInfo(SPI_SETDESKWALLPAPER,
+                0,
+                "",
+                SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE) > 0)
+            {
+                // applying desktop wallpaper worked!
+                return true;
+            }
+            else
+            {
+                // applying desktop wallpaper failed!
+                return false;
+            }
+
         }
     }
 }

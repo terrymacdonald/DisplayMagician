@@ -31,11 +31,13 @@ namespace DisplayMagician.UIForms
         {
             this.btn_back = new System.Windows.Forms.Button();
             this.gb_general = new System.Windows.Forms.GroupBox();
+            this.rb_leave_wallpaper = new System.Windows.Forms.RadioButton();
+            this.rb_clear_wallpaper = new System.Windows.Forms.RadioButton();
+            this.rb_apply_wallpaper = new System.Windows.Forms.RadioButton();
             this.btn_current = new System.Windows.Forms.Button();
             this.btn_clear = new System.Windows.Forms.Button();
             this.pb_wallpaper = new System.Windows.Forms.PictureBox();
             this.btn_select = new System.Windows.Forms.Button();
-            this.cb_set_wallpaper = new System.Windows.Forms.CheckBox();
             this.lbl_style = new System.Windows.Forms.Label();
             this.cmb_wallpaper_display_mode = new System.Windows.Forms.ComboBox();
             this.gb_general.SuspendLayout();
@@ -50,7 +52,7 @@ namespace DisplayMagician.UIForms
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(476, 380);
+            this.btn_back.Location = new System.Drawing.Point(476, 436);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 9;
@@ -60,21 +62,58 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            this.gb_general.Controls.Add(this.rb_leave_wallpaper);
+            this.gb_general.Controls.Add(this.rb_clear_wallpaper);
+            this.gb_general.Controls.Add(this.rb_apply_wallpaper);
             this.gb_general.Controls.Add(this.btn_current);
             this.gb_general.Controls.Add(this.btn_clear);
             this.gb_general.Controls.Add(this.pb_wallpaper);
             this.gb_general.Controls.Add(this.btn_select);
-            this.gb_general.Controls.Add(this.cb_set_wallpaper);
             this.gb_general.Controls.Add(this.lbl_style);
             this.gb_general.Controls.Add(this.cmb_wallpaper_display_mode);
             this.gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_general.ForeColor = System.Drawing.Color.White;
-            this.gb_general.Location = new System.Drawing.Point(27, 21);
+            this.gb_general.Location = new System.Drawing.Point(27, 27);
             this.gb_general.Name = "gb_general";
-            this.gb_general.Size = new System.Drawing.Size(525, 337);
+            this.gb_general.Size = new System.Drawing.Size(525, 381);
             this.gb_general.TabIndex = 11;
             this.gb_general.TabStop = false;
             this.gb_general.Text = "Wallpaper Settings";
+            // 
+            // rb_leave_wallpaper
+            // 
+            this.rb_leave_wallpaper.AutoSize = true;
+            this.rb_leave_wallpaper.Checked = true;
+            this.rb_leave_wallpaper.Location = new System.Drawing.Point(28, 30);
+            this.rb_leave_wallpaper.Name = "rb_leave_wallpaper";
+            this.rb_leave_wallpaper.Size = new System.Drawing.Size(146, 20);
+            this.rb_leave_wallpaper.TabIndex = 22;
+            this.rb_leave_wallpaper.TabStop = true;
+            this.rb_leave_wallpaper.Text = "Do Nothing (Default)";
+            this.rb_leave_wallpaper.UseVisualStyleBackColor = true;
+            this.rb_leave_wallpaper.CheckedChanged += new System.EventHandler(this.rb_leave_wallpaper_CheckedChanged);
+            // 
+            // rb_clear_wallpaper
+            // 
+            this.rb_clear_wallpaper.AutoSize = true;
+            this.rb_clear_wallpaper.Location = new System.Drawing.Point(28, 56);
+            this.rb_clear_wallpaper.Name = "rb_clear_wallpaper";
+            this.rb_clear_wallpaper.Size = new System.Drawing.Size(381, 20);
+            this.rb_clear_wallpaper.TabIndex = 21;
+            this.rb_clear_wallpaper.Text = "Clear the Desktop Wallpaper when using this Display Profile";
+            this.rb_clear_wallpaper.UseVisualStyleBackColor = true;
+            this.rb_clear_wallpaper.CheckedChanged += new System.EventHandler(this.rb_clear_wallpaper_CheckedChanged);
+            // 
+            // rb_apply_wallpaper
+            // 
+            this.rb_apply_wallpaper.AutoSize = true;
+            this.rb_apply_wallpaper.Location = new System.Drawing.Point(28, 82);
+            this.rb_apply_wallpaper.Name = "rb_apply_wallpaper";
+            this.rb_apply_wallpaper.Size = new System.Drawing.Size(386, 20);
+            this.rb_apply_wallpaper.TabIndex = 20;
+            this.rb_apply_wallpaper.Text = "Apply this Desktop Wallpaper when using this Display Profile";
+            this.rb_apply_wallpaper.UseVisualStyleBackColor = true;
+            this.rb_apply_wallpaper.CheckedChanged += new System.EventHandler(this.rb_apply_wallpaper_CheckedChanged);
             // 
             // btn_current
             // 
@@ -86,7 +125,7 @@ namespace DisplayMagician.UIForms
             this.btn_current.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_current.ForeColor = System.Drawing.Color.White;
             this.btn_current.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.btn_current.Location = new System.Drawing.Point(417, 158);
+            this.btn_current.Location = new System.Drawing.Point(417, 201);
             this.btn_current.Name = "btn_current";
             this.btn_current.Size = new System.Drawing.Size(75, 23);
             this.btn_current.TabIndex = 19;
@@ -104,7 +143,7 @@ namespace DisplayMagician.UIForms
             this.btn_clear.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_clear.ForeColor = System.Drawing.Color.White;
             this.btn_clear.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.btn_clear.Location = new System.Drawing.Point(417, 187);
+            this.btn_clear.Location = new System.Drawing.Point(417, 230);
             this.btn_clear.Name = "btn_clear";
             this.btn_clear.Size = new System.Drawing.Size(75, 23);
             this.btn_clear.TabIndex = 18;
@@ -118,7 +157,7 @@ namespace DisplayMagician.UIForms
             this.pb_wallpaper.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.pb_wallpaper.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pb_wallpaper.Enabled = false;
-            this.pb_wallpaper.Location = new System.Drawing.Point(28, 68);
+            this.pb_wallpaper.Location = new System.Drawing.Point(28, 111);
             this.pb_wallpaper.Name = "pb_wallpaper";
             this.pb_wallpaper.Size = new System.Drawing.Size(381, 212);
             this.pb_wallpaper.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -135,7 +174,7 @@ namespace DisplayMagician.UIForms
             this.btn_select.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_select.ForeColor = System.Drawing.Color.White;
             this.btn_select.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.btn_select.Location = new System.Drawing.Point(417, 129);
+            this.btn_select.Location = new System.Drawing.Point(417, 172);
             this.btn_select.Name = "btn_select";
             this.btn_select.Size = new System.Drawing.Size(75, 23);
             this.btn_select.TabIndex = 16;
@@ -143,28 +182,13 @@ namespace DisplayMagician.UIForms
             this.btn_select.UseVisualStyleBackColor = true;
             this.btn_select.Click += new System.EventHandler(this.btn_select_wallpaper_Click);
             // 
-            // cb_set_wallpaper
-            // 
-            this.cb_set_wallpaper.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.cb_set_wallpaper.AutoSize = true;
-            this.cb_set_wallpaper.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.cb_set_wallpaper.ForeColor = System.Drawing.Color.White;
-            this.cb_set_wallpaper.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.cb_set_wallpaper.Location = new System.Drawing.Point(28, 36);
-            this.cb_set_wallpaper.Name = "cb_set_wallpaper";
-            this.cb_set_wallpaper.Size = new System.Drawing.Size(333, 20);
-            this.cb_set_wallpaper.TabIndex = 14;
-            this.cb_set_wallpaper.Text = "Apply this Wallpaper when using this Display Profile";
-            this.cb_set_wallpaper.UseVisualStyleBackColor = true;
-            this.cb_set_wallpaper.CheckedChanged += new System.EventHandler(this.cb_set_wallpaper_CheckedChanged);
-            // 
             // lbl_style
             // 
             this.lbl_style.AutoSize = true;
             this.lbl_style.Enabled = false;
             this.lbl_style.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_style.ForeColor = System.Drawing.Color.Transparent;
-            this.lbl_style.Location = new System.Drawing.Point(176, 291);
+            this.lbl_style.Location = new System.Drawing.Point(176, 334);
             this.lbl_style.Name = "lbl_style";
             this.lbl_style.Size = new System.Drawing.Size(44, 16);
             this.lbl_style.TabIndex = 13;
@@ -175,7 +199,7 @@ namespace DisplayMagician.UIForms
             this.cmb_wallpaper_display_mode.Enabled = false;
             this.cmb_wallpaper_display_mode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmb_wallpaper_display_mode.FormattingEnabled = true;
-            this.cmb_wallpaper_display_mode.Location = new System.Drawing.Point(226, 286);
+            this.cmb_wallpaper_display_mode.Location = new System.Drawing.Point(226, 329);
             this.cmb_wallpaper_display_mode.Name = "cmb_wallpaper_display_mode";
             this.cmb_wallpaper_display_mode.Size = new System.Drawing.Size(183, 24);
             this.cmb_wallpaper_display_mode.TabIndex = 12;
@@ -186,7 +210,7 @@ namespace DisplayMagician.UIForms
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(580, 427);
+            this.ClientSize = new System.Drawing.Size(580, 483);
             this.Controls.Add(this.gb_general);
             this.Controls.Add(this.btn_back);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -210,12 +234,14 @@ namespace DisplayMagician.UIForms
         #endregion
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.GroupBox gb_general;
-        private System.Windows.Forms.CheckBox cb_set_wallpaper;
         private System.Windows.Forms.Label lbl_style;
         private System.Windows.Forms.ComboBox cmb_wallpaper_display_mode;
         private System.Windows.Forms.Button btn_select;
         private System.Windows.Forms.Button btn_clear;
         private System.Windows.Forms.PictureBox pb_wallpaper;
         private System.Windows.Forms.Button btn_current;
+        private System.Windows.Forms.RadioButton rb_leave_wallpaper;
+        private System.Windows.Forms.RadioButton rb_clear_wallpaper;
+        private System.Windows.Forms.RadioButton rb_apply_wallpaper;
     }
 }

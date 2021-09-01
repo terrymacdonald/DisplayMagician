@@ -1051,16 +1051,27 @@ namespace DisplayMagicianShared
             }
             finally
             {
-                // If the applying path info worked, then we attempt to set the desktop background
-                if (profile.SetWallpaper)
+                // If the applying path info worked, then we attempt to set the desktop background if needed
+                if (profile.WallpaperMode.Equals(Wallpaper.Mode.Apply) && !String.IsNullOrWhiteSpace(profile.WallpaperBitmapFilename))
                 {
-                    if (Wallpaper.Set(profile.SavedProfileIconCacheFilename, profile.WallpaperStyle))
+                    if (Wallpaper.Set(profile.WallpaperBitmapFilename, profile.WallpaperStyle))
                     {
                         SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it worked!");
                     }
                     else
                     {
                         SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to set the desktop wallpaper to {profile.SavedProfileIconCacheFilename} using {profile.WallpaperStyle} style for profile {profile.Name}, and it failed :(");
+                    }
+                }
+                else if (profile.WallpaperMode.Equals(Wallpaper.Mode.Clear))
+                {
+                    if (Wallpaper.Clear())
+                    {
+                        SharedLogger.logger.Trace($"Program/ApplyProfile: We attempted to clear the desktop wallpaper and it worked!");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to clear the desktop wallpaper and it failed :(");
                     }
                 }
                 // We stop the stop watch

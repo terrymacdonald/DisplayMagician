@@ -236,7 +236,7 @@ namespace DisplayMagicianShared
 
         public string SavedProfileIconCacheFilename { get; set; }
 
-        public bool SetWallpaper { get; set; }
+        public Wallpaper.Mode WallpaperMode { get; set; }
 
         public Wallpaper.Style WallpaperStyle { get; set; }
 
@@ -356,7 +356,7 @@ namespace DisplayMagicianShared
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
-            profile.SetWallpaper = SetWallpaper;
+            profile.WallpaperMode = WallpaperMode;
             profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
             profile.WallpaperStyle = WallpaperStyle;
             return true;

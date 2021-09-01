@@ -28,12 +28,12 @@ namespace DisplayMagician.UIForms
             InitializeComponent();
 
             // Populate the Style dictionary
-            wallpaperStyleText.Add(Wallpaper.Style.Center, "Center the Wallpaper");
             wallpaperStyleText.Add(Wallpaper.Style.Fill, "Fill the Wallpaper");
             wallpaperStyleText.Add(Wallpaper.Style.Fit, "Fit the Wallpaper");
             wallpaperStyleText.Add(Wallpaper.Style.Stretch, "Stretch the Wallpaper");
-            wallpaperStyleText.Add(Wallpaper.Style.Span, "Span the Wallpaper");
             wallpaperStyleText.Add(Wallpaper.Style.Tile, "Tile the Wallpaper");
+            wallpaperStyleText.Add(Wallpaper.Style.Center, "Center the Wallpaper");
+            wallpaperStyleText.Add(Wallpaper.Style.Span, "Span the Wallpaper");
 
             cmb_wallpaper_display_mode.DisplayMember = "Value";
             cmb_wallpaper_display_mode.ValueMember = "Text";
@@ -61,10 +61,10 @@ namespace DisplayMagician.UIForms
 
         private void ProfileSettingsForm_Load(object sender, EventArgs e)
         {
-            if (Profile.SetWallpaper)
+            if (Profile.WallpaperMode.Equals(Wallpaper.Mode.Apply))
             {
-                logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} has loaded with Set Wallpaper enabled and Wallpaper Style {Profile.WallpaperStyle.ToString("G")} and Wallpaper Filename of {Profile.WallpaperBitmapFilename}.");
-                cb_set_wallpaper.Checked = true;
+                logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} has loaded with Apply Wallpaper enabled and Wallpaper Style {Profile.WallpaperStyle.ToString("G")} and Wallpaper Filename of {Profile.WallpaperBitmapFilename}.");
+                rb_apply_wallpaper.Checked = true;
                 cmb_wallpaper_display_mode.SelectedIndex = cmb_wallpaper_display_mode.FindStringExact(wallpaperStyleText[Profile.WallpaperStyle]);
                 if (Profile.WallpaperBitmapFilename != "" && File.Exists(Profile.WallpaperBitmapFilename))
                 {
@@ -77,36 +77,55 @@ namespace DisplayMagician.UIForms
                     pb_wallpaper.Image = wallpaperImage;
                 }
             }
+            else if (Profile.WallpaperMode.Equals(Wallpaper.Mode.Clear))
+            {
+                logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} has loaded with Clear Wallpaper enabled.");
+                rb_clear_wallpaper.Checked = true;                
+            }
             else
             {
-                cb_set_wallpaper.Checked = false;
+                logger.Info($"ProfileSettingsForm/ProfileSettingsForm_Load: Profile {Profile.Name} is set to do nothing.");
+                rb_leave_wallpaper.Checked = true;
+                cmb_wallpaper_display_mode.SelectedIndex = 0;
             }
             
         }
 
         private void ProfileSettingsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Profile.SetWallpaper = cb_set_wallpaper.Checked;
+            if (rb_apply_wallpaper.Checked)
+            {
+                Profile.WallpaperMode = Wallpaper.Mode.Apply;
+            }
+            else if (rb_clear_wallpaper.Checked)
+            {
+                Profile.WallpaperMode = Wallpaper.Mode.Clear;
+            }
+            else
+            {
+                Profile.WallpaperMode = Wallpaper.Mode.DoNothing;
+            }
+
             Profile.WallpaperStyle = ((KeyValuePair<Wallpaper.Style, string>)cmb_wallpaper_display_mode.SelectedItem).Key;
         }
 
         private void btn_back_Click(object sender, EventArgs e)
         {
             // Check that if there isn't an image, and yet apply this profile checkbox is selected, then we need to unselect it to stop an error state
-            if (cb_set_wallpaper.Checked == true && (Profile.WallpaperBitmapFilename == "" || Profile.WallpaperBitmapFilename == null))
+            if (rb_apply_wallpaper.Checked == true && (Profile.WallpaperBitmapFilename == "" || Profile.WallpaperBitmapFilename == null))
             {
                 // We need to force turn off the application of the desktop wallpaper as it won't work
-                Profile.SetWallpaper = false;
+                Profile.WallpaperMode = Wallpaper.Mode.DoNothing;
                 Profile.WallpaperBitmapFilename = "";
-                cb_set_wallpaper.Checked = false;
+                rb_apply_wallpaper.Checked = false;
             }
             this.Close();
         }
 
-        private void cb_set_wallpaper_CheckedChanged(object sender, EventArgs e)
+        private void rb_apply_wallpaper_CheckedChanged(object sender, EventArgs e)
         {
             _profileSettingChanged = true;
-            if (cb_set_wallpaper.Checked)
+            if (rb_apply_wallpaper.Checked)
             {
                 // Enable all the things
                 pb_wallpaper.Enabled = true;
@@ -115,16 +134,6 @@ namespace DisplayMagician.UIForms
                 btn_clear.Enabled = true;
                 lbl_style.Enabled = true;
                 cmb_wallpaper_display_mode.Enabled = true;
-            }
-            else
-            {
-                // Disable all the things
-                pb_wallpaper.Enabled = false;
-                btn_select.Enabled = false;
-                btn_current.Enabled = false;
-                btn_clear.Enabled = false;
-                lbl_style.Enabled = false;
-                cmb_wallpaper_display_mode.Enabled = false;
             }
         }
 
@@ -273,6 +282,38 @@ namespace DisplayMagician.UIForms
                 // Show the wallpaper image so that the user can decide to use it
                 pb_wallpaper.Image = wallpaperImage;
             }
+        }
+        
+
+        private void rb_clear_wallpaper_CheckedChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
+            if (rb_clear_wallpaper.Checked)
+            {
+                // Disable all the things
+                pb_wallpaper.Enabled = false;
+                btn_select.Enabled = false;
+                btn_current.Enabled = false;
+                btn_clear.Enabled = false;
+                lbl_style.Enabled = false;
+                cmb_wallpaper_display_mode.Enabled = false;
+            }
+        }
+
+        private void rb_leave_wallpaper_CheckedChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
+            if (rb_leave_wallpaper.Checked)
+            {
+                // Disable all the things
+                pb_wallpaper.Enabled = false;
+                btn_select.Enabled = false;
+                btn_current.Enabled = false;
+                btn_clear.Enabled = false;
+                lbl_style.Enabled = false;
+                cmb_wallpaper_display_mode.Enabled = false;
+            }
+
         }
     }
 }
