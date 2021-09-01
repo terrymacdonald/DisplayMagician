@@ -1025,6 +1025,27 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 rhs) => !(lhs == rhs);
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1>
+    {
+        public UInt32 DisplayId;  //!< Display ID
+        NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
+
+        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other && this.Equals(other);
+
+        public bool Equals(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other)
+        => DisplayId == other.DisplayId &&
+           Details.Equals(other.Details);
+
+        public override Int32 GetHashCode()
+        {
+            return (DisplayId, Details).GetHashCode();
+        }
+        public static bool operator ==(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 rhs) => !(lhs == rhs);
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct NV_DISPLAYCONFIG_PATH_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V2> // Version is 2
     {
@@ -1032,12 +1053,15 @@ namespace DisplayMagicianShared.NVIDIA
         public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
 
         public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
-        public NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 TargetInfo;
-        public NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo;             //!< May be NULL if mode info is not important
+        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[] TargetInfo;
+        public NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 SourceModeInfo;             //!< May be NULL if mode info is not important
                                                                                 //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
                                                                                 //public UInt32 reserved : 31;              //!< Must be 0
                                                                                 //public LUID pOSAdapterID;              //!< Used by Non-NVIDIA adapter for poInt32er to OS Adapter of LUID
                                                                                 //!< type, type casted to void *.
+        public UInt32 Reserved;
+        public IntPtr OSAdapterID;
 
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_INFO_V2 other && this.Equals(other);
 
@@ -1046,16 +1070,52 @@ namespace DisplayMagicianShared.NVIDIA
            SourceId == other.SourceId &&
            TargetInfoCount == other.TargetInfoCount &&
            TargetInfo.Equals(other.TargetInfo) &&
-           sourceModeInfo.Equals(other.sourceModeInfo);
+           SourceModeInfo.Equals(other.SourceModeInfo) &&
+           Reserved == other.Reserved &&
+           OSAdapterID == other.OSAdapterID;
 
         public override Int32 GetHashCode()
         {
-            return (Version, SourceId, TargetInfoCount, TargetInfo, sourceModeInfo).GetHashCode();
+            return (Version, SourceId, TargetInfoCount, TargetInfo, SourceModeInfo).GetHashCode();
         }
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_INFO_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_DISPLAYCONFIG_PATH_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_INFO_V2 rhs) => !(lhs == rhs);
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NV_DISPLAYCONFIG_PATH_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V1> // Version is 1
+    {
+        public UInt32 Version;
+        public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
+
+        public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
+        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[] TargetInfo;
+        public NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 SourceModeInfo;             //!< May be NULL if mode info is not important
+                                                                                //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
+                                                                                //public UInt32 reserved : 31;              //!< Must be 0
+                                                                                //public LUID pOSAdapterID;              //!< Used by Non-NVIDIA adapter for poInt32er to OS Adapter of LUID
+                                                                                //!< type, type casted to void *.
+
+        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_INFO_V1 other && this.Equals(other);
+
+        public bool Equals(NV_DISPLAYCONFIG_PATH_INFO_V1 other)
+        => Version == other.Version &&
+           SourceId == other.SourceId &&
+           TargetInfoCount == other.TargetInfoCount &&
+           TargetInfo.Equals(other.TargetInfo) &&
+           SourceModeInfo.Equals(other.SourceModeInfo);
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, SourceId, TargetInfoCount, TargetInfo, SourceModeInfo).GetHashCode();
+        }
+        public static bool operator ==(NV_DISPLAYCONFIG_PATH_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_INFO_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_DISPLAYCONFIG_PATH_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_INFO_V1 rhs) => !(lhs == rhs);
+    }
+
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1>
@@ -1880,6 +1940,8 @@ namespace DisplayMagicianShared.NVIDIA
         public static UInt32 NV_GPU_DISPLAYIDS_V2_VER = MAKE_NVAPI_VERSION<NV_GPU_DISPLAYIDS_V2>(3); // NOTE: There is a bug in R470 that sets the NV_GPU_DISPLAYIDS_V2 version to 3!
         public static UInt32 NV_BOARD_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_BOARD_INFO_V1>(1);
         public static UInt32 NV_EDID_V3_VER = MAKE_NVAPI_VERSION<NV_EDID_V3>(3);
+        public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V1>(1);
+        public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V2_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V2>(2);
 
 
         #region Internal Constant
@@ -1900,6 +1962,10 @@ namespace DisplayMagicianShared.NVIDIA
         private static UInt32 MAKE_NVAPI_VERSION<T>(Int32 version)
         {
             return (UInt32)((Marshal.SizeOf(typeof(T))) | (Int32)(version << 16));
+        }
+        private static UInt32 MAKE_NVAPI_VERSION(Int32 size, Int32 version)
+        {
+            return (UInt32)((Int32)size | (Int32)(version << 16));
         }
 
         private static void GetDelegate<T>(UInt32 apiId, out T newDelegate) where T : class
@@ -2008,7 +2074,9 @@ namespace DisplayMagicianShared.NVIDIA
                 GetDelegate(NvId_DISP_GetGDIPrimaryDisplayId, out DISP_GetGDIPrimaryDisplayIdInternal);
                 GetDelegate(NvId_Disp_GetHdrCapabilities, out Disp_GetHdrCapabilitiesInternal);
                 GetDelegate(NvId_Disp_HdrColorControl, out Disp_HdrColorControlInternal);
-
+                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
+                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission
+                GetDelegate(NvId_DISP_GetDisplayIdByDisplayName, out DISP_GetDisplayIdByDisplayNameInternal);
 
                 // GPUs
                 GetDelegate(NvId_EnumPhysicalGPUs, out EnumPhysicalGPUsInternal);
@@ -3059,6 +3127,189 @@ namespace DisplayMagicianShared.NVIDIA
             return status;
         }
         #endregion
+
+
+        // ******** IMPORTANT! This code has an error when attempting to perform the third pass as required by NVAPI documentation *********
+        // ******** FOr this reason I have disabled the code as I don't actually need to get it going. ******** 
+        /*        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
+                private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegate(
+                    [In][Out] ref UInt32 pathInfoCount,
+                    [In][Out] IntPtr pathInfoBuffer);
+                private static readonly DISP_GetDisplayConfigDelegate DISP_GetDisplayConfigInternal;
+
+                /// <summary>
+                /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
+                ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
+                ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
+                ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
+                ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
+                ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
+                //                               to number of targetInfoCount(from Second Pass).
+                /// SUPPORTED OS:  Windows 7 and higher
+                /// </summary>
+                /// <param name="PathInfoCount"></param>
+                /// <param name="PathInfo"></param>
+                /// <returns></returns>
+                public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount, ref NV_DISPLAYCONFIG_PATH_INFO_V1[] PathInfos, bool partFilledIn = false)
+                {
+                    NVAPI_STATUS status;
+                    IntPtr pathInfoBuffer = IntPtr.Zero;
+                    IntPtr currentPathInfoBuffer = IntPtr.Zero;
+                    if (partFilledIn)
+                    {
+                        // Copy the supplied object for the third pass (when we have the pathInfoCount and the targetInfoCount for each pathInfo, but we want the details)
+                        //NV_DISPLAYCONFIG_PATH_INFO_V1[] passedPathInfo = PathInfos;                
+                        //PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V1[PathInfoCount];
+                        // Go through the array and create the structure 
+                        int overallTargetCount = 0;
+                        for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
+                        {
+                            // Copy the information passed in, into the buffer we want to pass
+                            //PathInfos[x].Version = MAKE_NVAPI_VERSION(Marshal.SizeOf(passedPathInfo[x]),1);
+                            *//*PathInfos[x].SourceId = passedPathInfo[x].SourceId;
+                            PathInfos[x].TargetInfoCount = passedPathInfo[x].TargetInfoCount;
+                            PathInfos[x].TargetInfo = passedPathInfo[x].TargetInfo;                   
+                            PathInfos[x].SourceModeInfo = = passedPathInfo[x].SourceModeInfo;*//*
+                            overallTargetCount += (int)PathInfos[x].TargetInfoCount;
+                        }
+                        // Initialize unmanged memory to hold the unmanaged array of structs
+                        int memorySizeRequired = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V1)) * (int)PathInfoCount;
+                        pathInfoBuffer = Marshal.AllocCoTaskMem(memorySizeRequired);
+                        // Also set another memory pointer to the same place so that we can do the memory copying item by item
+                        // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                        currentPathInfoBuffer = pathInfoBuffer;
+                        // Go through the array and copy things from managed code to unmanaged code
+                        for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
+                        {
+                            // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
+                            Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, false);
+                            // advance the buffer forwards to the next object
+                            currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[x]));
+                        }
+
+                    }
+                    else
+                    {
+                        // Build a new blank object for the second pass (when we have the pathInfoCount, but want the targetInfoCount  for each pathInfo)
+                        // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
+                        PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V1[PathInfoCount];
+                        // Initialize unmanged memory to hold the unmanaged array of structs
+                        pathInfoBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V1)) * (int)PathInfoCount);
+                        // Also set another memory pointer to the same place so that we can do the memory copying item by item
+                        // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                        currentPathInfoBuffer = pathInfoBuffer;
+                        // Go through the array and copy things from managed code to unmanaged code
+                        for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
+                        {
+                            PathInfos[x].Version = MAKE_NVAPI_VERSION(Marshal.SizeOf(PathInfos[x]), 1);
+                            PathInfos[x].SourceModeInfo = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
+                            // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
+                            Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, false);
+                            // advance the buffer forwards to the next object
+                            currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[x]));
+                        }
+                    }
+
+
+                    if (DISP_GetDisplayConfigInternal != null)
+                    {
+                        // Use the unmanaged buffer in the unmanaged C call
+                        status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoBuffer);
+
+                        if (status == NVAPI_STATUS.NVAPI_OK)
+                        {
+                            // If everything worked, then copy the data back from the unmanaged array into the managed array
+                            // So that we can use it in C# land
+                            // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
+                            currentPathInfoBuffer = pathInfoBuffer;
+                            // Create a managed array to store the received information within
+                            PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V1[PathInfoCount];
+                            // Go through the memory buffer item by item and copy the items into the managed array
+                            for (int i = 0; i < PathInfoCount; i++)
+                            {
+                                // build a structure in the array slot
+                                PathInfos[i] = new NV_DISPLAYCONFIG_PATH_INFO_V1();
+                                // fill the array slot structure with the data from the buffer
+                                PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V1)Marshal.PtrToStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V1));
+                                // destroy the bit of memory we no longer need
+                                Marshal.DestroyStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V1));
+                                // advance the buffer forwards to the next object
+                                currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[i]));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                    }
+
+                    Marshal.FreeCoTaskMem(pathInfoBuffer);
+
+                    return status;
+                }
+
+                // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
+                // NvAPIMosaic_EnumDisplayGrids
+                private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegateNull(
+                    [In][Out] ref UInt32 pathInfoCount,
+                    [In][Out] IntPtr pathInfoBuffer);
+                private static readonly DISP_GetDisplayConfigDelegateNull DISP_GetDisplayConfigInternalNull;
+
+                /// <summary>
+                /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
+                ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
+                ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
+                ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
+                ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
+                ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
+                //                               to number of targetInfoCount(from Second Pass).
+                /// SUPPORTED OS:  Windows 7 and higher
+                /// </summary>
+                /// <param name="PathInfoCount"></param>
+                /// <returns></returns>
+                public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount)
+                {
+                    NVAPI_STATUS status;
+                    IntPtr pathInfos = IntPtr.Zero;
+
+                    if (DISP_GetDisplayConfigInternalNull != null) { status = DISP_GetDisplayConfigInternalNull(ref PathInfoCount, pathInfos); }
+                    else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+                    return status;
+                }*/
+
+
+        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayIdByDisplayName(const char *displayName, NvU32* displayId);
+        private delegate NVAPI_STATUS DISP_GetDisplayIdByDisplayNameDelegate(
+            [In] string displayName,
+            [Out] out UInt32 displayId);
+        private static readonly DISP_GetDisplayIdByDisplayNameDelegate DISP_GetDisplayIdByDisplayNameInternal;
+
+        /// <summary>
+        ///
+        /// DESCRIPTION:     This API retrieves the Display Id of a given display by
+        ///                  display name. The display must be active to retrieve the
+        ///                  displayId. In the case of clone mode or Surround gaming,
+        ///                  the primary or top-left display will be returned.
+        ///
+        /// \param [in]     displayName  Name of display (Eg: "\\DISPLAY1" to
+        ///                              retrieve the displayId for.
+        /// \param [out]    displayId    Display ID of the requested display.
+        /// </summary>
+        /// <param name="displayName"></param>
+        /// <param name="displayId"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DISP_GetDisplayIdByDisplayName(string displayName, out UInt32 displayId)
+        {
+            NVAPI_STATUS status;
+            displayId = 0;
+
+            if (DISP_GetDisplayIdByDisplayNameInternal != null) { status = DISP_GetDisplayIdByDisplayNameInternal(displayName, out displayId); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
+
 
         // EnumPhysicalGPUs
         private delegate NVAPI_STATUS EnumPhysicalGPUsDelegate(

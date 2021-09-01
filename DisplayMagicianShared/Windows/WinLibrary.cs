@@ -41,6 +41,7 @@ namespace DisplayMagicianShared.Windows
         public DISPLAYCONFIG_PATH_INFO[] DisplayConfigPaths;
         public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
         public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
+        public Dictionary<uint, string> DisplaySources;
         public List<string> DisplayIdentifiers;
 
         public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
@@ -278,6 +279,7 @@ namespace DisplayMagicianShared.Windows
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
             windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
             windowsDisplayConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
+            windowsDisplayConfig.DisplaySources = new Dictionary<uint, string>();
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
@@ -285,6 +287,24 @@ namespace DisplayMagicianShared.Windows
             int hdrInfoCount = 0;
             foreach (var path in paths)
             {
+                // get display source name
+                var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
+                sourceInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+                sourceInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SOURCE_DEVICE_NAME>();
+                sourceInfo.Header.AdapterId = path.SourceInfo.AdapterId;
+                sourceInfo.Header.Id = path.SourceInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    // Store it for later
+                    windowsDisplayConfig.DisplaySources.Add(path.SourceInfo.Id, sourceInfo.ViewGdiDeviceName);
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/PrintActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the source info for source adapter #{path.SourceInfo.AdapterId}");
+                }
+
                 // Get adapter ID for later
                 SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get adapter name for adapter {path.TargetInfo.AdapterId.Value}.");
                 if (!windowsDisplayConfig.DisplayAdapters.ContainsKey(path.TargetInfo.AdapterId.Value))
@@ -372,6 +392,88 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
 
             return windowsDisplayConfig;
+        }
+
+        public static Dictionary<uint, string> GetDisplaySourceNames()
+        {
+            // Get the size of the largest Active Paths and Modes arrays
+            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the size of the largest Active Paths and Modes arrays");
+            int pathCount = 0;
+            int modeCount = 0;
+            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+            if (err != WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+                throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
+            }
+
+            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the current Display Config path and mode arrays");
+            var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+            var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+            err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+            if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+            {
+                SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: The displays were modified between GetDisplayConfigBufferSizes and QueryDisplayConfig so we need to get the buffer sizes again.");
+                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the size of the largest Active Paths and Modes arrays");
+                // Screen changed in between GetDisplayConfigBufferSizes and QueryDisplayConfig, so we need to get buffer sizes again
+                // as per https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig 
+                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+                if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                    throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
+                }
+                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the current Display Config path and mode arrays");
+                paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+                modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+                err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+                if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                    throw new WinLibraryException($"The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
+                }
+                else if (err != WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again");
+                    throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again.");
+                }
+            }
+            else if (err != WIN32STATUS.ERROR_SUCCESS)
+            {
+                SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays");
+                throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
+            }
+
+            // Prepare the empty DisplaySources dictionary
+            Dictionary<uint, string> DisplaySources = new Dictionary<uint, string>();
+
+            // Now cycle through the paths and grab the HDR state information
+            // and map the adapter name to adapter id
+            var hdrInfos = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
+            int hdrInfoCount = 0;
+            foreach (var path in paths)
+            {
+                // get display source name
+                var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
+                sourceInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+                sourceInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SOURCE_DEVICE_NAME>();
+                sourceInfo.Header.AdapterId = path.SourceInfo.AdapterId;
+                sourceInfo.Header.Id = path.SourceInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    // Store it for later
+                    DisplaySources.Add(path.SourceInfo.Id, sourceInfo.ViewGdiDeviceName);
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/PrintActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the source info for source adapter #{path.SourceInfo.AdapterId}");
+                }
+
+            }
+
+            return DisplaySources;
         }
 
 
