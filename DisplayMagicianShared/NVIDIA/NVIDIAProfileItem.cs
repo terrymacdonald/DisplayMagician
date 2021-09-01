@@ -254,13 +254,18 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool PerformPostLoadingTasks()
         {
             // First thing we do is to set up the Screens
-            _screens = GetScreenPositions();
+            //_screens = GetScreenPositions();
 
             return true;
         }
 
         public override List<ScreenPosition> GetScreenPositions()
         {
+            // Set up some colours
+            Color primaryScreenColor = Color.FromArgb(150, 255, 97, 27); // represents Primary screen blue
+            Color spannedScreenColor = Color.FromArgb(118, 185, 0); // represents NVIDIA Green
+            Color normalScreenColor = Color.FromArgb(195, 195, 195); // represents normal screen colour (gray)
+
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
@@ -271,109 +276,209 @@ namespace DisplayMagicianShared.NVIDIA
                 // Return an empty screen if we have no Display Config Paths to use!
                 return _screens;
             }
-
-            // TODO: Make the NVIDIA displays show the individual screens and overlap!
-            /*// Create a dictionary of all the screen sizes we want
-            Dictionary<string,SpannedScreenPosition> MosaicScreens = new Dictionary<string,SpannedScreenPosition>();
-            for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
-            {               
-                for (int j = 0; j < _nvidiaDisplayConfig.MosaicConfig.MosaicViewports.Where(item => item); j++)
-                {
-
-                }
-            }*/
-
-            foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
+            // Now we need to check for Spanned screens
+            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
             {
-                // For each path we go through and get the relevant info we need.
-                if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
+                // TODO: Make the NVIDIA displays show the individual screens and overlap!
+                // Create a dictionary of all the screen sizes we want
+                //Dictionary<string,SpannedScreenPosition> MosaicScreens = new Dictionary<string,SpannedScreenPosition>();
+                for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
                 {
-                    // Set some basics about the screen
                     ScreenPosition screen = new ScreenPosition();
                     screen.Library = "NVIDIA";
-
-                    UInt32 sourceId = path.SourceInfo.Id;
-                    UInt32 targetId = path.TargetInfo.Id;
-                    
-
-                    // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
-                    foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
+                    if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount > 1)
                     {
-                        // Find the matching Display Config Source Mode
-                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
-                        {
-                            screen.Name = targetId.ToString();
-                            //screen.DisplayConnector = displayMode.DisplayConnector;
-                            screen.ScreenX = displayMode.SourceMode.Position.X;
-                            screen.ScreenY = displayMode.SourceMode.Position.Y;
-                            screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                            screen.ScreenHeight = (int)displayMode.SourceMode.Height;
-
-                            // If we're at the 0,0 coordinate then we're the primary monitor
-                            if (screen.ScreenX == 0 && screen.ScreenY == 0)
-                            {
-                                screen.IsPrimary = true;
-                            }
-
-                            // Figure out if this is a spanned screen, and if so, record this info
-                            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
-                            {
-
-                            }
-
-                            break;
-                        }
-                    }
-
-                    foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
-                    {
-                        // Find the matching HDR information
-                        if (hdrInfo.Id == targetId)
-                        {
-                            // HDR information
-                            if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
-                            {
-                                screen.HDRSupported = true;
-                                if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
-                                {
-                                    screen.HDREnabled = true;
-                                }
-                                else
-                                {
-                                    screen.HDREnabled = false;
-                                }
-
-                            }
-                            else
-                            {
-                                screen.HDRSupported = false;
-                                screen.HDREnabled = false;
-                            }
-                            break;
-                        }
-                    }
-
-                    
-                    // Now we need to check for Spanned screens
-                    if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
-                    {
+                        // Set some basics about the screen                        
+                        screen.SpannedScreens = new List<SpannedScreenPosition>();
+                        screen.Name = "NVIDIA Surround/Mosaic";
                         screen.IsSpanned = true;
-                        screen.Colour = Color.FromArgb(118, 185, 0); // represents NVIDIA Green
-                        screen.SpannedName = "NVIDIA Surround/Mosaic";
+                        screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
+                        screen.SpannedColumns = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
+                        screen.Colour = spannedScreenColor;
+
+                        // This is a combined surround/mosaic screen
+                        // We need to build the size of the screen to match it later so we check the MosaicViewports
+                        uint minX = 0;
+                        uint minY = 0;
+                        uint maxX = 0;
+                        uint maxY = 0;
+                        uint overallX = 0;
+                        uint overallY = 0;
+                        int overallWidth = 0;
+                        int overallHeight = 0;
+                        for (int j = 0; j < _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount; j++)
+                        {
+                            SpannedScreenPosition spannedScreen = new SpannedScreenPosition();
+                            spannedScreen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[j].DisplayId.ToString();
+                            spannedScreen.Colour = spannedScreenColor;
+
+                            // Calculate screen size
+                            NV_RECT viewRect = _nvidiaDisplayConfig.MosaicConfig.MosaicViewports[i][j];
+                            if (viewRect.Left < minX)
+                            {
+                                minX = viewRect.Left;
+                            }
+                            if (viewRect.Top < minY)
+                            {
+                                minY = viewRect.Top;
+                            }
+                            if (viewRect.Right > maxX)
+                            {
+                                maxX = viewRect.Right;
+                            }
+                            if (viewRect.Bottom > maxY)
+                            {
+                                maxY = viewRect.Bottom;
+                            }
+                            uint width = viewRect.Right - viewRect.Left + 1;
+                            uint height = viewRect.Bottom - viewRect.Top + 1;
+                            spannedScreen.ScreenX = (int)viewRect.Left;
+                            spannedScreen.ScreenY = (int)viewRect.Top;
+                            spannedScreen.ScreenWidth = (int)width;
+                            spannedScreen.ScreenHeight = (int)height;
+
+                            // Figure out the overall figures for the screen
+                            if (viewRect.Left < overallX)
+                            {
+                                overallX = viewRect.Left;
+                            }
+                            if (viewRect.Top < overallY)
+                            {
+                                overallY = viewRect.Top;
+                            }
+
+                            overallWidth = (int)maxX - (int)minX + 1;
+                            overallHeight = (int)maxY - (int)minY + 1;
+
+                            spannedScreen.Row = i + 1;
+                            spannedScreen.Column = j + 1;
+
+                            // Add the spanned screen to the screen
+                            screen.SpannedScreens.Add(spannedScreen);
+                        }
+
+                        //screen.Name = targetId.ToString();
+                        //screen.DisplayConnector = displayMode.DisplayConnector;
+                        screen.ScreenX = (int)overallX;
+                        screen.ScreenY = (int)overallY;
+                        screen.ScreenWidth = (int)overallWidth;
+                        screen.ScreenHeight = (int)overallHeight;
+
+                        // If we're at the 0,0 coordinate then we're the primary monitor
+                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                        {
+                            // Record we're primary screen
+                            screen.IsPrimary = true;
+                            // Change the colour to be the primary colour, but only if it isn't a surround screen
+                            if (screen.Colour != spannedScreenColor)
+                            {
+                                screen.Colour = primaryScreenColor;
+                            }                                
+                        }
+
                     }
-                    else
+                    else if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount == 1)
                     {
-                        screen.IsSpanned = false;
-                        screen.Colour = Color.FromArgb(195, 195, 195); // represents normal screen colour
+                        // This is a single screen
+                        // Set some basics about the screen                        
+                        NV_MOSAIC_DISPLAY_SETTING_V1 viewDisplaySettings = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplaySettings;
+                        screen.ScreenX = (int)viewDisplaySettings.;
+                        screen.ScreenY = (int)viewDisplaySettings.Top;
+                        screen.ScreenWidth = (int)viewDisplaySettings.Width;
+                        screen.ScreenHeight = (int)viewDisplaySettings.Height;
+
+                        // If we're at the 0,0 coordinate then we're the primary monitor
+                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                        {
+                            screen.IsPrimary = true;
+                            screen.Colour = primaryScreenColor;
+                        }
+
                     }
 
                     _screens.Add(screen);
-                }                        
+                }
             }
+            else
+            {
+                foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
+                {
+                    // For each path we go through and get the relevant info we need.
+                    if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
+                    {
+                        // Set some basics about the screen
+                        ScreenPosition screen = new ScreenPosition();
+                        screen.Library = "NVIDIA";
+                        screen.IsSpanned = false;
+                        screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
+
+                        UInt32 sourceId = path.SourceInfo.Id;
+                        UInt32 targetId = path.TargetInfo.Id;
+
+
+                        // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
+                        foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
+                        {
+                            // Find the matching Display Config Source Mode
+                            if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
+                            {
+                                screen.Name = targetId.ToString();
+                                //screen.DisplayConnector = displayMode.DisplayConnector;
+                                screen.ScreenX = displayMode.SourceMode.Position.X;
+                                screen.ScreenY = displayMode.SourceMode.Position.Y;
+                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+
+                                // If we're at the 0,0 coordinate then we're the primary monitor
+                                if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                                {
+                                    screen.IsPrimary = true;
+                                    screen.Colour = primaryScreenColor;
+                                }                          
+                                break;
+                            }
+                        }
+
+                        foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                        {
+                            // Find the matching HDR information
+                            if (hdrInfo.Id == targetId)
+                            {
+                                // HDR information
+                                if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
+                                {
+                                    screen.HDRSupported = true;
+                                    if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
+                                    {
+                                        screen.HDREnabled = true;
+                                    }
+                                    else
+                                    {
+                                        screen.HDREnabled = false;
+                                    }
+
+                                }
+                                else
+                                {
+                                    screen.HDRSupported = false;
+                                    screen.HDREnabled = false;
+                                }
+                                break;
+                            }
+                        }
+ 
+                        _screens.Add(screen);
+                    }
+                }
+            }
+
+            
+
+            
 
             /*
             // Go through the screens, and update the Mosaic screens with their info (if there are any)
-            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
+            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled && _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos.Length)
             {
                 // *** Enum values for the mosaic topology type ***
                 // NV_MOSAIC_TOPO_1x2_BASIC = 1

@@ -30,9 +30,8 @@ namespace DisplayMagicianShared
         internal bool HDREnabled;
         public List<string> Features;
         // If the screen is AMD Eyefinity or NVIDIA Surround or similar, it has screens that are part of it
-        // These fields indicate this. THe spanned screens are added to the SpannedScreens field
+        // These fields indicate this. The spanned screens are added to the SpannedScreens field as required
         public bool IsSpanned;
-        public string SpannedName;
         public List<SpannedScreenPosition> SpannedScreens;
         public int SpannedColumns;
         public int SpannedRows;
@@ -45,7 +44,6 @@ namespace DisplayMagicianShared
         public int ScreenWidth;
         public int ScreenHeight;
         public string Name;
-        public bool IsPrimary;
         public Color Colour;
         public List<string> Features;
         public int Column;

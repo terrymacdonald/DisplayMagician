@@ -58,22 +58,7 @@ namespace DisplayMagicianShared
 
             return rect;
         }
-
-        /*public static Size GetLargestResolution(List<ScreenPosition> screens)
-        {
-            Size largest = Size.Empty;
-
-            foreach (ScreenPosition screen in screens)
-            {
-                if ((ulong)screen.ScreenWidth * (ulong)screen.ScreenHeight > (ulong)largest.Width * (ulong)largest.Height)
-                {
-                    largest = new Size(screen.ScreenWidth, screen.ScreenHeight);
-                }
-            }
-
-            return largest;
-        }*/
-
+       
 
         /// <summary>
         ///     Creates a rounded rectangle path
@@ -131,10 +116,10 @@ namespace DisplayMagicianShared
         public Bitmap ToTightestBitmap(int width = 256, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
         {
             var viewSize = CalculateViewSize(_profile.Screens, 0, 0);
-            int viewSizeRatio = Convert.ToInt32(viewSize.Width / viewSize.Height);
+            double viewSizeRatio = viewSize.Width / viewSize.Height;
 
             if (height == 0)
-                height = width / viewSizeRatio;
+                height = Convert.ToInt32((double)width / viewSizeRatio);
 
             var bitmap = new Bitmap(width, height, format);
             bitmap.MakeTransparent();

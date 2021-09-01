@@ -1007,7 +1007,7 @@ namespace DisplayMagicianShared.Windows
 
         public List<string> GetCurrentPCIVideoCardVendors()
         {
-            SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the current PCI vendor ids for the videocards reported to Windows");
+            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the current PCI vendor ids for the videocards reported to Windows");
             List<string> videoCardVendorIds = new List<string>();
 
 
