@@ -50,7 +50,7 @@ namespace DisplayMagicianShared
         public int Row;
     }
 
-    public class ProfileItem : IComparable
+    public class ProfileItem : IEquatable<ProfileItem>, IComparable
     {
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
@@ -385,35 +385,6 @@ namespace DisplayMagicianShared
             return false;
         }
 
-        public override int GetHashCode()
-        {
-
-            // Get hash code for the ProfileDisplayIdentifiers field if it is not null.
-            int hashIds = ProfileDisplayIdentifiers == null ? 0 : ProfileDisplayIdentifiers.GetHashCode();
-
-            // Get Paths too
-            //int hashPaths = Paths == null ? 0 : Paths.GetHashCode();
-            int hashPaths = 0;
-
-            // Calculate the hash code for the product.
-            return (hashIds, hashPaths).GetHashCode();
-
-        }
-        
-
-        public override string ToString()
-        {
-            return (Name ?? Language.UN_TITLED_PROFILE);
-        }
-
-        public int CompareTo(object obj)
-        {
-            if (!(obj is ProfileItem)) throw new ArgumentException("Object to CompareTo is not a Shortcut"); ;
-
-            ProfileItem otherProfile = (ProfileItem)obj;
-            return this.Name.CompareTo(otherProfile.Name);
-        }
-
 
         // ReSharper disable once FunctionComplexityOverflow
         // ReSharper disable once CyclomaticComplexity
@@ -530,7 +501,75 @@ namespace DisplayMagicianShared
         {
             return new List<ScreenPosition>();
         }
+
+        /*public int CompareTo(ProfileItem other)
+        {
+            return this.Name.CompareTo(other.Name);
+        }*/
+
+        public int CompareTo(object obj)
+        {
+            if (!(obj is ProfileItem)) throw new ArgumentException("Object to CompareTo is not a Shortcut"); ;
+
+            ProfileItem otherProfile = (ProfileItem)obj;
+            return this.Name.CompareTo(otherProfile.Name);
+        }
+
+        // The public override for the Object.Equals
+        public override bool Equals(object obj) => this.Equals(obj as ProfileItem);
+
+        // Profiles are equal if their Viewports are equal
+        public bool Equals(ProfileItem other)
+        {
+
+            // If parameter is null, return false.
+            if (other is null)
+                return false;
+
+            // Optimization for a common success case.
+            if (Object.ReferenceEquals(this, other))
+                return true;
+
+            // If run-time types are not exactly the same, return false.
+            if (this.GetType() != other.GetType())
+                return false;
+
+            if (!this.ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
+            {
+                return false;
+            }
+
+            // Otherwise if all the tests work, then we're good!
+            return true;
+        }
+
+        // If Equals() returns true for this object compared to  another
+        // then GetHashCode() must return the same value for these objects.
+        public override int GetHashCode()
+        {
+            // Calculate the hash code for the product.
+            return (ProfileDisplayIdentifiers).GetHashCode();
+
+        }
+
+        public static bool operator ==(ProfileItem lhs, ProfileItem rhs)
+        {
+            if (lhs is null)
+            {
+                if (rhs is null)
+                {
+                    return true;
+                }
+
+                // Only the left side is null.
+                return false;
+            }
+            // Equals handles case of null on right side.
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(ProfileItem lhs, ProfileItem rhs) => !(lhs == rhs);
     }
-
-
 }
+
+

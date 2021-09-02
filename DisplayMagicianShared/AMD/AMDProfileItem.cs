@@ -12,7 +12,7 @@ using System.Drawing.Imaging;
 namespace DisplayMagicianShared.AMD
 {
 
-    public class AMDProfileItem : ProfileItem, IComparable
+    public class AMDProfileItem : ProfileItem, IEquatable<AMDProfileItem>, IComparable
     {
         private static List<AMDProfileItem> _allSavedProfiles = new List<AMDProfileItem>();
         private ProfileIcon _profileIcon;
@@ -363,12 +363,16 @@ namespace DisplayMagicianShared.AMD
             return _screens;
         }
 
+        public int CompareTo(object obj)
+        {
+            if (!(obj is AMDProfileItem)) throw new ArgumentException("Object to CompareTo is not a AMDProfileItem"); ;
+
+            AMDProfileItem otherProfile = (AMDProfileItem)obj;
+            return this.Name.CompareTo(otherProfile.Name);
+        }
 
         // The public override for the Object.Equals
-        public override bool Equals(object obj)
-        {
-            return this.Equals(obj as AMDProfileItem);
-        }
+        public override bool Equals(object obj) => this.Equals(obj as AMDProfileItem);
 
         // Profiles are equal if their Viewports are equal
         public bool Equals(AMDProfileItem other)
@@ -406,8 +410,25 @@ namespace DisplayMagicianShared.AMD
         {
             // Calculate the hash code for the product.
             return (AMDDisplayConfig, WindowsDisplayConfig, ProfileDisplayIdentifiers).GetHashCode();
-
         }
+
+        public static bool operator ==(AMDProfileItem lhs, AMDProfileItem rhs)
+        {
+            if (lhs is null)
+            {
+                if (rhs is null)
+                {
+                    return true;
+                }
+
+                // Only the left side is null.
+                return false;
+            }
+            // Equals handles case of null on right side.
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(AMDProfileItem lhs, AMDProfileItem rhs) => !(lhs == rhs);
 
     }
     

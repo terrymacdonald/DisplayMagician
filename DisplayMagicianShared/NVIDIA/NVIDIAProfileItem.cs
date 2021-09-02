@@ -14,7 +14,7 @@ using DisplayMagicianShared.Windows;
 namespace DisplayMagicianShared.NVIDIA
 {
 
-    public class NVIDIAProfileItem : ProfileItem, IComparable
+    public class NVIDIAProfileItem : ProfileItem, IEquatable<ProfileItem>, IComparable
     {
         private static List<NVIDIAProfileItem> _allSavedProfiles = new List<NVIDIAProfileItem>();
         private ProfileIcon _profileIcon;
@@ -140,12 +140,16 @@ namespace DisplayMagicianShared.NVIDIA
 
             // Copy all our profile data over to the other profile
             profile.Name = Name;
-            //profile.Paths = Paths;
+            profile.WindowsDisplayConfig = WindowsDisplayConfig;
+            profile.NVIDIADisplayConfig = NVIDIADisplayConfig;
             profile.ProfileIcon = ProfileIcon;
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
+            profile.WallpaperMode = WallpaperMode;
+            profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
+            profile.WallpaperStyle = WallpaperStyle;
             return true;
         }
 
@@ -544,12 +548,16 @@ namespace DisplayMagicianShared.NVIDIA
             return _screens;
         }
 
+        public int CompareTo(object obj)
+        {
+            if (!(obj is NVIDIAProfileItem)) throw new ArgumentException("Object to CompareTo is not a NVIDIAProfileItem"); ;
+
+            NVIDIAProfileItem otherProfile = (NVIDIAProfileItem)obj;
+            return this.Name.CompareTo(otherProfile.Name);
+        }
 
         // The public override for the Object.Equals
-        public override bool Equals(object obj)
-        {
-            return this.Equals(obj as NVIDIAProfileItem);
-        }
+        public override bool Equals(object obj) => this.Equals(obj as NVIDIAProfileItem);
 
         // Profiles are equal if their Viewports are equal
         public bool Equals(NVIDIAProfileItem other)
@@ -592,6 +600,23 @@ namespace DisplayMagicianShared.NVIDIA
 
         }
 
+        public static bool operator ==(NVIDIAProfileItem lhs, NVIDIAProfileItem rhs)
+        {
+            if (lhs is null)
+            {
+                if (rhs is null)
+                {
+                    return true;
+                }
+
+                // Only the left side is null.
+                return false;
+            }
+            // Equals handles case of null on right side.
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(NVIDIAProfileItem lhs, NVIDIAProfileItem rhs) => !(lhs == rhs);
     }
 
 }

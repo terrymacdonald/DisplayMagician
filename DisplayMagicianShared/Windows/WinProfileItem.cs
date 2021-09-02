@@ -11,7 +11,7 @@ using System.Drawing.Imaging;
 namespace DisplayMagicianShared.Windows
 {    
 
-    public class WinProfileItem : ProfileItem, IComparable
+    public class WinProfileItem : ProfileItem, IEquatable<WinProfileItem>, IComparable
     {
         private static List<WinProfileItem> _allSavedProfiles = new List<WinProfileItem>();
         private ProfileIcon _profileIcon;
@@ -102,15 +102,13 @@ namespace DisplayMagicianShared.Windows
         public override bool IsValid()
         {
 
-            if (
+            if (WinLibrary.GetLibrary().IsValidConfig(_windowsDisplayConfig) &&
                 ProfileIcon is ProfileIcon &&
                 System.IO.File.Exists(SavedProfileIconCacheFilename) &&
                 ProfileBitmap is Bitmap &&
                 ProfileTightestBitmap is Bitmap &&
                 ProfileDisplayIdentifiers.Count > 0)
-            {
-               return true;               
-            }
+                return true;
             else
                 return false;
         }
@@ -133,7 +131,9 @@ namespace DisplayMagicianShared.Windows
             profile.ProfileBitmap = ProfileBitmap;
             profile.ProfileTightestBitmap = ProfileTightestBitmap;
             profile.ProfileDisplayIdentifiers = ProfileDisplayIdentifiers;
-            profile.Screens = Screens;
+            profile.WallpaperMode = WallpaperMode;
+            profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
+            profile.WallpaperStyle = WallpaperStyle;
             return true;
         }
 
@@ -223,6 +223,10 @@ namespace DisplayMagicianShared.Windows
 
         public override List<ScreenPosition> GetScreenPositions()
         {
+            // Set up some colours
+            Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
+            Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
+
             // Now we create the screens structure from the AMD profile information
             _screens = new List<ScreenPosition>();
 
@@ -233,7 +237,7 @@ namespace DisplayMagicianShared.Windows
                 // Return an empty screen if we have no Display Config Paths to use!
                 return _screens;
             }
-
+            
             foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
             {
                 // For each path we go through and get the relevant info we need.
@@ -242,13 +246,18 @@ namespace DisplayMagicianShared.Windows
                     // Set some basics about the screen
                     ScreenPosition screen = new ScreenPosition();
                     screen.Library = "WINDOWS";
+                    screen.IsSpanned = false;
+                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
 
+                    UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
 
+
+                    // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
                         // Find the matching Display Config Source Mode
-                        if (displayMode.InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == targetId)
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
                         {
                             screen.Name = targetId.ToString();
                             //screen.DisplayConnector = displayMode.DisplayConnector;
@@ -261,7 +270,9 @@ namespace DisplayMagicianShared.Windows
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
                             {
                                 screen.IsPrimary = true;
+                                screen.Colour = primaryScreenColor;
                             }
+                            break;
                         }
                     }
 
@@ -289,28 +300,28 @@ namespace DisplayMagicianShared.Windows
                                 screen.HDRSupported = false;
                                 screen.HDREnabled = false;
                             }
-
+                            break;
                         }
                     }
-
-                    // No spanning in a windows ccd system
-                    screen.IsSpanned = false;
-                    screen.Colour = Color.FromArgb(195, 195, 195); // represents normal screen colour
-
 
                     _screens.Add(screen);
                 }
             }
-
+            
             return _screens;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (!(obj is WinProfileItem)) throw new ArgumentException("Object to CompareTo is not a WinProfileItem"); ;
+
+            WinProfileItem otherProfile = (WinProfileItem)obj;
+            return this.Name.CompareTo(otherProfile.Name);
         }
 
 
         // The public override for the Object.Equals
-        public override bool Equals(object obj)
-        {
-            return this.Equals(obj as WinProfileItem);
-        }
+        public override bool Equals(object obj) => this.Equals(obj as WinProfileItem);
 
         // Profiles are equal if their Viewports are equal
         public bool Equals(WinProfileItem other)
@@ -349,6 +360,23 @@ namespace DisplayMagicianShared.Windows
 
         }
 
+        public static bool operator ==(WinProfileItem lhs, WinProfileItem rhs)
+        {
+            if (lhs is null)
+            {
+                if (rhs is null)
+                {
+                    return true;
+                }
+
+                // Only the left side is null.
+                return false;
+            }
+            // Equals handles case of null on right side.
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(WinProfileItem lhs, WinProfileItem rhs) => !(lhs == rhs);
     }
     
 }
