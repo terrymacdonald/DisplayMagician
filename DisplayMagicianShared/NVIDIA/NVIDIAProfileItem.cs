@@ -548,13 +548,13 @@ namespace DisplayMagicianShared.NVIDIA
             return _screens;
         }
 
-        public int CompareTo(object obj)
+        /*public int CompareTo(object obj)
         {
             if (!(obj is NVIDIAProfileItem)) throw new ArgumentException("Object to CompareTo is not a NVIDIAProfileItem"); ;
 
             NVIDIAProfileItem otherProfile = (NVIDIAProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
-        }
+        }*/
 
         // The public override for the Object.Equals
         public override bool Equals(object obj) => this.Equals(obj as NVIDIAProfileItem);

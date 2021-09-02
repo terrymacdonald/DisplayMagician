@@ -363,13 +363,13 @@ namespace DisplayMagicianShared.AMD
             return _screens;
         }
 
-        public int CompareTo(object obj)
+        /*public int CompareTo(object obj)
         {
-            if (!(obj is AMDProfileItem)) throw new ArgumentException("Object to CompareTo is not a AMDProfileItem"); ;
+            if (!(obj is ProfileItem)) throw new ArgumentException("Object to CompareTo is not a AMDProfileItem"); ;
 
             AMDProfileItem otherProfile = (AMDProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
-        }
+        }*/
 
         // The public override for the Object.Equals
         public override bool Equals(object obj) => this.Equals(obj as AMDProfileItem);

@@ -311,13 +311,13 @@ namespace DisplayMagicianShared.Windows
             return _screens;
         }
 
-        public int CompareTo(object obj)
+        /*public int CompareTo(object obj)
         {
             if (!(obj is WinProfileItem)) throw new ArgumentException("Object to CompareTo is not a WinProfileItem"); ;
 
             WinProfileItem otherProfile = (WinProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
-        }
+        }*/
 
 
         // The public override for the Object.Equals

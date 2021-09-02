@@ -502,11 +502,6 @@ namespace DisplayMagicianShared
             return new List<ScreenPosition>();
         }
 
-        /*public int CompareTo(ProfileItem other)
-        {
-            return this.Name.CompareTo(other.Name);
-        }*/
-
         public int CompareTo(object obj)
         {
             if (!(obj is ProfileItem)) throw new ArgumentException("Object to CompareTo is not a Shortcut"); ;
