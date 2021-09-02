@@ -1,4 +1,7 @@
 ﻿using DisplayMagicianShared;
+using DisplayMagicianShared.NVIDIA;
+using DisplayMagicianShared.AMD;
+using DisplayMagicianShared.Windows;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
@@ -62,8 +65,12 @@ namespace DisplayMagician.UIForms
                     profileToUse = ProfileRepository.CurrentProfile;
                 }
 
+                // Stop the callback doing anything
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
-                return profileToUse.ProfileBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+
+                Image imageToUse;
+                imageToUse = profileToUse.ProfileBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);                
+                return imageToUse;
             }
             catch (Exception ex)
             {

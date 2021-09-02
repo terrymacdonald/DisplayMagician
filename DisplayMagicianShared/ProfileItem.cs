@@ -564,6 +564,12 @@ namespace DisplayMagicianShared
         }
 
         public static bool operator !=(ProfileItem lhs, ProfileItem rhs) => !(lhs == rhs);
+
+        // IMPORTANT - This ProfileItem ToString function is required to make the Profile ImageListView work properly! DO NOT DELETE!
+        public override string ToString()
+        {
+            return (Name ?? Language.UN_TITLED_PROFILE);
+        }
     }
 }
 
