@@ -25,6 +25,14 @@ namespace DisplayMagicianShared
         AMD = 2,
     }
 
+    public enum FORCED_VIDEO_MODE : Int32
+    {
+        WINDOWS = 0,
+        NVIDIA = 1,
+        AMD = 2,
+        DETECT = 99,
+    }
+
     public enum ApplyProfileResult
     {
         Successful,
@@ -46,8 +54,9 @@ namespace DisplayMagicianShared
         private static AMDLibrary amdLibrary;
         private static NVIDIALibrary nvidiaLibrary;
         private static WinLibrary winLibrary;
-        // Make th default video mode Windows
-        public static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
+        // Make the default video mode Windows
+        private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
+        private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -55,6 +64,7 @@ namespace DisplayMagicianShared
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
         private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_version.ToString(2)}.json");
+        
 
 
         #endregion
@@ -62,41 +72,7 @@ namespace DisplayMagicianShared
         #region Class Constructors
         static ProfileRepository()
         {
-            // Figure out the Video Cards and see what mode we want
-            // Get a list of all the PCI Vendor IDs
-            List<string> videoCardVendors = WinLibrary.GetLibrary().GetCurrentPCIVideoCardVendors();
-            // This sets the order in which the different modes have been chosen.
-            // NVIDIA Video cards are the most common, so go first
-            _currentVideoMode = VIDEO_MODE.WINDOWS;
-            if (NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
-            {
-                // Initialise the the NVIDIA NvAPI Library
-                try
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
-                    nvidiaLibrary = new NVIDIALibrary();
-                    _currentVideoMode = VIDEO_MODE.NVIDIA;
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NVAPI caused an exception.");
-                }
-            }
-            else if (AMDLibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
-            {
-                // Initialise the the AMD ADL Library
-                try
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
-                    amdLibrary = new AMDLibrary();
-                    _currentVideoMode = VIDEO_MODE.AMD;
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising AMD ADL caused an exception.");
-                }
-            }
-
+            
             try
             {
                 // Create the Profile Storage Path if it doesn't exist so that it's avilable for all the program
@@ -197,6 +173,18 @@ namespace DisplayMagicianShared
             set
             {
                 _currentVideoMode = value;
+            }
+        }
+        public static FORCED_VIDEO_MODE ForcedVideoMode
+        {
+            get
+            {
+                return _forcedVideoMode;
+            }
+            set
+            {
+                _forcedVideoMode = value;
+                SetVideoCardMode(value);
             }
         }
 
@@ -924,11 +912,11 @@ namespace DisplayMagicianShared
 
         public static List<string> GetAllConnectedDisplayIdentifiers()
         {
-            if (NVIDIALibrary.GetLibrary().IsInstalled)
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
                 return NVIDIALibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
             }
-            else if (AMDLibrary.GetLibrary().IsInstalled)
+            else if (_currentVideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
             {
                 return AMDLibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
             }
@@ -940,11 +928,11 @@ namespace DisplayMagicianShared
 
         public static List<string> GetCurrentDisplayIdentifiers()
         {
-            if (NVIDIALibrary.GetLibrary().IsInstalled)
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
                 return NVIDIALibrary.GetLibrary().GetCurrentDisplayIdentifiers();
             }
-            else if (AMDLibrary.GetLibrary().IsInstalled)
+            else if (_currentVideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
             {
                 return AMDLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
             }
@@ -1092,6 +1080,86 @@ namespace DisplayMagicianShared
 
             return ApplyProfileResult.Successful;
         }
+
+        public static bool SetVideoCardMode(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
+        {            
+            _forcedVideoMode = forcedVideoMode;
+            // This sets the order in which the different modes have been chosen.
+            // NVIDIA Video cards are the most common, so go first
+            if (_forcedVideoMode == FORCED_VIDEO_MODE.NVIDIA)
+            {
+                // We force the video mode to be NVIDIA
+                _currentVideoMode = VIDEO_MODE.NVIDIA;
+            }
+            else if (forcedVideoMode == FORCED_VIDEO_MODE.AMD)
+            {
+                // We force the video mode to be AMD
+                _currentVideoMode = VIDEO_MODE.AMD;
+            }
+            else if (forcedVideoMode == FORCED_VIDEO_MODE.WINDOWS)
+            {
+                // We force the video mode to be WINDOWS
+                _currentVideoMode = VIDEO_MODE.WINDOWS;
+            }
+            else
+            {
+                // We do normal video library detection based on the video card!
+
+                // Figure out the Video Cards and see what mode we want
+                // Get a list of all the PCI Vendor IDs
+                List<string> videoCardVendors = WinLibrary.GetLibrary().GetCurrentPCIVideoCardVendors();
+                if (NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
+                {
+                    // We detected a NVIDIA video card in the computer
+                    _currentVideoMode = VIDEO_MODE.NVIDIA;
+                }
+                else if (AMDLibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
+                {
+                    // We detected an AMD video card in the computer
+                    _currentVideoMode = VIDEO_MODE.AMD;
+                }
+                else
+                {
+                    // We fallback to the built-in Windows CCD drivers
+                    _currentVideoMode = VIDEO_MODE.WINDOWS;
+                }
+            }
+
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
+            {
+                // Initialise the the NVIDIA NvAPI Library
+                try
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
+                    nvidiaLibrary = new NVIDIALibrary();
+                    _currentVideoMode = VIDEO_MODE.NVIDIA;
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising NVIDIA NVAPI caused an exception.");
+                    return false;
+                }
+            }
+            else if (_currentVideoMode == VIDEO_MODE.AMD)
+            {
+                // Initialise the the AMD ADL Library
+                try
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
+                    amdLibrary = new AMDLibrary();
+                    _currentVideoMode = VIDEO_MODE.AMD;
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Initialising AMD ADL caused an exception.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        
+
 
         #endregion
 

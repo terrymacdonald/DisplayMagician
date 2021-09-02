@@ -235,10 +235,12 @@ namespace DisplayMagician {
 
             CommandOption debug = app.Option("--debug", "Generate a DisplayMagician.log debug-level log file", CommandOptionType.NoValue);
             CommandOption trace = app.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
+            CommandOption forcedVideoLibrary = app.Option("--force-video-library", "Bypass the normal video detection logic to force a particular video library (AMD, NVIDIA, Windows)", CommandOptionType.SingleValue);
 
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
+                // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
@@ -252,6 +254,29 @@ namespace DisplayMagician {
                     logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
+                }
+
+                // Set the --force-video-library option if supplied
+                if (forcedVideoLibrary.HasValue())
+                {
+                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.NVIDIA;
+                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("AMD"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.AMD;
+                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("Windows"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.WINDOWS;
+                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                    }
                 }
 
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
@@ -273,6 +298,7 @@ namespace DisplayMagician {
             // This is the ChangeProfile command
             app.Command(DisplayMagicianStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
             {
+                // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
@@ -286,6 +312,29 @@ namespace DisplayMagician {
                     logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
+                }
+
+                // Set the --force-video-library option if supplied
+                if (forcedVideoLibrary.HasValue())
+                {
+                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.NVIDIA;
+                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("AMD"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.AMD;
+                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("Windows"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.WINDOWS;
+                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                    }
                 }
 
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
@@ -314,6 +363,7 @@ namespace DisplayMagician {
             // This is the CreateProfile command
             app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
             {
+                // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
@@ -327,6 +377,29 @@ namespace DisplayMagician {
                     logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
+                }
+
+                // Set the --force-video-library option if supplied
+                if (forcedVideoLibrary.HasValue())
+                {
+                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.NVIDIA;
+                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("AMD"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.AMD;
+                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("Windows"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.WINDOWS;
+                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                    }
                 }
 
                 //description and help text of the command.
@@ -343,6 +416,7 @@ namespace DisplayMagician {
 
             app.OnExecute(() =>
             {
+                // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
@@ -356,6 +430,29 @@ namespace DisplayMagician {
                     logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
+                }
+
+                // Set the --force-video-library option if supplied
+                if (forcedVideoLibrary.HasValue())
+                {
+                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.NVIDIA;
+                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("AMD"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.AMD;
+                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("Windows"))
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.WINDOWS;
+                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                    }
                 }
 
                 logger.Debug($"No commandline command was invoked, so starting up normally");

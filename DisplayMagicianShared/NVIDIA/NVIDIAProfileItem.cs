@@ -164,19 +164,25 @@ namespace DisplayMagicianShared.NVIDIA
         public override void RefreshPossbility()
         {
             // Check whether this profile is possible
-            if (NVIDIALibrary.GetLibrary().IsPossibleConfig(_nvidiaDisplayConfig))
+            if (ProfileRepository.CurrentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
+                if (NVIDIALibrary.GetLibrary().IsPossibleConfig(_nvidiaDisplayConfig))
+                {
 
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is possible!");
-                _isPossible = true;
+                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is possible!");
+                    _isPossible = true;
 
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
+                    _isPossible = false;
+                }
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
                 _isPossible = false;
             }
-
         }
 
         // Actually set this profile active
