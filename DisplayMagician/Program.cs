@@ -277,6 +277,16 @@ namespace DisplayMagician {
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                         logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
+                    else
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    }
+                }
+                else
+                {
+                    ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
                 }
 
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
@@ -335,6 +345,16 @@ namespace DisplayMagician {
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                         logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
+                    else
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    }
+                }
+                else
+                {
+                    ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
                 }
 
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
@@ -400,8 +420,17 @@ namespace DisplayMagician {
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                         logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
+                    else
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    }
                 }
-
+                else
+                {
+                    ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                }
                 //description and help text of the command.
                 createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
 
@@ -453,6 +482,16 @@ namespace DisplayMagician {
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                         logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
+                    else
+                    {
+                        ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    }
+                }
+                else
+                {
+                    ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
                 }
 
                 logger.Debug($"No commandline command was invoked, so starting up normally");

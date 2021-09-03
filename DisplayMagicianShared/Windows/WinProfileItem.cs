@@ -152,20 +152,27 @@ namespace DisplayMagicianShared.Windows
         public override void RefreshPossbility()
         {
             // Check whether this profile is possible
-            if (WinLibrary.GetLibrary().IsPossibleConfig(_windowsDisplayConfig))
+            if (ProfileRepository.CurrentVideoMode == VIDEO_MODE.WINDOWS && WinLibrary.GetLibrary().IsInstalled)
             {
+                if (WinLibrary.GetLibrary().IsPossibleConfig(_windowsDisplayConfig))
+                {
 
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
-                _isPossible = true;
+                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
+                    _isPossible = true;
 
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
+                    _isPossible = false;
+                }
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
                 _isPossible = false;
             }
-
         }
+
 
         // Actually set this profile active
         public override bool SetActive()
