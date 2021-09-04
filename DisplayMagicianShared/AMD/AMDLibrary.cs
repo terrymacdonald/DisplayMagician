@@ -23,6 +23,8 @@ namespace DisplayMagicianShared.AMD
         public bool IsSLSEnabled;
         //public ADL_SLS_MAP[] SLSMap;
 
+        public override bool Equals(object obj) => obj is AMD_ADAPTER_CONFIG other && this.Equals(other);
+
         public bool Equals(AMD_ADAPTER_CONFIG other)
         => AdapterIndex == other.AdapterIndex &&
            AdapterBusNumber == other.AdapterBusNumber &&
@@ -37,6 +39,10 @@ namespace DisplayMagicianShared.AMD
         {
             return (AdapterIndex, AdapterBusNumber, AdapterDeviceNumber, IsPrimaryAdapter, SLSMapIndex, IsSLSEnabled).GetHashCode();
         }
+
+        public static bool operator ==(AMD_ADAPTER_CONFIG lhs, AMD_ADAPTER_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(AMD_ADAPTER_CONFIG lhs, AMD_ADAPTER_CONFIG rhs) => !(lhs == rhs);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -45,6 +51,8 @@ namespace DisplayMagicianShared.AMD
         public List<AMD_ADAPTER_CONFIG> AdapterConfigs;
         public List<string> DisplayIdentifiers;
 
+        public override bool Equals(object obj) => obj is AMD_DISPLAY_CONFIG other && this.Equals(other);
+
         public bool Equals(AMD_DISPLAY_CONFIG other)
         => AdapterConfigs.SequenceEqual(other.AdapterConfigs);
 
@@ -52,6 +60,10 @@ namespace DisplayMagicianShared.AMD
         {
             return (AdapterConfigs).GetHashCode();
         }
+
+        public static bool operator ==(AMD_DISPLAY_CONFIG lhs, AMD_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(AMD_DISPLAY_CONFIG lhs, AMD_DISPLAY_CONFIG rhs) => !(lhs == rhs);
     }
 
     public class AMDLibrary : IDisposable

@@ -288,7 +288,6 @@ namespace DisplayMagician {
                     ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
                     logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
                 }
-
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
 

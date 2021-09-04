@@ -11,7 +11,7 @@ using System.Drawing.Imaging;
 namespace DisplayMagicianShared.Windows
 {    
 
-    public class WinProfileItem : ProfileItem, IEquatable<WinProfileItem>, IComparable
+    public class WinProfileItem : ProfileItem, IComparable
     {
         private static List<WinProfileItem> _allSavedProfiles = new List<WinProfileItem>();
         private ProfileIcon _profileIcon;
@@ -318,44 +318,28 @@ namespace DisplayMagicianShared.Windows
             return _screens;
         }
 
-        /*public int CompareTo(object obj)
+        public override int CompareTo(object obj)
         {
             if (!(obj is WinProfileItem)) throw new ArgumentException("Object to CompareTo is not a WinProfileItem"); ;
 
             WinProfileItem otherProfile = (WinProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
-        }*/
-
+        }
 
         // The public override for the Object.Equals
-        public override bool Equals(object obj) => this.Equals(obj as WinProfileItem);
+        public override bool Equals(object obj)
+        {
+            return EqualsDerived(obj) &&
+                obj.GetType() == typeof(WinProfileItem);
+        }
 
         // Profiles are equal if their Viewports are equal
-        public bool Equals(WinProfileItem other)
+        public override bool EqualsDerived(object obj)
         {
-
-            // If parameter is null, return false.
-            if (other is null)
-                return false;
-
-            // Optimization for a common success case.
-            if (Object.ReferenceEquals(this, other))
-                return true;
-
-            // If run-time types are not exactly the same, return false.
-            if (this.GetType() != other.GetType())
-                return false;
-
-            // If Windows Display Config is different then return false.
-            if (!WindowsDisplayConfig.Equals(other.WindowsDisplayConfig))
-                return false;
-
-            // If Display Identifiers are different then return false.
-            if (!ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
-                return false;
-
-            // Otherwise if all the tests work, then we're good!
-            return true;
+            return base.EqualsDerived(obj) &&
+                    !object.ReferenceEquals(obj, null) &&
+                    obj is WinProfileItem &&
+                    ((WinProfileItem)obj).WindowsDisplayConfig == this.WindowsDisplayConfig;
         }
 
         // If Equals() returns true for this object compared to  another
@@ -369,18 +353,15 @@ namespace DisplayMagicianShared.Windows
 
         public static bool operator ==(WinProfileItem lhs, WinProfileItem rhs)
         {
-            if (lhs is null)
-            {
-                if (rhs is null)
-                {
-                    return true;
-                }
+            if (object.ReferenceEquals(lhs, rhs))
+                return true;
 
-                // Only the left side is null.
-                return false;
-            }
-            // Equals handles case of null on right side.
-            return lhs.Equals(rhs);
+            if (!object.ReferenceEquals(lhs, null) &&
+                !object.ReferenceEquals(rhs, null) &&
+                lhs.Equals(rhs))
+                return true;
+
+            return false;
         }
 
         public static bool operator !=(WinProfileItem lhs, WinProfileItem rhs) => !(lhs == rhs);

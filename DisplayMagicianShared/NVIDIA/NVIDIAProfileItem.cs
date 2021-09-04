@@ -14,7 +14,7 @@ using DisplayMagicianShared.Windows;
 namespace DisplayMagicianShared.NVIDIA
 {
 
-    public class NVIDIAProfileItem : ProfileItem, IEquatable<ProfileItem>, IComparable
+    public class NVIDIAProfileItem : ProfileItem, IComparable
     {
         private static List<NVIDIAProfileItem> _allSavedProfiles = new List<NVIDIAProfileItem>();
         private ProfileIcon _profileIcon;
@@ -548,18 +548,32 @@ namespace DisplayMagicianShared.NVIDIA
             return _screens;
         }
 
-        /*public int CompareTo(object obj)
+        public override int CompareTo(object obj)
         {
             if (!(obj is NVIDIAProfileItem)) throw new ArgumentException("Object to CompareTo is not a NVIDIAProfileItem"); ;
 
             NVIDIAProfileItem otherProfile = (NVIDIAProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
-        }*/
+        }
 
         // The public override for the Object.Equals
-        public override bool Equals(object obj) => this.Equals(obj as NVIDIAProfileItem);
+        public override bool Equals(object obj)
+        {
+            return EqualsDerived(obj) &&
+                obj.GetType() == typeof(NVIDIAProfileItem);
+        }
 
         // Profiles are equal if their Viewports are equal
+        public override bool EqualsDerived(object obj)
+        {
+            return base.EqualsDerived(obj) &&
+                    !object.ReferenceEquals(obj, null) &&
+                    obj is NVIDIAProfileItem &&
+                    ((NVIDIAProfileItem)obj).NVIDIADisplayConfig == this.NVIDIADisplayConfig &&
+                    ((NVIDIAProfileItem)obj).WindowsDisplayConfig == this.WindowsDisplayConfig;
+        }
+
+/*        // Profiles are equal if their Viewports are equal
         public bool Equals(NVIDIAProfileItem other)
         {
 
@@ -590,7 +604,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Otherwise if all the tests work, then we're good!
             return true;
         }
-
+*/
         // If Equals() returns true for this object compared to  another
         // then GetHashCode() must return the same value for these objects.
         public override int GetHashCode()
@@ -602,18 +616,15 @@ namespace DisplayMagicianShared.NVIDIA
 
         public static bool operator ==(NVIDIAProfileItem lhs, NVIDIAProfileItem rhs)
         {
-            if (lhs is null)
-            {
-                if (rhs is null)
-                {
-                    return true;
-                }
+            if (object.ReferenceEquals(lhs, rhs))
+                return true;
 
-                // Only the left side is null.
-                return false;
-            }
-            // Equals handles case of null on right side.
-            return lhs.Equals(rhs);
+            if (!object.ReferenceEquals(lhs, null) &&
+                !object.ReferenceEquals(rhs, null) &&
+                lhs.Equals(rhs))
+                return true;
+
+            return false;
         }
 
         public static bool operator !=(NVIDIAProfileItem lhs, NVIDIAProfileItem rhs) => !(lhs == rhs);

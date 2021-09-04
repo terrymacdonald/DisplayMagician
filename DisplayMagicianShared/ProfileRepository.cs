@@ -647,13 +647,7 @@ namespace DisplayMagicianShared
             if (profile == null){
                 SharedLogger.logger.Error($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is null. Not changing anything, and reporting an error");
                 return false;
-            }
-
-            if (Object.ReferenceEquals(_currentProfile, profile))
-            {
-                SharedLogger.logger.Trace($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is the currently active profile. Not changing anything.");
-                return true;
-            }                
+            }             
             
             if (profile is NVIDIAProfileItem && _currentProfile is NVIDIAProfileItem)
             {
