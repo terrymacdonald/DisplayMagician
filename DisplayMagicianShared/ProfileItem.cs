@@ -52,7 +52,7 @@ namespace DisplayMagicianShared
         public int Row;
     }
 
-    public class ProfileItem : IComparable
+    public class ProfileItem : IComparable<ProfileItem>
     {
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
@@ -504,13 +504,73 @@ namespace DisplayMagicianShared
             return new List<ScreenPosition>();
         }
 
-        public virtual int CompareTo(object obj)
+        /*public virtual int CompareTo(object obj)
         {
             if (!(obj is ProfileItem)) throw new ArgumentException("Object to CompareTo is not a Shortcut"); ;
 
             ProfileItem otherProfile = (ProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
+        }*/
+
+        public int CompareTo(ProfileItem other)
+        {
+
+            int result = CompareToValues(other);
+
+            // If comparison based solely on values
+            // returns zero, indicating that two instances
+            // are equal in those fields they have in common,
+            // only then we break the tie by comparing
+            // data types of the two instances.
+            if (result == 0)
+                result = CompareTypes(other);
+
+            return result;
+
         }
+
+        protected virtual int CompareToValues(ProfileItem other)
+        {
+
+            if (object.ReferenceEquals(other, null))
+                return 1;   // All instances are greater than null
+
+            // Base class simply compares Mark properties
+            return Name.CompareTo(other.Name);
+
+        }
+
+        protected int CompareTypes(ProfileItem other)
+        {
+
+            // Base type is considered less than derived type
+            // when two instances have the same values of
+            // base fields.
+
+            // Instances of two distinct derived types are
+            // ordered by comparing full names of their
+            // types when base fields are equal.
+            // This is consistent comparison rule for all
+            // instances of the two derived types.
+
+            int result = 0;
+
+            Type thisType = this.GetType();
+            Type otherType = other.GetType();
+
+            if (otherType.IsSubclassOf(thisType))
+                result = -1;    // other is subclass of this class
+            else if (thisType.IsSubclassOf(otherType))
+                result = 1;     // this is subclass of other class
+            else if (thisType != otherType)
+                result = thisType.FullName.CompareTo(otherType.FullName);
+            // cut the tie with a test that returns
+            // the same value for all objects
+
+            return result;
+
+        }
+
 
         // The public override for the Object.Equals
         public override bool Equals(object obj)
@@ -524,7 +584,7 @@ namespace DisplayMagicianShared
         {
             return !object.ReferenceEquals(obj, null) &&
                     obj is ProfileItem &&
-                    ((ProfileItem)obj).ProfileDisplayIdentifiers == this.ProfileDisplayIdentifiers;
+                    ((ProfileItem)obj).ProfileDisplayIdentifiers.SequenceEqual(this.ProfileDisplayIdentifiers);
         }
 
         // If Equals() returns true for this object compared to  another

@@ -12,7 +12,7 @@ using System.Drawing.Imaging;
 namespace DisplayMagicianShared.AMD
 {
 
-    public class AMDProfileItem : ProfileItem, IComparable
+    public class AMDProfileItem : ProfileItem
     {
         private static List<AMDProfileItem> _allSavedProfiles = new List<AMDProfileItem>();
         private ProfileIcon _profileIcon;
@@ -363,13 +363,13 @@ namespace DisplayMagicianShared.AMD
             return _screens;
         }
 
-        public override int CompareTo(object obj)
+        /*public override int CompareTo(object obj)
         {
             if (!(obj is AMDProfileItem)) throw new ArgumentException("Object to CompareTo is not a AMDProfileItem"); ;
 
             AMDProfileItem otherProfile = (AMDProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
-        }
+        }*/
 
         // The public override for the Object.Equals
         public override bool Equals(object obj)

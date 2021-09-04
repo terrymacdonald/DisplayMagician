@@ -102,8 +102,6 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Exception creating the Profiles storage folder.");
             }
-            // Load the Profiles from storage
-            LoadProfiles();
         }
         #endregion
 
@@ -221,6 +219,22 @@ namespace DisplayMagicianShared
         #endregion
 
         #region Class Methods
+        public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
+        {
+            if (!SetVideoCardMode(forcedVideoMode))
+            {
+                return false;
+            }
+
+            if (!LoadProfiles())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+
         public static bool AddProfile(ProfileItem profile)
         {
             if (!(profile is ProfileItem))

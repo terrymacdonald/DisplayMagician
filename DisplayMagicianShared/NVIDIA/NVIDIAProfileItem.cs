@@ -14,7 +14,7 @@ using DisplayMagicianShared.Windows;
 namespace DisplayMagicianShared.NVIDIA
 {
 
-    public class NVIDIAProfileItem : ProfileItem, IComparable
+    public class NVIDIAProfileItem : ProfileItem
     {
         private static List<NVIDIAProfileItem> _allSavedProfiles = new List<NVIDIAProfileItem>();
         private ProfileIcon _profileIcon;
@@ -393,7 +393,7 @@ namespace DisplayMagicianShared.NVIDIA
                     }
                     else if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount == 1)
                     {
-                        // This is a single screen
+                        // This is a single screen with an adjoining mosaic screen
                         // Set some basics about the screen
                         uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
                         string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
@@ -547,14 +547,7 @@ namespace DisplayMagicianShared.NVIDIA
 
             return _screens;
         }
-
-        public override int CompareTo(object obj)
-        {
-            if (!(obj is NVIDIAProfileItem)) throw new ArgumentException("Object to CompareTo is not a NVIDIAProfileItem"); ;
-
-            NVIDIAProfileItem otherProfile = (NVIDIAProfileItem)obj;
-            return this.Name.CompareTo(otherProfile.Name);
-        }
+       
 
         // The public override for the Object.Equals
         public override bool Equals(object obj)

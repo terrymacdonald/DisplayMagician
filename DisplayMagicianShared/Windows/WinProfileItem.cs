@@ -11,7 +11,7 @@ using System.Drawing.Imaging;
 namespace DisplayMagicianShared.Windows
 {    
 
-    public class WinProfileItem : ProfileItem, IComparable
+    public class WinProfileItem : ProfileItem
     {
         private static List<WinProfileItem> _allSavedProfiles = new List<WinProfileItem>();
         private ProfileIcon _profileIcon;
@@ -318,13 +318,13 @@ namespace DisplayMagicianShared.Windows
             return _screens;
         }
 
-        public override int CompareTo(object obj)
+        /*public override int CompareTo(object obj)
         {
             if (!(obj is WinProfileItem)) throw new ArgumentException("Object to CompareTo is not a WinProfileItem"); ;
 
             WinProfileItem otherProfile = (WinProfileItem)obj;
             return this.Name.CompareTo(otherProfile.Name);
-        }
+        }*/
 
         // The public override for the Object.Equals
         public override bool Equals(object obj)
