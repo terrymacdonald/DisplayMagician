@@ -604,37 +604,85 @@ namespace DisplayMagician.GameLibraries
                     }
                 }
 
-
-
-
-                // Now we access the config.vdf that lives in the Steam Config file, as that lists all 
-                // the SteamLibraries. We need to find out where they areso we can interrogate them
-                _steamConfigVdfFile = Path.Combine(_steamPath, "config", "config.vdf");
-                string steamConfigVdfText = File.ReadAllText(_steamConfigVdfFile, Encoding.UTF8);
-
-                logger.Trace($"SteamLibrary/LoadInstalledGames: Processing the {_steamConfigVdfFile} VDF file");
-
                 List<string> steamLibrariesPaths = new List<string>();
                 // We add the default library which is based on where Steam was installed
                 logger.Info($"SteamLibrary/LoadInstalledGames: Found original steam library {_steamPath}");
                 steamLibrariesPaths.Add(_steamPath);
 
-                // Now we have to parse the config.vdf looking for the location of any additional SteamLibraries
-                // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
-                // There may be multiple so we need to check the whole file
-                Regex steamLibrariesRegex = new Regex(@"""BaseInstallFolder_\d+""\s+""(.*)""", RegexOptions.IgnoreCase);
-                // Try to match all lines against the Regex.
-                MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamConfigVdfText);
-                // If at least one of them matched!
-                foreach (Match steamLibraryMatch in steamLibrariesMatches)
+                // Now we access the LibraryFolders.vdf that lives in the Steamapps folder, as that lists all 
+                // the SteamLibraries. We need to find out where they areso we can interrogate them
+                string _steamLibraryFoldersVdfFile = Path.Combine(_steamPath, "steamapps", "libraryfolders.vdf");
+                if (File.Exists(_steamLibraryFoldersVdfFile))
                 {
-                    if (steamLibraryMatch.Success)
-                    { 
-                        string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                        logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath}");
-                        steamLibrariesPaths.Add(steamLibraryPath);
+                    logger.Trace($"SteamLibrary/LoadInstalledGames: Processing the {_steamLibraryFoldersVdfFile} VDF file looking for additional Steam Libraries");
+                    string steamLibraryFoldersText = File.ReadAllText(_steamLibraryFoldersVdfFile, Encoding.UTF8);
+
+                    logger.Trace($"SteamLibrary/LoadInstalledGames: Processing the {_steamLibraryFoldersVdfFile} VDF file");
+
+
+                    // Now we have to parse the config.vdf looking for the location of any additional SteamLibraries
+                    // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
+                    // There may be multiple so we need to check the whole file
+                    Regex steamLibrariesRegex = new Regex(@"\t""\d+""\t\t""(.*?)""\n", RegexOptions.IgnoreCase);
+                    // Try to match all lines against the Regex.
+                    MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamLibraryFoldersText);
+                    // If at least one of them matched!
+                    foreach (Match steamLibraryMatch in steamLibrariesMatches)
+                    {
+                        if (steamLibraryMatch.Success)
+                        {
+                            // Check the entry is actually a directory 
+                            string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
+                            if (Directory.Exists(steamLibraryPath))
+                            {
+                                logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath}");
+                                steamLibrariesPaths.Add(steamLibraryPath);
+                            }
+                            else
+                            {
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath}, but it didn't exist on the file system");
+                            }
+                        }
                     }
                 }
+                else
+                {
+                    logger.Trace($"SteamLibrary/LoadInstalledGames: There was no {_steamLibraryFoldersVdfFile } VDF file, so processing the {_steamConfigVdfFile} VDF file instead");
+                    // Now we access the config.vdf that lives in the Steam Config file, as that lists all 
+                    // the SteamLibraries. We need to find out where they areso we can interrogate them
+                    _steamConfigVdfFile = Path.Combine(_steamPath, "config", "config.vdf");
+                    string steamConfigVdfText = File.ReadAllText(_steamConfigVdfFile, Encoding.UTF8);
+
+                    logger.Trace($"SteamLibrary/LoadInstalledGames: Processing the {_steamConfigVdfFile} VDF file");
+
+
+                    // Now we have to parse the config.vdf looking for the location of any additional SteamLibraries
+                    // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
+                    // There may be multiple so we need to check the whole file
+                    Regex steamLibrariesRegex = new Regex(@"""BaseInstallFolder_\d+""\s+""(.*)""", RegexOptions.IgnoreCase);
+                    // Try to match all lines against the Regex.
+                    MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamConfigVdfText);
+                    // If at least one of them matched!
+                    foreach (Match steamLibraryMatch in steamLibrariesMatches)
+                    {
+                        if (steamLibraryMatch.Success)
+                        {
+                            string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
+                            if (Directory.Exists(steamLibraryPath))
+                            {
+                                logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath}");
+                                steamLibrariesPaths.Add(steamLibraryPath);
+                            }
+                            else
+                            {
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath}, but it didn't exist on the file system");
+                            }
+                        }
+                    }
+                }
+                
+
+                
                 // Now we go off and find the details for the games in each Steam Library
                 foreach (string steamLibraryPath in steamLibrariesPaths)
                 {

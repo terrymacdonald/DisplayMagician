@@ -586,7 +586,7 @@ namespace DisplayMagicianShared
             // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
             // that fact.
             int ourMatchedIds = 0;
-            List<string> otherDisplayIdentifiers =((ProfileItem)obj).ProfileDisplayIdentifiers;
+            List<string> otherDisplayIdentifiers =(obj as ProfileItem).ProfileDisplayIdentifiers;
             foreach (string ourDisplayIdentifier in ProfileDisplayIdentifiers)
             {
                 if (otherDisplayIdentifiers.Contains(ourDisplayIdentifier)){
