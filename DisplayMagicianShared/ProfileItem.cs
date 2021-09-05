@@ -582,9 +582,30 @@ namespace DisplayMagicianShared
         // Profiles are equal if their Viewports are equal
         public virtual bool EqualsDerived(object obj)
         {
+
+            // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
+            // that fact.
+            int ourMatchedIds = 0;
+            List<string> otherDisplayIdentifiers =((ProfileItem)obj).ProfileDisplayIdentifiers;
+            foreach (string ourDisplayIdentifier in ProfileDisplayIdentifiers)
+            {
+                if (otherDisplayIdentifiers.Contains(ourDisplayIdentifier)){
+                    ourMatchedIds++;
+                }
+            }
+            int otherMatchedIds = 0;
+            foreach (string otherDisplayIdentifier in otherDisplayIdentifiers)
+            {
+                if (ProfileDisplayIdentifiers.Contains(otherDisplayIdentifier))
+                {
+                    otherMatchedIds++;
+                }
+            }
+
             return !object.ReferenceEquals(obj, null) &&
                     obj is ProfileItem &&
-                    ((ProfileItem)obj).ProfileDisplayIdentifiers.SequenceEqual(this.ProfileDisplayIdentifiers);
+                    ProfileDisplayIdentifiers.Count == otherDisplayIdentifiers.Count &&
+                    ourMatchedIds == otherMatchedIds;
         }
 
         // If Equals() returns true for this object compared to  another

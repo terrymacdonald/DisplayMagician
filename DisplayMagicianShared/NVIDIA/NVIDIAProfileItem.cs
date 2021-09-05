@@ -249,6 +249,7 @@ namespace DisplayMagicianShared.NVIDIA
                 // Create the profile data from the current config
                 _nvidiaDisplayConfig = nvidiaLibrary.GetActiveConfig();
                 _windowsDisplayConfig= WinLibrary.GetLibrary().GetActiveConfig();
+                _profileDisplayIdentifiers = nvidiaLibrary.GetCurrentDisplayIdentifiers();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();

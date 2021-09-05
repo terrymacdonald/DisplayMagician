@@ -208,6 +208,7 @@ namespace DisplayMagicianShared.Windows
             {
                 // Create the profile data from the current config
                 _windowsDisplayConfig = winLibrary.GetActiveConfig();
+                _profileDisplayIdentifiers = winLibrary.GetCurrentDisplayIdentifiers();                
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();

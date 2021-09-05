@@ -489,7 +489,7 @@ namespace DisplayMagician {
                 }
                 else
                 {
-                    ProfileRepository.ForcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
                     logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
                 }
 

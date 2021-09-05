@@ -194,193 +194,193 @@ namespace DisplayMagicianShared.NVIDIA
 
     public enum NV_ROTATE : UInt32
     {
-        NV_ROTATE_0 = 0,
-        NV_ROTATE_90 = 1,
-        NV_ROTATE_180 = 2,
-        NV_ROTATE_270 = 3,
-        NV_ROTATE_IGNORED = 4,
+        ROTATE_0 = 0,
+        ROTATE_90 = 1,
+        ROTATE_180 = 2,
+        ROTATE_270 = 3,
+        ROTATE_IGNORED = 4,
     }
 
     public enum NV_FORMAT : UInt32
     {
-        NV_FORMAT_UNKNOWN = 0,       //!< unknown. Driver will choose one as following value.
-        NV_FORMAT_P8 = 41,       //!< for 8bpp mode
-        NV_FORMAT_R5G6B5 = 23,       //!< for 16bpp mode
-        NV_FORMAT_A8R8G8B8 = 21,       //!< for 32bpp mode
-        NV_FORMAT_A16B16G16R16F = 113,      //!< for 64bpp(floating poInt32) mode.
+        UNKNOWN = 0,       //!< unknown. Driver will choose one as following value.
+        P8 = 41,       //!< for 8bpp mode
+        R5G6B5 = 23,       //!< for 16bpp mode
+        A8R8G8B8 = 21,       //!< for 32bpp mode
+        A16B16G16R16F = 113,      //!< for 64bpp(floating poInt32) mode.
 
     }
 
     public enum NV_SCALING : UInt32
     {
-        NV_SCALING_DEFAULT = 0,        //!< No change
+        DEFAULT = 0,        //!< No change
 
         // New Scaling Declarations
-        NV_SCALING_GPU_SCALING_TO_CLOSEST = 1,  //!< Balanced  - Full Screen
-        NV_SCALING_GPU_SCALING_TO_NATIVE = 2,  //!< Force GPU - Full Screen
-        NV_SCALING_GPU_SCANOUT_TO_NATIVE = 3,  //!< Force GPU - Centered\No Scaling
-        NV_SCALING_GPU_SCALING_TO_ASPECT_SCANOUT_TO_NATIVE = 5,  //!< Force GPU - Aspect Ratio
-        NV_SCALING_GPU_SCALING_TO_ASPECT_SCANOUT_TO_CLOSEST = 6,  //!< Balanced  - Aspect Ratio
-        NV_SCALING_GPU_SCANOUT_TO_CLOSEST = 7,  //!< Balanced  - Centered\No Scaling
-        NV_SCALING_GPU_INTEGER_ASPECT_SCALING = 8,  //!< Force GPU - Integer Scaling
+        GPU_SCALING_TO_CLOSEST = 1,  //!< Balanced  - Full Screen
+        GPU_SCALING_TO_NATIVE = 2,  //!< Force GPU - Full Screen
+        GPU_SCANOUT_TO_NATIVE = 3,  //!< Force GPU - Centered\No Scaling
+        GPU_SCALING_TO_ASPECT_SCANOUT_TO_NATIVE = 5,  //!< Force GPU - Aspect Ratio
+        GPU_SCALING_TO_ASPECT_SCANOUT_TO_CLOSEST = 6,  //!< Balanced  - Aspect Ratio
+        GPU_SCANOUT_TO_CLOSEST = 7,  //!< Balanced  - Centered\No Scaling
+        GPU_INTEGER_ASPECT_SCALING = 8,  //!< Force GPU - Integer Scaling
 
         // Legacy Declarations
-        NV_SCALING_MONITOR_SCALING = NV_SCALING_GPU_SCALING_TO_CLOSEST,
-        NV_SCALING_ADAPTER_SCALING = NV_SCALING_GPU_SCALING_TO_NATIVE,
-        NV_SCALING_CENTERED = NV_SCALING_GPU_SCANOUT_TO_NATIVE,
-        NV_SCALING_ASPECT_SCALING = NV_SCALING_GPU_SCALING_TO_ASPECT_SCANOUT_TO_NATIVE,
+        MONITOR_SCALING = GPU_SCALING_TO_CLOSEST,
+        ADAPTER_SCALING = GPU_SCALING_TO_NATIVE,
+        CENTERED = GPU_SCANOUT_TO_NATIVE,
+        ASPECT_SCALING = GPU_SCALING_TO_ASPECT_SCANOUT_TO_NATIVE,
 
-        NV_SCALING_CUSTOMIZED = 255       //!< For future use
+        CUSTOMIZED = 255       //!< For future use
     }
 
     public enum NV_TARGET_VIEW_MODE : UInt32
     {
-        NV_VIEW_MODE_STANDARD = 0,
-        NV_VIEW_MODE_CLONE = 1,
-        NV_VIEW_MODE_HSPAN = 2,
-        NV_VIEW_MODE_VSPAN = 3,
-        NV_VIEW_MODE_DUALVIEW = 4,
-        NV_VIEW_MODE_MULTIVIEW = 5,
+        STANDARD = 0,
+        CLONE = 1,
+        HSPAN = 2,
+        VSPAN = 3,
+        DUALVIEW = 4,
+        MULTIVIEW = 5,
     }
 
     public enum NV_MONITOR_CONN_TYPE : Int32
     {
-        NV_MONITOR_CONN_TYPE_UNINITIALIZED = 0,
-        NV_MONITOR_CONN_TYPE_VGA,
-        NV_MONITOR_CONN_TYPE_COMPONENT,
-        NV_MONITOR_CONN_TYPE_SVIDEO,
-        NV_MONITOR_CONN_TYPE_HDMI,
-        NV_MONITOR_CONN_TYPE_DVI,
-        NV_MONITOR_CONN_TYPE_LVDS,
-        NV_MONITOR_CONN_TYPE_DP,
-        NV_MONITOR_CONN_TYPE_COMPOSITE,
-        NV_MONITOR_CONN_TYPE_UNKNOWN = -1
+        UNINITIALIZED = 0,
+        VGA = 1,
+        COMPONENT = 2,
+        SVIDEO = 3,
+        HDMI = 4,
+        DVI = 5,
+        LVDS = 6,
+        DP = 7,
+        COMPOSITE = 8,
+        UNKNOWN = -1
     }
 
     public enum NV_DISPLAY_TV_FORMAT : UInt32
     {
-        NV_DISPLAY_TV_FORMAT_NONE = 0,
-        NV_DISPLAY_TV_FORMAT_SD_NTSCM = 0x00000001,
-        NV_DISPLAY_TV_FORMAT_SD_NTSCJ = 0x00000002,
-        NV_DISPLAY_TV_FORMAT_SD_PALM = 0x00000004,
-        NV_DISPLAY_TV_FORMAT_SD_PALBDGH = 0x00000008,
-        NV_DISPLAY_TV_FORMAT_SD_PALN = 0x00000010,
-        NV_DISPLAY_TV_FORMAT_SD_PALNC = 0x00000020,
-        NV_DISPLAY_TV_FORMAT_SD_576i = 0x00000100,
-        NV_DISPLAY_TV_FORMAT_SD_480i = 0x00000200,
-        NV_DISPLAY_TV_FORMAT_ED_480p = 0x00000400,
-        NV_DISPLAY_TV_FORMAT_ED_576p = 0x00000800,
-        NV_DISPLAY_TV_FORMAT_HD_720p = 0x00001000,
-        NV_DISPLAY_TV_FORMAT_HD_1080i = 0x00002000,
-        NV_DISPLAY_TV_FORMAT_HD_1080p = 0x00004000,
-        NV_DISPLAY_TV_FORMAT_HD_720p50 = 0x00008000,
-        NV_DISPLAY_TV_FORMAT_HD_1080p24 = 0x00010000,
-        NV_DISPLAY_TV_FORMAT_HD_1080i50 = 0x00020000,
-        NV_DISPLAY_TV_FORMAT_HD_1080p50 = 0x00040000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp30 = 0x00080000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp30_3840 = NV_DISPLAY_TV_FORMAT_UHD_4Kp30,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp25 = 0x00100000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp25_3840 = NV_DISPLAY_TV_FORMAT_UHD_4Kp25,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp24 = 0x00200000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp24_3840 = NV_DISPLAY_TV_FORMAT_UHD_4Kp24,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp24_SMPTE = 0x00400000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp50_3840 = 0x00800000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp60_3840 = 0x00900000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp30_4096 = 0x00A00000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp25_4096 = 0x00B00000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp24_4096 = 0x00C00000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp50_4096 = 0x00D00000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp60_4096 = 0x00E00000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp24_7680 = 0x01000000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp25_7680 = 0x02000000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp30_7680 = 0x04000000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp48_7680 = 0x08000000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp50_7680 = 0x09000000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp60_7680 = 0x0A000000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp100_7680 = 0x0B000000,
-        NV_DISPLAY_TV_FORMAT_UHD_8Kp120_7680 = 0x0C000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp48_3840 = 0x0D000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp48_4096 = 0x0E000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp100_4096 = 0x0F000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp100_3840 = 0x10000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp120_4096 = 0x11000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp120_3840 = 0x12000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp100_5120 = 0x13000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp120_5120 = 0x14000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp24_5120 = 0x15000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp25_5120 = 0x16000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp30_5120 = 0x17000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp48_5120 = 0x18000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp50_5120 = 0x19000000,
-        NV_DISPLAY_TV_FORMAT_UHD_4Kp60_5120 = 0x20000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp24_10240 = 0x21000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp25_10240 = 0x22000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp30_10240 = 0x23000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp48_10240 = 0x24000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp50_10240 = 0x25000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp60_10240 = 0x26000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp100_10240 = 0x27000000,
-        NV_DISPLAY_TV_FORMAT_UHD_10Kp120_10240 = 0x28000000,
+        NONE = 0,
+        SD_NTSCM = 0x00000001,
+        SD_NTSCJ = 0x00000002,
+        SD_PALM = 0x00000004,
+        SD_PALBDGH = 0x00000008,
+        SD_PALN = 0x00000010,
+        SD_PALNC = 0x00000020,
+        SD_576i = 0x00000100,
+        SD_480i = 0x00000200,
+        ED_480p = 0x00000400,
+        ED_576p = 0x00000800,
+        HD_720p = 0x00001000,
+        HD_1080i = 0x00002000,
+        HD_1080p = 0x00004000,
+        HD_720p50 = 0x00008000,
+        HD_1080p24 = 0x00010000,
+        HD_1080i50 = 0x00020000,
+        HD_1080p50 = 0x00040000,
+        UHD_4Kp30 = 0x00080000,
+        UHD_4Kp30_3840 = UHD_4Kp30,
+        UHD_4Kp25 = 0x00100000,
+        UHD_4Kp25_3840 = UHD_4Kp25,
+        UHD_4Kp24 = 0x00200000,
+        UHD_4Kp24_3840 = UHD_4Kp24,
+        UHD_4Kp24_SMPTE = 0x00400000,
+        UHD_4Kp50_3840 = 0x00800000,
+        UHD_4Kp60_3840 = 0x00900000,
+        UHD_4Kp30_4096 = 0x00A00000,
+        UHD_4Kp25_4096 = 0x00B00000,
+        UHD_4Kp24_4096 = 0x00C00000,
+        UHD_4Kp50_4096 = 0x00D00000,
+        UHD_4Kp60_4096 = 0x00E00000,
+        UHD_8Kp24_7680 = 0x01000000,
+        UHD_8Kp25_7680 = 0x02000000,
+        UHD_8Kp30_7680 = 0x04000000,
+        UHD_8Kp48_7680 = 0x08000000,
+        UHD_8Kp50_7680 = 0x09000000,
+        UHD_8Kp60_7680 = 0x0A000000,
+        UHD_8Kp100_7680 = 0x0B000000,
+        UHD_8Kp120_7680 = 0x0C000000,
+        UHD_4Kp48_3840 = 0x0D000000,
+        UHD_4Kp48_4096 = 0x0E000000,
+        UHD_4Kp100_4096 = 0x0F000000,
+        UHD_4Kp100_3840 = 0x10000000,
+        UHD_4Kp120_4096 = 0x11000000,
+        UHD_4Kp120_3840 = 0x12000000,
+        UHD_4Kp100_5120 = 0x13000000,
+        UHD_4Kp120_5120 = 0x14000000,
+        UHD_4Kp24_5120 = 0x15000000,
+        UHD_4Kp25_5120 = 0x16000000,
+        UHD_4Kp30_5120 = 0x17000000,
+        UHD_4Kp48_5120 = 0x18000000,
+        UHD_4Kp50_5120 = 0x19000000,
+        UHD_4Kp60_5120 = 0x20000000,
+        UHD_10Kp24_10240 = 0x21000000,
+        UHD_10Kp25_10240 = 0x22000000,
+        UHD_10Kp30_10240 = 0x23000000,
+        UHD_10Kp48_10240 = 0x24000000,
+        UHD_10Kp50_10240 = 0x25000000,
+        UHD_10Kp60_10240 = 0x26000000,
+        UHD_10Kp100_10240 = 0x27000000,
+        UHD_10Kp120_10240 = 0x28000000,
 
 
-        NV_DISPLAY_TV_FORMAT_SD_OTHER = 0x30000000,
-        NV_DISPLAY_TV_FORMAT_ED_OTHER = 0x40000000,
-        NV_DISPLAY_TV_FORMAT_HD_OTHER = 0x50000000,
+        SD_OTHER = 0x30000000,
+        ED_OTHER = 0x40000000,
+        HD_OTHER = 0x50000000,
 
-        NV_DISPLAY_TV_FORMAT_ANY = 0x80000000,
+        ANY = 0x80000000,
 
     }
 
     public enum NV_GPU_CONNECTOR_TYPE : UInt32
     {
-        NVAPI_GPU_CONNECTOR_VGA_15_PIN = 0x00000000,
-        NVAPI_GPU_CONNECTOR_TV_COMPOSITE = 0x00000010,
-        NVAPI_GPU_CONNECTOR_TV_SVIDEO = 0x00000011,
-        NVAPI_GPU_CONNECTOR_TV_HDTV_COMPONENT = 0x00000013,
-        NVAPI_GPU_CONNECTOR_TV_SCART = 0x00000014,
-        NVAPI_GPU_CONNECTOR_TV_COMPOSITE_SCART_ON_EIAJ4120 = 0x00000016,
-        NVAPI_GPU_CONNECTOR_TV_HDTV_EIAJ4120 = 0x00000017,
-        NVAPI_GPU_CONNECTOR_PC_POD_HDTV_YPRPB = 0x00000018,
-        NVAPI_GPU_CONNECTOR_PC_POD_SVIDEO = 0x00000019,
-        NVAPI_GPU_CONNECTOR_PC_POD_COMPOSITE = 0x0000001A,
-        NVAPI_GPU_CONNECTOR_DVI_I_TV_SVIDEO = 0x00000020,
-        NVAPI_GPU_CONNECTOR_DVI_I_TV_COMPOSITE = 0x00000021,
-        NVAPI_GPU_CONNECTOR_DVI_I = 0x00000030,
-        NVAPI_GPU_CONNECTOR_DVI_D = 0x00000031,
-        NVAPI_GPU_CONNECTOR_ADC = 0x00000032,
-        NVAPI_GPU_CONNECTOR_LFH_DVI_I_1 = 0x00000038,
-        NVAPI_GPU_CONNECTOR_LFH_DVI_I_2 = 0x00000039,
-        NVAPI_GPU_CONNECTOR_SPWG = 0x00000040,
-        NVAPI_GPU_CONNECTOR_OEM = 0x00000041,
-        NVAPI_GPU_CONNECTOR_DISPLAYPORT_EXTERNAL = 0x00000046,
-        NVAPI_GPU_CONNECTOR_DISPLAYPORT_INTERNAL = 0x00000047,
-        NVAPI_GPU_CONNECTOR_DISPLAYPORT_MINI_EXT = 0x00000048,
-        NVAPI_GPU_CONNECTOR_HDMI_A = 0x00000061,
-        NVAPI_GPU_CONNECTOR_HDMI_C_MINI = 0x00000063,
-        NVAPI_GPU_CONNECTOR_LFH_DISPLAYPORT_1 = 0x00000064,
-        NVAPI_GPU_CONNECTOR_LFH_DISPLAYPORT_2 = 0x00000065,
-        NVAPI_GPU_CONNECTOR_VIRTUAL_WFD = 0x00000070,
-        NVAPI_GPU_CONNECTOR_USB_C = 0x00000071,
-        NVAPI_GPU_CONNECTOR_UNKNOWN = 0xFFFFFFFF,
+        VGA_15_PIN = 0x00000000,
+        TV_COMPOSITE = 0x00000010,
+        TV_SVIDEO = 0x00000011,
+        TV_HDTV_COMPONENT = 0x00000013,
+        TV_SCART = 0x00000014,
+        TV_COMPOSITE_SCART_ON_EIAJ4120 = 0x00000016,
+        TV_HDTV_EIAJ4120 = 0x00000017,
+        PC_POD_HDTV_YPRPB = 0x00000018,
+        PC_POD_SVIDEO = 0x00000019,
+        PC_POD_COMPOSITE = 0x0000001A,
+        DVI_I_TV_SVIDEO = 0x00000020,
+        DVI_I_TV_COMPOSITE = 0x00000021,
+        DVI_I = 0x00000030,
+        DVI_D = 0x00000031,
+        ADC = 0x00000032,
+        LFH_DVI_I_1 = 0x00000038,
+        LFH_DVI_I_2 = 0x00000039,
+        SPWG = 0x00000040,
+        OEM = 0x00000041,
+        DISPLAYPORT_EXTERNAL = 0x00000046,
+        DISPLAYPORT_INTERNAL = 0x00000047,
+        DISPLAYPORT_MINI_EXT = 0x00000048,
+        HDMI_A = 0x00000061,
+        HDMI_C_MINI = 0x00000063,
+        LFH_DISPLAYPORT_1 = 0x00000064,
+        LFH_DISPLAYPORT_2 = 0x00000065,
+        VIRTUAL_WFD = 0x00000070,
+        USB_C = 0x00000071,
+        UNKNOWN = 0xFFFFFFFF,
     }
 
     public enum NV_TIMING_OVERRIDE : UInt32
     {
-        NV_TIMING_OVERRIDE_CURRENT = 0,          //!< get the current timing
-        NV_TIMING_OVERRIDE_AUTO,                 //!< the timing the driver will use based the current policy
-        NV_TIMING_OVERRIDE_EDID,                 //!< EDID timing
-        NV_TIMING_OVERRIDE_DMT,                  //!< VESA DMT timing
-        NV_TIMING_OVERRIDE_DMT_RB,               //!< VESA DMT timing with reduced blanking
-        NV_TIMING_OVERRIDE_CVT,                  //!< VESA CVT timing
-        NV_TIMING_OVERRIDE_CVT_RB,               //!< VESA CVT timing with reduced blanking
-        NV_TIMING_OVERRIDE_GTF,                  //!< VESA GTF timing
-        NV_TIMING_OVERRIDE_EIA861,               //!< EIA 861x pre-defined timing
-        NV_TIMING_OVERRIDE_ANALOG_TV,            //!< analog SD/HDTV timing
-        NV_TIMING_OVERRIDE_CUST,                 //!< NV custom timings
-        NV_TIMING_OVERRIDE_NV_PREDEFINED,        //!< NV pre-defined timing (basically the PsF timings)
-        NV_TIMING_OVERRIDE_NV_PSF = NV_TIMING_OVERRIDE_NV_PREDEFINED,
-        NV_TIMING_OVERRIDE_NV_ASPR,
-        NV_TIMING_OVERRIDE_SDI,                  //!< Override for SDI timing
+        CURRENT = 0,          //!< get the current timing
+        AUTO,                 //!< the timing the driver will use based the current policy
+        EDID,                 //!< EDID timing
+        DMT,                  //!< VESA DMT timing
+        DMT_RB,               //!< VESA DMT timing with reduced blanking
+        CVT,                  //!< VESA CVT timing
+        CVT_RB,               //!< VESA CVT timing with reduced blanking
+        GTF,                  //!< VESA GTF timing
+        EIA861,               //!< EIA 861x pre-defined timing
+        ANALOG_TV,            //!< analog SD/HDTV timing
+        CUST,                 //!< NV custom timings
+        NV_PREDEFINED,        //!< NV pre-defined timing (basically the PsF timings)
+        NV_PSF = NV_PREDEFINED,
+        NV_ASPR,
+        SDI,                  //!< Override for SDI timing
 
         NV_TIMING_OVRRIDE_MAX,
     }
@@ -391,12 +391,12 @@ namespace DisplayMagicianShared.NVIDIA
     //! the returned list to only those that match the given type.
     public enum NV_MOSAIC_TOPO_TYPE : UInt32
     {
-        NV_MOSAIC_TOPO_TYPE_ALL = 0,                          //!< All mosaic topologies
-        NV_MOSAIC_TOPO_TYPE_BASIC = 1,                        //!< Basic Mosaic topologies
-        NV_MOSAIC_TOPO_TYPE_PASSIVE_STEREO = 2,               //!< Passive Stereo topologies
-        NV_MOSAIC_TOPO_TYPE_SCALED_CLONE = 3,                 //!< Not supported at this time
-        NV_MOSAIC_TOPO_TYPE_PASSIVE_STEREO_SCALED_CLONE = 4,  //!< Not supported at this time
-        NV_MOSAIC_TOPO_TYPE_MAX,                          //!< Always leave this at end of the enum
+        ALL = 0,                          //!< All mosaic topologies
+        BASIC = 1,                        //!< Basic Mosaic topologies
+        PASSIVE_STEREO = 2,               //!< Passive Stereo topologies
+        SCALED_CLONE = 3,                 //!< Not supported at this time
+        PASSIVE_STEREO_SCALED_CLONE = 4,  //!< Not supported at this time
+        MAX,                          //!< Always leave this at end of the enum
     }
 
 
@@ -412,33 +412,33 @@ namespace DisplayMagicianShared.NVIDIA
     //!       please update the corresponding value in nvEscDef.h
     public enum NV_MOSAIC_TOPO : UInt32
     {
-        NV_MOSAIC_TOPO_NONE,
+        TOPO_NONE,
 
         // 'BASIC' topos start here
         //
         // The result of using one of these Mosaic topos is that multiple monitors
         // will combine to create a single desktop.
         //
-        NV_MOSAIC_TOPO_BEGIN_BASIC,
-        NV_MOSAIC_TOPO_1x2_BASIC = NV_MOSAIC_TOPO_BEGIN_BASIC,
-        NV_MOSAIC_TOPO_2x1_BASIC,
-        NV_MOSAIC_TOPO_1x3_BASIC,
-        NV_MOSAIC_TOPO_3x1_BASIC,
-        NV_MOSAIC_TOPO_1x4_BASIC,
-        NV_MOSAIC_TOPO_4x1_BASIC,
-        NV_MOSAIC_TOPO_2x2_BASIC,
-        NV_MOSAIC_TOPO_2x3_BASIC,
-        NV_MOSAIC_TOPO_2x4_BASIC,
-        NV_MOSAIC_TOPO_3x2_BASIC,
-        NV_MOSAIC_TOPO_4x2_BASIC,
-        NV_MOSAIC_TOPO_1x5_BASIC,
-        NV_MOSAIC_TOPO_1x6_BASIC,
-        NV_MOSAIC_TOPO_7x1_BASIC,
+        TOPO_BEGIN_BASIC,
+        TOPO_1x2_BASIC = TOPO_BEGIN_BASIC,
+        TOPO_2x1_BASIC,
+        TOPO_1x3_BASIC,
+        TOPO_3x1_BASIC,
+        TOPO_1x4_BASIC,
+        TOPO_4x1_BASIC,
+        TOPO_2x2_BASIC,
+        TOPO_2x3_BASIC,
+        TOPO_2x4_BASIC,
+        TOPO_3x2_BASIC,
+        TOPO_4x2_BASIC,
+        TOPO_1x5_BASIC,
+        TOPO_1x6_BASIC,
+        TOPO_7x1_BASIC,
 
         // Add padding for 10 more entries. 6 will be enough room to specify every
         // possible topology with 8 or fewer displays, so this gives us a little
         // extra should we need it.
-        NV_MOSAIC_TOPO_END_BASIC = NV_MOSAIC_TOPO_7x1_BASIC + 9,
+        TOPO_END_BASIC = TOPO_7x1_BASIC + 9,
 
         // 'PASSIVE_STEREO' topos start here
         //
@@ -449,33 +449,33 @@ namespace DisplayMagicianShared.NVIDIA
         // same rows x cols), will be used for the right eye.  The difference between
         // the two topos is that different GPUs and displays will be used.
         //
-        NV_MOSAIC_TOPO_BEGIN_PASSIVE_STEREO,    // value shadowed in nvEscDef.h
-        NV_MOSAIC_TOPO_1x2_PASSIVE_STEREO = NV_MOSAIC_TOPO_BEGIN_PASSIVE_STEREO,
-        NV_MOSAIC_TOPO_2x1_PASSIVE_STEREO,
-        NV_MOSAIC_TOPO_1x3_PASSIVE_STEREO,
-        NV_MOSAIC_TOPO_3x1_PASSIVE_STEREO,
-        NV_MOSAIC_TOPO_1x4_PASSIVE_STEREO,
-        NV_MOSAIC_TOPO_4x1_PASSIVE_STEREO,
-        NV_MOSAIC_TOPO_2x2_PASSIVE_STEREO,
-        NV_MOSAIC_TOPO_END_PASSIVE_STEREO = NV_MOSAIC_TOPO_2x2_PASSIVE_STEREO + 4,
+        TOPO_BEGIN_PASSIVE_STEREO,    // value shadowed in nvEscDef.h
+        TOPO_1x2_PASSIVE_STEREO = TOPO_BEGIN_PASSIVE_STEREO,
+        TOPO_2x1_PASSIVE_STEREO,
+        TOPO_1x3_PASSIVE_STEREO,
+        TOPO_3x1_PASSIVE_STEREO,
+        TOPO_1x4_PASSIVE_STEREO,
+        TOPO_4x1_PASSIVE_STEREO,
+        TOPO_2x2_PASSIVE_STEREO,
+        TOPO_END_PASSIVE_STEREO = TOPO_2x2_PASSIVE_STEREO + 4,
 
 
         //
         // Total number of topos.  Always leave this at the end of the enumeration.
         //
-        NV_MOSAIC_TOPO_MAX  //! Total number of topologies.
+        TOPO_MAX  //! Total number of topologies.
 
     }
 
     [Flags]
     public enum NV_MOSAIC_TOPO_VALIDITY : UInt32
     {
-        NV_MOSAIC_TOPO_VALIDITY_VALID = 0x00000000,  //!< The topology is valid
-        NV_MOSAIC_TOPO_VALIDITY_MISSING_GPU = 0x00000001,   //!< Not enough SLI GPUs were found to fill the entire
+        VALID = 0x00000000,  //!< The topology is valid
+        MISSING_GPU = 0x00000001,   //!< Not enough SLI GPUs were found to fill the entire
                                                             //! topology. hPhysicalGPU will be 0 for these.
-        NV_MOSAIC_TOPO_VALIDITY_MISSING_DISPLAY = 0x00000002,   //!< Not enough displays were found to fill the entire
+        MISSING_DISPLAY = 0x00000002,   //!< Not enough displays were found to fill the entire
                                                                 //! topology. displayOutputId will be 0 for these.
-        NV_MOSAIC_TOPO_VALIDITY_MIXED_DISPLAY_TYPES = 0x00000004,   //!< The topoogy is only possible with displays of the same
+        MIXED_DISPLAY_TYPES = 0x00000004,   //!< The topoogy is only possible with displays of the same
                                                                     //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
                                                                     //! sure they are all CRTs, or all DFPs.
     }
@@ -493,29 +493,29 @@ namespace DisplayMagicianShared.NVIDIA
 
     public enum NV_PIXEL_SHIFT_TYPE
     {
-        NV_PIXEL_SHIFT_TYPE_NO_PIXEL_SHIFT = 0,          //!< No pixel shift will be applied to this display.
-        NV_PIXEL_SHIFT_TYPE_2x2_TOP_LEFT_PIXELS = 1,          //!< This display will be used to scanout top left pixels in 2x2 PixelShift configuration
-        NV_PIXEL_SHIFT_TYPE_2x2_BOTTOM_RIGHT_PIXELS = 2,          //!< This display will be used to scanout bottom right pixels in 2x2 PixelShift configuration
-        NV_PIXEL_SHIFT_TYPE_2x2_TOP_RIGHT_PIXELS = 4,          //!< This display will be used to scanout top right pixels in 2x2 PixelShift configuration
-        NV_PIXEL_SHIFT_TYPE_2x2_BOTTOM_LEFT_PIXELS = 8,          //!< This display will be used to scanout bottom left pixels in 2x2 PixelShift configuration
+        TYPE_NO_PIXEL_SHIFT = 0,          //!< No pixel shift will be applied to this display.
+        TYPE_2x2_TOP_LEFT_PIXELS = 1,          //!< This display will be used to scanout top left pixels in 2x2 PixelShift configuration
+        TYPE_2x2_BOTTOM_RIGHT_PIXELS = 2,          //!< This display will be used to scanout bottom right pixels in 2x2 PixelShift configuration
+        TYPE_2x2_TOP_RIGHT_PIXELS = 4,          //!< This display will be used to scanout top right pixels in 2x2 PixelShift configuration
+        TYPE_2x2_BOTTOM_LEFT_PIXELS = 8,          //!< This display will be used to scanout bottom left pixels in 2x2 PixelShift configuration
     }
 
     public enum NV_HDR_CMD : UInt32
     {
-        NV_HDR_CMD_GET = 0,                             //!< Get current HDR output configuration
-        NV_HDR_CMD_SET = 1                              //!< Set HDR output configuration
+        CMD_GET = 0,                             //!< Get current HDR output configuration
+        CMD_SET = 1                              //!< Set HDR output configuration
     }
 
 
     public enum NV_HDR_MODE : UInt32
     {
         // Official production-ready HDR modes
-        NV_HDR_MODE_OFF = 0,            //!< Turn off HDR
-        NV_HDR_MODE_UHDA = 2,            //!< Source: CCCS [a.k.a FP16 scRGB, linear, sRGB primaries, [-65504,0, 65504] range, RGB(1,1,1) = 80nits]  Output : UHDA HDR [a.k.a HDR10, RGB/YCC 10/12bpc ST2084(PQ) EOTF RGB(1,1,1) = 10000 nits, Rec2020 color primaries, ST2086 static HDR metadata]. This is the only supported production HDR mode.
+        OFF = 0,            //!< Turn off HDR
+        UHDA = 2,            //!< Source: CCCS [a.k.a FP16 scRGB, linear, sRGB primaries, [-65504,0, 65504] range, RGB(1,1,1) = 80nits]  Output : UHDA HDR [a.k.a HDR10, RGB/YCC 10/12bpc ST2084(PQ) EOTF RGB(1,1,1) = 10000 nits, Rec2020 color primaries, ST2086 static HDR metadata]. This is the only supported production HDR mode.
 
         // Experimental
-        NV_HDR_MODE_UHDA_PASSTHROUGH = 5,            //!< Experimental mode only, not for production! Source: HDR10 RGB 10bpc Output: HDR10 RGB 10 bpc - signal UHDA HDR mode (PQ + Rec2020) to the sink but send source pixel values unmodified (no PQ or Rec2020 conversions) - assumes source is already in HDR10 format.
-        NV_HDR_MODE_DOLBY_VISION = 7,            //!< Experimental mode only, not for production! Source: RGB8 Dolby Vision encoded (12 bpc YCbCr422 packed into RGB8) Output: Dolby Vision encoded : Application is to encoded frames in DV format and embed DV dynamic metadata as described in Dolby Vision specification.
+        UHDA_PASSTHROUGH = 5,            //!< Experimental mode only, not for production! Source: HDR10 RGB 10bpc Output: HDR10 RGB 10 bpc - signal UHDA HDR mode (PQ + Rec2020) to the sink but send source pixel values unmodified (no PQ or Rec2020 conversions) - assumes source is already in HDR10 format.
+        DOLBY_VISION = 7,            //!< Experimental mode only, not for production! Source: RGB8 Dolby Vision encoded (12 bpc YCbCr422 packed into RGB8) Output: Dolby Vision encoded : Application is to encoded frames in DV format and embed DV dynamic metadata as described in Dolby Vision specification.
 
         // Unsupported/obsolete HDR modes
         //NV_HDR_MODE_EDR = 3,            //!< Do not use! Internal test mode only, to be removed. Source: CCCS (a.k.a FP16 scRGB) Output : EDR (Extended Dynamic Range) - HDR content is tonemapped and gamut mapped to output on regular SDR display set to max luminance ( ~300 nits ).
@@ -527,33 +527,33 @@ namespace DisplayMagicianShared.NVIDIA
 
     public enum NV_COLOR_FORMAT : UInt32
     {
-        NV_COLOR_FORMAT_RGB = 0,
-        NV_COLOR_FORMAT_YUV422,
-        NV_COLOR_FORMAT_YUV444,
-        NV_COLOR_FORMAT_YUV420,
+        RGB = 0,
+        YUV422,
+        YUV444,
+        YUV420,
 
-        NV_COLOR_FORMAT_DEFAULT = 0xFE,
-        NV_COLOR_FORMAT_AUTO = 0xFF
+        DEFAULT = 0xFE,
+        AUTO = 0xFF
     }
 
 
     public enum NV_DYNAMIC_RANGE : UInt32
     {
-        NV_DYNAMIC_RANGE_VESA = 0x0,
-        NV_DYNAMIC_RANGE_CEA = 0x1,
+        VESA = 0x0,
+        CEA = 0x1,
 
-        NV_DYNAMIC_RANGE_AUTO = 0xFF
+        AUTO = 0xFF
     }
 
 
     public enum NV_BPC : UInt32
     {
-        NV_BPC_DEFAULT = 0,
-        NV_BPC_6 = 1,
-        NV_BPC_8 = 2,
-        NV_BPC_10 = 3,
-        NV_BPC_12 = 4,
-        NV_BPC_16 = 5,
+        BPC_DEFAULT = 0,
+        BPC_6 = 1,
+        BPC_8 = 2,
+        BPC_10 = 3,
+        BPC_12 = 4,
+        BPC_16 = 5,
     }
 
     [Flags]
@@ -1294,11 +1294,11 @@ namespace DisplayMagicianShared.NVIDIA
            GPULayout1D.SequenceEqual(other.GPULayout1D);
 
         public bool TopologyValid => ValidityMask == 0; //!< The topology is valid
-        public bool TopologyMissingGPU => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.NV_MOSAIC_TOPO_VALIDITY_MISSING_GPU); //!< Not enough SLI GPUs were found to fill the entire
+        public bool TopologyMissingGPU => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_GPU); //!< Not enough SLI GPUs were found to fill the entire
                                                                                                                              //! topology. hPhysicalGPU will be 0 for these.
-        public bool TopologyMissingDisplay => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.NV_MOSAIC_TOPO_VALIDITY_MISSING_DISPLAY);//!< Not enough displays were found to fill the entire
+        public bool TopologyMissingDisplay => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_DISPLAY);//!< Not enough displays were found to fill the entire
                                                                                                                                     //! topology. displayOutputId will be 0 for these.
-        public bool TopologyMixedDisplayTypes => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.NV_MOSAIC_TOPO_VALIDITY_MIXED_DISPLAY_TYPES);//!< The topoogy is only possible with displays of the same
+        public bool TopologyMixedDisplayTypes => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MIXED_DISPLAY_TYPES);//!< The topoogy is only possible with displays of the same
                                                                                                                                            //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
                                                                                                                                            //! sure they are all CRTs, or all DFPs.
 
@@ -1901,7 +1901,7 @@ namespace DisplayMagicianShared.NVIDIA
         public const UInt32 NV_MOSAIC_TOPO_IDX_LEFT_EYE = 0;
         public const UInt32 NV_MOSAIC_TOPO_IDX_RIGHT_EYE = 1;
         public const UInt32 NV_MOSAIC_TOPO_NUM_EYES = 2;
-        public const UInt32 NV_MOSAIC_TOPO_MAX = (UInt32)NV_MOSAIC_TOPO.NV_MOSAIC_TOPO_MAX;
+        public const UInt32 NV_MOSAIC_TOPO_MAX = (UInt32)NV_MOSAIC_TOPO.TOPO_MAX;
         public const UInt32 NVAPI_MAX_MOSAIC_DISPLAY_ROWS = 8;
         public const UInt32 NVAPI_MAX_MOSAIC_DISPLAY_COLUMNS = 8;
         public const UInt32 NVAPI_GENERIC_STRING_MAX = 4096;

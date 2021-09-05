@@ -374,7 +374,7 @@ namespace DisplayMagicianShared.NVIDIA
                 }
 
                 // Check if there is a topology and that Mosaic is enabled
-                if (mosaicTopoBrief.Topo != NV_MOSAIC_TOPO.NV_MOSAIC_TOPO_NONE && mosaicTopoBrief.Enabled == 1)
+                if (mosaicTopoBrief.Topo != NV_MOSAIC_TOPO.TOPO_NONE && mosaicTopoBrief.Enabled == 1)
                 {
                     // Mosaic is enabled!
                     SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NVIDIA Mosaic is enabled.");
@@ -749,7 +749,7 @@ namespace DisplayMagicianShared.NVIDIA
                             if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                             {
                                 SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_HdrColorControl returned OK. HDR mode is currently {hdrColorData.HdrMode.ToString("G")}.");
-                                if (hdrColorData.HdrMode != NV_HDR_MODE.NV_HDR_MODE_OFF)
+                                if (hdrColorData.HdrMode != NV_HDR_MODE.OFF)
                                 {
                                     isNvHdrEnabled = true;
                                 }
@@ -1787,6 +1787,7 @@ namespace DisplayMagicianShared.NVIDIA
                             // We want to skip this display as it is non-active, and we only want active displays
                             continue;
                         }
+                       
 
                         // Now we try to get the GPU and Output ID from the DisplayID
                         PhysicalGpuHandle physicalGpu = new PhysicalGpuHandle();
@@ -1905,7 +1906,7 @@ namespace DisplayMagicianShared.NVIDIA
                         }
                         try
                         {
-                            displayInfo.Add(gpuOutputId.ToString());
+                            displayInfo.Add(oneDisplay.ConnectorType.ToString("G"));
                         }
                         catch (Exception ex)
                         {

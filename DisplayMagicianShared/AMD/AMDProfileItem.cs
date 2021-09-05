@@ -245,6 +245,7 @@ namespace DisplayMagicianShared.AMD
                 // Create the profile data from the current config
                 _amdDisplayConfig = amdLibrary.GetActiveConfig();
                 _windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
+                _profileDisplayIdentifiers = amdLibrary.GetCurrentDisplayIdentifiers();
 
                 // Now, since the ActiveProfile has changed, we need to regenerate screen positions
                 _screens = GetScreenPositions();
