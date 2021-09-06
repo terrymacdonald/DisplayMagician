@@ -12,8 +12,8 @@ using System.Drawing.Imaging;
 namespace DisplayMagicianShared.AMD
 {
 
-    public class AMDProfileItem : ProfileItem
-    {
+    public class AMDProfileItem : ProfileItem, IEquatable<AMDProfileItem>
+    { 
         private static List<AMDProfileItem> _allSavedProfiles = new List<AMDProfileItem>();
         private ProfileIcon _profileIcon;
         private Bitmap _profileBitmap, _profileShortcutBitmap;
@@ -364,51 +364,46 @@ namespace DisplayMagicianShared.AMD
             return _screens;
         }
 
-        /*public override int CompareTo(object obj)
+        // The object specific Equals
+        public bool Equals(AMDProfileItem other)
         {
-            if (!(obj is AMDProfileItem)) throw new ArgumentException("Object to CompareTo is not a AMDProfileItem"); ;
+            // Check references
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
 
-            AMDProfileItem otherProfile = (AMDProfileItem)obj;
-            return this.Name.CompareTo(otherProfile.Name);
-        }*/
-
-        // The public override for the Object.Equals
-        public override bool Equals(object obj)
-        {
-            return EqualsDerived(obj) &&
-                obj.GetType() == typeof(AMDProfileItem);
+            // Check the object fields
+            return base.Equals(other) &&
+                AMDDisplayConfig == other.AMDDisplayConfig &&
+                WindowsDisplayConfig == other.WindowsDisplayConfig;
         }
 
-        // Profiles are equal if their Viewports are equal
-        public override bool EqualsDerived(object obj)
+        // The public override for the Object.Equals
+        public bool Equals(Object obj)
         {
-            return base.EqualsDerived(obj) &&
-                    !object.ReferenceEquals(obj, null) &&
-                    obj is AMDProfileItem &&
-                    ((AMDProfileItem)obj).AMDDisplayConfig == this.AMDDisplayConfig &&
-                    ((AMDProfileItem)obj).WindowsDisplayConfig == this.WindowsDisplayConfig;
+            // Check references
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            // If different types then can't be true
+            if (obj.GetType() == this.GetType()) return false;
+            // Check the object fields as this must the same object as obj, and we need to test in more detail
+            return Equals((AMDProfileItem)obj);
         }
 
         public override int GetHashCode()
         {
             // Calculate the hash code for the product.
-            return (AMDDisplayConfig, WindowsDisplayConfig, ProfileDisplayIdentifiers).GetHashCode();
+            return (base.GetHashCode(), AMDDisplayConfig, WindowsDisplayConfig).GetHashCode();
         }
 
         public static bool operator ==(AMDProfileItem lhs, AMDProfileItem rhs)
         {
-            if (object.ReferenceEquals(lhs, rhs))
-                return true;
-
-            if (!object.ReferenceEquals(lhs, null) &&
-                !object.ReferenceEquals(rhs, null) &&
-                lhs.Equals(rhs))
-                return true;
-
-            return false;
+            return Equals(lhs, rhs);
         }
 
-        public static bool operator !=(AMDProfileItem lhs, AMDProfileItem rhs) => !(lhs == rhs);
+        public static bool operator !=(AMDProfileItem lhs, AMDProfileItem rhs)
+        {
+            return !Equals(lhs, rhs);
+        }
     }
     
 }

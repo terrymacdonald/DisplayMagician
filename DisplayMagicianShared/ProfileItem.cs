@@ -52,7 +52,7 @@ namespace DisplayMagicianShared
         public int Row;
     }
 
-    public class ProfileItem : IComparable<ProfileItem>
+    public class ProfileItem : IComparable<ProfileItem>, IEquatable<ProfileItem>
     {
         private static List<ProfileItem> _allSavedProfiles = new List<ProfileItem>();
         private ProfileIcon _profileIcon;
@@ -291,7 +291,6 @@ namespace DisplayMagicianShared
         }
 
         [JsonConverter(typeof(CustomBitmapConverter))]
-        //[JsonIgnore]
         public virtual Bitmap ProfileTightestBitmap
         {
             get
@@ -352,7 +351,6 @@ namespace DisplayMagicianShared
 
             // Copy all our profile data over to the other profile
             profile.Name = Name;
-            //profile.Paths = Paths;
             profile.ProfileIcon = ProfileIcon;
             profile.SavedProfileIconCacheFilename = SavedProfileIconCacheFilename;
             profile.ProfileBitmap = ProfileBitmap;
@@ -571,25 +569,22 @@ namespace DisplayMagicianShared
 
         }
 
-
-        // The public override for the Object.Equals
-        public override bool Equals(object obj)
+        // The object specific Equals
+        public bool Equals(ProfileItem other)
         {
-            return EqualsDerived(obj) &&
-                obj.GetType() == typeof(ProfileItem);
-        }
+            // Check references
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
 
-        // Profiles are equal if their Viewports are equal
-        public virtual bool EqualsDerived(object obj)
-        {
-
+            // Check the object fields
             // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
             // that fact.
             int ourMatchedIds = 0;
-            List<string> otherDisplayIdentifiers =(obj as ProfileItem).ProfileDisplayIdentifiers;
+            List<string> otherDisplayIdentifiers = other.ProfileDisplayIdentifiers;
             foreach (string ourDisplayIdentifier in ProfileDisplayIdentifiers)
             {
-                if (otherDisplayIdentifiers.Contains(ourDisplayIdentifier)){
+                if (otherDisplayIdentifiers.Contains(ourDisplayIdentifier))
+                {
                     ourMatchedIds++;
                 }
             }
@@ -602,10 +597,20 @@ namespace DisplayMagicianShared
                 }
             }
 
-            return !object.ReferenceEquals(obj, null) &&
-                    obj is ProfileItem &&
-                    ProfileDisplayIdentifiers.Count == otherDisplayIdentifiers.Count &&
+            return ProfileDisplayIdentifiers.Count == otherDisplayIdentifiers.Count &&
                     ourMatchedIds == otherMatchedIds;
+        }
+
+        // The public override for the Object.Equals
+        public bool Equals(Object obj)
+        {
+            // Check references
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            // If different types then can't be true
+            if (obj.GetType() == this.GetType()) return false;
+            // Check the object fields as this must the same object as obj, and we need to test in more detail
+            return Equals((ProfileItem) obj);
         }
 
         // If Equals() returns true for this object compared to  another
@@ -619,7 +624,7 @@ namespace DisplayMagicianShared
 
         public static bool operator ==(ProfileItem lhs, ProfileItem rhs)
         {
-            if (object.ReferenceEquals(lhs, rhs))
+            /*if (object.ReferenceEquals(lhs, rhs))
                 return true;
 
             if (!object.ReferenceEquals(lhs, null) &&
@@ -627,10 +632,14 @@ namespace DisplayMagicianShared
                 lhs.Equals(rhs))
                 return true;
 
-            return false;
+            return false;*/
+            return Equals(lhs, rhs);
         }
 
-        public static bool operator !=(ProfileItem lhs, ProfileItem rhs) => !(lhs == rhs);
+        public static bool operator !=(ProfileItem lhs, ProfileItem rhs)
+        {
+            return !Equals(lhs, rhs);
+        }
 
         // IMPORTANT - This ProfileItem ToString function is required to make the Profile ImageListView work properly! DO NOT DELETE!
         public override string ToString()

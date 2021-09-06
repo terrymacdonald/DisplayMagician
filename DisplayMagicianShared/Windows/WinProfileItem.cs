@@ -11,7 +11,7 @@ using System.Drawing.Imaging;
 namespace DisplayMagicianShared.Windows
 {    
 
-    public class WinProfileItem : ProfileItem
+    public class WinProfileItem : ProfileItem, IEquatable<WinProfileItem>
     {
         private static List<WinProfileItem> _allSavedProfiles = new List<WinProfileItem>();
         private ProfileIcon _profileIcon;
@@ -319,28 +319,28 @@ namespace DisplayMagicianShared.Windows
             return _screens;
         }
 
-        /*public override int CompareTo(object obj)
+        // The object specific Equals
+        public bool Equals(WinProfileItem other)
         {
-            if (!(obj is WinProfileItem)) throw new ArgumentException("Object to CompareTo is not a WinProfileItem"); ;
+            // Check references
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
 
-            WinProfileItem otherProfile = (WinProfileItem)obj;
-            return this.Name.CompareTo(otherProfile.Name);
-        }*/
-
-        // The public override for the Object.Equals
-        public override bool Equals(object obj)
-        {
-            return EqualsDerived(obj) &&
-                obj.GetType() == typeof(WinProfileItem);
+            // Check the object fields
+            return base.Equals(other) &&
+                WindowsDisplayConfig == other.WindowsDisplayConfig;
         }
 
-        // Profiles are equal if their Viewports are equal
-        public override bool EqualsDerived(object obj)
+        // The public override for the Object.Equals
+        public bool Equals(Object obj)
         {
-            return base.EqualsDerived(obj) &&
-                    !object.ReferenceEquals(obj, null) &&
-                    obj is WinProfileItem &&
-                    ((WinProfileItem)obj).WindowsDisplayConfig == this.WindowsDisplayConfig;
+            // Check references
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            // If different types then can't be true
+            if (obj.GetType() == this.GetType()) return false;
+            // Check the object fields as this must the same object as obj, and we need to test in more detail
+            return Equals((WinProfileItem)obj);
         }
 
         // If Equals() returns true for this object compared to  another
@@ -348,24 +348,19 @@ namespace DisplayMagicianShared.Windows
         public override int GetHashCode()
         {
             // Calculate the hash code for the product.
-            return (WindowsDisplayConfig, ProfileDisplayIdentifiers).GetHashCode();
+            return (base.GetHashCode(), WindowsDisplayConfig).GetHashCode();
 
         }
 
         public static bool operator ==(WinProfileItem lhs, WinProfileItem rhs)
         {
-            if (object.ReferenceEquals(lhs, rhs))
-                return true;
-
-            if (!object.ReferenceEquals(lhs, null) &&
-                !object.ReferenceEquals(rhs, null) &&
-                lhs.Equals(rhs))
-                return true;
-
-            return false;
+            return Equals(lhs, rhs);
         }
 
-        public static bool operator !=(WinProfileItem lhs, WinProfileItem rhs) => !(lhs == rhs);
+        public static bool operator !=(WinProfileItem lhs, WinProfileItem rhs)
+        {
+            return !Equals(lhs, rhs);
+        }
     }
     
 }

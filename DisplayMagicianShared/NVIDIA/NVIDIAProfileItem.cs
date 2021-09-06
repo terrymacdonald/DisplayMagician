@@ -14,7 +14,7 @@ using DisplayMagicianShared.Windows;
 namespace DisplayMagicianShared.NVIDIA
 {
 
-    public class NVIDIAProfileItem : ProfileItem
+    public class NVIDIAProfileItem : ProfileItem, IEquatable<NVIDIAProfileItem>
     {
         private static List<NVIDIAProfileItem> _allSavedProfiles = new List<NVIDIAProfileItem>();
         private ProfileIcon _profileIcon;
@@ -548,80 +548,51 @@ namespace DisplayMagicianShared.NVIDIA
 
             return _screens;
         }
-       
 
-        // The public override for the Object.Equals
-        public override bool Equals(object obj)
-        {
-            return EqualsDerived(obj) &&
-                obj.GetType() == typeof(NVIDIAProfileItem);
-        }
 
-        // Profiles are equal if their Viewports are equal
-        public override bool EqualsDerived(object obj)
-        {
-            return base.EqualsDerived(obj) &&
-                    !object.ReferenceEquals(obj, null) &&
-                    obj is NVIDIAProfileItem &&
-                    ((NVIDIAProfileItem)obj).NVIDIADisplayConfig == this.NVIDIADisplayConfig &&
-                    ((NVIDIAProfileItem)obj).WindowsDisplayConfig == this.WindowsDisplayConfig;
-        }
-
-/*        // Profiles are equal if their Viewports are equal
+        // The object specific Equals
         public bool Equals(NVIDIAProfileItem other)
         {
+            // Check references
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
 
-            // If parameter is null, return false.
-            if (other is null)
-                return false;
-
-            // Optimization for a common success case.
-            if (Object.ReferenceEquals(this, other))
-                return true;
-
-            // If run-time types are not exactly the same, return false.
-            if (this.GetType() != other.GetType())
-                return false;
-
-            // If NVIDIA Display Config is different then return false.
-            if (!NVIDIADisplayConfig.Equals(other.NVIDIADisplayConfig))
-                return false;
-
-            // If Windows Display Config is different then return false.
-            if (!WindowsDisplayConfig.Equals(other.WindowsDisplayConfig))
-                return false;
-
-            // If Display Identifiers are different then return false.
-            if (!ProfileDisplayIdentifiers.SequenceEqual(other.ProfileDisplayIdentifiers))
-                return false;
-
-            // Otherwise if all the tests work, then we're good!
-            return true;
+            // Check the object fields
+            return base.Equals(other) &&
+                NVIDIADisplayConfig == other.NVIDIADisplayConfig &&
+                WindowsDisplayConfig == other.WindowsDisplayConfig; 
         }
-*/
+
+        // The public override for the Object.Equals
+        public bool Equals(Object obj)
+        {
+            // Check references
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            // If different types then can't be true
+            if (obj.GetType() == this.GetType()) return false;
+            // Check the object fields as this must the same object as obj, and we need to test in more detail
+            return Equals((NVIDIAProfileItem)obj);
+        }
+
         // If Equals() returns true for this object compared to  another
         // then GetHashCode() must return the same value for these objects.
         public override int GetHashCode()
         {
-            // Calculate the hash code for the product.
-            return (NVIDIADisplayConfig, WindowsDisplayConfig, ProfileDisplayIdentifiers).GetHashCode();
+            // Calculate the hash code for the product,  including the base properties
+            return (base.GetHashCode(), NVIDIADisplayConfig, WindowsDisplayConfig).GetHashCode();
 
         }
 
         public static bool operator ==(NVIDIAProfileItem lhs, NVIDIAProfileItem rhs)
-        {
-            if (object.ReferenceEquals(lhs, rhs))
-                return true;
-
-            if (!object.ReferenceEquals(lhs, null) &&
-                !object.ReferenceEquals(rhs, null) &&
-                lhs.Equals(rhs))
-                return true;
-
-            return false;
+        {            
+            return Equals(lhs, rhs);
         }
 
-        public static bool operator !=(NVIDIAProfileItem lhs, NVIDIAProfileItem rhs) => !(lhs == rhs);
+        public static bool operator !=(NVIDIAProfileItem lhs, NVIDIAProfileItem rhs)
+        {
+            return !Equals(lhs, rhs);
+        }
     }
 
 }

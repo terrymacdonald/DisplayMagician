@@ -202,11 +202,8 @@ namespace DisplayMagician.UIForms
                 // if the item was removed from the list during this 
                 // list refresh, then we select this profile only if it 
                 // is the currently used Profile
-                if (_selectedProfile is ProfileItem && _selectedProfile.Equals(profile))
+                if (ProfileRepository.IsActiveProfile(_selectedProfile))
                     newItem.Selected = true;
-
- 
-                //ProfileRepository.ProfileValidityLookup[profile.Name] = profile.IsPossible;
 
                 // Add it to the list!
                 ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
@@ -351,14 +348,11 @@ namespace DisplayMagician.UIForms
                 // We're in 'save' mode!
 
                 // Check we're not already saving this profile
-                foreach (ProfileItem savedProfile in ProfileRepository.AllProfiles)
-                {
-                    //if (String.Equals(txt_profile_save_name.Text, savedProfile.Name, StringComparison.InvariantCultureIgnoreCase))
-                    if (savedProfile.Equals(_selectedProfile))
-                    {
-                        MessageBox.Show($"Sorry, this display profile was already saved as '{savedProfile.Name}'.", "Profile already saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                string previouslySavedProfileName = "";
+                if (ProfileRepository.ContainsCurrentProfile(out previouslySavedProfileName))
+                { 
+                    MessageBox.Show($"Sorry, this display profile was already saved as '{previouslySavedProfileName}'.", "Profile already saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
 
                 // So we've already passed the check that says this profile is unique
@@ -434,10 +428,10 @@ namespace DisplayMagician.UIForms
 
         private void btn_view_current_Click(object sender, EventArgs e)
         {
-            // Reload the profiles in case we swapped to another program to change it
-            ProfileRepository.GetActiveProfile();
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
+            // Reload the profiles in case we swapped to another program to change it
+            ProfileRepository.UpdateActiveProfile();
             // Change to the current selected Profile
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
@@ -460,7 +454,7 @@ namespace DisplayMagician.UIForms
             switch (m.Msg)
             {
                 case WM_DISPLAYCHANGE:
-                    ProfileRepository.UpdateActiveProfile();
+                    btn_view_current.PerformClick();
                     break;
             }
 
