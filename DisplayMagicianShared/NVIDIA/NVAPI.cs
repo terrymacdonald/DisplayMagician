@@ -1182,8 +1182,11 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool Equals(object obj) => obj is NV_MOSAIC_TOPO_BRIEF other && this.Equals(other);
 
         public bool Equals(NV_MOSAIC_TOPO_BRIEF other)
-        => Version == other.Version &&
-           Topo.Equals(other.Topo);
+        => Version == other.Version;
+        // Note: This is ignored as it changes depending on what the last topology applied was, which of course changes with use. 
+        // This doesn't affect the whether the config can be applied, but really all it does is mess up the Equality comparison!
+        // so I've ignored it.
+        // Topo.Equals(other.Topo); 
         // Note: Removed Enabled and IsPossible from matches so that comparisons work even if they aren't enabled or possible now
         // Enabled == other.Enabled &&
         // IsPossible == other.IsPossible  

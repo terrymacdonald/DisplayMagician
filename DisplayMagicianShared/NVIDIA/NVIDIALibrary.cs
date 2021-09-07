@@ -94,15 +94,18 @@ namespace DisplayMagicianShared.NVIDIA
     {
         public NVIDIA_MOSAIC_CONFIG MosaicConfig;
         public NVIDIA_HDR_CONFIG HdrConfig;
-        public Dictionary<UInt32, string> DisplayNames;
+        // Note: We purposely have left out the DisplayNames from the Equals as it's order keeps changing after each reboot and after each profile swap
+        // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
+        // generating the profile icon.
+        public Dictionary<UInt32, string> DisplayNames; 
         public List<string> DisplayIdentifiers;
 
         public override bool Equals(object obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
+        
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
         => MosaicConfig.Equals(other.MosaicConfig) &&
            HdrConfig.Equals(other.HdrConfig) &&
-           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers) &&
-           DisplayNames.SequenceEqual(other.DisplayNames);
+           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
 
         public override int GetHashCode()
         {
@@ -1841,27 +1844,27 @@ namespace DisplayMagicianShared.NVIDIA
                         {
                             if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_ARGUMENT)
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: Either edidInfo was null when it was supplied, or gpuOutputId . NvAPI_GPU_GetEDID() returned error code {NVStatus}");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: Either edidInfo was null when it was supplied, or gpuOutputId . NvAPI_GPU_GetEDID() returned status  code {NVStatus}");
                             }
                             else if (NVStatus == NVAPI_STATUS.NVAPI_NVIDIA_DEVICE_NOT_FOUND)
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: No active GPU was found. NvAPI_GPU_GetEDID() returned error code {NVStatus}");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: No active GPU was found. NvAPI_GPU_GetEDID() returned status  code {NVStatus}");
                             }
                             else if (NVStatus == NVAPI_STATUS.NVAPI_EXPECTED_PHYSICAL_GPU_HANDLE)
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The GPU Handle supplied was not a valid GPU Handle. NvAPI_GPU_GetEDID() returned error code {NVStatus}");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The GPU Handle supplied was not a valid GPU Handle. NvAPI_GPU_GetEDID() returned status  code {NVStatus}");
                             }
                             else if (NVStatus == NVAPI_STATUS.NVAPI_DATA_NOT_FOUND)
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The display does not support EDID. NvAPI_GPU_GetEDID() returned error code {NVStatus}");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The display does not support EDID. NvAPI_GPU_GetEDID() returned status code {NVStatus}");
                             }
                             else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_GPU_GetEDID() returned error code {NVStatus}");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_GPU_GetEDID() returned status  code {NVStatus}");
                             }
                             else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_GPU_GetEDID() returned error code {NVStatus}");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_GPU_GetEDID() returned status  code {NVStatus}");
                             }
                             else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
                             {
