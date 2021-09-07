@@ -53,10 +53,8 @@
   <ItemGroup>
     <Compile Include="AMD\ADL.cs" />
     <Compile Include="AMD\AMDLibrary.cs" />
-    <Compile Include="AMD\AMDProfileItem.cs" />
     <Compile Include="NVIDIA\NVAPI.cs" />
     <Compile Include="NVIDIA\NVIDIALibrary.cs" />
-    <Compile Include="NVIDIA\NVIDIAProfileItem.cs" />
     <Compile Include="NVIDIA\PInvokeDelegateFactory.cs" />
     <Compile Include="SharedLogger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -86,7 +84,6 @@
     <Compile Include="UserControls\DisplayView.Designer.cs">
       <DependentUpon>DisplayView.cs</DependentUpon>
     </Compile>
-    <Compile Include="Windows\WinProfileItem.cs" />
     <Compile Include="Windows\CCD.cs" />
     <Compile Include="Windows\WinLibrary.cs" />
     <Compile Include="Wallpaper.cs" />

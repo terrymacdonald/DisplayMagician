@@ -424,33 +424,22 @@ namespace DisplayMagicianShared
         }
 
 
-        public static bool ContainsProfile(ProfileItem Profile)
+        public static bool ContainsProfile(ProfileItem profile)
         {
-            if (!(Profile is ProfileItem))
+            if (!(profile is ProfileItem))
                 return false;
 
-            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Checking if our profile repository contains a profile called {Profile.Name}");
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Checking if our profile repository contains a profile called {profile.Name}");
 
             foreach (ProfileItem testProfile in _allProfiles)
             {
-                if (testProfile.VideoMode == VIDEO_MODE.NVIDIA && (testProfile as NVIDIAProfileItem).Equals(Profile))
+                if (testProfile.Equals(profile))
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {Profile.Name}");
+                    SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {profile.Name}");
                     return true;
-                }
-                else if (testProfile.VideoMode == VIDEO_MODE.AMD && (testProfile as AMDProfileItem).Equals(Profile))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {Profile.Name}");
-                    return true;
-                }
-                else if (testProfile.VideoMode == VIDEO_MODE.WINDOWS && (testProfile as AMDProfileItem).Equals(Profile))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {Profile.Name}");
-                    return true;
-                }
- 
+                } 
             }
-            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository doesn't contain a profile called {Profile.Name}");
+            SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository doesn't contain a profile called {profile.Name}");
             return false;
         }
 
@@ -501,26 +490,12 @@ namespace DisplayMagicianShared
 
             foreach (ProfileItem testProfile in _allProfiles)
             {
-                // TODO - change for Equals
-                if (testProfile.VideoMode == VIDEO_MODE.NVIDIA && (testProfile as NVIDIAProfileItem).Equals(_currentProfile))
+                if (testProfile.Equals(_currentProfile))
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {testProfile.Name}");
                     savedProfileName = testProfile.Name;
                     return true;
                 }
-                else if (testProfile.VideoMode == VIDEO_MODE.AMD && (testProfile as AMDProfileItem).Equals(_currentProfile))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {testProfile.Name}");
-                    savedProfileName = testProfile.Name;
-                    return true;
-                }
-                else if (testProfile.VideoMode == VIDEO_MODE.WINDOWS && (testProfile as AMDProfileItem).Equals(_currentProfile))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/ContainsProfile: Our profile repository does contain a profile called {testProfile.Name}");
-                    savedProfileName = testProfile.Name;
-                    return true;
-                }              
-
             }
 
             SharedLogger.logger.Debug($"ProfileRepository/ContainsCurrentProfile: Our profile repository doesn't contain the display profile currently in use");
@@ -609,79 +584,52 @@ namespace DisplayMagicianShared
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
-
+            ProfileItem profile;
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
             if (_currentVideoMode == VIDEO_MODE.NVIDIA)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA NVAPI Driver is installed, so using that for this display profile.");
-                NVIDIAProfileItem nvidiaProfile = new NVIDIAProfileItem
+                profile = new ProfileItem
                 {
                     Name = "Current NVIDIA Display Profile",
-                };
-                nvidiaProfile.CreateProfileFromCurrentDisplaySettings();
-
-                if (_profilesLoaded && _allProfiles.Count > 0)
-                {
-
-                    foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
-                    {
-                        if (nvidiaProfile.Equals(loadedProfile))
-                        {
-                            _currentProfile = loadedProfile;
-                            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The NVIDIA profile {loadedProfile.Name} is currently active (in use now).");
-                            return;
-                        }
-                    }
-                }
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current NVIDIA profile is a new profile that doesn't already exist in the Profile Repository.");
-                _currentProfile = nvidiaProfile;
+                    VideoMode = VIDEO_MODE.NVIDIA
+                };                
             }
             else if (_currentVideoMode == VIDEO_MODE.AMD)
             {
                 SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: NVIDIA is not installed but the AMD ADL Driver IS installed, so using that for this display profile.");
-                AMDProfileItem amdProfile = new AMDProfileItem
+                profile = new ProfileItem
                 {
                     Name = "Current AMD Display Profile",
+                    VideoMode = VIDEO_MODE.AMD
                 };
-                amdProfile.CreateProfileFromCurrentDisplaySettings();
-                if (_profilesLoaded && _allProfiles.Count > 0)
-                {
-                    foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
-                    {
-                        if (amdProfile.Equals(loadedProfile))
-                        {
-                            _currentProfile = loadedProfile;
-                            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The AMD profile {loadedProfile.Name} is currently active (in use now).");
-                            return;
-                        }
-                    }
-                }
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current AMD profile is a new profile that doesn't already exist in the Profile Repository.");
-                _currentProfile = amdProfile;
             }
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Neither NVIDIA NVAPI or AMD ADL Drivers are installed, so using the built in Windows CCD library interface for this display profile.");
-                WinProfileItem winProfile = new WinProfileItem
+                profile = new ProfileItem
                 {
                     Name = "Current Windows Display Profile",
+                    VideoMode = VIDEO_MODE.WINDOWS
                 };
-                winProfile.CreateProfileFromCurrentDisplaySettings();
-                if (_profilesLoaded && _allProfiles.Count > 0)
+            }
+
+            profile.CreateProfileFromCurrentDisplaySettings();
+
+            if (_profilesLoaded && _allProfiles.Count > 0)
+            {
+
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
-                    foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+                    if (loadedProfile.Equals(profile))
                     {
-                        if (winProfile.Equals(loadedProfile))
-                        {
-                            _currentProfile = loadedProfile;
-                            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The Windows profile {loadedProfile.Name} is currently active (in use now).");
-                            return;
-                        }
+                        _currentProfile = loadedProfile;
+                        SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The {loadedProfile.VideoMode.ToString("G")} profile '{loadedProfile.Name}' is currently active (in use now).");
+                        return;
                     }
                 }
-                SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current Windows profile is a new profile that doesn't already exist in the Profile Repository.");
-                _currentProfile = winProfile;
             }
+            SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
+            _currentProfile = profile;
         }
 
         public static ProfileItem GetActiveProfile()
@@ -709,51 +657,14 @@ namespace DisplayMagicianShared
                 return false;
             }             
             
-            if (profile is NVIDIAProfileItem)
+            if (profile.Equals(_currentProfile))
             {
-                NVIDIAProfileItem nvidiaCurrentProfile = (NVIDIAProfileItem)_currentProfile;
-                if (nvidiaCurrentProfile.Equals(profile))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The NVIDIA profile {profile.Name} is the currently active profile.");
-                    return true;
-                }
-                else
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The NVIDIA profile {profile.Name} is the not currently active profile.");
-                    return false;
-                }
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is the currently active profile.");
+                return true;
             }
-            else if (_currentProfile is AMDProfileItem)
-            {
-                AMDProfileItem amdCurrentProfile = (AMDProfileItem)_currentProfile;
-                if (amdCurrentProfile.Equals(profile))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The AMD profile {profile.Name} is the currently active profile.");
-                    return true;
-                }
-                else
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The AMD profile {profile.Name} is the not currently active profile.");
-                    return false;
-                }
-            }
-            else if (_currentProfile is WinProfileItem)
-            {
-                WinProfileItem winCurrentProfile = (WinProfileItem)_currentProfile;
-                if (winCurrentProfile.Equals(profile))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The Windows CCD profile {profile.Name} is the currently active profile.");
-                    return true;
-                }
-                else
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The Windows CCD profile {profile.Name} is the not currently active profile.");
-                    return false;
-                }
-            }      
             else
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The requested profile {profile.Name} is a different video library to the current profile, so can't possibly be the same one.");
+                SharedLogger.logger.Debug($"ProfileRepository/IsActiveProfile: The profile {profile.Name} is the not currently active profile.");
                 return false;
             }
         }
@@ -795,10 +706,7 @@ namespace DisplayMagicianShared
 
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
 
-                    // Update the current active profile
-                    UpdateActiveProfile();
-
-                    // Go through all the  profiles and set up the needed structures (such as the Screens list)
+                    /*// Go through all the  profiles and set up the needed structures (such as the Screens list)
                     // and check if the current profile is used
                     foreach (ProfileItem loadedProfile in _allProfiles)
                     {
@@ -833,7 +741,7 @@ namespace DisplayMagicianShared
                         {
                             SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: ERROR - Profile {loadedProfile.Name} is not a recognised profile!");
                         }
-                    }
+                    }*/
 
                     // Sort the profiles alphabetically
                     _allProfiles.Sort();
@@ -842,7 +750,7 @@ namespace DisplayMagicianShared
                 else
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: The {_profileStorageJsonFileName} profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
-                    UpdateActiveProfile();
+                    //UpdateActiveProfile();
                 }
             } 
             else
@@ -850,10 +758,12 @@ namespace DisplayMagicianShared
                 // If we get here, then we don't have any profiles saved!
                 // So we gotta start from scratch
                 SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Couldn't find the {_profileStorageJsonFileName} profile JSON file that contains the Profiles");
-                UpdateActiveProfile();
+                //UpdateActiveProfile();
             }
             _profilesLoaded = true;
 
+            // Update the current active profile
+            UpdateActiveProfile();
             IsPossibleRefresh();
 
             return true;
@@ -1021,9 +931,6 @@ namespace DisplayMagicianShared
         public static ApplyProfileResult ApplyProfile(ProfileItem profile)
         {
             SharedLogger.logger.Trace($"Program/ApplyProfile: Starting");
-            NVIDIAProfileItem nvidiaProfile = null;
-            AMDProfileItem amdProfile = null;
-            WinProfileItem winProfile = null;
             // We try to time the profile display swap
             Stopwatch stopWatch = new Stopwatch();
             bool wasDisplayChangeSuccessful = true;
@@ -1040,39 +947,14 @@ namespace DisplayMagicianShared
                 stopWatch.Start();
 
                 // We try to swap profiles. The profiles have checking logic in them
-                if (profile is NVIDIAProfileItem)
+                if (!(profile.SetActive()))
                 {
-                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile is an NVIDIA Profile, so changing type to NVIDIAProfileItem");
-                    nvidiaProfile = (NVIDIAProfileItem)profile;
-                    if (!nvidiaProfile.SetActive())
-                    {
-                        SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the NVIDIA Profile!");
-                        return ApplyProfileResult.Error;
-                    }
-                }
-                else if (profile is AMDProfileItem)
-                {
-                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile is an AMD Profile, so changing type to AMDProfileItem");
-                    amdProfile = (AMDProfileItem)profile;
-                    if (!amdProfile.SetActive())
-                    {
-                        SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the AMD Profile!");
-                        return ApplyProfileResult.Error;
-                    }
-                }
-                else if (profile is WinProfileItem)
-                {
-                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile is a Windows CCD Profile, so changing type to WinProfileItem");
-                    winProfile = (WinProfileItem)profile;
-                    if (!winProfile.SetActive())
-                    {
-                        // Somehow return that this profile topology didn't apply
-                        throw new ApplyTopologyException("ProfileRepository/ApplyProfile: amdApplyProfileTask: Error applying the AMD Profile!");
-                    }
+                    SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.VideoMode.ToString("G")} Profile!");
+                    return ApplyProfileResult.Error;
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Profile type is not one that is supported by DisplayMagician, so returning an ApplyProfileResult error");
+                    SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.VideoMode.ToString("G")} Profile!");
                     return ApplyProfileResult.Error;
                 }
 
