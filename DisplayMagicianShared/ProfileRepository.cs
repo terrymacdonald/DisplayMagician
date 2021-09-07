@@ -706,41 +706,14 @@ namespace DisplayMagicianShared
 
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
 
-                    /*// Go through all the  profiles and set up the needed structures (such as the Screens list)
+                    // Go through all the  profiles and set up the needed structures (such as the Screens list)
                     // and check if the current profile is used
-                    foreach (ProfileItem loadedProfile in _allProfiles)
+                    /*foreach (ProfileItem loadedProfile in _allProfiles)
                     {
-                        if (loadedProfile.VideoMode == VIDEO_MODE.NVIDIA)
-                        {
-                            // NVIDIA config!
-                            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is a NVIDIA Profile");
-                            NVIDIAProfileItem nvidiaLoadedProfile = (NVIDIAProfileItem)loadedProfile;
-                            nvidiaLoadedProfile.PerformPostLoadingTasks();
-                            if (ProfileRepository.IsActiveProfile(nvidiaLoadedProfile))
-                                _currentProfile = nvidiaLoadedProfile;
-                        }
-                        else if (loadedProfile is AMDProfileItem)
-                        {
-                            // AMD config!
-                            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is an AMD Profile");
-                            AMDProfileItem amdLoadedProfile = (AMDProfileItem) loadedProfile;
-                            amdLoadedProfile.PerformPostLoadingTasks();
-                            if (ProfileRepository.IsActiveProfile(amdLoadedProfile))
-                                _currentProfile = amdLoadedProfile;
-                        }
-                        else if (loadedProfile is WinProfileItem)
-                        {
-                            // Windows CCD config!
-                            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is a Windows Profile");
-                            WinProfileItem winLoadedProfile = (WinProfileItem)loadedProfile;
-                            winLoadedProfile.PerformPostLoadingTasks();
-                            if (ProfileRepository.IsActiveProfile(winLoadedProfile))
-                                _currentProfile = winLoadedProfile;
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: ERROR - Profile {loadedProfile.Name} is not a recognised profile!");
-                        }
+                        SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Profile {loadedProfile.Name} is a NVIDIA Profile");
+                        loadedProfile.PerformPostLoadingTasks();
+                        *//*if (ProfileRepository.IsActiveProfile(loadedProfile))
+                            _currentProfile = loadedProfile;*//*
                     }*/
 
                     // Sort the profiles alphabetically

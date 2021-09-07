@@ -202,7 +202,7 @@ namespace DisplayMagician.UIForms
                 // if the item was removed from the list during this 
                 // list refresh, then we select this profile only if it 
                 // is the currently used Profile
-                if (ProfileRepository.IsActiveProfile(_selectedProfile))
+                if (profile.Equals(_selectedProfile))
                     newItem.Selected = true;
 
                 // Add it to the list!

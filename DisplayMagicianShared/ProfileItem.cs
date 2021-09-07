@@ -522,10 +522,13 @@ namespace DisplayMagicianShared
             }
         }
 
-        public virtual bool PerformPostLoadingTasks()
+        /*public bool PerformPostLoadingTasks()
         {
-            return false;
-        }
+            // First thing we do is to set up the Screens
+            //_screens = GetScreenPositions();
+
+            return true;
+        }*/
 
 
         // ReSharper disable once FunctionComplexityOverflow
@@ -1474,7 +1477,6 @@ namespace DisplayMagicianShared
             // Check the object fields
             // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
             // that fact.
-            int ourMatchedIds = 0;
             return NVIDIADisplayConfig.Equals(other.NVIDIADisplayConfig) &&
                 //AMDDisplayConfig.Equals(other.AMDDisplayConfig) && 
                 WindowsDisplayConfig.Equals(other.WindowsDisplayConfig) &&
@@ -1489,6 +1491,7 @@ namespace DisplayMagicianShared
             if (ReferenceEquals(this, obj)) return true;
             // If different types then can't be true
             if (obj.GetType() == this.GetType()) return false;
+            if (!(obj is ProfileItem)) return false;
             // Check the object fields as this must the same object as obj, and we need to test in more detail
             return Equals((ProfileItem) obj);
         }
