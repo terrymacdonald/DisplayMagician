@@ -21,6 +21,8 @@ namespace DisplayMagician.UIForms
         private ProfileAdaptor _profileAdaptor = new ProfileAdaptor();
         //public static Dictionary<string, bool> profileValidity = new Dictionary<string, bool>();
 
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public DisplayProfileForm()
         {
             InitializeComponent();
@@ -54,6 +56,8 @@ namespace DisplayMagician.UIForms
             // Apply the Profile
             if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             {
+                logger.Error($"DisplayProfileForm/Apply_Click: Waiting 0.5 sec for the display to apply");
+                System.Threading.Thread.Sleep(500);
                 ChangeSelectedProfile(_selectedProfile);
             }
         }
