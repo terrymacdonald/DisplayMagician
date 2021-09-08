@@ -1244,6 +1244,9 @@ namespace DisplayMagicianShared.NVIDIA
                     SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We are on a non-Mosaic profile now, and we are changing to a non-Mosaic profile so there is nothing to do as far as NVIDIA is concerned!");
                 }
 
+                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Waiting 0.5 seconds to let the display change take place before adjusting the NVIDIA HDR settings");
+                System.Threading.Thread.Sleep(500);
+
                 // Now, we have the current HDR settings, and the existing HDR settings, so we go through and we attempt to set each display color settings
                 foreach (var wantedHdrColorData in displayConfig.HdrConfig.HdrColorData)
                 {

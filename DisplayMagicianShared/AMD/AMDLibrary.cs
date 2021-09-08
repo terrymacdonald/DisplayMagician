@@ -947,6 +947,9 @@ namespace DisplayMagicianShared.AMD
 
                 }
 
+                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: Waiting 0.5 seconds to let the display change take place before adjusting the AMD HDR settings");
+                System.Threading.Thread.Sleep(500);
+
                 // We want to set the AMD HDR settings
 
                 // We want to apply the Windows CCD layout info and HDR

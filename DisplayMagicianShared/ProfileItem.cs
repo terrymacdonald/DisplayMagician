@@ -672,6 +672,10 @@ namespace DisplayMagicianShared
                             if (itWorkedforNVIDIA)
                             {
                                 SharedLogger.logger.Trace($"ProfileRepository/SetActive: The NVIDIA display settings within profile {Name} were successfully applied.");
+
+                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: Waiting 0.5 seconds to let the NVIDIA display change take place before setting the Windows CCD display settings");
+                                System.Threading.Thread.Sleep(500);
+
                                 // Then let's try to also apply the windows changes
                                 // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a Mosaic config,
                                 // or if the display config we want to change to is a Mosaic config. So we just have to assume that it will work!
@@ -720,6 +724,10 @@ namespace DisplayMagicianShared
                             if (itWorkedforNVIDIA)
                             {
                                 SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings within profile {Name} were successfully applied.");
+
+                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: Waiting 0.5 seconds to let the AMD display change take place before setting the Windows CCD display settings");
+                                System.Threading.Thread.Sleep(500);
+
                                 // Then let's try to also apply the windows changes
                                 // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a Mosaic config,
                                 // or if the display config we want to change to is a Mosaic config. So we just have to assume that it will work!

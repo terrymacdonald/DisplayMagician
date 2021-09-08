@@ -788,6 +788,9 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
 
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting 0.5 seconds to let the display change take place before adjusting the Windows CCD HDR settings");
+            System.Threading.Thread.Sleep(500);
+
             foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.DisplayHDRStates)
             {
                 SharedLogger.logger.Trace($"Trying to get information whether HDR color is in use now on Display {myHDRstate.Id}.");
