@@ -56,8 +56,8 @@ namespace DisplayMagician.UIForms
             // Apply the Profile
             if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             {
-                /*logger.Error($"DisplayProfileForm/Apply_Click: Waiting 0.5 sec for the display to apply");
-                System.Threading.Thread.Sleep(500);*/
+                logger.Error($"DisplayProfileForm/Apply_Click: Waiting 0.5 sec for the display to apply");
+                System.Threading.Thread.Sleep(500);
                 ChangeSelectedProfile(_selectedProfile);
             }
         }
