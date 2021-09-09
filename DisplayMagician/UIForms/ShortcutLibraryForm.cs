@@ -468,5 +468,17 @@ namespace DisplayMagician.UIForms
         {
             btn_delete.PerformClick();
         }
+
+        private void ShortcutLibraryForm_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (lbl_mask.Visible == true)
+            {
+                if (e.KeyChar == 27)
+                {
+                    // We set the CancelWait to be true on ShortcutRespository, and it will be picked up bythe shortcut check.
+                    ShortcutRepository.CancelWait = true;
+                }
+            }
+        }
     }
 }

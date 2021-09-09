@@ -246,7 +246,7 @@
             this.tsmi_delete.Text = "Delete Shortcut...";
             this.tsmi_delete.Click += new System.EventHandler(this.tsmi_delete_Click);
             // 
-            // lbl_masked_form
+            // lbl_mask
             // 
             this.lbl_mask.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
@@ -255,7 +255,7 @@
             this.lbl_mask.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_mask.ForeColor = System.Drawing.Color.White;
             this.lbl_mask.Location = new System.Drawing.Point(360, 306);
-            this.lbl_mask.Name = "lbl_masked_form";
+            this.lbl_mask.Name = "lbl_mask";
             this.lbl_mask.Size = new System.Drawing.Size(415, 104);
             this.lbl_mask.TabIndex = 33;
             this.lbl_mask.Text = "lbl_masked_form";
@@ -289,6 +289,7 @@
             this.Text = "DisplayMagician - Game Shortcuts";
             this.Activated += new System.EventHandler(this.ShortcutLibraryForm_Activated);
             this.Load += new System.EventHandler(this.ShortcutLibraryForm_Load);
+            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ShortcutLibraryForm_KeyPress);
             this.cms_shortcuts.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();

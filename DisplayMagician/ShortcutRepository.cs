@@ -31,6 +31,7 @@ namespace DisplayMagician
         //public static Dictionary<string, bool> _shortcutWarningLookup = new Dictionary<string, bool>();
         //public static Dictionary<string, bool> _shortcutErrorLookup = new Dictionary<string, bool>();
         private static bool _shortcutsLoaded = false;
+        private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_{Version.ToString(2)}.json");
@@ -95,6 +96,11 @@ namespace DisplayMagician
         public static Version Version
         {
             get => new Version(1, 0, 0);
+        }
+
+        public static bool CancelWait {
+            get => _cancelWait;
+            set => _cancelWait = value;
         }
 
         #endregion
@@ -1448,9 +1454,15 @@ namespace DisplayMagician
                                         break;
                                     }
 
+                                    if (_cancelWait)
+                                    {
+                                        logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                        break;
+                                    }
+
                                     // Send a message to windows so that it doesn't think
                                     // we're locked and try to kill us
-                                    System.Threading.Thread.CurrentThread.Join(0);
+                                    Thread.CurrentThread.Join(0);
                                     Thread.Sleep(1000);
                                 }
                                 logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
@@ -1511,9 +1523,17 @@ namespace DisplayMagician
                                     break;
                                 }
 
+                                if (_cancelWait)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                    break;
+                                }
+
+
                                 // Send a message to windows so that it doesn't think
                                 // we're locked and try to kill us
-                                System.Threading.Thread.CurrentThread.Join(0);
+                                Thread.CurrentThread.Join(0);
+                                // Pause for a second
                                 Thread.Sleep(1000);
                             }
                             logger.Debug($"ShortcutRepository/RunShortcut: Alternative Game Executable {altGameProcessToMonitor} has exited.");
@@ -1635,9 +1655,15 @@ namespace DisplayMagician
                                     break;
                                 }
 
+                                if (_cancelWait)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
+                                    break;
+                                }
+
                                 // Send a message to windows so that it doesn't think
                                 // we're locked and try to kill us
-                                System.Threading.Thread.CurrentThread.Join(0);
+                                Thread.CurrentThread.Join(0);
                                 Thread.Sleep(1000);
                             }
                             logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
