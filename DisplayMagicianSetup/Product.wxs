@@ -120,17 +120,7 @@
 				</Shortcut>
 				<RemoveFolder Id="CleanUpApplicationShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
 				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="DisplayMagicianInstalled" Type="integer" Value="1" KeyPath="yes"/>
-			</Component>
-			<Component Id="LogReporterShortcut" Guid="1C24F22F-8796-4CF0-9E84-7D06B6662239">
-				<Shortcut Id="LogReporterStartMenuShortcut"
-						  Name="!(loc.LogReporterName)"
-						  Description="!(loc.LogReporterDescription)"
-						  Target="[APPLICATIONROOTDIRECTORY]$(var.DisplayMagicianLogReporter.TargetFileName)"
-						  WorkingDirectory="APPLICATIONROOTDIRECTORY"
-						  Icon="DisplayMagicianIcon.ico" />
-				<RemoveFolder Id="CleanUpLogReporterShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
-				<RegistryValue Root="HKCU" Key="Software\DisplayMagician" Name="LogReporterInstalled" Type="integer" Value="1" KeyPath="yes"/>
-			</Component>
+			</Component>		
 		</DirectoryRef>
 
 
@@ -159,27 +149,18 @@
 		<Feature Id="DisplayMagicianFeature" Title="!(loc.ProductName)" Level="1">
 			<ComponentGroupRef Id="DisplayMagicianFiles" />
 			<ComponentRef Id="ApplicationShortcut" />
-			<ComponentRef Id="LogReporterShortcut" />
 			<ComponentRef Id="HKLMRegistryEntries" />
 			<ComponentRef Id="HKCURegistryEntries" />
 
 			<!-- Add in the 3 ShellExtension files we need to make the COM registration work -->
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
-				<File Id="DisplayMagicianShellExtension.dll" KeyPath="yes" Source="$(var.DisplayMagicianShellExtension.TargetDir)\DisplayMagicianShellExtension.dll" />
+				<File Id="DisplayMagicianShellExtension.dll" KeyPath="yes" Source="$(var.DisplayMagicianShellExtension.TargetDir)\DisplayMagicianShellExtension.dll"/>
 			</Component>
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="ServerRegistrationManager.exe" Source="$(var.DisplayMagicianShellExtension.TargetDir)\ServerRegistrationManager.exe" KeyPath="yes" />
 			</Component>
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="SharpShell.dll" Source="$(var.DisplayMagicianShellExtension.TargetDir)\SharpShell.dll" KeyPath="yes" />
-			</Component>
-
-			<!-- Add in the LogReporter files we need  -->
-			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
-				<File Id="LogReporter.exe" KeyPath="yes" Source="$(var.DisplayMagicianLogReporter.TargetDir)\LogReporter.exe" />
-			</Component>
-			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
-				<File Id="LogReporter.exe.config" KeyPath="yes" Source="$(var.DisplayMagicianLogReporter.TargetDir)\LogReporter.exe.config" />
 			</Component>
 		</Feature>
 	</Product>

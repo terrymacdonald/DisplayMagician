@@ -8,12 +8,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisplayMagicianShellExtensi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisplayMagicianShared", "DisplayMagicianShared\DisplayMagicianShared.csproj", "{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisplayMagicianLogReporter", "DisplayMagicianLogReporter\DisplayMagicianLogReporter.csproj", "{76DF2BCF-911B-4820-B63E-8F3468DB5E79}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DisplayMagicianTests", "DisplayMagicianTests\DisplayMagicianTests.csproj", "{D7AFD3CC-53BF-4991-ABFE-638A3F355310}"
 	ProjectSection(ProjectDependencies) = postProject
 		{55D4FF65-EDC7-48EF-933E-B6E7F3809B68} = {55D4FF65-EDC7-48EF-933E-B6E7F3809B68}
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79} = {76DF2BCF-911B-4820-B63E-8F3468DB5E79}
 	EndProjectSection
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "DisplayMagicianSetup", "DisplayMagicianSetup\DisplayMagicianSetup.wixproj", "{DFD22D4D-F2E4-4BA4-B32A-7A990A35BA08}"
@@ -69,18 +66,6 @@ Global
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x64.Build.0 = Release|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x86.ActiveCfg = Release|Any CPU
 		{1CACDA43-01C7-4CD4-BF6E-9421A29510FC}.Release|x86.Build.0 = Release|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|AnyCPU.Build.0 = Debug|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|x64.Build.0 = Debug|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Debug|x86.Build.0 = Debug|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|AnyCPU.ActiveCfg = Release|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|AnyCPU.Build.0 = Release|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|x64.ActiveCfg = Release|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|x64.Build.0 = Release|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|x86.ActiveCfg = Release|Any CPU
-		{76DF2BCF-911B-4820-B63E-8F3468DB5E79}.Release|x86.Build.0 = Release|Any CPU
 		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
 		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{D7AFD3CC-53BF-4991-ABFE-638A3F355310}.Debug|x64.ActiveCfg = Debug|Any CPU

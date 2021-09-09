@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagicianLogReporter\DisplayMagicianLogReporter.csproj" />
     <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
     <ProjectReference Include="..\DisplayMagician\DisplayMagician.csproj" />
   </ItemGroup>
