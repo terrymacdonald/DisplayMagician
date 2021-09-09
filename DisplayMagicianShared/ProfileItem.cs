@@ -932,36 +932,53 @@ namespace DisplayMagicianShared
                     {
                         // This is a single screen with an adjoining mosaic screen
                         // Set some basics about the screen
-                        uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                        string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
-                        uint sourceIndex = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
-                        for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
+                        try
                         {
-                            // Skip this if its not a source info config type
-                            if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
+                            uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
+                            string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
+                            uint sourceIndex = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
+                            for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
                             {
-                                continue;
+                                // Skip this if its not a source info config type
+                                if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
+                                {
+                                    continue;
+                                }
+
+                                // If the source index matches the index of the source info object we're  looking at, then process it!
+                                if (_windowsDisplayConfig.DisplayConfigModes[x].Id == sourceIndex)
+                                {
+                                    screen.Name = displayId.ToString();
+
+                                    screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
+                                    screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
+                                    screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
+                                    screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
+                                    break;
+                                }
+                            }
+                            // If we're at the 0,0 coordinate then we're the primary monitor
+                            if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                            {
+                                screen.IsPrimary = true;
+                                screen.Colour = primaryScreenColor;
                             }
 
-                            // If the source index matches the index of the source info object we're  looking at, then process it!
-                            if (_windowsDisplayConfig.DisplayConfigModes[x].Id == sourceIndex)
-                            {
-                                screen.Name = displayId.ToString();
-
-                                screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
-                                screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
-                                screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
-                                screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
-                                break;
-                            }
                         }
-
-
-                        // If we're at the 0,0 coordinate then we're the primary monitor
-                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                        catch (KeyNotFoundException ex)
                         {
-                            screen.IsPrimary = true;
-                            screen.Colour = primaryScreenColor;
+                            // Thrown if the Windows display doesn't match the NVIDIA display.
+                            // Typically happens during configuration of a new Mosaic mode.
+                            // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
+                            // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
+                            // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
+                            continue;
+                        }
+                        catch (Exception ex)
+                        {
+                            // Some other exception has occurred and we need to report it.
+                            SharedLogger.logger.Info(ex, $"ProfileRepository/GetNVIDIAScreenPositions: An exception happened when trying to create a screen from a single Mosaic desktop");
+                            continue;
                         }
 
                     }
