@@ -784,19 +784,19 @@ namespace DisplayMagician.GameLibraries
             }
             catch (SecurityException ex)
             {
-                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The user does not have the permissions required to read the Uplay InstallDir registry key.");
+                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The user does not have the permissions required to read the Steam InstallDir registry key.");
             }
             catch (ObjectDisposedException ex)
             {
-                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Uplay InstallDir registry key (closed keys cannot be accessed).");
+                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The Microsoft.Win32.RegistryKey is closed when trying to access the Steam InstallDir registry key (closed keys cannot be accessed).");
             }
             catch (IOException ex)
             {
-                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The Uplay InstallDir registry key has been marked for deletion so we cannot access the value dueing the UplayLibrary check.");
+                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The Steam InstallDir registry key has been marked for deletion so we cannot access the value dueing the SteamLibrary check.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The user does not have the necessary registry rights to check whether Uplay is installed.");
+                logger.Warn(ex, "SteamLibrary/GetAllInstalledGames: The user does not have the necessary registry rights to check whether Steam is installed.");
             }
 
             return true;
