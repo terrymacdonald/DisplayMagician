@@ -2062,6 +2062,7 @@ namespace DisplayMagicianShared.NVIDIA
             catch (DllNotFoundException) { return; }
             catch (EntryPointNotFoundException) { return; }
             catch (ArgumentNullException) { return; }
+            catch (NullReferenceException) { return; }
 
             if (InitializeInternal() == NVAPI_STATUS.NVAPI_OK)
             {

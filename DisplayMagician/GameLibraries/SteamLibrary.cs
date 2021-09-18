@@ -623,7 +623,7 @@ namespace DisplayMagician.GameLibraries
                     // Now we have to parse the config.vdf looking for the location of any additional SteamLibraries
                     // We look for lines similar to this: "BaseInstallFolder_1"		"E:\\SteamLibrary"
                     // There may be multiple so we need to check the whole file
-                    Regex steamLibrariesRegex = new Regex(@"\t""\d+""\t\t""(.*?)""\n", RegexOptions.IgnoreCase);
+                    Regex steamLibrariesRegex = new Regex(@"\t""path""\t\t""(.*?)""\n", RegexOptions.IgnoreCase);
                     // Try to match all lines against the Regex.
                     MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamLibraryFoldersText);
                     // If at least one of them matched!
@@ -640,17 +640,18 @@ namespace DisplayMagician.GameLibraries
                             }
                             else
                             {
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath}, but it didn't exist on the file system");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath} in {_steamLibraryFoldersVdfFile}, but it didn't exist on the file system");
                             }
                         }
                     }
                 }
-                else
+
+                _steamConfigVdfFile = Path.Combine(_steamPath, "config", "config.vdf");
+                if (File.Exists(_steamConfigVdfFile))
                 {
-                    logger.Trace($"SteamLibrary/LoadInstalledGames: There was no {_steamLibraryFoldersVdfFile } VDF file, so processing the {_steamConfigVdfFile} VDF file instead");
+                    logger.Trace($"SteamLibrary/LoadInstalledGames: Processing the {_steamConfigVdfFile} VDF file as well as it was found too");
                     // Now we access the config.vdf that lives in the Steam Config file, as that lists all 
-                    // the SteamLibraries. We need to find out where they areso we can interrogate them
-                    _steamConfigVdfFile = Path.Combine(_steamPath, "config", "config.vdf");
+                    // the SteamLibraries. We need to find out where they areso we can interrogate them                    
                     string steamConfigVdfText = File.ReadAllText(_steamConfigVdfFile, Encoding.UTF8);
 
                     logger.Trace($"SteamLibrary/LoadInstalledGames: Processing the {_steamConfigVdfFile} VDF file");
@@ -671,11 +672,15 @@ namespace DisplayMagician.GameLibraries
                             if (Directory.Exists(steamLibraryPath))
                             {
                                 logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath}");
-                                steamLibrariesPaths.Add(steamLibraryPath);
+                                // Check if the steam library is already in the list!
+                                if (!steamLibrariesPaths.Contains(steamLibraryPath))
+                                {
+                                    steamLibrariesPaths.Add(steamLibraryPath);
+                                }                                
                             }
                             else
                             {
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath}, but it didn't exist on the file system");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath} in {_steamConfigVdfFile}, but it didn't exist on the file system");
                             }
                         }
                     }
@@ -717,23 +722,23 @@ namespace DisplayMagician.GameLibraries
                                     // Construct the full path to the game dir from the appInfo and libraryAppManifest data
                                     string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
 
-                                        logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamGameId} at {steamGameInstallDir }");
 
-                                        // And finally we try to populate the 'where', to see what gets run
-                                        // And so we can extract the process name
-                                        if (steamAppInfo[steamGameId].GameExes.Count > 0)
+                                    // And finally we try to populate the 'where', to see what gets run
+                                    // And so we can extract the process name
+                                    if (steamAppInfo[steamGameId].GameExes.Count > 0)
+                                    {
+                                        foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
                                         {
-                                            foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
+                                            steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                            // If the game executable exists, then we can proceed
+                                            if (File.Exists(steamGameExe))
                                             {
-                                                steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
-                                                logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-                                                // If the game executable exists, then we can proceed
-                                                if (File.Exists(steamGameExe))
-                                                {
-                                                    logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-                                                    break;
-                                                }
+                                                logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                                break;
                                             }
+                                        }
 
                                     }
 

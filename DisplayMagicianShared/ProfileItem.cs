@@ -601,7 +601,15 @@ namespace DisplayMagicianShared
 
         public virtual void RefreshPossbility()
         {
-            // Check whether this profile is possible
+            // Check whether this profile is the same as the video mode, otherwise it's not possible
+            if (ProfileRepository.CurrentVideoMode != VideoMode)
+            {
+                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
+                _isPossible = false;
+                return;
+            }
+
+            // Otherwise actually check the possibility
             if (ProfileRepository.CurrentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
                 if (NVIDIALibrary.GetLibrary().IsPossibleConfig(_nvidiaDisplayConfig))
