@@ -276,7 +276,22 @@ namespace DisplayMagicianShared.AMD
             return _instance;
         }
 
+        public AMD_DISPLAY_CONFIG CreateDefaultConfig()
+        {
+            AMD_DISPLAY_CONFIG myDefaultConfig = new AMD_DISPLAY_CONFIG();
 
+            // Fill in the minimal amount we need to avoid null references
+            // so that we won't break json.net when we save a default config
+
+            myDefaultConfig.AdapterConfigs = new List<AMD_ADAPTER_CONFIG>();
+            myDefaultConfig.SlsConfig.SLSMapConfigs = new List<AMD_SLSMAP_CONFIG>();
+            myDefaultConfig.SlsConfig.SLSEnabledDisplayTargets = new List<ADL_MODE>();
+            myDefaultConfig.DisplayTargets = new List<ADL_DISPLAY_TARGET>();
+            myDefaultConfig.HdrConfigs = new Dictionary<int, AMD_HDR_CONFIG>();
+            myDefaultConfig.DisplayIdentifiers = new List<string>();
+
+            return myDefaultConfig;
+        }
 
         public AMD_DISPLAY_CONFIG GetActiveConfig()
         {

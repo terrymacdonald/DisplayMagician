@@ -58,9 +58,9 @@ namespace DisplayMagicianShared
         private Bitmap _profileBitmap, _profileShortcutBitmap;
         private List<string> _profileDisplayIdentifiers = new List<string>();
         private List<ScreenPosition> _screens = new List<ScreenPosition>();
-        private NVIDIA_DISPLAY_CONFIG _nvidiaDisplayConfig = new NVIDIA_DISPLAY_CONFIG();
-        private AMD_DISPLAY_CONFIG _amdDisplayConfig = new AMD_DISPLAY_CONFIG();
-        private WINDOWS_DISPLAY_CONFIG _windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
+        private NVIDIA_DISPLAY_CONFIG _nvidiaDisplayConfig;
+        private AMD_DISPLAY_CONFIG _amdDisplayConfig;
+        private WINDOWS_DISPLAY_CONFIG _windowsDisplayConfig;
 
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         private static string AppWallpaperPath = Path.Combine(AppDataPath, $"Wallpaper");
@@ -135,6 +135,14 @@ namespace DisplayMagicianShared
         #endregion
         public ProfileItem()
         {
+            // Fill out a new NVIDIA and AMD object when a profile is being created
+            // so that it will save correctly. Json.NET will save null references by default
+            // unless we fill them up first, and that in turn causes NullReference errors when
+            // loading the DisplayProfiles_2.0.json into DisplayMagician next time.
+            // We cannot make the structs themselves create the default entry, so instead, we 
+            // make each library create the default.
+            _nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().CreateDefaultConfig();
+            _amdDisplayConfig = AMDLibrary.GetLibrary().CreateDefaultConfig();
         }
 
         public static Version Version = new Version(2, 1);
@@ -456,7 +464,10 @@ namespace DisplayMagicianShared
 
         public bool CreateProfileFromCurrentDisplaySettings()
         {
-            if (VideoMode == VIDEO_MODE.NVIDIA)
+            // Create defaults for NVIDIA and AMD so that the JSON file can save properly
+            // (C# Structs populate with default values which mean that arrays start with null)
+
+            if (VideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 if (nvidiaLibrary.IsInstalled)
@@ -476,7 +487,7 @@ namespace DisplayMagicianShared
                     return false;
                 }
             }
-            else if(VideoMode == VIDEO_MODE.AMD)
+            else if(VideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
             {
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
                 if (amdLibrary.IsInstalled)
@@ -664,7 +675,7 @@ namespace DisplayMagicianShared
         // Actually set this profile active
         public bool SetActive()
         {
-            if (VideoMode == VIDEO_MODE.NVIDIA)
+            if (VideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
@@ -716,7 +727,7 @@ namespace DisplayMagicianShared
                     }
                 }
             }
-            else if (VideoMode == VIDEO_MODE.AMD)
+            else if (VideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
             {
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
@@ -1509,9 +1520,9 @@ namespace DisplayMagicianShared
 
             // Check the object fields
             // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
-            // that fact.
+            // that fact.                        
             return NVIDIADisplayConfig.Equals(other.NVIDIADisplayConfig) &&
-                //AMDDisplayConfig.Equals(other.AMDDisplayConfig) && 
+                AMDDisplayConfig.Equals(other.AMDDisplayConfig) && 
                 WindowsDisplayConfig.Equals(other.WindowsDisplayConfig) &&
                 ProfileDisplayIdentifiers.SequenceEqual (other.ProfileDisplayIdentifiers);
         }

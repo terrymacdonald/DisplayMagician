@@ -225,11 +225,14 @@ namespace DisplayMagicianShared
             {
                 return false;
             }
-
-            if (!LoadProfiles())
+            
+            if (!_profilesLoaded)
             {
-                return false;
-            }
+                if (!LoadProfiles())
+                {
+                    return false;
+                }
+            }            
 
             return true;
         }
@@ -692,11 +695,13 @@ namespace DisplayMagicianShared
                     {
                         _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, new JsonSerializerSettings
                         {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Ignore,
+                            MissingMemberHandling = MissingMemberHandling.Error,
+                            NullValueHandling = NullValueHandling.Include,
+                            //NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Include,
+                            //DefaultValueHandling = DefaultValueHandling.Ignore,
                             TypeNameHandling = TypeNameHandling.Auto,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace
+                            ObjectCreationHandling = ObjectCreationHandling.Auto,
                         });
                     }
                     catch (Exception ex) 
@@ -780,9 +785,12 @@ namespace DisplayMagicianShared
                 var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
-                    TypeNameHandling = TypeNameHandling.Auto
-
+                    //NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Include,
+                    //DefaultValueHandling = DefaultValueHandling.Ignore,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    MissingMemberHandling = MissingMemberHandling.Error,
+                    ObjectCreationHandling = ObjectCreationHandling.Replace,
                 });
 
 

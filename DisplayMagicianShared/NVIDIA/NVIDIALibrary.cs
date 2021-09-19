@@ -286,7 +286,22 @@ namespace DisplayMagicianShared.NVIDIA
             return _instance;
         }
 
+        public NVIDIA_DISPLAY_CONFIG CreateDefaultConfig()
+        {
+            NVIDIA_DISPLAY_CONFIG myDefaultConfig = new NVIDIA_DISPLAY_CONFIG();
 
+            // Fill in the minimal amount we need to avoid null references
+            // so that we won't break json.net when we save a default config
+
+            myDefaultConfig.MosaicConfig.MosaicGridTopos = new NV_MOSAIC_GRID_TOPO_V2[0];
+            myDefaultConfig.MosaicConfig.MosaicViewports = new List<NV_RECT[]>();
+            myDefaultConfig.HdrConfig.HdrCapabilities = new Dictionary<uint, NV_HDR_CAPABILITIES_V2>();
+            myDefaultConfig.HdrConfig.HdrColorData = new Dictionary<uint, NV_HDR_COLOR_DATA_V2>();
+            myDefaultConfig.DisplayNames = new Dictionary<uint, string>();
+            myDefaultConfig.DisplayIdentifiers = new List<string>();
+
+            return myDefaultConfig;
+        }
 
         public NVIDIA_DISPLAY_CONFIG GetActiveConfig()
         {
