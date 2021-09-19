@@ -701,7 +701,7 @@ namespace DisplayMagicianShared
                             DefaultValueHandling = DefaultValueHandling.Include,
                             //DefaultValueHandling = DefaultValueHandling.Ignore,
                             TypeNameHandling = TypeNameHandling.Auto,
-                            ObjectCreationHandling = ObjectCreationHandling.Auto,
+                            ObjectCreationHandling = ObjectCreationHandling.Replace,
                         });
                     }
                     catch (Exception ex) 
