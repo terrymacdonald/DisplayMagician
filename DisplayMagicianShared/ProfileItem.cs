@@ -1139,147 +1139,98 @@ namespace DisplayMagicianShared
                 return _screens;
             }
             // Now we need to check for Spanned screens
-            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
+            if (_amdDisplayConfig.SlsConfig.IsSlsEnabled)
             {
-                // TODO: Make the NVIDIA displays show the individual screens and overlap!
-
-
-
-                // Create a dictionary of all the screen sizes we want
-                //Dictionary<string,SpannedScreenPosition> MosaicScreens = new Dictionary<string,SpannedScreenPosition>();
-                for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
+                for (int i = 0; i < _amdDisplayConfig.DisplayMaps.Count; i++)
                 {
                     ScreenPosition screen = new ScreenPosition();
-                    screen.Library = "NVIDIA";
+                    screen.Library = "AMD";
                     screen.Colour = normalScreenColor;
-                    if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount > 1)
+                    // This is multiple screens
+                    screen.SpannedScreens = new List<SpannedScreenPosition>();
+                    screen.Name = "AMD Eyefinity";
+                    //screen.IsSpanned = true;
+                    screen.SpannedRows = _amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSMap.Grid.SLSGridRow;
+                    screen.SpannedColumns = _amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSMap.Grid.SLSGridColumn;
+                    screen.Colour = spannedScreenColor;
+                        
+                    // This is a combined surround/mosaic screen
+                    // We need to build the size of the screen to match it later so we check the MosaicViewports
+                    /*int minX = 0;
+                    int minY = 0;
+                    int maxX = 0;
+                    int maxY = 0;
+                    int overallX = 0;
+                    int overallY = 0;
+                    int overallWidth = 0;
+                    int overallHeight = 0;
+                    for (int j = 0; j < _amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets.Count; j++)
                     {
-                        // Set some basics about the screen                        
-                        screen.SpannedScreens = new List<SpannedScreenPosition>();
-                        screen.Name = "NVIDIA Surround/Mosaic";
-                        screen.IsSpanned = true;
-                        screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
-                        screen.SpannedColumns = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
-                        screen.Colour = spannedScreenColor;
+                        SpannedScreenPosition spannedScreen = new SpannedScreenPosition();
+                        spannedScreen.Name = $"Display #{_amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].DisplayTarget.DisplayID.DisplayLogicalIndex} on Adapter #{_amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].DisplayTarget.DisplayID.DisplayLogicalAdapterIndex}";
+                        spannedScreen.Colour = spannedScreenColor;
 
-                        // This is a combined surround/mosaic screen
-                        // We need to build the size of the screen to match it later so we check the MosaicViewports
-                        uint minX = 0;
-                        uint minY = 0;
-                        uint maxX = 0;
-                        uint maxY = 0;
-                        uint overallX = 0;
-                        uint overallY = 0;
-                        int overallWidth = 0;
-                        int overallHeight = 0;
-                        for (int j = 0; j < _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount; j++)
+                        // Calculate screen size
+                        spannedScreen.ScreenX = (int)_amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].ViewSize.XPos;
+                        spannedScreen.ScreenY = (int)_amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].ViewSize.YPos;
+                        spannedScreen.ScreenWidth = (int)_amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].ViewSize.XRes;
+                        spannedScreen.ScreenHeight = (int)_amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].ViewSize.YRes;
+
+                        if (spannedScreen.ScreenX < minX)
                         {
-                            SpannedScreenPosition spannedScreen = new SpannedScreenPosition();
-                            spannedScreen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[j].DisplayId.ToString();
-                            spannedScreen.Colour = spannedScreenColor;
-
-                            // Calculate screen size
-                            NV_RECT viewRect = _nvidiaDisplayConfig.MosaicConfig.MosaicViewports[i][j];
-                            if (viewRect.Left < minX)
-                            {
-                                minX = viewRect.Left;
-                            }
-                            if (viewRect.Top < minY)
-                            {
-                                minY = viewRect.Top;
-                            }
-                            if (viewRect.Right > maxX)
-                            {
-                                maxX = viewRect.Right;
-                            }
-                            if (viewRect.Bottom > maxY)
-                            {
-                                maxY = viewRect.Bottom;
-                            }
-                            uint width = viewRect.Right - viewRect.Left + 1;
-                            uint height = viewRect.Bottom - viewRect.Top + 1;
-                            spannedScreen.ScreenX = (int)viewRect.Left;
-                            spannedScreen.ScreenY = (int)viewRect.Top;
-                            spannedScreen.ScreenWidth = (int)width;
-                            spannedScreen.ScreenHeight = (int)height;
-
-                            // Figure out the overall figures for the screen
-                            if (viewRect.Left < overallX)
-                            {
-                                overallX = viewRect.Left;
-                            }
-                            if (viewRect.Top < overallY)
-                            {
-                                overallY = viewRect.Top;
-                            }
-
-                            overallWidth = (int)maxX - (int)minX + 1;
-                            overallHeight = (int)maxY - (int)minY + 1;
-
-                            spannedScreen.Row = i + 1;
-                            spannedScreen.Column = j + 1;
-
-                            // Add the spanned screen to the screen
-                            screen.SpannedScreens.Add(spannedScreen);
+                            minX = spannedScreen.ScreenX;
+                        }
+                        if (spannedScreen.ScreenY < minY)
+                        {
+                            minY = spannedScreen.ScreenY;
+                        }
+                        if (spannedScreen.ScreenX + spannedScreen.ScreenWidth > maxX)
+                        {
+                            maxX = spannedScreen.ScreenX + spannedScreen.ScreenWidth;
+                        }
+                        if (spannedScreen.ScreenY + spannedScreen.ScreenHeight > maxY)
+                        {
+                            maxY = spannedScreen.ScreenY + spannedScreen.ScreenHeight;
                         }
 
-                        //screen.Name = targetId.ToString();
-                        //screen.DisplayConnector = displayMode.DisplayConnector;
-                        screen.ScreenX = (int)overallX;
-                        screen.ScreenY = (int)overallY;
-                        screen.ScreenWidth = (int)overallWidth;
-                        screen.ScreenHeight = (int)overallHeight;
-
-                        // If we're at the 0,0 coordinate then we're the primary monitor
-                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                        // Figure out the overall figures for the screen
+                        if (spannedScreen.ScreenX < overallX)
                         {
-                            // Record we're primary screen
-                            screen.IsPrimary = true;
-                            // Change the colour to be the primary colour, but only if it isn't a surround screen
-                            if (screen.Colour != spannedScreenColor)
-                            {
-                                screen.Colour = primaryScreenColor;
-                            }
+                            overallX = spannedScreen.ScreenX;
+                        }
+                        if (spannedScreen.ScreenY < overallY)
+                        {
+                            overallY = spannedScreen.ScreenY;
                         }
 
-                    }
-                    else if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount == 1)
+                        overallWidth = (int)maxX - (int)minX + 1;
+                        overallHeight = (int)maxY - (int)minY + 1;
+
+                        spannedScreen.Row = _amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].SLSGridPositionY;
+                        spannedScreen.Column = _amdDisplayConfig.SlsConfig.SLSMapConfigs[i].SLSTargets[j].SLSGridPositionX;
+
+                        // Add the spanned screen to the screen
+                        screen.SpannedScreens.Add(spannedScreen);
+                    }*/
+
+                    //screen.Name = targetId.ToString();
+                    //screen.DisplayConnector = displayMode.DisplayConnector;
+                    screen.ScreenX = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XPos;
+                    screen.ScreenY = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YPos;
+                    screen.ScreenWidth = _amdDisplayConfig.DisplayMaps[i].DisplayMode.XRes;
+                    screen.ScreenHeight = _amdDisplayConfig.DisplayMaps[i].DisplayMode.YRes;
+
+                    // If we're at the 0,0 coordinate then we're the primary monitor
+                    if (screen.ScreenX == 0 && screen.ScreenY == 0)
                     {
-                        // This is a single screen with an adjoining mosaic screen
-                        // Set some basics about the screen
-                        uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                        string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
-                        uint sourceIndex = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
-                        for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
+                        // Record we're primary screen
+                        screen.IsPrimary = true;
+                        // Change the colour to be the primary colour, but only if it isn't a surround screen
+                        if (screen.Colour != spannedScreenColor)
                         {
-                            // Skip this if its not a source info config type
-                            if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
-                            {
-                                continue;
-                            }
-
-                            // If the source index matches the index of the source info object we're  looking at, then process it!
-                            if (_windowsDisplayConfig.DisplayConfigModes[x].Id == sourceIndex)
-                            {
-                                screen.Name = displayId.ToString();
-
-                                screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
-                                screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
-                                screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
-                                screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
-                                break;
-                            }
-                        }
-
-
-                        // If we're at the 0,0 coordinate then we're the primary monitor
-                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
-                        {
-                            screen.IsPrimary = true;
                             screen.Colour = primaryScreenColor;
                         }
-
-                    }
+                    }                    
 
                     _screens.Add(screen);
                 }
@@ -1293,7 +1244,7 @@ namespace DisplayMagicianShared
                     {
                         // Set some basics about the screen
                         ScreenPosition screen = new ScreenPosition();
-                        screen.Library = "NVIDIA";
+                        screen.Library = "AMD";
                         screen.IsSpanned = false;
                         screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
 
