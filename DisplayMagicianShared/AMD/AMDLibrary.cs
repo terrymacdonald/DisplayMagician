@@ -7,6 +7,7 @@ using Microsoft.Win32.SafeHandles;
 using DisplayMagicianShared;
 using System.ComponentModel;
 using DisplayMagicianShared.Windows;
+using System.Threading;
 
 namespace DisplayMagicianShared.AMD
 {
@@ -1316,32 +1317,45 @@ namespace DisplayMagicianShared.AMD
                             // If we get an error with just tturning it on, then we need to actually try to created a new Eyefinity map and then enable it
                             // If we reach this stage, then the user has discarded the AMD Eyefinity mode in AMD due to a bad UI design, and we need to work around that slight issue.
                             // (BTW that's FAR to easy to do in the AMD Radeon GUI)
+                            // NOTE: There is a slight issue with way of doing things. Although we create a much more robust way of working, we also will never ever actually use the Eyefinity config as saved.
+                            //       Instead, we will always drop through to creating an Eyefinity config each time, the only saving grace being that the AMD Driver is smart enough to notice this and it will reuse the same SLSMapIndex number.
+                            //       This at least means that we won't keep filling the AMD Driver up with additional EYefinity configs! It will instaed only add one more additional AMD Config if it works this way.
 
-                            // Attempt to create am SLS Map Config in the AMD Radeon driver config database
-                            int newSlsMapIndex;
-                            ADL_SLS_TARGET[] slsTargetArray = slsMapConfig.SLSTargets.ToArray();
-                            ADLRet = ADLImport.ADL2_Display_SLSMapConfig_Create(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap, displayConfig.DisplayTargets.Count, displayConfig.DisplayTargets.ToArray(), slsMapConfig.BezelModePercent, out newSlsMapIndex, ADLImport.ADL_DISPLAY_SLSMAPCONFIG_GET_OPTION_RELATIVETO_CURRENTANGLE);
+                            int supportedSLSLayoutImageMode;
+                            int reasonForNotSupportSLS;
+                            ADLRet = ADLImport.ADL2_Display_SLSMapConfig_Valid(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap, slsMapConfig.SLSTargets.Count, slsMapConfig.SLSTargets.ToArray(), out supportedSLSLayoutImageMode, out reasonForNotSupportSLS, ADLImport.ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_CURRENTANGLE);
                             if (ADLRet == ADL_STATUS.ADL_OK)
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_Create successfully created a new SLSMAP with index {newSlsMapIndex} for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_Valid successfully validated a new SLSMAP config for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - ADL2_Display_SLSMapConfig_Valid returned ADL_STATUS {ADLRet} when trying to create a new SLSMAP for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
+                                return false;
+                            }
+
+                            // Create and apply the new SLSMap
+                            int newSlsMapIndex;
+                            ADLRet = ADLImport.ADL2_Display_SLSMapConfig_Create(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap, slsMapConfig.SLSTargets.Count, slsMapConfig.SLSTargets.ToArray(), slsMapConfig.BezelModePercent, out newSlsMapIndex, ADLImport.ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_CURRENTANGLE);
+                            if (ADLRet == ADL_STATUS.ADL_OK)
+                            {
+                                if (newSlsMapIndex != -1)
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_Create successfully created the new SLSMAP we just created with index {newSlsMapIndex} to TRUE for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
+
+                                    // At this point we have created a new AMD Eyefinity Config
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - ADL2_Display_SLSMapConfig_Create returned ADL_STATUS {ADLRet} but the returned SLSMapIndex was -1, which indicates that the new SLSMAP failed to create for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
+                                }
                             }
                             else
                             {
                                 SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - ADL2_Display_SLSMapConfig_Create returned ADL_STATUS {ADLRet} when trying to create a new SLSMAP for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
-                                continue;
+                                return false;
                             }
 
-                            // If we get here, then we've successfully created the new SLSMAP, so now we need to turn it on.
-                            ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, newSlsMapIndex, ADLImport.ADL_TRUE);
-                            if (ADLRet == ADL_STATUS.ADL_OK)
-                            {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully enabled the new SLSMAP we just created with index {slsMapConfig.SLSMap.SLSMapIndex} to TRUE for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - ADL2_Display_SLSMapConfig_Create returned ADL_STATUS {ADLRet} when trying to enable the new SLSMAP we just created for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
-                                continue;
-                            }
                         }
 
                     }

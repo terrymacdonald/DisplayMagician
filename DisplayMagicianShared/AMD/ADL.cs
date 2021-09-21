@@ -1924,6 +1924,12 @@ namespace DisplayMagicianShared.AMD
         public const int ADL_DISPLAY_SLSMAPCONFIG_GET_OPTION_RELATIVETO_LANDSCAPE = 0x00000001;
         public const int ADL_DISPLAY_SLSMAPCONFIG_GET_OPTION_RELATIVETO_CURRENTANGLE = 0x00000002;
 
+        public const int ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_LANDSCAPE = 0x00000001;
+        public const int ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_CURRENTANGLE = 0x00000002;
+
+        public const int ADL_DISPLAY_SLSMAPCONFIG_REARRANGE_OPTION_RELATIVETO_LANDSCAPE = 0x00000001;
+        public const int ADL_DISPLAY_SLSMAPCONFIG_REARRANGE_OPTION_RELATIVETO_CURRENTANGLE = 0x00000002;
+
 
         public const int ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_FIT = 0x0100;
         public const int ADL_DISPLAY_SLSMAP_SLSLAYOUTMODE_FILL = 0x0200;
@@ -2047,7 +2053,7 @@ namespace DisplayMagicianShared.AMD
         //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_VALID) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, ADLSLSMap slsMap, int iNumDisplayTarget, ADLSLSTarget* lpSLSTarget, int* lpSupportedSLSLayoutImageMode, int* lpReasonForNotSupportSLS, int iOption);
         // Function to Set SLS configuration for each display index the controller and the adapter is being mapped to.
         [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Valid(IntPtr ADLContextHandle, int adapterIndex, ADL_SLS_MAP SLSMap, int numDisplayTarget, ADL_DISPLAY_TARGET[] displayTarget, out int supportedSLSLayoutImageMode, out int reasonForNotSupportingSLS, int option);
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Valid(IntPtr ADLContextHandle, int adapterIndex, ADL_SLS_MAP SLSMap, int numDisplayTarget, ADL_SLS_TARGET[] displayTarget, out int supportedSLSLayoutImageMode, out int reasonForNotSupportingSLS, int option);
 
         //typedef int (* ADL2_DISPLAY_SLSMAPINDEX_GET) (ADL_CONTEXT_HANDLE, int, int, ADLDisplayTarget*, int*);
         // Function to get a SLS map index based on a group of displays that are connected in the given adapter. The driver only searches the active SLS grid database.
@@ -2072,11 +2078,11 @@ namespace DisplayMagicianShared.AMD
         //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_CREATE) (ADL_CONTEXT_HANDLE context, int iAdapterIndex, ADLSLSMap SLSMap, int iNumTarget, ADLSLSTarget* lpSLSTarget, int iBezelModePercent, int* lpSLSMapIndex, int iOption);
         // This function creates an SLS configuration with a given grid, targets, and bezel mode percent. It will output an SLS map index if the SLS map is successfully created.
         [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Create(IntPtr ADLContextHandle, int adapterIndex, ADL_SLS_MAP SLSMap, int numDisplayTarget, ADL_DISPLAY_TARGET[] displayTarget, int bezelModePercent, out int SLSMapIndex, int option);
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Create(IntPtr ADLContextHandle, int adapterIndex, ADL_SLS_MAP SLSMap, int numDisplayTarget, ADL_SLS_TARGET[] displayTarget, int bezelModePercent, out int SLSMapIndex, int option);
 
         //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_REARRANGE) (ADL_CONTEXT_HANDLE, int, int, int, ADLSLSTarget*, ADLSLSMap, int);
         [DllImport(ATI_ADL_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Rearrange(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex, int numDisplayTarget, ref ADL_DISPLAY_TARGET[] displayTarget, ADL_SLS_MAP[] SLSMap, int option);
+        public static extern ADL_STATUS ADL2_Display_SLSMapConfig_Rearrange(IntPtr ADLContextHandle, int adapterIndex, int SLSMapIndex, int numDisplayTarget, ADL_SLS_TARGET[] displayTargets, ADL_SLS_MAP SLSMap, int option);
 
         //typedef int (* ADL2_DISPLAY_SLSMAPCONFIG_SETSTATE) (ADL_CONTEXT_HANDLE, int, int, int);
         // This is used to set the SLS Grid we want from the SLSMap by selecting the one we want and supplying that as an index.
