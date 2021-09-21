@@ -675,6 +675,7 @@ namespace DisplayMagician
                                     {
                                         // use the Audio Device
                                         audioDevice.SetAsDefault();
+                                        break;
                                     }
                                 }
                             }
@@ -746,6 +747,7 @@ namespace DisplayMagician
                                     {
                                         // use the Audio Device
                                         captureDevice.SetAsDefault();
+                                        break;
                                     }
                                 }
                             }
