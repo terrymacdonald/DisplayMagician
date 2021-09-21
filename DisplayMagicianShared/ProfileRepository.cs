@@ -936,7 +936,7 @@ namespace DisplayMagicianShared
                 else
                 {
                     SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.VideoMode.ToString("G")} Profile!");
-                    return ApplyProfileResult.Error;
+                    return ApplyProfileResult.Successful;
                 }
 
             }
