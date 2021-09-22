@@ -91,7 +91,7 @@ namespace DisplayMagician {
 
             // Rules for mapping loggers to targets          
             NLog.LogLevel logLevel = null;
-            switch (AppProgramSettings.LogLevel)
+            /*switch (AppProgramSettings.LogLevel)
             {
                 case "Trace":
                     logLevel = NLog.LogLevel.Trace;
@@ -111,8 +111,13 @@ namespace DisplayMagician {
                 default:
                     logLevel = NLog.LogLevel.Info;
                     break;
-            }
-           
+            }*/
+
+            // TODO: **************************************** CHANGE THIS *******************************************
+            // Force Logging to TRACE during debg
+            logLevel = NLog.LogLevel.Trace;
+
+
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
             {
