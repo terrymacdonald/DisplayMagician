@@ -289,6 +289,7 @@ namespace DisplayMagicianShared.AMD
             myDefaultConfig.AdapterConfigs = new List<AMD_ADAPTER_CONFIG>();
             myDefaultConfig.SlsConfig.SLSMapConfigs = new List<AMD_SLSMAP_CONFIG>();
             myDefaultConfig.SlsConfig.SLSEnabledDisplayTargets = new List<ADL_MODE>();
+            myDefaultConfig.DisplayMaps = new List<ADL_DISPLAY_MAP>();
             myDefaultConfig.DisplayTargets = new List<ADL_DISPLAY_TARGET>();
             myDefaultConfig.HdrConfigs = new Dictionary<int, AMD_HDR_CONFIG>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
