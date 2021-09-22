@@ -1017,12 +1017,12 @@ namespace DisplayMagicianShared
                 // Figure out the Video Cards and see what mode we want
                 // Get a list of all the PCI Vendor IDs
                 List<string> videoCardVendors = WinLibrary.GetLibrary().GetCurrentPCIVideoCardVendors();
-                if (NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
+                if (NVIDIALibrary.GetLibrary().IsInstalled && NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
                 {
                     // We detected a NVIDIA video card in the computer
                     _currentVideoMode = VIDEO_MODE.NVIDIA;
                 }
-                else if (AMDLibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
+                else if (AMDLibrary.GetLibrary().IsInstalled && AMDLibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
                 {
                     // We detected an AMD video card in the computer
                     _currentVideoMode = VIDEO_MODE.AMD;
