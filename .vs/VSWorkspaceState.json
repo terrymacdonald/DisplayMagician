@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\docs",
+    "\\docs\\update"
   ],
-  "SelectedNode": "\\DisplayMagician.sln",
+  "SelectedNode": "\\.gitattributes",
   "PreviewInSolutionExplorer": false
 }
