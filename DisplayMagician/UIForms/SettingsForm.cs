@@ -62,6 +62,17 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings MinimiseOnStart set to false");
             }
 
+            // start upgrade settings 
+            if (Program.AppProgramSettings.UpgradeToPreReleases)
+            {
+                cb_upgrade_prerelease.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeToPreReleases set to true");
+            }
+            else
+            {
+                cb_upgrade_prerelease.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeToPreReleases set to false");
+            }
 
             // setup loglevel on start
             switch (Program.AppProgramSettings.LogLevel)
@@ -237,6 +248,18 @@ namespace DisplayMagician.UIForms
             NLog.LogManager.Configuration = config;
 
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved LogLevel as {Program.AppProgramSettings.LogLevel}");
+
+            // save upgrade in prereleases setting
+            if (cb_upgrade_prerelease.Checked)
+            {
+                Program.AppProgramSettings.UpgradeToPreReleases = true;
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully set DisplayMagician to upgrade to pre-release versions of software");
+            }
+            else
+            {
+                Program.AppProgramSettings.UpgradeToPreReleases = false;
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from upgrading to pre-release versions of software");
+            }
         }
 
         private void btn_back_Click(object sender, EventArgs e)

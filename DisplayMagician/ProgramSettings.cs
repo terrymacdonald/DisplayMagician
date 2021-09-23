@@ -21,6 +21,7 @@ namespace DisplayMagician
         #region Instance Variables
         private bool _startOnBootUp = false;
         private bool _minimiseOnStart = false;
+        private bool _upgradeToPrereleases = false;
         private string _logLevel = NLog.LogLevel.Info.ToString();
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
@@ -44,6 +45,24 @@ namespace DisplayMagician
                     SaveSettings();
             }
         }
+
+        public bool UpgradeToPreReleases
+        {
+            get
+            {
+                return _upgradeToPrereleases;
+            }
+            set
+            {
+                _upgradeToPrereleases = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
+        }
+
         public bool MinimiseOnStart { 
             get
             {
