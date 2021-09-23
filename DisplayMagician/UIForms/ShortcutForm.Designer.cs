@@ -38,6 +38,7 @@ namespace DisplayMagician.UIForms
             this.dialog_open = new System.Windows.Forms.OpenFileDialog();
             this.tabc_shortcut = new System.Windows.Forms.TabControl();
             this.tabp_display = new System.Windows.Forms.TabPage();
+            this.pbLogo = new System.Windows.Forms.PictureBox();
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
             this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
@@ -123,6 +124,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
             this.tabp_audio.SuspendLayout();
             this.gb_capture_settings.SuspendLayout();
             this.gb_capture_volume.SuspendLayout();
@@ -214,6 +216,7 @@ namespace DisplayMagician.UIForms
             // tabp_display
             // 
             this.tabp_display.BackColor = System.Drawing.Color.Black;
+            this.tabp_display.Controls.Add(this.pbLogo);
             this.tabp_display.Controls.Add(this.lbl_profile_shown_subtitle);
             this.tabp_display.Controls.Add(this.lbl_profile_shown);
             this.tabp_display.Controls.Add(this.ilv_saved_profiles);
@@ -227,6 +230,17 @@ namespace DisplayMagician.UIForms
             this.tabp_display.TabIndex = 0;
             this.tabp_display.Text = "1. Choose Display Profile";
             this.tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
+            // 
+            // pbLogo
+            // 
+            this.pbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pbLogo.BackColor = System.Drawing.Color.DimGray;
+            this.pbLogo.Location = new System.Drawing.Point(953, 20);
+            this.pbLogo.Name = "pbLogo";
+            this.pbLogo.Size = new System.Drawing.Size(100, 49);
+            this.pbLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pbLogo.TabIndex = 38;
+            this.pbLogo.TabStop = false;
             // 
             // lbl_profile_shown_subtitle
             // 
@@ -266,7 +280,7 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(1086, 156);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(1086, 184);
             this.ilv_saved_profiles.TabIndex = 24;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -1368,6 +1382,7 @@ namespace DisplayMagician.UIForms
             this.tabc_shortcut.ResumeLayout(false);
             this.tabp_display.ResumeLayout(false);
             this.tabp_display.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
             this.tabp_audio.ResumeLayout(false);
             this.tabp_audio.PerformLayout();
             this.gb_capture_settings.ResumeLayout(false);
@@ -1492,5 +1507,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_game_library;
         private System.Windows.Forms.ComboBox cbx_game_priority;
         private System.Windows.Forms.Label lbl_game_priority;
+        private System.Windows.Forms.PictureBox pbLogo;
     }
 }

@@ -1458,6 +1458,20 @@ namespace DisplayMagician.UIForms
             // And we need to update the actual selected profile too!
             _profileToUse = profile;
 
+            // And show the logo for the driver
+            if (_profileToUse.VideoMode == VIDEO_MODE.NVIDIA)
+            {
+                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.nvidiablack, Properties.Resources.nvidiawhite);
+            }
+            else if (_profileToUse.VideoMode == VIDEO_MODE.AMD)
+            {
+                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.amdblack, Properties.Resources.amdwhite);
+            }
+            else
+            {
+                pbLogo.Image = PickBitmapBasedOnBgColour(BackColor, Properties.Resources.winblack, Properties.Resources.winwhite);
+            }
+
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _profileToUse.Name;
 
@@ -2317,6 +2331,18 @@ namespace DisplayMagician.UIForms
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Main-Game-and-Application-Examples";
             System.Diagnostics.Process.Start(targetURL);
+        }
+
+        private Bitmap PickBitmapBasedOnBgColour(Color bgColour, Bitmap lightBitmap, Bitmap darkBitmap)
+        {
+            if ((bgColour.R * 0.299 + bgColour.G * 0.587 + bgColour.B * 0.114) > 186)
+            {
+                return darkBitmap;
+            }
+            else
+            {
+                return lightBitmap;
+            }
         }
     }
 
