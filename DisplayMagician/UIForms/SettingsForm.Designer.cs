@@ -305,9 +305,10 @@ namespace DisplayMagician.UIForms
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.Location = new System.Drawing.Point(43, 71);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(356, 13);
+            this.label2.Size = new System.Drawing.Size(410, 13);
             this.label2.TabIndex = 15;
-            this.label2.Text = "(NOTE: beta versions may crash and not work correctly. Use with caution)";
+            this.label2.Text = "(NOTE: beta versions may crash and not work correctly. Use this option with cauti" +
+    "on!)";
             // 
             // cb_upgrade_prerelease
             // 
