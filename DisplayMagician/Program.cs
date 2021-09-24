@@ -803,7 +803,7 @@ namespace DisplayMagician {
             Action loadEpicGamesAction = new Action(() =>
             {
                 // Check if Epic is installed
-                GameLibrary epicLibrary = OriginLibrary.GetLibrary();
+                GameLibrary epicLibrary = EpicLibrary.GetLibrary();
                 if (epicLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
@@ -860,6 +860,7 @@ namespace DisplayMagician {
                 int threads = loadGamesActions.Count;
                 ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = threads };
                 Parallel.Invoke(options, loadGamesActions.ToArray());
+                // Once we get here , we know that all the parallel actions have returned
                 logger.Debug($"Program/LoadGamesInBackground: All game loading tasks finished");
             }
             catch (AggregateException ae)

@@ -495,6 +495,7 @@ namespace DisplayMagician.GameLibraries
                             else
                             {
                                 logger.Warn($"OriginLibrary/LoadInstalledGames: Couldn't figure out where Game ID {originGame.GameID} is installed. Skipping game.");
+                                continue;
                             }
 
                             string gameInstallerData = Path.Combine(originGame.GameInstallDir, @"__Installer", @"installerdata.xml");
