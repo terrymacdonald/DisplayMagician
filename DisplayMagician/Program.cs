@@ -21,6 +21,8 @@ using System.Collections;
 using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
+using AutoUpdaterDotNET;
+using Newtonsoft.Json;
 
 namespace DisplayMagician {
 
@@ -638,6 +640,9 @@ namespace DisplayMagician {
 
                 IPCService.GetInstance().Status = InstanceStatus.User;
 
+                // Check for updates
+                CheckForUpdates();
+
                 // Run the program with normal startup
                 AppMainForm = new MainForm();
                 Application.Run(AppMainForm);                
@@ -948,6 +953,128 @@ namespace DisplayMagician {
                 parsedHotkey = parsedHotkey.Replace("+Menu", "");
 
             return parsedHotkey;
+        }
+
+        public static void CheckForUpdates()
+        {
+            //Run the AutoUpdater to see if there are any updates available.
+            //FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(Application.ExecutablePath);
+            //AutoUpdater.InstalledVersion = new Version(fvi.FileVersion);
+            AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
+            AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
+            if (Program.AppProgramSettings.UpgradeToPreReleases)
+            {
+                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/update_2.0.json");
+            }
+            else
+            {
+                AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/prerelease_2.0.json");
+            }
+        }
+
+        private static void AutoUpdaterOnParseUpdateInfoEvent(ParseUpdateInfoEventArgs args)
+        {
+            dynamic json = JsonConvert.DeserializeObject(args.RemoteData);
+            logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Received the following Update JSON file from {AutoUpdater.AppCastURL}: {args.RemoteData}");
+            try
+            {
+                logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
+                args.UpdateInfo = new UpdateInfoEventArgs
+                {
+                    CurrentVersion = (string)json["version"],
+                    ChangelogURL = (string)json["changelog"],
+                    DownloadURL = (string)json["url"],
+                    Mandatory = new Mandatory
+                    {
+                        Value = (bool)json["mandatory"]["value"],
+                        UpdateMode = (Mode)(int)json["mandatory"]["mode"],
+                        MinimumVersion = (string)json["mandatory"]["minVersion"]
+                    },
+                    CheckSum = new CheckSum
+                    {
+                        Value = (string)json["checksum"]["value"],
+                        HashingAlgorithm = (string)json["checksum"]["hashingAlgorithm"]
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
+            }
+
+        }
+
+        private static void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
+        {
+            if (args.Error == null)
+            {
+                if (args.IsUpdateAvailable)
+                {
+                    logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
+                    DialogResult dialogResult;
+                    if (args.Mandatory.Value)
+                    {
+                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
+                        dialogResult =
+                            MessageBox.Show(
+                                $@"There is new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is required update. Press Ok to begin updating the application.", @"Update Available",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
+                        dialogResult =
+                            MessageBox.Show(
+                                $@"There is new version {args.CurrentVersion} available. You are using version {
+                                        args.InstalledVersion
+                                    }. Do you want to update the application now?", @"Update Available",
+                                MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Information);
+                    }
+
+                    // Uncomment the following line if you want to show standard update dialog instead.
+                    // AutoUpdater.ShowUpdateForm(args);
+
+                    if (dialogResult.Equals(DialogResult.Yes) || dialogResult.Equals(DialogResult.OK))
+                    {
+                        try
+                        {
+                            logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Downloading {args.InstalledVersion} update.");
+                            if (AutoUpdater.DownloadUpdate(args))
+                            {
+                                logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Restarting to apply {args.InstalledVersion} update.");
+                                Application.Exit();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - Exception during update download.");
+                            MessageBox.Show(ex.Message, ex.GetType().ToString(), MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (args.Error is WebException)
+                {
+                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - WebException - There was a problem reaching the update server.");
+                    MessageBox.Show(
+                        @"There is a problem reaching update server. Please check your internet connection and try again later.",
+                        @"Update Check Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
+                    MessageBox.Show(args.Error.Message,
+                        args.Error.GetType().ToString(), MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
         }
 
     }
