@@ -39,7 +39,7 @@ namespace DisplayMagician.UIForms
         private void SettingsForm_Load(object sender, EventArgs e)
         {
             // start displaymagician when computer starts
-            if (Program.AppProgramSettings.StartOnBootUp)
+            if (Program.AppProgramSettings.StartOnBootUp == true)
             {
                 cb_start_on_boot.Checked = true;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings StartOnBootUp set to true");
@@ -51,7 +51,7 @@ namespace DisplayMagician.UIForms
             }
 
             // setup minimise on start
-            if (Program.AppProgramSettings.MinimiseOnStart)
+            if (Program.AppProgramSettings.MinimiseOnStart == true)
             {
                 cb_minimise_notification_area.Checked = true;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings MinimiseOnStart set to true");
@@ -63,7 +63,7 @@ namespace DisplayMagician.UIForms
             }
 
             // start upgrade settings 
-            if (Program.AppProgramSettings.UpgradeToPreReleases)
+            if (Program.AppProgramSettings.UpgradeToPreReleases == true)
             {
                 cb_upgrade_prerelease.Checked = true;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeToPreReleases set to true");

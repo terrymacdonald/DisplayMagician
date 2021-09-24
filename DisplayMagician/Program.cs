@@ -965,7 +965,7 @@ namespace DisplayMagician {
             AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
             AutoUpdater.RunUpdateAsAdmin = true;
             AutoUpdater.HttpUserAgent = "DisplayMagician AutoUpdater";
-            if (Program.AppProgramSettings.UpgradeToPreReleases)
+            if (Program.AppProgramSettings.UpgradeToPreReleases == false)
             {
                 AutoUpdater.Start("http://displaymagician.littlebitbig.com/update/update_2.0.json");
             }
