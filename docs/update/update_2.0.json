@@ -3,7 +3,7 @@
   "url": "https://github.com/terrymacdonald/DisplayMagician/releases/download/v2.0.0/DisplayMagicianSetup-v2.0.0.msi",
   "changelog": "https://github.com/terrymacdonald/DisplayMagician/releases",
   "mandatory": {
-    "value": true,
+    "value": false,
     "minVersion": "0.1.0.0",
     "mode": 0
   },
