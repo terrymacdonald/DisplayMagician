@@ -21,7 +21,7 @@
                 <File Id="filDE7F24A649EB60701DC0EC41FE83CBBE" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\CircularProgressBar.dll" />
             </Component>
             <Component Id="cmp7EE113DB90D07F08FCE70C1861DEA947" Guid="{1E72FC84-ACAD-4A17-85B4-4D14A745882F}">
-                <File Id="filF7D383DE2E27A23D8552666CEA0DDC80" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.exe" />
+                <File Id="DisplayMagicianExe" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.exe" />
             </Component>
             <Component Id="cmpCF520827D65E51E3ECB59344A6F528D0" Guid="{13A3918C-64B7-40B5-8AFE-362620B43184}">
                 <File Id="fil2841FB135B81D3B7EF6634B1E3E562DA" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\DisplayMagician.exe.config" />

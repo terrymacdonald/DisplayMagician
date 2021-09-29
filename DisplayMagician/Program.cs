@@ -1014,7 +1014,8 @@ namespace DisplayMagician {
                 if (args.IsUpdateAvailable)
                 {
                     logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
-                    DialogResult dialogResult;
+                    DialogResult dialogResult;                    
+
                     if (args.Mandatory.Value)
                     {
                         logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
@@ -1037,7 +1038,7 @@ namespace DisplayMagician {
                     }
 
                     // Uncomment the following line if you want to show standard update dialog instead.
-                    // AutoUpdater.ShowUpdateForm(args);
+                    //AutoUpdater.ShowUpdateForm(args);
 
                     if (dialogResult.Equals(DialogResult.Yes) || dialogResult.Equals(DialogResult.OK))
                     {

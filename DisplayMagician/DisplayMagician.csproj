@@ -122,6 +122,7 @@
     <Compile Include="ImageUtils.cs" />
     <Compile Include="ProcessUtils.cs" />
     <Compile Include="ProgramSettings.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -168,6 +169,12 @@
     <Compile Include="UIForms\ShortcutLibraryForm.Designer.cs">
       <DependentUpon>ShortcutLibraryForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="UIForms\StartMessageForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\StartMessageForm.Designer.cs">
+      <DependentUpon>StartMessageForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="UIForms\StartProgramControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -199,7 +206,6 @@
       <DependentUpon>DisplayProfileForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Resources\Language.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Language.Designer.cs</LastGenOutput>
@@ -233,6 +239,9 @@
     <EmbeddedResource Include="UIForms\ShortcutLibraryForm.resx">
       <DependentUpon>ShortcutLibraryForm.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\StartMessageForm.resx">
+      <DependentUpon>StartMessageForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\StartProgramControl.resx">
       <DependentUpon>StartProgramControl.cs</DependentUpon>
@@ -369,6 +378,9 @@
     </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>"$(DevEnvDir)TextTransform.exe" -a !!BuildConfiguration!$(Configuration) "$(ProjectDir)Properties\AssemblyInfo.tt"</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
