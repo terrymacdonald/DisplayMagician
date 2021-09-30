@@ -8,13 +8,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Net;
 
 namespace DisplayMagician.UIForms
 {
     public partial class StartMessageForm : Form
     {
+        private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public string Filename;
+        public string URL;
+        public string Heading;
 
         public StartMessageForm()
         {
@@ -28,10 +32,76 @@ namespace DisplayMagician.UIForms
 
         private void StartMessageForm_Load(object sender, EventArgs e)
         {
-            if (File.Exists(Filename))
+            string FullPath;
+
+            // check if we're in Filename mode or URL mode
+            if (!String.IsNullOrWhiteSpace(Filename))
             {
-                rtb_message.LoadFile(Filename, RichTextBoxStreamType.RichText);
-            }            
+                // We're in filename mode
+                // Figure out the full path of the filename
+                try
+                {
+                    FullPath = Path.Combine(Application.StartupPath, Filename);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Filename supplied (\"{Filename}\") is not within the Application startup path (\"{Application.StartupPath}\")");
+                    return;
+                }
+
+                // Try to load the Filename if it's supplied
+                try
+                {
+                    if (File.Exists(Filename))
+                    {
+                        rtb_message.LoadFile(Filename, RichTextBoxStreamType.RichText);
+                    }
+                    else
+                    {
+                        logger.Error($"StartMessageForm/StartMessageForm_Load: Couldn't find the Filename supplied (\"{Filename}\") and load it into the RichTextBox message object");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the Filename supplied (\"{Filename}\") into the RichTextBox message object");
+                    return;
+                }
+            }
+            else
+            {
+                // We're in URL mode
+                // See if the URL supplied is valid
+                if (!IsURLValid(URL))
+                {
+                    logger.Error($"StartMessageForm/StartMessageForm_Load: URL {URL} pointing to the RTF file is invalid!");
+                    return;
+                }
+                // If we get here, then the URL is good. See if we can access the URL supplied
+                WebClient client = new WebClient();
+                try
+                {
+                    byte[] byteArray = client.DownloadData(URL);
+                    MemoryStream theMemStream = new MemoryStream();
+                    theMemStream.Write(byteArray, 0, byteArray.Length);
+                    rtb_message.LoadFile(theMemStream, RichTextBoxStreamType.RichText);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the URL supplied (\"{Filename}\") into the RichTextBox message object");
+                    return;
+                }
+
+            }
+        }
+
+        public static bool IsURLValid(string url)
+        {
+            Uri uriResult;
+            bool tryCreateResult = Uri.TryCreate(url, UriKind.Absolute, out uriResult);
+            if (tryCreateResult == true && uriResult != null)
+                return true;
+            else
+                return false;
         }
     }
 }
