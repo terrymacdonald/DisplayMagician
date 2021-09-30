@@ -1,19 +1,21 @@
 [
 	{
 		"id":1,
+		"mode":"rtf",
 		"minimum_version": "0.0.0.0",
 		"maximum_version": "2.0.0.0",
-		"start_date": "",
-		"end_date": "",
+		"start_date": null,
+		"end_date": null,
 		"heading": "DisplayMagician Upgrade Message",		
 		"rtf_url": "https://displaymagician.littlebitbig.com/messages/DisplayMagician20210930.rtf",
 	},
 	{
 		"id":2,
+		"mode":"rtf",
 		"minimum_version": "0.0.0.0",
 		"maximum_version": "2.0.0.0",
-		"start_date": "2021-04-23T18:25:43.511Z",
-		"end_date": "2021-04-23T18:25:43.511Z",
+		"start_date": "2021-09-23T18:25:43.511Z",
+		"end_date": "2021-10-10T18:25:43.511Z",
 		"heading": "DisplayMagician Upgrade Message 2",		
 		"rtf_url": "https://displaymagician.littlebitbig.com/messages/DisplayMagician20210930.rtf",
 	}	
