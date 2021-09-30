@@ -29,30 +29,35 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
-            this.lbl_profile_shown = new System.Windows.Forms.Label();
+            this.lbl_heading_text = new System.Windows.Forms.Label();
             this.rtb_message = new System.Windows.Forms.RichTextBox();
             this.btn_back = new System.Windows.Forms.Button();
+            this.pnl_richtextbox = new System.Windows.Forms.Panel();
+            this.pnl_richtextbox.SuspendLayout();
             this.SuspendLayout();
             // 
-            // lbl_profile_shown
+            // lbl_heading_text
             // 
-            this.lbl_profile_shown.AutoSize = true;
-            this.lbl_profile_shown.BackColor = System.Drawing.Color.Black;
-            this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown.Location = new System.Drawing.Point(437, 19);
-            this.lbl_profile_shown.Name = "lbl_profile_shown";
-            this.lbl_profile_shown.Size = new System.Drawing.Size(400, 29);
-            this.lbl_profile_shown.TabIndex = 20;
-            this.lbl_profile_shown.Text = "Important DisplayMagician Message";
-            this.lbl_profile_shown.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lbl_heading_text.AutoSize = true;
+            this.lbl_heading_text.BackColor = System.Drawing.Color.Black;
+            this.lbl_heading_text.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_heading_text.ForeColor = System.Drawing.Color.White;
+            this.lbl_heading_text.Location = new System.Drawing.Point(437, 19);
+            this.lbl_heading_text.Name = "lbl_heading_text";
+            this.lbl_heading_text.Size = new System.Drawing.Size(400, 29);
+            this.lbl_heading_text.TabIndex = 20;
+            this.lbl_heading_text.Text = "Important DisplayMagician Message";
+            this.lbl_heading_text.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // rtb_message
             // 
-            this.rtb_message.Location = new System.Drawing.Point(0, 62);
+            this.rtb_message.BackColor = System.Drawing.Color.White;
+            this.rtb_message.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.rtb_message.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rtb_message.Location = new System.Drawing.Point(20, 20);
             this.rtb_message.Name = "rtb_message";
             this.rtb_message.ReadOnly = true;
-            this.rtb_message.Size = new System.Drawing.Size(1275, 732);
+            this.rtb_message.Size = new System.Drawing.Size(1209, 687);
             this.rtb_message.TabIndex = 21;
             this.rtb_message.Text = "";
             // 
@@ -68,9 +73,19 @@ namespace DisplayMagician.UIForms
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 22;
-            this.btn_back.Text = "&Back";
+            this.btn_back.Text = "&Close";
             this.btn_back.UseVisualStyleBackColor = true;
             this.btn_back.Click += new System.EventHandler(this.btn_back_Click);
+            // 
+            // pnl_richtextbox
+            // 
+            this.pnl_richtextbox.BackColor = System.Drawing.Color.White;
+            this.pnl_richtextbox.Controls.Add(this.rtb_message);
+            this.pnl_richtextbox.Location = new System.Drawing.Point(13, 63);
+            this.pnl_richtextbox.Name = "pnl_richtextbox";
+            this.pnl_richtextbox.Padding = new System.Windows.Forms.Padding(20);
+            this.pnl_richtextbox.Size = new System.Drawing.Size(1249, 727);
+            this.pnl_richtextbox.TabIndex = 23;
             // 
             // StartMessageForm
             // 
@@ -78,14 +93,17 @@ namespace DisplayMagician.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(1274, 844);
+            this.Controls.Add(this.pnl_richtextbox);
             this.Controls.Add(this.btn_back);
-            this.Controls.Add(this.rtb_message);
-            this.Controls.Add(this.lbl_profile_shown);
+            this.Controls.Add(this.lbl_heading_text);
             this.Name = "StartMessageForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DisplayMagician - Message";
+            this.TopMost = true;
             this.Load += new System.EventHandler(this.StartMessageForm_Load);
+            this.pnl_richtextbox.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -93,8 +111,9 @@ namespace DisplayMagician.UIForms
 
         #endregion
 
-        private System.Windows.Forms.Label lbl_profile_shown;
+        private System.Windows.Forms.Label lbl_heading_text;
         private System.Windows.Forms.RichTextBox rtb_message;
         private System.Windows.Forms.Button btn_back;
+        private System.Windows.Forms.Panel pnl_richtextbox;
     }
 }

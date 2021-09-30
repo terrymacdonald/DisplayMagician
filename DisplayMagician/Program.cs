@@ -17,10 +17,6 @@ using DesktopNotifications;
 using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
-using System.Collections;
-using DisplayMagicianShared.AMD;
-using DisplayMagicianShared.NVIDIA;
-using DisplayMagicianShared.Windows;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 
@@ -645,6 +641,15 @@ namespace DisplayMagician {
 
                 // Check if it's an upgrade from DisplayMagician v1 to v2
                 // and if it is then explain what the user needs to do.
+                // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.0.json doesn't
+                if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json")))
+                {
+                    StartMessageForm myMessageWindow = new StartMessageForm();
+                    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician1to2.rtf";
+                    myMessageWindow.HeadingText = "DisplayMagician v2.0.0 Upgrade Warning";
+                    myMessageWindow.ButtonText = "&Close";
+                    myMessageWindow.Show();
+                }
 
                 // Run the program with normal startup
                 AppMainForm = new MainForm();

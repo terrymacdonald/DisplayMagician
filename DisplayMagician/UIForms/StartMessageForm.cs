@@ -18,7 +18,8 @@ namespace DisplayMagician.UIForms
 
         public string Filename;
         public string URL;
-        public string Heading;
+        public string HeadingText;
+        public string ButtonText;
 
         public StartMessageForm()
         {
@@ -33,6 +34,18 @@ namespace DisplayMagician.UIForms
         private void StartMessageForm_Load(object sender, EventArgs e)
         {
             string FullPath;
+
+            // Set the heading text if supplied
+            if (!String.IsNullOrWhiteSpace(HeadingText))
+            {
+                lbl_heading_text.Text = HeadingText;
+            }
+
+            // Set the button text if supplied
+            if (!String.IsNullOrWhiteSpace(ButtonText))
+            {
+                btn_back.Text = ButtonText;
+            }
 
             // check if we're in Filename mode or URL mode
             if (!String.IsNullOrWhiteSpace(Filename))
@@ -74,6 +87,7 @@ namespace DisplayMagician.UIForms
                 if (!IsURLValid(URL))
                 {
                     logger.Error($"StartMessageForm/StartMessageForm_Load: URL {URL} pointing to the RTF file is invalid!");
+                    this.Close();
                     return;
                 }
                 // If we get here, then the URL is good. See if we can access the URL supplied
@@ -83,11 +97,13 @@ namespace DisplayMagician.UIForms
                     byte[] byteArray = client.DownloadData(URL);
                     MemoryStream theMemStream = new MemoryStream();
                     theMemStream.Write(byteArray, 0, byteArray.Length);
+                    theMemStream.Position = 0;
                     rtb_message.LoadFile(theMemStream, RichTextBoxStreamType.RichText);
                 }
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the URL supplied (\"{Filename}\") into the RichTextBox message object");
+                    this.Close();
                     return;
                 }
 
