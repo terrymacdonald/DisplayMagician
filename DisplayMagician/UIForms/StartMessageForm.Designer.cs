@@ -40,11 +40,12 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown.BackColor = System.Drawing.Color.Black;
             this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown.Location = new System.Drawing.Point(478, 18);
+            this.lbl_profile_shown.Location = new System.Drawing.Point(437, 19);
             this.lbl_profile_shown.Name = "lbl_profile_shown";
-            this.lbl_profile_shown.Size = new System.Drawing.Size(318, 29);
+            this.lbl_profile_shown.Size = new System.Drawing.Size(400, 29);
             this.lbl_profile_shown.TabIndex = 20;
-            this.lbl_profile_shown.Text = "Important Upgrade Message";
+            this.lbl_profile_shown.Text = "Important DisplayMagician Message";
+            this.lbl_profile_shown.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // rtb_message
             // 
@@ -83,7 +84,7 @@ namespace DisplayMagician.UIForms
             this.Name = "StartMessageForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
-            this.Text = "DisplayMagician - Startup Message";
+            this.Text = "DisplayMagician - Message";
             this.Load += new System.EventHandler(this.StartMessageForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

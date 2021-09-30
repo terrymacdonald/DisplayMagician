@@ -643,6 +643,9 @@ namespace DisplayMagician {
                 // Check for updates
                 CheckForUpdates();
 
+                // Check if it's an upgrade from DisplayMagician v1 to v2
+                // and if it is then explain what the user needs to do.
+
                 // Run the program with normal startup
                 AppMainForm = new MainForm();
                 Application.Run(AppMainForm);                
