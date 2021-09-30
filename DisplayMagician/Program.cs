@@ -651,6 +651,9 @@ namespace DisplayMagician {
                     myMessageWindow.Show();
                 }
 
+                // Show any messages we need to show
+                ShowMessages();
+
                 // Run the program with normal startup
                 AppMainForm = new MainForm();
                 Application.Run(AppMainForm);                
@@ -962,6 +965,36 @@ namespace DisplayMagician {
                 parsedHotkey = parsedHotkey.Replace("+Menu", "");
 
             return parsedHotkey;
+        }
+
+        public static void ShowMessages()
+        {
+            // Get the message index
+            string json;
+            List<MessageItem> messageIndex;
+            WebClient client = new WebClient();
+            string indexUrl = "https://displaymagician.littlebitbig.com/messages/index_2.0.json";
+            try
+            {
+                json = client.DownloadString(indexUrl);
+                messageIndex = JsonConvert.DeserializeObject<List<MessageItem>>(json);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/ShowMessages: Exception while trying to load the messages index from {indexUrl}.");
+                return;
+            }
+
+            StartMessageForm myMessageWindow = new StartMessageForm();
+            foreach (MessageItem message in messageIndex)
+            {
+                myMessageWindow.MessageMode = message.Mode;
+                myMessageWindow.URL = message.Url;
+                myMessageWindow.HeadingText = message.HeadingText;
+                myMessageWindow.ButtonText = message.ButtonText;
+                myMessageWindow.Show();
+            }
+            
         }
 
         public static void CheckForUpdates()

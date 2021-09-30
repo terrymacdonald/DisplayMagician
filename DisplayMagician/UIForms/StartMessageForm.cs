@@ -16,10 +16,20 @@ namespace DisplayMagician.UIForms
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public string Filename;
-        public string URL;
-        public string HeadingText;
-        public string ButtonText;
+        public string MessageMode
+        { get; set; } = "RTF";
+
+        public string Filename
+        { get; set; }
+
+        public string URL
+        { get; set; }
+
+        public string HeadingText
+        { get; set; } = "DisplayMagician Message";
+
+        public string ButtonText
+        { get; set; } = "&Close";
 
         public StartMessageForm()
         {
@@ -67,7 +77,14 @@ namespace DisplayMagician.UIForms
                 {
                     if (File.Exists(Filename))
                     {
-                        rtb_message.LoadFile(Filename, RichTextBoxStreamType.RichText);
+                        if (MessageMode == "RTF")
+                        {
+                            rtb_message.LoadFile(Filename, RichTextBoxStreamType.RichText);
+                        }
+                        else
+                        {
+                            logger.Error($"StartMessageForm/StartMessageForm_Load: Message from file {Filename} is in an unsupported MessageMode: {MessageMode}");
+                        }
                     }
                     else
                     {
@@ -92,21 +109,28 @@ namespace DisplayMagician.UIForms
                 }
                 // If we get here, then the URL is good. See if we can access the URL supplied
                 WebClient client = new WebClient();
-                try
+                if (MessageMode == "RTF")
                 {
-                    byte[] byteArray = client.DownloadData(URL);
-                    MemoryStream theMemStream = new MemoryStream();
-                    theMemStream.Write(byteArray, 0, byteArray.Length);
-                    theMemStream.Position = 0;
-                    rtb_message.LoadFile(theMemStream, RichTextBoxStreamType.RichText);
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the URL supplied (\"{Filename}\") into the RichTextBox message object");
-                    this.Close();
-                    return;
-                }
+                    try
+                    {
+                        byte[] byteArray = client.DownloadData(URL);
+                        MemoryStream theMemStream = new MemoryStream();
+                        theMemStream.Write(byteArray, 0, byteArray.Length);
+                        theMemStream.Position = 0;
+                        rtb_message.LoadFile(theMemStream, RichTextBoxStreamType.RichText);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the URL supplied (\"{URL}\") into the RichTextBox message object (RTF Mode)");
+                        this.Close();
+                        return;
+                    }
 
+                }
+                else
+                {
+                    logger.Error($"StartMessageForm/StartMessageForm_Load: Message from URL {URL} is in an unsupported MessageMode: {MessageMode}");
+                }
             }
         }
 
