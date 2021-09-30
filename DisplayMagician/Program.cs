@@ -988,7 +988,7 @@ namespace DisplayMagician {
             StartMessageForm myMessageWindow = new StartMessageForm();
             foreach (MessageItem message in messageIndex)
             {
-                myMessageWindow.MessageMode = message.Mode;
+                myMessageWindow.MessageMode = message.MessageMode;
                 myMessageWindow.URL = message.Url;
                 myMessageWindow.HeadingText = message.HeadingText;
                 myMessageWindow.ButtonText = message.ButtonText;
