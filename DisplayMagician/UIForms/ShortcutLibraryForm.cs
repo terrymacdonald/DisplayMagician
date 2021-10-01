@@ -480,5 +480,17 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
+
+        private void btn_help_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Troubleshooting-DisplayMagician";
+            System.Diagnostics.Process.Start(targetURL);
+        }
+
+        private void btn_donate_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/sponsors/terrymacdonald";
+            System.Diagnostics.Process.Start(targetURL);
+        }
     }
 }

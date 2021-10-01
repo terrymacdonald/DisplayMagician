@@ -47,6 +47,8 @@
             this.tsmi_save_to_desktop = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_delete = new System.Windows.Forms.ToolStripMenuItem();
             this.lbl_mask = new System.Windows.Forms.Label();
+            this.btn_help = new System.Windows.Forms.Button();
+            this.btn_donate = new System.Windows.Forms.Button();
             this.cms_shortcuts.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -262,6 +264,38 @@
             this.lbl_mask.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lbl_mask.Visible = false;
             // 
+            // btn_help
+            // 
+            this.btn_help.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_help.ForeColor = System.Drawing.Color.White;
+            this.btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.btn_help.Location = new System.Drawing.Point(966, 12);
+            this.btn_help.Name = "btn_help";
+            this.btn_help.Size = new System.Drawing.Size(75, 23);
+            this.btn_help.TabIndex = 34;
+            this.btn_help.Text = "&Help";
+            this.btn_help.UseVisualStyleBackColor = true;
+            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
+            // 
+            // btn_donate
+            // 
+            this.btn_donate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_donate.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_donate.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_donate.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_donate.ForeColor = System.Drawing.Color.White;
+            this.btn_donate.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.btn_donate.Location = new System.Drawing.Point(1047, 12);
+            this.btn_donate.Name = "btn_donate";
+            this.btn_donate.Size = new System.Drawing.Size(75, 23);
+            this.btn_donate.TabIndex = 35;
+            this.btn_donate.Text = "D&onate";
+            this.btn_donate.UseVisualStyleBackColor = true;
+            this.btn_donate.Click += new System.EventHandler(this.btn_donate_Click);
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -269,6 +303,8 @@
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(1134, 716);
+            this.Controls.Add(this.btn_donate);
+            this.Controls.Add(this.btn_help);
             this.Controls.Add(this.lbl_mask);
             this.Controls.Add(this.lbl_create_shortcut);
             this.Controls.Add(this.label1);
@@ -315,5 +351,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmi_delete;
         private System.Windows.Forms.ToolStripMenuItem tsmi_save_to_desktop;
         private System.Windows.Forms.Label lbl_mask;
+        private System.Windows.Forms.Button btn_help;
+        private System.Windows.Forms.Button btn_donate;
     }
 }

@@ -138,7 +138,7 @@
 
 		<!-- Plumb the registering and unregistering of the ShellExtension DLL into the instllation sequence -->
 		<InstallExecuteSequence>
-			<RemoveExistingProducts After="InstallInitialize"/>
+			<RemoveExistingProducts After="InstallValidate"/>
 			<Custom Action="InstallShell" After="InstallFiles">NOT Installed</Custom>
 			<Custom Action="UninstallShell" Before="RemoveFiles">(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
 			<Custom Action='AlreadyUpdated' After='FindRelatedProducts'>SELFFOUND</Custom>
