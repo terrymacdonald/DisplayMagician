@@ -77,9 +77,15 @@ namespace DisplayMagician.UIForms
                 {
                     if (File.Exists(Filename))
                     {
-                        if (MessageMode == "RTF")
+                        if (MessageMode == "rtf")
                         {
+                            rtb_message.Show();
                             rtb_message.LoadFile(Filename, RichTextBoxStreamType.RichText);
+                        }
+                        else if (MessageMode == "txt")
+                        {
+                            rtb_message.Show();
+                            rtb_message.LoadFile(Filename, RichTextBoxStreamType.PlainText);
                         }
                         else
                         {
@@ -109,7 +115,7 @@ namespace DisplayMagician.UIForms
                 }
                 // If we get here, then the URL is good. See if we can access the URL supplied
                 WebClient client = new WebClient();
-                if (MessageMode == "RTF")
+                if (MessageMode == "rtf")
                 {
                     try
                     {
@@ -117,6 +123,7 @@ namespace DisplayMagician.UIForms
                         MemoryStream theMemStream = new MemoryStream();
                         theMemStream.Write(byteArray, 0, byteArray.Length);
                         theMemStream.Position = 0;
+                        rtb_message.Show();
                         rtb_message.LoadFile(theMemStream, RichTextBoxStreamType.RichText);
                     }
                     catch (Exception ex)
@@ -124,8 +131,22 @@ namespace DisplayMagician.UIForms
                         logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the URL supplied (\"{URL}\") into the RichTextBox message object (RTF Mode)");
                         this.Close();
                         return;
+                    }                
+                }
+                else if (MessageMode == "txt")
+                {
+                    try
+                    {
+                        string textToShow = client.DownloadString(URL);
+                        rtb_message.Show();
+                        rtb_message.Text = textToShow;
                     }
-
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the URL supplied (\"{URL}\") into the RichTextBox message object (TXT Mode)");
+                        this.Close();
+                        return;
+                    }
                 }
                 else
                 {

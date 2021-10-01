@@ -985,14 +985,82 @@ namespace DisplayMagician {
                 return;
             }
 
-            StartMessageForm myMessageWindow = new StartMessageForm();
+            
             foreach (MessageItem message in messageIndex)
             {
+                // Firstly, check that the version is correct
+                Version myAppVersion = Assembly.GetEntryAssembly().GetName().Version;
+                if (!string.IsNullOrWhiteSpace(message.MinVersion))
+                {
+                    Version minVersion;
+                    if (!(Version.TryParse(message.MinVersion,out minVersion)))
+                    {
+                        logger.Error($"Program/ShowMessages: Couldn't show message \"{message.HeadingText}\" (#{message.Id}) as we couldn't parse the minversion string.");
+                        continue;
+                    }
+
+                    if (!(myAppVersion >= minVersion))
+                    {
+                        logger.Debug($"Program/ShowMessages: Message is for version >= {minVersion} and this is version {myAppVersion} so not showing message.");
+                        continue;
+                    }
+                }
+                if (!string.IsNullOrWhiteSpace(message.MaxVersion))
+                {
+                    Version maxVersion;
+                    if (!(Version.TryParse(message.MaxVersion, out maxVersion)))
+                    {
+                        logger.Error($"Program/ShowMessages: Couldn't show message \"{message.HeadingText}\" (#{message.Id}) as we couldn't parse the maxversion string.");
+                        continue;
+                    }
+
+                    if (!(myAppVersion <= maxVersion))
+                    {
+                        logger.Debug($"Program/ShowMessages: Message is for version <= {maxVersion} and this is version {myAppVersion} so not showing message.");
+                        continue;
+                    }
+                }
+
+                // Secondly check if the dates are such that we should show this
+                if (!string.IsNullOrWhiteSpace(message.StartDate))
+                {
+                    // Convert datestring to a datetime
+                    DateTime startTime;
+                    if (!DateTime.TryParse(message.StartDate,out startTime))
+                    {
+                        logger.Error($"Program/ShowMessages: Couldn't show message \"{message.HeadingText}\" (#{message.Id}) as we couldn't parse the start date.");
+                        continue;
+                    }
+
+                    if (!(DateTime.Now >= startTime))
+                    {
+                        logger.Debug($"Program/ShowMessages: Message start date for \"{message.HeadingText}\" (#{message.Id}) not yet reached so not ready to show message.");
+                        continue;
+                    }
+                }
+                if (!string.IsNullOrWhiteSpace(message.EndDate))
+                {
+                    // Convert datestring to a datetime
+                    DateTime endTime;
+                    if (!DateTime.TryParse(message.EndDate, out endTime))
+                    {
+                        logger.Error($"Program/ShowMessages: Couldn't show message \"{message.HeadingText}\" (#{message.Id}) as we couldn't parse the end date.");
+                        continue;
+                    }
+
+                    if (!(DateTime.Now <= endTime))
+                    {
+                        logger.Debug($"Program/ShowMessages: Message end date for \"{message.HeadingText}\" (#{message.Id}) past so not showing message as it's too old.");
+                        continue;
+                    }
+                }
+
+                StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = message.MessageMode;
                 myMessageWindow.URL = message.Url;
                 myMessageWindow.HeadingText = message.HeadingText;
                 myMessageWindow.ButtonText = message.ButtonText;
-                myMessageWindow.Show();
+                myMessageWindow.ShowDialog();
             }
             
         }
