@@ -89,7 +89,7 @@ namespace DisplayMagician {
 
             // Rules for mapping loggers to targets          
             NLog.LogLevel logLevel = null;
-            /*switch (AppProgramSettings.LogLevel)
+            switch (AppProgramSettings.LogLevel)
             {
                 case "Trace":
                     logLevel = NLog.LogLevel.Trace;
@@ -109,11 +109,7 @@ namespace DisplayMagician {
                 default:
                     logLevel = NLog.LogLevel.Info;
                     break;
-            }*/
-
-            // TODO: **************************************** CHANGE THIS *******************************************
-            // Force Logging to TRACE during debg
-            logLevel = NLog.LogLevel.Trace;
+            }
 
 
             // Create the log file target
@@ -224,9 +220,9 @@ namespace DisplayMagician {
                 UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.StopParsingAndCollect,
             }; 
 
-            app.Description = "This application helps configure your NVIDIA Videocard for multiple displays.";
-            app.ExtendedHelpText = "This application helps configure your NVIDIA Videocard for multiple displays. It has some nifty features such as the "
-                + Environment.NewLine + " ability to temporarily change your screen settings while you are playing a game, and then change them back once finished.";
+            app.Description = "DisplayMagician is an open source tool for automatically configuring your displays and sound for a game or application from a single Windows Shortcut.";
+            app.ExtendedHelpText = "DisplayMagician is an open source tool for automatically configuring your displays and sound for a game"
+                + Environment.NewLine + "or application from a single Windows Shortcut, and reverting them back when finished.";
 
             app.GetFullNameAndVersion();
             app.MakeSuggestionsInErrorMessage = true;
