@@ -57,7 +57,7 @@
 		</Condition>
 		<!-- This will ask the user to close the DisplayMagician app if it's running while upgrading -->
 		<util:CloseApplication Id="CloseDisplayMagician" CloseMessage="no" Description="!(loc.MustCloseDisplayMagician)"
-							   ElevatedCloseMessage="no" RebootPrompt="no" Target="$(var.ExeProcessName)" />
+							   ElevatedCloseMessage="no" RebootPrompt="no" Target="$(var.ExeName)" />
 		<!-- Use the built in WixUI_InstallDir GUI -->
 		<UIRef Id="WixUI_InstallDir" />
 

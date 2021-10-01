@@ -14,6 +14,6 @@
   The name of your application exe file. This will be used to kill the process when updating
   and creating the desktop shortcut
   -->
-	<?define ExeProcessName="DisplayMagician" ?>
+	<?define ExeName="DisplayMagician.exe" ?>
 
 </Include>
