@@ -29,6 +29,7 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StartMessageForm));
             this.lbl_heading_text = new System.Windows.Forms.Label();
             this.rtb_message = new System.Windows.Forms.RichTextBox();
             this.btn_back = new System.Windows.Forms.Button();
@@ -57,7 +58,7 @@ namespace DisplayMagician.UIForms
             this.rtb_message.Location = new System.Drawing.Point(20, 20);
             this.rtb_message.Name = "rtb_message";
             this.rtb_message.ReadOnly = true;
-            this.rtb_message.Size = new System.Drawing.Size(1209, 687);
+            this.rtb_message.Size = new System.Drawing.Size(1205, 683);
             this.rtb_message.TabIndex = 21;
             this.rtb_message.Text = "";
             // 
@@ -80,6 +81,7 @@ namespace DisplayMagician.UIForms
             // pnl_richtextbox
             // 
             this.pnl_richtextbox.BackColor = System.Drawing.Color.White;
+            this.pnl_richtextbox.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.pnl_richtextbox.Controls.Add(this.rtb_message);
             this.pnl_richtextbox.Location = new System.Drawing.Point(13, 63);
             this.pnl_richtextbox.Name = "pnl_richtextbox";
@@ -92,6 +94,8 @@ namespace DisplayMagician.UIForms
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
+            this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1274, 844);
             this.Controls.Add(this.pnl_richtextbox);
             this.Controls.Add(this.btn_back);

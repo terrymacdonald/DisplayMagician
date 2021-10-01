@@ -977,6 +977,11 @@ namespace DisplayMagician {
             try
             {
                 json = client.DownloadString(indexUrl);
+                if (String.IsNullOrWhiteSpace(json))
+                {
+                    logger.Trace($"Program/ShowMessages: There were no messages in the {indexUrl} message index.");
+                    return;
+                }
                 messageIndex = JsonConvert.DeserializeObject<List<MessageItem>>(json);
             }
             catch (Exception ex)
@@ -985,9 +990,20 @@ namespace DisplayMagician {
                 return;
             }
 
-            
+            ProgramSettings programSettings = ProgramSettings.LoadSettings();
+
             foreach (MessageItem message in messageIndex)
             {
+                // Skip if we've already shown it
+                if (message.Id <= programSettings.LastMessageIdRead)
+                {
+                    // Unless it's one coming up that we're monitoring
+                    if (!programSettings.MessagesToMonitor.Contains(message.Id))
+                    {
+                        continue;
+                    }
+                }
+
                 // Firstly, check that the version is correct
                 Version myAppVersion = Assembly.GetEntryAssembly().GetName().Version;
                 if (!string.IsNullOrWhiteSpace(message.MinVersion))
@@ -1017,6 +1033,7 @@ namespace DisplayMagician {
                     if (!(myAppVersion <= maxVersion))
                     {
                         logger.Debug($"Program/ShowMessages: Message is for version <= {maxVersion} and this is version {myAppVersion} so not showing message.");
+                        // Save it if it's one coming up that we're monitoring and we haven't already saved it
                         continue;
                     }
                 }
@@ -1035,6 +1052,11 @@ namespace DisplayMagician {
                     if (!(DateTime.Now >= startTime))
                     {
                         logger.Debug($"Program/ShowMessages: Message start date for \"{message.HeadingText}\" (#{message.Id}) not yet reached so not ready to show message.");
+                        if (!programSettings.MessagesToMonitor.Contains(message.Id))
+                        {
+                            programSettings.MessagesToMonitor.Add(message.Id);
+                            programSettings.SaveSettings();
+                        }
                         continue;
                     }
                 }
@@ -1061,6 +1083,19 @@ namespace DisplayMagician {
                 myMessageWindow.HeadingText = message.HeadingText;
                 myMessageWindow.ButtonText = message.ButtonText;
                 myMessageWindow.ShowDialog();
+                // If this the list of messages is still trying to monitor this message, then remove it if we've shown it to the user.
+                if (programSettings.MessagesToMonitor.Contains(message.Id))
+                {
+                    programSettings.MessagesToMonitor.Remove(message.Id);
+                    programSettings.SaveSettings();
+                }
+
+                // Update the latest message id to keep track of where we're up to
+                if (message.Id > programSettings.LastMessageIdRead)
+                {
+                    programSettings.LastMessageIdRead = message.Id;
+                }
+                
             }
             
         }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -22,6 +23,8 @@ namespace DisplayMagician
         private bool _startOnBootUp = false;
         private bool _minimiseOnStart = false;
         private bool _upgradeToPrereleases = false;
+        private int _lastMessageIdRead = 0;
+        private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Info.ToString();
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
@@ -77,6 +80,40 @@ namespace DisplayMagician
                 if (_programSettingsLoaded)
                     SaveSettings();
             } 
+        }
+
+        public int LastMessageIdRead
+        {
+            get
+            {
+                return _lastMessageIdRead;
+            }
+            set
+            {
+                _lastMessageIdRead = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
+        }
+
+        public List<int> MessagesToMonitor
+        {
+            get
+            {
+                return _messagesToMonitor;
+            }
+            set
+            {
+                _messagesToMonitor = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
         }
 
         public string LogLevel
