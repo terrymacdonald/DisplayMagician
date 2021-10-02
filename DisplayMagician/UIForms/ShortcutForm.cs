@@ -194,12 +194,12 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private static bool IsLowQuality(IconImage iconImage)
+        /*private static bool IsLowQuality(IconImage iconImage)
         {
             return iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format1bppIndexed ||
                     iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format4bppIndexed ||
                     iconImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed;
-        }
+        }*/
 
         private void btn_app_executable_Click(object sender, EventArgs e)
         {
@@ -745,14 +745,84 @@ namespace DisplayMagician.UIForms
 
         private bool CanEnableSaveButton()
         {
-            if ((txt_shortcut_save_name.Text.Length > 0) &&
-                _profileToUse is ProfileItem &&
-                (rb_no_game.Checked ||
-                rb_launcher.Checked && !_gameId.Equals("0") ||
-                rb_standalone.Checked && txt_executable.Text.Length > 0))
-                return true;
-            else
+            // Check the name is valid to save
+            if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text))
+            {
                 return false;
+            }
+
+            // Check the profile is set and that it's still valid
+            if (!(_profileToUse is ProfileItem))
+            {
+                return false;
+            }
+
+            // Check the Shortcut Category to see if it's application
+            if (rb_standalone.Checked)
+            {
+                if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
+                {
+                    return false;
+
+                }
+
+                if (!File.Exists(txt_executable.Text))
+                {
+                    return false;
+                }
+
+                if (rb_wait_alternative_executable.Checked && String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
+                {
+                    return false;
+                }
+
+                if (rb_wait_alternative_executable.Checked && !File.Exists(txt_alternative_executable.Text))
+                {
+                    return false;
+                }
+
+            }
+            else if (rb_launcher.Checked)
+            {
+
+                if (cb_args_game.Checked && String.IsNullOrWhiteSpace(txt_args_game.Text))
+                {
+                    return false;
+                }
+
+                if (_gameId.Equals("0"))
+                {
+                    return false;
+                }
+
+                bool gameStillInstalled = false;
+                foreach (ImageListViewItem gameItem in ilv_games.Items)
+                {
+                    if (gameItem.Text.Equals(txt_game_name.Text))
+                    {
+                        gameStillInstalled = true;
+                        break;
+                    }
+
+                }
+                if (!gameStillInstalled)
+                {
+                    return false;
+                }
+
+                if (cb_wait_alternative_game.Checked && String.IsNullOrWhiteSpace(txt_alternative_game.Text))
+                {
+                    return false;
+                }
+
+                if (cb_wait_alternative_game.Checked && !File.Exists(txt_alternative_game.Text))
+                {
+                    return false;
+                }
+
+            }
+
+            return true;
         }
 
         private void EnableSaveButtonIfValid()
@@ -1071,6 +1141,26 @@ namespace DisplayMagician.UIForms
 
             if (_shortcutToEdit != null)
             {
+
+                bool gameStillInstalled = false;
+                foreach (ImageListViewItem gameItem in ilv_games.Items)
+                {
+                    if (gameItem.Text.Equals(_shortcutToEdit.GameName))
+                    {
+                        gameStillInstalled = true;
+                        break;
+                    }
+
+                }
+                if (!gameStillInstalled)
+                {
+                    DialogResult result = MessageBox.Show(
+                        $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
+                        @"Game no longer exists",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+
                 if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
                 {
                     // We have loaded the profile used last time
@@ -1620,9 +1710,9 @@ namespace DisplayMagician.UIForms
         private void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
         {
 
-            if (_isUnsaved && _loadedShortcut)
+            if (_isUnsaved && _loadedShortcut && CanEnableSaveButton())
             {
-                // If the user doesn't want to close this window without saving, then don't close the window.
+                // If the user doesn't want to close this window without saving (when they can save), then don't close the window.
                 DialogResult result = MessageBox.Show(
                     @"You have unsaved changes! Do you want to save your changes?",
                     @"You have unsaved changes.",
