@@ -21,7 +21,7 @@ Different games require your displays configured in different ways. If you're a 
 
 There is now. DisplayMagician allows you to configure multiple different display profiles, and then use those different display profiles to create Game Shortcuts. These Game Shortcuts allow you to have your game or application start exactly the way you like it.
 
-Do you like running Dirt Rally 2.0 on a single NVidia Surround window across triple screens, and yet you like to run Project Cars 2 across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut (you can even start games with a Hotkey)!
+Do you like running Dirt Rally 2.0 on a single NVidia Surround window across triple screens, and yet you like to run Assetto Corsa across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut (you can even start games with a Hotkey)!
 
 DisplayMagician also allows you to automatically change to a different audio device just for one game, and will revert that change when you close the game. Great if you have some special audio devices you use only for certain games. No more fiddling with audio settings - just play the game!
 
@@ -51,14 +51,13 @@ DisplayMagician lets you set up the following information for each game or appli
 
 ## Planned features
 
-* Add Battlenet Game Launcher
-* Add Bethesda Game Launcher
-* Add Unit Tests!
 * Change UI from Winforms to .NET6 and MAUI
+* Add Unit Tests!
+* Maybe add Intel Alchemist GPU spanned screen support when they are eventually released.
 
 ## Requirements
 
-* DisplayMagician only support 64-bit Windows 10
+* DisplayMagician only support 64-bit Windows 10/11
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
 
@@ -72,6 +71,7 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 ### Screenshots
 <p align="center"><img src="READMEAssets/DisplayMagicianMainScreen.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfiles.png"/></p>
+<p align="center"><img src="READMEAssets/DisplayMagicianDisplayProfilesSettings.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianShortcutLibrary.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut1.png"/></p>
 <p align="center"><img src="READMEAssets/DisplayMagicianConfigureShortcut2.png"/></p>
@@ -86,20 +86,20 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 
 1. Install 'DisplayMagician'
 2. Run 'DisplayMagician', and click on the 'Display Profiles' button
-    * Use 'Windows Display Settings' or 'NVIDIA Control Panel' to configure your display(s) exactly as you would like them
+    * Use 'Windows Display Settings', 'NVIDIA Control Panel' or 'AMD Radeon Setup' to configure your display(s) exactly as you would like them
     * ALT-TAB back to DisplayMagician, and you should see the new display configuration shown in the Display Profile window.
-    * Click the 'Save As/Rename' button so that DisplayMagician will remember the current Display Profile so you can use it in your Shortcuts.
+    * Click the 'Save As/Rename' button so that DisplayMagician will remember the current Display Profile so you can use it in your Game Shortcuts.
     * You will need to do this for each different display configuration you want to use in any of your games or applications.
     * Click 'Back' button to go back to the main DisplayMagician window.
 2. Now that you have some Display Profiles set up, you can create some Game Shortcuts that will use them! Click on the 'Game Shortcuts' button.
-3. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you every want to edit them.
+3. You will be shown your Shortcut Library window. This is where all your Shortcuts live, and where you have to go if you ever want to edit them.
 4. Click the 'New' button to create a new Game Shortcut
     * Choose the Display Profile you want to use with the Game Shortcut. Make sure it matches what the game expects :).
     * Click on the '2. Choose Audio' tab, to modify which speakers you use for sound, or which microphone you use to talk into.
     * Click on the '3. Choose what happens before' tab, to choose any other programs you want to start before you start the main Game or Application. You can choose if you want to shut them down afterwards too! Click on the 'Find Examples' button if you'd like to see some example helper software and their settings for popular games.
     * Click on the '4. Choose Game to start' tab, to choose the main game or application that the Game Shortcut will start and monitor.
-    * Choose the Game from the list shown (be sure to click the > button), or if it's not listed there then select the game or application executable. 
-    * Click on the '5. Chose what happens afterwards' tab, and choose if you want to rollback any changes made by the Game Shortcut when it runs, or if you want to keep them.
+    * Choose the Game from the list shown (be sure to click it so it has a red border), or if it's not shown in ths list then select the specific game or application executable in the 'Launch a Game executable' section of the page. 
+    * Click on the '5. Chose what happens afterwards' tab, and choose if you want to rollback any changes made by the Game Shortcut when it runs, or if you want to keep them rather than rolling them back.
     * If the 'auto-suggest name' option is enabled then you should have a Shortcut Name already entered in automatically. 
     * You can optionally create a keyboard shortcut (Hotkey) for this Game Shortcut. To do this, click on the 'Hotkey' button.
     * Click the 'Save' button to save the Shortcut to the Shortcut Library. If you can only see the outline of a button, then you have some missing fields you need to fill in. The Save button only shows if you have a valid Shortcut set up.
@@ -139,5 +139,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ## Credits
 Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the name of some of these people:
 
-* Original HelioDisplayManagement project created by the amazing Soroush Falahati 
+* Original HelioDisplayManagement project created by the amazing Soroush Falahati
 * Various icons made by Freepik from www.flaticon.com
+* Scowling (Without you, AMD support wouldn’t exist)
+* Frcooper (thanks for the sponsoring)
+* Stringfieldmark (thanks for sponsoring and the testing help)
+* Bossebossebosse (thanks for the donation)
+* Sk666 (thanks for the donation)
+* FormelLMS (thanks for the donation and the testing help)
+* RBZL (thanks for the donation)
+* Domenic (thanks for the testing help)
+* Mobeeuz (thanks for the testing help)
+* Slippery-silvia (thanks for the testing help for Mosaic cards)
+* Neilperson (thanks for the cool idea)
+* DragRedSim (thanks for the bug report)
