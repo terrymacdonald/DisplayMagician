@@ -146,6 +146,8 @@ namespace DisplayMagician
             // If there are no GameLibraries then choose executable instead
             if (!(UplayLibrary.GetLibrary().IsGameLibraryInstalled && 
                 SteamLibrary.GetLibrary().IsGameLibraryInstalled &&
+                GogLibrary.GetLibrary().IsGameLibraryInstalled &&
+                EpicLibrary.GetLibrary().IsGameLibraryInstalled &&
                 OriginLibrary.GetLibrary().IsGameLibraryInstalled))
             {
                 _gameLibrary = SupportedGameLibraryType.Unknown;
@@ -1335,6 +1337,7 @@ namespace DisplayMagician
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
                                 }
+                                break;
                             }
                         }
                     }                    
@@ -1407,6 +1410,7 @@ namespace DisplayMagician
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
                                 }
+                                break;
                             }
                         }
                     }                    
