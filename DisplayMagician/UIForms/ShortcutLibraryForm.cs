@@ -397,36 +397,39 @@ namespace DisplayMagician.UIForms
             else if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
                 message = $"Running the {_selectedShortcut.GameName} game and waiting until you close it.";
 
+            // Create a Mask Control that will cover the ShortcutLibrary Window to lock
+            lbl_mask.Text = message;
+            lbl_mask.Location = new Point(0, 0);
+            lbl_mask.Size = this.Size;
+            lbl_mask.BackColor = Color.FromArgb(100, Color.Black);
+            lbl_mask.BringToFront();
+            lbl_mask.Visible = true;
+
+            ilv_saved_shortcuts.SuspendLayout();
+            ilv_saved_shortcuts.Refresh();
+
             if (!Program.AppProgramSettings.MinimiseOnStart)
             {
-                // Create a Mask Control that will cover the ShortcutLibrary Window to lock
-                lbl_mask.Text = message;
-                lbl_mask.Location = new Point(0, 0);
-                lbl_mask.Size = this.Size;
-                lbl_mask.BackColor = Color.FromArgb(100, Color.Black);
-                lbl_mask.BringToFront();
-                lbl_mask.Visible = true;
-
-                ilv_saved_shortcuts.SuspendLayout();
-                ilv_saved_shortcuts.Refresh();
-
+                
                 // Get the MainForm so we can access the NotifyIcon on it.
                 MainForm mainForm = (MainForm)this.Owner;
 
                 // Run the shortcut
                 ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
 
-                ilv_saved_shortcuts.ResumeLayout();
-
-                // REmove the Masked Control to allow the user to start using DisplayMagician again.
-                lbl_mask.Visible = false;
-                lbl_mask.SendToBack();
             }
             else
             {
                 // Run the shortcut
                 ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
             }
+
+            ilv_saved_shortcuts.ResumeLayout();
+
+            // REmove the Masked Control to allow the user to start using DisplayMagician again.
+            lbl_mask.Visible = false;
+            lbl_mask.SendToBack();
+
         }
 
         private void ilv_saved_shortcuts_ItemHover(object sender, ItemHoverEventArgs e)

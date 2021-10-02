@@ -15,7 +15,7 @@ namespace DisplayMagician
         // Common items to the class
         private static bool _programSettingsLoaded = false;
         // Other constants that are useful
-        private static string _programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_{FileVersion.ToString(2)}.json");
+        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.0.json");
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
@@ -215,12 +215,6 @@ namespace DisplayMagician
             }
         }
 
-
-        public static Version FileVersion
-        {
-            get => new Version(1, 0, 0);
-        }
-
         #endregion
 
         #region Class Methods
@@ -232,15 +226,15 @@ namespace DisplayMagician
             // This means we have to only use console.write in this function....
             ProgramSettings programSettings = null;
 
-            if (File.Exists(_programSettingsStorageJsonFileName))
+            if (File.Exists(programSettingsStorageJsonFileName))
             {
                 string json = "";
                 try {
-                    json = File.ReadAllText(_programSettingsStorageJsonFileName, Encoding.Unicode);
+                    json = File.ReadAllText(programSettingsStorageJsonFileName, Encoding.Unicode);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {_programSettingsStorageJsonFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
+                    Console.WriteLine($"ProgramSettings/LoadSettings: Tried to read the JSON file {programSettingsStorageJsonFileName} to memory from disk but File.ReadAllText threw an exception. {ex}");
                 }
 
                 if (!string.IsNullOrWhiteSpace(json))
@@ -257,13 +251,13 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"ProgramSettings/LoadSettings: Tried to parse the JSON file {_programSettingsStorageJsonFileName} but the JsonConvert threw an exception. {ex}");
+                        Console.WriteLine($"ProgramSettings/LoadSettings: Tried to parse the JSON file {programSettingsStorageJsonFileName} but the JsonConvert threw an exception. {ex}");
                     }
                 }
             }
             else
             {
-                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {_programSettingsStorageJsonFileName}");
+                Console.WriteLine($"ProgramSettings/LoadSettings: No ProgramSettings file found. Creating new one at {programSettingsStorageJsonFileName}");
                 programSettings = new ProgramSettings();
                 programSettings.SaveSettings();
             }
@@ -279,7 +273,7 @@ namespace DisplayMagician
         public bool SaveSettings()
         {
 
-            logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {_programSettingsStorageJsonFileName}.");
+            logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {programSettingsStorageJsonFileName}.");
 
             try
             {
@@ -294,13 +288,13 @@ namespace DisplayMagician
 
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    File.WriteAllText(_programSettingsStorageJsonFileName, json, Encoding.Unicode);
+                    File.WriteAllText(programSettingsStorageJsonFileName, json, Encoding.Unicode);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {_programSettingsStorageJsonFileName}.");
+                logger.Error(ex, $"ProgramSettings/SaveSettings: Exception attempting to save the program settings to {programSettingsStorageJsonFileName}.");
             }
 
             return false;

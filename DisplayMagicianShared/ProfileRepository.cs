@@ -47,7 +47,6 @@ namespace DisplayMagicianShared
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
         public static Dictionary<string, bool> _profileWarningLookup = new Dictionary<string, bool>();
         private static bool _profilesLoaded = false;
-        public static Version _version = new Version(2, 0, 0);
         private static ProfileItem _currentProfile;
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
         private static bool notifiedEDIDErrorToUser = false;
@@ -63,7 +62,7 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_{_version.ToString(2)}.json");
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.0.json");
         
 
 
@@ -160,6 +159,11 @@ namespace DisplayMagicianShared
 
                 return _allProfiles.Count;
             }
+        }
+
+        public static string ProfileStorageFileName
+        {
+            get => _profileStorageJsonFileName;
         }
 
         public static VIDEO_MODE CurrentVideoMode

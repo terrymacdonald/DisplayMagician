@@ -69,6 +69,7 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Filename supplied (\"{Filename}\") is not within the Application startup path (\"{Application.StartupPath}\")");
+                    this.Close();
                     return;
                 }
 
@@ -90,16 +91,21 @@ namespace DisplayMagician.UIForms
                         else
                         {
                             logger.Error($"StartMessageForm/StartMessageForm_Load: Message from file {Filename} is in an unsupported MessageMode: {MessageMode}");
+                            this.Close();
+                            return;
                         }
                     }
                     else
                     {
                         logger.Error($"StartMessageForm/StartMessageForm_Load: Couldn't find the Filename supplied (\"{Filename}\") and load it into the RichTextBox message object");
+                        this.Close();
+                        return;
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"StartMessageForm/StartMessageForm_Load: Exception while trying to load the Filename supplied (\"{Filename}\") into the RichTextBox message object");
+                    this.Close();
                     return;
                 }
             }
@@ -151,6 +157,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     logger.Error($"StartMessageForm/StartMessageForm_Load: Message from URL {URL} is in an unsupported MessageMode: {MessageMode}");
+                    this.Close();
+                    return;
                 }
             }
         }
