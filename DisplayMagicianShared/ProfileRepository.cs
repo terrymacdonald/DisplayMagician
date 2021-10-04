@@ -1045,7 +1045,6 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
                     nvidiaLibrary = new NVIDIALibrary();
-                    _currentVideoMode = VIDEO_MODE.NVIDIA;
                 }
                 catch (Exception ex)
                 {
@@ -1060,7 +1059,6 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
                     amdLibrary = new AMDLibrary();
-                    _currentVideoMode = VIDEO_MODE.AMD;
                 }
                 catch (Exception ex)
                 {

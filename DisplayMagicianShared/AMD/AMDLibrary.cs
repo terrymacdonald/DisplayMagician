@@ -209,9 +209,13 @@ namespace DisplayMagicianShared.AMD
             catch (DllNotFoundException ex)
             {
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
-                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
+                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: DLL Not Found Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed (which it won't be if you don't have an AMD card)");
             }
-
+            catch (Exception ex)
+            {
+                // If we get here then something else happened
+                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: General Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed (which it won't be if you don't have an AMD card)");
+            }
         }
 
         ~AMDLibrary()

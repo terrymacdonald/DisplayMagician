@@ -193,7 +193,12 @@ namespace DisplayMagicianShared.NVIDIA
             catch (DllNotFoundException ex)
             {
                 // If this fires, then the DLL isn't available, so we need don't try to do anything else
-                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed.");
+                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed (which it won't be if you don't have an NVIDIA card).");
+            }
+            catch (Exception ex)
+            {
+                // If we get here then another problem happened
+                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: General Exception trying to load the NVAPI DLL. This generally means you don't have the NVIDIA NVAPI driver installed  (which it won't be if you don't have an NVIDIA card)");
             }
 
         }
