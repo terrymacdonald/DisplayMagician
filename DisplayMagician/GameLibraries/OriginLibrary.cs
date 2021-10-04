@@ -509,7 +509,6 @@ namespace DisplayMagician.GameLibraries
                                 XDocument xdoc = XDocument.Load(gameInstallerData);
                                 float manifestVersion;
                                 // Try to figure out which version of the client created this game (as they changed their format a lot)
-                                var thing = xdoc.XPathSelectElement("/DiPManifest").Attribute("version").Value;
                                 if (xdoc.XPathSelectElement("/DiPManifest").Attribute("version").Value != null)
                                 {
                                     if (Single.TryParse(xdoc.XPathSelectElement("/DiPManifest").Attribute("version").Value, out manifestVersion))
