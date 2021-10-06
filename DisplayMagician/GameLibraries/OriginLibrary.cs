@@ -10,6 +10,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using System.Web;
 using System.Diagnostics;
+using System.Text;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -587,9 +588,65 @@ namespace DisplayMagician.GameLibraries
                                 {
                                     originGame.GameName = xdoc.XPathSelectElement("/game/metadata/localeInfo[@locale='en_US']/title").Value;
                                     logger.Trace($"OriginLibrary/LoadInstalledGames: Game Name {originGame.GameName} found in Game Installer Data file {gameInstallerData}");
-                                    // This logger format requires more work and help from someon with the right game installed
-                                    logger.Error($"OriginLibrary/LoadInstalledGames: We currently don't have a way to extract the GameExePath from Origin v2.x installer.xml manifest files. Couldn't process {gameInstallerData}. Skipping processing file.");
-                                    continue;
+                                    // This logger format requires more work and help from someone with the right game installed
+                                    string mnsftRelFileName = xdoc.XPathSelectElement("/game/installManifest/filePath").Value;
+                                    string mnsftFullFileName = Path.Combine(originGame.GameInstallDir, mnsftRelFileName);
+                                    logger.Trace($"OriginLibrary/LoadInstalledGames: Game uses a v{manifestVersion} manifest version, so needing to parse mnfst file {mnsftFullFileName} found in Game Installer Data file {gameInstallerData}");
+                                    // read in the mnsft.txt file
+                                    string mnsftData;
+                                    try
+                                    {
+                                        mnsftData = File.ReadAllText(mnsftFullFileName, Encoding.Unicode);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.Error(ex, $"OriginLibrary/LoadInstalledGames: Tried to read the mnfst file {mnsftFullFileName} to memory but File.ReadAllTextthrew an exception. Skipping this game");
+                                        continue;
+                                    }                                    
+                                    // look for a .par file as that will indicate the main exe
+                                    string[] parFiles;
+                                    try
+                                    {
+                                        parFiles = Directory.GetFiles(originGame.GameInstallDir, "*.par", SearchOption.AllDirectories);
+                                        logger.Trace($"OriginLibrary/LoadInstalledGames: Found {parFiles.Length} .par files in the {originGame.GameInstallDir} directory.");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.Error(ex, $"OriginLibrary/LoadInstalledGames: Tried to find any *.par files in the game directory {originGame.GameInstallDir} . Skipping this game");
+                                        continue;
+                                    }
+
+                                    if (parFiles.Length == 0)
+                                    {
+                                        // No par files found :( So lets just try and pick the first exe in the mnfst.txt instead.
+                                        logger.Trace($"OriginLibrary/LoadInstalledGames: No .par files in the {originGame.GameInstallDir} directory, so attempting to get the first exe in the mnsft.txt file.");
+                                        MatchCollection mc = Regex.Matches(mnsftData, @"""([^/]*).exe""");
+                                        if (mc.Count > 0)
+                                        {
+                                            originGame.GameExePath = mc[0].Groups[1].ToString();
+                                            logger.Trace($"OriginLibrary/LoadInstalledGames: originGame.GameExePath = {originGame.GameExePath }");
+                                        }
+                                        logger.Error($"OriginLibrary/LoadInstalledGames: Couldn't find any *.par files in the game directory {originGame.GameInstallDir} . Skipping this game");
+                                    }
+                                    else if (parFiles.Length > 0)
+                                    {
+                                        // Par files found! So lets just try and pick the exe that has the same basename as the par file in the mnfst.txt.
+                                        string parFileBaseName = Path.GetFileNameWithoutExtension(parFiles[0]);
+                                        logger.Trace($"OriginLibrary/LoadInstalledGames: Looking for {parFileBaseName}.exe in the mnsft.txt file as it matches {parFiles[0]}.");
+                                        MatchCollection mc = Regex.Matches(mnsftData, $@"""{parFiles[0]}.exe""");
+                                        if (mc.Count > 0)
+                                        {
+                                            originGame.GameExePath = mc[0].Groups[1].ToString();
+                                            logger.Trace($"OriginLibrary/LoadInstalledGames: originGame.GameExePath = {originGame.GameExePath }");
+                                        }
+                                        logger.Error($"OriginLibrary/LoadInstalledGames: Couldn't find any *.par files in the game directory {originGame.GameInstallDir} . Skipping this game");
+                                    }
+                                    else
+                                    {
+                                        logger.Error($"OriginLibrary/LoadInstalledGames: Count of par files was less than zero. Skipping this game");
+                                        continue;
+                                    }
+
                                 }
                                 else
                                 {
