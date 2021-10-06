@@ -1141,25 +1141,28 @@ namespace DisplayMagician.UIForms
 
             if (_shortcutToEdit != null)
             {
-
-                bool gameStillInstalled = false;
-                foreach (ImageListViewItem gameItem in ilv_games.Items)
+                if (_shortcutToEdit.Category == ShortcutCategory.Game && _shortcutToEdit.GameAppId != null)
                 {
-                    if (gameItem.Text.Equals(_shortcutToEdit.GameName))
+                    bool gameStillInstalled = false;
+                    foreach (ImageListViewItem gameItem in ilv_games.Items)
                     {
-                        gameStillInstalled = true;
-                        break;
-                    }
+                        if (gameItem.Text.Equals(_shortcutToEdit.GameName))
+                        {
+                            gameStillInstalled = true;
+                            break;
+                        }
 
+                    }
+                    if (!gameStillInstalled)
+                    {
+                        DialogResult result = MessageBox.Show(
+                            $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
+                            @"Game no longer exists",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Exclamation);
+                    }
                 }
-                if (!gameStillInstalled)
-                {
-                    DialogResult result = MessageBox.Show(
-                        $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
-                        @"Game no longer exists",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
+                
 
                 if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
                 {
