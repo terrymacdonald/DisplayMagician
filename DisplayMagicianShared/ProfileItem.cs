@@ -701,8 +701,17 @@ namespace DisplayMagicianShared
                                 bool itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig);
                                 if (itWorkedforWindows)
                                 {
-                                    SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
-                                    return true;
+                                    bool itWorkedforNVIDIAColor = NVIDIALibrary.GetLibrary().SetActiveConfigOverride(_nvidiaDisplayConfig);
+
+                                    if (itWorkedforNVIDIAColor)
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIAInfo/loadFromFile: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
+                                        return true;
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIAInfo/loadFromFile: The NVIDIA display settings that override windows within the profile {Name} were NOT applied correctly.");
+                                    }                                
                                 }
                                 else
                                 {
@@ -753,8 +762,17 @@ namespace DisplayMagicianShared
                                 bool itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig);
                                 if (itWorkedforWindows)
                                 {
-                                    SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
-                                    return true;
+                                    bool itWorkedforAMDColor = AMDLibrary.GetLibrary().SetActiveConfigOverride(_amdDisplayConfig);
+
+                                    if (itWorkedforAMDColor)
+                                    {
+                                        SharedLogger.logger.Trace($"AMDInfo/loadFromFile: The AMD display settings that override windows within the profile {Name} were successfully applied.");
+                                        return true;
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"AMDInfo/loadFromFile: The AMD display settings that override windows within the profile {Name} were NOT applied correctly.");
+                                    }                                    
                                 }
                                 else
                                 {
