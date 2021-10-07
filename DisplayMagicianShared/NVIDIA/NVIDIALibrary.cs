@@ -70,6 +70,24 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator !=(NVIDIA_HDR_CONFIG lhs, NVIDIA_HDR_CONFIG rhs) => !(lhs == rhs);
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NVIDIA_COLOR_CONFIG : IEquatable<NVIDIA_COLOR_CONFIG>
+    {
+        public Dictionary<UInt32, NV_COLOR_DATA_V5> ColorData;
+
+        public override bool Equals(object obj) => obj is NVIDIA_COLOR_CONFIG other && this.Equals(other);
+        public bool Equals(NVIDIA_COLOR_CONFIG other)
+        => ColorData.SequenceEqual(other.ColorData);
+
+        public override int GetHashCode()
+        {
+            return (ColorData).GetHashCode();
+        }
+        public static bool operator ==(NVIDIA_COLOR_CONFIG lhs, NVIDIA_COLOR_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVIDIA_COLOR_CONFIG lhs, NVIDIA_COLOR_CONFIG rhs) => !(lhs == rhs);
+    }
+
     /*[StructLayout(LayoutKind.Sequential)]
     public struct NVIDIA_WINDOWS_DISPLAY_CONFIG : IEquatable<NVIDIA_WINDOWS_DISPLAY_CONFIG>
     {
@@ -94,17 +112,19 @@ namespace DisplayMagicianShared.NVIDIA
     {
         public NVIDIA_MOSAIC_CONFIG MosaicConfig;
         public NVIDIA_HDR_CONFIG HdrConfig;
+        public NVIDIA_COLOR_CONFIG ColorConfig;
         // Note: We purposely have left out the DisplayNames from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
         // generating the profile icon.
-        public Dictionary<UInt32, string> DisplayNames; 
+        public Dictionary<UInt32, string> DisplayNames;
         public List<string> DisplayIdentifiers;
 
         public override bool Equals(object obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
-        
+
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
         => MosaicConfig.Equals(other.MosaicConfig) &&
            HdrConfig.Equals(other.HdrConfig) &&
+           ColorConfig.Equals(other.ColorConfig) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
 
         public override int GetHashCode()
@@ -128,6 +148,7 @@ namespace DisplayMagicianShared.NVIDIA
 
         private bool _initialised = false;
         private bool _haveSessionHandle = false;
+        private bool _haveActiveDisplayConfig = false;
 
         // To detect redundant calls
         private bool _disposed = false;
@@ -135,6 +156,7 @@ namespace DisplayMagicianShared.NVIDIA
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _nvapiSessionHandle = IntPtr.Zero;
+        private NVIDIA_DISPLAY_CONFIG _activeDisplayConfig;
 
         static NVIDIALibrary() { }
         public NVIDIALibrary()
@@ -193,12 +215,7 @@ namespace DisplayMagicianShared.NVIDIA
             catch (DllNotFoundException ex)
             {
                 // If this fires, then the DLL isn't available, so we need don't try to do anything else
-                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed (which it won't be if you don't have an NVIDIA card).");
-            }
-            catch (Exception ex)
-            {
-                // If we get here then another problem happened
-                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: General Exception trying to load the NVAPI DLL. This generally means you don't have the NVIDIA NVAPI driver installed  (which it won't be if you don't have an NVIDIA card)");
+                SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed.");
             }
 
         }
@@ -285,6 +302,23 @@ namespace DisplayMagicianShared.NVIDIA
             }
         }
 
+        public NVIDIA_DISPLAY_CONFIG ActiveDisplayConfig
+        {
+            get
+            {
+                if (!_haveActiveDisplayConfig)
+                {
+                    _activeDisplayConfig = GetActiveConfig();
+                    _haveActiveDisplayConfig = true;
+                }
+                return _activeDisplayConfig;
+            }
+            set
+            {
+                _activeDisplayConfig = value;
+            }
+        }
+
 
         public static NVIDIALibrary GetLibrary()
         {
@@ -302,6 +336,7 @@ namespace DisplayMagicianShared.NVIDIA
             myDefaultConfig.MosaicConfig.MosaicViewports = new List<NV_RECT[]>();
             myDefaultConfig.HdrConfig.HdrCapabilities = new Dictionary<uint, NV_HDR_CAPABILITIES_V2>();
             myDefaultConfig.HdrConfig.HdrColorData = new Dictionary<uint, NV_HDR_COLOR_DATA_V2>();
+            myDefaultConfig.ColorConfig.ColorData = new Dictionary<uint, NV_COLOR_DATA_V5>();
             myDefaultConfig.DisplayNames = new Dictionary<uint, string>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
 
@@ -658,10 +693,11 @@ namespace DisplayMagicianShared.NVIDIA
                         }
 
 
-                        // Time to get the HDR capabilities and settings for each display
+                        // Time to get the color settings, HDR capabilities and settings for each display
                         bool isNvHdrEnabled = false;
                         Dictionary<UInt32, NV_HDR_CAPABILITIES_V2> allHdrCapabilities = new Dictionary<UInt32, NV_HDR_CAPABILITIES_V2>();
                         Dictionary<UInt32, NV_HDR_COLOR_DATA_V2> allHdrColorData = new Dictionary<UInt32, NV_HDR_COLOR_DATA_V2>();
+                        Dictionary<UInt32, NV_COLOR_DATA_V5> allColorData = new Dictionary<UInt32, NV_COLOR_DATA_V5>();
                         for (int displayIndex = 0; displayIndex < displayCount; displayIndex++)
                         {
                             if (allDisplays)
@@ -681,7 +717,50 @@ namespace DisplayMagicianShared.NVIDIA
                                 }
                             }
 
+                            // If we've already got the details from the display, then skip it now
+                            if (allColorData.ContainsKey(displayIds[displayIndex].DisplayId))
+                            {
+                                continue;
+                            }
 
+                            // We get the Color Capabilities of the display
+                            NV_COLOR_DATA_V5 colorData = new NV_COLOR_DATA_V5();
+                            // Set the command as a 'GET'
+                            colorData.Cmd = NV_COLOR_CMD.NV_COLOR_CMD_GET;
+                            NVStatus = NVImport.NvAPI_Disp_ColorControl(displayIds[displayIndex].DisplayId, ref colorData);
+                            if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfig: Your monitor {displayIds[displayIndex].DisplayId} has the following color settings set. BPC = {colorData.Bpc.ToString("G")}. Color Format = {colorData.ColorFormat.ToString("G")}. Colorimetry = {colorData.Colorimetry.ToString("G")}. Color Selection Policy = {colorData.ColorSelectionPolicy.ToString("G")}. Color Depth = {colorData.Depth.ToString("G")}. Dynamic Range = {colorData.DynamicRange.ToString("G")}. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                                allColorData.Add(displayIds[displayIndex].DisplayId, colorData);
+                            }
+                            else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                            }
+                            else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                            }
+                            else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                            }
+                            else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                            }
+                            else if (NVStatus == NVAPI_STATUS.NVAPI_NOT_SUPPORTED)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                            }
+                            else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
+                            {
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: A miscellaneous error occurred. NvAPI_Disp_ColorControl() returned error code {NVStatus}.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting HDR color settings! NvAPI_Disp_ColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayIds[displayIndex].DisplayId} doesn't support HDR.");
+                            }
 
                             // Now we get the HDR capabilities of the display
                             NV_HDR_CAPABILITIES_V2 hdrCapabilities = new NV_HDR_CAPABILITIES_V2();
@@ -768,10 +847,11 @@ namespace DisplayMagicianShared.NVIDIA
 
                             // Now we get the HDR colour settings of the display
                             NV_HDR_COLOR_DATA_V2 hdrColorData = new NV_HDR_COLOR_DATA_V2();
+                            hdrColorData.Cmd = NV_HDR_CMD.CMD_GET;
                             NVStatus = NVImport.NvAPI_Disp_HdrColorControl(displayIds[displayIndex].DisplayId, ref hdrColorData);
                             if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                             {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_HdrColorControl returned OK. HDR mode is currently {hdrColorData.HdrMode.ToString("G")}.");
+                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_HdrColorControl returned OK. HDR mode is set to {hdrColorData.HdrMode.ToString("G")}.");
                                 if (hdrColorData.HdrMode != NV_HDR_MODE.OFF)
                                 {
                                     isNvHdrEnabled = true;
@@ -808,6 +888,7 @@ namespace DisplayMagicianShared.NVIDIA
                         myDisplayConfig.HdrConfig.IsNvHdrEnabled = isNvHdrEnabled;
                         myDisplayConfig.HdrConfig.HdrCapabilities = allHdrCapabilities;
                         myDisplayConfig.HdrConfig.HdrColorData = allHdrColorData;
+                        myDisplayConfig.ColorConfig.ColorData = allColorData;
 
                     }
 
@@ -1065,6 +1146,19 @@ namespace DisplayMagicianShared.NVIDIA
             }
 
             // Start printing out things
+            stringToReturn += $"\n****** NVIDIA COLOR CONFIG *******\n";
+            foreach (KeyValuePair<uint, NV_COLOR_DATA_V5> colorData in displayConfig.ColorConfig.ColorData)
+            {
+                string displayId = colorData.Key.ToString();
+                stringToReturn += $"Display {displayId} BPC is {colorData.Value.Bpc.ToString("G")}.\n";
+                stringToReturn += $"Display {displayId} ColorFormat is {colorData.Value.ColorFormat.ToString("G")}.\n";
+                stringToReturn += $"Display {displayId} Colorimetry is {colorData.Value.Colorimetry.ToString("G")}.\n";
+                stringToReturn += $"Display {displayId} ColorSelectionPolicy is {colorData.Value.ColorSelectionPolicy.ToString("G")}.\n";
+                stringToReturn += $"Display {displayId} Depth is {colorData.Value.Depth.ToString("G")}.\n";
+                stringToReturn += $"Display {displayId} DynamicRange is {colorData.Value.DynamicRange.ToString("G")}.\n";
+            }
+
+            // Start printing out HDR things
             stringToReturn += $"\n****** NVIDIA HDR CONFIG *******\n";
             if (displayConfig.HdrConfig.IsNvHdrEnabled)
             {
@@ -1146,8 +1240,6 @@ namespace DisplayMagicianShared.NVIDIA
             {
 
                 NVAPI_STATUS NVStatus = NVAPI_STATUS.NVAPI_ERROR;
-                // We want to get the current config
-                NVIDIA_DISPLAY_CONFIG currentDisplayConfig = GetNVIDIADisplayConfig();
 
                 // We want to check the NVIDIA Surround (Mosaic) config is valid
                 SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Testing whether the display configuration is valid");
@@ -1206,7 +1298,7 @@ namespace DisplayMagicianShared.NVIDIA
                     }
 
                 }
-                else if (!displayConfig.MosaicConfig.IsMosaicEnabled && currentDisplayConfig.MosaicConfig.IsMosaicEnabled)
+                else if (!displayConfig.MosaicConfig.IsMosaicEnabled && ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
                 {
                     // We are on a Mosaic profile now, and we need to change to a non-Mosaic profile
                     // We need to disable the Mosaic Topology
@@ -1257,21 +1349,31 @@ namespace DisplayMagicianShared.NVIDIA
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Some non standard error occurred while getting Mosaic Topology! NvAPI_Mosaic_EnableCurrentTopo() returned error code {NVStatus}");
                     }
                 }
-                else if (!displayConfig.MosaicConfig.IsMosaicEnabled && !currentDisplayConfig.MosaicConfig.IsMosaicEnabled)
+                else if (!displayConfig.MosaicConfig.IsMosaicEnabled && !ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
                 {
                     // We are on a non-Mosaic profile now, and we are changing to a non-Mosaic profile
                     // so there is nothing to do as far as NVIDIA is concerned!
                     SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We are on a non-Mosaic profile now, and we are changing to a non-Mosaic profile so there is nothing to do as far as NVIDIA is concerned!");
                 }
 
-                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Waiting 0.5 seconds to let the display change take place before adjusting the NVIDIA HDR settings");
-                System.Threading.Thread.Sleep(500);
+            }
+            return true;
+        }
+
+        public bool SetActiveConfigOverride(NVIDIA_DISPLAY_CONFIG displayConfig)
+        {
+
+            if (_initialised)
+            {
+
+                NVAPI_STATUS NVStatus = NVAPI_STATUS.NVAPI_ERROR;
 
                 // Now, we have the current HDR settings, and the existing HDR settings, so we go through and we attempt to set each display color settings
                 foreach (var wantedHdrColorData in displayConfig.HdrConfig.HdrColorData)
                 {
                     // Now we set the HDR colour settings of the display
                     NV_HDR_COLOR_DATA_V2 hdrColorData = wantedHdrColorData.Value;
+                    hdrColorData.Cmd = NV_HDR_CMD.CMD_SET;
                     NVStatus = NVImport.NvAPI_Disp_HdrColorControl(wantedHdrColorData.Key, ref hdrColorData);
                     if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                     {
@@ -1303,6 +1405,51 @@ namespace DisplayMagicianShared.NVIDIA
                     }
                 }
 
+                //SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Waiting 0.5 seconds to let the display change take place before adjusting the NVIDIA HDR settings");
+                //System.Threading.Thread.Sleep(500);
+
+                // Now, we have the current color settings to set, so we go through and we attempt to set each display color settings
+                foreach (var wantedColorData in displayConfig.ColorConfig.ColorData)
+                {
+                    // Now we set the colour settings of the display (non-HDR settings)
+                    NV_COLOR_DATA_V5 colorData = wantedColorData.Value;
+                    // Set the command as a 'SET'
+                    colorData.Cmd = NV_COLOR_CMD.NV_COLOR_CMD_SET;
+                    NVStatus = NVImport.NvAPI_Disp_ColorControl(wantedColorData.Key, ref colorData);
+                    if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_ColorControl returned OK. BPC is set to {colorData.Bpc.ToString("G")}. Color Format is set to {colorData.ColorFormat.ToString("G")}. Colorimetry is set to {colorData.Colorimetry.ToString("G")}. Color Selection Policy is set to {colorData.ColorSelectionPolicy.ToString("G")}. Color Depth is set to {colorData.Depth.ToString("G")}. Dynamic Range is set to {colorData.DynamicRange.ToString("G")}");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_NOT_SUPPORTED)
+                    {
+                        SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfig: Your monitor {wantedColorData.Key} doesn't support the requested color settings. BPC = {colorData.Bpc.ToString("G")}. Color Format = {colorData.ColorFormat.ToString("G")}. Colorimetry = {colorData.Colorimetry.ToString("G")}. Color Selection Policy = {colorData.ColorSelectionPolicy.ToString("G")}. Color Depth = {colorData.Depth.ToString("G")}. Dynamic Range = {colorData.DynamicRange.ToString("G")}. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
+                    {
+                        SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
+                    {
+                        SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
+                    {
+                        SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
+                    {
+                        SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                    }
+                    else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
+                    {
+                        SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfig: A miscellaneous error occurred. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Some non standard error occurred while seting the color settings! NvAPI_Disp_ColorControl() returned error code {NVStatus}. It's most likely that your monitor {wantedColorData.Key} doesn't support this color mode.");
+                    }
+                }
+
             }
             else
             {
@@ -1319,11 +1466,11 @@ namespace DisplayMagicianShared.NVIDIA
         {
             // Get the current windows display configs to compare to the one we loaded
             bool allDisplays = false;
-            NVIDIA_DISPLAY_CONFIG currentDisplayConfig = GetNVIDIADisplayConfig(allDisplays);
+            _activeDisplayConfig = GetNVIDIADisplayConfig(allDisplays);
 
             // Check whether the display config is in use now
             SharedLogger.logger.Trace($"NVIDIALibrary/IsActiveConfig: Checking whether the display configuration is already being used.");
-            if (displayConfig.Equals(currentDisplayConfig))
+            if (displayConfig.Equals(_activeDisplayConfig))
             {
                 SharedLogger.logger.Trace($"NVIDIALibrary/IsActiveConfig: The display configuration is already being used (supplied displayConfig Equals currentDisplayConfig");
                 return true;
@@ -1809,7 +1956,7 @@ namespace DisplayMagicianShared.NVIDIA
                             // We want to skip this display as it is non-active, and we only want active displays
                             continue;
                         }
-                       
+
 
                         // Now we try to get the GPU and Output ID from the DisplayID
                         PhysicalGpuHandle physicalGpu = new PhysicalGpuHandle();

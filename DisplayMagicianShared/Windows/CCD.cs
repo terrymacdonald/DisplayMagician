@@ -519,7 +519,7 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_PATH_SOURCE_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_PATH_SOURCE_INFO other)
             => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after a reboot.
-                //Id == other.Id &&  // Removed the ID from the list as the Display ID it maps to will change after a switch from surround to non-surround profile
+               //Id == other.Id &&  // Removed the ID from the list as the Display ID it maps to will change after a switch from surround to non-surround profile
                 ModeInfoIdx == other.ModeInfoIdx &&
                 StatusFlags.Equals(other.StatusFlags);
 

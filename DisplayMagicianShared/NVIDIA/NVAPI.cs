@@ -472,12 +472,12 @@ namespace DisplayMagicianShared.NVIDIA
     {
         VALID = 0x00000000,  //!< The topology is valid
         MISSING_GPU = 0x00000001,   //!< Not enough SLI GPUs were found to fill the entire
-                                                            //! topology. hPhysicalGPU will be 0 for these.
+                                    //! topology. hPhysicalGPU will be 0 for these.
         MISSING_DISPLAY = 0x00000002,   //!< Not enough displays were found to fill the entire
-                                                                //! topology. displayOutputId will be 0 for these.
+                                        //! topology. displayOutputId will be 0 for these.
         MIXED_DISPLAY_TYPES = 0x00000004,   //!< The topoogy is only possible with displays of the same
-                                                                    //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
-                                                                    //! sure they are all CRTs, or all DFPs.
+                                            //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
+                                            //! sure they are all CRTs, or all DFPs.
     }
 
     public enum NV_GPU_BUS_TYPE : UInt32
@@ -525,7 +525,7 @@ namespace DisplayMagicianShared.NVIDIA
 
     }
 
-    public enum NV_COLOR_FORMAT : UInt32
+    public enum NV_COLOR_FORMAT : byte
     {
         RGB = 0,
         YUV422,
@@ -536,8 +536,36 @@ namespace DisplayMagicianShared.NVIDIA
         AUTO = 0xFF
     }
 
+    public enum NV_DYNAMIC_RANGE : byte
+    {
+        VESA = 0x0,
+        CEA = 0x1,
 
-    public enum NV_DYNAMIC_RANGE : UInt32
+        AUTO = 0xFF
+    }
+
+    public enum NV_BPC : byte
+    {
+        BPC_DEFAULT = 0,
+        BPC_6 = 1,
+        BPC_8 = 2,
+        BPC_10 = 3,
+        BPC_12 = 4,
+        BPC_16 = 5,
+    }
+
+    public enum NV_HDR_COLOR_FORMAT : UInt32
+    {
+        RGB = 0,
+        YUV422,
+        YUV444,
+        YUV420,
+
+        DEFAULT = 0xFE,
+        AUTO = 0xFF
+    }
+
+    public enum NV_HDR_DYNAMIC_RANGE : UInt32
     {
         VESA = 0x0,
         CEA = 0x1,
@@ -546,14 +574,49 @@ namespace DisplayMagicianShared.NVIDIA
     }
 
 
-    public enum NV_BPC : UInt32
+    public enum NV_COLOR_CMD : byte
     {
-        BPC_DEFAULT = 0,
-        BPC_6 = 1,
-        BPC_8 = 2,
-        BPC_10 = 3,
-        BPC_12 = 4,
-        BPC_16 = 5,
+        NV_COLOR_CMD_GET = 1,
+        NV_COLOR_CMD_SET,
+        NV_COLOR_CMD_IS_SUPPORTED_COLOR,
+        NV_COLOR_CMD_GET_DEFAULT
+    }
+
+    public enum NV_COLOR_COLORIMETRY : UInt32
+    {
+        NV_COLOR_COLORIMETRY_RGB = 0,
+        NV_COLOR_COLORIMETRY_YCC601,
+        NV_COLOR_COLORIMETRY_YCC709,
+        NV_COLOR_COLORIMETRY_XVYCC601,
+        NV_COLOR_COLORIMETRY_XVYCC709,
+        NV_COLOR_COLORIMETRY_SYCC601,
+        NV_COLOR_COLORIMETRY_ADOBEYCC601,
+        NV_COLOR_COLORIMETRY_ADOBERGB,
+        NV_COLOR_COLORIMETRY_BT2020RGB,
+        NV_COLOR_COLORIMETRY_BT2020YCC,
+        NV_COLOR_COLORIMETRY_BT2020cYCC,
+
+        NV_COLOR_COLORIMETRY_DEFAULT = 0xFE,
+        NV_COLOR_COLORIMETRY_AUTO = 0xFF
+    }
+
+    public enum NV_COLOR_SELECTION_POLICY : UInt32
+    {
+        NV_COLOR_SELECTION_POLICY_USER = 0,     //!< app/nvcpl make decision to select the desire color format
+        NV_COLOR_SELECTION_POLICY_BEST_QUALITY = 1, //!< driver/ OS make decision to select the best color format
+        NV_COLOR_SELECTION_POLICY_DEFAULT = NV_COLOR_SELECTION_POLICY_BEST_QUALITY,
+        NV_COLOR_SELECTION_POLICY_UNKNOWN = 0xFF,
+    }
+
+    public enum NV_DESKTOP_COLOR_DEPTH
+    {
+        NV_DESKTOP_COLOR_DEPTH_DEFAULT = 0x0,                                    // set if the current setting should be kept
+        NV_DESKTOP_COLOR_DEPTH_8BPC = 0x1,                                    //8 bit int per color component (8 bit int alpha)
+        NV_DESKTOP_COLOR_DEPTH_10BPC = 0x2,                                    //10 bit int per color component (2 bit int alpha)
+        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT = 0x3,                                    //16 bit float per color component (16 bit float alpha)
+        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_WCG = 0x4,                                    //16 bit float per color component (16 bit float alpha) wide color gamut
+        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR = 0x5,                                    //16 bit float per color component (16 bit float alpha) HDR
+        NV_DESKTOP_COLOR_DEPTH_MAX_VALUE = NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR, // must be set to highest enum value
     }
 
     [Flags]
@@ -1298,12 +1361,12 @@ namespace DisplayMagicianShared.NVIDIA
 
         public bool TopologyValid => ValidityMask == 0; //!< The topology is valid
         public bool TopologyMissingGPU => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_GPU); //!< Not enough SLI GPUs were found to fill the entire
-                                                                                                                             //! topology. hPhysicalGPU will be 0 for these.
+                                                                                                     //! topology. hPhysicalGPU will be 0 for these.
         public bool TopologyMissingDisplay => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_DISPLAY);//!< Not enough displays were found to fill the entire
-                                                                                                                                    //! topology. displayOutputId will be 0 for these.
+                                                                                                            //! topology. displayOutputId will be 0 for these.
         public bool TopologyMixedDisplayTypes => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MIXED_DISPLAY_TYPES);//!< The topoogy is only possible with displays of the same
-                                                                                                                                           //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
-                                                                                                                                           //! sure they are all CRTs, or all DFPs.
+                                                                                                                   //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
+                                                                                                                   //! sure they are all CRTs, or all DFPs.
 
         public override Int32 GetHashCode()
         {
@@ -1799,8 +1862,8 @@ namespace DisplayMagicianShared.NVIDIA
         public NV_HDR_MODE HdrMode;                                 //!< HDR mode
         public NV_STATIC_METADATA_DESCRIPTOR_ID StaticMetadataDescriptorId;           //!< Static Metadata Descriptor Id (0 for static metadata type 1)
         public NV_HDR_COLOR_DISPLAY_DATA MasteringDisplayData; //!< Static Metadata Descriptor Type 1, CEA-861.3, SMPTE ST2086
-        public NV_COLOR_FORMAT HdrColorFormat;                                     //!< Optional, One of NV_COLOR_FORMAT enum values, if set it will apply requested color format for HDR session
-        public NV_DYNAMIC_RANGE HdrDynamicRange;                                    //!< Optional, One of NV_DYNAMIC_RANGE enum values, if set it will apply requested dynamic range for HDR session
+        public NV_HDR_COLOR_FORMAT HdrColorFormat;                                     //!< Optional, One of NV_COLOR_FORMAT enum values, if set it will apply requested color format for HDR session
+        public NV_HDR_DYNAMIC_RANGE HdrDynamicRange;                                    //!< Optional, One of NV_DYNAMIC_RANGE enum values, if set it will apply requested dynamic range for HDR session
         public NV_BPC HdrBpc;                                             //!< Optional, One of NV_BPC enum values, if set it will apply requested color depth
                                                                           //!< Dolby Vision mode: DV supports specific combinations of colorformat, dynamic range and bpc. Please refer Dolby Vision specification.
                                                                           //!<                    If invalid or no combination is passed driver will force default combination of RGB format + full range + 8bpc.
@@ -1865,6 +1928,40 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_HDR_COLOR_DISPLAY_DATA lhs, NV_HDR_COLOR_DISPLAY_DATA rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_HDR_COLOR_DISPLAY_DATA lhs, NV_HDR_COLOR_DISPLAY_DATA rhs) => !(lhs == rhs);
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_COLOR_DATA_V5 : IEquatable<NV_COLOR_DATA_V5>
+    {
+        public UInt32 Version; //!< Version of this structure
+        public UInt16 Size;    //!< Size of this structure
+        public NV_COLOR_CMD Cmd;
+        public NV_COLOR_FORMAT ColorFormat;          //!< One of NV_COLOR_FORMAT enum values.
+        public NV_COLOR_COLORIMETRY Colorimetry;          //!< One of NV_COLOR_COLORIMETRY enum values.
+        public NV_DYNAMIC_RANGE DynamicRange;         //!< One of NV_DYNAMIC_RANGE enum values.
+        public NV_BPC Bpc;                  //!< One of NV_BPC enum values.
+        public NV_COLOR_SELECTION_POLICY ColorSelectionPolicy; //!< One of the color selection policy
+        public NV_DESKTOP_COLOR_DEPTH Depth;                //!< One of NV_DESKTOP_COLOR_DEPTH enum values.    
+
+        public override bool Equals(object obj) => obj is NV_COLOR_DATA_V5 other && this.Equals(other);
+        public bool Equals(NV_COLOR_DATA_V5 other)
+        => Version == other.Version &&
+           Size == other.Size &&
+           Cmd == other.Cmd &&
+           ColorFormat == other.ColorFormat &&
+           Colorimetry == other.Colorimetry &&
+           DynamicRange == other.DynamicRange &&
+            Bpc == other.Bpc &&
+            ColorSelectionPolicy == other.ColorSelectionPolicy &&
+            Depth == other.Depth;
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, Size, Cmd, ColorFormat, Colorimetry, DynamicRange, Bpc, ColorSelectionPolicy, Depth).GetHashCode();
+        }
+        public static bool operator ==(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => !(lhs == rhs);
     }
 
     // ==================================
@@ -1938,6 +2035,7 @@ namespace DisplayMagicianShared.NVIDIA
         public static UInt32 NV_MOSAIC_SUPPORTED_TOPO_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_SUPPORTED_TOPO_INFO_V1>(1);
         public static UInt32 NV_MOSAIC_SUPPORTED_TOPO_INFO_V2_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_SUPPORTED_TOPO_INFO_V2>(2);
         public static UInt32 NV_HDR_COLOR_DATA_V2_VER = MAKE_NVAPI_VERSION<NV_HDR_COLOR_DATA_V2>(2);
+        public static UInt32 NV_COLOR_DATA_V5_VER = MAKE_NVAPI_VERSION<NV_COLOR_DATA_V5>(5);
         public static UInt32 NV_HDR_CAPABILITIES_V2_VER = MAKE_NVAPI_VERSION<NV_HDR_CAPABILITIES_V2>(2);
         public static UInt32 NV_MOSAIC_DISPLAY_TOPO_STATUS_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_DISPLAY_TOPO_STATUS_V1>(1);
         public static UInt32 NV_GPU_DISPLAYIDS_V2_VER = MAKE_NVAPI_VERSION<NV_GPU_DISPLAYIDS_V2>(3); // NOTE: There is a bug in R470 that sets the NV_GPU_DISPLAYIDS_V2 version to 3!
@@ -2078,6 +2176,7 @@ namespace DisplayMagicianShared.NVIDIA
                 GetDelegate(NvId_DISP_GetGDIPrimaryDisplayId, out DISP_GetGDIPrimaryDisplayIdInternal);
                 GetDelegate(NvId_Disp_GetHdrCapabilities, out Disp_GetHdrCapabilitiesInternal);
                 GetDelegate(NvId_Disp_HdrColorControl, out Disp_HdrColorControlInternal);
+                GetDelegate(NvId_Disp_ColorControl, out Disp_ColorControlInternal);
                 /*GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
                 GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission*/
                 GetDelegate(NvId_DISP_GetDisplayIdByDisplayName, out DISP_GetDisplayIdByDisplayNameInternal);
@@ -4012,6 +4111,26 @@ namespace DisplayMagicianShared.NVIDIA
             NVAPI_STATUS status;
             pHdrColorData.Version = NVImport.NV_HDR_COLOR_DATA_V2_VER;
             if (Disp_HdrColorControlInternal != null) { status = Disp_HdrColorControlInternal(displayId, ref pHdrColorData); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_Disp_ColorControl(__in NvU32 displayId, __inout NV_HDR_COLOR_DATA *pHdrColorData);
+        private delegate NVAPI_STATUS Disp_ColorControlDelegate(
+            [In] UInt32 displayId,
+            [In][Out] ref NV_COLOR_DATA_V5 colorData);
+        private static readonly Disp_ColorControlDelegate Disp_ColorControlInternal;
+        /// <summary>
+        //!  This API gets and sets the color capabilities of the display.
+        /// <param name="displayId"></param>
+        /// <param name="colorData"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_Disp_ColorControl(UInt32 displayId, ref NV_COLOR_DATA_V5 colorData)
+        {
+            NVAPI_STATUS status;
+            colorData.Version = NVImport.NV_COLOR_DATA_V5_VER;
+            if (Disp_ColorControlInternal != null) { status = Disp_ColorControlInternal(displayId, ref colorData); }
             else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
 
             return status;

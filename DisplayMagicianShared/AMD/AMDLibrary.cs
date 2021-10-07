@@ -160,6 +160,7 @@ namespace DisplayMagicianShared.AMD
         private static WinLibrary _winLibrary = new WinLibrary();
 
         private bool _initialised = false;
+        private bool _haveActiveDisplayConfig = false;
 
         // To detect redundant calls
         private bool _disposed = false;
@@ -167,6 +168,7 @@ namespace DisplayMagicianShared.AMD
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _adlContextHandle = IntPtr.Zero;
+        private AMD_DISPLAY_CONFIG _activeDisplayConfig;
 
         static AMDLibrary() { }
         public AMDLibrary()
@@ -209,13 +211,9 @@ namespace DisplayMagicianShared.AMD
             catch (DllNotFoundException ex)
             {
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
-                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: DLL Not Found Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed (which it won't be if you don't have an AMD card)");
+                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
             }
-            catch (Exception ex)
-            {
-                // If we get here then something else happened
-                SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: General Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed (which it won't be if you don't have an AMD card)");
-            }
+
         }
 
         ~AMDLibrary()
@@ -275,6 +273,23 @@ namespace DisplayMagicianShared.AMD
             {
                 // A list of all the matching PCI Vendor IDs are per https://www.pcilookup.com/?ven=amd&dev=&action=submit
                 return new List<string>() { "1002" };
+            }
+        }
+
+        public AMD_DISPLAY_CONFIG ActiveDisplayConfig
+        {
+            get
+            {
+                if (!_haveActiveDisplayConfig)
+                {
+                    _activeDisplayConfig = GetActiveConfig();
+                    _haveActiveDisplayConfig = true;
+                }
+                return _activeDisplayConfig;
+            }
+            set
+            {
+                _activeDisplayConfig = value;
             }
         }
 
@@ -1298,9 +1313,6 @@ namespace DisplayMagicianShared.AMD
                 // Set the initial state of the ADL_STATUS
                 ADL_STATUS ADLRet = 0;
 
-                // We want to get the current config
-                AMD_DISPLAY_CONFIG currentDisplayConfig = GetAMDDisplayConfig();
-
                 // set the display locations
                 if (displayConfig.SlsConfig.IsSlsEnabled)
                 {
@@ -1371,12 +1383,12 @@ namespace DisplayMagicianShared.AMD
                     // We need to change to a plain, non-Eyefinity (SLS) profile, so we need to disable any SLS Topologies if they are being used
                     SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is not used in the new display configuration, so we need to set it to disabled if it's configured currently");
 
-                    if (currentDisplayConfig.SlsConfig.IsSlsEnabled)
+                    if (ActiveDisplayConfig.SlsConfig.IsSlsEnabled)
                     {
                         // We need to disable the current Eyefinity (SLS) profile to turn it off
                         SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is enabled in the current display configuration, so we need to turn it off");
 
-                        foreach (AMD_SLSMAP_CONFIG slsMapConfig in currentDisplayConfig.SlsConfig.SLSMapConfigs)
+                        foreach (AMD_SLSMAP_CONFIG slsMapConfig in ActiveDisplayConfig.SlsConfig.SLSMapConfigs)
                         {
                             // Turn off this SLS Map Config
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap.SLSMapIndex, ADLImport.ADL_FALSE);
@@ -1395,6 +1407,24 @@ namespace DisplayMagicianShared.AMD
 
                 }
 
+            }
+            else
+            {
+                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
+                throw new AMDLibraryException($"Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
+            }
+
+            return true;
+        }
+
+
+        public bool SetActiveConfigOverride(AMD_DISPLAY_CONFIG displayConfig)
+        {
+            if (_initialised)
+            {
+                // Set the initial state of the ADL_STATUS
+                ADL_STATUS ADLRet = 0;
+
                 // We want to set the AMD HDR settings now
                 // We got through each of the attached displays and set the HDR
 
@@ -1402,7 +1432,7 @@ namespace DisplayMagicianShared.AMD
                 foreach (var hdrConfig in displayConfig.HdrConfigs)
                 {
                     // Try and find the HDR config displays in the list of currently connected displays
-                    foreach (var displayInfoItem in currentDisplayConfig.DisplayTargets)
+                    foreach (var displayInfoItem in ActiveDisplayConfig.DisplayTargets)
                     {
                         // If we find the HDR config display in the list of currently connected displays then try to set the HDR setting we recorded earlier
                         if (hdrConfig.Key == displayInfoItem.DisplayID.DisplayLogicalIndex)
@@ -1436,16 +1466,16 @@ namespace DisplayMagicianShared.AMD
                     }
 
                 }
-
             }
             else
             {
-                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
-                throw new AMDLibraryException($"Tried to run SetActiveConfig but the AMD ADL library isn't initialised!");
+                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
+                throw new AMDLibraryException($"Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
             }
-
             return true;
         }
+
+
 
         public bool IsActiveConfig(AMD_DISPLAY_CONFIG displayConfig)
         {

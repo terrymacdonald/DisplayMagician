@@ -736,7 +736,7 @@ namespace DisplayMagicianShared.Windows
                 {
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found SDR White Level: {whiteLevelInfo.SDRWhiteLevel} for target {path.TargetInfo.Id}.");
 
-                    stringToReturn += $"****** Interrogating SDR Whilte Level for Display {path.TargetInfo.Id} *******\n";
+                    stringToReturn += $"****** Interrogating SDR White Level for Display {path.TargetInfo.Id} *******\n";
                     stringToReturn += $" SDR White Level: {whiteLevelInfo.SDRWhiteLevel}\n";
                     stringToReturn += $"\n";
                 }
