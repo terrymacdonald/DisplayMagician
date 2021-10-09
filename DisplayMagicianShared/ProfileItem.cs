@@ -701,7 +701,7 @@ namespace DisplayMagicianShared
                                 bool itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig);
                                 if (itWorkedforWindows)
                                 {
-                                    bool itWorkedforNVIDIAColor = NVIDIALibrary.GetLibrary().SetActiveConfigOverride(_nvidiaDisplayConfig);
+                                    bool itWorkedforNVIDIAColor = nvidiaLibrary.SetActiveConfigOverride(_nvidiaDisplayConfig);
 
                                     if (itWorkedforNVIDIAColor)
                                     {
@@ -762,7 +762,7 @@ namespace DisplayMagicianShared
                                 bool itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig);
                                 if (itWorkedforWindows)
                                 {
-                                    bool itWorkedforAMDColor = AMDLibrary.GetLibrary().SetActiveConfigOverride(_amdDisplayConfig);
+                                    bool itWorkedforAMDColor = amdLibrary.SetActiveConfigOverride(_amdDisplayConfig);
 
                                     if (itWorkedforAMDColor)
                                     {

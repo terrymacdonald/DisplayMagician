@@ -393,7 +393,7 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_RATIONAL other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_RATIONAL other)
             => Numerator == other.Numerator &&
-                Denominator == other.Denominator;
+               Denominator == other.Denominator;
 
         public override int GetHashCode()
         {
