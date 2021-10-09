@@ -681,7 +681,7 @@ namespace DisplayMagicianShared
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
                 if (nvidiaLibrary.IsInstalled)
                 {
-                    if (!nvidiaLibrary.IsActiveConfig(_nvidiaDisplayConfig) && !winLibrary.IsActiveConfig(_windowsDisplayConfig))
+                    if (!(nvidiaLibrary.IsActiveConfig(_nvidiaDisplayConfig) && winLibrary.IsActiveConfig(_windowsDisplayConfig)))
                     {
                         if (nvidiaLibrary.IsPossibleConfig(_nvidiaDisplayConfig))
                         {
@@ -742,7 +742,7 @@ namespace DisplayMagicianShared
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
                 if (amdLibrary.IsInstalled)
                 {
-                    if (!amdLibrary.IsActiveConfig(_amdDisplayConfig) && !winLibrary.IsActiveConfig(_windowsDisplayConfig))
+                    if (!(amdLibrary.IsActiveConfig(_amdDisplayConfig) && winLibrary.IsActiveConfig(_windowsDisplayConfig)))
                     {
                         if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
                         {
@@ -1542,6 +1542,7 @@ namespace DisplayMagicianShared
         {
             return (Name ?? Language.UN_TITLED_PROFILE);
         }
+
     }
 }
 

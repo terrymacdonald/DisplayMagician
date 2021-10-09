@@ -11,6 +11,7 @@ using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.Serialization;
+using Newtonsoft.Json.Linq;
 
 namespace DisplayMagicianShared
 {
@@ -693,11 +694,17 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
                 }
 
+                // Migrate any previous entries to the latest version of the file format to the latest one
+                json = MigrateJsonToLatestVersion(json);
+
+
                 if (!string.IsNullOrWhiteSpace(json))
                 {
+                    List<string> jsonErrors = new List<string>();
+
                      try
                     {
-                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, new JsonSerializerSettings
+                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Error,
                             NullValueHandling = NullValueHandling.Include,
@@ -706,12 +713,32 @@ namespace DisplayMagicianShared
                             //DefaultValueHandling = DefaultValueHandling.Ignore,
                             TypeNameHandling = TypeNameHandling.Auto,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
-                        });
+                            
+                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            {
+                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                args.ErrorContext.Handled = true;
+                            },
+                        };                       
+                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);                       
+
                     }
                     catch (Exception ex) 
                     { 
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
+
+                    // If we have any JSON.net errors, then we need to records them in the logs
+                    if (jsonErrors.Count > 0)
+                    {
+                        foreach (string jsonError in jsonErrors)
+                        {
+                            SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: {jsonErrors}");
+                        }
+                    }
+
+                    // We need to try and 
+
 
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
 
@@ -749,6 +776,68 @@ namespace DisplayMagicianShared
             IsPossibleRefresh();
 
             return true;
+        }        
+
+        public static string MigrateJsonToLatestVersion(string json)
+        {
+
+            bool changedJson = false;
+            JArray root = new JArray();
+            try
+            {
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Processing the Profiles json data to migrate any older feature to the latest version.");
+                root = JArray.Parse(json);
+            }
+            catch(JsonReaderException ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+            catch(Exception ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+
+
+            // Now we try and add a default NVIDIA Color Settings if there isn't one
+            try
+            {
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing NVIDIA Color Config.");
+
+                // Create a default object
+                NVIDIA_DISPLAY_CONFIG myDefaultConfig = new NVIDIA_DISPLAY_CONFIG();
+                myDefaultConfig.ColorConfig.ColorData = new Dictionary<uint, NV_COLOR_DATA_V5>();
+                JObject defaultColorConfig = (JObject)JToken.FromObject(myDefaultConfig.ColorConfig);
+
+                for (int i=0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+                    JObject result = (JObject)profile.SelectToken("NVIDIADisplayConfig.ColorConfig.ColorData");
+                    if (result == null)
+                    {                        
+                        
+                        JObject NVIDIADisplayConfig = (JObject)profile.SelectToken("NVIDIADisplayConfig");
+                        NVIDIADisplayConfig.Add("ColorConfig",defaultColorConfig);
+                        changedJson = true;
+                    }
+                }                
+            }
+            catch (JsonReaderException ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+
+            // Now write the changed json to the json string but only if we've changed something
+            if (changedJson)
+            {
+                json = root.ToString(Formatting.Indented);
+            }            
+
+
+            return json;
         }
 
         public static bool SaveProfiles()
@@ -782,11 +871,14 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Profiles folder {AppProfileStoragePath} exists.");
             }
+
+            List<string> jsonErrors = new List<string>();
+
             try
             {
                 SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Converting the objects to JSON format.");
 
-                var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, new JsonSerializerSettings
+                JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
                     //NullValueHandling = NullValueHandling.Ignore,
@@ -795,7 +887,13 @@ namespace DisplayMagicianShared
                     TypeNameHandling = TypeNameHandling.Auto,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
-                });
+                    Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                    {
+                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                        args.ErrorContext.Handled = true;
+                    },
+                };
+                var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, mySerializerSettings);
 
 
                 if (!string.IsNullOrWhiteSpace(json))
@@ -809,6 +907,15 @@ namespace DisplayMagicianShared
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFileName}.");
+            }
+
+            // If we have any JSON.net errors, then we need to records them in the logs
+            if (jsonErrors.Count > 0)
+            {
+                foreach (string jsonError in jsonErrors)
+                {
+                    SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: {jsonErrors}");
+                }
             }
 
             return false;

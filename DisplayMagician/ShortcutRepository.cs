@@ -402,20 +402,41 @@ namespace DisplayMagician
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
                     List<ShortcutItem> shortcuts = new List<ShortcutItem>();
 #pragma warning restore IDE0059 // Unnecessary assignment of a value
+
+                    List<string> jsonErrors = new List<string>();
                     try
                     {
-                        _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, new JsonSerializerSettings
+                        
+
+                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Include,
-                            TypeNameHandling = TypeNameHandling.Auto
-                        });
+                            TypeNameHandling = TypeNameHandling.Auto,
+                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            {
+                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                args.ErrorContext.Handled = true;
+                            },
+                        };
+
+                        _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, mySerializerSettings);
+                        
                     }
                     catch (Exception ex)
                     {
                         logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the SHortcut JSON file!");
                         throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the SHortcut JSON file!");
+                    }
+
+                    // If we have any JSON.net errors, then we need to records them in the logs
+                    if (jsonErrors.Count > 0)
+                    {
+                        foreach (string jsonError in jsonErrors)
+                        {
+                            logger.Error($"ShortcutRepository/LoadShortcuts: {jsonErrors}");
+                        }
                     }
 
                     // Lookup all the Profile Names in the Saved Profiles
@@ -499,17 +520,24 @@ namespace DisplayMagician
             }
 
 
+            List<string> jsonErrors = new List<string>();
+
             try
             {
                 logger.Debug($"ShortcutRepository/SaveShortcuts: Converting the objects to JSON format.");
 
-                var json = JsonConvert.SerializeObject(_allShortcuts, Formatting.Indented, new JsonSerializerSettings
+                JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Populate,
-                    TypeNameHandling = TypeNameHandling.Auto
-
-                });
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                    {
+                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                        args.ErrorContext.Handled = true;
+                    },
+                };
+                var json = JsonConvert.SerializeObject(_allShortcuts, Formatting.Indented, mySerializerSettings);
 
 
                 if (!string.IsNullOrWhiteSpace(json))
@@ -523,6 +551,15 @@ namespace DisplayMagician
             catch (Exception ex)
             {
                 logger.Error(ex, $"ShortcutRepository/SaveShortcuts: Unable to save the shortcut repository to the {_shortcutStorageJsonFileName}.");
+            }
+
+            // If we have any JSON.net errors, then we need to records them in the logs
+            if (jsonErrors.Count > 0)
+            {
+                foreach (string jsonError in jsonErrors)
+                {
+                    logger.Error($"ProfileRepository/SaveProfiles: {jsonErrors}");
+                }
             }
 
             return false;
