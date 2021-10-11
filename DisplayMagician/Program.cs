@@ -918,7 +918,11 @@ namespace DisplayMagician {
             }
             catch (AggregateException ae)
             {
-                logger.Error(ae, $"Program/LoadGamesInBackground exception during loadGamesActions");
+                logger.Error(ae, $"Program/LoadGamesInBackground: One or more exception during execution of loadGamesActions");
+                foreach (Exception ex in ae.InnerExceptions)
+                {
+                    logger.Error(ex, $"Program/LoadGamesInBackground: LoadGamesActions exception:");
+                }
             }
 
             // Produce a single array of Games we can reference later
