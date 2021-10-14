@@ -85,6 +85,7 @@
       <DependentUpon>DisplayView.cs</DependentUpon>
     </Compile>
     <Compile Include="Windows\CCD.cs" />
+    <Compile Include="Windows\GDI.cs" />
     <Compile Include="Windows\WinLibrary.cs" />
     <Compile Include="Wallpaper.cs" />
   </ItemGroup>
