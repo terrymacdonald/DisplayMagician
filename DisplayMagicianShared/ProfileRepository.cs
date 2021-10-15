@@ -818,8 +818,40 @@ namespace DisplayMagicianShared
                         JObject NVIDIADisplayConfig = (JObject)profile.SelectToken("NVIDIADisplayConfig");
                         NVIDIADisplayConfig.Add("ColorConfig",defaultColorConfig);
                         changedJson = true;
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing NVIDIA Color Config in profile {profile.SelectToken("Name")} (index {i}).");
                     }
                 }                
+            }
+            catch (JsonReaderException ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+
+            // Now we try and add a default Windows GDI Device Context if there isn't one
+            try
+            {
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows GDI Device Context.");
+
+                // Create a default object
+                Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
+                JObject defaultGdiDisplaySettings = (JObject)JToken.FromObject(GdiDisplaySettings);
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+                    JObject result = (JObject)profile.SelectToken("WindowsDisplayConfig.GdiDisplaySettings");
+                    if (result == null)
+                    {
+
+                        JObject WindowsDisplayConfig = (JObject)profile.SelectToken("WindowsDisplayConfig");
+                        WindowsDisplayConfig.Add("GdiDisplaySettings", defaultGdiDisplaySettings);
+                        changedJson = true;
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
+                    }
+                }
             }
             catch (JsonReaderException ex)
             {
