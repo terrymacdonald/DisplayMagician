@@ -651,9 +651,9 @@ namespace DisplayMagician.GameLibraries
                                             }
 
                                             // Now try to get the Uplay game icon
-                                            if (!String.IsNullOrEmpty(executable.icon_image))
+                                            if (!String.IsNullOrEmpty(root.icon_image))
                                             {
-                                                gameIconPath = Path.Combine(_uplayPath, "data", "games", executable.icon_image);
+                                                gameIconPath = Path.Combine(_uplayPath, "data", "games", root.icon_image);
 
                                                 // If the icon file isn't actually there, then use the game exe instead.
                                                 if (!File.Exists(gameIconPath))
@@ -753,9 +753,9 @@ namespace DisplayMagician.GameLibraries
                                             }
 
                                             // Now try to get the Uplay game icon
-                                            if (!String.IsNullOrEmpty(executable.icon_image))
+                                            if (!String.IsNullOrEmpty(root.icon_image))
                                             {
-                                                gameIconPath = Path.Combine(_uplayPath, "data", "games", executable.icon_image);
+                                                gameIconPath = Path.Combine(_uplayPath, "data", "games", root.icon_image);
 
                                                 // If the icon file isn't actually there, then use the game exe instead.
                                                 if (!File.Exists(gameIconPath))
