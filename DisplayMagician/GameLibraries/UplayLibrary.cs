@@ -792,8 +792,15 @@ namespace DisplayMagician.GameLibraries
                                 catch (Exception ex)
                                 {
                                     // If we get an error processing the game YAML, lets try and skip this game and try the next one. It might work!
-                                    logger.Error($"UplayLibrary/LoadInstalledGames: Problem deserialising the YAML embedded in the Uplay configuration file {uplayConfigFilePath}. Cannot process this games!");
-                                    continue;
+                                    if (item.GameInfo.StartsWith("root:"))
+                                    {
+                                        logger.Warn($"UplayLibrary/LoadInstalledGames: Problem deserialising the YAML embedded in the Uplay configuration file {uplayConfigFilePath}. Cannot process this Uplay game! (Uplay ID:{item.UplayId}): {item.GameInfo}");
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        logger.Trace($"UplayLibrary/LoadInstalledGames: This Uplay entry (Uplay ID:{item.UplayId}) in the Uplay configuration file {uplayConfigFilePath} is not a YAML config so skipping: {item.GameInfo}");
+                                    }
                                 }
 
                             }
@@ -802,7 +809,7 @@ namespace DisplayMagician.GameLibraries
                     catch (Exception ex)
                     {
                         // We can't do anything if we hit here.
-                        logger.Error($"UplayLibrary/LoadInstalledGames: Problem deserialising the protobuf Uplay configuration file {uplayConfigFilePath}. Cannot process any games!");
+                        logger.Error($"UplayLibrary/LoadInstalledGames: Problem deserialising the protobuf Uplay configuration file {uplayConfigFilePath}. Cannot process any Uplay games!");
                         return false;
                     }
                 }                   
