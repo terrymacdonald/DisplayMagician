@@ -108,7 +108,7 @@
     <Compile Include="GameLibraries\SteamAppInfoParser\Package.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\PackageInfo.cs" />
     <Compile Include="GameLibraries\SteamAppInfoParser\App.cs" />
-    <Compile Include="GameLibraries\UplayConfigurationParser\UplayConfigurationParser.cs" />
+    <Compile Include="GameLibraries\UplayFileStructure.cs" />
     <Compile Include="GameLibraries\OriginGame.cs" />
     <Compile Include="GameLibraries\OriginLibrary.cs" />
     <Compile Include="GameLibraries\UplayLibrary.cs" />
@@ -312,6 +312,9 @@
     <PackageReference Include="NLog">
       <Version>4.7.11</Version>
     </PackageReference>
+    <PackageReference Include="protobuf-net">
+      <Version>3.0.101</Version>
+    </PackageReference>
     <PackageReference Include="QueryString.NET">
       <Version>1.0.0</Version>
     </PackageReference>
@@ -323,6 +326,9 @@
     </PackageReference>
     <PackageReference Include="WinFormAnimation">
       <Version>1.6.0.4</Version>
+    </PackageReference>
+    <PackageReference Include="YamlDotNet">
+      <Version>11.2.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
