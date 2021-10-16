@@ -478,7 +478,7 @@ namespace DisplayMagicianShared.Windows
             return windowsDisplayConfig;
         }
 
-        public static Dictionary<string, uint> GetDisplaySourceNames()
+        public static Dictionary<string, List<uint>> GetDisplaySourceNames()
         {
             // Get the size of the largest Active Paths and Modes arrays
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the size of the largest Active Paths and Modes arrays");
@@ -529,7 +529,7 @@ namespace DisplayMagicianShared.Windows
             }
 
             // Prepare the empty DisplaySources dictionary
-            Dictionary<string, uint> DisplaySources = new Dictionary<string, uint>();
+            Dictionary<string, List<uint>> DisplaySources = new Dictionary<string, List<uint>>();
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
@@ -547,7 +547,18 @@ namespace DisplayMagicianShared.Windows
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
                     // Store it for later
-                    DisplaySources.Add(sourceInfo.ViewGdiDeviceName, path.SourceInfo.Id);
+                    //DisplaySources.Add(sourceInfo.ViewGdiDeviceName, path.SourceInfo.Id);
+                    if (DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
+                    {
+                        // We want to add another cloned display
+                        DisplaySources[sourceInfo.ViewGdiDeviceName].Add(path.SourceInfo.Id);
+                    }
+                    else
+                    {
+                        // We want to create a new list entry if there isn't one already there.
+                        DisplaySources.Add(sourceInfo.ViewGdiDeviceName, new List<uint> { path.SourceInfo.Id });
+                    }
+                    
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
                 }
                 else
