@@ -325,9 +325,7 @@ namespace DisplayMagicianShared.Windows
                     if (windowsDisplayConfig.DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
                     {
                         // We already have at least one display using this source, so we need to add the other cloned display to the existing list
-                        List<uint> sourceIds = windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName];
-                        sourceIds.Add(path.SourceInfo.Id);
-                        windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sourceIds);
+                        windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Add(path.SourceInfo.Id);
                     }
                     else
                     {
@@ -336,7 +334,7 @@ namespace DisplayMagicianShared.Windows
                         sourceIds.Add(path.SourceInfo.Id);
                         windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sourceIds);
                     }
-                    
+
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
                 }
                 else
@@ -558,7 +556,7 @@ namespace DisplayMagicianShared.Windows
                         // We want to create a new list entry if there isn't one already there.
                         DisplaySources.Add(sourceInfo.ViewGdiDeviceName, new List<uint> { path.SourceInfo.Id });
                     }
-                    
+
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
                 }
                 else
