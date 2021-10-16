@@ -973,7 +973,7 @@ namespace DisplayMagicianShared
                         {
                             uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
                             string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
-                            uint sourceIndex = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
+                            List<uint> sourceIndexes = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
                             for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
                             {
                                 // Skip this if its not a source info config type
@@ -982,8 +982,8 @@ namespace DisplayMagicianShared
                                     continue;
                                 }
 
-                                // If the source index matches the index of the source info object we're  looking at, then process it!
-                                if (_windowsDisplayConfig.DisplayConfigModes[x].Id == sourceIndex)
+                                // If the source index matches the index of the source info object we're looking at, then process it!
+                                if (sourceIndexes.Contains(_windowsDisplayConfig.DisplayConfigModes[x].Id))
                                 {
                                     screen.Name = displayId.ToString();
 

@@ -797,12 +797,11 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
             }
 
-
-            // Now we try and add a default NVIDIA Color Settings if there isn't one
+            // We do the change we wre trying to do
             try
             {
+                // Now we try and add a default NVIDIA Color Settings if there isn't one
                 SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing NVIDIA Color Config.");
-
                 // Create a default object
                 NVIDIA_DISPLAY_CONFIG myDefaultConfig = new NVIDIA_DISPLAY_CONFIG();
                 myDefaultConfig.ColorConfig.ColorData = new Dictionary<uint, NV_COLOR_DATA_V5>();
@@ -820,22 +819,10 @@ namespace DisplayMagicianShared
                         changedJson = true;
                         SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing NVIDIA Color Config in profile {profile.SelectToken("Name")} (index {i}).");
                     }
-                }                
-            }
-            catch (JsonReaderException ex)
-            {
-                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
-            }
+                }
 
-            // Now we try and add a default Windows GDI Device Context if there isn't one
-            try
-            {
+                // Now we try to patch in a Windows GDI device context into the json if there isnt one
                 SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows GDI Device Context.");
-
                 // Create a default object
                 Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
                 JObject defaultGdiDisplaySettings = (JObject)JToken.FromObject(GdiDisplaySettings);
@@ -852,6 +839,41 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
                     }
                 }
+
+                // Now we try to convert the individual sourceids into a list of source ids to cope with cloned devices
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows GDI Device Context.");
+                // Create a default object
+                List<uint> WinDisplaySourcesList = new List<uint>();
+                //JObject WinDisplaySources = (JObject)JToken.FromObject(WinDisplaySourcesList);
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+                    try
+                    {
+                        JObject WindowsDisplaySources = (JObject)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
+                        Dictionary<string, List<uint>> existingDisplaySources = WindowsDisplaySources.ToObject<Dictionary<string, List<uint>>>();
+                    }
+                    catch (Exception ex)
+                    {
+                        JObject WindowsDisplaySources = (JObject)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
+                        //foreach (var displaySource in WindowsDisplaySources.ToObject<Dictionary<string,uint>>())
+                        Dictionary<string, uint> existingDisplaySources = WindowsDisplaySources.ToObject<Dictionary<string, uint>>();
+                        Dictionary<string, List<uint>> newDisplaySources = new Dictionary<string, List<uint>>();
+                        foreach (var sourceName in existingDisplaySources.Keys)
+                        {
+                            List<uint> newList = new List<uint>();
+                            newList.Add((uint)existingDisplaySources[sourceName]);
+                            newDisplaySources[sourceName] = newList;
+                        }
+                        JObject newSourcesDict = JObject.FromObject(newDisplaySources);
+                        JToken WindowsDisplayConfig = (JToken)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
+                        WindowsDisplayConfig.Replace(newSourcesDict);
+                        changedJson = true;
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
+                    }
+                    
+                }                
+
             }
             catch (JsonReaderException ex)
             {

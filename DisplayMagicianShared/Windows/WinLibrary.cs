@@ -46,7 +46,7 @@ namespace DisplayMagicianShared.Windows
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
         // generating the profile icon.
-        public Dictionary<string, uint> DisplaySources;
+        public Dictionary<string, List<uint>> DisplaySources;
         public List<string> DisplayIdentifiers;
 
         public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
@@ -143,7 +143,7 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplayConfigPaths = new DISPLAYCONFIG_PATH_INFO[0];
             myDefaultConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[0];
             myDefaultConfig.DisplayIdentifiers = new List<string>();
-            myDefaultConfig.DisplaySources = new Dictionary<string, uint>();
+            myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
 
             return myDefaultConfig;
@@ -304,7 +304,7 @@ namespace DisplayMagicianShared.Windows
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
             windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
             windowsDisplayConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
-            windowsDisplayConfig.DisplaySources = new Dictionary<string, uint>();
+            windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
@@ -322,7 +322,21 @@ namespace DisplayMagicianShared.Windows
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
                     // Store it for later
-                    windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, path.SourceInfo.Id);
+                    if (windowsDisplayConfig.DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
+                    {
+                        // We already have at least one display using this source, so we need to add the other cloned display to the existing list
+                        List<uint> sourceIds = windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName];
+                        sourceIds.Add(path.SourceInfo.Id);
+                        windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sourceIds);
+                    }
+                    else
+                    {
+                        // This is the first display to use this source
+                        List<uint> sourceIds = new List<uint>();
+                        sourceIds.Add(path.SourceInfo.Id);
+                        windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sourceIds);
+                    }
+                    
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
                 }
                 else

@@ -2399,7 +2399,7 @@ namespace DisplayMagician.UIForms
                         _gameLauncher = game.GameLibrary.ToString("G");
                         lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                         _gameId = game.Id;
-
+                        break;
                     }
                 }
             }
