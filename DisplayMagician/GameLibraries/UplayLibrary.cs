@@ -545,6 +545,7 @@ namespace DisplayMagician.GameLibraries
                                     productInfo = deserializer.Deserialize<ProductInformation>(item.GameInfo);
                                     var root = productInfo.root;
 
+                                    string gameId = ""; 
                                     string gameName = "";
                                     string gameExePath = "";
                                     string gameIconPath = "";
@@ -599,12 +600,19 @@ namespace DisplayMagician.GameLibraries
                                                     regKeyText = regKeyText.Replace(@"\InstallDir", "");
                                                     regKeyText = regKeyText.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
                                                     logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKLM reg key {regKeyText}");
-
                                                     if (this.GetInstallDirFromRegKey(regKeyText, out exePath))
                                                     {
                                                         gameExePath = Path.Combine(exePath, executable.path.relative);                                                        
                                                         logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses local machine registry key: {executable.working_directory.register} ");
                                                     }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
                                                 }
                                                 /*else if (executable.working_directory.register.StartsWith("HKEY_CURRENT_USER"))
                                                 {
@@ -620,6 +628,14 @@ namespace DisplayMagician.GameLibraries
                                                         gameExePath = Path.Combine(exePath, executable.path.relative);
                                                         logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses current user registry key: {executable.working_directory.register} ");
                                                     }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
                                                 }*/
                                                 else if (!String.IsNullOrEmpty(executable.working_directory.append))
                                                 {
@@ -627,6 +643,8 @@ namespace DisplayMagician.GameLibraries
                                                     gameExePath = Path.Combine(executable.working_directory.append, executable.path.relative);
                                                     gameIconPath = Path.Combine(executable.working_directory.append, executable.icon_image);
                                                     logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses appended file path: {executable.working_directory.append} ");
+                                                    gameId = productInfo.uplay_id.ToString();
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
                                                 }
                                                 else
                                                 {
@@ -674,7 +692,7 @@ namespace DisplayMagician.GameLibraries
                                             // Now we need to save the game name, cause if we're here then we're good enough to save
                                             // Then we have the gameID, the thumbimage, the icon, the name, the exe path
                                             // And we add the Game to the list of games we have!
-                                            _allGames.Add(new UplayGame(productInfo.uplay_id.ToString(), gameName, gameExePath, gameIconPath));
+                                            _allGames.Add(new UplayGame(gameId, gameName, gameExePath, gameIconPath));
                                             logger.Trace($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {productInfo.uplay_id}, name {gameName}, game exe {gameExePath} and icon path {gameIconPath}");
                                             break;
                                         }
@@ -707,6 +725,15 @@ namespace DisplayMagician.GameLibraries
                                                         gameExePath = Path.Combine(exePath, executable.path.relative);
                                                         logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses local machine registry key: {executable.working_directory.register} ");
                                                     }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
+
                                                 }
                                                 /*else if (executable.working_directory.register.StartsWith("HKEY_CURRENT_USER"))
                                                 {
@@ -722,6 +749,14 @@ namespace DisplayMagician.GameLibraries
                                                         gameExePath = Path.Combine(exePath, executable.path.relative);
                                                         logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses current user registry key: {executable.working_directory.register} ");
                                                     }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
                                                 }*/
                                                 else if (!String.IsNullOrEmpty(executable.working_directory.append))
                                                 {
@@ -729,6 +764,8 @@ namespace DisplayMagician.GameLibraries
                                                     gameExePath = Path.Combine(executable.working_directory.append, executable.path.relative);
                                                     gameIconPath = Path.Combine(executable.working_directory.append, executable.icon_image);
                                                     logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses appended file path: {executable.working_directory.append} ");
+                                                    gameId = productInfo.uplay_id.ToString();
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
                                                 }
                                                 else
                                                 {
@@ -776,7 +813,7 @@ namespace DisplayMagician.GameLibraries
                                             // Now we need to save the game name, cause if we're here then we're good enough to save
                                             // Then we have the gameID, the thumbimage, the icon, the name, the exe path
                                             // And we add the Game to the list of games we have!
-                                            _allGames.Add(new UplayGame(productInfo.uplay_id.ToString(), gameName, gameExePath, gameIconPath));
+                                            _allGames.Add(new UplayGame(gameId, gameName, gameExePath, gameIconPath));
                                             logger.Trace($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {productInfo.uplay_id}, name {gameName}, game exe {gameExePath} and icon path {gameIconPath}");
                                             break;
                                         }
