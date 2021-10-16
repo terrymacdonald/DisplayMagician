@@ -669,7 +669,7 @@ namespace DisplayMagician
                 
             }
 
-            // Get the list of Audio Devices currently connected and active
+            // Get the list of Audio Devices currently connected or unplugged (they can be plugged back in)
             bool needToChangeAudioDevice = false;
             CoreAudioDevice rollbackAudioDevice = null;
             double rollbackAudioVolume = 50;
@@ -682,7 +682,8 @@ namespace DisplayMagician
             if (_audioController != null)
             {
                 try {
-                    activeAudioDevices = _audioController.GetPlaybackDevices(DeviceState.Active).ToList();
+                    activeAudioDevices = _audioController.GetPlaybackDevices(DeviceState.Active | DeviceState.Unplugged).ToList();
+                    bool foundAudioDevice = false;
                     if (activeAudioDevices.Count > 0)
                     {
                         // Change Audio Device (if one specified)
@@ -705,6 +706,7 @@ namespace DisplayMagician
                             if (needToChangeAudioDevice)
                             {
                                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.AudioDevice} audio device.");
+                                
 
                                 foreach (CoreAudioDevice audioDevice in activeAudioDevices)
                                 {
@@ -712,8 +714,14 @@ namespace DisplayMagician
                                     {
                                         // use the Audio Device
                                         audioDevice.SetAsDefault();
+                                        foundAudioDevice = true;
                                         break;
                                     }
+                                }
+
+                                if (!foundAudioDevice)
+                                {
+                                    logger.Error($"ShortcutRepository/RunShortcut: We wanted to use {shortcutToUse.AudioDevice} audio device but it wasn't plugged in or unplugged. Unable to use so skipping setting the audio device.");
                                 }
                             }
                             else
@@ -721,20 +729,23 @@ namespace DisplayMagician
                                 logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.AudioDevice} audio device so no need to change audio devices.");
                             }
 
-                            if (shortcutToUse.SetAudioVolume)
+                            if (foundAudioDevice)
                             {
-                                logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} volume level to {shortcutToUse.AudioVolume}%.");
-                                Task myTask = new Task(() =>
+                                if (shortcutToUse.SetAudioVolume)
                                 {
-                                    _audioController.DefaultPlaybackDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
-                                });
-                                myTask.Start();
-                                myTask.Wait(2000);
-                            }
-                            else
-                            {
-                                logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.AudioDevice} volume level.");
-                            }
+                                    logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} volume level to {shortcutToUse.AudioVolume}%.");
+                                    Task myTask = new Task(() =>
+                                    {
+                                        _audioController.DefaultPlaybackDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                    });
+                                    myTask.Start();
+                                    myTask.Wait(2000);
+                                }
+                                else
+                                {
+                                    logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.AudioDevice} volume level.");
+                                }
+                            }                            
                         }
                         else
                         {
@@ -754,8 +765,9 @@ namespace DisplayMagician
 
                 try
                 {
-                    // Get the list of Audio Devices currently connected
-                    activeCaptureDevices = _audioController.GetCaptureDevices(DeviceState.Active).ToList();
+                    // Get the list of Capture Devices currently connected or currently unplugged (they can be plugged back in)
+                    activeCaptureDevices = _audioController.GetCaptureDevices(DeviceState.Active | DeviceState.Unplugged).ToList();
+                    bool foundCaptureDevice = false;
                     if (activeCaptureDevices.Count > 0)
                     {
 
@@ -784,8 +796,14 @@ namespace DisplayMagician
                                     {
                                         // use the Audio Device
                                         captureDevice.SetAsDefault();
+                                        foundCaptureDevice = true;
                                         break;
                                     }
+                                }
+
+                                if (!foundCaptureDevice)
+                                {
+                                    logger.Error($"ShortcutRepository/RunShortcut: We wanted to use {shortcutToUse.CaptureDevice} capture (microphone) device but it wasn't plugged in or unplugged. Unable to use so skipping setting the capture device.");
                                 }
                             }
                             else
@@ -793,20 +811,23 @@ namespace DisplayMagician
                                 logger.Info($"ShortcutRepository/RunShortcut: We're already using the {shortcutToUse.CaptureDevice} capture (microphone) device so no need to change capture devices.");
                             }
 
-                            if (shortcutToUse.SetCaptureVolume)
+                            if (foundCaptureDevice)
                             {
-                                logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
-                                Task myTask = new Task(() =>
+                                if (shortcutToUse.SetCaptureVolume)
                                 {
-                                    _audioController.DefaultCaptureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
-                                });
-                                myTask.Start();
-                                myTask.Wait(2000);
-                            }
-                            else
-                            {
-                                logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.CaptureDevice} capture (microphone) volume level.");
-                            }
+                                    logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
+                                    Task myTask = new Task(() =>
+                                    {
+                                        _audioController.DefaultCaptureDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.CaptureVolume));
+                                    });
+                                    myTask.Start();
+                                    myTask.Wait(2000);
+                                }
+                                else
+                                {
+                                    logger.Info($"ShortcutRepository/RunShortcut: We don't need to set the {shortcutToUse.CaptureDevice} capture (microphone) volume level.");
+                                }
+                            }                            
 
                         }
                         else

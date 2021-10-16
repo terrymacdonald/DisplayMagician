@@ -1326,7 +1326,9 @@ namespace DisplayMagician
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Error;
                                 }
-                                if (audioDevice.State == DeviceState.Unplugged)
+                                // As per Issue #39, this causes issues on HDMI audio devices and others that *could* work if the screen was enabled.
+                                // Disabling this code as it is too much error checking for audio devices. The user can plug these in after the chagne and they will work.
+                                /*if (audioDevice.State == DeviceState.Unplugged)
                                 {
                                     logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is unplugged!");
                                     ShortcutError error = new ShortcutError();
@@ -1336,7 +1338,7 @@ namespace DisplayMagician
                                     _shortcutErrors.Add(error);
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
-                                }
+                                }*/
                                 break;
                             }
                         }
@@ -1399,7 +1401,9 @@ namespace DisplayMagician
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Error;
                                 }
-                                if (captureDevice.State == DeviceState.Unplugged)
+                                // As per Issue #39, this causes issues on HDMI audiodevices and others that *could* work if the screen was enabled.
+                                // Disabling this code as it is too much error checking for capture devices. The user can plug these in after the chagne and they will work.
+                                /*if (captureDevice.State == DeviceState.Unplugged)
                                 {
                                     logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is unplugged!");
                                     ShortcutError error = new ShortcutError();
@@ -1409,7 +1413,7 @@ namespace DisplayMagician
                                     _shortcutErrors.Add(error);
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
-                                }
+                                }*/
                                 break;
                             }
                         }
