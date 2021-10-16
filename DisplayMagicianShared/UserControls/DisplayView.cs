@@ -207,7 +207,11 @@ namespace DisplayMagicianShared.UserControls
                 {
                     str = $"Primary Display{Environment.NewLine}" + str;
                 }
-                
+                if (screen.IsClone)
+                {
+                    str = str + $"(+{screen.ClonedCopies-1} Clone)";
+                }
+
                 DrawString(g, str, wordTextColour, selectedWordFont, wordRect.Size, wordRect.Location);
 
                 // Draw the position of the screen

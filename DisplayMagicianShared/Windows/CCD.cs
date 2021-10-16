@@ -637,20 +637,31 @@ namespace DisplayMagicianShared.Windows
             if (InfoType != other.InfoType)
                 return false;
 
+            // This happens when it is a target mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET &&
                 Id == other.Id &&
                 TargetMode.Equals(other.TargetMode))
                 return true;
 
+            // This happens when it is a source mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
                 //Id == other.Id && // Disabling this check as as the Display ID it maps to will change after a switch from surround to non-surround profile, ruining the equality match
                 // Only seems to be a problem with the DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE options weirdly enough!
                 SourceMode.Equals(other.SourceMode))
                 return true;
 
+            // This happens when it is a desktop image mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE &&
                 Id == other.Id &&
                 DesktopImageInfo.Equals(other.DesktopImageInfo))
+                return true;
+
+            // This happens when it is a clone - there is an extra entry with all zeros in it!
+            if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.Zero &&
+                Id == other.Id &&
+                DesktopImageInfo.Equals(other.DesktopImageInfo) &&
+                TargetMode.Equals(other.TargetMode) &&
+                SourceMode.Equals(other.SourceMode))
                 return true;
 
             return false;

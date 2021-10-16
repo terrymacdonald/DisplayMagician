@@ -25,6 +25,8 @@ namespace DisplayMagicianShared
         public string Name;
         public string Library;
         public bool IsPrimary;
+        public bool IsClone;
+        public int ClonedCopies;
         public Color Colour;
         public string DisplayConnector;
         internal bool HDRSupported;
@@ -1039,6 +1041,22 @@ namespace DisplayMagicianShared
                         UInt32 sourceId = path.SourceInfo.Id;
                         UInt32 targetId = path.TargetInfo.Id;
 
+                        screen.IsClone = false;
+                        screen.ClonedCopies = 0;
+                        foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
+                        {
+                            if (displaySource.Value.Contains(sourceId))
+                            {
+                                if (displaySource.Value.Count > 1)
+                                {
+                                    // We have a cloned display
+                                    screen.IsClone = true;
+                                    screen.ClonedCopies = displaySource.Value.Count;
+                                }
+                                break;
+                            }
+                        }
+
 
                         // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
                         foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
@@ -1269,6 +1287,21 @@ namespace DisplayMagicianShared
                         UInt32 sourceId = path.SourceInfo.Id;
                         UInt32 targetId = path.TargetInfo.Id;
 
+                        screen.IsClone = false;
+                        screen.ClonedCopies = 0;
+                        foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
+                        {
+                            if (displaySource.Value.Contains(sourceId))
+                            {
+                                if (displaySource.Value.Count > 1)
+                                {
+                                    // We have a cloned display
+                                    screen.IsClone = true;
+                                    screen.ClonedCopies = displaySource.Value.Count;
+                                }
+                                break;
+                            }
+                        }
 
                         // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
                         foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
@@ -1360,6 +1393,21 @@ namespace DisplayMagicianShared
                     UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
 
+                    screen.IsClone = false;
+                    screen.ClonedCopies = 0;
+                    foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
+                    {
+                        if (displaySource.Value.Contains(sourceId))
+                        {
+                            if (displaySource.Value.Count > 1)
+                            {
+                                // We have a cloned display
+                                screen.IsClone = true;
+                                screen.ClonedCopies = displaySource.Value.Count;
+                            }
+                            break;
+                        }
+                    }
 
                     // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)

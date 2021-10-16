@@ -1283,12 +1283,12 @@ namespace DisplayMagicianShared.NVIDIA
                     NV_COLOR_DATA_V5 colorData = colorDataDict.Value;
                     UInt32 displayId = colorDataDict.Key;
 
-                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to process HDR Colour for display {displayId}.");
-
                     // If this is a setting that says it will use default windows colour settings, then we turn it off
-                    if (colorData.ColorSelectionPolicy != NV_COLOR_SELECTION_POLICY.NV_COLOR_SELECTION_POLICY_DEFAULT &&
+                    if (colorData.ColorSelectionPolicy == NV_COLOR_SELECTION_POLICY.NV_COLOR_SELECTION_POLICY_DEFAULT &&
                         ActiveDisplayConfig.ColorConfig.ColorData[displayId].ColorSelectionPolicy != colorData.ColorSelectionPolicy)
                     {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to turn off NVIDIA customer colour settings for display {displayId}.");
+
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want the standard colour settings to be {displayConfig.ColorConfig.ColorData[displayId].ColorSelectionPolicy.ToString("G")} for Mosaic display {displayId}.");
                         colorData = displayConfig.ColorConfig.ColorData[displayId];
 
@@ -1349,6 +1349,10 @@ namespace DisplayMagicianShared.NVIDIA
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Some non standard error occurred while seting the color settings! NvAPI_Disp_ColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayId} doesn't support this color mode.");
                         }
                     }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want only want to turn off custom NVIDIA colour settings if needed for display {displayId}, and that currently isn't required. Skipping changing NVIDIA colour mode.");
+                    }
                 }
 
                 SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to turn off HDR colour if it's user set HDR colour.");
@@ -1358,10 +1362,11 @@ namespace DisplayMagicianShared.NVIDIA
                     NV_HDR_COLOR_DATA_V2 hdrColorData = hdrColorDataDict.Value;
                     UInt32 displayId = hdrColorDataDict.Key;
 
-                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to turn off HDR mode for display {displayId}.");
                     // if it's not an HDR then we turn off HDR
-                    if (hdrColorData.HdrMode != NV_HDR_MODE.OFF && ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode != hdrColorData.HdrMode)
+                    if (hdrColorData.HdrMode == NV_HDR_MODE.OFF && ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode != hdrColorData.HdrMode)
                     {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to turn on custom HDR mode for display {displayId}.");
+
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: HDR mode is currently {ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode.ToString("G")} for Mosaic display {displayId}.");
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want HDR settings BPC  {hdrColorData.HdrBpc} for Mosaic display {displayId}");
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want HDR settings HDR Colour Format {hdrColorData.HdrColorFormat} for Mosaic display {displayId}");
@@ -1401,6 +1406,11 @@ namespace DisplayMagicianShared.NVIDIA
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Some non standard error occurred while getting Mosaic Topology! NvAPI_Disp_HdrColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayId} doesn't support HDR.");
                         }
                     }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want only want to turn off custom NVIDIA HDR settings if needed for display {displayId}, and that currently isn't required. Skipping changing NVIDIA HDR mode.");
+                    }
+
                 }
 
             }
@@ -1422,12 +1432,12 @@ namespace DisplayMagicianShared.NVIDIA
                     NV_COLOR_DATA_V5 colorData = colorDataDict.Value;
                     UInt32 displayId = colorDataDict.Key;
 
-                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want to process HDR Colour for Mosaic display {displayId}.");
-
-                    // If this is a setting that says it will use default windows colour settings, then we turn it off
-                    if (colorData.ColorSelectionPolicy == NV_COLOR_SELECTION_POLICY.NV_COLOR_SELECTION_POLICY_DEFAULT &&
-                        ActiveDisplayConfig.ColorConfig.ColorData[displayId].ColorSelectionPolicy != NV_COLOR_SELECTION_POLICY.NV_COLOR_SELECTION_POLICY_DEFAULT)
+                    // If this is a setting that says it uses user colour settings, then we turn it off
+                    if (colorData.ColorSelectionPolicy != NV_COLOR_SELECTION_POLICY.NV_COLOR_SELECTION_POLICY_DEFAULT &&
+                        ActiveDisplayConfig.ColorConfig.ColorData[displayId].ColorSelectionPolicy != colorData.ColorSelectionPolicy)
                     {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want to use custom NVIDIA HDR Colour for display {displayId}.");
+
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want the standard colour settings to be {displayConfig.ColorConfig.ColorData[displayId].ColorSelectionPolicy.ToString("G")} for Mosaic display {displayId}.");
                         colorData = displayConfig.ColorConfig.ColorData[displayId];
 
@@ -1488,20 +1498,24 @@ namespace DisplayMagicianShared.NVIDIA
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Some non standard error occurred while seting the color settings! NvAPI_Disp_ColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayId} doesn't support this color mode.");
                         }
                     }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want only want to turn on custom NVIDIA colour settings if needed for display {displayId}, and that currently isn't required. Skipping changing NVIDIA colour mode.");
+                    }
                 }
 
-                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want to turn off HDR colour if it's user set HDR colour.");
+                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want to turn on NVIDIA HDR colour if it's user wants to use NVIDIA HDR colour.");
                 // Now we try to set each display color
                 foreach (var hdrColorDataDict in displayConfig.HdrConfig.HdrColorData)
                 {
                     NV_HDR_COLOR_DATA_V2 hdrColorData = hdrColorDataDict.Value;
                     UInt32 displayId = hdrColorDataDict.Key;
 
-                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want to turn off HDR mode for Mosaic display {displayId}.");
-                    // if it's not an HDR then we turn off HDR
-                    if (hdrColorData.HdrMode == NV_HDR_MODE.OFF &&
-                        ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode != NV_HDR_MODE.OFF)
+                    // if it's HDR and it's a different mode than what we are in now, then set HDR
+                    if (hdrColorData.HdrMode != NV_HDR_MODE.OFF &&
+                        ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode != hdrColorData.HdrMode)
                     {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want to turn on user-set HDR mode for display {displayId} as it's supposed to be on.");
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: HDR mode is currently {ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode.ToString("G")} for Mosaic display {displayId}.");
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want HDR settings BPC  {hdrColorData.HdrBpc} for Mosaic display {displayId}");
                         SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want HDR settings HDR Colour Format {hdrColorData.HdrColorFormat} for Mosaic display {displayId}");
@@ -1540,6 +1554,10 @@ namespace DisplayMagicianShared.NVIDIA
                         {
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Some non standard error occurred while getting Mosaic Topology! NvAPI_Disp_HdrColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayId} doesn't support HDR.");
                         }
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We want only want to turn on custom NVIDIA HDR if needed for display {displayId} and that currently isn't required. Skipping changing NVIDIA HDR mode.");
                     }
                 }
 
