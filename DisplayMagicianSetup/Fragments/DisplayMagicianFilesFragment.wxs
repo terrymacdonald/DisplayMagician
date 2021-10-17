@@ -37,10 +37,7 @@
             </Component>-->
             <Component Id="cmpE8833A8E220525D7707A018B20CEDD87" Guid="{EBC27E33-6C4D-4612-BC5F-AC0A09DDD636}">
                 <File Id="filD4FD53D2FBF78674DBC3A1B446B44FC5" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\EDIDParser.dll" />
-            </Component>
-			<Component Id="cmp8C52E948AAB2D43DF696BB7D003A8E4B" Guid="{3C8F90C4-CFD5-4B8C-9929-44239BAECE94}">
-                <File Id="fil1965347683EC48A269FE672473CD04C2" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\HtmlAgilityPack.dll" />
-            </Component>
+            </Component>			
             <Component Id="cmpC13B4DB64E30D03117ECF099B1A9CD9C" Guid="{36C70104-58C9-497D-9775-38E65F1809CD}">
                 <File Id="fil44FFB513E29A8346713440B4BCB7F1E6" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\IconExtractor.dll" />
             </Component>
@@ -77,6 +74,12 @@
 			<Component Id="cmpC64ECA245317593760E42F3996F3A079" Guid="{AF290F63-703E-441F-86C8-2F00DADDEF9B}">
                 <File Id="fil5299F0448E950048C778AA65A04FB498" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\NLog.dll" />
             </Component>
+			<Component Id="cmp8C52E948AAB2D43DF696BB7D003A8E45" Guid="{3C8F90C4-CFD5-4B8C-9929-44239BAECE95}">
+				<File Id="fil1965347683EC48A269FE672473CD04C5" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\protobuf-net.Core.dll" />
+			</Component>
+			<Component Id="cmp8C52E948AAB2D4F322455234322A8E45" Guid="{3D8F90C4-FFD5-4B8C-9929-42339BAECE91}">
+				<File Id="fil19658443928748A269FE672473CD04C5" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\protobuf-net.dll" />
+			</Component>
             <Component Id="cmpBEC07D0236076B07E4E7D7632CCA69CB" Guid="{9845F3EB-281F-4BB1-9B88-5B5D454F0977}">
                 <File Id="fil8C59ED1965E9E2D1C82459BE5C1E903E" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\QueryString.NETCore.dll" />
             </Component>
@@ -101,6 +104,9 @@
             <Component Id="cmp27AC6F10258FA1C97C54F3C1D153D122" Guid="{06BD97C2-07D8-4032-842C-AD16D1560803}">
                 <File Id="fil01CF08752F4284E3144706F10481AEA0" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\WinFormAnimation.dll" />
             </Component>
+			<Component Id="cmp44AC6F10258FA1C97C54F3C1D153D144" Guid="{44BD97C2-0448-4044-842C-AD16D1560844}">
+				<File Id="fil44CF08752F4284E3144706F10481AE44" KeyPath="yes" Source="$(var.DisplayMagician.TargetDir)\YamlDotNet.dll" />
+			</Component>
         </DirectoryRef>
     </Fragment>
     <Fragment>
@@ -113,7 +119,6 @@
             <ComponentRef Id="cmpCF520827D65E51E3ECB59344A6F528D0" />
             <ComponentRef Id="cmp936B3459EEFF10D8EB978B7DD0F9FDDA" />
             <ComponentRef Id="cmpE8833A8E220525D7707A018B20CEDD87" />
-            <ComponentRef Id="cmp8C52E948AAB2D43DF696BB7D003A8E4B" />
             <ComponentRef Id="cmpC13B4DB64E30D03117ECF099B1A9CD9C" />
             <ComponentRef Id="cmp6AB92D1CF70395670A490E1B9BD347DE" />
             <ComponentRef Id="cmp23C6CFB3962E9B4E2A7E8EF56F20A99F" />
@@ -135,6 +140,9 @@
 			<ComponentRef Id="cmp5069692C1912B298A026EA30A3823321" />
             <ComponentRef Id="cmp27AC6F10258FA1C97C54F3C1D153D122" />
             <ComponentRef Id="cmp357CADF3E913AADB2DD6BD3938986798" />
-		</ComponentGroup>
+			<ComponentRef Id="cmp8C52E948AAB2D43DF696BB7D003A8E45" />
+			<ComponentRef Id="cmp8C52E948AAB2D4F322455234322A8E45" />
+			<ComponentRef Id="cmp44AC6F10258FA1C97C54F3C1D153D144" />
+	    </ComponentGroup>
     </Fragment>
 </Wix>
