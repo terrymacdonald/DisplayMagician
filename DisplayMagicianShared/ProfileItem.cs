@@ -469,14 +469,17 @@ namespace DisplayMagicianShared
             // Create defaults for NVIDIA and AMD so that the JSON file can save properly
             // (C# Structs populate with default values which mean that arrays start with null)
 
-            if (VideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
+            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+
+            if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled)
             {
-                NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 if (nvidiaLibrary.IsInstalled)
                 {
                     // Create the profile data from the current config
                     _nvidiaDisplayConfig = nvidiaLibrary.GetActiveConfig();
-                    _windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
+                    _windowsDisplayConfig = winLibrary.GetActiveConfig();
                     _profileDisplayIdentifiers = nvidiaLibrary.GetCurrentDisplayIdentifiers();
 
                     // Now, since the ActiveProfile has changed, we need to regenerate screen positions
@@ -491,12 +494,11 @@ namespace DisplayMagicianShared
             }
             else if(VideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
             {
-                AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
                 if (amdLibrary.IsInstalled)
                 {
                     // Create the profile data from the current config
                     _amdDisplayConfig = amdLibrary.GetActiveConfig();
-                    _windowsDisplayConfig = WinLibrary.GetLibrary().GetActiveConfig();
+                    _windowsDisplayConfig = winLibrary.GetActiveConfig();
                     _profileDisplayIdentifiers = amdLibrary.GetCurrentDisplayIdentifiers();
 
                     // Now, since the ActiveProfile has changed, we need to regenerate screen positions
@@ -511,7 +513,6 @@ namespace DisplayMagicianShared
             }
             else if (VideoMode == VIDEO_MODE.WINDOWS)
             {
-                WinLibrary winLibrary = WinLibrary.GetLibrary();
                 if (winLibrary.IsInstalled)
                 {
                     // Create the profile data from the current config
@@ -534,14 +535,6 @@ namespace DisplayMagicianShared
                 return false;
             }
         }
-
-        /*public bool PerformPostLoadingTasks()
-        {
-            // First thing we do is to set up the Screens
-            //_screens = GetScreenPositions();
-
-            return true;
-        }*/
 
 
         // ReSharper disable once FunctionComplexityOverflow
