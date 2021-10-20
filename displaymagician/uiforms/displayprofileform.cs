@@ -56,9 +56,18 @@ namespace DisplayMagician.UIForms
             // Apply the Profile
             if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             {
-                logger.Error($"DisplayProfileForm/Apply_Click: Waiting 0.5 sec for the display to apply");
+                logger.Trace($"DisplayProfileForm/Apply_Click: The Profile {_selectedProfile.Name} was successfully applied. Waiting 0.5 sec for the display to settle after the change.");
                 System.Threading.Thread.Sleep(500);
+                logger.Trace($"DisplayProfileForm/Apply_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
                 ChangeSelectedProfile(_selectedProfile);
+            }
+            else if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Cancelled)
+            {
+                logger.Warn($"DisplayProfileForm/Apply_Click: The user cancelled changing to Profile {_selectedProfile.Name}.");
+            }
+            else
+            {
+                logger.Warn($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
             }
         }
 
