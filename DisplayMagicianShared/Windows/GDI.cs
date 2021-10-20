@@ -421,7 +421,7 @@ namespace DisplayMagicianShared.Windows
 
         public bool Equals(DISPLAY_DEVICE other)
             => Size == other.Size &&
-                DeviceName == other.DeviceName &&
+                // DeviceName == other.DeviceName && // Had to remove this as the device name often changes after a reboot!
                 DeviceString == other.DeviceString &&
                 StateFlags == other.StateFlags &&
                 DeviceId == other.DeviceId &&

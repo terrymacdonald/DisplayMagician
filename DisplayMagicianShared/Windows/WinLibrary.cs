@@ -22,7 +22,7 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is ADVANCED_HDR_INFO_PER_PATH other && this.Equals(other);
         public bool Equals(ADVANCED_HDR_INFO_PER_PATH other)
         => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
-            Id == other.Id &&
+           //Id == other.Id && // Removed the ID too, as that changes if the user has a Clone!
            AdvancedColorInfo.Equals(other.AdvancedColorInfo) &&
            SDRWhiteLevel.Equals(other.SDRWhiteLevel);
         public override int GetHashCode()
@@ -43,6 +43,7 @@ namespace DisplayMagicianShared.Windows
         public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
         public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
+        public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
         // generating the profile icon.
@@ -51,7 +52,8 @@ namespace DisplayMagicianShared.Windows
 
         public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(WINDOWS_DISPLAY_CONFIG other)
-        => DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
+        => IsCloned == other.IsCloned &&
+           DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
            DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
            DisplayHDRStates.SequenceEqual(other.DisplayHDRStates) &&
            GdiDisplaySettings.SequenceEqual(other.GdiDisplaySettings) &&
@@ -59,7 +61,7 @@ namespace DisplayMagicianShared.Windows
 
         public override int GetHashCode()
         {
-            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, GdiDisplaySettings, DisplayIdentifiers).GetHashCode();
+            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, GdiDisplaySettings, IsCloned, DisplayIdentifiers).GetHashCode();
         }
         public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -144,6 +146,7 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[0];
             myDefaultConfig.DisplayIdentifiers = new List<string>();
             myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
+            myDefaultConfig.IsCloned = false;
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
 
             return myDefaultConfig;
@@ -305,19 +308,24 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
             windowsDisplayConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
             windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
+            windowsDisplayConfig.IsCloned = false;
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
             var hdrInfos = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
             int hdrInfoCount = 0;
-            foreach (var path in paths)
+            for (int i = 0; i < paths.Length; i++)
             {
+                //DISPLAYCONFIG_PATH_INFO path = paths[i];
+
+                // Track if this display is a cloned path
+                bool isClonedPath = false;
                 // get display source name
                 var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
                 sourceInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
                 sourceInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SOURCE_DEVICE_NAME>();
-                sourceInfo.Header.AdapterId = path.SourceInfo.AdapterId;
-                sourceInfo.Header.Id = path.SourceInfo.Id;
+                sourceInfo.Header.AdapterId = paths[i].SourceInfo.AdapterId;
+                sourceInfo.Header.Id = paths[i].SourceInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
@@ -325,98 +333,111 @@ namespace DisplayMagicianShared.Windows
                     if (windowsDisplayConfig.DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
                     {
                         // We already have at least one display using this source, so we need to add the other cloned display to the existing list
-                        windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Add(path.SourceInfo.Id);
+                        windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Add(paths[i].SourceInfo.Id);
+                        isClonedPath = true;
+                        windowsDisplayConfig.IsCloned = true;
                     }
                     else
                     {
                         // This is the first display to use this source
                         List<uint> sourceIds = new List<uint>();
-                        sourceIds.Add(path.SourceInfo.Id);
+                        sourceIds.Add(paths[i].SourceInfo.Id);
                         windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sourceIds);
                     }
 
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {paths[i].SourceInfo.Id}.");
                 }
                 else
                 {
-                    SharedLogger.logger.Warn($"WinLibrary/PrintActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the source info for source adapter #{path.SourceInfo.AdapterId}");
+                    SharedLogger.logger.Warn($"WinLibrary/PrintActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the source info for source adapter #{paths[i].SourceInfo.AdapterId}");
+                }
+
+                // Check if this path is a cloned display path, and if so make some changes
+                // so that the cloned display will be applied properly
+                if (isClonedPath)
+                {
+                    // We need to make some modifications to this path so that we store as ready for being applied
+                    // https://docs.microsoft.com/en-us/windows-hardware/drivers/display/ccd-example-code
+                    paths[i].Flags |= DISPLAYCONFIG_PATH_FLAGS.DISPLAYCONFIG_PATH_ACTIVE;
+                    paths[i].SourceInfo.ModeInfoIdx = CCDImport.DISPLAYCONFIG_PATH_MODE_IDX_INVALID;
+                    paths[i].TargetInfo.ModeInfoIdx = CCDImport.DISPLAYCONFIG_PATH_MODE_IDX_INVALID;
                 }
 
                 // Get adapter ID for later
-                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get adapter name for adapter {path.TargetInfo.AdapterId.Value}.");
-                if (!windowsDisplayConfig.DisplayAdapters.ContainsKey(path.TargetInfo.AdapterId.Value))
+                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get adapter name for adapter {paths[i].TargetInfo.AdapterId.Value}.");
+                if (!windowsDisplayConfig.DisplayAdapters.ContainsKey(paths[i].TargetInfo.AdapterId.Value))
                 {
                     var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
                     adapterInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
                     adapterInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_ADAPTER_NAME>();
-                    adapterInfo.Header.AdapterId = path.TargetInfo.AdapterId;
-                    adapterInfo.Header.Id = path.TargetInfo.Id;
+                    adapterInfo.Header.AdapterId = paths[i].TargetInfo.AdapterId;
+                    adapterInfo.Header.Id = paths[i].TargetInfo.Id;
                     err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
                     if (err == WIN32STATUS.ERROR_SUCCESS)
                     {
                         // Store it for later
-                        windowsDisplayConfig.DisplayAdapters.Add(path.TargetInfo.AdapterId.Value, adapterInfo.AdapterDevicePath);
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found adapter name {adapterInfo.AdapterDevicePath} for adapter {path.TargetInfo.AdapterId.Value}.");
+                        windowsDisplayConfig.DisplayAdapters.Add(paths[i].TargetInfo.AdapterId.Value, adapterInfo.AdapterDevicePath);
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found adapter name {adapterInfo.AdapterDevicePath} for adapter {paths[i].TargetInfo.AdapterId.Value}.");
                     }
                     else
                     {
-                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to query the adapter name for adapter {path.TargetInfo.AdapterId.Value}.");
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to query the adapter name for adapter {paths[i].TargetInfo.AdapterId.Value}.");
                     }
                 }
 
                 // Get advanced color info
-                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get advanced color info for display {path.TargetInfo.Id}.");
+                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get advanced color info for display {paths[i].TargetInfo.Id}.");
                 var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
                 colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
                 colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
-                colorInfo.Header.AdapterId = path.TargetInfo.AdapterId;
-                colorInfo.Header.Id = path.TargetInfo.Id;
+                colorInfo.Header.AdapterId = paths[i].TargetInfo.AdapterId;
+                colorInfo.Header.Id = paths[i].TargetInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found color info for display {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found color info for display {paths[i].TargetInfo.Id}.");
                     if (colorInfo.AdvancedColorSupported)
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is supported for display {path.TargetInfo.Id}.");
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is supported for display {paths[i].TargetInfo.Id}.");
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT supported for display {path.TargetInfo.Id}.");
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT supported for display {paths[i].TargetInfo.Id}.");
                     }
                     if (colorInfo.AdvancedColorEnabled)
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is enabled for display {path.TargetInfo.Id}.");
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is enabled for display {paths[i].TargetInfo.Id}.");
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT enabled for display {path.TargetInfo.Id}.");
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT enabled for display {paths[i].TargetInfo.Id}.");
                     }
                 }
                 else
                 {
-                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get advanced color settings for display {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get advanced color settings for display {paths[i].TargetInfo.Id}.");
                 }
 
                 // get SDR white levels
-                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get SDR white levels for adapter {path.TargetInfo.AdapterId.Value}.");
+                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get SDR white levels for adapter {paths[i].TargetInfo.AdapterId.Value}.");
                 var whiteLevelInfo = new DISPLAYCONFIG_SDR_WHITE_LEVEL();
                 whiteLevelInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
                 whiteLevelInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SDR_WHITE_LEVEL>();
-                whiteLevelInfo.Header.AdapterId = path.TargetInfo.AdapterId;
-                whiteLevelInfo.Header.Id = path.TargetInfo.Id;
+                whiteLevelInfo.Header.AdapterId = paths[i].TargetInfo.AdapterId;
+                whiteLevelInfo.Header.Id = paths[i].TargetInfo.Id;
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref whiteLevelInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found SDR White levels for display {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found SDR White levels for display {paths[i].TargetInfo.Id}.");
                 }
                 else
                 {
-                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get SDR White levels for display {path.TargetInfo.Id}.");
+                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get SDR White levels for display {paths[i].TargetInfo.Id}.");
                 }
 
                 hdrInfos[hdrInfoCount] = new ADVANCED_HDR_INFO_PER_PATH();
-                hdrInfos[hdrInfoCount].AdapterId = path.TargetInfo.AdapterId;
-                hdrInfos[hdrInfoCount].Id = path.TargetInfo.Id;
+                hdrInfos[hdrInfoCount].AdapterId = paths[i].TargetInfo.AdapterId;
+                hdrInfos[hdrInfoCount].Id = paths[i].TargetInfo.Id;
                 hdrInfos[hdrInfoCount].AdvancedColorInfo = colorInfo;
                 hdrInfos[hdrInfoCount].SDRWhiteLevel = whiteLevelInfo;
                 hdrInfoCount++;
@@ -581,55 +602,20 @@ namespace DisplayMagicianShared.Windows
         public string PrintActiveConfig()
         {
             string stringToReturn = "";
+
+            // Get the current config
+            WINDOWS_DISPLAY_CONFIG displayConfig = GetActiveConfig();
+
+            WIN32STATUS err = WIN32STATUS.ERROR_GEN_FAILURE;
             stringToReturn += $"****** WINDOWS CCD CONFIGURATION *******\n";
+            stringToReturn += $"Display profile contains cloned screens: {displayConfig.IsCloned}\n";
+            stringToReturn += $"\n";
+
             // Get the size of the largest Active Paths and Modes arrays
             int pathCount = 0;
             int modeCount = 0;
-            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
-            if (err != WIN32STATUS.ERROR_SUCCESS)
-            {
-                SharedLogger.logger.Error($"WinLibrary/PrintActiveConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
-                throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
-            }
 
-            SharedLogger.logger.Trace($"WinLibrary/PrintActiveConfig: Getting the current Display Config path and mode arrays");
-            var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
-            var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
-            err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
-            if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
-            {
-                SharedLogger.logger.Warn($"WinLibrary/PrintActiveConfig: The displays were modified between GetDisplayConfigBufferSizes and QueryDisplayConfig so we need to get the buffer sizes again.");
-                SharedLogger.logger.Trace($"WinLibrary/PrintActiveConfig: Getting the size of the largest Active Paths and Modes arrays");
-                // Screen changed in between GetDisplayConfigBufferSizes and QueryDisplayConfig, so we need to get buffer sizes again
-                // as per https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig 
-                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
-                if (err != WIN32STATUS.ERROR_SUCCESS)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/PrintActiveConfig: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
-                    throw new WinLibraryException($"GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
-                }
-                SharedLogger.logger.Trace($"WinLibrary/PrintActiveConfig: Getting the current Display Config path and mode arrays");
-                paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
-                modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
-                err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
-                if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/PrintActiveConfig: ERROR - The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
-                    throw new WinLibraryException($"The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
-                }
-                else if (err != WIN32STATUS.ERROR_SUCCESS)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/PrintActiveConfig: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again");
-                    throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays again.");
-                }
-            }
-            else if (err != WIN32STATUS.ERROR_SUCCESS)
-            {
-                SharedLogger.logger.Error($"WinLibrary/PrintActiveConfig: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays");
-                throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
-            }
-
-            foreach (var path in paths)
+            foreach (var path in displayConfig.DisplayConfigPaths)
             {
                 stringToReturn += $"----++++==== Path ====++++----\n";
 
@@ -645,6 +631,17 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Trace($"WinLibrary/PrintActiveConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {path.SourceInfo.Id}.");
                     stringToReturn += $"****** Interrogating Display Source {path.SourceInfo.Id} *******\n";
                     stringToReturn += $"Found Display Source {sourceInfo.ViewGdiDeviceName}\n";
+                    if (displayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Count > 1)
+                    {
+                        stringToReturn += $"Display Source is Cloned: true\n";
+                        stringToReturn += $"Number of Display Source clones: {displayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Count - 1}\n";
+                    }
+                    else
+                    {
+                        stringToReturn += $"Display Source is Cloned: false\n";
+                        stringToReturn += $"Number of Display Source clones: 0\n";
+
+                    }
                     stringToReturn += $"\n";
                 }
                 else
@@ -915,6 +912,17 @@ namespace DisplayMagicianShared.Windows
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Generating a list of all the current display configs");
             WINDOWS_DISPLAY_CONFIG allWindowsDisplayConfig = GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS);
 
+            if (displayConfig.IsCloned)
+            {
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: We have a cloned display in this display profile, so using the Windows GDI to set the layout");
+            }
+            else
+            {
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: We have no cloned displays in thus display profile, so using the Windows CCD to set the layout");
+            }
+
+
+
             // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
             PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.DisplayAdapters);
@@ -1007,7 +1015,8 @@ namespace DisplayMagicianShared.Windows
                 GDI_DISPLAY_SETTING displayDeviceSettings = myGdiDisplaySettings.Value;
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceName}.");
                 DEVICE_MODE modeToUse = displayDeviceSettings.DeviceMode;
-                CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(displayDeviceName, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
+                //CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(displayDeviceName, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
+                CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(null, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
                 if (result == CHANGE_DISPLAY_RESULTS.Successful)
                 {
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Successfully changed display {displayDeviceName} to use the new mode!");

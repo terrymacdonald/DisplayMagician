@@ -98,7 +98,7 @@ namespace DisplayMagicianShared.Windows
     public enum DISPLAYCONFIG_TOPOLOGY_ID : uint
     {
         Zero = 0x0,
-        DISPLAYCONFIG_TOPOLOGY_public = 0x00000001,
+        DISPLAYCONFIG_TOPOLOGY_INTERNAL = 0x00000001,
         DISPLAYCONFIG_TOPOLOGY_CLONE = 0x00000002,
         DISPLAYCONFIG_TOPOLOGY_EXTEND = 0x00000004,
         DISPLAYCONFIG_TOPOLOGY_EXTERNAL = 0x00000008,
@@ -106,7 +106,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_PATH : uint
+    public enum DISPLAYCONFIG_PATH_FLAGS : uint
     {
         Zero = 0x0,
         DISPLAYCONFIG_PATH_ACTIVE = 0x00000001,
@@ -566,7 +566,7 @@ namespace DisplayMagicianShared.Windows
 
         public bool Equals(DISPLAYCONFIG_PATH_TARGET_INFO other)
             => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
-                Id == other.Id &&
+               // Id == other.Id && // Removed as ID changes after reboot when the display is a cloned copy :(
                 ModeInfoIdx == other.ModeInfoIdx &&
                 OutputTechnology.Equals(other.OutputTechnology) &&
                 Rotation.Equals(other.Rotation) &&
@@ -591,7 +591,7 @@ namespace DisplayMagicianShared.Windows
     {
         public DISPLAYCONFIG_PATH_SOURCE_INFO SourceInfo;
         public DISPLAYCONFIG_PATH_TARGET_INFO TargetInfo;
-        public uint Flags;
+        public DISPLAYCONFIG_PATH_FLAGS Flags;
 
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_PATH_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_PATH_INFO other)
@@ -988,6 +988,7 @@ namespace DisplayMagicianShared.Windows
     {
         // Set some useful constants
         public const SDC SDC_CCD_TEST_IF_VALID = (SDC.SDC_VALIDATE | SDC.SDC_USE_SUPPLIED_DISPLAY_CONFIG);
+        public const uint DISPLAYCONFIG_PATH_MODE_IDX_INVALID = 0xffffffff;
 
 
         // GetDisplayConfigBufferSizes
