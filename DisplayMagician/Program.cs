@@ -236,14 +236,14 @@ namespace DisplayMagician {
             // Check if it's an upgrade from DisplayMagician v1 to v2
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
-            // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.0.json doesn't
-            if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json")))
+            // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.1.json doesn't
+            if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json")))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1 to DisplayMagician v2, so performing some upgrade steps.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.1, so performing some upgrade steps.");
                 // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
                 if (upgradedSettingsFile)
                 {
-                    logger.Info($"Program/Main: Upgraded v1 settings file {oldSettingsFile} to v2 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
+                    logger.Info($"Program/Main: Upgraded v1.0 settings file {oldSettingsFile} to v2.0 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
                 }                
 
                 // Copy the old Game Shortcuts file to the new v2 name
@@ -259,14 +259,29 @@ namespace DisplayMagician {
                 }    
                 catch(Exception ex)
                 {
-                    logger.Error(ex, $"Program/Main: Exception upgrading v1 shortcut file {oldShortcutsFile} to v2 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
+                    logger.Error(ex, $"Program/Main: Exception upgrading v1.0 shortcut file {oldShortcutsFile} to v2.0 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
                 }
 
                 // Warn the user about the fact we need a new DisplayProfiles_2.0.json
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
                 myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician1to2.rtf";
-                myMessageWindow.HeadingText = "DisplayMagician v2.0.0 Upgrade Warning";
+                myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
+                myMessageWindow.ButtonText = "&Close";
+                myMessageWindow.ShowDialog();
+            }
+            // Check if it's an upgrade from DisplayMagician v2.0 to v2.1
+            // and if it is then copy the old configs to the new filenames and
+            // explain to the user what they need to do.
+            // e.g. DisplayProfiles_2.1.json exists, but DisplayProfiles_2.0.json doesn't
+            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json")))
+            {
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.1, so performing some upgrade steps.");
+                // Warn the user about the fact we need a new DisplayProfiles_2.0.json
+                StartMessageForm myMessageWindow = new StartMessageForm();
+                myMessageWindow.MessageMode = "rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician2.0to2.1.rtf";
+                myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
             }
