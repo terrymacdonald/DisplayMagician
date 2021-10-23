@@ -63,7 +63,7 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.0.json");
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.1.json");
         
 
 
@@ -800,7 +800,7 @@ namespace DisplayMagicianShared
             // We do the change we wre trying to do
             try
             {
-                // Now we try and add a default NVIDIA Color Settings if there isn't one
+                /*// Now we try and add a default NVIDIA Color Settings if there isn't one
                 SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing NVIDIA Color Config.");
                 // Create a default object
                 NVIDIA_DISPLAY_CONFIG myDefaultConfig = new NVIDIA_DISPLAY_CONFIG();
@@ -872,7 +872,7 @@ namespace DisplayMagicianShared
                         SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
                     }
                     
-                }                
+                }                */
 
             }
             catch (JsonReaderException ex)
