@@ -310,13 +310,35 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
             windowsDisplayConfig.IsCloned = false;
 
+            // First of all generate the current displayIdentifiers
+            windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
+
+            // Next, extract the UID entries for the displays as that's what the Path IDs are normally supposed to be
+            // This is how we know the actual target id's ofd the monitors currently connected
+            Regex rx = new Regex(@"UID(?<uid>\d+)#", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            HashSet<uint> physicalTargetIdsToFind = new HashSet<uint>();
+            foreach (string displayIdentifier in windowsDisplayConfig.DisplayIdentifiers)
+            {
+                MatchCollection mc = rx.Matches(displayIdentifier);
+                if (mc.Count > 0)
+                {
+                    physicalTargetIdsToFind.Add(UInt32.Parse(mc[0].Groups["uid"].Value));
+                }
+            }
+
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
+            HashSet<uint> targetIdsToChange = new HashSet<uint>();
             var hdrInfos = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
             int hdrInfoCount = 0;
             for (int i = 0; i < paths.Length; i++)
             {
-                //DISPLAYCONFIG_PATH_INFO path = paths[i];
+                // Figure out if this path has a physical targetId, and if it doesn't store it
+                if (!physicalTargetIdsToFind.Contains(paths[i].TargetInfo.Id))
+                {
+                    // Add to the list of physical path target ids we need to patch later
+                    targetIdsToChange.Add(paths[i].TargetInfo.Id);
+                }
 
                 // Track if this display is a cloned path
                 bool isClonedPath = false;
@@ -443,8 +465,40 @@ namespace DisplayMagicianShared.Windows
                 hdrInfoCount++;
             }
 
+            // Now we need to figure out the maps between the cloned ID and the real physical target id
+            // the Advanced color info structure actually holds this information! So lets mine it.
+            Dictionary<uint, uint> targetIdMap = new Dictionary<uint, uint>();
+            foreach (var hdrInfo in hdrInfos)
+            {
+                targetIdMap[hdrInfo.Id] = hdrInfo.AdvancedColorInfo.Header.Id;
+            }
+
+            // Now we need to go through the list of paths again and patch the 'cloned' displays with a real display ID so the config works
+            for (int i = 0; i < paths.Length; i++)
+            {
+                if (targetIdsToChange.Contains(paths[i].TargetInfo.Id))
+                {
+                    // Patch the cloned ids with a real working one!
+                    paths[i].TargetInfo.Id = targetIdMap[paths[i].TargetInfo.Id];
+                }
+            }
+
+
+            // Store the active paths and modes in our display config object
+            windowsDisplayConfig.DisplayConfigPaths = paths;
+            windowsDisplayConfig.DisplayConfigModes = modes;
+            windowsDisplayConfig.DisplayHDRStates = hdrInfos;
+            windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
+
+
+            return windowsDisplayConfig;
+        }
+
+        public Dictionary<string, GDI_DISPLAY_SETTING> GetGdiDisplaySettings()
+        {
             // Get the list of all display adapters in this machine through GDI
             Dictionary<string, GDI_DISPLAY_SETTING> gdiDeviceSettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
+            Dictionary<string, string> gdiDeviceSources = new Dictionary<string, string>();
             UInt32 displayDeviceNum = 0;
             DISPLAY_DEVICE displayDevice = new DISPLAY_DEVICE();
             displayDevice.Size = (UInt32)Marshal.SizeOf<DISPLAY_DEVICE>();
@@ -472,7 +526,8 @@ namespace DisplayMagicianShared.Windows
                             // This is a primary device, so we'll set that too.
                             myDisplaySetting.IsPrimary = true;
                         }
-                        gdiDeviceSettings[displayDevice.DeviceName] = myDisplaySetting;
+                        gdiDeviceSettings[displayDevice.DeviceKey] = myDisplaySetting;
+                        gdiDeviceSources[displayDevice.DeviceName] = displayDevice.DeviceKey;
                     }
                     else
                     {
@@ -486,15 +541,7 @@ namespace DisplayMagicianShared.Windows
 
                 displayDeviceNum++;
             }
-
-            // Store the active paths and modes in our display config object
-            windowsDisplayConfig.DisplayConfigPaths = paths;
-            windowsDisplayConfig.DisplayConfigModes = modes;
-            windowsDisplayConfig.DisplayHDRStates = hdrInfos;
-            windowsDisplayConfig.GdiDisplaySettings = gdiDeviceSettings;
-            windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
-
-            return windowsDisplayConfig;
+            return gdiDeviceSettings;
         }
 
         public static Dictionary<string, List<uint>> GetDisplaySourceNames()
@@ -921,8 +968,6 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: We have no cloned displays in thus display profile, so using the Windows CCD to set the layout");
             }
 
-
-
             // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
             PatchAdapterIDs(ref displayConfig, allWindowsDisplayConfig.DisplayAdapters);
@@ -938,13 +983,13 @@ namespace DisplayMagicianShared.Windows
             }
             else
             {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - SetDisplayConfig couldn't validate the display configuration supplied. This display configuration wouldn't work.");
+                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - SetDisplayConfig couldn't validate the display configuration supplied. This display configuration won't work if applied.");
                 return false;
             }
 
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Yay! The display configuration is valid! Attempting to set the Display Config now");
             // Now set the specified display configuration for this computer                    
-            err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET);
+            err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET | SDC.SDC_FORCE_MODE_ENUMERATION);
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully set the display configuration to the settings supplied!");
@@ -1007,61 +1052,72 @@ namespace DisplayMagicianShared.Windows
 
             }
 
-            // Attempt to set the display adapters in this machine through GDI
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API");
+            // Get the existing displays
+            Dictionary<string, GDI_DISPLAY_SETTING> currentGdiDisplaySettings = GetGdiDisplaySettings();
+
+            // Apply the previously saved display settings to the new displays (match them up)
+            // NOTE: This may be the only mode needed once it's completed.
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API using ");
             foreach (var myGdiDisplaySettings in displayConfig.GdiDisplaySettings)
             {
-                string displayDeviceName = myGdiDisplaySettings.Key;
+                string displayDeviceKey = myGdiDisplaySettings.Key;
                 GDI_DISPLAY_SETTING displayDeviceSettings = myGdiDisplaySettings.Value;
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceName}.");
-                DEVICE_MODE modeToUse = displayDeviceSettings.DeviceMode;
-                //CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(displayDeviceName, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
-                CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(null, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
-                if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
+
+                if (currentGdiDisplaySettings.ContainsKey(displayDeviceKey))
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Successfully changed display {displayDeviceName} to use the new mode!");
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The settings change was unsuccessful because the system is DualView capable. Display {displayDeviceName} not updated to new mode.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: An invalid set of flags was passed in. Display {displayDeviceName} not updated to use the new mode.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The graphics mode is not supported. Display {displayDeviceName} not updated to use the new mode.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: An invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceName} not updated to use the new mode.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.Failed)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The display driver failed to apply the specified graphics mode. Display {displayDeviceName} not updated to use the new mode.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: Unable to write new settings to the registry. Display {displayDeviceName} not updated to use the new mode.");
-                    return false;
-                }
-                else if (result == CHANGE_DISPLAY_RESULTS.Restart)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The computer must be restarted for the graphics mode to work. Display {displayDeviceName} not updated to use the new mode.");
-                    return false;
-                }
-                else
-                {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Display {displayDeviceName} not updated to use the new mode.");
+                    string currentDeviceName = currentGdiDisplaySettings[displayDeviceKey].Device.DeviceName;
+                    DEVICE_MODE currentModeToUse = currentGdiDisplaySettings[displayDeviceKey].DeviceMode;
+                    DEVICE_MODE modeToUse = displayDeviceSettings.DeviceMode;
+
+                    CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceName, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
+                    if (result == CHANGE_DISPLAY_RESULTS.Successful)
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Successfully changed display {displayDeviceKey} to use the new mode!");
+                    }
+                    else if (result == CHANGE_DISPLAY_RESULTS.BadDualView)
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The settings change was unsuccessful because the system is DualView capable. Display {displayDeviceKey} not updated to new mode.");
+                        return false;
+                    }
+                    else if (result == CHANGE_DISPLAY_RESULTS.BadFlags)
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: An invalid set of flags was passed in. Display {displayDeviceKey} not updated to use the new mode.");
+                        return false;
+                    }
+                    else if (result == CHANGE_DISPLAY_RESULTS.BadMode)
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The graphics mode is not supported. Display {displayDeviceKey} not updated to use the new mode.");
+                        return false;
+                    }
+                    else if (result == CHANGE_DISPLAY_RESULTS.BadParam)
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: An invalid parameter was passed in. This can include an invalid flag or combination of flags. Display {displayDeviceKey} not updated to use the new mode.");
+                        return false;
+                    }
+                    else if (result == CHANGE_DISPLAY_RESULTS.Failed)
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The display driver failed to apply the specified graphics mode. Display {displayDeviceKey} not updated to use the new mode.");
+                        return false;
+                    }
+                    else if (result == CHANGE_DISPLAY_RESULTS.NotUpdated)
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: Unable to write new settings to the registry. Display {displayDeviceKey} not updated to use the new mode.");
+                        return false;
+                    }
+                    else if (result == CHANGE_DISPLAY_RESULTS.Restart)
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: The computer must be restarted for the graphics mode to work. Display {displayDeviceKey} not updated to use the new mode.");
+                        return false;
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Display {displayDeviceKey} not updated to use the new mode.");
+                    }
                 }
 
             }
+
             return true;
         }
 
@@ -1309,6 +1365,15 @@ namespace DisplayMagicianShared.Windows
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Warn(ex, $"WinLibrary/GetSomeDisplayIdentifiers: Exception getting Windows Display EDID Product Code from video card. Substituting with a # instead");
+                    displayInfo.Add("#");
+                }
+                try
+                {
+                    displayInfo.Add(targetInfo.MonitorDevicePath.ToString());
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Warn(ex, $"WinLibrary/GetSomeDisplayIdentifiers: Exception getting Windows Path Target Info Id from video card. Substituting with a # instead");
                     displayInfo.Add("#");
                 }
                 try
