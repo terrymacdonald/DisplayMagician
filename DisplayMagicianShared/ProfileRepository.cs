@@ -587,9 +587,6 @@ namespace DisplayMagicianShared
         public static void UpdateActiveProfile()
         {
 
-
-            //ProfileItem activeProfile;
-
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
             ProfileItem profile;

@@ -466,72 +466,31 @@ namespace DisplayMagicianShared
 
         public bool CreateProfileFromCurrentDisplaySettings()
         {
-            // Create defaults for NVIDIA and AMD so that the JSON file can save properly
+            // Calling the 3 different libraries automatically gets the different configs from each of the 3 video libraries.
+            // If the video library isn't in use then it also fills in the defaults so that the JSON file can save properly
             // (C# Structs populate with default values which mean that arrays start with null)
 
-            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
-            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
-            WinLibrary winLibrary = WinLibrary.GetLibrary();
+            try
+            {                            
+                NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+                AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+                WinLibrary winLibrary = WinLibrary.GetLibrary();
 
-            if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled)
-            {
-                if (nvidiaLibrary.IsInstalled)
-                {
-                    // Create the profile data from the current config
-                    _nvidiaDisplayConfig = nvidiaLibrary.GetActiveConfig();
-                    _windowsDisplayConfig = winLibrary.GetActiveConfig();
-                    _profileDisplayIdentifiers = nvidiaLibrary.GetCurrentDisplayIdentifiers();
+                // Create the profile data from the current config
+                _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;
+                _amdDisplayConfig = amdLibrary.ActiveDisplayConfig;
+                _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
+                _profileDisplayIdentifiers = nvidiaLibrary.CurrentDisplayIdentifiers;
 
-                    // Now, since the ActiveProfile has changed, we need to regenerate screen positions
-                    _screens = GetScreenPositions();
+                // Now, since the ActiveProfile has changed, we need to regenerate screen positions
+                _screens = GetScreenPositions();
 
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return true;
+                
             }
-            else if(VideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
+            catch (Exception ex)
             {
-                if (amdLibrary.IsInstalled)
-                {
-                    // Create the profile data from the current config
-                    _amdDisplayConfig = amdLibrary.GetActiveConfig();
-                    _windowsDisplayConfig = winLibrary.GetActiveConfig();
-                    _profileDisplayIdentifiers = amdLibrary.GetCurrentDisplayIdentifiers();
-
-                    // Now, since the ActiveProfile has changed, we need to regenerate screen positions
-                    _screens = GetScreenPositions();
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else if (VideoMode == VIDEO_MODE.WINDOWS)
-            {
-                if (winLibrary.IsInstalled)
-                {
-                    // Create the profile data from the current config
-                    _windowsDisplayConfig = winLibrary.GetActiveConfig();
-                    _profileDisplayIdentifiers = winLibrary.GetCurrentDisplayIdentifiers();
-
-                    // Now, since the ActiveProfile has changed, we need to regenerate screen positions
-                    _screens = GetScreenPositions();
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                SharedLogger.logger.Error($"ProfileRepository/CreateProfileFromCurrentDisplaySettings: Tried to use an unknown video mode!");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/CreateProfileFromCurrentDisplaySettings: Exception getting the config settings!");
                 return false;
             }
         }
@@ -676,7 +635,7 @@ namespace DisplayMagicianShared
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
                 if (nvidiaLibrary.IsInstalled)
                 {
-                    if (!(nvidiaLibrary.IsActiveConfig(_nvidiaDisplayConfig) && winLibrary.IsActiveConfig(_windowsDisplayConfig)))
+                    if (!winLibrary.IsActiveConfig(_windowsDisplayConfig) || !nvidiaLibrary.IsActiveConfig(_nvidiaDisplayConfig))
                     {
                         if (nvidiaLibrary.IsPossibleConfig(_nvidiaDisplayConfig))
                         {
@@ -737,7 +696,7 @@ namespace DisplayMagicianShared
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
                 if (amdLibrary.IsInstalled)
                 {
-                    if (!(amdLibrary.IsActiveConfig(_amdDisplayConfig) && winLibrary.IsActiveConfig(_windowsDisplayConfig)))
+                    if (!winLibrary.IsActiveConfig(_windowsDisplayConfig) || !amdLibrary.IsActiveConfig(_amdDisplayConfig))
                     {
                         if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
                         {
