@@ -2008,6 +2008,7 @@ namespace DisplayMagicianShared.NVIDIA
         public const UInt32 NVAPI_LONG_STRING_MAX = 256;
         public const UInt32 NVAPI_SHORT_STRING_MAX = 64;
         public const UInt32 NVAPI_MAX_PHYSICAL_GPUS = 64;
+        public const UInt32 NVAPI_MAX_PHYSICAL_GPUS_QUERIED = 32;
         public const UInt32 NVAPI_UNICODE_STRING_MAX = 2048;
         public const UInt32 NVAPI_BINARY_DATA_MAX = 4096;
         public const UInt32 NVAPI_SETTING_MAX_VALUES = 100;
@@ -2217,13 +2218,13 @@ namespace DisplayMagicianShared.NVIDIA
 
         private static string GetDllName()
         {
-            if (IntPtr.Size == 4)
+            if (IntPtr.Size > 4)
             {
-                return "nvapi.dll";
+                return "nvapi64.dll";
             }
             else
             {
-                return "nvapi64.dll";
+                return "nvapi.dll";
             }
         }
 
@@ -2318,9 +2319,6 @@ namespace DisplayMagicianShared.NVIDIA
             }
 
         }
-
-
-
         #endregion
 
 

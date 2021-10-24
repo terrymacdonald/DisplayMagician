@@ -157,10 +157,7 @@ namespace DisplayMagicianShared.AMD
         // .NET guarantees thread safety for static initialization
         private static AMDLibrary _instance = new AMDLibrary();
 
-        private static WinLibrary _winLibrary = new WinLibrary();
-
         private bool _initialised = false;
-        private bool _haveActiveDisplayConfig = false;
 
         // To detect redundant calls
         private bool _disposed = false;
@@ -195,6 +192,8 @@ namespace DisplayMagicianShared.AMD
                     {
                         _initialised = true;
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: AMD ADL2 library was initialised successfully");
+                        SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Running UpdateActiveConfig to ensure there is a config to use later");
+                        _activeDisplayConfig = GetActiveConfig();
                     }
                     else
                     {
@@ -206,7 +205,6 @@ namespace DisplayMagicianShared.AMD
                     SharedLogger.logger.Trace(ex, $"AMDLibrary/AMDLibrary: Exception intialising AMD ADL2 library. ADL2_Main_Control_Create() caused an exception.");
                 }
 
-                _winLibrary = WinLibrary.GetLibrary();
             }
             catch (DllNotFoundException ex)
             {
@@ -280,16 +278,19 @@ namespace DisplayMagicianShared.AMD
         {
             get
             {
-                if (!_haveActiveDisplayConfig)
-                {
-                    _activeDisplayConfig = GetActiveConfig();
-                    _haveActiveDisplayConfig = true;
-                }
                 return _activeDisplayConfig;
             }
             set
             {
                 _activeDisplayConfig = value;
+            }
+        }
+
+        public List<string> CurrentDisplayIdentifiers
+        {
+            get
+            {
+                return _activeDisplayConfig.DisplayIdentifiers;
             }
         }
 
@@ -314,6 +315,22 @@ namespace DisplayMagicianShared.AMD
             myDefaultConfig.DisplayIdentifiers = new List<string>();
 
             return myDefaultConfig;
+        }
+
+        public bool UpdateActiveConfig()
+        {
+            SharedLogger.logger.Trace($"AMDLibrary/UpdateActiveConfig: Updating the currently active config");
+            try
+            {
+                _activeDisplayConfig = GetActiveConfig();
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Trace(ex, $"AMDLibrary/UpdateActiveConfig: Exception updating the currently active config");
+                return false;
+            }
+
+            return true;
         }
 
         public AMD_DISPLAY_CONFIG GetActiveConfig()
@@ -934,7 +951,7 @@ namespace DisplayMagicianShared.AMD
             string stringToReturn = "";
 
             // Get the current config
-            AMD_DISPLAY_CONFIG displayConfig = GetActiveConfig();
+            AMD_DISPLAY_CONFIG displayConfig = ActiveDisplayConfig;
 
             stringToReturn += $"****** AMD VIDEO CARDS *******\n";
 
@@ -1479,13 +1496,10 @@ namespace DisplayMagicianShared.AMD
 
         public bool IsActiveConfig(AMD_DISPLAY_CONFIG displayConfig)
         {
-            // Get the current windows display configs to compare to the one we loaded
-            bool allDisplays = false;
-            AMD_DISPLAY_CONFIG currentWindowsDisplayConfig = GetAMDDisplayConfig(allDisplays);
 
             // Check whether the display config is in use now
             SharedLogger.logger.Trace($"AMDLibrary/IsActiveConfig: Checking whether the display configuration is already being used.");
-            if (displayConfig.Equals(currentWindowsDisplayConfig))
+            if (displayConfig.Equals(_activeDisplayConfig))
             {
                 SharedLogger.logger.Trace($"AMDLibrary/IsActiveConfig: The display configuration is already being used (supplied displayConfig Equals currentWindowsDisplayConfig)");
                 return true;
