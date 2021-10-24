@@ -101,7 +101,7 @@ namespace DisplayMagicianShared
             catch (Exception ex)
             {
                 SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Exception creating the Profiles storage folder.");
-            }
+            }            
         }
         #endregion
 
