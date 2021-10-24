@@ -476,7 +476,12 @@ namespace DisplayMagicianShared
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
-                // Create the profile data from the current config
+                // For a library update to the latest version so that we pick up any new changes since the last update
+                nvidiaLibrary.UpdateActiveConfig();
+                amdLibrary.UpdateActiveConfig();
+                winLibrary.UpdateActiveConfig();
+
+                // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;
                 _amdDisplayConfig = amdLibrary.ActiveDisplayConfig;
                 _windowsDisplayConfig = winLibrary.ActiveDisplayConfig;
