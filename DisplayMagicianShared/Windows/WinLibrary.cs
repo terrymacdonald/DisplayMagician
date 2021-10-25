@@ -1100,24 +1100,25 @@ namespace DisplayMagicianShared.Windows
             // Apply the previously saved display settings to the new displays (match them up)
             // NOTE: This may be the only mode needed once it's completed.
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API using ");
-            for (int i = 0; i < displayConfig.GdiDisplaySettings.Count; i++)
+            foreach (var gdiDisplay in displayConfig.GdiDisplaySettings)
             {
 
-                var thisGdiSetting = displayConfig.GdiDisplaySettings.ElementAt(i);
-                string displayDeviceKey = thisGdiSetting.Key;
+                string displayDeviceKey = gdiDisplay.Key;
                 GDI_DISPLAY_SETTING displayDeviceSettings = displayConfig.GdiDisplaySettings[displayDeviceKey];
 
                 if (currentGdiDisplaySettings.ContainsKey(displayDeviceKey))
                 {
                     SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
-                    string currentDeviceName = currentGdiDisplaySettings[displayDeviceKey].Device.DeviceName;
-                    //DEVICE_MODE currentModeToUse = currentGdiDisplaySettings[displayDeviceKey].DeviceMode;
-                    DEVICE_MODE modeToUse = displayDeviceSettings.DeviceMode;
+                    GDI_DISPLAY_SETTING currentDeviceSetting = currentGdiDisplaySettings[displayDeviceKey];
 
-                    // Update the Device name to match what the OS currently thinks that is (Ensures the device settings are provided to the correct screens)
-                    displayDeviceSettings.Device.DeviceName = currentGdiDisplaySettings[displayDeviceKey].Device.DeviceName;
+                    // Use the current device as a base, but set some of the various settings we stored as part of the profile 
+                    currentDeviceSetting.DeviceMode.BitsPerPixel = displayDeviceSettings.DeviceMode.BitsPerPixel;
+                    currentDeviceSetting.DeviceMode.DisplayOrientation = displayDeviceSettings.DeviceMode.DisplayOrientation;
+                    currentDeviceSetting.DeviceMode.DisplayFrequency = displayDeviceSettings.DeviceMode.DisplayFrequency;
+                    // Sets the greyscale and interlaced settings
+                    currentDeviceSetting.DeviceMode.DisplayFlags = displayDeviceSettings.DeviceMode.DisplayFlags;
 
-                    CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceName, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
+                    CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceSetting.Device.DeviceName, ref currentDeviceSetting.DeviceMode, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
                     if (result == CHANGE_DISPLAY_RESULTS.Successful)
                     {
                         SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Successfully changed display {displayDeviceKey} to use the new mode!");
