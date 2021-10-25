@@ -363,32 +363,34 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is DEVICE_MODE other && this.Equals(other);
 
         public bool Equals(DEVICE_MODE other)
-            => DeviceName.Equals(other.DeviceName) &&
+            => //DeviceName.Equals(other.DeviceName) &&  // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 SpecificationVersion == other.SpecificationVersion &&
-                DriverVersion.Equals(other.DriverVersion) &&
-                Size.Equals(other.Size) &&
-                DriverExtra.Equals(other.DriverExtra) &&
-                Fields.Equals(other.Fields) &&
-                Position.Equals(other.Position) &&
+                //DriverVersion.Equals(other.DriverVersion) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //Size.Equals(other.Size) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //DriverExtra.Equals(other.DriverExtra) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //Fields.Equals(other.Fields) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //Position.Equals(other.Position) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 DisplayOrientation.Equals(other.DisplayOrientation) &&
                 DisplayFixedOutput.Equals(other.DisplayFixedOutput) &&
-                Color.Equals(other.Color) &&
-                Duplex.Equals(other.Duplex) &&
-                YResolution.Equals(other.YResolution) &&
-                TrueTypeOption.Equals(other.TrueTypeOption) &&
-                Collate.Equals(other.Collate) &&
-                FormName.Equals(other.FormName) &&
-                LogicalInchPixels.Equals(other.LogicalInchPixels) &&
+                //Color.Equals(other.Color) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //Duplex.Equals(other.Duplex) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //YResolution.Equals(other.YResolution) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //TrueTypeOption.Equals(other.TrueTypeOption) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //Collate.Equals(other.Collate) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //FormName.Equals(other.FormName) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+                //LogicalInchPixels.Equals(other.LogicalInchPixels) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 BitsPerPixel.Equals(other.BitsPerPixel) &&
-                PixelsWidth.Equals(other.PixelsWidth) &&
-                PixelsHeight.Equals(other.PixelsHeight) &&
+                PixelsWidth.Equals(other.PixelsWidth) && 
+                PixelsHeight.Equals(other.PixelsHeight) && 
                 DisplayFlags.Equals(other.DisplayFlags) &&
                 DisplayFrequency == other.DisplayFrequency;
 
         public override int GetHashCode()
         {
-            return (DeviceName, SpecificationVersion, DriverVersion, Size, DriverExtra, Fields, Position, DisplayOrientation, DisplayFixedOutput, Color, Duplex,
-                YResolution, TrueTypeOption, Collate, FormName, LogicalInchPixels, BitsPerPixel, PixelsWidth, PixelsHeight, DisplayFlags, DisplayFrequency).GetHashCode();
+            // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
+            //return (DeviceName, SpecificationVersion, DriverVersion, Size, DriverExtra, Fields, Position, DisplayOrientation, DisplayFixedOutput, Color, Duplex,
+            //    YResolution, TrueTypeOption, Collate, FormName, LogicalInchPixels, BitsPerPixel, PixelsWidth, PixelsHeight, DisplayFlags, DisplayFrequency).GetHashCode();
+            return (SpecificationVersion, DisplayOrientation, DisplayFixedOutput, BitsPerPixel, PixelsWidth, PixelsHeight, DisplayFlags, DisplayFrequency).GetHashCode();
         }
 
         public static bool operator ==(DEVICE_MODE lhs, DEVICE_MODE rhs) => lhs.Equals(rhs);
