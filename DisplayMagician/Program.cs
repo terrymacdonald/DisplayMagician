@@ -280,7 +280,7 @@ namespace DisplayMagician {
                 // Warn the user about the fact we need a new DisplayProfiles_2.0.json
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician2.0to2.1.rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician20to21.rtf";
                 myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();

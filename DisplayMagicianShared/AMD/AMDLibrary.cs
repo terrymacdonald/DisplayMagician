@@ -170,7 +170,7 @@ namespace DisplayMagicianShared.AMD
         static AMDLibrary() { }
         public AMDLibrary()
         {
-
+            _activeDisplayConfig = CreateDefaultConfig();
             try
             {
                 SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Attempting to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}");

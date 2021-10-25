@@ -515,13 +515,22 @@ namespace DisplayMagicianShared.Windows
                 }
             }
 
+            // And then we need to go through the list of modes again and patch the 'cloned' displays with a real display ID so the display layout is right in cloned displays
+            for (int i = 0; i < modes.Length; i++)
+            {
+                // We only change the ids that match in InfoType for target displays
+                if (modes[i].InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET && targetIdsToChange.Contains(modes[i].Id))
+                {
+                    // Patch the cloned ids with a real working one!
+                    modes[i].Id = targetIdMap[modes[i].Id];
+                }
+            }
 
             // Store the active paths and modes in our display config object
             windowsDisplayConfig.DisplayConfigPaths = paths;
             windowsDisplayConfig.DisplayConfigModes = modes;
             windowsDisplayConfig.DisplayHDRStates = hdrInfos;
             windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
-
 
             return windowsDisplayConfig;
         }
@@ -1018,8 +1027,9 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - SetDisplayConfig couldn't validate the display configuration supplied. This display configuration won't work if applied.");
                 return false;
             }
-
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Yay! The display configuration is valid! Attempting to set the Display Config now");
+
+
             // Now set the specified display configuration for this computer                    
             err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, SDC.DISPLAYMAGICIAN_SET | SDC.SDC_FORCE_MODE_ENUMERATION);
             if (err == WIN32STATUS.ERROR_SUCCESS)
@@ -1090,17 +1100,22 @@ namespace DisplayMagicianShared.Windows
             // Apply the previously saved display settings to the new displays (match them up)
             // NOTE: This may be the only mode needed once it's completed.
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to change Display Device settings through GDI API using ");
-            foreach (var myGdiDisplaySettings in displayConfig.GdiDisplaySettings)
+            for (int i = 0; i < displayConfig.GdiDisplaySettings.Count; i++)
             {
-                string displayDeviceKey = myGdiDisplaySettings.Key;
-                GDI_DISPLAY_SETTING displayDeviceSettings = myGdiDisplaySettings.Value;
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
+
+                var thisGdiSetting = displayConfig.GdiDisplaySettings.ElementAt(i);
+                string displayDeviceKey = thisGdiSetting.Key;
+                GDI_DISPLAY_SETTING displayDeviceSettings = displayConfig.GdiDisplaySettings[displayDeviceKey];
 
                 if (currentGdiDisplaySettings.ContainsKey(displayDeviceKey))
                 {
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to change Device Mode for Display {displayDeviceKey}.");
                     string currentDeviceName = currentGdiDisplaySettings[displayDeviceKey].Device.DeviceName;
-                    DEVICE_MODE currentModeToUse = currentGdiDisplaySettings[displayDeviceKey].DeviceMode;
+                    //DEVICE_MODE currentModeToUse = currentGdiDisplaySettings[displayDeviceKey].DeviceMode;
                     DEVICE_MODE modeToUse = displayDeviceSettings.DeviceMode;
+
+                    // Update the Device name to match what the OS currently thinks that is (Ensures the device settings are provided to the correct screens)
+                    displayDeviceSettings.Device.DeviceName = currentGdiDisplaySettings[displayDeviceKey].Device.DeviceName;
 
                     CHANGE_DISPLAY_RESULTS result = GDIImport.ChangeDisplaySettingsEx(currentDeviceName, ref modeToUse, IntPtr.Zero, CHANGE_DISPLAY_SETTINGS_FLAGS.CDS_UPDATEREGISTRY, IntPtr.Zero);
                     if (result == CHANGE_DISPLAY_RESULTS.Successful)
@@ -1147,7 +1162,10 @@ namespace DisplayMagicianShared.Windows
                         SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Display {displayDeviceKey} not updated to use the new mode.");
                     }
                 }
-
+                else
+                {
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Display {displayDeviceKey} is not currently in use, so cannot set it!");
+                }
             }
 
             return true;
