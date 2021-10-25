@@ -50,9 +50,13 @@ namespace DisplayMagician.UIForms
             this.gb_upgrades = new System.Windows.Forms.GroupBox();
             this.label2 = new System.Windows.Forms.Label();
             this.cb_upgrade_prerelease = new System.Windows.Forms.CheckBox();
+            this.gb_support = new System.Windows.Forms.GroupBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.btn_create_support_package = new System.Windows.Forms.Button();
             this.gb_general.SuspendLayout();
             this.gb_hotkeys.SuspendLayout();
             this.gb_upgrades.SuspendLayout();
+            this.gb_support.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_back
@@ -63,7 +67,7 @@ namespace DisplayMagician.UIForms
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(1034, 434);
+            this.btn_back.Location = new System.Drawing.Point(1034, 517);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 9;
@@ -324,12 +328,53 @@ namespace DisplayMagician.UIForms
             this.cb_upgrade_prerelease.Text = "Upgrade DisplayMagician to latest beta versions when available";
             this.cb_upgrade_prerelease.UseVisualStyleBackColor = true;
             // 
+            // gb_support
+            // 
+            this.gb_support.Controls.Add(this.btn_create_support_package);
+            this.gb_support.Controls.Add(this.label3);
+            this.gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gb_support.ForeColor = System.Drawing.Color.White;
+            this.gb_support.Location = new System.Drawing.Point(27, 442);
+            this.gb_support.Name = "gb_support";
+            this.gb_support.Size = new System.Drawing.Size(525, 98);
+            this.gb_support.TabIndex = 16;
+            this.gb_support.TabStop = false;
+            this.gb_support.Text = "Support Settings";
+            // 
+            // label3
+            // 
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.Location = new System.Drawing.Point(105, 57);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(334, 32);
+            this.label3.TabIndex = 15;
+            this.label3.Text = "Use this button to save a support package to your computer. You can then upload t" +
+    "his file to GitHub when you have a problem";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btn_create_support_package
+            // 
+            this.btn_create_support_package.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_create_support_package.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_create_support_package.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_create_support_package.ForeColor = System.Drawing.Color.White;
+            this.btn_create_support_package.Location = new System.Drawing.Point(169, 21);
+            this.btn_create_support_package.Name = "btn_create_support_package";
+            this.btn_create_support_package.Size = new System.Drawing.Size(183, 33);
+            this.btn_create_support_package.TabIndex = 48;
+            this.btn_create_support_package.Text = "Create a Support Package";
+            this.btn_create_support_package.UseVisualStyleBackColor = true;
+            this.btn_create_support_package.Click += new System.EventHandler(this.btn_create_support_package_Click);
+            // 
             // SettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(1142, 481);
+            this.ClientSize = new System.Drawing.Size(1142, 564);
+            this.Controls.Add(this.gb_support);
             this.Controls.Add(this.gb_upgrades);
             this.Controls.Add(this.gb_hotkeys);
             this.Controls.Add(this.gb_general);
@@ -351,6 +396,7 @@ namespace DisplayMagician.UIForms
             this.gb_hotkeys.PerformLayout();
             this.gb_upgrades.ResumeLayout(false);
             this.gb_upgrades.PerformLayout();
+            this.gb_support.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -377,5 +423,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.GroupBox gb_upgrades;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.CheckBox cb_upgrade_prerelease;
+        private System.Windows.Forms.GroupBox gb_support;
+        private System.Windows.Forms.Button btn_create_support_package;
+        private System.Windows.Forms.Label label3;
     }
 }

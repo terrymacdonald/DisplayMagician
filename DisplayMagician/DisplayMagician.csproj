@@ -301,7 +301,7 @@
       <Version>4.0.0-beta.74</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications">
-      <Version>7.1.0-preview1</Version>
+      <Version>7.1.1</Version>
     </PackageReference>
     <PackageReference Include="MintPlayer.IconUtils">
       <Version>1.0.4</Version>
@@ -316,13 +316,16 @@
       <Version>2.1.0</Version>
     </PackageReference>
     <PackageReference Include="NLog">
-      <Version>4.7.11</Version>
+      <Version>4.7.12</Version>
     </PackageReference>
     <PackageReference Include="protobuf-net">
       <Version>3.0.101</Version>
     </PackageReference>
     <PackageReference Include="QueryString.NET">
       <Version>1.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.IO.Compression">
+      <Version>4.3.0</Version>
     </PackageReference>
     <PackageReference Include="ValveKeyValue">
       <Version>0.3.1.152</Version>

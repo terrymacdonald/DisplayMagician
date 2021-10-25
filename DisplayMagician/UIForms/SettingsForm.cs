@@ -3,6 +3,8 @@ using NHotkey;
 using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Windows.Forms;
 using WK.Libraries.BootMeUpNS;
@@ -471,5 +473,44 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void btn_create_support_package_Click(object sender, EventArgs e)
+        {
+            string zipFilePath = "";
+            using (var archiveStream = new FileStream(zipFilePath, FileMode.Create))
+            {
+                using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create, true))
+                {
+                    // Get the list of files to zip
+                    List<string> listOfFiles = new List<string> {
+                        // Add the DisplayMagician.log file
+                        Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
+                        // Add the DisplayMagician.log file
+                        Path.Combine(Program.AppProfilePath,"DisplayProfile_2.1.json"),
+                        // Add the DisplayMagician.log file
+                        Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
+                        // Add the DisplayMagician.log file
+                        Path.Combine(Program.AppDataPath,"Settings_2.0.json")
+                    };
+
+                    foreach (string filename in listOfFiles)
+                    {
+                        var zipArchiveEntry = archive.CreateEntry(filename, CompressionLevel.Fastest);
+                        
+                        using (Stream zipStream = zipArchiveEntry.Open())
+                        {
+                            using (StreamWriter writer = new StreamWriter(zipStream))
+                            {
+                                writer.WriteLine(filename);
+                            }
+                        }
+                            
+                    }
+                }
+
+                zip
+            }
+
+            return archiveFile;
+        }
     }
 }
