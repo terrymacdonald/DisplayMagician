@@ -1098,6 +1098,8 @@ namespace DisplayMagicianShared
                 else
                 {
                     SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.VideoMode.ToString("G")} Profile!");
+                    // We also need to update the ActiveProfile so that DisplayMagician knows things have changed
+                    ProfileRepository.UpdateActiveProfile();
                     return ApplyProfileResult.Successful;
                 }
 
