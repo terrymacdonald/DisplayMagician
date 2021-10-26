@@ -364,14 +364,14 @@ namespace DisplayMagicianShared.Windows
 
         public bool Equals(DEVICE_MODE other)
             => //DeviceName.Equals(other.DeviceName) &&  // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
-                SpecificationVersion == other.SpecificationVersion &&
+                //SpecificationVersion == other.SpecificationVersion &&
                 //DriverVersion.Equals(other.DriverVersion) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 //Size.Equals(other.Size) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 //DriverExtra.Equals(other.DriverExtra) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 //Fields.Equals(other.Fields) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 //Position.Equals(other.Position) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 DisplayOrientation.Equals(other.DisplayOrientation) &&
-                DisplayFixedOutput.Equals(other.DisplayFixedOutput) &&
+                //DisplayFixedOutput.Equals(other.DisplayFixedOutput) &&
                 //Color.Equals(other.Color) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 //Duplex.Equals(other.Duplex) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 //YResolution.Equals(other.YResolution) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
@@ -380,8 +380,8 @@ namespace DisplayMagicianShared.Windows
                 //FormName.Equals(other.FormName) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 //LogicalInchPixels.Equals(other.LogicalInchPixels) && // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
                 BitsPerPixel.Equals(other.BitsPerPixel) &&
-                PixelsWidth.Equals(other.PixelsWidth) && 
-                PixelsHeight.Equals(other.PixelsHeight) && 
+                //PixelsWidth.Equals(other.PixelsWidth) && 
+                //PixelsHeight.Equals(other.PixelsHeight) && 
                 DisplayFlags.Equals(other.DisplayFlags) &&
                 DisplayFrequency == other.DisplayFrequency;
 
@@ -390,7 +390,7 @@ namespace DisplayMagicianShared.Windows
             // Removed specifically for DisplayMagician matching. Remove if you need true equality matching
             //return (DeviceName, SpecificationVersion, DriverVersion, Size, DriverExtra, Fields, Position, DisplayOrientation, DisplayFixedOutput, Color, Duplex,
             //    YResolution, TrueTypeOption, Collate, FormName, LogicalInchPixels, BitsPerPixel, PixelsWidth, PixelsHeight, DisplayFlags, DisplayFrequency).GetHashCode();
-            return (SpecificationVersion, DisplayOrientation, DisplayFixedOutput, BitsPerPixel, PixelsWidth, PixelsHeight, DisplayFlags, DisplayFrequency).GetHashCode();
+            return (DisplayOrientation, BitsPerPixel, DisplayFlags, DisplayFrequency).GetHashCode();
         }
 
         public static bool operator ==(DEVICE_MODE lhs, DEVICE_MODE rhs) => lhs.Equals(rhs);
