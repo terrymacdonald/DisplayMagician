@@ -104,8 +104,8 @@ namespace DisplayMagician.UIForms
                     logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Fatal");
                     break;
                 default:
-                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Info"]);
-                    logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Info");
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Trace"]);
+                    logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Trace");
                     break;
             }
 
@@ -475,42 +475,92 @@ namespace DisplayMagician.UIForms
 
         private void btn_create_support_package_Click(object sender, EventArgs e)
         {
-            string zipFilePath = "";
-            using (var archiveStream = new FileStream(zipFilePath, FileMode.Create))
+            try
             {
-                using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create, true))
+                using (SaveFileDialog saveFileDialog = new SaveFileDialog())
                 {
-                    // Get the list of files to zip
-                    List<string> listOfFiles = new List<string> {
-                        // Add the DisplayMagician.log file
-                        Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
-                        // Add the DisplayMagician.log file
-                        Path.Combine(Program.AppProfilePath,"DisplayProfile_2.1.json"),
-                        // Add the DisplayMagician.log file
-                        Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
-                        // Add the DisplayMagician.log file
-                        Path.Combine(Program.AppDataPath,"Settings_2.0.json")
-                    };
+                    DateTime now = DateTime.Now;
+                    saveFileDialog.InitialDirectory = Environment.SpecialFolder.MyDocuments.ToString();
+                    saveFileDialog.Filter = "Zip Files(*.zip)| *.zip | All files(*.*) | *.*";
+                    saveFileDialog.FilterIndex = 2;
+                    saveFileDialog.RestoreDirectory = true;
+                    saveFileDialog.FileName = $"DisplayMagician-Support-{now.ToString("yyyyMMdd-HHmm")}.zip";
+                    saveFileDialog.Title = "Save a DisplayMagician Support ZIP file";
 
-                    foreach (string filename in listOfFiles)
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        var zipArchiveEntry = archive.CreateEntry(filename, CompressionLevel.Fastest);
-                        
-                        using (Stream zipStream = zipArchiveEntry.Open())
+                        //Get the path of specified file
+                        string zipFilePath = saveFileDialog.FileName;
+                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Creating support zip file at {zipFilePath}.");
+
+                        if (File.Exists(zipFilePath))
                         {
-                            using (StreamWriter writer = new StreamWriter(zipStream))
-                            {
-                                writer.WriteLine(filename);
-                            }
+                            File.Delete(zipFilePath);
                         }
-                            
+
+                        ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
+                                                                                              
+                        // Get the list of files to zip
+                        List<string> listOfFiles = new List<string> {
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppDataPath,"Settings_2.0.json")
+                        };
+                        foreach (string filename in listOfFiles)
+                        {
+                            try
+                            {
+                                if (File.Exists(filename))
+                                {
+                                    archive.CreateEntryFromFile(filename, Path.GetFileName(filename), CompressionLevel.Optimal);
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Warn($"SettingsForm/btn_create_support_package_Click: Couldn't add {filename} to the support ZIP file {zipFilePath} as it doesn't exist.");
+                                }
+                                
+                            }
+                            catch (ArgumentNullException ex)
+                            {
+                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while adding files to the support zip file.");
+                            }
+                            catch (System.Runtime.InteropServices.ExternalException ex)
+                            {
+                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while adding files to the support zip file.");
+                            }
+                            catch (Exception ex)
+                            {
+                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while adding files to the support zip file.");
+                            }
+
+
+                        }
+
+                        archive.Dispose();
+                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Finished creating support zip file at {zipFilePath}.");
+                        MessageBox.Show($"Created DisplayMagician Support ZIP file {zipFilePath}. You can now attach this file to your GitHub issue.");
                     }
                 }
-
-                zip
+            }
+            catch (ArgumentNullException ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while creating support zip file.");
+            }
+            catch (System.Runtime.InteropServices.ExternalException ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while creating support zip file.");
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while creating support zip file.");
             }
 
-            return archiveFile;
+            
         }
     }
 }

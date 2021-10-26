@@ -103,6 +103,7 @@ namespace DisplayMagician {
 
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
+            
 
             // Rules for mapping loggers to targets          
             /*NLog.LogLevel logLevel = null;
@@ -132,6 +133,8 @@ namespace DisplayMagician {
             // While there are a large number of big changes taking place with DisplayMagician, this will minimise
             // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
             NLog.LogLevel logLevel = NLog.LogLevel.Trace;
+            AppProgramSettings.LogLevel = "Trace";
+
 
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
