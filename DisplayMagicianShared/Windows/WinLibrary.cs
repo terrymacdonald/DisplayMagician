@@ -56,12 +56,16 @@ namespace DisplayMagicianShared.Windows
            DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
            DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
            DisplayHDRStates.SequenceEqual(other.DisplayHDRStates) &&
-           GdiDisplaySettings.SequenceEqual(other.GdiDisplaySettings) &&
+           // The dictionary keys sometimes change after returning from NVIDIA Surround, so we need to only focus on comparing the values of the GDISettings.
+           // Additionally, we had to disable the DEviceKey from the equality testing within the GDI library itself as that waould also change after changing back from NVIDIA surround
+           // This still allows us to detect when refresh rates change, which will allow DisplayMagician to detect profile differences.
+           GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
 
         public override int GetHashCode()
         {
-            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, GdiDisplaySettings, IsCloned, DisplayIdentifiers).GetHashCode();
+            //return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, GdiDisplaySettings.Values, IsCloned, DisplayIdentifiers).GetHashCode();
+            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers).GetHashCode();
         }
         public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -1564,6 +1568,25 @@ namespace DisplayMagicianShared.Windows
 
             return videoCardVendorIds;
 
+        }
+
+        public static bool GDISettingsEqual(Dictionary<string, GDI_DISPLAY_SETTING> gdi1, Dictionary<string, GDI_DISPLAY_SETTING> gdi2)
+        {
+            if (gdi1.Count == gdi2.Count)
+            {
+                for (int i = 0; i < gdi1.Count; i++)
+                {
+                    if (gdi1.Values.ToList()[i] != gdi2.Values.ToList()[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
     }

@@ -639,7 +639,7 @@ namespace DisplayMagicianShared.Windows
 
             // This happens when it is a target mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET &&
-                Id == other.Id &&
+                Id == other.Id && // Disabling this check as as the Display ID it maps to will change after a switch from clone to non-clone profile, ruining the equality match
                 TargetMode.Equals(other.TargetMode))
                 return true;
 
@@ -652,13 +652,13 @@ namespace DisplayMagicianShared.Windows
 
             // This happens when it is a desktop image mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE &&
-                Id == other.Id &&
+                Id == other.Id &&  // Disabling this check as as the Display ID it maps to will change after a switch from clone to non-clone profile, ruining the equality match
                 DesktopImageInfo.Equals(other.DesktopImageInfo))
                 return true;
 
             // This happens when it is a clone - there is an extra entry with all zeros in it!
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.Zero &&
-                Id == other.Id &&
+                //Id == other.Id && // Disabling this check as as the Display ID it maps to will change after a switch from clone to non-clone profile, ruining the equality match
                 DesktopImageInfo.Equals(other.DesktopImageInfo) &&
                 TargetMode.Equals(other.TargetMode) &&
                 SourceMode.Equals(other.SourceMode))
@@ -672,15 +672,20 @@ namespace DisplayMagicianShared.Windows
         {
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
                 return (InfoType, Id, TargetMode).GetHashCode();
+            //return (InfoType, TargetMode).GetHashCode();
 
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
-                return (InfoType, Id, SourceMode).GetHashCode();
+                //return (InfoType, Id, SourceMode).GetHashCode();
+                return (InfoType, SourceMode).GetHashCode();
+
 
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE)
                 return (InfoType, Id, DesktopImageInfo).GetHashCode();
+            //return (InfoType, DesktopImageInfo).GetHashCode();
 
             // otherwise we return everything
             return (InfoType, Id, TargetMode, SourceMode, DesktopImageInfo).GetHashCode();
+            //return (InfoType, TargetMode, SourceMode, DesktopImageInfo).GetHashCode();
         }
 
         public static bool operator ==(DISPLAYCONFIG_MODE_INFO lhs, DISPLAYCONFIG_MODE_INFO rhs) => lhs.Equals(rhs);
