@@ -822,9 +822,6 @@ namespace DisplayMagicianShared
             // Now we need to check for Spanned screens
             if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
             {
-                // TODO: Make the NVIDIA displays show the individual screens and overlap!
-
-
 
                 // Create a dictionary of all the screen sizes we want
                 //Dictionary<string,SpannedScreenPosition> MosaicScreens = new Dictionary<string,SpannedScreenPosition>();
@@ -904,12 +901,54 @@ namespace DisplayMagicianShared
                             screen.SpannedScreens.Add(spannedScreen);
                         }
 
-                        //screen.Name = targetId.ToString();
-                        //screen.DisplayConnector = displayMode.DisplayConnector;
-                        screen.ScreenX = (int)overallX;
-                        screen.ScreenY = (int)overallY;
-                        screen.ScreenWidth = (int)overallWidth;
-                        screen.ScreenHeight = (int)overallHeight;
+                        // Need to look for the Windows layout details now we know the size of this display
+                        // Set some basics about the screen
+                        try
+                        {
+                            uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
+                            string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
+                            List<uint> sourceIndexes = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
+                            for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
+                            {
+                                // Skip this if its not a source info config type
+                                if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
+                                {
+                                    continue;
+                                }
+
+                                // If the source index matches the index of the source info object we're looking at, then process it!
+                                if (sourceIndexes.Contains(_windowsDisplayConfig.DisplayConfigModes[x].Id))
+                                {
+                                    screen.Name = displayId.ToString();
+
+                                    screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
+                                    screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
+                                    screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
+                                    screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
+                                    break;
+                                }
+                            }
+                        }
+                        catch (KeyNotFoundException ex)
+                        {
+                            // Thrown if the Windows display doesn't match the NVIDIA display.
+                            // Typically happens during configuration of a new Mosaic mode.
+                            // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
+                            // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
+                            // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
+                            continue;
+                        }
+                        catch (Exception ex)
+                        {
+                            // Some other exception has occurred and we need to report it.
+                            //screen.Name = targetId.ToString();
+                            //screen.DisplayConnector = displayMode.DisplayConnector;
+                            screen.ScreenX = (int)overallX;
+                            screen.ScreenY = (int)overallY;
+                            screen.ScreenWidth = (int)overallWidth;
+                            screen.ScreenHeight = (int)overallHeight;
+                        }
+
 
                         // If we're at the 0,0 coordinate then we're the primary monitor
                         if (screen.ScreenX == 0 && screen.ScreenY == 0)
