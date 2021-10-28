@@ -123,6 +123,7 @@ namespace DisplayMagicianShared.UserControls
 
         private void DrawView(Graphics g)
         {
+
             var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
             var factor = Math.Min(Width / viewSize.Width, Height / viewSize.Height);
             g.ScaleTransform(factor, factor);
