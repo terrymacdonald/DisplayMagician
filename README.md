@@ -15,13 +15,15 @@ The latest version of this application is available for download via the [releas
 
 <p align="center"><a href="https://github.com/terrymacdonald/DisplayMagician/releases/latest"><img src="READMEAssets/gh-download.png"/></a></p>
 
+** IMPORTANT! ** - If you tried DisplayMagician in the past and it didn't work for you, please try it again. THere has been a complete rewrite of the NVIDIA, AMD and Windows video manipulation libraries, and it is able to track and manipulate nearly all display configuration changes!
+
 ## What it does
 
 Different games require your displays configured in different ways. If you're a simracer like me, you also require a lot of additional 'helper' applications the give you the additional functionality to game the way you want. Making all those changes each time I wanted to play each game REALLY started annoying me, and I thought there must be a better way.
 
 There is now. DisplayMagician allows you to configure multiple different display profiles, and then use those different display profiles to create Game Shortcuts. These Game Shortcuts allow you to have your game or application start exactly the way you like it.
 
-Do you like running Dirt Rally 2.0 on a single NVidia Surround window across triple screens, and yet you like to run Assetto Corsa across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut (you can even start games with a Hotkey)!
+Do you like running Dirt Rally 2.0 on a single NVIDIA Surround window across triple screens, and yet you like to run Assetto Corsa across four individual screens (a triple and one above)? Do you like running SimHub when you play iRacing, yet you want to start Twitch when you play Call of Duty? Well with DisplayMagician you can do all that with a single Desktop Shortcut (you can even start games with a Hotkey)!
 
 DisplayMagician also allows you to automatically change to a different audio device just for one game, and will revert that change when you close the game. Great if you have some special audio devices you use only for certain games. No more fiddling with audio settings - just play the game!
 
@@ -48,16 +50,18 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
+* Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
 
 ## Planned features
 
 * Change UI from Winforms to .NET6 and MAUI
 * Add Unit Tests!
-* Maybe add Intel Alchemist GPU spanned screen support when they are eventually released.
+* Maybe add Intel Alchemist GPU spanned screen support when those cards are eventually released.
 
 ## Requirements
 
-* DisplayMagician only support 64-bit Windows 10/11
+* DisplayMagician only supports 64-bit Windows 10/11
+* Your displays must use HDMI or DisplayPort connections and support EDID
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
 
