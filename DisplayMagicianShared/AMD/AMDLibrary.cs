@@ -1901,7 +1901,7 @@ namespace DisplayMagicianShared.AMD
                         if (!displayIdentifiers.Contains(displayIdentifier))
                         {
                             displayIdentifiers.Add(displayIdentifier);
-                            SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
+                            SharedLogger.logger.Debug($"AMDLibrary/GetSomeDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                         }
                     }
                 }
