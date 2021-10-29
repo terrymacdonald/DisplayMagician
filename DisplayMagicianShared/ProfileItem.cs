@@ -477,9 +477,20 @@ namespace DisplayMagicianShared
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
                 // For a library update to the latest version so that we pick up any new changes since the last update
-                nvidiaLibrary.UpdateActiveConfig();
-                amdLibrary.UpdateActiveConfig();
-                winLibrary.UpdateActiveConfig();
+                if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled)
+                {
+                    nvidiaLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig();
+                }
+                else if (VideoMode == VIDEO_MODE.AMD && amdLibrary.IsInstalled)
+                {
+                    amdLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig();
+                }
+                else
+                {
+                    winLibrary.UpdateActiveConfig();
+                }                               
 
                 // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;

@@ -1445,7 +1445,7 @@ namespace DisplayMagicianShared.Windows
                 if (!displayIdentifiers.Contains(displayIdentifier))
                 {
                     displayIdentifiers.Add(displayIdentifier);
-                    SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
+                    SharedLogger.logger.Debug($"WinLibrary/GetSomeDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                 }
 
             }
