@@ -316,6 +316,9 @@ namespace DisplayMagician {
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
+                // Try to load all the games in parallel to this process
+                Task.Run(() => LoadGamesInBackground());
+
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
@@ -588,6 +591,10 @@ namespace DisplayMagician {
                     }
                 }
                 logger.Info("Starting Normally...");
+                
+                // Try to load all the games in parallel to this process
+                Task.Run(() => LoadGamesInBackground());
+
                 StartUpApplication();
                 return 0;
             });
@@ -603,10 +610,7 @@ namespace DisplayMagician {
                 splashThread.SetApartmentState(ApartmentState.STA);
                 splashThread.Start();
 
-            }
-
-            // Try to load all the games in parallel to this process
-            Task.Run(() => LoadGamesInBackground());
+            }         
 
             try
             {
@@ -657,6 +661,9 @@ namespace DisplayMagician {
 
             
                 IPCService.GetInstance().Status = InstanceStatus.User;
+
+                if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                 // Run the program with directly showing CreateProfile form
                 Application.Run(new DisplayProfileForm());
@@ -788,6 +795,9 @@ namespace DisplayMagician {
                 throw new Exception(Language.Cannot_find_shortcut_in_library);
             }
 
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
             if (shortcutToRun is ShortcutItem)
             {
                 ShortcutRepository.RunShortcut(shortcutToRun);
@@ -814,6 +824,9 @@ namespace DisplayMagician {
             // Lookup the profile
             ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
             logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
+
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             ProfileRepository.ApplyProfile(profileToUse);
 
