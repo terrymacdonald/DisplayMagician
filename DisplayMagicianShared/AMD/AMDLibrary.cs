@@ -1336,11 +1336,13 @@ namespace DisplayMagicianShared.AMD
                     // We need to change to an Eyefinity (SLS) profile, so we need to apply the new SLS Topologies
                     SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is enabled in the new display configuration, so we need to set it");
 
+                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: There are {displayConfig.SlsConfig.SLSMapConfigs.Count} SLSMapConfigs in this display configuration");
+
                     foreach (AMD_SLSMAP_CONFIG slsMapConfig in displayConfig.SlsConfig.SLSMapConfigs)
                     {
                         // Attempt to turn on this SLS Map Config if it exists in the AMD Radeon driver config database
                         ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap.SLSMapIndex, ADLImport.ADL_TRUE);
-                        if (ADLRet == ADL_STATUS.ADL_OK)
+                        if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully set the SLSMAP with index {slsMapConfig.SLSMap.SLSMapIndex} to TRUE for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
                         }
@@ -1358,7 +1360,7 @@ namespace DisplayMagicianShared.AMD
                             int supportedSLSLayoutImageMode;
                             int reasonForNotSupportSLS;
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_Valid(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap, slsMapConfig.SLSTargets.Count, slsMapConfig.SLSTargets.ToArray(), out supportedSLSLayoutImageMode, out reasonForNotSupportSLS, ADLImport.ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_CURRENTANGLE);
-                            if (ADLRet == ADL_STATUS.ADL_OK)
+                            if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_Valid successfully validated a new SLSMAP config for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
                             }
@@ -1371,7 +1373,7 @@ namespace DisplayMagicianShared.AMD
                             // Create and apply the new SLSMap
                             int newSlsMapIndex;
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_Create(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap, slsMapConfig.SLSTargets.Count, slsMapConfig.SLSTargets.ToArray(), slsMapConfig.BezelModePercent, out newSlsMapIndex, ADLImport.ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_CURRENTANGLE);
-                            if (ADLRet == ADL_STATUS.ADL_OK)
+                            if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
                             {
                                 if (newSlsMapIndex != -1)
                                 {
@@ -1409,7 +1411,7 @@ namespace DisplayMagicianShared.AMD
                         {
                             // Turn off this SLS Map Config
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap.SLSMapIndex, ADLImport.ADL_FALSE);
-                            if (ADLRet == ADL_STATUS.ADL_OK)
+                            if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully disabled the SLSMAP with index {slsMapConfig.SLSMap.SLSMapIndex} for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
                             }
@@ -1420,6 +1422,10 @@ namespace DisplayMagicianShared.AMD
                             }
 
                         }
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is not used in the wanted display configuration, or the current display configuration. Nothing to do.");
                     }
 
                 }
