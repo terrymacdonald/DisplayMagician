@@ -123,7 +123,11 @@ namespace DisplayMagician.UIForms
                                         MessageBoxIcon.Error);
                     }
                 }
-            }          
+            }
+
+            // Shut down the splash screen
+            if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+                Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
             if (Program.AppProgramSettings.MinimiseOnStart) 
             {
@@ -173,11 +177,7 @@ namespace DisplayMagician.UIForms
             {
                 cb_minimise_notification_area.Checked = false;
             }
-
-            // Shut down the splash screen
-            if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
-                Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
-
+            
             // If we've been handed a Form of some kind, then open it straight away
             if (formToOpen is DisplayProfileForm)
             {
@@ -189,8 +189,18 @@ namespace DisplayMagician.UIForms
                 var shortcutLibraryForm = new ShortcutLibraryForm();
             shortcutLibraryForm.ShowDialog(this);
             }            
+            else
+            {
+                // Make this window top most if we're not minimised
+                if (!Program.AppProgramSettings.MinimiseOnStart)
+                {
+                    this.TopMost = true;
+                    this.Activate();
+                    this.TopMost = false;
+                }
+            }
 
-    }
+        }
 
         protected override void SetVisibleCore(bool value)
         {
@@ -427,6 +437,9 @@ namespace DisplayMagician.UIForms
             Restore();
             Show();
             BringToFront();
+            this.TopMost = true;
+            this.Activate();
+            this.TopMost = false;
         }
 
         public void exitApplication()
