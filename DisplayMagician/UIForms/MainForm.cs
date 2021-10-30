@@ -175,7 +175,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Shut down the splash screen
-            if (Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+            if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
                 Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
             // If we've been handed a Form of some kind, then open it straight away
@@ -188,9 +188,7 @@ namespace DisplayMagician.UIForms
             {
                 var shortcutLibraryForm = new ShortcutLibraryForm();
             shortcutLibraryForm.ShowDialog(this);
-            }
-
-
+            }            
 
     }
 

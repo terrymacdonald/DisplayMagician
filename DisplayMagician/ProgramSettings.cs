@@ -22,6 +22,7 @@ namespace DisplayMagician
         #region Instance Variables
         private bool _startOnBootUp = false;
         private bool _minimiseOnStart = false;
+        private bool _showSplashScreen = true;
         private bool _upgradeToPrereleases = false;
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
@@ -41,6 +42,23 @@ namespace DisplayMagician
             set
             {
                 _startOnBootUp = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
+        }
+
+        public bool ShowSplashScreen
+        {
+            get
+            {
+                return _showSplashScreen;
+            }
+            set
+            {
+                _showSplashScreen = value;
 
                 // Because a value has changed, we need to save the setting 
                 // to remember it for later.

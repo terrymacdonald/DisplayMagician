@@ -64,6 +64,18 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings MinimiseOnStart set to false");
             }
 
+            // show splashscreen on startup 
+            if (Program.AppProgramSettings.ShowSplashScreen == true)
+            {
+                cb_show_splashscreen.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowSplashScreen set to true");
+            }
+            else
+            {
+                cb_show_splashscreen.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowSplashScreen set to false");
+            }
+
             // start upgrade settings 
             if (Program.AppProgramSettings.UpgradeToPreReleases == true)
             {
@@ -183,8 +195,7 @@ namespace DisplayMagician.UIForms
                 }
                 else
                     logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully set DisplayMagician to start when Windows starts");
-            }
-                
+            }                
             else
             {
                 Program.AppProgramSettings.StartOnBootUp = false;
@@ -204,6 +215,13 @@ namespace DisplayMagician.UIForms
             else
                 Program.AppProgramSettings.MinimiseOnStart = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved MinimiseOnStart as {Program.AppProgramSettings.MinimiseOnStart}");
+
+            // save show splashscreen on startup
+            if (cb_show_splashscreen.Checked)
+                Program.AppProgramSettings.ShowSplashScreen = true;
+            else
+                Program.AppProgramSettings.ShowSplashScreen = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowSplashScreen as {Program.AppProgramSettings.ShowSplashScreen}");
 
             // save loglevel on close
             // and make that log level live in NLog straight away
@@ -562,5 +580,6 @@ namespace DisplayMagician.UIForms
 
             
         }
+
     }
 }

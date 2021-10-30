@@ -53,6 +53,7 @@ namespace DisplayMagician.UIForms
             this.gb_support = new System.Windows.Forms.GroupBox();
             this.btn_create_support_package = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
+            this.cb_show_splashscreen = new System.Windows.Forms.CheckBox();
             this.gb_general.SuspendLayout();
             this.gb_hotkeys.SuspendLayout();
             this.gb_upgrades.SuspendLayout();
@@ -77,6 +78,7 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            this.gb_general.Controls.Add(this.cb_show_splashscreen);
             this.gb_general.Controls.Add(this.cb_start_on_boot);
             this.gb_general.Controls.Add(this.label1);
             this.gb_general.Controls.Add(this.cmb_loglevel);
@@ -85,7 +87,7 @@ namespace DisplayMagician.UIForms
             this.gb_general.ForeColor = System.Drawing.Color.White;
             this.gb_general.Location = new System.Drawing.Point(27, 21);
             this.gb_general.Name = "gb_general";
-            this.gb_general.Size = new System.Drawing.Size(525, 183);
+            this.gb_general.Size = new System.Drawing.Size(525, 239);
             this.gb_general.TabIndex = 11;
             this.gb_general.TabStop = false;
             this.gb_general.Text = "General Settings";
@@ -109,7 +111,7 @@ namespace DisplayMagician.UIForms
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Transparent;
-            this.label1.Location = new System.Drawing.Point(26, 120);
+            this.label1.Location = new System.Drawing.Point(26, 157);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(137, 16);
             this.label1.TabIndex = 13;
@@ -119,7 +121,7 @@ namespace DisplayMagician.UIForms
             // 
             this.cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmb_loglevel.FormattingEnabled = true;
-            this.cmb_loglevel.Location = new System.Drawing.Point(169, 117);
+            this.cmb_loglevel.Location = new System.Drawing.Point(169, 154);
             this.cmb_loglevel.Name = "cmb_loglevel";
             this.cmb_loglevel.Size = new System.Drawing.Size(333, 24);
             this.cmb_loglevel.TabIndex = 12;
@@ -296,9 +298,9 @@ namespace DisplayMagician.UIForms
             this.gb_upgrades.Controls.Add(this.cb_upgrade_prerelease);
             this.gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_upgrades.ForeColor = System.Drawing.Color.White;
-            this.gb_upgrades.Location = new System.Drawing.Point(27, 235);
+            this.gb_upgrades.Location = new System.Drawing.Point(27, 292);
             this.gb_upgrades.Name = "gb_upgrades";
-            this.gb_upgrades.Size = new System.Drawing.Size(525, 177);
+            this.gb_upgrades.Size = new System.Drawing.Size(525, 120);
             this.gb_upgrades.TabIndex = 13;
             this.gb_upgrades.TabStop = false;
             this.gb_upgrades.Text = "Upgrade Settings";
@@ -368,6 +370,20 @@ namespace DisplayMagician.UIForms
     "this file to GitHub when you have a problem you need me to fix";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // cb_show_splashscreen
+            // 
+            this.cb_show_splashscreen.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cb_show_splashscreen.AutoSize = true;
+            this.cb_show_splashscreen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.cb_show_splashscreen.ForeColor = System.Drawing.Color.White;
+            this.cb_show_splashscreen.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.cb_show_splashscreen.Location = new System.Drawing.Point(28, 113);
+            this.cb_show_splashscreen.Name = "cb_show_splashscreen";
+            this.cb_show_splashscreen.Size = new System.Drawing.Size(312, 20);
+            this.cb_show_splashscreen.TabIndex = 15;
+            this.cb_show_splashscreen.Text = "Show DisplayMagician splash screen on startup";
+            this.cb_show_splashscreen.UseVisualStyleBackColor = true;
+            // 
             // SettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -426,5 +442,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.GroupBox gb_support;
         private System.Windows.Forms.Button btn_create_support_package;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.CheckBox cb_show_splashscreen;
     }
 }

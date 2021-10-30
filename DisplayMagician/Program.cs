@@ -594,12 +594,16 @@ namespace DisplayMagician {
 
             logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
 
-            //Show Splash Form
-            AppSplashScreen = new LoadingForm();
-            var splashThread = new Thread(new ThreadStart(
-                () => Application.Run(AppSplashScreen)));
-            splashThread.SetApartmentState(ApartmentState.STA);
-            splashThread.Start();
+            if (AppProgramSettings.ShowSplashScreen)
+            {
+                //Show Splash Form
+                AppSplashScreen = new LoadingForm();
+                var splashThread = new Thread(new ThreadStart(
+                    () => Application.Run(AppSplashScreen)));
+                splashThread.SetApartmentState(ApartmentState.STA);
+                splashThread.Start();
+
+            }
 
             // Try to load all the games in parallel to this process
             Task.Run(() => LoadGamesInBackground());
@@ -743,7 +747,7 @@ namespace DisplayMagician {
 
         private static void MainForm_LoadCompleted(object sender, EventArgs e)
         {
-            if (AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
             AppMainForm.TopMost = true;
             AppMainForm.Activate();
