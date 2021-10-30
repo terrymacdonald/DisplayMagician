@@ -145,6 +145,15 @@ Thanks for the work and the time that all of our contributors put into making th
 
 * Original HelioDisplayManagement project created by the amazing Soroush Falahati
 * Various icons made by Freepik from www.flaticon.com
+* Erbkaiser (for the amazing help bug squashing)
+* SneakingJ (Major props for the help getting cloned display profiles to work)
+* Scowling (Again, without you, AMD support wouldn’t exist for v2.1)
+* Slippery-silvia (Again, thanks for the testing help for Mosaic cards with v2.1)
+* Domenic (Thanks for the testing help as always)
+* Mobeeuz (Your thorough testing logs really helped!)
+* S4b0tage (Thanks for the testing help and the coffees)
+* Gpo123 (thanks for the bug report)
+* Whitestar127 (thanks for the bug report)
 * Scowling (Without you, AMD support wouldn’t exist)
 * Frcooper (thanks for the sponsoring)
 * Stringfieldmark (thanks for sponsoring and the testing help)
@@ -152,8 +161,5 @@ Thanks for the work and the time that all of our contributors put into making th
 * Sk666 (thanks for the donation)
 * FormelLMS (thanks for the donation and the testing help)
 * RBZL (thanks for the donation)
-* Domenic (thanks for the testing help)
-* Mobeeuz (thanks for the testing help)
-* Slippery-silvia (thanks for the testing help for Mosaic cards)
 * Neilperson (thanks for the cool idea)
 * DragRedSim (thanks for the bug report)
