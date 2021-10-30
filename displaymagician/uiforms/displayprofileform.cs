@@ -69,6 +69,12 @@ namespace DisplayMagician.UIForms
             {
                 logger.Warn($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
             }
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
         }
 
 
@@ -122,6 +128,12 @@ namespace DisplayMagician.UIForms
                 // So we need to change the mode
                 ChangeSelectedProfile(ProfileRepository.CurrentProfile);
 
+            }
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
             }
 
         }
@@ -178,6 +190,7 @@ namespace DisplayMagician.UIForms
                 {
                     MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
+
             }
         }
 
@@ -222,13 +235,6 @@ namespace DisplayMagician.UIForms
                 ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
 
             }
-
-            // Also refresh the right-click menu (if we have a main form loaded)
-            if (Program.AppMainForm is Form)
-            {
-                Program.AppMainForm.RefreshNotifyIconMenus();
-            }
-
 
             // Restart updating the saved_profiles listview
             ilv_saved_profiles.ResumeLayout();
@@ -332,6 +338,12 @@ namespace DisplayMagician.UIForms
             // Refresh the image list view
             //RefreshImageListView(profile);
 
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
+
             // And finally refresh the profile in the display view
             dv_profile.Profile = profile;
             dv_profile.Refresh();
@@ -431,6 +443,12 @@ namespace DisplayMagician.UIForms
 
             // now update the profiles image listview
             RefreshDisplayProfileUI();
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
 
         }
 

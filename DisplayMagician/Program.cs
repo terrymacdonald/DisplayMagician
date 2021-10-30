@@ -317,7 +317,8 @@ namespace DisplayMagician {
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
                 // Try to load all the games in parallel to this process
-                Task.Run(() => LoadGamesInBackground());
+                //Task.Run(() => LoadGamesInBackground());
+                LoadGamesInBackground();
 
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
@@ -591,16 +592,17 @@ namespace DisplayMagician {
                     }
                 }
                 logger.Info("Starting Normally...");
-                
+
                 // Try to load all the games in parallel to this process
-                Task.Run(() => LoadGamesInBackground());
+                //Task.Run(() => LoadGamesInBackground());
+                logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
+                LoadGamesInBackground();
 
                 StartUpApplication();
                 return 0;
             });
 
-            logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
-
+            
             if (AppProgramSettings.ShowSplashScreen)
             {
                 //Show Splash Form
@@ -609,7 +611,6 @@ namespace DisplayMagician {
                     () => Application.Run(AppSplashScreen)));
                 splashThread.SetApartmentState(ApartmentState.STA);
                 splashThread.Start();
-
             }         
 
             try
@@ -662,6 +663,7 @@ namespace DisplayMagician {
             
                 IPCService.GetInstance().Status = InstanceStatus.User;
 
+                // Close the splash screen
                 if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                     AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
@@ -735,7 +737,7 @@ namespace DisplayMagician {
 
                 // Run the program with normal startup
                 AppMainForm = new MainForm();
-                //AppMainForm.Load += MainForm_LoadCompleted;
+                AppMainForm.Load += MainForm_LoadCompleted;
                 Application.Run(AppMainForm);                
 
             }
@@ -768,6 +770,10 @@ namespace DisplayMagician {
 
             ShortcutItem shortcutToRun = null;
 
+            // Close the splash screen
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
             // Check there is only one version of this application so we won't
             // mess with another monitoring session
             if (
@@ -795,9 +801,6 @@ namespace DisplayMagician {
                 throw new Exception(Language.Cannot_find_shortcut_in_library);
             }
 
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
-
             if (shortcutToRun is ShortcutItem)
             {
                 ShortcutRepository.RunShortcut(shortcutToRun);
@@ -821,12 +824,13 @@ namespace DisplayMagician {
         {
             logger.Trace($"Program/RunProfile: Starting");
 
+            // Close the splash screen
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
             // Lookup the profile
             ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
             logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
-
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
-                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             ProfileRepository.ApplyProfile(profileToUse);
 

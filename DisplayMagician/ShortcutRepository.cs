@@ -629,6 +629,7 @@ namespace DisplayMagician
                     @"Cannot run the Shortcut",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
+                
                 return;
             }
 
