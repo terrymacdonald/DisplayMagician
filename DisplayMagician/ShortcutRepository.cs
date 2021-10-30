@@ -1119,7 +1119,7 @@ namespace DisplayMagician
                 string notificationText = $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...";
                 if (notificationText.Length >= 64)
                 {
-                    string thingToRun = shortcutToUse.ExecutableNameAndPath.Substring(0, 35);
+                    string thingToRun = shortcutToUse.ExecutableNameAndPath.Substring(0, 34);
                     notifyIcon.Text = $"DisplayMagician: Running {thingToRun}...";
                 }
                 Application.DoEvents();
@@ -1372,19 +1372,20 @@ namespace DisplayMagician
 
                     }
 
+                    string notificationText = $"DisplayMagician: Running {gameToRun.Name}...";
+                    if (notificationText.Length >= 64)
+                    {
+                        string thingToRun = gameToRun.Name.Substring(0, 34);
+                        notifyIcon.Text = $"DisplayMagician: Running {thingToRun}...";
+                    }
+                    Application.DoEvents();
+
                     // At this point, if the user wants to actually monitor a different process, 
                     // then we actually need to monitor that instead
                     if (shortcutToUse.MonitorDifferentGameExe)
                     {
                         // If we are monitoring a different executable rather than the game itself, then lets get that name ready instead
                         string altGameProcessToMonitor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.DifferentGameExeToMonitor);
-
-                        // Add a status notification icon in the status area
-                        if (gameToRun.Name.Length <= 41)
-                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name}...";
-                        else
-                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name.Substring(0, 41)}...";
-                        Application.DoEvents();                       
 
                         // Now look for the thing we're supposed to monitor
                         // and wait until it starts up
@@ -1621,13 +1622,6 @@ namespace DisplayMagician
                     {
                         // we are monitoring the game thats actually running (the most common scenario)
                         
-                        // Add a status notification icon in the status area
-                        if (gameToRun.Name.Length <= 41)
-                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name}...";
-                        else
-                            notifyIcon.Text = $"DisplayMagician: Running {gameToRun.Name.Substring(0, 41)}...";
-                        Application.DoEvents();
-
                         // Now we want to tell the user we're running a game!
                         // Construct the Windows toast content
                         tcBuilder = new ToastContentBuilder()
@@ -1976,6 +1970,10 @@ namespace DisplayMagician
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Display Profile, so no need to change it back.");
             }
+
+            // Reset the popup over the system tray icon to what's normal for it.
+            notifyIcon.Text = $"DisplayMagician";
+            Application.DoEvents();
 
         }
 
