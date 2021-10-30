@@ -130,6 +130,9 @@ namespace DisplayMagician.UIForms
 
             }
 
+            // As this may impact which game shortcuts are now usable, also force a refresh of the game shortcuts validity
+            ShortcutRepository.IsValidRefresh();
+
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
             {

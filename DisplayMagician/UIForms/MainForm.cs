@@ -351,10 +351,19 @@ namespace DisplayMagician.UIForms
                 foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                 {
                     ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, profile.ProfileBitmap, runProfileToolStripMenuItem_Click);
-                    if (profile.IsActive || !profile.IsPossible)
+                    if (!profile.IsPossible)
+                    {
                         profileMenuItem.Enabled = false;
-                    else
+                    }                        
+                    else if (profile.IsActive)
+                    {
                         profileMenuItem.Enabled = true;
+                        profileMenuItem.Font = new Font(profileMenuItem.Font, FontStyle.Bold); 
+                    }
+                    else
+                    {
+                        profileMenuItem.Enabled = true;
+                    }                        
                     profileToolStripMenuItem.DropDownItems.Add(profileMenuItem);
                 }
 
