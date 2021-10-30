@@ -407,6 +407,12 @@ namespace DisplayMagician.UIForms
                 // Run the shortcut if it's still there
                 if (profileToRun != null)
                     ProfileRepository.ApplyProfile(profileToRun);
+
+                // Also refresh the right-click menu (if we have a main form loaded)
+                if (Program.AppMainForm is Form)
+                {
+                    Program.AppMainForm.RefreshNotifyIconMenus();
+                }
             }
         }
 
@@ -428,6 +434,12 @@ namespace DisplayMagician.UIForms
                 // Run the shortcut if it's still there
                 if (shortcutToRun != null)
                     ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
+
+                // Also refresh the right-click menu (if we have a main form loaded)
+                if (Program.AppMainForm is Form)
+                {
+                    Program.AppMainForm.RefreshNotifyIconMenus();
+                }
             }
         }
 

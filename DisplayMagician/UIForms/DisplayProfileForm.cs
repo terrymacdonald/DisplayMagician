@@ -223,13 +223,6 @@ namespace DisplayMagician.UIForms
 
             }
 
-            // Also refresh the right-click menu (if we have a main form loaded)
-            if (Program.AppMainForm is Form)
-            {
-                Program.AppMainForm.RefreshNotifyIconMenus();
-            }
-
-
             // Restart updating the saved_profiles listview
             ilv_saved_profiles.ResumeLayout();
         }
@@ -331,6 +324,12 @@ namespace DisplayMagician.UIForms
 
             // Refresh the image list view
             //RefreshImageListView(profile);
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
 
             // And finally refresh the profile in the display view
             dv_profile.Profile = profile;
