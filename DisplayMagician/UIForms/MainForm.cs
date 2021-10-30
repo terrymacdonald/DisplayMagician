@@ -140,7 +140,8 @@ namespace DisplayMagician.UIForms
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
                     .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
                     .AddText("DisplayMagician is minimised", hintMaxLines: 1)
-                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open")
+                    .SetToastDuration(ToastDuration.Short);              
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 var doc = new XmlDocument();
@@ -153,7 +154,7 @@ namespace DisplayMagician.UIForms
                 DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
 
                 // And then show it
-                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);                                   
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
             }
             else
@@ -172,6 +173,10 @@ namespace DisplayMagician.UIForms
             {
                 cb_minimise_notification_area.Checked = false;
             }
+
+            // Shut down the splash screen
+            if (Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+                Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
             // If we've been handed a Form of some kind, then open it straight away
             if (formToOpen is DisplayProfileForm)

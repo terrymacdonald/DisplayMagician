@@ -19,6 +19,7 @@ using NLog.Config;
 using System.Collections.Generic;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace DisplayMagician {
 
@@ -40,7 +41,7 @@ namespace DisplayMagician {
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
-
+        public static LoadingForm AppSplashScreen;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
 
@@ -593,6 +594,13 @@ namespace DisplayMagician {
 
             logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
 
+            //Show Splash Form
+            AppSplashScreen = new LoadingForm();
+            var splashThread = new Thread(new ThreadStart(
+                () => Application.Run(AppSplashScreen)));
+            splashThread.SetApartmentState(ApartmentState.STA);
+            splashThread.Start();
+
             // Try to load all the games in parallel to this process
             Task.Run(() => LoadGamesInBackground());
 
@@ -716,6 +724,7 @@ namespace DisplayMagician {
 
                 // Run the program with normal startup
                 AppMainForm = new MainForm();
+                //AppMainForm.Load += MainForm_LoadCompleted;
                 Application.Run(AppMainForm);                
 
             }
@@ -732,6 +741,14 @@ namespace DisplayMagician {
             
         }
 
+        private static void MainForm_LoadCompleted(object sender, EventArgs e)
+        {
+            if (AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+            AppMainForm.TopMost = true;
+            AppMainForm.Activate();
+            AppMainForm.TopMost = false;
+        }
 
         // ReSharper disable once CyclomaticComplexity
         private static void RunShortcut(string shortcutUUID)
@@ -1005,6 +1022,7 @@ namespace DisplayMagician {
             }
 
             return true;
+
 
         }
 
