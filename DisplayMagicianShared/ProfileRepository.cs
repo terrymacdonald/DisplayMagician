@@ -769,7 +769,7 @@ namespace DisplayMagicianShared
             _profilesLoaded = true;
 
             // Update the current active profile
-            UpdateActiveProfile();
+            //UpdateActiveProfile();
             IsPossibleRefresh();
 
             return true;
@@ -998,7 +998,7 @@ namespace DisplayMagicianShared
         {
             // We need to refresh the cached answer
             // Get the list of connected devices
-            ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
+            //ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
@@ -1029,15 +1029,15 @@ namespace DisplayMagicianShared
         {
             if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
-                return NVIDIALibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                return NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers;
             }
             else if (_currentVideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
             {
-                return AMDLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                return AMDLibrary.GetLibrary().CurrentDisplayIdentifiers;
             }
             else
             {
-                return WinLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                return WinLibrary.GetLibrary().CurrentDisplayIdentifiers;
             }
         }
 
@@ -1143,13 +1143,12 @@ namespace DisplayMagicianShared
                 if (wasDisplayChangeSuccessful)
                 {
                     result = "was successful";
+                    ProfileRepository.UpdateActiveProfile();
+
                 }
                 // Display the TimeSpan time and result.
                 SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
             }
-
-
-            ProfileRepository.UpdateActiveProfile();
 
             return ApplyProfileResult.Successful;
         }

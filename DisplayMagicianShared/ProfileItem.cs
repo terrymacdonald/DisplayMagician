@@ -454,10 +454,11 @@ namespace DisplayMagicianShared
         public virtual bool PreSave()
         {
             // Prepare our profile data for saving
-            if (_profileDisplayIdentifiers.Count == 0)
+            // Disabling as this should never happen now
+            /*if (_profileDisplayIdentifiers.Count == 0)
             {
                 _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers();
-            }
+            }*/
 
             // Return if it is valid and we should continue
             return IsValid();
@@ -638,6 +639,7 @@ namespace DisplayMagicianShared
             }
             else
             {
+                SharedLogger.logger.Warn($"ProfileRepository/IsPossibleRefresh: We have a current video mode we don't understand, or it's not installed! The current video mode is {ProfileRepository.CurrentVideoMode}. The profile {Name} has a {VideoMode.ToString("G")} video mode and NVIDIALibrary IsInstalled is {NVIDIALibrary.GetLibrary().IsInstalled}, AMDLibrary IsInstalled is {AMDLibrary.GetLibrary().IsInstalled} and WinLibrary IsInstalled is {WinLibrary.GetLibrary().IsInstalled} ");
                 _isPossible = false;
             }
         }
