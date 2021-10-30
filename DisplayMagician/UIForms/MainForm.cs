@@ -317,7 +317,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void RefreshNotifyIconMenus()
+        public void RefreshNotifyIconMenus()
         {
             // Clear all the profiles
             profileToolStripMenuItem.DropDownItems.Clear();
@@ -370,7 +370,9 @@ namespace DisplayMagician.UIForms
                     shortcutToolStripMenuItem.DropDownItems.Add(shortcutMenuItem);
                 }
             }
-                
+
+            // Apply it by running the Application.DoEvents();
+            Application.DoEvents();
 
         }
 

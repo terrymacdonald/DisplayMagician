@@ -47,6 +47,7 @@ namespace DisplayMagician.UIForms
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
 
+
             RemoveWarningIfShortcuts();
         }
 
@@ -100,6 +101,12 @@ namespace DisplayMagician.UIForms
     
             // Restart updating the saved_profiles listview
             ilv_saved_shortcuts.ResumeLayout();
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
 
         }
     
