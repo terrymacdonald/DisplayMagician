@@ -102,12 +102,6 @@ namespace DisplayMagician.UIForms
             // Restart updating the saved_profiles listview
             ilv_saved_shortcuts.ResumeLayout();
 
-            // Also refresh the right-click menu (if we have a main form loaded)
-            if (Program.AppMainForm is Form)
-            {
-                Program.AppMainForm.RefreshNotifyIconMenus();
-            }
-
         }
     
         private ShortcutItem GetShortcutFromName(string shortcutName)
@@ -207,6 +201,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
+                    logger.Warn(ex, $"ShortcutLibraryForm/btn_save_Click: Exception saving shortcut to {dialog_save.FileName}.");
                     MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
@@ -282,6 +277,11 @@ namespace DisplayMagician.UIForms
             this.Cursor = Cursors.Default;
             RemoveWarningIfShortcuts();
 
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
         }
 
         private void btn_edit_Click(object sender, EventArgs e)
@@ -328,6 +328,12 @@ namespace DisplayMagician.UIForms
                 }
 
                 this.Cursor = Cursors.Default;
+
+                // Also refresh the right-click menu (if we have a main form loaded)
+                if (Program.AppMainForm is Form)
+                {
+                    Program.AppMainForm.RefreshNotifyIconMenus();
+                }
             }
         }
 
@@ -365,6 +371,12 @@ namespace DisplayMagician.UIForms
             ShortcutRepository.IsValidRefresh();
             RefreshShortcutLibraryUI();
             RemoveWarningIfShortcuts();
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
         }
 
         private void btn_run_Click(object sender, EventArgs e)
@@ -436,6 +448,12 @@ namespace DisplayMagician.UIForms
             // REmove the Masked Control to allow the user to start using DisplayMagician again.
             lbl_mask.Visible = false;
             lbl_mask.SendToBack();
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
 
         }
 
