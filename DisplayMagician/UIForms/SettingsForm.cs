@@ -172,10 +172,8 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
+        public static bool SetBootMeUp(bool enabled)
         {
-
-            logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Trace");
             var bootMeUp = new BootMeUp
             {
                 UseAlternativeOnFail = true,
@@ -184,7 +182,7 @@ namespace DisplayMagician.UIForms
             };
 
             // save start on Boot up
-            if (cb_start_on_boot.Checked)
+            if (enabled)
             {
                 Program.AppProgramSettings.StartOnBootUp = true;
                 bootMeUp.Enabled = true;
@@ -192,10 +190,15 @@ namespace DisplayMagician.UIForms
                 {
                     logger.Error($"SettingsForm/SettingsForm_FormClosing: Failed to set up DisplayMagician to start when Windows starts");
                     MessageBox.Show("There was an issue setting DisplayMagician to run when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");
+                    return false;
                 }
                 else
+                {
                     logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully set DisplayMagician to start when Windows starts");
-            }                
+                    return true;
+                }
+                    
+            }
             else
             {
                 Program.AppProgramSettings.StartOnBootUp = false;
@@ -204,10 +207,22 @@ namespace DisplayMagician.UIForms
                 {
                     logger.Error($"SettingsForm/SettingsForm_FormClosing: Failed to stop DisplayMagician from starting when Windows starts");
                     MessageBox.Show("There was an issue stopping DisplayMagician from running when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");
+                    return false;
                 }
                 else
+                {
                     logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from starting when Windows starts");
+                    return true;
+                }
+                    
             }
+        }
+
+        private void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+
+            logger.Info($"SettingsForm/SettingsForm_Load: Setting BootMeUp to {cb_start_on_boot.Checked}");
+            SetBootMeUp(cb_start_on_boot.Checked);
 
             // save minimise on close
             if (cb_minimise_notification_area.Checked)

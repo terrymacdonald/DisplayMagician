@@ -489,7 +489,7 @@ namespace DisplayMagician.UIForms
                 allowClose = false;
                 // Enable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = true;
-                Program.AppProgramSettings.StartOnBootUp = true;
+                SettingsForm.SetBootMeUp(true);
                 // Change the exit_button text to say 'Close'
                 btn_exit.Text = "&Close";
             }
@@ -501,7 +501,7 @@ namespace DisplayMagician.UIForms
                 allowClose = true;
                 // Disable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = false;
-                Program.AppProgramSettings.StartOnBootUp = false;
+                SettingsForm.SetBootMeUp(false);
                 // Change the exit_button text to say 'Exit'
                 btn_exit.Text = "&Exit";
 
