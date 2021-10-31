@@ -44,6 +44,7 @@ namespace DisplayMagician {
         public static LoadingForm AppSplashScreen;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
+        private static bool _gamesLoaded = false;
 
         /// <summary>
         ///     The main entry point for the application.
@@ -318,8 +319,7 @@ namespace DisplayMagician {
             {
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
-                LoadGamesInBackground();
-
+                
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
@@ -378,7 +378,9 @@ namespace DisplayMagician {
                 {
                     logger.Debug($"RunShortcut commandline command was invoked!");
 
-                    // 
+                    // Load the games in background onexecute
+                    LoadGamesInBackground();
+
                     RunShortcut(argumentShortcut.Value);
                     return 0;
                 });
@@ -705,8 +707,7 @@ namespace DisplayMagician {
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        logger.Error(ex, $"Program/StartUpNormally exception while trying to create directory {AppIconPath}");
+                        logger.Error(ex, $"Program/StartUpApplication exception while trying to create directory {AppIconPath}");
                     }
                 }
 
@@ -723,8 +724,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    logger.Error(ex, $"Program/StartUpNormally exception create Icon files for future use in {AppIconPath}");
+                    logger.Error(ex, $"Program/StartUpApplication exception create Icon files for future use in {AppIconPath}");
                 }
 
                 IPCService.GetInstance().Status = InstanceStatus.User;
@@ -743,8 +743,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                logger.Error(ex, $"Program/StartUpNormally top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"Program/StartUpApplication top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 MessageBox.Show(
                     ex.Message,
                     Language.Fatal_Error,
@@ -839,7 +838,9 @@ namespace DisplayMagician {
         public static bool LoadGamesInBackground()
         {
 
-            logger.Debug($"Program/LoadGamesInBackground: Starting");
+            logger.Trace($"Program/LoadGamesInBackground: Attempting to load games from detected game libraries.");
+
+
             // Now lets prepare loading all the Steam games we have installed
             Action loadSteamGamesAction = new Action(() =>
             {
@@ -1042,9 +1043,9 @@ namespace DisplayMagician {
                 game.GameBitmap = bm;
             }
 
+            _gamesLoaded = true;
+
             return true;
-
-
         }
 
         public static string HotkeyToString(Keys hotkey)
