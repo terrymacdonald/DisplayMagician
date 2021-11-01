@@ -131,9 +131,9 @@ namespace DisplayMagician
         private Bitmap _shortcutBitmap, _originalBitmap;
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
-        public string _originalIconPath;
-        public bool _userChoseOwnIcon = false;
-        public string _userIconPath;
+        private string _originalIconPath;
+        private bool _userChoseOwnIcon = false;
+        private string _userIconPath;
         private Bitmap _userIconBitmap;
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;

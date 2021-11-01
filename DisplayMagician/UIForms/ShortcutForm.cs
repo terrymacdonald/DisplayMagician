@@ -1388,6 +1388,36 @@ namespace DisplayMagician.UIForms
             // Set the shortcut name
             txt_shortcut_save_name.Text = _shortcutToEdit.Name;
 
+            if (_shortcutToEdit.Category == ShortcutCategory.Game)
+            {
+                _userGameIconPath = _shortcutToEdit.UserIconPath;
+                txt_game_use_different_icon.Text = _userGameIconPath;
+                _userChoseOwnGameIcon = _shortcutToEdit.UserChoseOwnIcon;
+                if (_shortcutToEdit.UserChoseOwnIcon)
+                {                    
+                    cb_game_use_different_icon.Checked = true;
+                }
+                else
+                {
+                    cb_game_use_different_icon.Checked = false;
+                }
+            }
+            else if (_shortcutToEdit.Category == ShortcutCategory.Application)
+            {
+                _userExeIconPath = _shortcutToEdit.UserIconPath;
+                txt_exe_use_different_icon.Text = _userExeIconPath;
+                _userChoseOwnExeIcon = _shortcutToEdit.UserChoseOwnIcon;
+                if (_shortcutToEdit.UserChoseOwnIcon)
+                {
+                    cb_exe_use_different_icon.Checked = true;
+                }
+                else
+                {
+                    cb_exe_use_different_icon.Checked = false;
+                }
+            }            
+
+
             // Set up the start programs
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
