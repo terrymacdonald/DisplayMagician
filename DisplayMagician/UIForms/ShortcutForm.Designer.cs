@@ -768,6 +768,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_exe_use_different_icon
             // 
+            this.btn_exe_use_different_icon.Enabled = false;
             this.btn_exe_use_different_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_exe_use_different_icon.ForeColor = System.Drawing.Color.White;
             this.btn_exe_use_different_icon.Location = new System.Drawing.Point(880, 159);
@@ -1001,6 +1002,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_game_use_different_icon
             // 
+            this.btn_game_use_different_icon.Enabled = false;
             this.btn_game_use_different_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_game_use_different_icon.ForeColor = System.Drawing.Color.White;
             this.btn_game_use_different_icon.Location = new System.Drawing.Point(912, 121);

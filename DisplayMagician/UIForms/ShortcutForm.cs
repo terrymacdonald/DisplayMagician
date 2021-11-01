@@ -1546,6 +1546,9 @@ namespace DisplayMagician.UIForms
 
         private void btn_choose_alternative_executable_Click(object sender, EventArgs e)
         {
+            dialog_open.InitialDirectory = Path.GetDirectoryName(_executableToUse.ExecutableNameAndPath);
+            dialog_open.DefaultExt = "*.exe";
+            dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
@@ -1814,6 +1817,9 @@ namespace DisplayMagician.UIForms
 
         private string getExeFile()
         {
+            dialog_open.InitialDirectory = Environment.SpecialFolder.ProgramFiles.ToString();
+            dialog_open.DefaultExt = "*.exe";
+            dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
             string textToReturn = "";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
@@ -2224,6 +2230,19 @@ namespace DisplayMagician.UIForms
 
         private void btn_choose_alternative_game_Click(object sender, EventArgs e)
         {
+            string gamePath = "";
+            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            {
+                if (game.Name == txt_game_name.Text)
+                {
+                    gamePath = game.Directory;
+                    break;
+                }
+            }
+
+            dialog_open.InitialDirectory = gamePath;
+            dialog_open.DefaultExt = "*.exe";
+            dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
@@ -2529,6 +2548,19 @@ namespace DisplayMagician.UIForms
 
         private void btn_game_use_different_icon_Click(object sender, EventArgs e)
         {
+            string gamePath = "";
+            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            {
+                if (game.Name == txt_game_name.Text)
+                {
+                    gamePath = game.Directory;
+                    break;
+                }
+            }
+
+            dialog_open.InitialDirectory = gamePath;
+            dialog_open.DefaultExt = "*.exe";
+            dialog_open.Filter = "exe or icon files (*.exe;*.com;*.ico) | *.exe;*.com;*.ico | All files(*.*) | *.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
@@ -2552,6 +2584,9 @@ namespace DisplayMagician.UIForms
 
         private void btn_exe_use_different_icon_Click(object sender, EventArgs e)
         {
+            dialog_open.InitialDirectory = Path.GetDirectoryName(_executableToUse.ExecutableNameAndPath);
+            dialog_open.DefaultExt = "*.exe";
+            dialog_open.Filter = "exe or icon files (*.exe;*.com;*.ico) | *.exe;*.com;*.ico | All files(*.*) | *.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
