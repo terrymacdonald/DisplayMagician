@@ -132,6 +132,9 @@ namespace DisplayMagician
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
         public string _originalIconPath;
+        public bool _userChoseOwnIcon = false;
+        public string _userIconPath;
+        private Bitmap _userIconBitmap;
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
 #pragma warning restore CS3008 // Identifier is not CLS-compliant
@@ -713,6 +716,51 @@ namespace DisplayMagician
             }
         }
 
+        public bool UserChoseOwnIcon
+        {
+            get
+            {
+                return _userChoseOwnIcon;
+            }
+
+            set
+            {
+                _userChoseOwnIcon = value;
+            }
+        }
+
+        public string UserIconPath
+        {
+            get
+            {
+                return _userIconPath;
+            }
+
+            set
+            {
+                _userIconPath = value;
+
+                // And we do the same for the UserLargeBitmap 
+                //_userIconBitmap = ToLargeBitmap(_userIconPath);                
+            }
+        }
+
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public Bitmap UserLargeBitmap
+        {
+            get
+            {
+                return _userIconBitmap;
+            }
+
+            set
+            {
+                _userIconBitmap = value;
+
+            }
+        }
+
+
         public void UpdateNoGameShortcut(
             string name,
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
@@ -776,6 +824,8 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
+            bool userChoseOwnIcon = false,
+            string userIconPath = "",
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool setAudioVolume = false,
@@ -819,25 +869,15 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _userChoseOwnIcon = userChoseOwnIcon;
+            _userIconPath = userIconPath;
             _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            // We create the OriginalBitmap
-            // Find the game bitmap that matches the game name we just got
-            foreach (var aGame in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
-            {
-                if (aGame.Name.Equals(_gameName))
-                {
-                    _originalBitmap = aGame.GameBitmap;
-                }                
-            }
-            
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            // We create the Bitmaps for the game
+            SetBitmapsForGame();
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -853,6 +893,8 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
+            bool userChoseOwnIcon = false,
+            string userIconPath = "",
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool setAudioVolume = false,
@@ -893,21 +935,15 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
+            _userChoseOwnIcon = userChoseOwnIcon;
+            _userIconPath = userIconPath;
             _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);            
-            // We create the OriginalBitmap
-            _originalBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            // We create the Bitmaps for the executable
+            SetBitmapsForExecutable();
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -945,6 +981,9 @@ namespace DisplayMagician
             shortcut.OriginalLargeBitmap = OriginalLargeBitmap;
             shortcut.ShortcutBitmap = ShortcutBitmap;
             shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
+            shortcut.UserChoseOwnIcon = UserChoseOwnIcon;
+            shortcut.UserIconPath = UserIconPath;
+            shortcut.UserLargeBitmap = UserLargeBitmap;
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
             shortcut.StartPrograms = StartPrograms;
@@ -1000,57 +1039,17 @@ namespace DisplayMagician
             // Work out the name of the shortcut we'll save.
             _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
             logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Planning on saving shortcut icon to cache as {_savedShortcutIconCacheFilename}.");
-
-            MultiIcon shortcutIcon;
+            Icon shortcutIcon;
             try
             {
-                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Creating IconOverlay.");
-                shortcutIcon = ToIconOverlay();
-                if (shortcutIcon != null)
-                {
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving shortcut icon to cache with {_savedShortcutIconCacheFilename} as the name.");
-                    shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
-                }
-                else
-                {
-                    // If we fail to create an icon based on the original executable or game
-                    // Then we use the one appropriate for the game library
-                    SingleIcon si = shortcutIcon.Add("icon");
-                    Bitmap bm = null;
-                    if (_gameLibrary == SupportedGameLibraryType.Steam) 
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");                        
-                        bm = ToBitmapOverlay(Properties.Resources.Steam, _profileToUse.ProfileIcon.ToBitmap(),256,256);                        
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Uplay) 
-                      {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Uplay, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Origin)
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Origin, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Epic)
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Epic icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Epic, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.GOG)
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the GOG icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.GOG, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.DisplayMagician.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    si.Add(bm);
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the replacement icon for Shortcut '{Name}' to {_savedShortcutIconCacheFilename}.");
-                    shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
-                }
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Creating Icon from Shortcut bitmap.");
+                // Get an Hicon for the shortcutBitmap
+                IntPtr Hicon = _shortcutBitmap.GetHicon();
+                // Create a new icon from the handle. 
+                shortcutIcon = Icon.FromHandle(Hicon);
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving shortcut icon to cache with {_savedShortcutIconCacheFilename} as the name.");
+                using (FileStream fs = new FileStream(_savedShortcutIconCacheFilename, FileMode.Create))
+                    shortcutIcon.Save(fs);
                     
             }
             catch (Exception ex)
@@ -1059,91 +1058,109 @@ namespace DisplayMagician
 
                 // If we fail to create an icon any other way, then we use the default profile icon
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileToUse.Name} as the icon instead.");
-                shortcutIcon = _profileToUse.ProfileIcon.ToIcon();
+                shortcutIcon = Properties.Resources.DisplayMagician;
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
-                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+                using (FileStream fs = new FileStream(_savedShortcutIconCacheFilename, FileMode.Create))
+                    shortcutIcon.Save(fs);
             }
 
         }
 
-        public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
+        public void SetBitmapsForGame()
         {
-            if (originalBitmap == null)
+            // Get the user icon bitmap if its set.
+            if (_userChoseOwnIcon)
             {
-                if (_category == ShortcutCategory.Application)
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the user set icon as the game icon instead (from {_userIconPath}).");
+                _userIconBitmap = ImageUtils.GetMeABitmapFromFile(_userIconPath);
+            }
+
+            // Get the game icon bitmap if we can find it.
+            logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the game executable icon as the game icon instead from {_originalIconPath}.");
+            // Find the game bitmap that matches the game name we just got
+            foreach (var aGame in GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            {
+                if (aGame.Name.Equals(_gameName))
                 {
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the executable icon as the icon instead.");
-                    originalBitmap = ImageUtils.GetMeABitmapFromFile(_executableNameAndPath);
+                    _originalBitmap = aGame.GameBitmap;
                 }
-                else if (_category == ShortcutCategory.Game)
+            }
+            // If we can't find the game icon bitmap then we try the icons for the game libraries themselves
+            if (_originalBitmap == null)
+            {
+                if (_gameLibrary == SupportedGameLibraryType.Steam)
                 {
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: OriginalBitmap is null, so we'll try to make the BitmapOverlay using GameLibrary Icon.");
-                    if (_gameLibrary == SupportedGameLibraryType.Steam)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Steam icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Steam;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Uplay)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Uplay icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Uplay;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Origin)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Origin icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Origin;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Epic)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Epic icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Epic;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.GOG)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the GOG icon as the icon instead.");
-                        originalBitmap = Properties.Resources.GOG;
-                    }
-                    else
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                        originalBitmap = Properties.Resources.DisplayMagician.ToBitmap();
-                    }
+                    logger.Trace($"ShortcutItem/GetOriginalBitmapFromGame: Using the Steam icon as the icon instead.");
+                    _originalBitmap = Properties.Resources.Steam;
+                }
+                else if (_gameLibrary == SupportedGameLibraryType.Uplay)
+                {
+                    logger.Trace($"ShortcutItem/GetOriginalBitmapFromGame: Using the Uplay icon as the icon instead.");
+                    _originalBitmap = Properties.Resources.Uplay;
+                }
+                else if (_gameLibrary == SupportedGameLibraryType.Origin)
+                {
+                    logger.Trace($"ShortcutItem/GetOriginalBitmapFromGame: Using the Origin icon as the icon instead.");
+                    _originalBitmap = Properties.Resources.Origin;
+                }
+                else if (_gameLibrary == SupportedGameLibraryType.Epic)
+                {
+                    logger.Trace($"ShortcutItem/GetOriginalBitmapFromGame: Using the Epic icon as the icon instead.");
+                    _originalBitmap = Properties.Resources.Epic;
+                }
+                else if (_gameLibrary == SupportedGameLibraryType.GOG)
+                {
+                    logger.Trace($"ShortcutItem/GetOriginalBitmapFromGame: Using the GOG icon as the icon instead.");
+                    _originalBitmap = Properties.Resources.GOG;
                 }
                 else
                 {
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the profile icon as the icon instead.");
-                    originalBitmap = _profileToUse.ProfileBitmap;
+                    logger.Trace($"ShortcutItem/GetOriginalBitmapFromGame: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                    _originalBitmap = Properties.Resources.DisplayMagician.ToBitmap();
                 }
-                
             }
 
-            if (overlayBitmap == null)
+            // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
+            if (_userChoseOwnIcon)
             {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: overlayBitmap is null, so we'll just return the original bitmap without a profile overlay.");
-                return originalBitmap;
+                _shortcutBitmap = ImageUtils.ToBitmapOverlay(_userIconBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             }
-
-            if (width <= 0 || width > 256)
+            else
             {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: Width is out of range so setting to 256.");
-                width = 256;
+                _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
             }
-
-            if (height <= 0 || height > 256)
-            {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: Height is out of range so setting to 256.");
-                height = 256;
-            }
-
-            return ImageUtils.ToBitmapOverlay(originalBitmap, overlayBitmap, width, height, format);
 
         }
 
-#pragma warning disable CS3002 // Return type is not CLS-compliant
-        public MultiIcon ToIconOverlay()
-#pragma warning restore CS3002 // Return type is not CLS-compliant
+        public void SetBitmapsForExecutable()
         {
-            return ImageUtils.ToIconOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap);
+            
+            if (_userChoseOwnIcon)
+            {
+                logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Using the user set icon as the app icon instead (from {_userIconPath}).");
+                _userIconBitmap = ImageUtils.GetMeABitmapFromFile(_userIconPath);
+            }
+
+            logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Using the executable icon as the app icon instead from {_executableNameAndPath}.");
+            _originalBitmap = ImageUtils.GetMeABitmapFromFile(_executableNameAndPath);
+
+            if (_originalBitmap == null)
+            {
+                logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                _originalBitmap = ImageUtils.ToBitmapOverlay(Properties.Resources.DisplayMagician.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+            }
+
+            // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
+            if (_userChoseOwnIcon)
+            {
+                logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                _shortcutBitmap = ImageUtils.ToBitmapOverlay(_userIconBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            }
+            else
+            {
+                _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            }
+
         }
 
         public void RefreshValidity()
@@ -1485,7 +1502,7 @@ namespace DisplayMagician
             shortcutFileName = Path.ChangeExtension(shortcutFileName, @"lnk");
 
             // And we use the Icon from the shortcutIconCache
-            SaveShortcutIconToCache();
+            //SaveShortcutIconToCache();
             shortcutIconFileName = SavedShortcutIconCacheFilename;
 
             // If the user supplied a file

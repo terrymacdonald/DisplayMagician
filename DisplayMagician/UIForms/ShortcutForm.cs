@@ -57,6 +57,11 @@ namespace DisplayMagician.UIForms
         private List<CoreAudioDevice> captureDevices = null;
         private CoreAudioDevice selectedCaptureDevice = null;
         private Keys _hotkey = Keys.None;
+        private bool _userChoseOwnGameIcon = false;
+        private string _userGameIconPath = "";
+        private bool _userChoseOwnExeIcon = false;
+        private string _userExeIconPath = "";
+
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutForm(ShortcutItem shortcutToEdit)
@@ -294,6 +299,16 @@ namespace DisplayMagician.UIForms
                     return;
                 }
 
+                if (cb_exe_use_different_icon.Checked && !File.Exists(txt_exe_use_different_icon.Text))
+                {
+                    MessageBox.Show(
+                        @"The different icon you've chosen for this executable shortcut does not exist! Please a different executable or icon to use as an icon.",
+                        @"Different icon doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
             }
             else if (rb_launcher.Checked)
             {
@@ -354,6 +369,16 @@ namespace DisplayMagician.UIForms
                     MessageBox.Show(
                         @"The alternative game executable you have chosen does not exist! Please reselect the alternative game executable, or check you have permissions to view it.",
                         @"Alternative game executable doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                if (cb_game_use_different_icon.Checked && !File.Exists(txt_game_use_different_icon.Text))
+                {
+                    MessageBox.Show(
+                        @"The different icon you've chosen for this game shortcut does not exist! Please a different executable or icon to use as an icon.",
+                        @"Different icon doesn't exist",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
                     return;
@@ -540,6 +565,18 @@ namespace DisplayMagician.UIForms
                     _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).First();
                 }
 
+                // Now set the alternative icon if needed
+                if (cb_game_use_different_icon.Checked)
+                {
+                    _userChoseOwnGameIcon = true;
+                    _userGameIconPath = txt_game_use_different_icon.Text;
+                }
+                else
+                {
+                    _userChoseOwnGameIcon = false;
+                    _userGameIconPath = "";
+                }
+
                 try
                 {
                     _shortcutToEdit.UpdateGameShortcut(
@@ -550,6 +587,8 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _gameToUse.GameToPlay.IconPath,
+                        _userChoseOwnGameIcon,
+                        _userGameIconPath,
                         _changeAudioDevice,
                         _audioDevice,
                         _setAudioVolume,
@@ -574,6 +613,8 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _gameToUse.GameToPlay.IconPath,
+                        _userChoseOwnGameIcon,
+                        _userGameIconPath,
                         _changeAudioDevice,
                         _audioDevice,
                         _setAudioVolume,
@@ -612,6 +653,18 @@ namespace DisplayMagician.UIForms
                     _executableToUse.ProcessNameToMonitorUsesExecutable = true;
                 }
 
+                // Now set the alternative icon if needed
+                if (cb_exe_use_different_icon.Checked)
+                {
+                    _userChoseOwnExeIcon = true;
+                    _userExeIconPath = txt_exe_use_different_icon.Text;
+                }
+                else
+                {
+                    _userChoseOwnExeIcon = false;
+                    _userExeIconPath = "";
+                }
+
                 try
                 {
                     _shortcutToEdit.UpdateExecutableShortcut(
@@ -622,6 +675,8 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _executableToUse.ExecutableNameAndPath,
+                        _userChoseOwnExeIcon,
+                        _userExeIconPath,
                         _changeAudioDevice,
                         _audioDevice,
                         _setAudioVolume,
@@ -2435,6 +2490,86 @@ namespace DisplayMagician.UIForms
             else
             {
                 return lightBitmap;
+            }
+        }
+
+        private void cb_game_use_different_icon_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+
+            if (cb_game_use_different_icon.Checked)
+            {
+                txt_game_use_different_icon.Enabled = true;
+                btn_game_use_different_icon.Enabled = true;
+            }                
+            else
+            {
+                txt_game_use_different_icon.Enabled = false;
+                btn_game_use_different_icon.Enabled = false;
+            }
+        }
+
+        private void cb_exe_use_different_icon_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+
+            if (cb_exe_use_different_icon.Checked)
+            {
+                txt_exe_use_different_icon.Enabled = true;
+                btn_exe_use_different_icon.Enabled = true;
+            }
+            else
+            {
+                txt_exe_use_different_icon.Enabled = false;
+                btn_exe_use_different_icon.Enabled = false;
+            }
+        }
+
+        private void btn_game_use_different_icon_Click(object sender, EventArgs e)
+        {
+            if (dialog_open.ShowDialog(this) == DialogResult.OK)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                string fileExt = Path.GetExtension(dialog_open.FileName);
+                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com" || fileExt == @".ico"))
+                {
+                    txt_game_use_different_icon.Text = dialog_open.FileName;
+                    dialog_open.FileName = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "You need to select either an executable or an icon file.",
+                        "Select Exe or Icon",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+            }
+        }
+
+        private void btn_exe_use_different_icon_Click(object sender, EventArgs e)
+        {
+            if (dialog_open.ShowDialog(this) == DialogResult.OK)
+            {
+                if (_loadedShortcut)
+                    _isUnsaved = true;
+                string fileExt = Path.GetExtension(dialog_open.FileName);
+                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com" || fileExt == @".ico"))
+                {
+                    txt_exe_use_different_icon.Text = dialog_open.FileName;
+                    dialog_open.FileName = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "You need to select either an executable or an icon file.",
+                        "Select Exe or Icon",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
             }
         }
     }

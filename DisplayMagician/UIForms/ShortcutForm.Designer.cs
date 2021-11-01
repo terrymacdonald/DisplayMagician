@@ -74,8 +74,10 @@ namespace DisplayMagician.UIForms
             this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.btn_find_examples_game = new System.Windows.Forms.Button();
-            this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.p_standalone = new System.Windows.Forms.Panel();
+            this.btn_exe_use_different_icon = new System.Windows.Forms.Button();
+            this.txt_exe_use_different_icon = new System.Windows.Forms.TextBox();
+            this.cb_exe_use_different_icon = new System.Windows.Forms.CheckBox();
             this.cbx_exe_priority = new System.Windows.Forms.ComboBox();
             this.lbl_exe_priority = new System.Windows.Forms.Label();
             this.btn_exe_to_start = new System.Windows.Forms.Button();
@@ -92,6 +94,10 @@ namespace DisplayMagician.UIForms
             this.rb_standalone = new System.Windows.Forms.RadioButton();
             this.rb_no_game = new System.Windows.Forms.RadioButton();
             this.p_game = new System.Windows.Forms.Panel();
+            this.btn_game_use_different_icon = new System.Windows.Forms.Button();
+            this.txt_game_use_different_icon = new System.Windows.Forms.TextBox();
+            this.cb_game_use_different_icon = new System.Windows.Forms.CheckBox();
+            this.lbl_no_game_libraries = new System.Windows.Forms.Label();
             this.lbl_game_library = new System.Windows.Forms.Label();
             this.cbx_game_priority = new System.Windows.Forms.ComboBox();
             this.ilv_games = new Manina.Windows.Forms.ImageListView();
@@ -154,7 +160,7 @@ namespace DisplayMagician.UIForms
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(560, 806);
+            this.btn_save.Location = new System.Drawing.Point(560, 868);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(120, 40);
             this.btn_save.TabIndex = 6;
@@ -170,7 +176,7 @@ namespace DisplayMagician.UIForms
             this.btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_cancel.ForeColor = System.Drawing.Color.White;
-            this.btn_cancel.Location = new System.Drawing.Point(1008, 821);
+            this.btn_cancel.Location = new System.Drawing.Point(1008, 883);
             this.btn_cancel.Name = "btn_cancel";
             this.btn_cancel.Size = new System.Drawing.Size(94, 25);
             this.btn_cancel.TabIndex = 5;
@@ -209,7 +215,7 @@ namespace DisplayMagician.UIForms
             this.tabc_shortcut.Name = "tabc_shortcut";
             this.tabc_shortcut.SelectedIndex = 0;
             this.tabc_shortcut.ShowToolTips = true;
-            this.tabc_shortcut.Size = new System.Drawing.Size(1090, 682);
+            this.tabc_shortcut.Size = new System.Drawing.Size(1090, 744);
             this.tabc_shortcut.TabIndex = 28;
             this.tabc_shortcut.Click += new System.EventHandler(this.tabc_shortcut_VisibleChanged);
             // 
@@ -226,7 +232,7 @@ namespace DisplayMagician.UIForms
             this.tabp_display.Location = new System.Drawing.Point(4, 32);
             this.tabp_display.Name = "tabp_display";
             this.tabp_display.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_display.Size = new System.Drawing.Size(1082, 646);
+            this.tabp_display.Size = new System.Drawing.Size(1082, 708);
             this.tabp_display.TabIndex = 0;
             this.tabp_display.Text = "1. Choose Display Profile";
             this.tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
@@ -314,7 +320,7 @@ namespace DisplayMagician.UIForms
             this.tabp_audio.Location = new System.Drawing.Point(4, 32);
             this.tabp_audio.Name = "tabp_audio";
             this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_audio.Size = new System.Drawing.Size(1082, 646);
+            this.tabp_audio.Size = new System.Drawing.Size(1082, 708);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
             // 
@@ -642,7 +648,7 @@ namespace DisplayMagician.UIForms
             this.tabp_before.Location = new System.Drawing.Point(4, 32);
             this.tabp_before.Name = "tabp_before";
             this.tabp_before.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_before.Size = new System.Drawing.Size(1082, 646);
+            this.tabp_before.Size = new System.Drawing.Size(1082, 708);
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
             // 
@@ -654,7 +660,7 @@ namespace DisplayMagician.UIForms
             this.btn_find_examples_startprograms.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_find_examples_startprograms.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_find_examples_startprograms.ForeColor = System.Drawing.Color.White;
-            this.btn_find_examples_startprograms.Location = new System.Drawing.Point(953, 72);
+            this.btn_find_examples_startprograms.Location = new System.Drawing.Point(953, 134);
             this.btn_find_examples_startprograms.Name = "btn_find_examples_startprograms";
             this.btn_find_examples_startprograms.Size = new System.Drawing.Size(117, 25);
             this.btn_find_examples_startprograms.TabIndex = 40;
@@ -681,7 +687,7 @@ namespace DisplayMagician.UIForms
             this.btn_add_new_start_program.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_add_new_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_add_new_start_program.ForeColor = System.Drawing.Color.White;
-            this.btn_add_new_start_program.Location = new System.Drawing.Point(424, 61);
+            this.btn_add_new_start_program.Location = new System.Drawing.Point(424, 123);
             this.btn_add_new_start_program.Name = "btn_add_new_start_program";
             this.btn_add_new_start_program.Size = new System.Drawing.Size(235, 40);
             this.btn_add_new_start_program.TabIndex = 38;
@@ -697,7 +703,7 @@ namespace DisplayMagician.UIForms
             this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
             this.flp_start_programs.BackColor = System.Drawing.Color.White;
             this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.flp_start_programs.Location = new System.Drawing.Point(3, 135);
+            this.flp_start_programs.Location = new System.Drawing.Point(3, 197);
             this.flp_start_programs.Name = "flp_start_programs";
             this.flp_start_programs.Size = new System.Drawing.Size(1076, 508);
             this.flp_start_programs.TabIndex = 0;
@@ -706,7 +712,6 @@ namespace DisplayMagician.UIForms
             // 
             this.tabp_game.BackColor = System.Drawing.Color.Black;
             this.tabp_game.Controls.Add(this.btn_find_examples_game);
-            this.tabp_game.Controls.Add(this.lbl_no_game_libraries);
             this.tabp_game.Controls.Add(this.p_standalone);
             this.tabp_game.Controls.Add(this.rb_standalone);
             this.tabp_game.Controls.Add(this.rb_no_game);
@@ -717,19 +722,19 @@ namespace DisplayMagician.UIForms
             this.tabp_game.Location = new System.Drawing.Point(4, 32);
             this.tabp_game.Name = "tabp_game";
             this.tabp_game.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_game.Size = new System.Drawing.Size(1082, 646);
+            this.tabp_game.Size = new System.Drawing.Size(1082, 708);
             this.tabp_game.TabIndex = 2;
             this.tabp_game.Text = "4. Choose Game to start";
             // 
             // btn_find_examples_game
             // 
-            this.btn_find_examples_game.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_find_examples_game.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btn_find_examples_game.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
             this.btn_find_examples_game.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_find_examples_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_find_examples_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_find_examples_game.ForeColor = System.Drawing.Color.White;
-            this.btn_find_examples_game.Location = new System.Drawing.Point(953, 45);
+            this.btn_find_examples_game.Location = new System.Drawing.Point(924, 19);
             this.btn_find_examples_game.Name = "btn_find_examples_game";
             this.btn_find_examples_game.Size = new System.Drawing.Size(117, 25);
             this.btn_find_examples_game.TabIndex = 41;
@@ -737,26 +742,11 @@ namespace DisplayMagician.UIForms
             this.btn_find_examples_game.UseVisualStyleBackColor = true;
             this.btn_find_examples_game.Click += new System.EventHandler(this.btn_find_examples_game_Click);
             // 
-            // lbl_no_game_libraries
-            // 
-            this.lbl_no_game_libraries.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.lbl_no_game_libraries.AutoSize = true;
-            this.lbl_no_game_libraries.BackColor = System.Drawing.Color.Brown;
-            this.lbl_no_game_libraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
-            this.lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_game_libraries.Location = new System.Drawing.Point(255, 281);
-            this.lbl_no_game_libraries.Name = "lbl_no_game_libraries";
-            this.lbl_no_game_libraries.Size = new System.Drawing.Size(613, 22);
-            this.lbl_no_game_libraries.TabIndex = 34;
-            this.lbl_no_game_libraries.Text = "No supported game libraries detected! (Steam, Origin, Uplay, Epic or GOG supporte" +
-    "d)";
-            this.lbl_no_game_libraries.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.lbl_no_game_libraries.Visible = false;
-            // 
             // p_standalone
             // 
+            this.p_standalone.Controls.Add(this.btn_exe_use_different_icon);
+            this.p_standalone.Controls.Add(this.txt_exe_use_different_icon);
+            this.p_standalone.Controls.Add(this.cb_exe_use_different_icon);
             this.p_standalone.Controls.Add(this.cbx_exe_priority);
             this.p_standalone.Controls.Add(this.lbl_exe_priority);
             this.p_standalone.Controls.Add(this.btn_exe_to_start);
@@ -773,8 +763,41 @@ namespace DisplayMagician.UIForms
             this.p_standalone.Enabled = false;
             this.p_standalone.Location = new System.Drawing.Point(35, 86);
             this.p_standalone.Name = "p_standalone";
-            this.p_standalone.Size = new System.Drawing.Size(1006, 160);
+            this.p_standalone.Size = new System.Drawing.Size(1006, 201);
             this.p_standalone.TabIndex = 10;
+            // 
+            // btn_exe_use_different_icon
+            // 
+            this.btn_exe_use_different_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_exe_use_different_icon.ForeColor = System.Drawing.Color.White;
+            this.btn_exe_use_different_icon.Location = new System.Drawing.Point(880, 159);
+            this.btn_exe_use_different_icon.Name = "btn_exe_use_different_icon";
+            this.btn_exe_use_different_icon.Size = new System.Drawing.Size(85, 27);
+            this.btn_exe_use_different_icon.TabIndex = 34;
+            this.btn_exe_use_different_icon.Text = "Choose";
+            this.btn_exe_use_different_icon.UseVisualStyleBackColor = true;
+            this.btn_exe_use_different_icon.Click += new System.EventHandler(this.btn_exe_use_different_icon_Click);
+            // 
+            // txt_exe_use_different_icon
+            // 
+            this.txt_exe_use_different_icon.Enabled = false;
+            this.txt_exe_use_different_icon.Location = new System.Drawing.Point(425, 160);
+            this.txt_exe_use_different_icon.Name = "txt_exe_use_different_icon";
+            this.txt_exe_use_different_icon.Size = new System.Drawing.Size(449, 26);
+            this.txt_exe_use_different_icon.TabIndex = 33;
+            // 
+            // cb_exe_use_different_icon
+            // 
+            this.cb_exe_use_different_icon.AutoSize = true;
+            this.cb_exe_use_different_icon.ForeColor = System.Drawing.Color.White;
+            this.cb_exe_use_different_icon.Location = new System.Drawing.Point(171, 162);
+            this.cb_exe_use_different_icon.Name = "cb_exe_use_different_icon";
+            this.cb_exe_use_different_icon.Size = new System.Drawing.Size(232, 24);
+            this.cb_exe_use_different_icon.TabIndex = 32;
+            this.cb_exe_use_different_icon.Text = "Use a different shortcut icon:";
+            this.cb_exe_use_different_icon.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_exe_use_different_icon.UseVisualStyleBackColor = true;
+            this.cb_exe_use_different_icon.CheckedChanged += new System.EventHandler(this.cb_exe_use_different_icon_CheckedChanged);
             // 
             // cbx_exe_priority
             // 
@@ -953,6 +976,10 @@ namespace DisplayMagician.UIForms
             // 
             // p_game
             // 
+            this.p_game.Controls.Add(this.btn_game_use_different_icon);
+            this.p_game.Controls.Add(this.txt_game_use_different_icon);
+            this.p_game.Controls.Add(this.cb_game_use_different_icon);
+            this.p_game.Controls.Add(this.lbl_no_game_libraries);
             this.p_game.Controls.Add(this.lbl_game_library);
             this.p_game.Controls.Add(this.cbx_game_priority);
             this.p_game.Controls.Add(this.ilv_games);
@@ -967,19 +994,70 @@ namespace DisplayMagician.UIForms
             this.p_game.Controls.Add(this.lbl_game_timeout);
             this.p_game.Controls.Add(this.nud_timeout_game);
             this.p_game.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.p_game.Location = new System.Drawing.Point(3, 292);
+            this.p_game.Location = new System.Drawing.Point(3, 339);
             this.p_game.Name = "p_game";
-            this.p_game.Size = new System.Drawing.Size(1076, 351);
+            this.p_game.Size = new System.Drawing.Size(1076, 366);
             this.p_game.TabIndex = 7;
+            // 
+            // btn_game_use_different_icon
+            // 
+            this.btn_game_use_different_icon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_game_use_different_icon.ForeColor = System.Drawing.Color.White;
+            this.btn_game_use_different_icon.Location = new System.Drawing.Point(912, 121);
+            this.btn_game_use_different_icon.Name = "btn_game_use_different_icon";
+            this.btn_game_use_different_icon.Size = new System.Drawing.Size(85, 27);
+            this.btn_game_use_different_icon.TabIndex = 37;
+            this.btn_game_use_different_icon.Text = "Choose";
+            this.btn_game_use_different_icon.UseVisualStyleBackColor = true;
+            this.btn_game_use_different_icon.Click += new System.EventHandler(this.btn_game_use_different_icon_Click);
+            // 
+            // txt_game_use_different_icon
+            // 
+            this.txt_game_use_different_icon.Enabled = false;
+            this.txt_game_use_different_icon.Location = new System.Drawing.Point(399, 122);
+            this.txt_game_use_different_icon.Name = "txt_game_use_different_icon";
+            this.txt_game_use_different_icon.Size = new System.Drawing.Size(507, 26);
+            this.txt_game_use_different_icon.TabIndex = 36;
+            // 
+            // cb_game_use_different_icon
+            // 
+            this.cb_game_use_different_icon.AutoSize = true;
+            this.cb_game_use_different_icon.ForeColor = System.Drawing.Color.White;
+            this.cb_game_use_different_icon.Location = new System.Drawing.Point(165, 124);
+            this.cb_game_use_different_icon.Name = "cb_game_use_different_icon";
+            this.cb_game_use_different_icon.Size = new System.Drawing.Size(232, 24);
+            this.cb_game_use_different_icon.TabIndex = 35;
+            this.cb_game_use_different_icon.Text = "Use a different shortcut icon:";
+            this.cb_game_use_different_icon.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_game_use_different_icon.UseVisualStyleBackColor = true;
+            this.cb_game_use_different_icon.CheckedChanged += new System.EventHandler(this.cb_game_use_different_icon_CheckedChanged);
+            // 
+            // lbl_no_game_libraries
+            // 
+            this.lbl_no_game_libraries.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lbl_no_game_libraries.AutoSize = true;
+            this.lbl_no_game_libraries.BackColor = System.Drawing.Color.Brown;
+            this.lbl_no_game_libraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_no_game_libraries.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.lbl_no_game_libraries.ForeColor = System.Drawing.Color.White;
+            this.lbl_no_game_libraries.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.lbl_no_game_libraries.Location = new System.Drawing.Point(266, 176);
+            this.lbl_no_game_libraries.Name = "lbl_no_game_libraries";
+            this.lbl_no_game_libraries.Size = new System.Drawing.Size(613, 22);
+            this.lbl_no_game_libraries.TabIndex = 34;
+            this.lbl_no_game_libraries.Text = "No supported game libraries detected! (Steam, Origin, Uplay, Epic or GOG supporte" +
+    "d)";
+            this.lbl_no_game_libraries.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lbl_no_game_libraries.Visible = false;
             // 
             // lbl_game_library
             // 
             this.lbl_game_library.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.lbl_game_library.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_game_library.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_library.Location = new System.Drawing.Point(389, 40);
+            this.lbl_game_library.Location = new System.Drawing.Point(22, 40);
             this.lbl_game_library.Name = "lbl_game_library";
-            this.lbl_game_library.Size = new System.Drawing.Size(145, 16);
+            this.lbl_game_library.Size = new System.Drawing.Size(127, 22);
             this.lbl_game_library.TabIndex = 30;
             this.lbl_game_library.Text = "Game Library:";
             this.lbl_game_library.TextAlign = System.Drawing.ContentAlignment.TopRight;
@@ -989,7 +1067,7 @@ namespace DisplayMagician.UIForms
             this.cbx_game_priority.AllowDrop = true;
             this.cbx_game_priority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbx_game_priority.FormattingEnabled = true;
-            this.cbx_game_priority.Location = new System.Drawing.Point(150, 47);
+            this.cbx_game_priority.Location = new System.Drawing.Point(679, 11);
             this.cbx_game_priority.Name = "cbx_game_priority";
             this.cbx_game_priority.Size = new System.Drawing.Size(164, 28);
             this.cbx_game_priority.TabIndex = 29;
@@ -1000,11 +1078,11 @@ namespace DisplayMagician.UIForms
             | System.Windows.Forms.AnchorStyles.Right)));
             this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ilv_games.IntegralScroll = true;
-            this.ilv_games.Location = new System.Drawing.Point(0, 125);
+            this.ilv_games.Location = new System.Drawing.Point(0, 164);
             this.ilv_games.Name = "ilv_games";
             this.ilv_games.PersistentCacheDirectory = "";
             this.ilv_games.PersistentCacheSize = ((long)(100));
-            this.ilv_games.Size = new System.Drawing.Size(1076, 226);
+            this.ilv_games.Size = new System.Drawing.Size(1076, 202);
             this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
             this.ilv_games.TabIndex = 28;
             this.ilv_games.UseWIC = true;
@@ -1013,7 +1091,7 @@ namespace DisplayMagician.UIForms
             // cb_wait_alternative_game
             // 
             this.cb_wait_alternative_game.AutoSize = true;
-            this.cb_wait_alternative_game.Location = new System.Drawing.Point(25, 85);
+            this.cb_wait_alternative_game.Location = new System.Drawing.Point(165, 87);
             this.cb_wait_alternative_game.Name = "cb_wait_alternative_game";
             this.cb_wait_alternative_game.Size = new System.Drawing.Size(229, 24);
             this.cb_wait_alternative_game.TabIndex = 27;
@@ -1026,7 +1104,7 @@ namespace DisplayMagician.UIForms
             this.btn_choose_alternative_game.Enabled = false;
             this.btn_choose_alternative_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_choose_alternative_game.ForeColor = System.Drawing.Color.White;
-            this.btn_choose_alternative_game.Location = new System.Drawing.Point(453, 85);
+            this.btn_choose_alternative_game.Location = new System.Drawing.Point(912, 85);
             this.btn_choose_alternative_game.Name = "btn_choose_alternative_game";
             this.btn_choose_alternative_game.Size = new System.Drawing.Size(85, 27);
             this.btn_choose_alternative_game.TabIndex = 26;
@@ -1037,9 +1115,9 @@ namespace DisplayMagician.UIForms
             // txt_alternative_game
             // 
             this.txt_alternative_game.Enabled = false;
-            this.txt_alternative_game.Location = new System.Drawing.Point(258, 86);
+            this.txt_alternative_game.Location = new System.Drawing.Point(399, 85);
             this.txt_alternative_game.Name = "txt_alternative_game";
-            this.txt_alternative_game.Size = new System.Drawing.Size(193, 26);
+            this.txt_alternative_game.Size = new System.Drawing.Size(507, 26);
             this.txt_alternative_game.TabIndex = 24;
             // 
             // txt_game_name
@@ -1054,7 +1132,7 @@ namespace DisplayMagician.UIForms
             // 
             this.lbl_game_priority.AutoSize = true;
             this.lbl_game_priority.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_priority.Location = new System.Drawing.Point(41, 50);
+            this.lbl_game_priority.Location = new System.Drawing.Point(570, 14);
             this.lbl_game_priority.Name = "lbl_game_priority";
             this.lbl_game_priority.Size = new System.Drawing.Size(108, 20);
             this.lbl_game_priority.TabIndex = 18;
@@ -1076,16 +1154,16 @@ namespace DisplayMagician.UIForms
             // txt_args_game
             // 
             this.txt_args_game.Enabled = false;
-            this.txt_args_game.Location = new System.Drawing.Point(788, 11);
+            this.txt_args_game.Location = new System.Drawing.Point(399, 48);
             this.txt_args_game.Name = "txt_args_game";
-            this.txt_args_game.Size = new System.Drawing.Size(279, 26);
+            this.txt_args_game.Size = new System.Drawing.Size(667, 26);
             this.txt_args_game.TabIndex = 13;
             // 
             // cb_args_game
             // 
             this.cb_args_game.AutoSize = true;
             this.cb_args_game.ForeColor = System.Drawing.Color.White;
-            this.cb_args_game.Location = new System.Drawing.Point(555, 13);
+            this.cb_args_game.Location = new System.Drawing.Point(166, 50);
             this.cb_args_game.Name = "cb_args_game";
             this.cb_args_game.Size = new System.Drawing.Size(213, 24);
             this.cb_args_game.TabIndex = 12;
@@ -1099,7 +1177,7 @@ namespace DisplayMagician.UIForms
             // 
             this.lbl_game_timeout.AutoSize = true;
             this.lbl_game_timeout.ForeColor = System.Drawing.Color.White;
-            this.lbl_game_timeout.Location = new System.Drawing.Point(656, 51);
+            this.lbl_game_timeout.Location = new System.Drawing.Point(881, 14);
             this.lbl_game_timeout.Name = "lbl_game_timeout";
             this.lbl_game_timeout.Size = new System.Drawing.Size(125, 20);
             this.lbl_game_timeout.TabIndex = 4;
@@ -1108,7 +1186,7 @@ namespace DisplayMagician.UIForms
             // 
             // nud_timeout_game
             // 
-            this.nud_timeout_game.Location = new System.Drawing.Point(787, 50);
+            this.nud_timeout_game.Location = new System.Drawing.Point(1012, 13);
             this.nud_timeout_game.Maximum = new decimal(new int[] {
             240,
             0,
@@ -1128,7 +1206,7 @@ namespace DisplayMagician.UIForms
             this.rb_launcher.AutoSize = true;
             this.rb_launcher.Checked = true;
             this.rb_launcher.ForeColor = System.Drawing.Color.White;
-            this.rb_launcher.Location = new System.Drawing.Point(15, 262);
+            this.rb_launcher.Location = new System.Drawing.Point(15, 309);
             this.rb_launcher.Name = "rb_launcher";
             this.rb_launcher.Size = new System.Drawing.Size(466, 24);
             this.rb_launcher.TabIndex = 6;
@@ -1148,7 +1226,7 @@ namespace DisplayMagician.UIForms
             this.tabp_after.Location = new System.Drawing.Point(4, 32);
             this.tabp_after.Name = "tabp_after";
             this.tabp_after.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_after.Size = new System.Drawing.Size(1082, 646);
+            this.tabp_after.Size = new System.Drawing.Size(1082, 708);
             this.tabp_after.TabIndex = 3;
             this.tabp_after.Text = "5. Choose what happens afterwards";
             // 
@@ -1274,7 +1352,7 @@ namespace DisplayMagician.UIForms
             this.txt_shortcut_save_name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txt_shortcut_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_shortcut_save_name.Location = new System.Drawing.Point(207, 759);
+            this.txt_shortcut_save_name.Location = new System.Drawing.Point(207, 821);
             this.txt_shortcut_save_name.MaxLength = 200;
             this.txt_shortcut_save_name.Name = "txt_shortcut_save_name";
             this.txt_shortcut_save_name.Size = new System.Drawing.Size(744, 35);
@@ -1300,7 +1378,7 @@ namespace DisplayMagician.UIForms
             this.lbl_shortcut_name.AutoSize = true;
             this.lbl_shortcut_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_shortcut_name.ForeColor = System.Drawing.Color.Transparent;
-            this.lbl_shortcut_name.Location = new System.Drawing.Point(23, 762);
+            this.lbl_shortcut_name.Location = new System.Drawing.Point(23, 824);
             this.lbl_shortcut_name.Name = "lbl_shortcut_name";
             this.lbl_shortcut_name.Size = new System.Drawing.Size(178, 29);
             this.lbl_shortcut_name.TabIndex = 31;
@@ -1314,7 +1392,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest.Checked = true;
             this.cb_autosuggest.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_autosuggest.ForeColor = System.Drawing.Color.White;
-            this.cb_autosuggest.Location = new System.Drawing.Point(969, 768);
+            this.cb_autosuggest.Location = new System.Drawing.Point(969, 830);
             this.cb_autosuggest.Name = "cb_autosuggest";
             this.cb_autosuggest.Size = new System.Drawing.Size(117, 17);
             this.cb_autosuggest.TabIndex = 32;
@@ -1331,7 +1409,7 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_hotkey.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_hotkey.ForeColor = System.Drawing.Color.White;
-            this.btn_hotkey.Location = new System.Drawing.Point(434, 806);
+            this.btn_hotkey.Location = new System.Drawing.Point(434, 868);
             this.btn_hotkey.Name = "btn_hotkey";
             this.btn_hotkey.Size = new System.Drawing.Size(120, 40);
             this.btn_hotkey.TabIndex = 36;
@@ -1341,11 +1419,12 @@ namespace DisplayMagician.UIForms
             // 
             // lbl_hotkey_assigned
             // 
+            this.lbl_hotkey_assigned.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lbl_hotkey_assigned.AutoSize = true;
             this.lbl_hotkey_assigned.BackColor = System.Drawing.Color.Transparent;
             this.lbl_hotkey_assigned.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
-            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(26, 793);
+            this.lbl_hotkey_assigned.Location = new System.Drawing.Point(26, 884);
             this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
             this.lbl_hotkey_assigned.Size = new System.Drawing.Size(57, 16);
             this.lbl_hotkey_assigned.TabIndex = 37;
@@ -1360,7 +1439,7 @@ namespace DisplayMagician.UIForms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
-            this.ClientSize = new System.Drawing.Size(1114, 858);
+            this.ClientSize = new System.Drawing.Size(1114, 920);
             this.Controls.Add(this.lbl_hotkey_assigned);
             this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.cb_autosuggest);
@@ -1508,5 +1587,11 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ComboBox cbx_game_priority;
         private System.Windows.Forms.Label lbl_game_priority;
         private System.Windows.Forms.PictureBox pbLogo;
+        private System.Windows.Forms.Button btn_exe_use_different_icon;
+        private System.Windows.Forms.TextBox txt_exe_use_different_icon;
+        private System.Windows.Forms.CheckBox cb_exe_use_different_icon;
+        private System.Windows.Forms.Button btn_game_use_different_icon;
+        private System.Windows.Forms.TextBox txt_game_use_different_icon;
+        private System.Windows.Forms.CheckBox cb_game_use_different_icon;
     }
 }
