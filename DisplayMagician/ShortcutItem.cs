@@ -1006,30 +1006,21 @@ namespace DisplayMagician
 
         public void ReplaceShortcutIconInCache()
         {
-            string newShortcutIconFilename;
-            // Work out the name of the shortcut we'll save.
-            newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
-            logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename is {newShortcutIconFilename}.");
-
-            // If the new shortcut icon should be named differently
-            // then change the name of it
-            if (!newShortcutIconFilename.Equals(_savedShortcutIconCacheFilename))
+            // Figure out if we need to remove the old file
+            if (_savedShortcutIconCacheFilename != null)
             {
-                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename {newShortcutIconFilename} is different to the old shortcut Icon filename {_savedShortcutIconCacheFilename}.");
-                if (System.IO.File.Exists(_savedShortcutIconCacheFilename))
+                // Work out the name of the shortcut we'll save.
+                string oldShortcutIconFilename = _savedShortcutIconCacheFilename;
+                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Old shortcut Icon filename is {oldShortcutIconFilename}.");
+                if (System.IO.File.Exists(oldShortcutIconFilename))
                 {
-                    logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Deleting old shortcut Icon filename {_savedShortcutIconCacheFilename}.");
-                    System.IO.File.Delete(_savedShortcutIconCacheFilename);
+                    logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Deleting old shortcut Icon filename {oldShortcutIconFilename}.");
+                    System.IO.File.Delete(oldShortcutIconFilename);
                 }
 
-                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Creating the new shortcut Icon filename {newShortcutIconFilename} (calling SaveShortcutIconToCache).");
-                SaveShortcutIconToCache();
             }
-            else
-            {
-                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename {newShortcutIconFilename} matches old shortcut Icon filename {_savedShortcutIconCacheFilename} so skipping the rename.");
-            }
-
+            // Now we save the new file
+            SaveShortcutIconToCache();
         }
 
 
@@ -1039,29 +1030,29 @@ namespace DisplayMagician
             // Work out the name of the shortcut we'll save.
             _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
             logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Planning on saving shortcut icon to cache as {_savedShortcutIconCacheFilename}.");
-            Icon shortcutIcon;
+            MultiIcon shortcutIcon = new MultiIcon(); 
             try
             {
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Creating Icon from Shortcut bitmap.");
-                // Get an Hicon for the shortcutBitmap
-                IntPtr Hicon = _shortcutBitmap.GetHicon();
-                // Create a new icon from the handle. 
-                shortcutIcon = Icon.FromHandle(Hicon);
+                // Create a new 
+                SingleIcon si = shortcutIcon.Add("icon");
+                si.Add(_shortcutBitmap);
+                shortcutIcon.SelectedIndex = 0;
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving shortcut icon to cache with {_savedShortcutIconCacheFilename} as the name.");
-                using (FileStream fs = new FileStream(_savedShortcutIconCacheFilename, FileMode.Create))
-                    shortcutIcon.Save(fs);
-                    
+                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, $"ShortcutItem/SaveShortcutIconToCache: Exception while trying to save the Shortcut icon.");
-
+                shortcutIcon.Clear();
                 // If we fail to create an icon any other way, then we use the default profile icon
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileToUse.Name} as the icon instead.");
-                shortcutIcon = Properties.Resources.DisplayMagician;
+                SingleIcon si = shortcutIcon.Add("icon2");
+                si.Add(Properties.Resources.DisplayMagician);
+                shortcutIcon.SelectedIndex = 0; 
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
-                using (FileStream fs = new FileStream(_savedShortcutIconCacheFilename, FileMode.Create))
-                    shortcutIcon.Save(fs);
+                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
 
         }
