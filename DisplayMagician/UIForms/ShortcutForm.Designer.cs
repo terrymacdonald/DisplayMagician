@@ -111,6 +111,12 @@ namespace DisplayMagician.UIForms
             this.lbl_game_library = new System.Windows.Forms.Label();
             this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.tabp_after = new System.Windows.Forms.TabPage();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.txt_run_cmd_afterwards_args = new System.Windows.Forms.TextBox();
+            this.cb_run_cmd_afterwards_args = new System.Windows.Forms.CheckBox();
+            this.btn_run_cmd_afterwards = new System.Windows.Forms.Button();
+            this.txt_run_cmd_afterwards = new System.Windows.Forms.TextBox();
+            this.cb_run_cmd_afterwards = new System.Windows.Forms.CheckBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.rb_switch_capture_permanent = new System.Windows.Forms.RadioButton();
             this.rb_switch_capture_temp = new System.Windows.Forms.RadioButton();
@@ -126,10 +132,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.cb_run_cmd_afterwards = new System.Windows.Forms.CheckBox();
-            this.btn_run_cmd_afterwards = new System.Windows.Forms.Button();
-            this.txt_run_cmd_afterwards = new System.Windows.Forms.TextBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
@@ -149,10 +151,10 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)(this.pb_game_icon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).BeginInit();
             this.tabp_after.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gb_display_after.SuspendLayout();
-            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -1219,13 +1221,80 @@ namespace DisplayMagician.UIForms
             this.tabp_after.TabIndex = 3;
             this.tabp_after.Text = "5. Choose what happens afterwards";
             // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.txt_run_cmd_afterwards_args);
+            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards_args);
+            this.groupBox3.Controls.Add(this.btn_run_cmd_afterwards);
+            this.groupBox3.Controls.Add(this.txt_run_cmd_afterwards);
+            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards);
+            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox3.ForeColor = System.Drawing.Color.White;
+            this.groupBox3.Location = new System.Drawing.Point(175, 582);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(765, 122);
+            this.groupBox3.TabIndex = 14;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Run a program or command afterwards?";
+            // 
+            // txt_run_cmd_afterwards_args
+            // 
+            this.txt_run_cmd_afterwards_args.Enabled = false;
+            this.txt_run_cmd_afterwards_args.Location = new System.Drawing.Point(251, 75);
+            this.txt_run_cmd_afterwards_args.Name = "txt_run_cmd_afterwards_args";
+            this.txt_run_cmd_afterwards_args.Size = new System.Drawing.Size(479, 26);
+            this.txt_run_cmd_afterwards_args.TabIndex = 13;
+            // 
+            // cb_run_cmd_afterwards_args
+            // 
+            this.cb_run_cmd_afterwards_args.AutoSize = true;
+            this.cb_run_cmd_afterwards_args.ForeColor = System.Drawing.Color.White;
+            this.cb_run_cmd_afterwards_args.Location = new System.Drawing.Point(98, 77);
+            this.cb_run_cmd_afterwards_args.Name = "cb_run_cmd_afterwards_args";
+            this.cb_run_cmd_afterwards_args.Size = new System.Drawing.Size(147, 24);
+            this.cb_run_cmd_afterwards_args.TabIndex = 12;
+            this.cb_run_cmd_afterwards_args.Text = "Pass arguments:";
+            this.cb_run_cmd_afterwards_args.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_run_cmd_afterwards_args.UseVisualStyleBackColor = true;
+            this.cb_run_cmd_afterwards_args.CheckedChanged += new System.EventHandler(this.cb_run_cmd_afterwards_args_CheckedChanged);
+            // 
+            // btn_run_cmd_afterwards
+            // 
+            this.btn_run_cmd_afterwards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_run_cmd_afterwards.ForeColor = System.Drawing.Color.White;
+            this.btn_run_cmd_afterwards.Location = new System.Drawing.Point(645, 35);
+            this.btn_run_cmd_afterwards.Name = "btn_run_cmd_afterwards";
+            this.btn_run_cmd_afterwards.Size = new System.Drawing.Size(85, 27);
+            this.btn_run_cmd_afterwards.TabIndex = 11;
+            this.btn_run_cmd_afterwards.Text = "Choose";
+            this.btn_run_cmd_afterwards.UseVisualStyleBackColor = true;
+            // 
+            // txt_run_cmd_afterwards
+            // 
+            this.txt_run_cmd_afterwards.Enabled = false;
+            this.txt_run_cmd_afterwards.Location = new System.Drawing.Point(250, 36);
+            this.txt_run_cmd_afterwards.Name = "txt_run_cmd_afterwards";
+            this.txt_run_cmd_afterwards.Size = new System.Drawing.Size(389, 26);
+            this.txt_run_cmd_afterwards.TabIndex = 10;
+            // 
+            // cb_run_cmd_afterwards
+            // 
+            this.cb_run_cmd_afterwards.AutoSize = true;
+            this.cb_run_cmd_afterwards.Location = new System.Drawing.Point(98, 38);
+            this.cb_run_cmd_afterwards.Name = "cb_run_cmd_afterwards";
+            this.cb_run_cmd_afterwards.Size = new System.Drawing.Size(154, 24);
+            this.cb_run_cmd_afterwards.TabIndex = 0;
+            this.cb_run_cmd_afterwards.Text = "Run this program:";
+            this.cb_run_cmd_afterwards.UseVisualStyleBackColor = true;
+            this.cb_run_cmd_afterwards.CheckedChanged += new System.EventHandler(this.cb_run_cmd_afterwards_CheckedChanged);
+            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.rb_switch_capture_permanent);
             this.groupBox2.Controls.Add(this.rb_switch_capture_temp);
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.ForeColor = System.Drawing.Color.White;
-            this.groupBox2.Location = new System.Drawing.Point(175, 404);
+            this.groupBox2.Location = new System.Drawing.Point(175, 395);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(765, 161);
             this.groupBox2.TabIndex = 13;
@@ -1264,7 +1333,7 @@ namespace DisplayMagician.UIForms
             this.groupBox1.Controls.Add(this.rb_switch_audio_temp);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.ForeColor = System.Drawing.Color.White;
-            this.groupBox1.Location = new System.Drawing.Point(175, 219);
+            this.groupBox1.Location = new System.Drawing.Point(175, 210);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(765, 161);
             this.groupBox1.TabIndex = 12;
@@ -1303,7 +1372,7 @@ namespace DisplayMagician.UIForms
             this.gb_display_after.Controls.Add(this.rb_switch_display_temp);
             this.gb_display_after.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_display_after.ForeColor = System.Drawing.Color.White;
-            this.gb_display_after.Location = new System.Drawing.Point(175, 31);
+            this.gb_display_after.Location = new System.Drawing.Point(175, 22);
             this.gb_display_after.Name = "gb_display_after";
             this.gb_display_after.Size = new System.Drawing.Size(765, 162);
             this.gb_display_after.TabIndex = 11;
@@ -1421,50 +1490,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
-            // groupBox3
-            // 
-            this.groupBox3.Controls.Add(this.btn_run_cmd_afterwards);
-            this.groupBox3.Controls.Add(this.txt_run_cmd_afterwards);
-            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards);
-            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox3.ForeColor = System.Drawing.Color.White;
-            this.groupBox3.Location = new System.Drawing.Point(175, 591);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(765, 110);
-            this.groupBox3.TabIndex = 14;
-            this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Run a program or command afterwards?";
-            // 
-            // cb_run_cmd_afterwards
-            // 
-            this.cb_run_cmd_afterwards.AutoSize = true;
-            this.cb_run_cmd_afterwards.Location = new System.Drawing.Point(98, 45);
-            this.cb_run_cmd_afterwards.Name = "cb_run_cmd_afterwards";
-            this.cb_run_cmd_afterwards.Size = new System.Drawing.Size(154, 24);
-            this.cb_run_cmd_afterwards.TabIndex = 0;
-            this.cb_run_cmd_afterwards.Text = "Run this program:";
-            this.cb_run_cmd_afterwards.UseVisualStyleBackColor = true;
-            this.cb_run_cmd_afterwards.CheckedChanged += new System.EventHandler(this.cb_run_cmd_afterwards_CheckedChanged);
-            // 
-            // btn_run_cmd_afterwards
-            // 
-            this.btn_run_cmd_afterwards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_run_cmd_afterwards.ForeColor = System.Drawing.Color.White;
-            this.btn_run_cmd_afterwards.Location = new System.Drawing.Point(645, 42);
-            this.btn_run_cmd_afterwards.Name = "btn_run_cmd_afterwards";
-            this.btn_run_cmd_afterwards.Size = new System.Drawing.Size(85, 27);
-            this.btn_run_cmd_afterwards.TabIndex = 11;
-            this.btn_run_cmd_afterwards.Text = "Choose";
-            this.btn_run_cmd_afterwards.UseVisualStyleBackColor = true;
-            // 
-            // txt_run_cmd_afterwards
-            // 
-            this.txt_run_cmd_afterwards.Enabled = false;
-            this.txt_run_cmd_afterwards.Location = new System.Drawing.Point(250, 43);
-            this.txt_run_cmd_afterwards.Name = "txt_run_cmd_afterwards";
-            this.txt_run_cmd_afterwards.Size = new System.Drawing.Size(389, 26);
-            this.txt_run_cmd_afterwards.TabIndex = 10;
-            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1520,14 +1545,14 @@ namespace DisplayMagician.UIForms
             ((System.ComponentModel.ISupportInitialize)(this.pb_game_icon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_timeout_game)).EndInit();
             this.tabp_after.ResumeLayout(false);
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.gb_display_after.ResumeLayout(false);
             this.gb_display_after.PerformLayout();
-            this.groupBox3.ResumeLayout(false);
-            this.groupBox3.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1632,5 +1657,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_run_cmd_afterwards;
         private System.Windows.Forms.TextBox txt_run_cmd_afterwards;
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards;
+        private System.Windows.Forms.TextBox txt_run_cmd_afterwards_args;
+        private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_args;
     }
 }

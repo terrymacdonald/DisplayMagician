@@ -1992,6 +1992,30 @@ namespace DisplayMagician
                 logger.Debug($"ShortcutRepository/RunShortcut: Shortcut did not require changing Display Profile, so no need to change it back.");
             }
 
+            // And finally run the stop program we have
+            if (shortcutToUse.StopPrograms.Count > 0)
+            {
+                // At the moment we only allow one stop program
+                StopProgram stopProg = shortcutToUse.StopPrograms[0];
+                uint processID = 0;
+                try
+                {
+                    if (ProcessUtils.LaunchProcessWithPriority(stopProg.Executable, stopProg.Arguments, ProcessUtils.TranslatePriorityToClass(stopProg.ProcessPriority), out processID))
+                    {
+                        logger.Trace($"ShortcutRepository/RunShortcut: Successfully started Stop Program {stopProg.Executable} {stopProg.Arguments}");
+                    }
+                    else
+                    {
+                        logger.Warn($"ShortcutRepository/RunShortcut: Unable to start Stop Program {stopProg.Executable} {stopProg.Arguments}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while starting Stop Program {stopProg.Executable} {stopProg.Arguments}");
+                }
+            }
+
+
             // Reset the popup over the system tray icon to what's normal for it.
             notifyIcon.Text = $"DisplayMagician";
             Application.DoEvents();

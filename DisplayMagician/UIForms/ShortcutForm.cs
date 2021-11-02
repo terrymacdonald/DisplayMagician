@@ -1455,7 +1455,17 @@ namespace DisplayMagician.UIForms
             // Setup the single stop program we're beginning with
             if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
             {
+                cb_run_cmd_afterwards.Checked = true; 
                 txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
+                if (_shortcutToEdit.StopPrograms[0].ExecutableArgumentsRequired)
+                {
+                    cb_run_cmd_afterwards_args.Checked = true;
+                    txt_run_cmd_afterwards_args.Text = _shortcutToEdit.StopPrograms[0].Arguments;
+                }                
+            }
+            else
+            {
+                cb_run_cmd_afterwards.Checked = false;
             }
 
             // Refresh the Shortcut UI
@@ -2654,6 +2664,18 @@ namespace DisplayMagician.UIForms
             {
                 txt_run_cmd_afterwards.Enabled = false;
                 btn_run_cmd_afterwards.Enabled = false;
+            }
+        }
+
+        private void cb_run_cmd_afterwards_args_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cb_run_cmd_afterwards_args.Checked)
+            {
+                txt_run_cmd_afterwards_args.Enabled = true;
+            }
+            else
+            {
+                txt_run_cmd_afterwards_args.Enabled = false;
             }
         }
     }
