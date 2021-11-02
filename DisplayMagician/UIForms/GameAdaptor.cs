@@ -46,7 +46,7 @@ namespace DisplayMagician.UIForms
 
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
               
-                return game.GameBitmap.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
+                return game.GameBitmap.Image.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
 
             }
             catch (Exception ex)
@@ -159,7 +159,7 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySizeF = game.GameBitmap.PhysicalDimension;
+                            mySizeF = game.GameBitmap.Image.PhysicalDimension;
                             gotSizeF = true;
                         }
                         catch (Exception ex)

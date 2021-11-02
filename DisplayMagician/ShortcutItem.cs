@@ -90,6 +90,17 @@ namespace DisplayMagician
         public string Message;
     }
 
+    public struct ShortcutBitmap
+    {
+        public string UUID;
+        public string Name;
+        public int Order;
+        public string Source;
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public Bitmap Image;
+        public Size Size;
+    }
+
     public class ShortcutItem : IComparable
     {
         
@@ -133,8 +144,9 @@ namespace DisplayMagician
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
         private string _originalIconPath;
         private bool _userChoseOwnIcon = false;
-        private string _userIconPath;
-        private Bitmap _userIconBitmap;
+        private ShortcutBitmap _selectedImage = new ShortcutBitmap();
+        private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
+
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
 #pragma warning restore CS3008 // Identifier is not CLS-compliant
@@ -729,33 +741,30 @@ namespace DisplayMagician
             }
         }
 
-        public string UserIconPath
+        public ShortcutBitmap SelectedImage
         {
             get
             {
-                return _userIconPath;
+                return _selectedImage;
             }
 
             set
             {
-                _userIconPath = value;
+                _selectedImage = value;
 
-                // And we do the same for the UserLargeBitmap 
-                //_userIconBitmap = ToLargeBitmap(_userIconPath);                
             }
         }
 
-        [JsonConverter(typeof(CustomBitmapConverter))]
-        public Bitmap UserLargeBitmap
+        public List<ShortcutBitmap> AvailableImages
         {
             get
             {
-                return _userIconBitmap;
+                return _availableImages;
             }
 
             set
             {
-                _userIconBitmap = value;
+                _availableImages = value;
 
             }
         }
@@ -824,8 +833,8 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
-            bool userChoseOwnIcon = false,
-            string userIconPath = "",
+            bool userChoseOwnIcon,
+            List<ShortcutBitmap> availableImages,
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool setAudioVolume = false,
@@ -869,8 +878,8 @@ namespace DisplayMagician
             _autoName = autoName;
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
-            _userChoseOwnIcon = userChoseOwnIcon;
-            _userIconPath = userIconPath;
+            _userChoseOwnIcon = userChoseOwnIcon; 
+            _availableImages = availableImages;
             _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
@@ -893,8 +902,8 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
-            bool userChoseOwnIcon = false,
-            string userIconPath = "",
+            bool userChoseOwnIcon, 
+            List<ShortcutBitmap> availableImages, 
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool setAudioVolume = false,
@@ -936,7 +945,7 @@ namespace DisplayMagician
             _startPrograms = startPrograms;
             _originalIconPath = originalIconPath;
             _userChoseOwnIcon = userChoseOwnIcon;
-            _userIconPath = userIconPath;
+            _availableImages = availableImages;
             _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
@@ -981,9 +990,8 @@ namespace DisplayMagician
             shortcut.OriginalLargeBitmap = OriginalLargeBitmap;
             shortcut.ShortcutBitmap = ShortcutBitmap;
             shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
-            shortcut.UserChoseOwnIcon = UserChoseOwnIcon;
-            shortcut.UserIconPath = UserIconPath;
-            shortcut.UserLargeBitmap = UserLargeBitmap;
+            shortcut.UserChoseOwnIcon = UserChoseOwnIcon; 
+            shortcut.AvailableImages = AvailableImages;
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
             shortcut.StartPrograms = StartPrograms;
@@ -1062,19 +1070,23 @@ namespace DisplayMagician
             // Get the user icon bitmap if its set.
             if (_userChoseOwnIcon)
             {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the user set icon as the game icon instead (from {_userIconPath}).");
-                _userIconBitmap = ImageUtils.GetMeABitmapFromFile(_userIconPath);
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the user set icon as the game icon.");
+                _originalBitmap = _selectedImage.Image;
             }
-
-            // Get the game icon bitmap if we can find it.
-            logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the game executable icon as the game icon instead from {_originalIconPath}.");
-            // Find the game bitmap that matches the game name we just got
-            foreach (var aGame in GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            else
             {
-                if (aGame.Name.Equals(_gameName))
+                // Get the game icon bitmap if we can find it.
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the game executable icon as the game icon instead from {_originalIconPath}.");
+                // Find the game bitmap that matches the game name we just got
+                foreach (var aGame in GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
                 {
-                    _originalBitmap = aGame.GameBitmap;
+                    if (aGame.Name.Equals(_gameName))
+                    {
+                        _selectedImage = aGame.GameBitmap;
+                        _originalBitmap = aGame.GameBitmap.Image;
+                    }
                 }
+
             }
             // If we can't find the game icon bitmap then we try the icons for the game libraries themselves
             if (_originalBitmap == null)
@@ -1112,14 +1124,7 @@ namespace DisplayMagician
             }
 
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
-            if (_userChoseOwnIcon)
-            {
-                _shortcutBitmap = ImageUtils.ToBitmapOverlay(_userIconBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            }
-            else
-            {
-                _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            }
+            _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
         }
 
@@ -1128,29 +1133,27 @@ namespace DisplayMagician
             
             if (_userChoseOwnIcon)
             {
-                logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Using the user set icon as the app icon instead (from {_userIconPath}).");
-                _userIconBitmap = ImageUtils.GetMeABitmapFromFile(_userIconPath);
-            }
-
-            logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Using the executable icon as the app icon instead from {_executableNameAndPath}.");
-            _originalBitmap = ImageUtils.GetMeABitmapFromFile(_executableNameAndPath);
-
-            if (_originalBitmap == null)
-            {
-                logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                _originalBitmap = ImageUtils.ToBitmapOverlay(Properties.Resources.DisplayMagician.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-            }
-
-            // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
-            if (_userChoseOwnIcon)
-            {
-                logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                _shortcutBitmap = ImageUtils.ToBitmapOverlay(_userIconBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+                logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the user set icon as the game icon.");
+                _originalBitmap = _selectedImage.Image;
             }
             else
             {
+                logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Using the executable icon as the app icon instead from {_executableNameAndPath}.");
+                _availableImages = ImageUtils.GetMeAllBitmapsFromFile(_executableNameAndPath);
+                _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                _originalBitmap = _selectedImage.Image;
+
+                if (_originalBitmap == null)
+                {
+                    logger.Trace($"ShortcutItem/SetBitmapsForExecutable: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                    _originalBitmap = ImageUtils.ToBitmapOverlay(Properties.Resources.DisplayMagician.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
+                }
+
+                // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
                 _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
             }
+
 
         }
 

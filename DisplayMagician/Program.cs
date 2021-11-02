@@ -994,7 +994,7 @@ namespace DisplayMagician {
             // IconPath can be an ICO, or an EXE
             foreach (var game in GameLibrary.AllInstalledGamesInAllLibraries)
             {
-                Bitmap bm = null;
+                List<ShortcutBitmap> bmList = new List<ShortcutBitmap>();
                 try
                 {
                     /*ArrayList filesToSearchForIcon = new ArrayList();
@@ -1008,15 +1008,8 @@ namespace DisplayMagician {
                     // Note: This may be an icon file, or an exe file.
                     // This function tries to get a 256x256 Vista sized bitmap from the file
                     logger.Trace($"Program/LoadGamesInBackground: Attempting to get game bitmaps from {game.Name}.");
-                    bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
-                    if (bm != null && bm.GetType() == typeof(Bitmap))
-                    {
-                        logger.Trace($"Program/LoadGamesInBackground: Got game bitmaps from {game.Name}.");
-                    }
-                    else
-                    {
-                        logger.Trace($"Program/LoadGamesInBackground: Couldn't get game bitmaps from {game.Name} for some reason.");
-                    }
+                    bmList = ImageUtils.GetMeAllBitmapsFromFile(game.IconPath);
+                    logger.Trace($"Program/LoadGamesInBackground: Got game bitmaps from {game.Name}.");
 
                 }
                 catch (Exception ex)
@@ -1024,23 +1017,49 @@ namespace DisplayMagician {
                     logger.Error(ex, $"Program/LoadGamesInBackground: Exception building game bitmaps for {game.Name} during load");                    
                 }
 
-                if (bm == null)
+                if (bmList.Count == 0)
                 {
+                    ShortcutBitmap bm = new ShortcutBitmap();
+                    bm.UUID = Guid.NewGuid().ToString("D");
+                    bm.Order = bmList.Count;
+                    bm.Source = game.ExePath;
                     if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
-                        bm = Properties.Resources.Steam;
+                    {
+                        bm.Name = "Steam";
+                        bm.Image = Properties.Resources.Steam;
+                    }                        
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
-                        bm = Properties.Resources.Uplay;
+                    {
+                        bm.Name = "Uplay"; 
+                        bm.Image = Properties.Resources.Uplay;
+                    }                        
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
-                        bm = Properties.Resources.Origin;
+                    {
+                        bm.Name = "Origin";
+                        bm.Image = Properties.Resources.Origin;
+                    }                        
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Epic))
-                        bm = Properties.Resources.Epic;
+                    {
+                        bm.Name = "Epic";
+                        bm.Image = Properties.Resources.Epic;
+                    }
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.GOG))
-                        bm = Properties.Resources.GOG;
+                    {
+                        bm.Name = "GOG";
+                        bm.Image = Properties.Resources.GOG;
+                    }                        
                     else
-                        bm = Properties.Resources.DisplayMagician.ToBitmap();
+                    {
+                        bm.Name = "DisplayMagician";
+                        bm.Image = Properties.Resources.DisplayMagician.ToBitmap();
+                    }
+                    // Add the shortcutbitmap to the list
+                    bmList.Add(bm);
+
                 }
 
-                game.GameBitmap = bm;
+                game.AvailableGameBitmaps = bmList;
+                game.GameBitmap = ImageUtils.GetMeLargestAvailableBitmap(bmList);
             }
 
             _gamesLoaded = true;
