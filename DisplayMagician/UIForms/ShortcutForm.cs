@@ -2613,6 +2613,20 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
+
+        private void cb_run_cmd_afterwards_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cb_run_cmd_afterwards.Checked)
+            {
+                txt_run_cmd_afterwards.Enabled = true;
+                btn_run_cmd_afterwards.Enabled = true;
+            }
+            else
+            {
+                txt_run_cmd_afterwards.Enabled = false;
+                btn_run_cmd_afterwards.Enabled = false;
+            }
+        }
     }
 
     // Class used to populate combo boxes
