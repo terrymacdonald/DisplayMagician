@@ -61,6 +61,18 @@ namespace DisplayMagician
         public bool DontStartIfAlreadyRunning;
     }
 
+    public struct StopProgram
+    {
+        public int Priority;
+        public bool Disabled;
+        public ProcessPriority ProcessPriority;
+        public string Executable;
+        public string Arguments;
+        public bool ExecutableArgumentsRequired;
+        public bool CloseOnFinish;
+        public bool DontStartIfAlreadyRunning;
+    }
+
     public struct Executable
     {
         public string DifferentExecutableToMonitor;
@@ -139,6 +151,7 @@ namespace DisplayMagician
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
         private List<StartProgram> _startPrograms;
+        private List<StopProgram> _stopPrograms;
         private Bitmap _shortcutBitmap, _originalBitmap;
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
@@ -641,6 +654,20 @@ namespace DisplayMagician
             }
         }
 
+        public List<StopProgram> StopPrograms
+        {
+            get
+            {
+                return _stopPrograms;
+            }
+
+            set
+            {
+                _stopPrograms = value;
+            }
+        }
+
+
         public string OriginalIconPath {
             get
             {
@@ -788,6 +815,7 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
             bool autoName = true,
             Keys hotkey = Keys.None,
             string uuid = ""
@@ -843,7 +871,8 @@ namespace DisplayMagician
             string captureDevice = "",
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
+            List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
             bool autoName = true, 
             string uuid = "",
             Keys hotkey = Keys.None
@@ -877,6 +906,7 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _stopPrograms = stopPrograms;
             _originalIconPath = originalIconPath;
             _userChoseOwnIcon = userChoseOwnIcon; 
             _availableImages = availableImages;
@@ -912,7 +942,8 @@ namespace DisplayMagician
             string captureDevice = "",
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
+            List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
             bool autoName = true,
             Keys hotkey = Keys.None,
             string uuid = ""
@@ -943,6 +974,7 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _stopPrograms = stopPrograms; 
             _originalIconPath = originalIconPath;
             _userChoseOwnIcon = userChoseOwnIcon;
             _availableImages = availableImages;
@@ -995,6 +1027,7 @@ namespace DisplayMagician
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
             shortcut.StartPrograms = StartPrograms;
+            shortcut.StopPrograms = StopPrograms; 
             shortcut.ChangeAudioDevice = ChangeAudioDevice;
             shortcut.AudioDevice = AudioDevice;
             shortcut.SetAudioVolume = SetAudioVolume;

@@ -36,6 +36,7 @@ namespace DisplayMagician.UIForms
         private ShortcutPermanence _audioPermanence = ShortcutPermanence.Temporary;
         private ShortcutPermanence _capturePermanence = ShortcutPermanence.Temporary;
         List<StartProgram> _startPrograms = new List<StartProgram>();
+        List<StopProgram> _stopPrograms = new List<StopProgram>();
         private string _audioDevice = "";
         private bool _changeAudioDevice = false;
         private bool _setAudioVolume = false;
@@ -496,7 +497,23 @@ namespace DisplayMagician.UIForms
 
             // Replace the old start programs with the ones we've created now
             _startPrograms = newStartPrograms;
-            
+
+            // Store the single stop program if it's set (but wth lots of defaults)
+            if (!String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text) && File.Exists(txt_run_cmd_afterwards.Text))
+            {
+                _stopPrograms = new List<StopProgram>();
+                StopProgram stopProgram = new StopProgram();
+                stopProgram.Executable = txt_run_cmd_afterwards.Text;
+                stopProgram.Priority = 0;
+                stopProgram.DontStartIfAlreadyRunning = false;
+                stopProgram.Arguments = "";
+                stopProgram.Disabled = false;
+                stopProgram.ExecutableArgumentsRequired = false;
+                stopProgram.ProcessPriority = ProcessPriority.Normal;
+                _stopPrograms.Add(stopProgram);
+            }
+
+
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
             if (rb_launcher.Checked)
@@ -580,6 +597,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _stopPrograms,
                         _autoName,
                         _uuid,
                         _hotkey
@@ -606,6 +624,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _stopPrograms,
                         _autoName,
                         _uuid,
                         _hotkey
@@ -657,6 +676,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _stopPrograms,
                         _autoName,
                         _hotkey
                     );
@@ -682,6 +702,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _stopPrograms,
                         _autoName,
                         _hotkey
                     );
@@ -709,6 +730,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _stopPrograms,
                         _autoName,
                         _hotkey
                     );
@@ -731,6 +753,7 @@ namespace DisplayMagician.UIForms
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
+                        _stopPrograms,
                         _autoName,
                         _hotkey
                     );
@@ -1427,6 +1450,12 @@ namespace DisplayMagician.UIForms
                     flp_start_programs.Controls.Add(startProgramControl);
                     spOrder++;
                 }
+            }
+
+            // Setup the single stop program we're beginning with
+            if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
+            {
+                txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
             }
 
             // Refresh the Shortcut UI
