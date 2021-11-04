@@ -296,7 +296,11 @@ namespace DisplayMagician.GameLibraries
                     // Note: This may be an icon file, or an exe file.
                     // This function tries to get a 256x256 Vista sized bitmap from the file
                     logger.Trace($"Program/LoadGamesInBackground: Attempting to get game bitmaps from {game.Name}.");
-                    bmList = ImageUtils.GetMeAllBitmapsFromFile(game.IconPath);
+                    bmList.AddRange(ImageUtils.GetMeAllBitmapsFromFile(game.IconPath));
+                    if (game.ExePath != game.IconPath)
+                    {
+                        bmList.AddRange(ImageUtils.GetMeAllBitmapsFromFile(game.ExePath));
+                    }
                     logger.Trace($"Program/LoadGamesInBackground: Got game bitmaps from {game.Name}.");
 
                 }
@@ -308,38 +312,29 @@ namespace DisplayMagician.GameLibraries
                 if (bmList.Count == 0)
                 {
                     ShortcutBitmap bm = new ShortcutBitmap();
-                    bm.UUID = Guid.NewGuid().ToString("D");
-                    bm.Order = bmList.Count;
-                    bm.Source = game.ExePath;
                     if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
                     {
-                        bm.Name = "Steam";
-                        bm.Image = Properties.Resources.Steam;
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Steam, "Steam Icon", game.ExePath, bmList.Count);
                     }
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
                     {
-                        bm.Name = "Uplay";
-                        bm.Image = Properties.Resources.Uplay;
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Uplay, "Uplay Icon", game.ExePath, bmList.Count);
                     }
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
                     {
-                        bm.Name = "Origin";
-                        bm.Image = Properties.Resources.Origin;
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Origin, "Origin Icon", game.ExePath, bmList.Count);
                     }
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.Epic))
                     {
-                        bm.Name = "Epic";
-                        bm.Image = Properties.Resources.Epic;
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Epic, "Epic Icon", game.ExePath, bmList.Count);
                     }
                     else if (game.GameLibrary.Equals(SupportedGameLibraryType.GOG))
                     {
-                        bm.Name = "GOG";
-                        bm.Image = Properties.Resources.GOG;
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.GOG, "GOG Icon", game.ExePath, bmList.Count);
                     }
                     else
                     {
-                        bm.Name = "DisplayMagician";
-                        bm.Image = Properties.Resources.DisplayMagician.ToBitmap();
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", game.ExePath, bmList.Count);
                     }
                     // Add the shortcutbitmap to the list
                     bmList.Add(bm);

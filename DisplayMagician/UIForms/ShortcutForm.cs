@@ -1403,8 +1403,12 @@ namespace DisplayMagician.UIForms
                         // If the game is selected, then grab images from the game
                         if (shortcutGame != null)
                         {
-                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.ExePath));
-                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.IconPath));
+                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.IconPath));                             
+                            if (shortcutGame.ExePath != shortcutGame.IconPath)
+                            {
+                                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.ExePath));
+                            }
+                            
                         }
                         // If the different exe to monitor is set, then grab the icons from there too!
                         if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor) && File.Exists(_shortcutToEdit.DifferentGameExeToMonitor))
@@ -1620,6 +1624,11 @@ namespace DisplayMagician.UIForms
 
                 // Empty the bitmaps
                 EmptyTheImages();
+
+                if (!String.IsNullOrWhiteSpace(txt_executable.Text) && File.Exists(txt_executable.Text))
+                {
+                    UpdateExeImagesUI();
+                }
 
                 SuggestShortcutName();
                 EnableSaveButtonIfValid();
@@ -1971,6 +1980,21 @@ namespace DisplayMagician.UIForms
         private void btn_exe_to_start_Click(object sender, EventArgs e)
         {
             txt_executable.Text = getExeFile();
+            UpdateExeImagesUI();
+        }
+
+        private void UpdateExeImagesUI()
+        {
+            _availableImages = new List<ShortcutBitmap>();
+            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_executable.Text));
+            if (rb_wait_alternative_executable.Checked && File.Exists(txt_alternative_executable.Text))
+            {
+                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_alternative_executable.Text));
+            }
+            _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+            _shortcutToEdit.SelectedImage = _selectedImage;
+            pb_exe_icon.Image = _selectedImage.Image;
+            btn_choose_exe_icon.Enabled = true;
         }
 
         private void txt_shortcut_save_name_Click(object sender, EventArgs e)
@@ -2700,11 +2724,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_choose_exe_icon_Click(object sender, EventArgs e)
         {
-            if (rb_standalone.Checked && _shortcutToEdit.AvailableImages.Count > 0)
+            if (rb_standalone.Checked && _availableImages.Count > 0)
             {
                 ChooseIconForm exeIconForm = new ChooseIconForm();
-                exeIconForm.AvailableImages = _shortcutToEdit.AvailableImages;
-                exeIconForm.SelectedImage = _shortcutToEdit.SelectedImage;
+                exeIconForm.AvailableImages = _availableImages;
+                exeIconForm.SelectedImage = _selectedImage;
                 if (exeIconForm.ShowDialog() == DialogResult.OK)
                 {
                     _availableImages = exeIconForm.AvailableImages;
@@ -2720,8 +2744,8 @@ namespace DisplayMagician.UIForms
             if (rb_launcher.Checked && _shortcutToEdit.AvailableImages.Count > 0)
             {
                 ChooseIconForm gameIconForm = new ChooseIconForm();
-                gameIconForm.AvailableImages = _shortcutToEdit.AvailableImages;
-                gameIconForm.SelectedImage = _shortcutToEdit.SelectedImage;
+                gameIconForm.AvailableImages = _availableImages;
+                gameIconForm.SelectedImage = _selectedImage;
                 if (gameIconForm.ShowDialog() == DialogResult.OK)
                 {
                     _availableImages = gameIconForm.AvailableImages;

@@ -46,7 +46,11 @@ namespace DisplayMagician.UIForms
                 int imageCount = 1;
                 foreach (ShortcutBitmap sc in AvailableImages)
                 {
-                    ListViewItem lvi = new ListViewItem($"Image {sc.Order} from {sc.Source}");
+                    string[] stringsToAdd = new string[] { 
+                        $"Image {sc.Order} from {sc.Name}",
+                        $"{sc.Size.Width} x {sc.Size.Height}"
+                    };
+                    ListViewItem lvi = new ListViewItem(stringsToAdd);
                     lvi.Name = sc.UUID;
                     if (sc.Equals(SelectedImage))
                     {
