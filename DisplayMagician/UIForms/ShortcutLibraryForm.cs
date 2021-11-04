@@ -264,7 +264,7 @@ namespace DisplayMagician.UIForms
         private void btn_new_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
-            var shortcutForm = new ShortcutForm(new ShortcutItem());
+            var shortcutForm = new ShortcutForm(new ShortcutItem(),false);
             //ShortcutRepository.IsValidRefresh();
             shortcutForm.ShowDialog(this);
             if (shortcutForm.DialogResult == DialogResult.OK)
@@ -312,12 +312,8 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
 
                 this.Cursor = Cursors.WaitCursor;
-
-                // We need to stop ImageListView redrawing things before we're ready
-                // This stops an exception when ILV is just too keen!
-
-
-                var shortcutForm = new ShortcutForm(_selectedShortcut);
+                
+                var shortcutForm = new ShortcutForm(_selectedShortcut,true);
                 //ilv_saved_shortcuts.SuspendLayout();
                 shortcutForm.ShowDialog(this);
                 if (shortcutForm.DialogResult == DialogResult.OK)

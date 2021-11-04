@@ -373,6 +373,7 @@ namespace DisplayMagician
             Icon myIcon = null;
             List<ShortcutBitmap> bmList = new List<ShortcutBitmap>();
             int bmCount = 0;
+            string fileNameOnly = Path.GetFileName(fileNameAndPath);
 
             if (fileNameAndPath.EndsWith(".ico"))
             {
@@ -384,12 +385,7 @@ namespace DisplayMagician
 
                     myIcon = new Icon(fileNameAndPath, 256, 256);
                     //Icon myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
-                    ShortcutBitmap bm = new ShortcutBitmap();
-                    bm.UUID = Guid.NewGuid().ToString("D");
-                    bm.Order = bmCount++;
-                    bm.Source = fileNameAndPath;
-                    bm.Image = myIcon.ToBitmap();
-                    bm.Size = new Size(bm.Image.Width, bm.Image.Height);
+                    ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
                     // Add the shortcutbitmap to the list
                     bmList.Add(bm);
                     logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using standard Icon access method.");
@@ -406,12 +402,7 @@ namespace DisplayMagician
                     mySingleIcon.Load(fileNameAndPath);
                     foreach (IconImage myIconImage in mySingleIcon)
                     {
-                        ShortcutBitmap bm = new ShortcutBitmap();
-                        bm.UUID = Guid.NewGuid().ToString("D");
-                        bm.Order = bmCount++;
-                        bm.Source = fileNameAndPath;
-                        bm.Image = myIconImage.Image;
-                        bm.Size = new Size(bm.Image.Width, bm.Image.Height);
+                        ShortcutBitmap bm = CreateShortcutBitmap(myIconImage.Image, fileNameOnly, fileNameAndPath, bmCount++);
                         // Add the shortcutbitmap to the list
                         bmList.Add(bm);
                         logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the icon file {fileNameAndPath} using MultiIcon access method.");
@@ -453,12 +444,7 @@ namespace DisplayMagician
                     Icon[] allIcons = ie.GetAllIcons();
                     foreach (Icon myExtractedIcon in allIcons)
                     {
-                        ShortcutBitmap bm = new ShortcutBitmap();
-                        bm.UUID = Guid.NewGuid().ToString("D");
-                        bm.Order = bmCount++;
-                        bm.Source = fileNameAndPath;
-                        bm.Image = myExtractedIcon.ToBitmap();
-                        bm.Size = new Size(bm.Image.Width, bm.Image.Height);
+                        ShortcutBitmap bm = CreateShortcutBitmap(myExtractedIcon.ToBitmap(), fileNameOnly, fileNameAndPath, bmCount++);
                         // Add the shortcutbitmap to the list
                         bmList.Add(bm);
 
@@ -492,12 +478,7 @@ namespace DisplayMagician
 
                     if (myIcon != null)
                     {
-                        ShortcutBitmap bm = new ShortcutBitmap();
-                        bm.UUID = Guid.NewGuid().ToString("D");
-                        bm.Order = bmCount++;
-                        bm.Source = fileNameAndPath;
-                        bm.Image = myIcon.ToBitmap();
-                        bm.Size = new Size(bm.Image.Width, bm.Image.Height);
+                        ShortcutBitmap bm = CreateShortcutBitmap(myIcon.ToBitmap(),fileNameOnly,fileNameAndPath,bmCount++);
                         // Add the shortcutbitmap to the list
                         bmList.Add(bm);
 
@@ -559,6 +540,17 @@ namespace DisplayMagician
 
         }
 
+        public static ShortcutBitmap CreateShortcutBitmap(Bitmap bitmap, string name = "", string source = "", int order = 0)
+        {
+            ShortcutBitmap sc = new ShortcutBitmap();
+            sc.UUID = Guid.NewGuid().ToString("D");
+            sc.Name = name;
+            sc.Order = order;
+            sc.Source = source;
+            sc.Image = bitmap;
+            sc.Size = new Size(sc.Image.Width, sc.Image.Height);
+            return sc;
+        }
 
         public static bool ImagesAreEqual(Bitmap imageA, Bitmap imageB)
         {
