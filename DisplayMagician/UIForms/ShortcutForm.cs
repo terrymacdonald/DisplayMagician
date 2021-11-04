@@ -1,23 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing.IconLib;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagician.GameLibraries;
-using System.Globalization;
 using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
 using NHotkey.WindowsForms;
 using NHotkey;
-//using WK.Libraries.HotkeyListenerNS;
 
 namespace DisplayMagician.UIForms
 {
@@ -58,9 +53,9 @@ namespace DisplayMagician.UIForms
         private List<CoreAudioDevice> captureDevices = null;
         private CoreAudioDevice selectedCaptureDevice = null;
         private Keys _hotkey = Keys.None;
-        private bool _userChoseOwnGameIcon = false;
+        //private bool _userChoseOwnGameIcon = false;
         //private string _userGameIconPath = "";
-        private bool _userChoseOwnExeIcon = false;
+        //private bool _userChoseOwnExeIcon = false;
         //private string _userExeIconPath = "";
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
@@ -513,7 +508,6 @@ namespace DisplayMagician.UIForms
                 _stopPrograms.Add(stopProgram);
             }
 
-
             // Now we create the Shortcut Object ready to save
             // If we're launching a game
             if (rb_launcher.Checked)
@@ -564,18 +558,6 @@ namespace DisplayMagician.UIForms
                     _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).First();
                 }
 
-                // Now set the alternative icon if needed
-                /*if (cb_game_use_different_icon.Checked)
-                {
-                    _userChoseOwnGameIcon = true;
-                    _userGameIconPath = txt_game_use_different_icon.Text;
-                }
-                else
-                {
-                    _userChoseOwnGameIcon = false;
-                    _userGameIconPath = "";
-                }*/
-
                 try
                 {
                     _shortcutToEdit.UpdateGameShortcut(
@@ -586,7 +568,7 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _gameToUse.GameToPlay.IconPath,
-                        _userChoseOwnGameIcon,
+                        _selectedImage,
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
@@ -613,7 +595,7 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _gameToUse.GameToPlay.IconPath,
-                        _userChoseOwnGameIcon,
+                        _selectedImage, 
                         _availableImages, 
                         _changeAudioDevice,
                         _audioDevice,
@@ -665,7 +647,7 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _executableToUse.ExecutableNameAndPath,
-                        _userChoseOwnExeIcon,
+                        _selectedImage, 
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
@@ -691,7 +673,7 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _capturePermanence,
                         _executableToUse.ExecutableNameAndPath,
-                        _userChoseOwnExeIcon,
+                        _selectedImage, 
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
@@ -940,6 +922,11 @@ namespace DisplayMagician.UIForms
 
         private void ShortcutForm_Load(object sender, EventArgs e)
         {
+            Game shortcutGame = null;
+
+
+            // Parse the game bitmaps now as we need them
+            GameLibraries.GameLibrary.RefreshGameBitmaps();
 
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
@@ -1179,7 +1166,7 @@ namespace DisplayMagician.UIForms
                 rb_change_capture.Checked = false;
                 rb_set_capture_volume.Checked = false;
             }
-            
+
 
             // Load all the Games into the Games ListView
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
@@ -1188,6 +1175,11 @@ namespace DisplayMagician.UIForms
                 ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
                 //ilv_saved_profiles.Items.Add(newItem);
                 ilv_games.Items.Add(newItem, _gameAdaptor);
+                if (game.Name.Equals(_shortcutToEdit.GameName))
+                {
+                    shortcutGame = game;
+                }
+
             }
 
             if (_shortcutToEdit != null)
@@ -1213,7 +1205,7 @@ namespace DisplayMagician.UIForms
                             MessageBoxIcon.Exclamation);
                     }
                 }
-                
+
 
                 if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
                 {
@@ -1232,7 +1224,7 @@ namespace DisplayMagician.UIForms
                         @"Display Profile isn't possible now",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
-                            
+
                     }
 
                 }
@@ -1240,7 +1232,7 @@ namespace DisplayMagician.UIForms
 
             }
 
-            if (!foundChosenProfileInLoadedProfiles &&  !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
+            if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
             {
                 MessageBox.Show(
                     @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut.",
@@ -1311,14 +1303,14 @@ namespace DisplayMagician.UIForms
                 if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
                 {
                     txt_alternative_game.Text = _shortcutToEdit.DifferentGameExeToMonitor;
-                }                    
+                }
             }
             else
             {
                 cb_wait_alternative_game.Checked = false;
             }
 
-            
+
             // Set the launcher items if we have them
             if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
             {
@@ -1384,35 +1376,111 @@ namespace DisplayMagician.UIForms
             // Set the shortcut name
             txt_shortcut_save_name.Text = _shortcutToEdit.Name;
 
-            /*if (_shortcutToEdit.Category == ShortcutCategory.Game)
+            // Set the selected image and available images (originalBitmap is set during shortcut update)
+            if (_shortcutToEdit.OriginalLargeBitmap == null ||  ImageUtils.ImagesAreEqual(_shortcutToEdit.SelectedImage.Image, _shortcutToEdit.OriginalLargeBitmap))
             {
-                _userGameIconPath = _shortcutToEdit.UserIconPath;
-                txt_game_use_different_icon.Text = _userGameIconPath;
-                _userChoseOwnGameIcon = _shortcutToEdit.UserChoseOwnIcon;
-                if (_shortcutToEdit.UserChoseOwnIcon)
-                {                    
-                    cb_game_use_different_icon.Checked = true;
-                }
-                else
+                // if there aren't any available images, then we need to find some!
+                if (_shortcutToEdit.Category == ShortcutCategory.Game)
                 {
-                    cb_game_use_different_icon.Checked = false;
+                    // If this is a shortcut we're editing
+                    _availableImages = new List<ShortcutBitmap>();
+                    // If the game is selected, then grab images from the game
+                    if (shortcutGame != null)
+                    {
+                        _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.ExePath));
+                        _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.IconPath));
+                    }
+                    // If the different exe to monitor is set, then grab the icons from there too!
+                    if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor) && File.Exists(_shortcutToEdit.DifferentGameExeToMonitor))
+                    {
+                        _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.DifferentGameExeToMonitor));
+                    }
+
+                    bool matchedImage = false;
+                    if (_shortcutToEdit.OriginalLargeBitmap != null)
+                    {
+                        // go through available images and match the one we had
+                        foreach (ShortcutBitmap sc in _availableImages)
+                        {
+                            if (ImageUtils.ImagesAreEqual(sc.Image, _shortcutToEdit.OriginalLargeBitmap))
+                            {
+                                // We've found the original image!
+                                _selectedImage = sc;
+                                pb_game_icon.Image = _selectedImage.Image;
+                                matchedImage = true;
+                            }
+                        }
+                    }                        
+
+                    if (!matchedImage)
+                    {
+                        _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                        pb_game_icon.Image = _selectedImage.Image;
+                    }
+
+                    if (_shortcutToEdit.OriginalLargeBitmap != null)
+                    {
+                        btn_choose_game_icon.Enabled = true;
+                    }                    
+
+                }
+                else if (_shortcutToEdit.Category == ShortcutCategory.Application)
+                {
+                    // If this is a shortcut we're editing
+                    _availableImages = new List<ShortcutBitmap>();
+                    // If the exe is selected, then grab images from the exe
+                    _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.ExecutableNameAndPath));
+                    // If the different exe to monitor is set, then grab the icons from there too!
+                    if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
+                    {
+                        _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.DifferentExecutableToMonitor));
+                    }
+
+                    bool matchedImage = false;
+                    if (_shortcutToEdit.OriginalLargeBitmap != null)
+                    {
+                        // go through available images and match the one we had
+                        foreach (ShortcutBitmap sc in _availableImages)
+                        {
+                            if (ImageUtils.ImagesAreEqual(sc.Image, _shortcutToEdit.OriginalLargeBitmap))
+                            {
+                                // We've found the original image!
+                                _selectedImage = sc;
+                                pb_game_icon.Image = _selectedImage.Image;
+                                matchedImage = true;
+                            }
+                        }
+                    }
+
+                    if (!matchedImage)
+                    {
+                        _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                        pb_game_icon.Image = _selectedImage.Image;                        
+                    }
+
+                    if (_shortcutToEdit.OriginalLargeBitmap != null)
+                    {
+                        btn_choose_exe_icon.Enabled = true;
+                    }                    
+                }
+                    
+            }            
+            else
+            {
+                // This is the most common scenario
+                _selectedImage = _shortcutToEdit.SelectedImage;
+                _availableImages = _shortcutToEdit.AvailableImages;
+                if (_shortcutToEdit.Category == ShortcutCategory.Game)
+                {
+                    pb_game_icon.Image = _shortcutToEdit.SelectedImage.Image;
+                    btn_choose_game_icon.Enabled = true;
+                }
+                else if (_shortcutToEdit.Category == ShortcutCategory.Application)
+                {
+                    pb_exe_icon.Image = _shortcutToEdit.SelectedImage.Image;
+                    btn_choose_exe_icon.Enabled = true;
                 }
             }
-            else if (_shortcutToEdit.Category == ShortcutCategory.Application)
-            {
-                _userExeIconPath = _shortcutToEdit.UserIconPath;
-                txt_exe_use_different_icon.Text = _userExeIconPath;
-                _userChoseOwnExeIcon = _shortcutToEdit.UserChoseOwnIcon;
-                if (_shortcutToEdit.UserChoseOwnIcon)
-                {
-                    cb_exe_use_different_icon.Checked = true;
-                }
-                else
-                {
-                    cb_exe_use_different_icon.Checked = false;
-                }
-            }            */
-
 
             // Set up the start programs
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
@@ -1495,6 +1563,9 @@ namespace DisplayMagician.UIForms
                 // Disable the Game Panel
                 p_game.Enabled = false;
 
+                // Empty the bitmaps
+                EmptyTheImages();
+
                 SuggestShortcutName();
                 EnableSaveButtonIfValid();
             }
@@ -1515,10 +1586,21 @@ namespace DisplayMagician.UIForms
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
 
+                // Empty the bitmaps
+                EmptyTheImages();
+
                 SuggestShortcutName();
                 EnableSaveButtonIfValid();
 
             }
+        }
+
+        private void EmptyTheImages()
+        {
+            _availableImages.Clear();
+            _selectedImage = new ShortcutBitmap();
+            pb_exe_icon.Image = null;
+            pb_game_icon.Image = null;
         }
 
         private void rb_no_game_CheckedChanged(object sender, EventArgs e)
@@ -2561,76 +2643,16 @@ namespace DisplayMagician.UIForms
         }
 
 
-        /*private void btn_game_use_different_icon_Click(object sender, EventArgs e)
-        {
-            string gamePath = "";
-            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
-            {
-                if (game.Name == txt_game_name.Text)
-                {
-                    gamePath = game.Directory;
-                    break;
-                }
-            }
-
-            dialog_open.InitialDirectory = gamePath;
-            dialog_open.DefaultExt = "*.exe";
-            dialog_open.Filter = "exe or icon files (*.exe;*.com;*.ico) | *.exe;*.com;*.ico | All files(*.*) | *.*";
-            if (dialog_open.ShowDialog(this) == DialogResult.OK)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                string fileExt = Path.GetExtension(dialog_open.FileName);
-                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com" || fileExt == @".ico"))
-                {
-                    txt_game_use_different_icon.Text = dialog_open.FileName;
-                    dialog_open.FileName = string.Empty;
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "You need to select either an executable or an icon file.",
-                        "Select Exe or Icon",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
-            }
-        }
-
-        private void btn_exe_use_different_icon_Click(object sender, EventArgs e)
-        {
-            dialog_open.InitialDirectory = Path.GetDirectoryName(_executableToUse.ExecutableNameAndPath);
-            dialog_open.DefaultExt = "*.exe";
-            dialog_open.Filter = "exe or icon files (*.exe;*.com;*.ico) | *.exe;*.com;*.ico | All files(*.*) | *.*";
-            if (dialog_open.ShowDialog(this) == DialogResult.OK)
-            {
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-                string fileExt = Path.GetExtension(dialog_open.FileName);
-                if (File.Exists(dialog_open.FileName) && (fileExt == @".exe" || fileExt == @".com" || fileExt == @".ico"))
-                {
-                    txt_exe_use_different_icon.Text = dialog_open.FileName;
-                    dialog_open.FileName = string.Empty;
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "You need to select either an executable or an icon file.",
-                        "Select Exe or Icon",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
-            }
-        }
-*/
         private void btn_choose_exe_icon_Click(object sender, EventArgs e)
         {
             if (rb_standalone.Checked && _shortcutToEdit.AvailableImages.Count > 0)
             {
                 ChooseIconForm exeIconForm = new ChooseIconForm();
                 exeIconForm.AvailableImages = _shortcutToEdit.AvailableImages;
+                exeIconForm.SelectedImage = _shortcutToEdit.SelectedImage;
                 if (exeIconForm.ShowDialog() == DialogResult.OK)
                 {
+                    _availableImages = exeIconForm.AvailableImages;
                     _selectedImage = exeIconForm.SelectedImage;
                     pb_exe_icon.Image = exeIconForm.SelectedImage.Image;
                 }
@@ -2644,11 +2666,12 @@ namespace DisplayMagician.UIForms
             {
                 ChooseIconForm gameIconForm = new ChooseIconForm();
                 gameIconForm.AvailableImages = _shortcutToEdit.AvailableImages;
+                gameIconForm.SelectedImage = _shortcutToEdit.SelectedImage;
                 if (gameIconForm.ShowDialog() == DialogResult.OK)
                 {
+                    _availableImages = gameIconForm.AvailableImages;
                     _selectedImage = gameIconForm.SelectedImage;
-                    pb_game_icon.Image = gameIconForm.SelectedImage.Image;
-                    
+                    pb_game_icon.Image = gameIconForm.SelectedImage.Image;                     
                 }
             }
         }

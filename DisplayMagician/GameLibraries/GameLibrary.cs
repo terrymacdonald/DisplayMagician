@@ -267,8 +267,8 @@ namespace DisplayMagician.GameLibraries
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(EpicLibrary.GetLibrary().AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(GogLibrary.GetLibrary().AllInstalledGames);
 
-            // Create Game Bitmaps from the Games so the rest of the program is faster later
-            RefreshGameBitmaps();
+            // Stop creating Game Bitmaps from the Games so the rest of the program is faster later
+            //RefreshGameBitmaps();
 
             GamesLoaded = true;
 

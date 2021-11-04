@@ -755,19 +755,6 @@ namespace DisplayMagician
             }
         }
 
-        public bool UserChoseOwnIcon
-        {
-            get
-            {
-                return _userChoseOwnIcon;
-            }
-
-            set
-            {
-                _userChoseOwnIcon = value;
-            }
-        }
-
         public ShortcutBitmap SelectedImage
         {
             get
@@ -861,7 +848,7 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
-            bool userChoseOwnIcon,
+            ShortcutBitmap selectedImage, 
             List<ShortcutBitmap> availableImages,
             bool changeAudioDevice = false,
             string audioDevice = "",
@@ -908,7 +895,7 @@ namespace DisplayMagician
             _startPrograms = startPrograms;
             _stopPrograms = stopPrograms;
             _originalIconPath = originalIconPath;
-            _userChoseOwnIcon = userChoseOwnIcon; 
+            _selectedImage = selectedImage; 
             _availableImages = availableImages;
             _hotkey = hotkey;
 
@@ -916,7 +903,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the Bitmaps for the game
-            SetBitmapsForGame();
+            //SetBitmapsForGame();
+            _originalBitmap = selectedImage.Image;
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -932,7 +920,7 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
-            bool userChoseOwnIcon, 
+            ShortcutBitmap selectedImage,
             List<ShortcutBitmap> availableImages, 
             bool changeAudioDevice = false,
             string audioDevice = "",
@@ -976,7 +964,7 @@ namespace DisplayMagician
             _startPrograms = startPrograms;
             _stopPrograms = stopPrograms; 
             _originalIconPath = originalIconPath;
-            _userChoseOwnIcon = userChoseOwnIcon;
+            _selectedImage = selectedImage;
             _availableImages = availableImages;
             _hotkey = hotkey;
 
@@ -984,7 +972,8 @@ namespace DisplayMagician
             _profileUuid = profile.UUID;
 
             // We create the Bitmaps for the executable
-            SetBitmapsForExecutable();
+            //SetBitmapsForExecutable();
+            _originalBitmap = selectedImage.Image;
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -1022,7 +1011,7 @@ namespace DisplayMagician
             shortcut.OriginalLargeBitmap = OriginalLargeBitmap;
             shortcut.ShortcutBitmap = ShortcutBitmap;
             shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
-            shortcut.UserChoseOwnIcon = UserChoseOwnIcon; 
+            shortcut.SelectedImage = SelectedImage;
             shortcut.AvailableImages = AvailableImages;
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);

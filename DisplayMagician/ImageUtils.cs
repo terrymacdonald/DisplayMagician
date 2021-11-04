@@ -12,6 +12,7 @@ using TsudaKageyu;
 using DisplayMagicianShared;
 using MintPlayer.IconUtils;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace DisplayMagician
 {
@@ -558,6 +559,32 @@ namespace DisplayMagician
 
         }
 
+
+        public static bool ImagesAreEqual(Bitmap imageA, Bitmap imageB)
+        {
+            byte[] image1Bytes;
+            byte[] image2Bytes;
+
+            if (imageA == null || imageB == null)
+                return false;
+
+            using (var mstream = new MemoryStream())
+            {
+                imageA.Save(mstream,ImageFormat.Bmp);
+                image1Bytes = mstream.ToArray();
+            }
+
+            using (var mstream = new MemoryStream())
+            {
+                imageB.Save(mstream, ImageFormat.Bmp);
+                image2Bytes = mstream.ToArray();
+            }
+
+            var image164 = Convert.ToBase64String(image1Bytes);
+            var image264 = Convert.ToBase64String(image2Bytes);
+
+            return string.Equals(image164, image264);
+        }
 
         public static Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
