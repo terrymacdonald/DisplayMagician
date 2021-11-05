@@ -111,6 +111,7 @@ namespace DisplayMagician.UIForms
             this.btn_add.TabIndex = 39;
             this.btn_add.Text = "Add icons";
             this.btn_add.UseVisualStyleBackColor = true;
+            this.btn_add.Click += new System.EventHandler(this.btn_add_Click);
             // 
             // btn_select
             // 

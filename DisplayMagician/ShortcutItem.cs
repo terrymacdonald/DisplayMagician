@@ -69,7 +69,6 @@ namespace DisplayMagician
         public string Executable;
         public string Arguments;
         public bool ExecutableArgumentsRequired;
-        public bool CloseOnFinish;
         public bool DontStartIfAlreadyRunning;
     }
 

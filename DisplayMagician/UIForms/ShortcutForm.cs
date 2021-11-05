@@ -500,10 +500,18 @@ namespace DisplayMagician.UIForms
                 StopProgram stopProgram = new StopProgram();
                 stopProgram.Executable = txt_run_cmd_afterwards.Text;
                 stopProgram.Priority = 0;
-                stopProgram.DontStartIfAlreadyRunning = false;
-                stopProgram.Arguments = "";
+                stopProgram.DontStartIfAlreadyRunning = false;                
                 stopProgram.Disabled = false;
-                stopProgram.ExecutableArgumentsRequired = false;
+                if (cb_run_cmd_afterwards_args.Checked)
+                {
+                    stopProgram.ExecutableArgumentsRequired = true;
+                    stopProgram.Arguments = txt_run_cmd_afterwards_args.Text;
+                }
+                else
+                {                    
+                    stopProgram.ExecutableArgumentsRequired = false;
+                    stopProgram.Arguments = "";
+                }
                 stopProgram.ProcessPriority = ProcessPriority.Normal;
                 _stopPrograms.Add(stopProgram);
             }
@@ -585,7 +593,7 @@ namespace DisplayMagician.UIForms
                         _hotkey
                     );
                 }
-                catch(Exception ex)
+                catch(Exception ex) 
                 {
                     logger.Error(ex,$"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut! :  ",
                         txt_shortcut_save_name.Text, 
@@ -2779,6 +2787,11 @@ namespace DisplayMagician.UIForms
             {
                 txt_run_cmd_afterwards_args.Enabled = false;
             }
+        }
+
+        private void btn_run_cmd_afterwards_Click(object sender, EventArgs e)
+        {
+            txt_run_cmd_afterwards.Text = getExeFile();
         }
     }
 

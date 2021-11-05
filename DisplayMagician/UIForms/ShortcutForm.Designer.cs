@@ -1260,6 +1260,7 @@ namespace DisplayMagician.UIForms
             // 
             // btn_run_cmd_afterwards
             // 
+            this.btn_run_cmd_afterwards.Enabled = false;
             this.btn_run_cmd_afterwards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_run_cmd_afterwards.ForeColor = System.Drawing.Color.White;
             this.btn_run_cmd_afterwards.Location = new System.Drawing.Point(645, 35);
@@ -1268,6 +1269,7 @@ namespace DisplayMagician.UIForms
             this.btn_run_cmd_afterwards.TabIndex = 11;
             this.btn_run_cmd_afterwards.Text = "Choose";
             this.btn_run_cmd_afterwards.UseVisualStyleBackColor = true;
+            this.btn_run_cmd_afterwards.Click += new System.EventHandler(this.btn_run_cmd_afterwards_Click);
             // 
             // txt_run_cmd_afterwards
             // 
