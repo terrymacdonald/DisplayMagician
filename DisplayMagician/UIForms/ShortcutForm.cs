@@ -2734,7 +2734,7 @@ namespace DisplayMagician.UIForms
         {
             if (rb_standalone.Checked && _availableImages.Count > 0)
             {
-                ChooseIconForm exeIconForm = new ChooseIconForm();
+                ChooseImageForm exeIconForm = new ChooseImageForm();
                 exeIconForm.AvailableImages = _availableImages;
                 exeIconForm.SelectedImage = _selectedImage;
                 if (exeIconForm.ShowDialog() == DialogResult.OK)
@@ -2751,7 +2751,7 @@ namespace DisplayMagician.UIForms
         {
             if (rb_launcher.Checked && _shortcutToEdit.AvailableImages.Count > 0)
             {
-                ChooseIconForm gameIconForm = new ChooseIconForm();
+                ChooseImageForm gameIconForm = new ChooseImageForm();
                 gameIconForm.AvailableImages = _availableImages;
                 gameIconForm.SelectedImage = _selectedImage;
                 if (gameIconForm.ShowDialog() == DialogResult.OK)

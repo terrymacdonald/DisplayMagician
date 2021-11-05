@@ -143,225 +143,6 @@ namespace DisplayMagician
             return newBitmap;
         }
 
-        public static Bitmap GetMeABitmapFromFile(string fileNameAndPath)
-        {            
-            if (String.IsNullOrWhiteSpace(fileNameAndPath))
-            {
-                logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Bitmap fileNameAndPath is empty! Unable to get the icon from the file.");
-                return null;
-            }
-
-            Icon myIcon = null;
-            Bitmap bm = null;
-            Bitmap bmToReturn = new Bitmap(1, 1);            
-
-            if (fileNameAndPath.EndsWith(".ico"))
-            {                
-              
-                try
-                {
-
-                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: The file we want to get the image from is an icon file. Attempting to extract the icon file from {fileNameAndPath}.");
-
-
-                    myIcon = new Icon(fileNameAndPath, 256, 256);
-                    //Icon myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
-                    bm = myIcon.ToBitmap();
-
-
-                    //myIcon = Icon.ExtractAssociatedIcon(fileNameAndPath);
-                    //bm = myIcon.ToBitmap();
-
-                    if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                    {
-                        bmToReturn = bm;
-                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using standard Icon access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                    }
-                    else
-                    {
-                        logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using standard Icon access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using Standard Icon tools.");
-                }
-
-                try
-                {
-                    MultiIcon myMultiIcon = new MultiIcon();
-                    SingleIcon mySingleIcon = myMultiIcon.Add("Icon1");
-                    //mySingleIcon.Load(fileNameAndPath, IconOutputFormat.All);
-                    mySingleIcon.Load(fileNameAndPath);
-
-                    foreach (IconImage myIconImage in mySingleIcon)
-                    {
-                        bm = myIconImage.Image;
-
-                        if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                        {
-                            bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using MultiIcon access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                        }
-                        else
-                        {
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the icon file {fileNameAndPath} using MultiIcon access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from a *.ico using MultiIcon tools.");
-                }
-            }
-            else
-            {
-
-                /*try
-                {
-                    List<Icon> myIcons = ImageUtils.ExtractIconsFromExe(fileNameAndPath, true);
-                    if (myIcons != null && myIcons.Count > 0)
-                    {
-                        foreach (Icon myExtractedIcon in myIcons)
-                        {
-                            bm = myExtractedIcon.ToBitmap();
-
-                            if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                            {
-                                bmToReturn = bm;
-                                logger.Trace($"ShortcutItem/GetMeABitmapFromFile: This new bitmap from the icon file {fileNameAndPath} is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using ImageUtils.ExtractIconsFromExe.");
-                }*/
-
-                try
-                {
-                    var ie = new TsudaKageyu.IconExtractor(fileNameAndPath);
-                    Icon[] allIcons = ie.GetAllIcons();
-                    foreach (Icon myExtractedIcon in allIcons)
-                    {
-                        bm = myExtractedIcon.ToBitmap();
-
-                        if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                        {
-                            bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                        }
-                        else
-                        {
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the exe file {fileNameAndPath} using TsudaKageyu.IconExtractor access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the icon from an *.exe or *.dll using TsudaKageyu.IconExtractor.");
-                }
-
-            }
-
-            try
-            {
-
-                List<Icon> myExtractedIcons = MintPlayer.IconUtils.IconExtractor.Split(fileNameAndPath);
-                Size largeSize = new Size(256, 256);
-                foreach (Icon myExtractedIcon in myExtractedIcons)
-                {
-
-                    try
-                    {
-                        myIcon = (Icon)IconUtil.TryGetIcon(myExtractedIcon, largeSize, 32, true, true);
-                    }
-                    catch (ArgumentNullException nullex)
-                    {
-                        logger.Debug(nullex, $"ShortcutItem/GetMeABitmapFromFile: There was a faulty icon image within this icon that we couldn't test, so skipping it.");
-                        continue;
-                    }
-
-                    if (myIcon != null)
-                    {
-                        bm = myIcon.ToBitmap();
-
-                        if (bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                        {
-                            bmToReturn = bm;
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method is larger than the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                        }
-                        else
-                        {
-                            logger.Trace($"ShortcutItem/GetMeABitmapFromFile: New bitmap from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method is smaller or the same size as the previous one at {bm.Width} x {bm.Height}, so using that instead.");
-                        }
-                    }
-                    else
-                    {
-                        logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Couldn't extract an Icon from the file {fileNameAndPath} using MintPlayer.IconUtils.IconExtractor access method, so can't try to get the Icon using IconUtils.TryGetIcon.");
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to Split the icon using MintPlayer IconExtractor! ");
-            }
-
-
-            if (bmToReturn == null)
-            {
-                // If we couldn't get any bitmaps at all
-                logger.Warn( $"ShortcutItem/GetMeABitmapFromFile: Haven't managed to get a valid icon file so returning null :(.");
-                return null;
-            }
-            else if (bmToReturn.Width == 1 && bmToReturn.Height == 1)
-            {
-                // If we couldn't extract anything, so we return null
-                logger.Warn($"ShortcutItem/GetMeABitmapFromFile: Haven't managed to get a valid icon file so returning null instead of a 1x1 bitmap!.");
-                return null;
-            }
-            else
-            {
-                return bmToReturn;
-            }
-                
-        }
-
-        public static Bitmap GetMeABitmapFromFile(ArrayList fileNamesAndPaths)
-        {
-            Bitmap bmToReturn = null;
-
-
-            if (fileNamesAndPaths.Count == 0)
-            {
-                logger.Warn($"ShortcutItem/GetMeABitmapFromFile2: The fileNamesAndPaths list is empty! Can't get the bitmap from the files.");
-                return null;
-            }
-            logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: We have {fileNamesAndPaths.Count} files to try and extract a bitmap from.");
-            foreach (string fileNameAndPath in fileNamesAndPaths)
-            {
-                logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: Getting a bitmap from {fileNameAndPath} by running GetMeABitmapFromFile.");
-                Bitmap bm = GetMeABitmapFromFile(fileNameAndPath);
-
-                if (bmToReturn == null)
-                {
-                    bmToReturn = bm;
-                }
-                if (bm != null && bm.Width > bmToReturn.Width && bm.Height > bmToReturn.Height)
-                {
-                    bmToReturn = bm;
-                }
-                logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: The biggest bitmap we could get from {fileNameAndPath} was {bm.Width}x{bm.Height}.");
-            }
-
-            // Now we check if the icon is still too small. 
-            logger.Trace($"ShortcutItem/GetMeABitmapFromFile2: The biggest bitmap we could get from the {fileNamesAndPaths.Count} files was {bmToReturn.Width}x{bmToReturn.Height}.");
-            return bmToReturn;
-
-        }
-
         public static List<ShortcutBitmap> GetMeAllBitmapsFromFile(string fileNameAndPath)
         {
             if (String.IsNullOrWhiteSpace(fileNameAndPath))
@@ -375,7 +156,27 @@ namespace DisplayMagician
             int bmCount = 0;
             string fileNameOnly = Path.GetFileName(fileNameAndPath);
 
-            if (fileNameAndPath.EndsWith(".ico"))
+            if (fileNameAndPath.EndsWith(".jpg") || fileNameAndPath.EndsWith(".gif") || fileNameAndPath.EndsWith(".tif") || fileNameAndPath.EndsWith(".png") || fileNameAndPath.EndsWith(".bmp") ||
+                fileNameAndPath.EndsWith(".jpeg") || fileNameAndPath.EndsWith(".tiff"))
+            {
+
+                try
+                {
+
+                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: The file we want to get the image from is an image file. Attempting to extract the image from {fileNameAndPath}.");
+
+                    Bitmap bmap = new Bitmap(fileNameAndPath);
+                    ShortcutBitmap bm = CreateShortcutBitmap(bmap, fileNameOnly, fileNameAndPath, bmCount++);
+                    // Add the shortcutbitmap to the list
+                    bmList.Add(bm);
+                    logger.Trace($"ShortcutItem/GetMeABitmapFromFile: Added new bitmap from the image file {fileNameAndPath} using standard bitmap decoder access method.");
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutItem/GetMeABitmapFromFile: Exception while trying to extract the bitmap from an image ({fileNameAndPath})using standard bitmap decoder tools.");
+                }
+            }
+            else if (fileNameAndPath.EndsWith(".ico"))
             {
 
                 try
