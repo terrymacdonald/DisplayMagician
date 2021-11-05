@@ -14,6 +14,7 @@ namespace DisplayMagician.UIForms
     public partial class ChooseImageForm : Form
     {
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ChooseImageForm()
         {
@@ -116,6 +117,7 @@ namespace DisplayMagician.UIForms
                         List<ShortcutBitmap> newImages = ImageUtils.GetMeAllBitmapsFromFile(dialog_open.FileName);
                         if (newImages.Count == 0)
                         {
+                            logger.Trace($"No new images found when parsing {dialog_open.FileName} for images. Are you sure it's a valid image format?");
                             MessageBox.Show(
                             $"No new images found when parsing {dialog_open.FileName} for images. Are you sure it's a valid image format?",
                             "Add images to icon",
@@ -126,6 +128,7 @@ namespace DisplayMagician.UIForms
                         {
                             AvailableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(dialog_open.FileName));
                             UpdateImageListBox();
+                            logger.Trace($"ChooseImageForm/btn_add_Click: Added {newImages.Count} image(s) from {dialog_open.FileName} to the end of this image list.");
                             MessageBox.Show(
                             $"Added {newImages.Count} image(s) from {dialog_open.FileName} to the end of this image list.",
                             "Add images to icon",
@@ -137,6 +140,7 @@ namespace DisplayMagician.UIForms
                     }
                     catch(Exception ex)
                     {
+                        logger.Warn(ex, $"ChooseImageForm/btn_add_Click: Exception - unable to parse {dialog_open.FileName} for images. Are you sure it's a valid image format?");
                         MessageBox.Show(
                             $"Unable to parse {dialog_open.FileName} for images. Are you sure it's a valid image format?",
                             "Add images to icon",
@@ -147,6 +151,7 @@ namespace DisplayMagician.UIForms
                 }
                 else
                 {
+                    logger.Warn($"ChooseImageForm/btn_add_Click: Unable to open {dialog_open.FileName} to parse it for images. Are you sure you have the right file permissions?");
                     MessageBox.Show(
                         $"Unable to open {dialog_open.FileName} to parse it for images. Are you sure you have the right file permissions?",
                         "Add images to icon",
