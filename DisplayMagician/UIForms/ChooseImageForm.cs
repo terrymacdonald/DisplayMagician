@@ -41,36 +41,6 @@ namespace DisplayMagician.UIForms
         private void ChooseIconForm_Load(object sender, EventArgs e)
         {
             UpdateImageListBox();
-            /*if (AvailableImages.Count > 0)
-            {
-                bool alreadySelected = false;
-                // Load all the images into the list
-                int imageCount = 1;
-                foreach (ShortcutBitmap sc in AvailableImages)
-                {
-                    string[] stringsToAdd = new string[] { 
-                        $"Image {sc.Order} from {sc.Name}",
-                        $"{sc.Size.Width} x {sc.Size.Height}"
-                    };
-                    ListViewItem lvi = new ListViewItem(stringsToAdd);
-                    lvi.Name = sc.UUID;
-                    if (sc.Equals(SelectedImage))
-                    {
-                        lvi.Selected = true;
-                        pb_selected_icon.Image = SelectedImage.Image;
-                        _selectedImage = sc;
-                    }
-                    lv_icons.Items.Add(lvi);                    
-                }
-
-                // Select the first largest image listed if there isn't one already
-                if (lv_icons.SelectedItems.Count == 0)
-                {
-                    lv_icons.Items[0].Selected = true;
-                    pb_selected_icon.Image = AvailableImages[0].Image;
-                    _selectedImage = AvailableImages[0]; 
-                }
-            }*/
         }
 
         private void UpdateImageListBox()
