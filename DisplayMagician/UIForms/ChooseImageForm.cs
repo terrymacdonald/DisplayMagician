@@ -78,9 +78,6 @@ namespace DisplayMagician.UIForms
             lv_icons.Items.Clear();
             if (AvailableImages.Count > 0)
             {
-                bool alreadySelected = false;
-                // Load all the images into the list
-                int imageCount = 1;
                 foreach (ShortcutBitmap sc in AvailableImages)
                 {
                     string[] stringsToAdd = new string[] {
@@ -89,9 +86,11 @@ namespace DisplayMagician.UIForms
                     };
                     ListViewItem lvi = new ListViewItem(stringsToAdd);
                     lvi.Name = sc.UUID;
-                    if (sc.Equals(SelectedImage))
+                    if (ImageUtils.ImagesAreEqual(sc.Image,SelectedImage.Image))
                     {
                         lvi.Selected = true;
+                        lvi.Focused = true;
+                        lvi.EnsureVisible();
                         pb_selected_icon.Image = SelectedImage.Image;
                         _selectedImage = sc;
                     }
