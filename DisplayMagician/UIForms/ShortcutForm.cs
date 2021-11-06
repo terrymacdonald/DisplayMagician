@@ -1375,7 +1375,11 @@ namespace DisplayMagician.UIForms
             txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
 
             // Set the shortcut name
-            txt_shortcut_save_name.Text = _shortcutToEdit.Name;
+            if (_editingExistingShortcut)
+            {
+                txt_shortcut_save_name.Text = _shortcutToEdit.Name;
+            }
+            
 
             // Set the selected image and available images (originalBitmap is set during shortcut update)
             

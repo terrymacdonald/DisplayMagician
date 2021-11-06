@@ -1,253 +1,124 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Management;
+using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DisplayMagician
 {
-
-    [Flags]
-    public enum ProcessCreationFlags : uint
+    public class ProcessCreator
     {
-        ZERO_FLAG = 0x00000000,
-        CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
-        CREATE_DEFAULT_ERROR_MODE = 0x04000000,
-        CREATE_NEW_CONSOLE = 0x00000010,
-        CREATE_NEW_PROCESS_GROUP = 0x00000200,
-        CREATE_NO_WINDOW = 0x08000000,
-        CREATE_PROTECTED_PROCESS = 0x00040000,
-        CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
-        CREATE_SEPARATE_WOW_VDM = 0x00001000,
-        CREATE_SHARED_WOW_VDM = 0x00001000,
-        CREATE_SUSPENDED = 0x00000004,
-        CREATE_UNICODE_ENVIRONMENT = 0x00000400,
-        DEBUG_ONLY_THIS_PROCESS = 0x00000002,
-        DEBUG_PROCESS = 0x00000001,
-        DETACHED_PROCESS = 0x00000008,
-        EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
-        INHERIT_PARENT_AFFINITY = 0x00010000,
 
-        // Process creations flags
-        ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000,
-        BELOW_NORMAL_PRIORITY_CLASS = 0x00004000,
-        HIGH_PRIORITY_CLASS = 0x00000080,
-        IDLE_PRIORITY_CLASS = 0x00000040,
-        NORMAL_PRIORITY_CLASS = 0x00000020,
-        REALTIME_PRIORITY_CLASS = 0x00000100,
-    }
+        [Flags]
+        public enum PROCESS_CREATION_FLAGS : uint
+        {
+            ZERO_FLAG = 0x00000000,
+            CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
+            CREATE_DEFAULT_ERROR_MODE = 0x04000000,
+            CREATE_NEW_CONSOLE = 0x00000010,
+            CREATE_NEW_PROCESS_GROUP = 0x00000200,
+            CREATE_NO_WINDOW = 0x08000000,
+            CREATE_PROTECTED_PROCESS = 0x00040000,
+            CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
+            CREATE_SEPARATE_WOW_VDM = 0x00001000,
+            CREATE_SHARED_WOW_VDM = 0x00001000,
+            CREATE_SUSPENDED = 0x00000004,
+            CREATE_UNICODE_ENVIRONMENT = 0x00000400,
+            DEBUG_ONLY_THIS_PROCESS = 0x00000002,
+            DEBUG_PROCESS = 0x00000001,
+            DETACHED_PROCESS = 0x00000008,
+            EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
+            INHERIT_PARENT_AFFINITY = 0x00010000,
 
-    public struct PROCESS_INFORMATION
-    {
-        public IntPtr hProcess;
-        public IntPtr hThread;
-        public uint dwProcessId;
-        public uint dwThreadId;
-    }
+            // Process creations flags
+            ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000,
+            BELOW_NORMAL_PRIORITY_CLASS = 0x00004000,
+            HIGH_PRIORITY_CLASS = 0x00000080,
+            IDLE_PRIORITY_CLASS = 0x00000040,
+            NORMAL_PRIORITY_CLASS = 0x00000020,
+            REALTIME_PRIORITY_CLASS = 0x00000100,
+        }
 
-    public struct STARTUPINFO
-    {
-        public uint cb;
-        public string lpReserved;
-        public string lpDesktop;
-        public string lpTitle;
-        public uint dwX;
-        public uint dwY;
-        public uint dwXSize;
-        public uint dwYSize;
-        public uint dwXCountChars;
-        public uint dwYCountChars;
-        public uint dwFillAttribute;
-        public uint dwFlags;
-        public short wShowWindow;
-        public short cbReserved2;
-        public IntPtr lpReserved2;
-        public IntPtr hStdInput;
-        public IntPtr hStdOutput;
-        public IntPtr hStdError;
-    }
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct STARTUPINFOEX
+        {
+            public STARTUPINFO StartupInfo;
+            public IntPtr lpAttributeList;
+        }
 
-    public static class NativeMethods
-    {
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct STARTUPINFO
+        {
+            public Int32 cb;
+            public string lpReserved;
+            public string lpDesktop;
+            public string lpTitle;
+            public Int32 dwX;
+            public Int32 dwY;
+            public Int32 dwXSize;
+            public Int32 dwYSize;
+            public Int32 dwXCountChars;
+            public Int32 dwYCountChars;
+            public Int32 dwFillAttribute;
+            public Int32 dwFlags;
+            public Int16 wShowWindow;
+            public Int16 cbReserved2;
+            public IntPtr lpReserved2;
+            public IntPtr hStdInput;
+            public IntPtr hStdOutput;
+            public IntPtr hStdError;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public  struct PROCESS_INFORMATION
+        {
+            public IntPtr hProcess;
+            public IntPtr hThread;
+            public int dwProcessId;
+            public int dwThreadId;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SECURITY_ATTRIBUTES
+        {
+            public int nLength;
+            public IntPtr lpSecurityDescriptor;
+            public int bInheritHandle;
+        }
+
+
         [DllImport("kernel32.dll")]
-        public static extern bool CreateProcess(string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes,
-                                 bool bInheritHandles, ProcessCreationFlags dwCreationFlags, IntPtr lpEnvironment,
-                                string lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CreateProcess(
+            string lpApplicationName, string lpCommandLine, ref SECURITY_ATTRIBUTES lpProcessAttributes,
+            ref SECURITY_ATTRIBUTES lpThreadAttributes, bool bInheritHandles, PROCESS_CREATION_FLAGS dwCreationFlags,
+            IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
 
-        [DllImport("kernel32.dll")]
-        public static extern uint ResumeThread(IntPtr hThread);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool UpdateProcThreadAttribute(
+            IntPtr lpAttributeList, uint dwFlags, IntPtr Attribute, IntPtr lpValue,
+            IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
 
-        [DllImport("kernel32.dll")]
-        public static extern uint SuspendThread(IntPtr hThread);
-    }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool InitializeProcThreadAttributeList(
+            IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);
 
-    class ProcessInfo : IComparable<ProcessInfo>
-    {
-        public Process TheProcess;
-        public ProcessInfo Parent;
-        public List<ProcessInfo> Children = new List<ProcessInfo>();
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DeleteProcThreadAttributeList(IntPtr lpAttributeList);
 
-        public ProcessInfo(Process the_process)
-        {
-            TheProcess = the_process;
-        }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr hObject);
 
-        public override string ToString()
-        {
-            return string.Format("{0} [{1}]",
-                TheProcess.ProcessName, TheProcess.Id);
-        }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint ResumeThread(IntPtr hThread);
 
-        public int CompareTo(ProcessInfo other)
-        {
-            return TheProcess.ProcessName.CompareTo(
-                other.TheProcess.ProcessName);
-        }
-    }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint SuspendThread(IntPtr hThread);
 
-    static class ProcessUtils
-    {
-        private static Dictionary<int, ProcessInfo> allProcessInfosDict;
-        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static IntPtr ThreadHandle = IntPtr.Zero;
-
-        public static void Initialise()
-        {
-            allProcessInfosDict = new Dictionary<int, ProcessInfo>();
-
-            try
-            {
-                // Get the parent/child info.
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(
-                   "SELECT ProcessId, ParentProcessId FROM Win32_Process");
-                ManagementObjectCollection collection = searcher.Get();
-
-                // Get the processes.
-                foreach (Process process in Process.GetProcesses())
-                {
-                    allProcessInfosDict.Add(process.Id, new ProcessInfo(process));
-                }
-
-                // Create the child lists.
-                foreach (var item in collection)
-                {
-                    // Find the parent and child in the dictionary.
-                    int child_id = Convert.ToInt32(item["ProcessId"]);
-                    int parent_id = Convert.ToInt32(item["ParentProcessId"]);
-
-                    ProcessInfo child_info = null;
-                    ProcessInfo parent_info = null;
-                    if (allProcessInfosDict.ContainsKey(child_id))
-                        child_info = allProcessInfosDict[child_id];
-                    if (allProcessInfosDict.ContainsKey(parent_id))
-                        parent_info = allProcessInfosDict[parent_id];
-
-                    if (child_info == null)
-                        Console.WriteLine(
-                            "Cannot find child " + child_id.ToString() +
-                            " for parent " + parent_id.ToString());
-
-                    if (parent_info == null)
-                        Console.WriteLine(
-                            "Cannot find parent " + parent_id.ToString() +
-                            " for child " + child_id.ToString());
-
-                    if ((child_info != null) && (parent_info != null))
-                    {
-                        parent_info.Children.Add(child_info);
-                        child_info.Parent = parent_info;
-                    }
-                }
-
-            }
-            catch(Exception ex)
-            {
-                logger.Error(ex,$"ProcessUtils/Initialise: Exception (re)initialising the process information to figure out process hierarchy");
-            }
-
-        }
-
-        public static List<Process> FindChildProcesses(Process parentProcess)
-        {
-            List<Process> childProcesses = new List<Process>() { };
-
-            try
-            {
-                int parentId = parentProcess.Id;
-                // TODO: We *possibly* could walk the tree to find the program hierarchy, to get the full list of the 
-                // process tree, but this seems like the best way at this stage. I'm expecting I'll find an edge case in the future
-                // that requires some sort of modification, but this is working well in 2 days of testing so far!
-                if (allProcessInfosDict.ContainsKey(parentId))
-                {
-                    foreach (ProcessInfo childProcess in allProcessInfosDict[parentId].Children)
-                    {
-                        childProcesses.Add(childProcess.TheProcess);
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"ProcessUtils/FindChildProcesses: Exception finding the child processes of the parentProcess");
-            }
-            
-            return childProcesses;
-        }
-
-        public static bool StopProcess(Process processToStop)
-        {
-            try
-            {
-                // Stop the process
-                processToStop.CloseMainWindow();
-                if (!processToStop.WaitForExit(5000))
-                {
-                    logger.Trace($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
-                    processToStop.Kill();
-                    if (!processToStop.WaitForExit(5000))
-                    {
-                        logger.Error($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
-                        return false;
-                    }
-                    logger.Trace($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} was successfully killed.");
-                }
-                processToStop.Close();
-                return true;
-            }
-            catch (Win32Exception ex)
-            {
-                logger.Warn(ex, $"ProcessUtils/StopProcess: Win32Exception! Couldn't access the wait status for a named process we're trying to stop. So now just killing the process.");
-                processToStop.Kill();
-                if (!processToStop.WaitForExit(5000))
-                {
-                    logger.Error($"ProcessUtils/StopProcess: Win32Exception! Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
-                    return false;
-                }
-                logger.Trace($"ProcessUtils/StopProcess: Win32Exception! Process {processToStop.StartInfo.FileName} was successfully killed.");
-                processToStop.Close();
-                return true;
-            }
-            catch (InvalidOperationException ex)
-            {
-                logger.Error(ex, $"ProcessUtils/StopProcess: Couldn't kill the named process as the process appears to have closed already.");
-            }
-            catch (SystemException ex)
-            {
-                logger.Error(ex, $"ProcessUtils/StopProcess: Couldn't WaitForExit the named process as there is no process associated with the Process object (or cannot get the ID from the named process handle).");
-            }
-
-            catch (AggregateException ae)
-            {
-                logger.Error(ae, $"ProcessUtils/StopProcess: Got an AggregateException.");
-            }
-            return false;
-        }
-
-        public static ProcessPriorityClass TranslatePriorityToClass(ProcessPriority  processPriorityClass)
+        public static ProcessPriorityClass TranslatePriorityToClass(ProcessPriority processPriorityClass)
         {
             ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
             switch (processPriorityClass)
@@ -274,49 +145,137 @@ namespace DisplayMagician
             return wantedPriorityClass;
         }
 
-        public static ProcessCreationFlags TranslatePriorityClassToFlags(ProcessPriorityClass processPriorityClass)
+        public static PROCESS_CREATION_FLAGS TranslatePriorityClassToFlags(ProcessPriorityClass processPriorityClass)
         {
-            ProcessCreationFlags wantedPriorityClass = ProcessCreationFlags.NORMAL_PRIORITY_CLASS;
+            PROCESS_CREATION_FLAGS wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
             switch (processPriorityClass)
             {
                 case ProcessPriorityClass.High:
-                    wantedPriorityClass = ProcessCreationFlags.HIGH_PRIORITY_CLASS;
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.HIGH_PRIORITY_CLASS;
                     break;
                 case ProcessPriorityClass.AboveNormal:
-                    wantedPriorityClass = ProcessCreationFlags.ABOVE_NORMAL_PRIORITY_CLASS;
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.ABOVE_NORMAL_PRIORITY_CLASS;
                     break;
                 case ProcessPriorityClass.Normal:
-                    wantedPriorityClass = ProcessCreationFlags.NORMAL_PRIORITY_CLASS;
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
                     break;
                 case ProcessPriorityClass.BelowNormal:
-                    wantedPriorityClass = ProcessCreationFlags.BELOW_NORMAL_PRIORITY_CLASS;
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.BELOW_NORMAL_PRIORITY_CLASS;
                     break;
                 case ProcessPriorityClass.Idle:
-                    wantedPriorityClass = ProcessCreationFlags.IDLE_PRIORITY_CLASS;
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.IDLE_PRIORITY_CLASS;
                     break;
                 default:
-                    wantedPriorityClass = ProcessCreationFlags.NORMAL_PRIORITY_CLASS;
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
                     break;
             }
             return wantedPriorityClass;
         }
 
-        public static bool LaunchProcessWithPriority(string exeName, string cmdLine, ProcessPriorityClass priorityClass, out uint PID)
+        public static bool CreateProcessWithPriority(string exeName, string cmdLine, ProcessPriorityClass priorityClass, out PROCESS_INFORMATION processInfo)
         {
-            ProcessCreationFlags processFlags = TranslatePriorityClassToFlags(priorityClass);
+            PROCESS_CREATION_FLAGS processFlags = TranslatePriorityClassToFlags(priorityClass) | PROCESS_CREATION_FLAGS.CREATE_SUSPENDED;
+            bool success = false;
+            PROCESS_INFORMATION pInfo = new PROCESS_INFORMATION();
+            var pSec = new SECURITY_ATTRIBUTES();
+            var tSec = new SECURITY_ATTRIBUTES();
+            pSec.nLength = Marshal.SizeOf(pSec);
+            tSec.nLength = Marshal.SizeOf(tSec);
+            var sInfoEx = new STARTUPINFOEX();
+            sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
+            try
+            {
+                success = CreateProcess(exeName, cmdLine, ref pSec, ref tSec, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+            }
+            catch (Exception ex)
+            {
+                // This is 
+            }
+            processInfo = pInfo;
 
-            STARTUPINFO si = new STARTUPINFO();
-            PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
-            bool success = NativeMethods.CreateProcess(exeName, cmdLine, IntPtr.Zero, IntPtr.Zero, false, processFlags, IntPtr.Zero, null, ref si, out pi);
-            ThreadHandle = pi.hThread;
-            PID = pi.dwProcessId;
-
-            return success;
+            return true;
         }
 
-        public static void ResumeProcess()
+        public static void ResumeProcess(IntPtr threadHandle)
         {
-            NativeMethods.ResumeThread(ThreadHandle);
+            ResumeThread(threadHandle);
         }
-    }       
-}
+
+        public static bool CreateProcessWithParent(int parentProcessId)
+        {
+            const int PROC_THREAD_ATTRIBUTE_PARENT_PROCESS = 0x00020000;
+
+            var pInfo = new PROCESS_INFORMATION();
+            var sInfoEx = new STARTUPINFOEX();
+            sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
+            IntPtr lpValue = IntPtr.Zero;
+
+            try
+            {
+                if (parentProcessId > 0)
+                {
+                    var lpSize = IntPtr.Zero;
+                    var success = InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref lpSize);
+                    if (success || lpSize == IntPtr.Zero)
+                    {
+                        return false;
+                    }
+
+                    sInfoEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
+                    success = InitializeProcThreadAttributeList(sInfoEx.lpAttributeList, 1, 0, ref lpSize);
+                    if (!success)
+                    {
+                        return false;
+                    }
+
+                    var parentHandle = Process.GetProcessById(parentProcessId).Handle;
+                    // This value should persist until the attribute list is destroyed using the DeleteProcThreadAttributeList function
+                    lpValue = Marshal.AllocHGlobal(IntPtr.Size);
+                    Marshal.WriteIntPtr(lpValue, parentHandle);
+
+                    success = UpdateProcThreadAttribute(
+                        sInfoEx.lpAttributeList,
+                        0,
+                        (IntPtr)PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
+                        lpValue,
+                        (IntPtr)IntPtr.Size,
+                        IntPtr.Zero,
+                        IntPtr.Zero);
+                    if (!success)
+                    {
+                        return false;
+                    }
+                }
+
+                var pSec = new SECURITY_ATTRIBUTES();
+                var tSec = new SECURITY_ATTRIBUTES();
+                pSec.nLength = Marshal.SizeOf(pSec);
+                tSec.nLength = Marshal.SizeOf(tSec);
+                var lpApplicationName = Path.Combine(Environment.SystemDirectory, "notepad.exe");
+                return CreateProcess(lpApplicationName, null, ref pSec, ref tSec, false, PROCESS_CREATION_FLAGS.EXTENDED_STARTUPINFO_PRESENT, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+            }
+            finally
+            {
+                // Free the attribute list
+                if (sInfoEx.lpAttributeList != IntPtr.Zero)
+                {
+                    DeleteProcThreadAttributeList(sInfoEx.lpAttributeList);
+                    Marshal.FreeHGlobal(sInfoEx.lpAttributeList);
+                }
+                Marshal.FreeHGlobal(lpValue);
+
+                // Close process and thread handles
+                if (pInfo.hProcess != IntPtr.Zero)
+                {
+                    CloseHandle(pInfo.hProcess);
+                }
+                if (pInfo.hThread != IntPtr.Zero)
+                {
+                    CloseHandle(pInfo.hThread);
+                }
+            }
+        }
+
+    }
+}       
+

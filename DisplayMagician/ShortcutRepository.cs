@@ -895,6 +895,7 @@ namespace DisplayMagician
                     Process process = null;
                     try
                     {
+                        ProcessUtils.ScanProcesses(); 
                         uint processID = 0;
                         if (ProcessUtils.LaunchProcessWithPriority(processToStart.Executable, processToStart.Arguments, ProcessUtils.TranslatePriorityToClass(processToStart.ProcessPriority), out processID))
                         {
@@ -1810,7 +1811,7 @@ namespace DisplayMagician
                 logger.Debug($"ShortcutRepository/RunShortcut: We started {startProgramsToStart.Count} programs before the main executable or game, and now we want to stop {startProgramsToStop.Count } of them");
 
                 // Prepare the processInfos we need for finding child processes.
-                ProcessUtils.Initialise();
+                ProcessUtils.ScanProcesses();
 
                 // Stop the programs in the reverse order we started them
                 foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
