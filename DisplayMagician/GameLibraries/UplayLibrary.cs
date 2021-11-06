@@ -887,7 +887,7 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
-        public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
+        /*public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
         {
             string address = $@"uplay://launch/{game.Id}";
             if (String.IsNullOrWhiteSpace(gameArguments))
@@ -902,6 +902,21 @@ namespace DisplayMagician.GameLibraries
             gameProcess.PriorityClass = processPriority;
             return gameProcess;
 
+        }*/
+
+        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        {
+            string address = $@"uplay://launch/{game.Id}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += @"/" + gameArguments;
+            }
+            else
+            {
+                address += "/0";
+            }
+            List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
+            return gameProcesses;
         }
 
         #endregion

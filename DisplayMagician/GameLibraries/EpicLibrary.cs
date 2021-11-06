@@ -556,7 +556,7 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
-        public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
+        /*public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
         {
             string address = $@"com.epicgames.launcher://apps/{game.Id}?action=launch&silent=true";
             if (String.IsNullOrWhiteSpace(gameArguments))
@@ -566,7 +566,18 @@ namespace DisplayMagician.GameLibraries
             Process gameProcess = Process.Start(address);
             gameProcess.PriorityClass = processPriority;
             return gameProcess;
+        }*/
 
+        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        {
+            string address = $@"com.epicgames.launcher://apps/{game.Id}?action=launch&silent=true";
+            if (!String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += @"/" + gameArguments;
+            }
+            //Process gameProcess = Process.Start(address);
+            List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
+            return gameProcesses;
         }
         #endregion
 

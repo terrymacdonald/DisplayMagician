@@ -108,7 +108,7 @@ namespace DisplayMagician.GameLibraries
             return false;
         }
 
-        public virtual Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
+        public virtual List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
             return null;
         }
