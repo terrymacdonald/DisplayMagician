@@ -560,10 +560,10 @@ namespace DisplayMagician.GameLibraries
                 args += gameArguments;
             }
             Process gameProcess = null;
-            uint processID = 0;
-            if (ProcessUtils.LaunchProcessWithPriority(_gogExe, args, processPriority, out processID))
+            ProcessUtils.PROCESS_INFORMATION processInfo;
+            if (ProcessUtils.CreateProcessWithPriority(_gogExe, args, processPriority, out processInfo))
             {
-                gameProcess = Process.GetProcessById((int)processID);
+                gameProcess = Process.GetProcessById(processInfo.dwProcessId);
             }
             return gameProcess;
         }

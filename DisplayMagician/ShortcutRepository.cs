@@ -891,17 +891,42 @@ namespace DisplayMagician
                     }
 
                     // Start the executable
-                    logger.Info($"ShortcutRepository/RunShortcut: Starting process {processToStart.Executable}");
+                    logger.Info($"ShortcutRepository/RunShortcut: Starting Start Program process {processToStart.Executable}");
                     Process process = null;
                     try
                     {
-                        ProcessUtils.ScanProcesses(); 
-                        uint processID = 0;
-                        if (ProcessUtils.LaunchProcessWithPriority(processToStart.Executable, processToStart.Arguments, ProcessUtils.TranslatePriorityToClass(processToStart.ProcessPriority), out processID))
+                        //ProcessUtils.ScanProcesses(); 
+                        ProcessUtils.PROCESS_INFORMATION processInfo;
+                        if (ProcessUtils.CreateProcessWithPriority(processToStart.Executable, processToStart.Arguments, ProcessUtils.TranslatePriorityToClass(processToStart.ProcessPriority), out processInfo))
                         {
-                            process = Process.GetProcessById((int)processID);
+                            if (processInfo.dwProcessId > 0)
+                            {
+                                process = Process.GetProcessById(processInfo.dwProcessId);
+                            }
+                            else
+                            {
+                                logger.Warn($"ShortcutRepository/RunShortcut: CreateProcessWithPriority returned a process with PID 0 when trying to start process {processToStart.Executable}. This indicates that the process was not started.");
+                            }
                         }
-                        
+                        else
+                        {
+                            ProcessStartInfo psi = new ProcessStartInfo();
+                            psi.FileName = processToStart.Executable;
+                            psi.Arguments = processToStart.Arguments;
+                            psi.WorkingDirectory = Path.GetDirectoryName(processToStart.Executable);
+                            process = Process.Start(psi);
+                            processInfo.hProcess = process.Handle;
+                            processInfo.dwProcessId = process.Id;
+                            processInfo.dwThreadId = process.Threads[0].Id;
+                            //pInfo.dwThreadId = process.Threads[0].Id;
+                            Task.Delay(500);
+                            if (!process.HasExited)
+                            {
+                                process.PriorityClass = ProcessUtils.TranslatePriorityToClass(processToStart.ProcessPriority);
+                            }
+
+                        }
+
                         /*if (processToStart.ExecutableArgumentsRequired)
                         {
                             process = System.Diagnostics.Process.Start(processToStart.Executable, processToStart.Arguments);
@@ -922,7 +947,7 @@ namespace DisplayMagician
                         {
                             logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting the start program process priority of start program we started to {shortcutToUse.ProcessPriority.ToString("G")}");
                         }*/
-                        
+
 
                         // Record the program we started so we can close it later
                         if (processToStart.CloseOnFinish)
@@ -1027,18 +1052,35 @@ namespace DisplayMagician
                 try
                 {
                     Process process = null;
-                    /*if (shortcutToUse.ExecutableArgumentsRequired)
+                    ProcessUtils.PROCESS_INFORMATION processInfo;
+                    if (ProcessUtils.CreateProcessWithPriority(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, ProcessUtils.TranslatePriorityToClass(shortcutToUse.ProcessPriority), out processInfo))
                     {
-                        process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
+                        process = Process.GetProcessById(processInfo.dwProcessId);
+                        Task.Delay(500);
+                        if (process != null)
+                        {
+                            if (process.HasExited)
+                            {
+                                // Then we need to find what processes are running now with a parent of processInfo.process
+                                logger.Error($"ShortcutRepository/RunShortcut: Main executable process {shortcutToUse.ExecutableNameAndPath} has exited after a short delay. It is likely to be a launcher process. We're going to look for it's children.");
+                            }
+                        }
+                        else 
+                        {
+                            logger.Error($"ShortcutRepository/RunShortcut: Main executable process {shortcutToUse.ExecutableNameAndPath} didn't start for some reason. Process still = null.");
+                        }
                     }
                     else
                     {
-                        process = System.Diagnostics.Process.Start(shortcutToUse.ExecutableNameAndPath);
-                    }*/
-                    uint processID = 0;
-                    if (ProcessUtils.LaunchProcessWithPriority(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, ProcessUtils.TranslatePriorityToClass(shortcutToUse.ProcessPriority), out processID))
-                    {
-                        process = Process.GetProcessById((int)processID);
+                        logger.Error($"ShortcutRepository/RunShortcut: CreateProcessWithPriority couldn't create Main executable process {shortcutToUse.ExecutableNameAndPath}. Going to try to start it the old way without priority.");
+                        if (shortcutToUse.ExecutableArgumentsRequired)
+                        {
+                            process = Process.Start(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments);
+                        }
+                        else
+                        {
+                            process = Process.Start(shortcutToUse.ExecutableNameAndPath);
+                        }
                     }
 
                 }
@@ -1811,7 +1853,7 @@ namespace DisplayMagician
                 logger.Debug($"ShortcutRepository/RunShortcut: We started {startProgramsToStart.Count} programs before the main executable or game, and now we want to stop {startProgramsToStop.Count } of them");
 
                 // Prepare the processInfos we need for finding child processes.
-                ProcessUtils.ScanProcesses();
+                //ProcessUtils.ScanProcesses();
 
                 // Stop the programs in the reverse order we started them
                 foreach (Process processToStop in startProgramsToStop.Reverse<Process>())
@@ -1823,11 +1865,11 @@ namespace DisplayMagician
                         if (!processToStop.HasExited)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName}");
-                            if (ProcessUtils.StopProcess(processToStop))
+                            /*if (ProcessUtils.StopProcess(processToStop))
                             {
                                 logger.Debug($"ShortcutRepository/RunShortcut: Successfully stopped process {processToStop.StartInfo.FileName}");
                                 stoppedMainProcess = true;
-                            }
+                            }*/
                         }
                     }
                     catch (Exception ex)
@@ -1838,7 +1880,7 @@ namespace DisplayMagician
                     // Next, check whether it had any other processes it started itself
                     // (copes with loader processes that perform the initial start, then run the main exe)
                     // If so, we need to go through and find and close all subprocesses
-                    try
+                    /*try
                     {
                         List<Process> childProcesses = ProcessUtils.FindChildProcesses(processToStop);
                         if (childProcesses.Count > 0)
@@ -1863,7 +1905,7 @@ namespace DisplayMagician
                     catch (Exception ex)
                     {
                         logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while checking if processToStop has any child processes");
-                    }
+                    }*/
 
                     // if the only main process has already exited (e.g. the user exited it themselves)
                     // then we try to stop any processes with the same name as the application we started
@@ -1879,11 +1921,11 @@ namespace DisplayMagician
                             // If we have found one or more processes then we should be good to go
                             if (namedProcessesToStop.Count > 0)
                             {
-                                logger.Warn($"ShortcutRepository/RunShortcut: We couldn't find any children processes so we've looked for named processes with the name '{processToStop.StartInfo.FileName}' and we found {namedProcessesToStop.Count}. Closing them.");
+                                /*logger.Warn($"ShortcutRepository/RunShortcut: We couldn't find any children processes so we've looked for named processes with the name '{processToStop.StartInfo.FileName}' and we found {namedProcessesToStop.Count}. Closing them.");
                                 foreach (Process namedProcessToStop in namedProcessesToStop)
                                 {
                                     ProcessUtils.StopProcess(namedProcessToStop);
-                                }
+                                }*/
                             }
                             else
                             {
@@ -2001,7 +2043,8 @@ namespace DisplayMagician
                 uint processID = 0;
                 try
                 {
-                    if (ProcessUtils.LaunchProcessWithPriority(stopProg.Executable, stopProg.Arguments, ProcessUtils.TranslatePriorityToClass(stopProg.ProcessPriority), out processID))
+                    ProcessUtils.PROCESS_INFORMATION processInfo;
+                    if (ProcessUtils.CreateProcessWithPriority(stopProg.Executable, stopProg.Arguments, ProcessUtils.TranslatePriorityToClass(stopProg.ProcessPriority), out processInfo))
                     {
                         logger.Trace($"ShortcutRepository/RunShortcut: Successfully started Stop Program {stopProg.Executable} {stopProg.Arguments}");
                     }

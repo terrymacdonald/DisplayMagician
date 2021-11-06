@@ -2,10 +2,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace DisplayMagician
 {
-    public class ProcessCreator
+    public class ProcessUtils
     {
 
         [Flags]
@@ -94,6 +95,14 @@ namespace DisplayMagician
             IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFOEX lpStartupInfo,
             out PROCESS_INFORMATION lpProcessInformation);
 
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CreateProcess(
+            string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes,
+            IntPtr lpThreadAttributes, bool bInheritHandles, PROCESS_CREATION_FLAGS dwCreationFlags,
+            IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool UpdateProcThreadAttribute(
@@ -174,7 +183,7 @@ namespace DisplayMagician
 
         public static bool CreateProcessWithPriority(string exeName, string cmdLine, ProcessPriorityClass priorityClass, out PROCESS_INFORMATION processInfo)
         {
-            PROCESS_CREATION_FLAGS processFlags = TranslatePriorityClassToFlags(priorityClass) | PROCESS_CREATION_FLAGS.CREATE_SUSPENDED;
+            PROCESS_CREATION_FLAGS processFlags = TranslatePriorityClassToFlags(priorityClass);
             bool success = false;
             PROCESS_INFORMATION pInfo = new PROCESS_INFORMATION();
             var pSec = new SECURITY_ATTRIBUTES();
@@ -189,16 +198,27 @@ namespace DisplayMagician
             }
             catch (Exception ex)
             {
-                // This is 
+                // This is a problem
+            }
+            if (!success)
+            {
+                try
+                {
+                    success = CreateProcess(exeName, cmdLine, IntPtr.Zero, IntPtr.Zero, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+                }
+                catch (Exception ex)
+                {
+                    // This is a problem too                    
+                }
             }
             processInfo = pInfo;
 
-            return true;
+            return success;
         }
 
-        public static void ResumeProcess(IntPtr threadHandle)
+        public static void ResumeProcess(PROCESS_INFORMATION processInfo)
         {
-            ResumeThread(threadHandle);
+            ResumeThread(processInfo.hThread);
         }
 
         public static bool CreateProcessWithParent(int parentProcessId)
