@@ -886,7 +886,7 @@ namespace DisplayMagician.UIForms
                     else if (rb_switch_display_temp.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
                 }
-                else if (rb_launcher.Checked && txt_game_name.Text.Length > 0)
+                else if (rb_launcher.Checked && ilv_games.SelectedItems.Count >0)
                 {
                     txt_shortcut_save_name.Text = $"{txt_game_name.Text} ({_profileToUse.Name})";
                 }
