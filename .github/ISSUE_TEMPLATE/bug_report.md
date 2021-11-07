@@ -24,10 +24,21 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Reporting Logs**
-- Create a TRACE-level DisplayMagician.log file by running `C:\Program Files\DisplayMagician\DisplayMagician.exe --trace` in a command prompt.
+If DisplayMagician starts:
+- Open DisplayMagician and perform whatever actions are needed to make the bug occur.
+- Click on the Settings button on the main DisplayMagician window
+- Click on 'Create a Support Zip File' button
+- Save the Support Zip File on your computer.
+- Come back here, and upload the Support Zip File through your web browser and attach it to this issue.
+
+If DisplayMagician does not:
+- Open a terminal window and run `C:\Program Files\DisplayMagician\DisplayMagician.exe --trace` to create a TRACE-level DisplayMagician.log file.
 - The above command will create a DisplayMagician.log file in `C:\Users\<yourusername>\AppData\Local\DisplayMagician\Logs` which should contain a LOT of detailed TRACE level log entries. 
-- Feel free to check the DisplayMagician.log file for any information you might not want to share with the public. 
-- Once you're happy, attach the DisplayMagician.log TRACE file you just created to this issue.
+- Come back here, and upload the DisplayMagician.log file through your web browser and attach it to this issue.
+- Also attach the following files to this issue:
+  - `C:\Users\<yourusername>\AppData\Local\DisplayMagician\Profiles\DisplayProfiles_2.1.json` 
+  - `C:\Users\<yourusername>\AppData\Local\DisplayMagician\Shortcuts\Shortcuts_2.0.json`
+  - `C:\Users\<yourusername>\AppData\Local\DisplayMagician\Settings_2.0.json`
 
 **Enviroment (please complete the following information):**
  - Windows Version: [e.g. Win10]
