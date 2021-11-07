@@ -13,6 +13,7 @@ using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
 using NHotkey.WindowsForms;
 using NHotkey;
+using System.Threading;
 
 namespace DisplayMagician.UIForms
 {
@@ -66,6 +67,13 @@ namespace DisplayMagician.UIForms
         public ShortcutForm(ShortcutItem shortcutToEdit, bool editingExistingShortcut = false)
         {
             InitializeComponent();
+            Program.AppSplashScreen = new LoadingForm();
+            Program.AppSplashScreen.Title = "Preparing game images...";
+            Program.AppSplashScreen.Description = "Preparing game images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            var splashThread = new Thread(new ThreadStart(
+                () => Application.Run(Program.AppSplashScreen)));
+            splashThread.SetApartmentState(ApartmentState.STA);
+            splashThread.Start();
 
             // Set the profileAdaptor we need to load images from Profiles
             // into the Profiles ImageListView
@@ -1617,6 +1625,13 @@ namespace DisplayMagician.UIForms
 
             // Finally enable the save button if it's still valid
             EnableSaveButtonIfValid();
+
+            // Close the splash screen
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+                Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
+            this.TopMost = true;
+            this.Focus();
+            this.TopMost = false;
 
         }
 
