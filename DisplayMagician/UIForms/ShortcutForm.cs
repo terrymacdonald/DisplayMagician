@@ -68,8 +68,8 @@ namespace DisplayMagician.UIForms
         {
             InitializeComponent();
             Program.AppSplashScreen = new LoadingForm();
-            Program.AppSplashScreen.Title = "Preparing game images...";
-            Program.AppSplashScreen.Description = "Preparing game images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            Program.AppSplashScreen.Title = "Preparing images...";
+            Program.AppSplashScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
             var splashThread = new Thread(new ThreadStart(
                 () => Application.Run(Program.AppSplashScreen)));
             splashThread.SetApartmentState(ApartmentState.STA);

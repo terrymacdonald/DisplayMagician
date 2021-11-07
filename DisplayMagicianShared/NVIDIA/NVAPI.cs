@@ -1964,6 +1964,45 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator !=(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => !(lhs == rhs);
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_CUSTOM_DISPLAY_V1 : IEquatable<NV_CUSTOM_DISPLAY_V1>
+    {
+        public UInt32 Version; //!< Version of this structure
+        public UInt32 Width; //!< Source surface(source mode) width
+        public UInt32 Height;            //!< Source surface(source mode) height
+        public UInt32 Depth;             //!< Source surface color depth."0" means all 8/16/32bpp
+        public NV_FORMAT ColorFormat;       //!< Color format (optional)
+        public NV_VIEWPORTF SourcePartition;      //!< For multimon support, should be set to (0,0,1.0,1.0) for now.
+        public float XRatio;            //!< Horizontal scaling ratio
+        public float YRatio;            //!< Vertical scaling ratio
+        public NV_TIMING Timing;            //!< Timing used to program TMDS/DAC/LVDS/HDMI/TVEncoder, etc.
+        public UInt32 Flags; //!< If set to 1, it means a hardware modeset without OS update
+
+        //     Gets a boolean value indicating that a hardware mode-set without OS update should be performed.
+        public bool IsHardwareModeSetOnly => Flags.GetBit(0);
+
+        public override bool Equals(object obj) => obj is NV_CUSTOM_DISPLAY_V1 other && this.Equals(other);
+        public bool Equals(NV_CUSTOM_DISPLAY_V1 other)
+        => Version == other.Version &&
+           Width == other.Width &&
+           Height == other.Height &&
+           Depth == other.Depth &&
+           ColorFormat == other.ColorFormat &&
+           SourcePartition == other.SourcePartition &&
+            XRatio == other.XRatio &&
+            YRatio == other.YRatio &&
+            Timing == other.Timing &&
+            Flags == other.Flags;
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, Width, Height, Depth, ColorFormat, SourcePartition, XRatio, YRatio, Timing, Flags).GetHashCode();
+        }
+        public static bool operator ==(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => !(lhs == rhs);
+    }
+
     // ==================================
     // NVImport Class
     // ==================================

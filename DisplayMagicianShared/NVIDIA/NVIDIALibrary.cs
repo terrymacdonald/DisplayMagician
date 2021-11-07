@@ -89,11 +89,32 @@ namespace DisplayMagicianShared.NVIDIA
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    public struct NVIDIA_CUSTOM_DISPLAY_CONFIG : IEquatable<NVIDIA_CUSTOM_DISPLAY_CONFIG>
+    {
+        public List<NV_CUSTOM_DISPLAY_V1> CustomDisplay;
+
+        public override bool Equals(object obj) => obj is NVIDIA_CUSTOM_DISPLAY_CONFIG other && this.Equals(other);
+        public bool Equals(NVIDIA_CUSTOM_DISPLAY_CONFIG other)
+        => CustomDisplay.SequenceEqual(other.CustomDisplay);
+
+        public override int GetHashCode()
+        {
+            return (CustomDisplay).GetHashCode();
+        }
+        public static bool operator ==(NVIDIA_CUSTOM_DISPLAY_CONFIG lhs, NVIDIA_CUSTOM_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVIDIA_CUSTOM_DISPLAY_CONFIG lhs, NVIDIA_CUSTOM_DISPLAY_CONFIG rhs) => !(lhs == rhs);
+    }
+
+
+    [StructLayout(LayoutKind.Sequential)]
     public struct NVIDIA_DISPLAY_CONFIG : IEquatable<NVIDIA_DISPLAY_CONFIG>
     {
         public NVIDIA_MOSAIC_CONFIG MosaicConfig;
         public NVIDIA_HDR_CONFIG HdrConfig;
         public NVIDIA_COLOR_CONFIG ColorConfig;
+        public Dictionary<UInt32, NVIDIA_CUSTOM_DISPLAY_CONFIG> CustomDisplays;
+        public List<NV_DISPLAYCONFIG_PATH_INFO_V2> DisplayConfigs;
         // Note: We purposely have left out the DisplayNames from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
         // generating the profile icon.
@@ -106,6 +127,8 @@ namespace DisplayMagicianShared.NVIDIA
         => MosaicConfig.Equals(other.MosaicConfig) &&
            HdrConfig.Equals(other.HdrConfig) &&
            ColorConfig.Equals(other.ColorConfig) &&
+           //CustomDisplays.SequenceEqual(other.CustomDisplays) &&
+           //DisplayConfigs.SequenceEqual(other.DisplayConfigs) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
 
         public override int GetHashCode()
@@ -254,6 +277,8 @@ namespace DisplayMagicianShared.NVIDIA
             myDefaultConfig.HdrConfig.HdrCapabilities = new Dictionary<uint, NV_HDR_CAPABILITIES_V2>();
             myDefaultConfig.HdrConfig.HdrColorData = new Dictionary<uint, NV_HDR_COLOR_DATA_V2>();
             myDefaultConfig.ColorConfig.ColorData = new Dictionary<uint, NV_COLOR_DATA_V5>();
+            myDefaultConfig.CustomDisplays = new Dictionary<uint, NVIDIA_CUSTOM_DISPLAY_CONFIG>();
+            myDefaultConfig.DisplayConfigs = new List<NV_DISPLAYCONFIG_PATH_INFO_V2>();
             myDefaultConfig.DisplayNames = new Dictionary<uint, string>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
 
@@ -631,6 +656,9 @@ namespace DisplayMagicianShared.NVIDIA
                         Dictionary<UInt32, NV_HDR_CAPABILITIES_V2> allHdrCapabilities = new Dictionary<UInt32, NV_HDR_CAPABILITIES_V2>();
                         Dictionary<UInt32, NV_HDR_COLOR_DATA_V2> allHdrColorData = new Dictionary<UInt32, NV_HDR_COLOR_DATA_V2>();
                         Dictionary<UInt32, NV_COLOR_DATA_V5> allColorData = new Dictionary<UInt32, NV_COLOR_DATA_V5>();
+                        Dictionary<UInt32, NVIDIA_CUSTOM_DISPLAY_CONFIG> allCustomDisplays = new Dictionary<UInt32, NVIDIA_CUSTOM_DISPLAY_CONFIG>();
+                        List<NV_DISPLAYCONFIG_PATH_INFO_V2> allDisplayConfigs = new List<NV_DISPLAYCONFIG_PATH_INFO_V2>();
+
                         for (int displayIndex = 0; displayIndex < displayCount; displayIndex++)
                         {
                             if (allDisplays)
@@ -811,11 +839,13 @@ namespace DisplayMagicianShared.NVIDIA
                             }
                         }
 
-                        // Store the HDR information
+                        // Store the information
                         myDisplayConfig.HdrConfig.IsNvHdrEnabled = isNvHdrEnabled;
                         myDisplayConfig.HdrConfig.HdrCapabilities = allHdrCapabilities;
                         myDisplayConfig.HdrConfig.HdrColorData = allHdrColorData;
                         myDisplayConfig.ColorConfig.ColorData = allColorData;
+                        myDisplayConfig.CustomDisplays = allCustomDisplays;
+                        myDisplayConfig.DisplayConfigs = allDisplayConfigs;
                     }
 
                 }
