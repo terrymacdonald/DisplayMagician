@@ -132,6 +132,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.btn_refresh_games_list = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
@@ -326,7 +327,7 @@ namespace DisplayMagician.UIForms
             this.tabp_audio.Location = new System.Drawing.Point(4, 32);
             this.tabp_audio.Name = "tabp_audio";
             this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_audio.Size = new System.Drawing.Size(1082, 713);
+            this.tabp_audio.Size = new System.Drawing.Size(1082, 731);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
             // 
@@ -973,6 +974,7 @@ namespace DisplayMagician.UIForms
             // 
             // p_game
             // 
+            this.p_game.Controls.Add(this.btn_refresh_games_list);
             this.p_game.Controls.Add(this.btn_choose_game_icon);
             this.p_game.Controls.Add(this.pb_game_icon);
             this.p_game.Controls.Add(this.lbl_no_game_libraries);
@@ -1489,6 +1491,22 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
+            // btn_refresh_games_list
+            // 
+            this.btn_refresh_games_list.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_refresh_games_list.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_refresh_games_list.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_refresh_games_list.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_refresh_games_list.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_refresh_games_list.ForeColor = System.Drawing.Color.White;
+            this.btn_refresh_games_list.Location = new System.Drawing.Point(950, 162);
+            this.btn_refresh_games_list.Name = "btn_refresh_games_list";
+            this.btn_refresh_games_list.Size = new System.Drawing.Size(117, 25);
+            this.btn_refresh_games_list.TabIndex = 42;
+            this.btn_refresh_games_list.Text = "Refresh Games List";
+            this.btn_refresh_games_list.UseVisualStyleBackColor = true;
+            this.btn_refresh_games_list.Click += new System.EventHandler(this.btn_refresh_games_list_Click);
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1658,5 +1676,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards;
         private System.Windows.Forms.TextBox txt_run_cmd_afterwards_args;
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_args;
+        private System.Windows.Forms.Button btn_refresh_games_list;
     }
 }

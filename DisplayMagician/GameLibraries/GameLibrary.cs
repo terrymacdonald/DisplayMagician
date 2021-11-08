@@ -35,6 +35,8 @@ namespace DisplayMagician.GameLibraries
         public static List<Game> AllInstalledGamesInAllLibraries { get; set; }
         public static bool GamesLoaded { get; set; } = false;
 
+        public static bool GamesImagesLoaded { get; set; } = false;
+
         public virtual List<Game> AllInstalledGames { get; set; }
 
         public virtual int InstalledGameCount { get; set; }
@@ -260,6 +262,12 @@ namespace DisplayMagician.GameLibraries
                 }
             }
 
+            // Clear the game libraries in case this is a refresh
+            SteamLibrary.GetLibrary().AllInstalledGames.Clear();
+            UplayLibrary.GetLibrary().AllInstalledGames.Clear();
+            OriginLibrary.GetLibrary().AllInstalledGames.Clear();
+            EpicLibrary.GetLibrary().AllInstalledGames.Clear();
+            GogLibrary.GetLibrary().AllInstalledGames.Clear();
             // Produce a single array of Games we can reference later
             GameLibrary.AllInstalledGamesInAllLibraries = SteamLibrary.GetLibrary().AllInstalledGames;
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
@@ -344,6 +352,7 @@ namespace DisplayMagician.GameLibraries
                 game.AvailableGameBitmaps = bmList;
                 game.GameBitmap = ImageUtils.GetMeLargestAvailableBitmap(bmList);
             }
+            GamesImagesLoaded = true;
         }
 
 

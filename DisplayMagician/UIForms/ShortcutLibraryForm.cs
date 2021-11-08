@@ -19,6 +19,7 @@ namespace DisplayMagician.UIForms
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ShortcutItem _selectedShortcut = null;
+        private ShortcutForm _shortcutForm = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutLibraryForm()
@@ -264,13 +265,16 @@ namespace DisplayMagician.UIForms
         private void btn_new_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
-            var shortcutForm = new ShortcutForm(new ShortcutItem(),false);
-            //ShortcutRepository.IsValidRefresh();
-            shortcutForm.ShowDialog(this);
-            if (shortcutForm.DialogResult == DialogResult.OK)
+            if (_shortcutForm == null)
             {
-                ShortcutRepository.AddShortcut(shortcutForm.Shortcut);
-                _selectedShortcut = shortcutForm.Shortcut;
+                _shortcutForm = new ShortcutForm(new ShortcutItem(), false);
+            }            
+            //ShortcutRepository.IsValidRefresh();
+            _shortcutForm.ShowDialog(this);
+            if (_shortcutForm.DialogResult == DialogResult.OK)
+            {
+                ShortcutRepository.AddShortcut(_shortcutForm.Shortcut);
+                _selectedShortcut = _shortcutForm.Shortcut;
                 //ShortcutRepository.IsValidRefresh();
                 RefreshShortcutLibraryUI();
             }
@@ -313,10 +317,10 @@ namespace DisplayMagician.UIForms
 
                 this.Cursor = Cursors.WaitCursor;
                 
-                var shortcutForm = new ShortcutForm(_selectedShortcut,true);
+                _shortcutForm = new ShortcutForm(_selectedShortcut,true);
                 //ilv_saved_shortcuts.SuspendLayout();
-                shortcutForm.ShowDialog(this);
-                if (shortcutForm.DialogResult == DialogResult.OK)
+                _shortcutForm.ShowDialog(this);
+                if (_shortcutForm.DialogResult == DialogResult.OK)
                 {
                     RefreshShortcutLibraryUI();
                     // As this is an edit, we need to manually force saving the shortcut library

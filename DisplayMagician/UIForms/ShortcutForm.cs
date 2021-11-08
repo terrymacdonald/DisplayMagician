@@ -110,7 +110,11 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                audioController = new CoreAudioController();
+                if (audioController == null)
+                {
+                    audioController = new CoreAudioController();
+                }
+                    
             }
             catch (Exception ex)
             {
@@ -775,7 +779,7 @@ namespace DisplayMagician.UIForms
 
             // Save everything is golden and close the form.
             DialogResult = DialogResult.OK;
-            this.Close();
+            this.Hide();
         }
 
         private void txt_alternative_executable_TextChanged(object sender, EventArgs e)
@@ -941,9 +945,12 @@ namespace DisplayMagician.UIForms
             Game shortcutGame = null;
 
 
-            // Parse the game bitmaps now as we need them
-            GameLibraries.GameLibrary.RefreshGameBitmaps();
-
+            // Parse the game bitmaps now the first time as we need them
+            // We need to add a refresh button to the shortcut page now!
+            if (!GameLibraries.GameLibrary.GamesImagesLoaded)
+            {
+                GameLibraries.GameLibrary.RefreshGameBitmaps();
+            }            
 
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
@@ -1903,7 +1910,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_back_Click(object sender, EventArgs e)
         {
-            this.Close();
+            this.Hide();
         }
 
         private void radiobutton_Paint(object sender, PaintEventArgs e)
@@ -2823,6 +2830,45 @@ namespace DisplayMagician.UIForms
         private void btn_run_cmd_afterwards_Click(object sender, EventArgs e)
         {
             txt_run_cmd_afterwards.Text = getExeFile();
+        }
+
+        private void btn_refresh_games_list_Click(object sender, EventArgs e)
+        {
+            // Change the mouse crusor so the user knows something is happening
+            this.Cursor = Cursors.WaitCursor;
+            // Empty the games list
+            GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Clear();
+            // Load all the new games
+            GameLibraries.GameLibrary.LoadGamesInBackground();
+            // Parse the libraries
+            GameLibraries.GameLibrary.RefreshGameBitmaps();
+            // Load all the Games into the Games ListView            
+            ilv_games.Items.Clear();            
+            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
+            {
+                // Add the game to the game array
+                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
+                if (_editingExistingShortcut && game.Name.Equals(_shortcutToEdit.GameName))
+                {
+                    newItem.Selected = true;                    
+                }
+                ilv_games.Items.Add(newItem, _gameAdaptor);
+            }
+            // Make sure that if the item is selected that it's visible
+            if (ilv_games.SelectedItems.Count > 0)
+            {
+                int selectedIndex = ilv_games.SelectedItems[0].Index;
+                ilv_games.EnsureVisible(selectedIndex);
+            }
+            
+            // Change the user cursor back
+            this.Cursor = Cursors.Default;
+            // Show we're done
+            MessageBox.Show(
+                @"The list of available games has been updated.",
+                @"Games List Updated",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Exclamation);
         }
     }
 
