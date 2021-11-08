@@ -944,6 +944,7 @@ namespace DisplayMagician.UIForms
             // Parse the game bitmaps now as we need them
             GameLibraries.GameLibrary.RefreshGameBitmaps();
 
+
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
@@ -1212,6 +1213,8 @@ namespace DisplayMagician.UIForms
                 }
                 if (!gameStillInstalled)
                 {
+                    // Close the splash screen
+                    CloseTheSplashScreen();
                     DialogResult result = MessageBox.Show(
                         $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
                         @"Game no longer exists",
@@ -1232,7 +1235,8 @@ namespace DisplayMagician.UIForms
                 // since the shortcut was last created, then we need to tell the user
                 if (!chosenProfile.IsPossible)
                 {
-
+                    // Close the splash screen
+                    CloseTheSplashScreen();
                     MessageBox.Show(
                     $"The '{chosenProfile.Name}' Display Profile used by this Shortcut still exists, but it isn't possible to use it right now. You can either change the Display Profile this Shortcut uses, or you can change your Displays to make the Display Profile valid again.",
                     @"Display Profile isn't possible now",
@@ -1245,6 +1249,8 @@ namespace DisplayMagician.UIForms
 
             if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
             {
+                // Close the splash screen
+                CloseTheSplashScreen();
                 MessageBox.Show(
                     @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut.",
                     @"Display Profile no longer exists",
@@ -1627,12 +1633,18 @@ namespace DisplayMagician.UIForms
             EnableSaveButtonIfValid();
 
             // Close the splash screen
+            CloseTheSplashScreen();
+
+        }
+
+        private void CloseTheSplashScreen()
+        {
+            // Close the splash screen
             if (ProgramSettings.LoadSettings().ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
                 Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
             this.TopMost = true;
             this.Focus();
             this.TopMost = false;
-
         }
 
         private void rb_standalone_CheckedChanged(object sender, EventArgs e)
