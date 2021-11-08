@@ -301,19 +301,18 @@ namespace DisplayMagician.UIForms
             // 
             // dv_profile
             // 
-            this.dv_profile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.dv_profile.BackColor = System.Drawing.Color.DimGray;
             this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
             this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 0);
+            this.dv_profile.Location = new System.Drawing.Point(3, 3);
             this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
             this.dv_profile.Name = "dv_profile";
             this.dv_profile.PaddingX = 100;
             this.dv_profile.PaddingY = 100;
             this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(1082, 467);
+            this.dv_profile.Size = new System.Drawing.Size(1076, 472);
             this.dv_profile.TabIndex = 23;
             // 
             // tabp_audio
@@ -327,7 +326,7 @@ namespace DisplayMagician.UIForms
             this.tabp_audio.Location = new System.Drawing.Point(4, 32);
             this.tabp_audio.Name = "tabp_audio";
             this.tabp_audio.Padding = new System.Windows.Forms.Padding(3);
-            this.tabp_audio.Size = new System.Drawing.Size(1082, 731);
+            this.tabp_audio.Size = new System.Drawing.Size(1082, 713);
             this.tabp_audio.TabIndex = 4;
             this.tabp_audio.Text = "2. Choose Audio";
             // 
@@ -340,7 +339,7 @@ namespace DisplayMagician.UIForms
             this.lbl_no_active_capture_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_no_active_capture_devices.ForeColor = System.Drawing.Color.White;
             this.lbl_no_active_capture_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_active_capture_devices.Location = new System.Drawing.Point(126, 456);
+            this.lbl_no_active_capture_devices.Location = new System.Drawing.Point(126, 438);
             this.lbl_no_active_capture_devices.Name = "lbl_no_active_capture_devices";
             this.lbl_no_active_capture_devices.Size = new System.Drawing.Size(831, 22);
             this.lbl_no_active_capture_devices.TabIndex = 36;
@@ -357,7 +356,7 @@ namespace DisplayMagician.UIForms
             this.lbl_no_active_audio_devices.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_no_active_audio_devices.ForeColor = System.Drawing.Color.White;
             this.lbl_no_active_audio_devices.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_no_active_audio_devices.Location = new System.Drawing.Point(131, 162);
+            this.lbl_no_active_audio_devices.Location = new System.Drawing.Point(131, 153);
             this.lbl_no_active_audio_devices.Name = "lbl_no_active_audio_devices";
             this.lbl_no_active_audio_devices.Size = new System.Drawing.Size(804, 22);
             this.lbl_no_active_audio_devices.TabIndex = 35;
@@ -374,7 +373,7 @@ namespace DisplayMagician.UIForms
             this.lbl_disabled_shortcut_audio_chipset.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_disabled_shortcut_audio_chipset.ForeColor = System.Drawing.Color.White;
             this.lbl_disabled_shortcut_audio_chipset.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(263, 321);
+            this.lbl_disabled_shortcut_audio_chipset.Location = new System.Drawing.Point(263, 303);
             this.lbl_disabled_shortcut_audio_chipset.Name = "lbl_disabled_shortcut_audio_chipset";
             this.lbl_disabled_shortcut_audio_chipset.Size = new System.Drawing.Size(557, 22);
             this.lbl_disabled_shortcut_audio_chipset.TabIndex = 34;
@@ -990,8 +989,7 @@ namespace DisplayMagician.UIForms
             this.p_game.Controls.Add(this.lbl_game_timeout);
             this.p_game.Controls.Add(this.nud_timeout_game);
             this.p_game.Controls.Add(this.lbl_game_library);
-            this.p_game.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.p_game.Location = new System.Drawing.Point(3, 339);
+            this.p_game.Location = new System.Drawing.Point(3, 338);
             this.p_game.Name = "p_game";
             this.p_game.Size = new System.Drawing.Size(1076, 389);
             this.p_game.TabIndex = 7;
@@ -1051,15 +1049,14 @@ namespace DisplayMagician.UIForms
             // 
             // ilv_games
             // 
-            this.ilv_games.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ilv_games.IntegralScroll = true;
-            this.ilv_games.Location = new System.Drawing.Point(0, 187);
+            this.ilv_games.Location = new System.Drawing.Point(0, 200);
             this.ilv_games.Name = "ilv_games";
             this.ilv_games.PersistentCacheDirectory = "";
             this.ilv_games.PersistentCacheSize = ((long)(100));
-            this.ilv_games.Size = new System.Drawing.Size(1076, 202);
+            this.ilv_games.Size = new System.Drawing.Size(1076, 189);
             this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
             this.ilv_games.TabIndex = 28;
             this.ilv_games.UseWIC = true;

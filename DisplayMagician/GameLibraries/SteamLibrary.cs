@@ -633,14 +633,17 @@ namespace DisplayMagician.GameLibraries
                         {
                             // Check the entry is actually a directory 
                             string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                            if (Directory.Exists(steamLibraryPath))
+                            if (!steamLibraryPath.Equals(_steamPath) && Directory.Exists(steamLibraryPath))
                             {
-                                logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath}");
-                                steamLibrariesPaths.Add(steamLibraryPath);
+                                if (!steamLibrariesPaths.Contains(steamLibraryPath))
+                                {
+                                    logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath} in the {_steamLibraryFoldersVdfFile} VDF file ");
+                                    steamLibrariesPaths.Add(steamLibraryPath);
+                                }
                             }
                             else
                             {
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath} in {_steamLibraryFoldersVdfFile}, but it didn't exist on the file system");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath} in {_steamLibraryFoldersVdfFile}, but it didn't exist on the file system, or was already added");
                             }
                         }
                     }
@@ -669,18 +672,19 @@ namespace DisplayMagician.GameLibraries
                         if (steamLibraryMatch.Success)
                         {
                             string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                            if (Directory.Exists(steamLibraryPath))
+                            if (!steamLibraryPath.Equals(_steamPath) && Directory.Exists(steamLibraryPath))
                             {
                                 logger.Info($"SteamLibrary/LoadInstalledGames: Found additional steam library {steamLibraryPath}");
                                 // Check if the steam library is already in the list!
                                 if (!steamLibrariesPaths.Contains(steamLibraryPath))
                                 {
+                                    logger.Info($"SteamLibrary/LoadInstalledGames: Aadditional steam library {steamLibraryPath}");
                                     steamLibrariesPaths.Add(steamLibraryPath);
                                 }                                
                             }
                             else
                             {
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath} in {_steamConfigVdfFile}, but it didn't exist on the file system");
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found what it thought was an additional steam library {steamLibraryPath} in {_steamConfigVdfFile}, but it didn't exist on the file system, or was already added");
                             }
                         }
                     }
@@ -766,7 +770,8 @@ namespace DisplayMagician.GameLibraries
                                     }
 
                                     // And we add the Game to the list of games we have!
-                                    _allSteamGames.Add(new SteamGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath));
+                                    SteamGame gameToAdd = new SteamGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath);
+                                    _allSteamGames.Add(gameToAdd);
                                     logger.Debug($"SteamLibrary/LoadInstalledGames: Adding Steam Game with game id {steamGameId}, name {steamGameName}, game exe {steamGameExe} and icon path {steamGameIconPath}");
                                 }
                             }
