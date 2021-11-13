@@ -1336,13 +1336,11 @@ namespace DisplayMagicianShared.AMD
                     // We need to change to an Eyefinity (SLS) profile, so we need to apply the new SLS Topologies
                     SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is enabled in the new display configuration, so we need to set it");
 
-                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: There are {displayConfig.SlsConfig.SLSMapConfigs.Count} SLSMapConfigs in this display configuration");
-
                     foreach (AMD_SLSMAP_CONFIG slsMapConfig in displayConfig.SlsConfig.SLSMapConfigs)
                     {
                         // Attempt to turn on this SLS Map Config if it exists in the AMD Radeon driver config database
                         ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap.SLSMapIndex, ADLImport.ADL_TRUE);
-                        if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
+                        if (ADLRet == ADL_STATUS.ADL_OK)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully set the SLSMAP with index {slsMapConfig.SLSMap.SLSMapIndex} to TRUE for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
                         }
@@ -1360,7 +1358,7 @@ namespace DisplayMagicianShared.AMD
                             int supportedSLSLayoutImageMode;
                             int reasonForNotSupportSLS;
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_Valid(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap, slsMapConfig.SLSTargets.Count, slsMapConfig.SLSTargets.ToArray(), out supportedSLSLayoutImageMode, out reasonForNotSupportSLS, ADLImport.ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_CURRENTANGLE);
-                            if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
+                            if (ADLRet == ADL_STATUS.ADL_OK)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_Valid successfully validated a new SLSMAP config for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
                             }
@@ -1373,7 +1371,7 @@ namespace DisplayMagicianShared.AMD
                             // Create and apply the new SLSMap
                             int newSlsMapIndex;
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_Create(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap, slsMapConfig.SLSTargets.Count, slsMapConfig.SLSTargets.ToArray(), slsMapConfig.BezelModePercent, out newSlsMapIndex, ADLImport.ADL_DISPLAY_SLSMAPCONFIG_CREATE_OPTION_RELATIVETO_CURRENTANGLE);
-                            if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
+                            if (ADLRet == ADL_STATUS.ADL_OK)
                             {
                                 if (newSlsMapIndex != -1)
                                 {
@@ -1411,7 +1409,7 @@ namespace DisplayMagicianShared.AMD
                         {
                             // Turn off this SLS Map Config
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap.SLSMapIndex, ADLImport.ADL_FALSE);
-                            if (ADLRet == ADL_STATUS.ADL_OK || ADLRet == ADL_STATUS.ADL_OK_MODE_CHANGE || ADLRet == ADL_STATUS.ADL_OK_RESTART || ADLRet == ADL_STATUS.ADL_OK_WAIT || ADLRet == ADL_STATUS.ADL_OK_WARNING)
+                            if (ADLRet == ADL_STATUS.ADL_OK)
                             {
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: ADL2_Display_SLSMapConfig_SetState successfully disabled the SLSMAP with index {slsMapConfig.SLSMap.SLSMapIndex} for adapter { slsMapConfig.SLSMap.AdapterIndex}.");
                             }
@@ -1422,10 +1420,6 @@ namespace DisplayMagicianShared.AMD
                             }
 
                         }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is not used in the wanted display configuration, or the current display configuration. Nothing to do.");
                     }
 
                 }
@@ -1457,34 +1451,42 @@ namespace DisplayMagicianShared.AMD
                     // Try and find the HDR config displays in the list of currently connected displays
                     foreach (var displayInfoItem in ActiveDisplayConfig.DisplayTargets)
                     {
-                        // If we find the HDR config display in the list of currently connected displays then try to set the HDR setting we recorded earlier
-                        if (hdrConfig.Key == displayInfoItem.DisplayID.DisplayLogicalIndex)
+                        try
                         {
-                            if (hdrConfig.Value.HDREnabled)
+                            // If we find the HDR config display in the list of currently connected displays then try to set the HDR setting we recorded earlier
+                            if (hdrConfig.Key == displayInfoItem.DisplayID.DisplayLogicalIndex)
                             {
-                                ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 1);
-                                if (ADLRet == ADL_STATUS.ADL_OK)
+                                if (hdrConfig.Value.HDREnabled)
                                 {
-                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 1);
+                                    if (ADLRet == ADL_STATUS.ADL_OK)
+                                    {
+                                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Error($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was NOT able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was NOT able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 0);
+                                    if (ADLRet == ADL_STATUS.ADL_OK)
+                                    {
+                                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Error($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was NOT able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
                                 }
+                                break;
                             }
-                            else
-                            {
-                                ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 0);
-                                if (ADLRet == ADL_STATUS.ADL_OK)
-                                {
-                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was NOT able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
-                                }
-                            }
-                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"AMDLibrary/GetAMDDisplayConfig: Exception! ADL2_Display_HDRState_Set was NOT able to change HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                            continue;
                         }
                     }
 
@@ -1907,7 +1909,7 @@ namespace DisplayMagicianShared.AMD
                         if (!displayIdentifiers.Contains(displayIdentifier))
                         {
                             displayIdentifiers.Add(displayIdentifier);
-                            SharedLogger.logger.Debug($"AMDLibrary/GetSomeDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
+                            SharedLogger.logger.Debug($"ProfileRepository/GenerateProfileDisplayIdentifiers: DisplayIdentifier: {displayIdentifier}");
                         }
                     }
                 }
