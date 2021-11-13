@@ -918,7 +918,7 @@ namespace DisplayMagicianShared
                         // Set some basics about the screen
                         try
                         {
-                            uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
+                            string displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
                             string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
                             List<uint> sourceIndexes = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
                             for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
@@ -982,7 +982,7 @@ namespace DisplayMagicianShared
                         // Set some basics about the screen
                         try
                         {
-                            uint displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
+                            string displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
                             string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
                             List<uint> sourceIndexes = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
                             for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
