@@ -990,8 +990,7 @@ namespace DisplayMagician
 
             // Copy all the shortcut data over to the other Shortcut
             shortcut.Name = Name;
-            shortcut.ProfileToUse = ProfileToUse;
-            shortcut.ProfileUUID = ProfileUUID;
+            shortcut.AutoName = false; // Force the autoname to be off, as it's a copy.
             shortcut.DisplayPermanence = DisplayPermanence;
             shortcut.AudioPermanence = AudioPermanence;
             shortcut.CapturePermanence = CapturePermanence;
@@ -1008,16 +1007,9 @@ namespace DisplayMagician
             shortcut.StartTimeout = StartTimeout;
             shortcut.GameArguments = GameArguments;
             shortcut.GameArgumentsRequired = GameArgumentsRequired;
-            shortcut.OriginalIconPath = OriginalIconPath;
-            shortcut.OriginalLargeBitmap = OriginalLargeBitmap;
-            shortcut.ShortcutBitmap = ShortcutBitmap;
-            shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
-            shortcut.SelectedImage = SelectedImage;
-            shortcut.AvailableImages = AvailableImages;
+            shortcut.OriginalIconPath = OriginalIconPath;           
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
-            shortcut.StartPrograms = StartPrograms;
-            shortcut.StopPrograms = StopPrograms; 
             shortcut.ChangeAudioDevice = ChangeAudioDevice;
             shortcut.AudioDevice = AudioDevice;
             shortcut.SetAudioVolume = SetAudioVolume;
@@ -1026,10 +1018,53 @@ namespace DisplayMagician
             shortcut.CaptureDevice = CaptureDevice;
             shortcut.SetCaptureVolume = SetCaptureVolume;
             shortcut.CaptureVolume = CaptureVolume;
-            shortcut.Hotkey = Hotkey;
+            // shortcut.Hotkey = Hotkey; // We cannot duplicate the Hotkey as it breaks things
+
+            // Duplicate the Images
+
+            shortcut.OriginalLargeBitmap = (Bitmap)OriginalLargeBitmap.Clone();
+            shortcut.ShortcutBitmap = (Bitmap)ShortcutBitmap.Clone();
+            //shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename; // We want a new shortcut icon!
+            shortcut.SelectedImage = ImageUtils.ShortcutBitmapClone(SelectedImage);            
+            shortcut.AvailableImages = ImageUtils.ShortcutBitmapClone(AvailableImages);
+
+            // Duplicate the start programs
+            shortcut.StartPrograms = new List<StartProgram>();
+            foreach (StartProgram sp in StartPrograms)
+            {
+                StartProgram copiedStartProgram = new StartProgram();
+                copiedStartProgram.Arguments = sp.Arguments;
+                copiedStartProgram.CloseOnFinish = sp.CloseOnFinish;
+                copiedStartProgram.Disabled = sp.Disabled;
+                copiedStartProgram.DontStartIfAlreadyRunning = sp.DontStartIfAlreadyRunning;
+                copiedStartProgram.Executable = sp.Executable;
+                copiedStartProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
+                copiedStartProgram.Priority = sp.Priority;
+                copiedStartProgram.ProcessPriority = sp.ProcessPriority;
+                shortcut.StartPrograms.Add(copiedStartProgram);
+            }
+
+            // Duplicate the stop programs
+            shortcut.StopPrograms = new List<StopProgram>();
+            foreach (StopProgram sp in StopPrograms)
+            {
+                StopProgram copiedStopProgram = new StopProgram();
+                copiedStopProgram.Arguments = sp.Arguments;
+                copiedStopProgram.Disabled = sp.Disabled;
+                copiedStopProgram.DontStartIfAlreadyRunning = sp.DontStartIfAlreadyRunning;
+                copiedStopProgram.Executable = sp.Executable;
+                copiedStopProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
+                copiedStopProgram.Priority = sp.Priority;
+                copiedStopProgram.ProcessPriority = sp.ProcessPriority;
+                shortcut.StopPrograms.Add(copiedStopProgram);
+            }
+
+            // Do the profiles last as AutoName will error if done earlier
+            shortcut.ProfileToUse = ProfileToUse;
+            shortcut.ProfileUUID = ProfileUUID;
 
             // Save the shortcut incon to the icon cache
-            shortcut.ReplaceShortcutIconInCache();
+            shortcut.SaveShortcutIconToCache();
             shortcut.RefreshValidity();
 
             return true;

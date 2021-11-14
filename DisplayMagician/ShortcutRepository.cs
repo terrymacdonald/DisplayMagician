@@ -356,6 +356,45 @@ namespace DisplayMagician
             return true;
         }
 
+        public static bool CopyShortcut(ShortcutItem shortcut, out ShortcutItem copiedShortcut)
+        {
+
+            logger.Trace($"ShortcutRepository/CopyShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
+            
+            copiedShortcut = new ShortcutItem();
+
+            if (!(shortcut is ShortcutItem))
+                return false;
+
+            
+            if (shortcut.CopyTo(copiedShortcut,false))
+            {
+                // Copy worked!
+                // We add (Copy) to the end of the shortcut name
+                copiedShortcut.Name = copiedShortcut.Name + " (Copy)";
+                // Add the shortcut to the list of shortcuts
+                _allShortcuts.Add(copiedShortcut);
+
+                //Doublecheck it's been added
+                if (ContainsShortcut(copiedShortcut))
+                {
+                    // Select the copied shortcut
+                    
+                    // Save the shortcuts JSON as it's different
+                    SaveShortcuts();
+                    IsValidRefresh();
+                    return true;
+                }
+                else
+                    return false;
+            }
+            else
+            {
+                // Copy failed
+                return false;
+            }            
+        }
+
         private static bool LoadShortcuts()
         {
 

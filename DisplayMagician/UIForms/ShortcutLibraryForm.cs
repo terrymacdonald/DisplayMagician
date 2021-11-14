@@ -497,6 +497,11 @@ namespace DisplayMagician.UIForms
             btn_delete.PerformClick();
         }
 
+        private void tsmi_copy_Click(object sender, EventArgs e)
+        {
+            btn_copy.PerformClick();
+        }
+
         private void ShortcutLibraryForm_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (lbl_mask.Visible == true)
@@ -520,5 +525,39 @@ namespace DisplayMagician.UIForms
             string targetURL = @"https://github.com/sponsors/terrymacdonald";
             System.Diagnostics.Process.Start(targetURL);
         }
+
+        private void btn_copy_Click(object sender, EventArgs e)
+        {
+            if (_selectedShortcut == null)
+            {
+                if (ShortcutRepository.ShortcutCount > 0)
+                {
+                    MessageBox.Show(
+                        @"You need to select a Game Shortcut in order to copy it. Please select a Game Shortcut then try again, or right-click on the Game Shortcut and select 'Copy Shortcut'.",
+                        @"Select Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        @"You need to create a Game Shortcut in order to copy it. Please create a Game Shortcut by clicking the New button.",
+                        @"Create Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+            }
+            else
+            {
+                ShortcutItem copiedShortcut;
+                // Copy the shortcut
+                ShortcutRepository.CopyShortcut(_selectedShortcut, out copiedShortcut);
+                // Select the new copied shortcut
+                _selectedShortcut = copiedShortcut;
+                // Invalidate the list of shortcuts so it gets redrawn again with the copy included!
+                ilv_saved_shortcuts.Invalidate();
+                // Refresh the UI
+                RefreshShortcutLibraryUI();
+            }
+        }
+
     }
 }

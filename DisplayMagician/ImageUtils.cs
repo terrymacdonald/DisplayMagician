@@ -353,6 +353,34 @@ namespace DisplayMagician
             return sc;
         }
 
+        public static List<ShortcutBitmap> ShortcutBitmapClone(List<ShortcutBitmap> shortcutBitmaps)
+        {
+            // Clones the List<ShortcutBitmap>
+
+            List<ShortcutBitmap> scListToReturn = new List<ShortcutBitmap>();
+            foreach (ShortcutBitmap sc in shortcutBitmaps)
+            {
+                scListToReturn.Add(ImageUtils.ShortcutBitmapClone(sc));
+            }
+
+            return scListToReturn;
+        }
+
+        public static ShortcutBitmap ShortcutBitmapClone(ShortcutBitmap shortcutBitmap)
+        {
+            // Clones the ShortcutBitmap
+
+            ShortcutBitmap scToReturn = new ShortcutBitmap();
+            scToReturn.UUID = Guid.NewGuid().ToString("D"); 
+            scToReturn.Image = (Bitmap)shortcutBitmap.Image.Clone();
+            scToReturn.Name = shortcutBitmap.Name;
+            scToReturn.Order = shortcutBitmap.Order;
+            scToReturn.Size = shortcutBitmap.Size;
+            scToReturn.Source = shortcutBitmap.Source;
+            
+            return scToReturn;
+        }
+
         public static bool ImagesAreEqual(Bitmap imageA, Bitmap imageB)
         {
             byte[] image1Bytes;
