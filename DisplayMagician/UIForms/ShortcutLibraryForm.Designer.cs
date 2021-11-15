@@ -219,7 +219,7 @@
             this.tsmi_copy,
             this.tsmi_delete});
             this.cms_shortcuts.Name = "cms_shortcuts";
-            this.cms_shortcuts.Size = new System.Drawing.Size(216, 136);
+            this.cms_shortcuts.Size = new System.Drawing.Size(216, 114);
             // 
             // tsmi_edit
             // 

@@ -265,11 +265,15 @@ namespace DisplayMagician.UIForms
         private void btn_new_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
+            ShortcutItem si = new ShortcutItem();
             if (_shortcutForm == null)
             {
-                _shortcutForm = new ShortcutForm(new ShortcutItem(), false);
-            }            
-            //ShortcutRepository.IsValidRefresh();
+                _shortcutForm = new ShortcutForm();
+            } 
+            //ShortcutRepository.IsValidRefresh()
+            // Set the Shortcut to as a new shortcut
+            _shortcutForm.Shortcut = si;
+            _shortcutForm.EditingExistingShortcut = false;
             _shortcutForm.ShowDialog(this);
             if (_shortcutForm.DialogResult == DialogResult.OK)
             {
@@ -317,7 +321,12 @@ namespace DisplayMagician.UIForms
 
                 this.Cursor = Cursors.WaitCursor;
                 
-                _shortcutForm = new ShortcutForm(_selectedShortcut,true);
+                if (_shortcutForm == null)
+                {
+                    _shortcutForm = new ShortcutForm();
+                }
+                _shortcutForm.Shortcut = _selectedShortcut;
+                _shortcutForm.EditingExistingShortcut = true;
                 //ilv_saved_shortcuts.SuspendLayout();
                 _shortcutForm.ShowDialog(this);
                 if (_shortcutForm.DialogResult == DialogResult.OK)

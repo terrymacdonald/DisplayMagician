@@ -61,15 +61,16 @@ namespace DisplayMagician.UIForms
         //private string _userExeIconPath = "";
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
+        private bool _firstShow = true;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public ShortcutForm(ShortcutItem shortcutToEdit, bool editingExistingShortcut = false)
+        public ShortcutForm()
         {
             InitializeComponent();
             Program.AppSplashScreen = new LoadingForm();
             Program.AppSplashScreen.Title = "Preparing images...";
-            Program.AppSplashScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            Program.AppSplashScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";            
             var splashThread = new Thread(new ThreadStart(
                 () => Application.Run(Program.AppSplashScreen)));
             splashThread.SetApartmentState(ApartmentState.STA);
@@ -81,9 +82,6 @@ namespace DisplayMagician.UIForms
             {
                 _profileAdaptor = new ProfileAdaptor();
                 _gameAdaptor = new GameAdaptor();
-
-                _editingExistingShortcut = editingExistingShortcut;
-                _shortcutToEdit = shortcutToEdit;
 
                 // Style the Saved Profiles list
                 ilv_saved_profiles.MultiSelect = false;
@@ -126,6 +124,7 @@ namespace DisplayMagician.UIForms
         public ShortcutItem Shortcut
         {
             get => _shortcutToEdit;
+            set => _shortcutToEdit = value;
         }
 
         public bool EditingExistingShortcut
@@ -940,21 +939,62 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void ShortcutForm_Load(object sender, EventArgs e)
+        private void ClearForm()
+        {
+            // Clear the textboxes
+            txt_alternative_executable.Text = "";
+            txt_alternative_game.Text = "";
+            txt_args_executable.Text = "";
+            txt_args_game.Text = "";
+            txt_executable.Text = "";
+            txt_game_name.Text = "Please select a game from the list below...";
+            txt_run_cmd_afterwards.Text = "";
+            txt_run_cmd_afterwards_args.Text = "";
+            txt_shortcut_save_name.Text = "";
+
+            // Set the radio buttons to default
+            rb_no_change_audio.Checked = true;
+            rb_change_audio.Checked = false;
+            rb_keep_audio_volume.Checked = true;
+            rb_set_audio_volume.Checked = false;
+            rb_change_capture.Checked = false;
+            rb_keep_capture_volume.Checked = false;
+            rb_no_change_capture.Checked = true;
+            rb_set_capture_volume.Checked = false;
+
+            // Set the game mode on load
+            rb_launcher.Checked = true;
+            rb_no_game.Checked = false;
+            rb_standalone.Checked = false;
+
+            // Set the checkboxes
+            cb_args_executable.Checked = false;
+            cb_args_game.Checked = false;
+            cb_autosuggest.Checked = true;
+            cb_run_cmd_afterwards.Checked = false;
+            cb_run_cmd_afterwards_args.Checked = false;
+            cb_wait_alternative_game.Checked = false;
+
+            // Wipe the pictureboxes if they're in use
+            if (pb_exe_icon.Image != null)
+            {
+                pb_exe_icon.Image = null;
+            }
+            if (pb_game_icon.Image != null)
+            {
+                pb_game_icon.Image = null;
+            }
+        }
+
+        private void LoadShortcut()
         {
             Game shortcutGame = null;
-
-
-            // Parse the game bitmaps now the first time as we need them
-            // We need to add a refresh button to the shortcut page now!
-            if (!GameLibraries.GameLibrary.GamesImagesLoaded)
-            {
-                GameLibraries.GameLibrary.RefreshGameBitmaps();
-            }            
 
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
+
+            ClearForm();
 
             // Prepare the Game process priority combo box
             cbx_game_priority.DataSource = new ComboItem[] {
@@ -981,6 +1021,9 @@ namespace DisplayMagician.UIForms
             cbx_exe_priority.DisplayMember = "Text";
             cbx_exe_priority.SelectedIndex = 2; //Normal
             cbx_exe_priority.Enabled = true;
+
+            // Empty the selected game in case this is a reload
+            txt_alternative_executable.Text = "";
 
             // Populate all the Audio devices in the audio devices list.
             // Set the Audio device to the shortcut audio device only if 
@@ -1400,11 +1443,11 @@ namespace DisplayMagician.UIForms
             {
                 txt_shortcut_save_name.Text = _shortcutToEdit.Name;
             }
-            
+
 
             // Set the selected image and available images (originalBitmap is set during shortcut update)
-            
-            
+
+
             if (_editingExistingShortcut)
             {
                 ShortcutBitmap defaultBitmap = new ShortcutBitmap();
@@ -1436,12 +1479,12 @@ namespace DisplayMagician.UIForms
                         // If the game is selected, then grab images from the game
                         if (shortcutGame != null)
                         {
-                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.IconPath));                             
+                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.IconPath));
                             if (shortcutGame.ExePath != shortcutGame.IconPath)
                             {
                                 _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.ExePath));
                             }
-                            
+
                         }
                         // If the different exe to monitor is set, then grab the icons from there too!
                         if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor) && File.Exists(_shortcutToEdit.DifferentGameExeToMonitor))
@@ -1567,8 +1610,8 @@ namespace DisplayMagician.UIForms
                             btn_choose_exe_icon.Enabled = true;
                         }
                     }
-                }                    
-            }            
+                }
+            }
             else
             {
                 // We're editing a new shortcut, so no game or anything selected
@@ -1578,7 +1621,7 @@ namespace DisplayMagician.UIForms
             if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
             {
                 flp_start_programs.Controls.Clear();
-                
+
                 Padding firstStartProgramMargin = new Padding(10) { };
                 Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
 
@@ -1592,7 +1635,7 @@ namespace DisplayMagician.UIForms
                         continue;
                     }
 
-                    StartProgramControl startProgramControl = new StartProgramControl(myStartProgram,spOrder);
+                    StartProgramControl startProgramControl = new StartProgramControl(myStartProgram, spOrder);
                     startProgramControl.Dock = DockStyle.None;
                     if (spOrder == 1)
                     {
@@ -1601,7 +1644,7 @@ namespace DisplayMagician.UIForms
                     else
                     {
                         startProgramControl.Margin = otherStartProgramMargin;
-                    }                    
+                    }
                     startProgramControl.Width = flp_start_programs.Width - 40;
                     startProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
                     startProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
@@ -1615,13 +1658,13 @@ namespace DisplayMagician.UIForms
             // Setup the single stop program we're beginning with
             if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
             {
-                cb_run_cmd_afterwards.Checked = true; 
+                cb_run_cmd_afterwards.Checked = true;
                 txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
                 if (_shortcutToEdit.StopPrograms[0].ExecutableArgumentsRequired)
                 {
                     cb_run_cmd_afterwards_args.Checked = true;
                     txt_run_cmd_afterwards_args.Text = _shortcutToEdit.StopPrograms[0].Arguments;
-                }                
+                }
             }
             else
             {
@@ -1639,8 +1682,26 @@ namespace DisplayMagician.UIForms
             // Finally enable the save button if it's still valid
             EnableSaveButtonIfValid();
 
-            // Close the splash screen
-            CloseTheSplashScreen();
+        }
+
+        private void ShortcutForm_Load(object sender, EventArgs e)
+        {
+            if (_firstShow)
+            {
+                // Parse the game bitmaps now the first time as we need them
+                // We need to add a refresh button to the shortcut page now!
+                if (!GameLibraries.GameLibrary.GamesImagesLoaded)
+                {
+                    GameLibraries.GameLibrary.RefreshGameBitmaps();
+                }
+
+                // Close the splash screen
+                CloseTheSplashScreen();
+                _firstShow = false;
+            }
+            // Load the shortcut info
+            LoadShortcut();
+
 
         }
 
@@ -2870,6 +2931,7 @@ namespace DisplayMagician.UIForms
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Exclamation);
         }
+
     }
 
     // Class used to populate combo boxes

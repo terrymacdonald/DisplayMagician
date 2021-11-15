@@ -93,6 +93,7 @@ namespace DisplayMagician.UIForms
             this.rb_standalone = new System.Windows.Forms.RadioButton();
             this.rb_no_game = new System.Windows.Forms.RadioButton();
             this.p_game = new System.Windows.Forms.Panel();
+            this.btn_refresh_games_list = new System.Windows.Forms.Button();
             this.btn_choose_game_icon = new System.Windows.Forms.Button();
             this.pb_game_icon = new System.Windows.Forms.PictureBox();
             this.lbl_no_game_libraries = new System.Windows.Forms.Label();
@@ -132,7 +133,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.btn_refresh_games_list = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
@@ -996,6 +996,22 @@ namespace DisplayMagician.UIForms
             this.p_game.Size = new System.Drawing.Size(1076, 389);
             this.p_game.TabIndex = 7;
             // 
+            // btn_refresh_games_list
+            // 
+            this.btn_refresh_games_list.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_refresh_games_list.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_refresh_games_list.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_refresh_games_list.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_refresh_games_list.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_refresh_games_list.ForeColor = System.Drawing.Color.White;
+            this.btn_refresh_games_list.Location = new System.Drawing.Point(950, 162);
+            this.btn_refresh_games_list.Name = "btn_refresh_games_list";
+            this.btn_refresh_games_list.Size = new System.Drawing.Size(117, 25);
+            this.btn_refresh_games_list.TabIndex = 42;
+            this.btn_refresh_games_list.Text = "Refresh Games List";
+            this.btn_refresh_games_list.UseVisualStyleBackColor = true;
+            this.btn_refresh_games_list.Click += new System.EventHandler(this.btn_refresh_games_list_Click);
+            // 
             // btn_choose_game_icon
             // 
             this.btn_choose_game_icon.Enabled = false;
@@ -1490,22 +1506,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
-            // 
-            // btn_refresh_games_list
-            // 
-            this.btn_refresh_games_list.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_refresh_games_list.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_refresh_games_list.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_refresh_games_list.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_refresh_games_list.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_refresh_games_list.ForeColor = System.Drawing.Color.White;
-            this.btn_refresh_games_list.Location = new System.Drawing.Point(950, 162);
-            this.btn_refresh_games_list.Name = "btn_refresh_games_list";
-            this.btn_refresh_games_list.Size = new System.Drawing.Size(117, 25);
-            this.btn_refresh_games_list.TabIndex = 42;
-            this.btn_refresh_games_list.Text = "Refresh Games List";
-            this.btn_refresh_games_list.UseVisualStyleBackColor = true;
-            this.btn_refresh_games_list.Click += new System.EventHandler(this.btn_refresh_games_list_Click);
             // 
             // ShortcutForm
             // 
