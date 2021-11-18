@@ -62,7 +62,7 @@ namespace DisplayMagician.UIForms
             // Temporarily stop updating the saved_profiles listview
             ilv_saved_shortcuts.SuspendLayout();            
 
-            ImageListViewItem newItem = null;
+            ImageListViewItem newItem = null;            
             ilv_saved_shortcuts.Items.Clear();
 
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))

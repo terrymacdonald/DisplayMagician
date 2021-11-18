@@ -897,7 +897,7 @@ namespace DisplayMagician.UIForms
                     else if (rb_switch_display_temp.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
                 }
-                else if (rb_launcher.Checked && ilv_games.SelectedItems.Count >0)
+                else if (rb_launcher.Checked && ilv_games.SelectedItems.Count > 0)
                 {
                     txt_shortcut_save_name.Text = $"{txt_game_name.Text} ({_profileToUse.Name})";
                 }
@@ -924,7 +924,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void SelectGameInImageListView()
+        /*private void SelectGameInImageListView()
         {
             ilv_games.ClearSelection();
             IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_games.Items where item.Text == _shortcutToEdit.GameName select item);
@@ -937,7 +937,7 @@ namespace DisplayMagician.UIForms
                 ilv_games.EnsureVisible(itemToSelect.Index);
                 //ilv_games.Refresh();
             }
-        }
+        }*/
 
         private void ClearForm()
         {
@@ -1309,10 +1309,30 @@ namespace DisplayMagician.UIForms
             }
             // If we get to the end of the loaded profiles and haven't
             // found a matching profile, then we need to show the current profile
-            // that we're running now
+            // that we're running now (only if that's been saved)
             else if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
             {
-                chosenProfile = ProfileRepository.GetActiveProfile(); ;
+                ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
+                bool foundCurrentProfile = false;
+                foreach(ProfileItem profileToCheck in ProfileRepository.AllProfiles)
+                {
+                    if (profileToCheck.Equals(currentProfile))
+                    {
+                        chosenProfile = currentProfile;
+                        foundCurrentProfile = true;
+                    }
+                }
+
+                // If we get here, and we still haven't matched the profile, then just pick the first one
+                if (!foundCurrentProfile)
+                {
+                    if (ProfileRepository.ProfileCount > 0)
+                    {
+                        chosenProfile = ProfileRepository.AllProfiles[0];
+                    }
+                    
+                }
+                    
             }
 
 
@@ -1450,7 +1470,7 @@ namespace DisplayMagician.UIForms
 
             if (_editingExistingShortcut)
             {
-                ShortcutBitmap defaultBitmap = new ShortcutBitmap();
+                //ShortcutBitmap defaultBitmap = new ShortcutBitmap();
 
                 // Check if AvailableImages have been set, because if not, then we need to 'upgrade' the image structure
                 // To use this new way of working
@@ -2798,11 +2818,11 @@ namespace DisplayMagician.UIForms
             EnableSaveButtonIfValid();
         }
 
-        private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
+        /*private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
         {
-            if (tabc_shortcut.Visible == true)
-                SelectGameInImageListView();
-        }
+            //if (tabc_shortcut.Visible == true)
+            //    SelectGameInImageListView();
+        }*/
 
         private void btn_find_examples_startprograms_Click(object sender, EventArgs e)
         {
