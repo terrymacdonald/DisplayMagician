@@ -142,25 +142,25 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 ## Credits
-Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the name of some of these people:
+Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the names of these amazing people:
 
 * Original HelioDisplayManagement project created by the amazing Soroush Falahati
 * Various icons made by Freepik from www.flaticon.com
-* Erbkaiser (for the amazing help bug squashing)
+* Sean at SimCraft (Thank you so much for your generous donation!)
+* Domenic (Thanks for the solid month of troubleshooting help!)
+* Erbkaiser (One of the most impressive testers with an anamzing eye for detail)
 * SneakingJ (Major props for the help getting cloned display profiles to work)
-* Scowling (Again, without you, AMD support wouldn’t exist for v2.1)
+* Scowling (Again, without you, AMD support wouldn’t exist AT ALL! )
 * Slippery-silvia (Again, thanks for the testing help for Mosaic cards with v2.1)
-* Domenic (Thanks for the testing help as always)
 * Mobeeuz (Your thorough testing logs really helped!)
-* S4b0tage (Thanks for the testing help and the coffees)
+* S4b0tage (Thanks for the testing help and the donation!)
 * Gpo123 (thanks for the bug report)
 * Whitestar127 (thanks for the bug report)
-* Scowling (Without you, AMD support wouldn’t exist)
 * Frcooper (thanks for the sponsoring)
-* Stringfieldmark (thanks for sponsoring and the testing help)
+* Stringfieldmark (thanks for continued sponsoring and the testing help)
 * Bossebossebosse (thanks for the donation)
 * Sk666 (thanks for the donation)
-* FormelLMS (thanks for the donation and the testing help)
+* FormelLMS (thanks for the continued sponsoring and the testing help)
 * RBZL (thanks for the donation)
 * Neilperson (thanks for the cool idea)
 * DragRedSim (thanks for the bug report)
