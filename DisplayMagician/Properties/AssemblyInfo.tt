@@ -12,8 +12,8 @@
         minor = Convert.ToInt32(matches[0].Groups["minor"].Value);
         build = Convert.ToInt32(matches[0].Groups["build"].Value) + 1;
         revision = Convert.ToInt32(matches[0].Groups["revision"].Value);
-        if( this.Host.ResolveParameterValue("-","-","BuildConfiguration") == "Release" )
-            revision++;
+        //if( this.Host.ResolveParameterValue("-","-","BuildConfiguration") == "Release" )
+        //    revision++;
     }
 #>
 

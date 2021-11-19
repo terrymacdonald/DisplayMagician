@@ -11,7 +11,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("LittleBitBig")]
 [assembly: AssemblyProduct("DisplayMagician")]
-[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2021")]
+[assembly: AssemblyCopyright("Copyright © Terry MacDonald 2020-2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -26,8 +26,8 @@ using System.Resources;
 [assembly: Guid("e4ceaf5e-ad01-4695-b179-31168eb74c48")]
 
 // Version information
-[assembly: AssemblyVersion("2.1.0.254")]
-[assembly: AssemblyFileVersion("2.1.0.254")]
+[assembly: AssemblyVersion("2.1.1.255")]
+[assembly: AssemblyFileVersion("2.1.1.255")]
 [assembly: NeutralResourcesLanguageAttribute( "en" )]
 [assembly: CLSCompliant(true)]
 
