@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DisplayMagicianShared.Windows
 {
@@ -55,6 +52,8 @@ namespace DisplayMagicianShared.Windows
         /// </summary>
         BadDualView = -6
     }
+
+
 
     [Flags]
     public enum CHANGE_DISPLAY_SETTINGS_FLAGS : UInt32
@@ -269,6 +268,17 @@ namespace DisplayMagicianShared.Windows
         Primary = 1
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct APP_BAR_DATA
+    {
+        public int cbSize;
+        public IntPtr hWnd;
+        public int uCallbackMessage;
+        public ABE_EDGE uEdge;
+        public RECTL rc;
+        public ABS_SETTING lParam;
+    }
+
 
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/dd183565(v=vs.85).aspx
@@ -401,6 +411,7 @@ namespace DisplayMagicianShared.Windows
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct DISPLAY_DEVICE : IEquatable<DISPLAY_DEVICE>
     {
+
         [MarshalAs(UnmanagedType.U4)]
         public UInt32 Size;
 
@@ -579,8 +590,44 @@ namespace DisplayMagicianShared.Windows
         }
     }
 
+    public enum ABM_MESSAGE : UInt32
+    {
+        ABM_NEW = 0x00000000, // Registers a new appbar and specifies the message identifier that the system should use to send notification messages to the appbar.
+        ABM_REMOVE = 0x00000001, // Unregisters an appbar, removing the bar from the system's internal list.
+        ABM_QUERYPOS = 0x00000002, // Requests a size and screen position for an appbar.
+        ABM_SETPOS = 0x00000003, // Sets the size and screen position of an appbar.
+        ABM_GETSTATE = 0x00000004, // Retrieves the autohide and always-on-top states of the Windows taskbar.
+        ABM_GETTASKBARPOS = 0x00000005, // Retrieves the bounding rectangle of the Windows taskbar. Note that this applies only to the system taskbar. Other objects, particularly toolbars supplied with third-party software, also can be present. As a result, some of the screen area not covered by the Windows taskbar might not be visible to the user. To retrieve the area of the screen not covered by both the taskbar and other app bars—the working area available to your application—, use the GetMonitorInfo function.
+        ABM_ACTIVATE = 0x00000006, // Notifies the system to activate or deactivate an appbar. The lParam member of the APPBARDATA pointed to by pData is set to TRUE to activate or FALSE to deactivate.
+        ABM_GETAUTOHIDEBAR = 0x00000007, // Retrieves the handle to the autohide appbar associated with a particular edge of the screen.
+        ABM_SETAUTOHIDEBAR = 0x00000008, // Registers or unregisters an autohide appbar for an edge of the screen.
+        ABM_WINDOWPOSCHANGED = 0x00000009, // Notifies the system when an appbar's position has changed.
+        ABM_SETSTATE = 0x0000000A, // Windows XP and later: Sets the state of the appbar's autohide and always-on-top attributes.        
+        ABM_GETAUTOHIDEBAREX = 0x0000000B, // Windows XP and later: Retrieves the handle to the autohide appbar associated with a particular edge of a particular monitor.
+        ABM_SETAUTOHIDEBAREX = 0x0000000C, // Windows XP and later: Registers or unregisters an autohide appbar for an edge of a particular monitor.
+    }
+
+    public enum ABE_EDGE : UInt32
+    {
+        ABE_LEFT = 0,
+        ABE_TOP = 1,
+        ABE_RIGHT = 2,
+        ABE_BOTTOM = 3,
+    }
+
+    [Flags]
+    public enum ABS_SETTING : UInt32
+    {
+        ABS_AUTOHIDE = 0x1,
+        ABS_ALWAYSONTOP = 0x2,
+    }
+
+
     class GDIImport
     {
+        private const int ABS_NO_AUTOHIDE = 0x00;
+        private const int ABS_AUTOHIDE = 0x01;
+
         [DllImport("user32", CharSet = CharSet.Ansi)]
         public static extern CHANGE_DISPLAY_RESULTS ChangeDisplaySettingsEx(
             string deviceName,
@@ -668,6 +715,14 @@ namespace DisplayMagicianShared.Windows
         [DllImport("gdi32")]
         internal static extern bool SetDeviceGammaRamp(DCHandle dcHandle, ref GAMMA_RAMP ramp);
 
+        [DllImport("User32.dll", CharSet = CharSet.Auto)]
+        private static extern bool MoveWindow(IntPtr hWnd, int x, int y, int cx, int cy, bool repaint);
+
+        // This code was part of development to add recording taskbar location and state so that we could apply it later
+        // Windows 11 doesn't support moving 
+        [DllImport("Shell32.dll", CharSet = CharSet.Auto)]
+        private static extern int SHAppBarMessage(ABM_MESSAGE dwMessage, ref APP_BAR_DATA abd);
+
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         internal delegate int MonitorEnumProcedure(
             IntPtr monitorHandle,
@@ -675,5 +730,94 @@ namespace DisplayMagicianShared.Windows
             ref RECTL rect,
             IntPtr callbackObject
         );
+
+
+        public static APP_BAR_DATA GetTaskbarPosition()
+        {
+            APP_BAR_DATA abd = new APP_BAR_DATA();
+            abd.cbSize = Marshal.SizeOf(abd);
+
+            // Query the system for an approved size and position.
+            SHAppBarMessage(ABM_MESSAGE.ABM_GETTASKBARPOS, ref abd);
+
+            return abd;
+        }
+
+        public static bool GetTaskbarAutoHide(APP_BAR_DATA abd)
+        {
+            // Query the system for an approved size and position.
+            ABS_SETTING state = (ABS_SETTING)SHAppBarMessage(ABM_MESSAGE.ABM_GETSTATE, ref abd);
+
+            return state.HasFlag(ABS_SETTING.ABS_AUTOHIDE);
+        }
+
+
+        //public static void MoveTaskbar(APP_BAR_DATA abd, ABE_EDGE edge, Size idealSize)
+        public static void SetTaskbarPosition(APP_BAR_DATA abd, ABE_EDGE edge)
+        {
+            abd.uEdge = edge;
+            SHAppBarMessage(ABM_MESSAGE.ABM_SETPOS, ref abd);
+
+            /*// Get current size
+            int idealSize = 100;
+
+            if (edge == ABE_EDGE.ABE_LEFT || edge == ABE_EDGE.ABE_RIGHT)
+            {
+                abd.rc.Top = 0;
+                abd.rc.Bottom = SystemInformation.PrimaryMonitorSize.Height;
+                if (edge == ABE_EDGE.ABE_LEFT)
+                {
+                    abd.rc.Right = idealSize;
+                }
+                else
+                {
+                    abd.rc.Right = SystemInformation.PrimaryMonitorSize.Width;
+                    abd.rc.Left = abd.rc.Right - idealSize;
+                }
+
+            }
+            else
+            {
+                abd.rc.Left = 0;
+                abd.rc.Right = SystemInformation.PrimaryMonitorSize.Width;
+                if (edge == ABE_EDGE.ABE_TOP)
+                {
+                    abd.rc.Bottom = idealSize;
+                }
+                else
+                {
+                    abd.rc.Bottom = SystemInformation.PrimaryMonitorSize.Height;
+                    abd.rc.Top = abd.rc.Bottom - idealSize;
+                }
+            }
+
+            ABS_SETTING state = (ABS_SETTING)SHAppBarMessage(ABM_MESSAGE.ABM_GETSTATE, ref abd);*/
+        }
+
+        // THE FOLLOWING CODE WAS AN ATTEMPT TO SET THE TASKBAR POSITION USING CODE
+        // TURNS OUT WE CAN'T ACTUALLY SET THE POSITION PROGRAMMATICALLY iIN WIN10 or WIN11
+        // Next we want to remember where the windows toolbar is for each screen
+        // Query the system for an approved size and position.
+        // APP_BAR_DATA taskbarPosition = GDIImport.GetTaskbarPosition();
+        // bool taskbarAutoHide = GDIImport.GetTaskbarAutoHide(taskbarPosition);
+
+        // try to move the taskbar
+        // GDIImport.SetTaskbarPosition(taskbarPosition, ABE_EDGE.ABE_TOP);
+        // GDIImport.SetTaskbarAutoHide(taskbarPosition, true);
+
+        public static void SetTaskbarAutoHide(APP_BAR_DATA abd, bool hide)
+        {
+            if (hide)
+            {
+                // Set the autohide flag
+                abd.lParam |= ABS_SETTING.ABS_AUTOHIDE;
+            }
+            else
+            {
+                // Clear the autohide flag
+                abd.lParam &= ~ABS_SETTING.ABS_AUTOHIDE;
+            }
+            SHAppBarMessage(ABM_MESSAGE.ABM_GETSTATE, ref abd);
+        }
     }
 }

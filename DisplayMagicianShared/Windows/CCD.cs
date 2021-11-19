@@ -164,6 +164,7 @@ namespace DisplayMagicianShared.Windows
         SDC_FORCE_MODE_ENUMERATION = 0x00001000,
         SDC_ALLOW_PATH_ORDER_CHANGES = 0x00002000,
         SDC_VIRTUAL_MODE_AWARE = 0x00008000,
+        SDC_VIRTUAL_REFRESH_RATE_AWARE = 0x00020000,
 
         // Special common combinations (only set in this library)
         TEST_IF_VALID_DISPLAYCONFIG = (SDC_VALIDATE | SDC_USE_SUPPLIED_DISPLAY_CONFIG),
@@ -970,6 +971,19 @@ namespace DisplayMagicianShared.Windows
         public int Top;
         public int Right;
         public int Bottom;
+
+        public RECTL(int left, int top, int right, int bottom)
+        {
+            this.Left = left;
+            this.Top = top;
+            this.Right = right;
+            this.Bottom = bottom;
+        }
+
+        public static RECTL FromXYWH(int x, int y, int width, int height)
+        {
+            return new RECTL(x, y, x + width, y + height);
+        }
 
         public override bool Equals(object obj) => obj is RECTL other && this.Equals(other);
         public bool Equals(RECTL other)
