@@ -924,21 +924,6 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        /*private void SelectGameInImageListView()
-        {
-            ilv_games.ClearSelection();
-            IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_games.Items where item.Text == _shortcutToEdit.GameName select item);
-            if (matchingImageListViewItems.Any())
-            {
-                ImageListViewItem itemToSelect = matchingImageListViewItems.First();
-                itemToSelect.Selected = true;
-                itemToSelect.Focused = true;
-                itemToSelect.Enabled = true;
-                ilv_games.EnsureVisible(itemToSelect.Index);
-                //ilv_games.Refresh();
-            }
-        }*/
-
         private void ClearForm()
         {
             // Clear the textboxes
@@ -1635,6 +1620,7 @@ namespace DisplayMagician.UIForms
             else
             {
                 // We're editing a new shortcut, so no game or anything selected
+                ilv_games.ClearSelection();
             }
 
             // Set up the start programs
@@ -2791,26 +2777,23 @@ namespace DisplayMagician.UIForms
 
         private void ilv_games_ItemClick(object sender, ItemClickEventArgs e)
         {
-            if (ilv_games.SelectedItems.Count > 0)
+            txt_game_name.Text = e.Item.Text;
+            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
             {
-                txt_game_name.Text = e.Item.Text;
-                foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+                if (game.Name == txt_game_name.Text)
                 {
-                    if (game.Name == txt_game_name.Text)
-                    {
-                        if (_loadedShortcut)
-                            _isUnsaved = true;
-                        _gameLauncher = game.GameLibrary.ToString("G");
-                        lbl_game_library.Text = $"Game Library: {_gameLauncher}";
-                        _gameId = game.Id;
-                        _availableImages = game.AvailableGameBitmaps;
-                        _shortcutToEdit.AvailableImages = game.AvailableGameBitmaps;
-                        _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
-                        _shortcutToEdit.SelectedImage = _selectedImage;
-                        pb_game_icon.Image = _selectedImage.Image;
-                        btn_choose_game_icon.Enabled = true;
-                        break;
-                    }
+                    if (_loadedShortcut)
+                        _isUnsaved = true;
+                    _gameLauncher = game.GameLibrary.ToString("G");
+                    lbl_game_library.Text = $"Game Library: {_gameLauncher}";
+                    _gameId = game.Id;
+                    _availableImages = game.AvailableGameBitmaps;
+                    _shortcutToEdit.AvailableImages = game.AvailableGameBitmaps;
+                    _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                    _shortcutToEdit.SelectedImage = _selectedImage;
+                    pb_game_icon.Image = _selectedImage.Image;
+                    btn_choose_game_icon.Enabled = true;
+                    break;
                 }
             }
 
@@ -2818,11 +2801,6 @@ namespace DisplayMagician.UIForms
             EnableSaveButtonIfValid();
         }
 
-        /*private void tabc_shortcut_VisibleChanged(object sender, EventArgs e)
-        {
-            //if (tabc_shortcut.Visible == true)
-            //    SelectGameInImageListView();
-        }*/
 
         private void btn_find_examples_startprograms_Click(object sender, EventArgs e)
         {
