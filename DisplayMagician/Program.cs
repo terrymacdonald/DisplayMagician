@@ -1050,6 +1050,10 @@ namespace DisplayMagician {
             {
                 if (args.IsUpdateAvailable)
                 {
+                    // Shut down the splash screen
+                    if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+                        Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
+
                     logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
                     DialogResult dialogResult;                    
 
@@ -1099,6 +1103,10 @@ namespace DisplayMagician {
             }
             else
             {
+                // Shut down the splash screen
+                if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+                    Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
+
                 if (args.Error is WebException)
                 {
                     logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - WebException - There was a problem reaching the update server.");
