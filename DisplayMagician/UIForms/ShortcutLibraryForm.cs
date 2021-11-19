@@ -19,6 +19,7 @@ namespace DisplayMagician.UIForms
 
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ShortcutItem _selectedShortcut = null;
+        private ShortcutForm _shortcutForm = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutLibraryForm()
@@ -47,6 +48,7 @@ namespace DisplayMagician.UIForms
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
 
+
             RemoveWarningIfShortcuts();
         }
 
@@ -60,7 +62,7 @@ namespace DisplayMagician.UIForms
             // Temporarily stop updating the saved_profiles listview
             ilv_saved_shortcuts.SuspendLayout();            
 
-            ImageListViewItem newItem = null;
+            ImageListViewItem newItem = null;            
             ilv_saved_shortcuts.Items.Clear();
 
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
@@ -200,6 +202,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
+                    logger.Warn(ex, $"ShortcutLibraryForm/btn_save_Click: Exception saving shortcut to {dialog_save.FileName}.");
                     MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
@@ -262,19 +265,31 @@ namespace DisplayMagician.UIForms
         private void btn_new_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
-            var shortcutForm = new ShortcutForm(new ShortcutItem());
-            //ShortcutRepository.IsValidRefresh();
-            shortcutForm.ShowDialog(this);
-            if (shortcutForm.DialogResult == DialogResult.OK)
+            ShortcutItem si = new ShortcutItem();
+            if (_shortcutForm == null)
             {
-                ShortcutRepository.AddShortcut(shortcutForm.Shortcut);
-                _selectedShortcut = shortcutForm.Shortcut;
+                _shortcutForm = new ShortcutForm();
+            } 
+            //ShortcutRepository.IsValidRefresh()
+            // Set the Shortcut to as a new shortcut
+            _shortcutForm.Shortcut = si;
+            _shortcutForm.EditingExistingShortcut = false;
+            _shortcutForm.ShowDialog(this);
+            if (_shortcutForm.DialogResult == DialogResult.OK)
+            {
+                ShortcutRepository.AddShortcut(_shortcutForm.Shortcut);
+                _selectedShortcut = _shortcutForm.Shortcut;
                 //ShortcutRepository.IsValidRefresh();
                 RefreshShortcutLibraryUI();
             }
             this.Cursor = Cursors.Default;
             RemoveWarningIfShortcuts();
 
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
         }
 
         private void btn_edit_Click(object sender, EventArgs e)
@@ -305,15 +320,16 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
 
                 this.Cursor = Cursors.WaitCursor;
-
-                // We need to stop ImageListView redrawing things before we're ready
-                // This stops an exception when ILV is just too keen!
-
-
-                var shortcutForm = new ShortcutForm(_selectedShortcut);
+                
+                if (_shortcutForm == null)
+                {
+                    _shortcutForm = new ShortcutForm();
+                }
+                _shortcutForm.Shortcut = _selectedShortcut;
+                _shortcutForm.EditingExistingShortcut = true;
                 //ilv_saved_shortcuts.SuspendLayout();
-                shortcutForm.ShowDialog(this);
-                if (shortcutForm.DialogResult == DialogResult.OK)
+                _shortcutForm.ShowDialog(this);
+                if (_shortcutForm.DialogResult == DialogResult.OK)
                 {
                     RefreshShortcutLibraryUI();
                     // As this is an edit, we need to manually force saving the shortcut library
@@ -321,6 +337,12 @@ namespace DisplayMagician.UIForms
                 }
 
                 this.Cursor = Cursors.Default;
+
+                // Also refresh the right-click menu (if we have a main form loaded)
+                if (Program.AppMainForm is Form)
+                {
+                    Program.AppMainForm.RefreshNotifyIconMenus();
+                }
             }
         }
 
@@ -358,6 +380,12 @@ namespace DisplayMagician.UIForms
             ShortcutRepository.IsValidRefresh();
             RefreshShortcutLibraryUI();
             RemoveWarningIfShortcuts();
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
         }
 
         private void btn_run_Click(object sender, EventArgs e)
@@ -430,6 +458,12 @@ namespace DisplayMagician.UIForms
             lbl_mask.Visible = false;
             lbl_mask.SendToBack();
 
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
+
         }
 
         private void ilv_saved_shortcuts_ItemHover(object sender, ItemHoverEventArgs e)
@@ -472,6 +506,11 @@ namespace DisplayMagician.UIForms
             btn_delete.PerformClick();
         }
 
+        private void tsmi_copy_Click(object sender, EventArgs e)
+        {
+            btn_copy.PerformClick();
+        }
+
         private void ShortcutLibraryForm_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (lbl_mask.Visible == true)
@@ -495,5 +534,39 @@ namespace DisplayMagician.UIForms
             string targetURL = @"https://github.com/sponsors/terrymacdonald";
             System.Diagnostics.Process.Start(targetURL);
         }
+
+        private void btn_copy_Click(object sender, EventArgs e)
+        {
+            if (_selectedShortcut == null)
+            {
+                if (ShortcutRepository.ShortcutCount > 0)
+                {
+                    MessageBox.Show(
+                        @"You need to select a Game Shortcut in order to copy it. Please select a Game Shortcut then try again, or right-click on the Game Shortcut and select 'Copy Shortcut'.",
+                        @"Select Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        @"You need to create a Game Shortcut in order to copy it. Please create a Game Shortcut by clicking the New button.",
+                        @"Create Game Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+            }
+            else
+            {
+                ShortcutItem copiedShortcut;
+                // Copy the shortcut
+                ShortcutRepository.CopyShortcut(_selectedShortcut, out copiedShortcut);
+                // Select the new copied shortcut
+                _selectedShortcut = copiedShortcut;
+                // Invalidate the list of shortcuts so it gets redrawn again with the copy included!
+                ilv_saved_shortcuts.Invalidate();
+                // Refresh the UI
+                RefreshShortcutLibraryUI();
+            }
+        }
+
     }
 }

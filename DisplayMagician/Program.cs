@@ -19,6 +19,7 @@ using NLog.Config;
 using System.Collections.Generic;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace DisplayMagician {
 
@@ -36,13 +37,15 @@ namespace DisplayMagician {
         public static string AppSteamIconFilename = Path.Combine(AppIconPath, @"Steam.ico");
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
+        public static string AppDownloadsPath = Utils.GetDownloadsPath();
         public static bool AppToastActivated = false;
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
-
+        public static LoadingForm AppSplashScreen;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
+        private static bool _gamesLoaded = false;
 
         /// <summary>
         ///     The main entry point for the application.
@@ -103,9 +106,10 @@ namespace DisplayMagician {
 
             // Load the program settings
             AppProgramSettings = ProgramSettings.LoadSettings();
+            
 
             // Rules for mapping loggers to targets          
-            NLog.LogLevel logLevel = null;
+            /*NLog.LogLevel logLevel = null;
             switch (AppProgramSettings.LogLevel)
             {
                 case "Trace":
@@ -126,7 +130,13 @@ namespace DisplayMagician {
                 default:
                     logLevel = NLog.LogLevel.Info;
                     break;
-            }
+            }*/
+            // TODO - remove this temporary action to force Trace level logging
+            // I've set this as it was too onerous continuously teaching people how to turn on TRACE logging
+            // While there are a large number of big changes taking place with DisplayMagician, this will minimise
+            // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
+            NLog.LogLevel logLevel = NLog.LogLevel.Trace;
+            AppProgramSettings.LogLevel = "Trace";
 
 
             // Create the log file target
@@ -232,14 +242,14 @@ namespace DisplayMagician {
             // Check if it's an upgrade from DisplayMagician v1 to v2
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
-            // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.0.json doesn't
-            if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json")))
+            // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.1.json doesn't
+            if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json")))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1 to DisplayMagician v2, so performing some upgrade steps.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.1, so performing some upgrade steps.");
                 // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
                 if (upgradedSettingsFile)
                 {
-                    logger.Info($"Program/Main: Upgraded v1 settings file {oldSettingsFile} to v2 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
+                    logger.Info($"Program/Main: Upgraded v1.0 settings file {oldSettingsFile} to v2.0 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
                 }                
 
                 // Copy the old Game Shortcuts file to the new v2 name
@@ -255,14 +265,29 @@ namespace DisplayMagician {
                 }    
                 catch(Exception ex)
                 {
-                    logger.Error(ex, $"Program/Main: Exception upgrading v1 shortcut file {oldShortcutsFile} to v2 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
+                    logger.Error(ex, $"Program/Main: Exception upgrading v1.0 shortcut file {oldShortcutsFile} to v2.0 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
                 }
 
                 // Warn the user about the fact we need a new DisplayProfiles_2.0.json
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
                 myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician1to2.rtf";
-                myMessageWindow.HeadingText = "DisplayMagician v2.0.0 Upgrade Warning";
+                myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
+                myMessageWindow.ButtonText = "&Close";
+                myMessageWindow.ShowDialog();
+            }
+            // Check if it's an upgrade from DisplayMagician v2.0 to v2.1
+            // and if it is then copy the old configs to the new filenames and
+            // explain to the user what they need to do.
+            // e.g. DisplayProfiles_2.1.json exists, but DisplayProfiles_2.0.json doesn't
+            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json")))
+            {
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.1, so performing some upgrade steps.");
+                // Warn the user about the fact we need a new DisplayProfiles_2.0.json
+                StartMessageForm myMessageWindow = new StartMessageForm();
+                myMessageWindow.MessageMode = "rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician20to21.rtf";
+                myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
             }
@@ -293,6 +318,9 @@ namespace DisplayMagician {
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
+                // Try to load all the games in parallel to this process
+                //Task.Run(() => LoadGamesInBackground());
+                
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
@@ -351,7 +379,9 @@ namespace DisplayMagician {
                 {
                     logger.Debug($"RunShortcut commandline command was invoked!");
 
-                    // 
+                    // Load the games in background onexecute
+                    GameLibrary.LoadGamesInBackground();
+
                     RunShortcut(argumentShortcut.Value);
                     return 0;
                 });
@@ -565,14 +595,26 @@ namespace DisplayMagician {
                     }
                 }
                 logger.Info("Starting Normally...");
+
+                // Try to load all the games in parallel to this process
+                //Task.Run(() => LoadGamesInBackground());
+                logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
+                GameLibrary.LoadGamesInBackground();
+
                 StartUpApplication();
                 return 0;
             });
 
-            logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
-
-            // Try to load all the games in parallel to this process
-            Task.Run(() => LoadGamesInBackground());
+            
+            if (AppProgramSettings.ShowSplashScreen)
+            {
+                //Show Splash Form
+                AppSplashScreen = new LoadingForm();
+                var splashThread = new Thread(new ThreadStart(
+                    () => Application.Run(AppSplashScreen)));
+                splashThread.SetApartmentState(ApartmentState.STA);
+                splashThread.Start();
+            }         
 
             try
             {
@@ -624,6 +666,10 @@ namespace DisplayMagician {
             
                 IPCService.GetInstance().Status = InstanceStatus.User;
 
+                // Close the splash screen
+                if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                    AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
                 // Run the program with directly showing CreateProfile form
                 Application.Run(new DisplayProfileForm());
 
@@ -662,8 +708,7 @@ namespace DisplayMagician {
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Program/StartUpNormally exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        logger.Error(ex, $"Program/StartUpNormally exception while trying to create directory {AppIconPath}");
+                        logger.Error(ex, $"Program/StartUpApplication exception while trying to create directory {AppIconPath}");
                     }
                 }
 
@@ -680,8 +725,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Program/StartUpNormally exception 2: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                    logger.Error(ex, $"Program/StartUpNormally exception create Icon files for future use in {AppIconPath}");
+                    logger.Error(ex, $"Program/StartUpApplication exception create Icon files for future use in {AppIconPath}");
                 }
 
                 IPCService.GetInstance().Status = InstanceStatus.User;
@@ -694,13 +738,13 @@ namespace DisplayMagician {
 
                 // Run the program with normal startup
                 AppMainForm = new MainForm();
+                AppMainForm.Load += MainForm_LoadCompleted;
                 Application.Run(AppMainForm);                
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Program/StartUpNormally exception 3: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                logger.Error(ex, $"Program/StartUpNormally top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                logger.Error(ex, $"Program/StartUpApplication top level exception: {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 MessageBox.Show(
                     ex.Message,
                     Language.Fatal_Error,
@@ -710,6 +754,14 @@ namespace DisplayMagician {
             
         }
 
+        private static void MainForm_LoadCompleted(object sender, EventArgs e)
+        {
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+            AppMainForm.TopMost = true;
+            AppMainForm.Activate();
+            AppMainForm.TopMost = false;
+        }
 
         // ReSharper disable once CyclomaticComplexity
         private static void RunShortcut(string shortcutUUID)
@@ -717,6 +769,10 @@ namespace DisplayMagician {
             logger.Debug($"Program/RunShortcut: Starting");
 
             ShortcutItem shortcutToRun = null;
+
+            // Close the splash screen
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             // Check there is only one version of this application so we won't
             // mess with another monitoring session
@@ -768,6 +824,10 @@ namespace DisplayMagician {
         {
             logger.Trace($"Program/RunProfile: Starting");
 
+            // Close the splash screen
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
             // Lookup the profile
             ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
             logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
@@ -776,212 +836,7 @@ namespace DisplayMagician {
 
         }
 
-        public static bool LoadGamesInBackground()
-        {
-
-            logger.Debug($"Program/LoadGamesInBackground: Starting");
-            // Now lets prepare loading all the Steam games we have installed
-            Action loadSteamGamesAction = new Action(() =>
-            {
-                // Check if Steam is installed
-                GameLibrary steamLibrary = SteamLibrary.GetLibrary();
-                if (steamLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Steam library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Steam Games");
-                    if (!steamLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {steamLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Steam not installed.");
-                    Console.WriteLine("Steam not installed.");
-                }
-            });
-
-            // Now lets prepare loading all the Uplay games we have installed
-            Action loadUplayGamesAction = new Action(() =>
-            {
-                // Check if Uplay is installed
-                GameLibrary uplayLibrary = UplayLibrary.GetLibrary();
-                if (uplayLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Uplay library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Uplay Games");
-                    if (!uplayLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {uplayLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Uplay not installed.");
-                    Console.WriteLine("Uplay not installed.");
-                }
-
-            });
-
-            // Now lets prepare loading all the Origin games we have installed
-            Action loadOriginGamesAction = new Action(() =>
-            {
-                // Check if Origin is installed
-                GameLibrary originLibrary = OriginLibrary.GetLibrary();
-                if (originLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Origin library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Origin Games");
-                    if (!originLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Origin Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {originLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Origin not installed.");
-                    Console.WriteLine("Origin not installed.");
-                }
-
-            });
-
-            // Now lets prepare loading all the Epic games we have installed
-            Action loadEpicGamesAction = new Action(() =>
-            {
-                // Check if Epic is installed
-                GameLibrary epicLibrary = EpicLibrary.GetLibrary();
-                if (epicLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Origin library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Epic Games");
-                    if (!epicLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Epic Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Epic Games (found {epicLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Epic not installed.");
-                    Console.WriteLine("Epic not installed.");
-                }
-
-            });
-
-            // Now lets prepare loading all the GOG games we have installed
-            Action loadGogGamesAction = new Action(() =>
-            {
-                // Check if GOG is installed
-                GameLibrary gogLibrary = GogLibrary.GetLibrary();
-                if (gogLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Origin library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed GOG Games");
-                    if (!gogLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed GOG Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed GOG Games (found {gogLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: GOG not installed.");
-                    Console.WriteLine("GOG not installed.");
-                }
-
-            });
-
-            // Store all the actions in a array so we can wait on them later
-            List<Action> loadGamesActions = new List<Action>();
-            loadGamesActions.Add(loadSteamGamesAction);
-            loadGamesActions.Add(loadUplayGamesAction);
-            loadGamesActions.Add(loadOriginGamesAction);
-            loadGamesActions.Add(loadEpicGamesAction);
-            loadGamesActions.Add(loadGogGamesAction);
-
-            try
-            {
-                logger.Debug($"Program/LoadGamesInBackground: Running game loading actions.");
-                // Go through and start all the actions, making sure we only have one threat per action to avoid thread issues
-                int threads = loadGamesActions.Count;
-                ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = threads };
-                Parallel.Invoke(options, loadGamesActions.ToArray());
-                // Once we get here , we know that all the parallel actions have returned
-                logger.Debug($"Program/LoadGamesInBackground: All game loading tasks finished");
-            }
-            catch (AggregateException ae)
-            {
-                logger.Error(ae, $"Program/LoadGamesInBackground exception during loadGamesActions");
-            }
-
-            // Produce a single array of Games we can reference later
-            GameLibrary.AllInstalledGamesInAllLibraries = SteamLibrary.GetLibrary().AllInstalledGames;
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(EpicLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(GogLibrary.GetLibrary().AllInstalledGames);
-
-            // Create Game Bitmaps from the Games so the rest of the program is faster later
-            // Get the bitmap out of the IconPath 
-            // IconPath can be an ICO, or an EXE
-            foreach (var game in GameLibrary.AllInstalledGamesInAllLibraries)
-            {
-                Bitmap bm = null;
-                try
-                {
-                    /*ArrayList filesToSearchForIcon = new ArrayList();
-                    filesToSearchForIcon.Add(game.ExePath);
-                    if (game.IconPath != game.ExePath)
-                        filesToSearchForIcon.Add(game.IconPath);
-
-                    bm = ImageUtils.GetMeABitmapFromFile(filesToSearchForIcon);*/
-
-                    // We only want the icon location that the GameLibrary told us to use
-                    // Note: This may be an icon file, or an exe file.
-                    // This function tries to get a 256x256 Vista sized bitmap from the file
-                    logger.Trace($"Program/LoadGamesInBackground: Attempting to get game bitmaps from {game.Name}.");
-                    bm = ImageUtils.GetMeABitmapFromFile(game.IconPath);
-                    if (bm != null && bm.GetType() == typeof(Bitmap))
-                    {
-                        logger.Trace($"Program/LoadGamesInBackground: Got game bitmaps from {game.Name}.");
-                    }
-                    else
-                    {
-                        logger.Trace($"Program/LoadGamesInBackground: Couldn't get game bitmaps from {game.Name} for some reason.");
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Program/LoadGamesInBackground: Exception building game bitmaps for {game.Name} during load");                    
-                }
-
-                if (bm == null)
-                {
-                    if (game.GameLibrary.Equals(SupportedGameLibraryType.Steam))
-                        bm = Properties.Resources.Steam;
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Uplay))
-                        bm = Properties.Resources.Uplay;
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Origin))
-                        bm = Properties.Resources.Origin;
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.Epic))
-                        bm = Properties.Resources.Epic;
-                    else if (game.GameLibrary.Equals(SupportedGameLibraryType.GOG))
-                        bm = Properties.Resources.GOG;
-                    else
-                        bm = Properties.Resources.DisplayMagician.ToBitmap();
-                }
-
-                game.GameBitmap = bm;
-            }
-
-            return true;
-
-        }
-
+        
         public static string HotkeyToString(Keys hotkey)
         {
             string parsedHotkey = String.Empty;

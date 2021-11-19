@@ -123,6 +123,7 @@ namespace DisplayMagicianShared.UserControls
 
         private void DrawView(Graphics g)
         {
+
             var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
             var factor = Math.Min(Width / viewSize.Width, Height / viewSize.Height);
             g.ScaleTransform(factor, factor);
@@ -207,7 +208,11 @@ namespace DisplayMagicianShared.UserControls
                 {
                     str = $"Primary Display{Environment.NewLine}" + str;
                 }
-                
+                if (screen.IsClone)
+                {
+                    str = str + $"(+{screen.ClonedCopies-1} Clone)";
+                }
+
                 DrawString(g, str, wordTextColour, selectedWordFont, wordRect.Size, wordRect.Location);
 
                 // Draw the position of the screen

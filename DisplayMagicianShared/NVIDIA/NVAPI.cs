@@ -364,6 +364,72 @@ namespace DisplayMagicianShared.NVIDIA
         UNKNOWN = 0xFFFFFFFF,
     }
 
+    public enum NV_DISPLAYCONFIG_SPANNING_ORIENTATION : UInt32
+    {
+        NV_DISPLAYCONFIG_SPAN_NONE = 0,
+        NV_DISPLAYCONFIG_SPAN_HORIZONTAL = 1,
+        NV_DISPLAYCONFIG_SPAN_VERTICAL = 2,
+    }
+
+    public enum TIMING_SCAN_MODE : ushort
+    {
+        /// <summary>
+        ///     Progressive scan mode
+        /// </summary>
+        Progressive = 0,
+
+        /// <summary>
+        ///     Interlaced scan mode
+        /// </summary>
+        Interlaced = 1,
+
+        /// <summary>
+        ///     Interlaced scan mode with extra vertical blank
+        /// </summary>
+        InterlacedWithExtraVerticalBlank = 1,
+
+        /// <summary>
+        ///     Interlaced scan mode without extra vertical blank
+        /// </summary>
+        InterlacedWithNoExtraVerticalBlank = 2
+    }
+
+    public enum TIMING_VERTICAL_SYNC_POLARITY : byte
+    {
+        /// <summary>
+        ///     Positive vertical synchronized polarity
+        /// </summary>
+        Positive = 0,
+
+        /// <summary>
+        ///     Negative vertical synchronized polarity
+        /// </summary>
+        Negative = 1,
+
+        /// <summary>
+        ///     Default vertical synchronized polarity
+        /// </summary>
+        Default = Positive
+    }
+
+    public enum TIMING_HORIZONTAL_SYNC_POLARITY : byte
+    {
+        /// <summary>
+        ///     Positive horizontal synchronized polarity
+        /// </summary>
+        Positive = 0,
+
+        /// <summary>
+        ///     Negative horizontal synchronized polarity
+        /// </summary>
+        Negative = 1,
+
+        /// <summary>
+        ///     Default horizontal synchronized polarity
+        /// </summary>
+        Default = Negative
+    }
+
     public enum NV_TIMING_OVERRIDE : UInt32
     {
         CURRENT = 0,          //!< get the current timing
@@ -472,12 +538,12 @@ namespace DisplayMagicianShared.NVIDIA
     {
         VALID = 0x00000000,  //!< The topology is valid
         MISSING_GPU = 0x00000001,   //!< Not enough SLI GPUs were found to fill the entire
-                                                            //! topology. hPhysicalGPU will be 0 for these.
+                                    //! topology. hPhysicalGPU will be 0 for these.
         MISSING_DISPLAY = 0x00000002,   //!< Not enough displays were found to fill the entire
-                                                                //! topology. displayOutputId will be 0 for these.
+                                        //! topology. displayOutputId will be 0 for these.
         MIXED_DISPLAY_TYPES = 0x00000004,   //!< The topoogy is only possible with displays of the same
-                                                                    //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
-                                                                    //! sure they are all CRTs, or all DFPs.
+                                            //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
+                                            //! sure they are all CRTs, or all DFPs.
     }
 
     public enum NV_GPU_BUS_TYPE : UInt32
@@ -525,7 +591,7 @@ namespace DisplayMagicianShared.NVIDIA
 
     }
 
-    public enum NV_COLOR_FORMAT : UInt32
+    public enum NV_COLOR_FORMAT : byte
     {
         RGB = 0,
         YUV422,
@@ -536,8 +602,36 @@ namespace DisplayMagicianShared.NVIDIA
         AUTO = 0xFF
     }
 
+    public enum NV_DYNAMIC_RANGE : byte
+    {
+        VESA = 0x0,
+        CEA = 0x1,
 
-    public enum NV_DYNAMIC_RANGE : UInt32
+        AUTO = 0xFF
+    }
+
+    public enum NV_BPC : byte
+    {
+        BPC_DEFAULT = 0,
+        BPC_6 = 1,
+        BPC_8 = 2,
+        BPC_10 = 3,
+        BPC_12 = 4,
+        BPC_16 = 5,
+    }
+
+    public enum NV_HDR_COLOR_FORMAT : UInt32
+    {
+        RGB = 0,
+        YUV422,
+        YUV444,
+        YUV420,
+
+        DEFAULT = 0xFE,
+        AUTO = 0xFF
+    }
+
+    public enum NV_HDR_DYNAMIC_RANGE : UInt32
     {
         VESA = 0x0,
         CEA = 0x1,
@@ -546,14 +640,49 @@ namespace DisplayMagicianShared.NVIDIA
     }
 
 
-    public enum NV_BPC : UInt32
+    public enum NV_COLOR_CMD : byte
     {
-        BPC_DEFAULT = 0,
-        BPC_6 = 1,
-        BPC_8 = 2,
-        BPC_10 = 3,
-        BPC_12 = 4,
-        BPC_16 = 5,
+        NV_COLOR_CMD_GET = 1,
+        NV_COLOR_CMD_SET,
+        NV_COLOR_CMD_IS_SUPPORTED_COLOR,
+        NV_COLOR_CMD_GET_DEFAULT
+    }
+
+    public enum NV_COLOR_COLORIMETRY : UInt32
+    {
+        NV_COLOR_COLORIMETRY_RGB = 0,
+        NV_COLOR_COLORIMETRY_YCC601,
+        NV_COLOR_COLORIMETRY_YCC709,
+        NV_COLOR_COLORIMETRY_XVYCC601,
+        NV_COLOR_COLORIMETRY_XVYCC709,
+        NV_COLOR_COLORIMETRY_SYCC601,
+        NV_COLOR_COLORIMETRY_ADOBEYCC601,
+        NV_COLOR_COLORIMETRY_ADOBERGB,
+        NV_COLOR_COLORIMETRY_BT2020RGB,
+        NV_COLOR_COLORIMETRY_BT2020YCC,
+        NV_COLOR_COLORIMETRY_BT2020cYCC,
+
+        NV_COLOR_COLORIMETRY_DEFAULT = 0xFE,
+        NV_COLOR_COLORIMETRY_AUTO = 0xFF
+    }
+
+    public enum NV_COLOR_SELECTION_POLICY : UInt32
+    {
+        NV_COLOR_SELECTION_POLICY_USER = 0,     //!< app/nvcpl make decision to select the desire color format
+        NV_COLOR_SELECTION_POLICY_BEST_QUALITY = 1, //!< driver/ OS make decision to select the best color format
+        NV_COLOR_SELECTION_POLICY_DEFAULT = NV_COLOR_SELECTION_POLICY_BEST_QUALITY,
+        NV_COLOR_SELECTION_POLICY_UNKNOWN = 0xFF,
+    }
+
+    public enum NV_DESKTOP_COLOR_DEPTH
+    {
+        NV_DESKTOP_COLOR_DEPTH_DEFAULT = 0x0,                                    // set if the current setting should be kept
+        NV_DESKTOP_COLOR_DEPTH_8BPC = 0x1,                                    //8 bit int per color component (8 bit int alpha)
+        NV_DESKTOP_COLOR_DEPTH_10BPC = 0x2,                                    //10 bit int per color component (2 bit int alpha)
+        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT = 0x3,                                    //16 bit float per color component (16 bit float alpha)
+        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_WCG = 0x4,                                    //16 bit float per color component (16 bit float alpha) wide color gamut
+        NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR = 0x5,                                    //16 bit float per color component (16 bit float alpha) HDR
+        NV_DESKTOP_COLOR_DEPTH_MAX_VALUE = NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR, // must be set to highest enum value
     }
 
     [Flags]
@@ -759,36 +888,39 @@ namespace DisplayMagicianShared.NVIDIA
     }
 
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-    public struct NV_TIMINGEXT : IEquatable<NV_TIMINGEXT>
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Ansi)]
+    public struct NV_TIMING_EXTRA : IEquatable<NV_TIMING_EXTRA>
     {
-        public UInt32 Flag;          //!< Reserved for NVIDIA hardware-based enhancement, such as double-scan.
-        public ushort Rr;            //!< Logical refresh rate to present
-        public UInt32 Rrx1k;         //!< Physical vertical refresh rate in 0.001Hz
-        public UInt32 Aspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
-        public ushort Rep;           //!< Bit-wise pixel repetition factor: 0x1:no pixel repetition; 0x2:each pixel repeats twice horizontally,..
-        public UInt32 Status;        //!< Timing standard
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
+        public UInt32 Flags;          //!< Reserved for NVIDIA hardware-based enhancement, such as double-scan.
+        public ushort RefreshRate;            //!< Logical refresh rate to present
+        public UInt32 FrequencyInMillihertz;         //!< Physical vertical refresh rate in 0.001Hz
+        public ushort VerticalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
+        public ushort HorizontalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
+        public ushort HorizontalPixelRepetition;           //!< Bit-wise pixel repetition factor: 0x1:no pixel repetition; 0x2:each pixel repeats twice horizontally,..
+        public UInt32 TimingStandard;        //!< Timing standard
+        //[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
         public string Name;      //!< Timing name
 
-        public override bool Equals(object obj) => obj is NV_TIMINGEXT other && this.Equals(other);
+        public override bool Equals(object obj) => obj is NV_TIMING_EXTRA other && this.Equals(other);
 
-        public bool Equals(NV_TIMINGEXT other)
-        => Flag == other.Flag &&
-           Rr == other.Rr &&
-           Rrx1k == other.Rrx1k &&
-           Aspect == other.Aspect &&
-           Rep == other.Rep &&
-           Status == other.Status &&
+        public bool Equals(NV_TIMING_EXTRA other)
+        => Flags == other.Flags &&
+           RefreshRate == other.RefreshRate &&
+           FrequencyInMillihertz == other.FrequencyInMillihertz &&
+           VerticalAspect == other.VerticalAspect &&
+           HorizontalAspect == other.HorizontalAspect &&
+           HorizontalPixelRepetition == other.HorizontalPixelRepetition &&
+           TimingStandard == other.TimingStandard &&
            Name == other.Name;
 
         public override Int32 GetHashCode()
         {
-            return (Flag, Rr, Rrx1k, Aspect, Rep, Status, Name).GetHashCode();
+            return (Flags, RefreshRate, FrequencyInMillihertz, HorizontalAspect, HorizontalPixelRepetition, TimingStandard, Name).GetHashCode();
         }
-        public static bool operator ==(NV_TIMINGEXT lhs, NV_TIMINGEXT rhs) => lhs.Equals(rhs);
+        public static bool operator ==(NV_TIMING_EXTRA lhs, NV_TIMING_EXTRA rhs) => lhs.Equals(rhs);
 
-        public static bool operator !=(NV_TIMINGEXT lhs, NV_TIMINGEXT rhs) => !(lhs == rhs);
+        public static bool operator !=(NV_TIMING_EXTRA lhs, NV_TIMING_EXTRA rhs) => !(lhs == rhs);
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
@@ -800,20 +932,20 @@ namespace DisplayMagicianShared.NVIDIA
         public ushort HFrontPorch;      //!< horizontal front porch
         public ushort HSyncWidth;       //!< horizontal sync width
         public ushort HTotal;           //!< horizontal total
-        public byte HSyncPol;         //!< horizontal sync polarity: 1-negative, 0-positive
+        public TIMING_HORIZONTAL_SYNC_POLARITY HSyncPol;         //!< horizontal sync polarity: 1-negative, 0-positive
 
         public ushort VVisible;         //!< vertical visible
         public ushort VBorder;          //!< vertical border
         public ushort VFrontPorch;      //!< vertical front porch
         public ushort VSyncWidth;       //!< vertical sync width
         public ushort VTotal;           //!< vertical total
-        public byte VSyncPol;         //!< vertical sync polarity: 1-negative, 0-positive
+        public TIMING_VERTICAL_SYNC_POLARITY VSyncPol;         //!< vertical sync polarity: 1-negative, 0-positive
 
-        public ushort Interlaced;       //!< 1-Int32erlaced, 0-progressive
+        public TIMING_SCAN_MODE ScanMode;       //!< 1-Int32erlaced, 0-progressive
         public UInt32 Pclk;             //!< pixel clock in 10 kHz
 
         //other timing related extras
-        NV_TIMINGEXT Etc;
+        public NV_TIMING_EXTRA Extra;
 
         public override bool Equals(object obj) => obj is NV_TIMING other && this.Equals(other);
 
@@ -830,13 +962,13 @@ namespace DisplayMagicianShared.NVIDIA
            VSyncWidth == other.VSyncWidth &&
            VTotal == other.VTotal &&
            VSyncPol == other.VSyncPol &&
-           Interlaced == other.Interlaced &&
+           ScanMode == other.ScanMode &&
            Pclk == other.Pclk &&
-           Etc.Equals(other.Etc);
+           Extra.Equals(other.Extra);
 
         public override Int32 GetHashCode()
         {
-            return (HVisible, HBorder, HFrontPorch, HSyncWidth, HTotal, HSyncPol, VVisible, VBorder, VFrontPorch, VSyncWidth, VTotal, VSyncPol, Interlaced, Pclk, Etc).GetHashCode();
+            return (HVisible, HBorder, HFrontPorch, HSyncWidth, HTotal, HSyncPol, VVisible, VBorder, VFrontPorch, VSyncWidth, VTotal, VSyncPol, ScanMode, Pclk, Extra).GetHashCode();
         }
         public static bool operator ==(NV_TIMING lhs, NV_TIMING rhs) => lhs.Equals(rhs);
 
@@ -866,6 +998,27 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_RECT lhs, NV_RECT rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_RECT lhs, NV_RECT rhs) => !(lhs == rhs);
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_LUID : IEquatable<NV_LUID>
+    {
+        public UInt32 LowPart;
+        public UInt32 HighPart;
+
+        public override bool Equals(object obj) => obj is NV_LUID other && this.Equals(other);
+
+        public bool Equals(NV_LUID other)
+        => LowPart == other.LowPart &&
+           HighPart == other.HighPart;
+
+        public override Int32 GetHashCode()
+        {
+            return (LowPart, HighPart).GetHashCode();
+        }
+        public static bool operator ==(NV_LUID lhs, NV_LUID rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_LUID lhs, NV_LUID rhs) => !(lhs == rhs);
     }
 
 
@@ -922,6 +1075,14 @@ namespace DisplayMagicianShared.NVIDIA
         public float W;    //!<  Width of the viewport
         public float H;    //!<  Height of the viewport
 
+        public NV_VIEWPORTF(float myX, float myY, float myW, float myH) : this()
+        {
+            X = myX;
+            Y = myY;
+            W = myW;
+            H = myH;
+        }
+
         public override bool Equals(object obj) => obj is NV_VIEWPORTF other && this.Equals(other);
 
         // NOTE: Using Math.Round for equality testing between floats.
@@ -955,20 +1116,21 @@ namespace DisplayMagicianShared.NVIDIA
         public NV_SCALING Scaling;        //!< (IN) scaling setting.
 
         // Refresh Rate
-        public UInt32 RefreshRate1K;  //!< (IN) Non-Int32erlaced Refresh Rate of the mode, multiplied by 1000, 0 = ignored
-                                      //!< This is the value which driver reports to the OS.
-                                      // Flags
-                                      //public UInt32 Int32erlaced:1;   //!< (IN) Interlaced mode flag, ignored if refreshRate == 0
-                                      //public UInt32 primary:1;      //!< (IN) Declares primary display in clone configuration. This is *NOT* GDI Primary.
-                                      //!< Only one target can be primary per source. If no primary is specified, the first
-                                      //!< target will automatically be primary.
-                                      //public UInt32 isPanAndScanTarget:1; //!< Whether on this target Pan and Scan is enabled or has to be enabled. Valid only
-                                      //!< when the target is part of clone topology.
-                                      //public UInt32 disableVirtualModeSupport:1;
-                                      //public UInt32 isPreferredUnscaledTarget:1;
-                                      //public UInt32 reserved:27;
-                                      // TV format information
-        public NV_GPU_CONNECTOR_TYPE Connector;      //!< Specify connector type. For TV only, ignored if tvFormat == NV_DISPLAY_TV_FORMAT_NONE
+        public UInt32 RefreshRateInMillihertz;  //!< (IN) Non-Int32erlaced Refresh Rate of the mode, multiplied by 1000, 0 = ignored
+                                                //!< This is the value which driver reports to the OS.
+                                                // Flags
+                                                //public UInt32 Int32erlaced:1;   //!< (IN) Interlaced mode flag, ignored if refreshRate == 0
+                                                //public UInt32 primary:1;      //!< (IN) Declares primary display in clone configuration. This is *NOT* GDI Primary.
+                                                //!< Only one target can be primary per source. If no primary is specified, the first
+                                                //!< target will automatically be primary.
+                                                //public UInt32 isPanAndScanTarget:1; //!< Whether on this target Pan and Scan is enabled or has to be enabled. Valid only
+                                                //!< when the target is part of clone topology.
+                                                //public UInt32 disableVirtualModeSupport:1;
+                                                //public UInt32 isPreferredUnscaledTarget:1;
+                                                //public UInt32 reserved:27;
+        public UInt32 Flags;
+        // TV format information
+        public NV_GPU_CONNECTOR_TYPE ConnectorType;      //!< Specify connector type. For TV only, ignored if tvFormat == NV_DISPLAY_TV_FORMAT_NONE
         public NV_DISPLAY_TV_FORMAT TvFormat;       //!< (IN) to choose the last TV format set this value to NV_DISPLAY_TV_FORMAT_NONE
                                                     //!< In case of NvAPI_DISP_GetDisplayConfig(), this field will indicate the currently applied TV format;
                                                     //!< if no TV format is applied, this field will have NV_DISPLAY_TV_FORMAT_NONE value.
@@ -987,15 +1149,16 @@ namespace DisplayMagicianShared.NVIDIA
         => Version == other.Version &&
            Rotation == other.Rotation &&
            Scaling == other.Scaling &&
-           RefreshRate1K == other.RefreshRate1K &&
-           Connector == other.Connector &&
+           RefreshRateInMillihertz == other.RefreshRateInMillihertz &&
+           Flags == other.Flags &&
+           ConnectorType == other.ConnectorType &&
            TvFormat == other.TvFormat &&
            TimingOverride == other.TimingOverride &&
            Timing.Equals(other.Timing);
 
         public override Int32 GetHashCode()
         {
-            return (Version, Rotation, Scaling, RefreshRate1K, Connector, TvFormat, TimingOverride, Timing).GetHashCode();
+            return (Version, Rotation, Scaling, RefreshRateInMillihertz, Flags, ConnectorType, TvFormat, TimingOverride, Timing).GetHashCode();
         }
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO lhs, NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO rhs) => lhs.Equals(rhs);
 
@@ -1006,19 +1169,19 @@ namespace DisplayMagicianShared.NVIDIA
     public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>
     {
         public UInt32 DisplayId;  //!< Display ID
-        NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
-        public UInt32 TargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
+        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
+        public UInt32 WindowsCCDTargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
 
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 other && this.Equals(other);
 
         public bool Equals(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 other)
         => DisplayId == other.DisplayId &&
            Details.Equals(other.Details) &&
-           TargetId == other.TargetId;
+           WindowsCCDTargetId == other.WindowsCCDTargetId;
 
         public override Int32 GetHashCode()
         {
-            return (DisplayId, Details, TargetId).GetHashCode();
+            return (DisplayId, Details, WindowsCCDTargetId).GetHashCode();
         }
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 rhs) => lhs.Equals(rhs);
 
@@ -1029,7 +1192,7 @@ namespace DisplayMagicianShared.NVIDIA
     public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1>
     {
         public UInt32 DisplayId;  //!< Display ID
-        NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
+        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
 
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other && this.Equals(other);
 
@@ -1046,22 +1209,25 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 rhs) => !(lhs == rhs);
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct NV_DISPLAYCONFIG_PATH_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V2> // Version is 2
     {
         public UInt32 Version;
         public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
 
         public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
-        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[] TargetInfo;
-        public NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 SourceModeInfo;             //!< May be NULL if mode info is not important
-                                                                                //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
-                                                                                //public UInt32 reserved : 31;              //!< Must be 0
-                                                                                //public LUID pOSAdapterID;              //!< Used by Non-NVIDIA adapter for poInt32er to OS Adapter of LUID
-                                                                                //!< type, type casted to void *.
-        public UInt32 Reserved;
+        //[MarshalAs(UnmanagedType.ByValArray)]
+        public IntPtr TargetInfo;
+        public IntPtr SourceModeInfo;             //!< May be NULL if mode info is not important
+        //public IntPtr SourceModeInfo;             //!< May be NULL if mode info is not important
+        //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
+        //public UInt32 reserved : 31;              //!< Must be 0
+        public UInt32 Flags;
+        //!< Used by Non-NVIDIA adapter for pointer to OS Adapter of LUID
+        //!< type, type casted to void *.
         public IntPtr OSAdapterID;
+
+        public bool IsNonNVIDIAAdapter => Flags.GetBit(0); //!< if bit is set then this path uses a non-nvidia adapter
 
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_INFO_V2 other && this.Equals(other);
 
@@ -1071,12 +1237,11 @@ namespace DisplayMagicianShared.NVIDIA
            TargetInfoCount == other.TargetInfoCount &&
            TargetInfo.Equals(other.TargetInfo) &&
            SourceModeInfo.Equals(other.SourceModeInfo) &&
-           Reserved == other.Reserved &&
-           OSAdapterID == other.OSAdapterID;
+           Flags == other.Flags;
 
         public override Int32 GetHashCode()
         {
-            return (Version, SourceId, TargetInfoCount, TargetInfo, SourceModeInfo).GetHashCode();
+            return (Version, SourceId, TargetInfoCount, TargetInfo, SourceModeInfo, Flags).GetHashCode();
         }
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_INFO_V2 rhs) => lhs.Equals(rhs);
 
@@ -1125,10 +1290,11 @@ namespace DisplayMagicianShared.NVIDIA
         public NV_POSITION Position;                   //!< Is all positions are 0 or invalid, displays will be automatically
                                                        //!< positioned from left to right with GDI Primary at 0,0, and all
                                                        //!< other displays in the order of the path array.
-                                                       //public NV_DISPLAYCONFIG_SPANNING_ORIENTATION spanningOrientation;        //!< Spanning is only supported on XP
-                                                       //public UInt32 bGDIPrimary : 1;
-                                                       //public UInt32 bSLIFocus : 1;
-                                                       //public UInt32 reserved : 30;              //!< Must be 0
+        public NV_DISPLAYCONFIG_SPANNING_ORIENTATION SpanningOrientation;        //!< Spanning is only supported on XP
+        public UInt32 Flags;
+
+        public bool IsGDIPrimary => (Flags & 0x1) == 0x1; //!< if bit is set then this source is the primary GDI source
+        public bool IsSLIFocus => (Flags & 0x2) == 0x2; //!< if bit is set then this source has SLI focus
 
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 other && this.Equals(other);
 
@@ -1298,12 +1464,12 @@ namespace DisplayMagicianShared.NVIDIA
 
         public bool TopologyValid => ValidityMask == 0; //!< The topology is valid
         public bool TopologyMissingGPU => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_GPU); //!< Not enough SLI GPUs were found to fill the entire
-                                                                                                                             //! topology. hPhysicalGPU will be 0 for these.
+                                                                                                     //! topology. hPhysicalGPU will be 0 for these.
         public bool TopologyMissingDisplay => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MISSING_DISPLAY);//!< Not enough displays were found to fill the entire
-                                                                                                                                    //! topology. displayOutputId will be 0 for these.
+                                                                                                            //! topology. displayOutputId will be 0 for these.
         public bool TopologyMixedDisplayTypes => ValidityMask.HasFlag(NV_MOSAIC_TOPO_VALIDITY.MIXED_DISPLAY_TYPES);//!< The topoogy is only possible with displays of the same
-                                                                                                                                           //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
-                                                                                                                                           //! sure they are all CRTs, or all DFPs.
+                                                                                                                   //! NV_GPU_OUTPUT_TYPE. Check displayOutputIds to make
+                                                                                                                   //! sure they are all CRTs, or all DFPs.
 
         public override Int32 GetHashCode()
         {
@@ -1799,8 +1965,8 @@ namespace DisplayMagicianShared.NVIDIA
         public NV_HDR_MODE HdrMode;                                 //!< HDR mode
         public NV_STATIC_METADATA_DESCRIPTOR_ID StaticMetadataDescriptorId;           //!< Static Metadata Descriptor Id (0 for static metadata type 1)
         public NV_HDR_COLOR_DISPLAY_DATA MasteringDisplayData; //!< Static Metadata Descriptor Type 1, CEA-861.3, SMPTE ST2086
-        public NV_COLOR_FORMAT HdrColorFormat;                                     //!< Optional, One of NV_COLOR_FORMAT enum values, if set it will apply requested color format for HDR session
-        public NV_DYNAMIC_RANGE HdrDynamicRange;                                    //!< Optional, One of NV_DYNAMIC_RANGE enum values, if set it will apply requested dynamic range for HDR session
+        public NV_HDR_COLOR_FORMAT HdrColorFormat;                                     //!< Optional, One of NV_COLOR_FORMAT enum values, if set it will apply requested color format for HDR session
+        public NV_HDR_DYNAMIC_RANGE HdrDynamicRange;                                    //!< Optional, One of NV_DYNAMIC_RANGE enum values, if set it will apply requested dynamic range for HDR session
         public NV_BPC HdrBpc;                                             //!< Optional, One of NV_BPC enum values, if set it will apply requested color depth
                                                                           //!< Dolby Vision mode: DV supports specific combinations of colorformat, dynamic range and bpc. Please refer Dolby Vision specification.
                                                                           //!<                    If invalid or no combination is passed driver will force default combination of RGB format + full range + 8bpc.
@@ -1867,6 +2033,79 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator !=(NV_HDR_COLOR_DISPLAY_DATA lhs, NV_HDR_COLOR_DISPLAY_DATA rhs) => !(lhs == rhs);
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_COLOR_DATA_V5 : IEquatable<NV_COLOR_DATA_V5>
+    {
+        public UInt32 Version; //!< Version of this structure
+        public UInt16 Size;    //!< Size of this structure
+        public NV_COLOR_CMD Cmd;
+        public NV_COLOR_FORMAT ColorFormat;          //!< One of NV_COLOR_FORMAT enum values.
+        public NV_COLOR_COLORIMETRY Colorimetry;          //!< One of NV_COLOR_COLORIMETRY enum values.
+        public NV_DYNAMIC_RANGE DynamicRange;         //!< One of NV_DYNAMIC_RANGE enum values.
+        public NV_BPC Bpc;                  //!< One of NV_BPC enum values.
+        public NV_COLOR_SELECTION_POLICY ColorSelectionPolicy; //!< One of the color selection policy
+        public NV_DESKTOP_COLOR_DEPTH Depth;                //!< One of NV_DESKTOP_COLOR_DEPTH enum values.    
+
+        public override bool Equals(object obj) => obj is NV_COLOR_DATA_V5 other && this.Equals(other);
+        public bool Equals(NV_COLOR_DATA_V5 other)
+        => Version == other.Version &&
+           Size == other.Size &&
+           Cmd == other.Cmd &&
+           ColorFormat == other.ColorFormat &&
+           Colorimetry == other.Colorimetry &&
+           DynamicRange == other.DynamicRange &&
+            Bpc == other.Bpc &&
+            ColorSelectionPolicy == other.ColorSelectionPolicy &&
+            Depth == other.Depth;
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, Size, Cmd, ColorFormat, Colorimetry, DynamicRange, Bpc, ColorSelectionPolicy, Depth).GetHashCode();
+        }
+        public static bool operator ==(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => !(lhs == rhs);
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_CUSTOM_DISPLAY_V1 : IEquatable<NV_CUSTOM_DISPLAY_V1>
+    {
+        public UInt32 Version; //!< Version of this structure
+        public UInt32 Width; //!< Source surface(source mode) width
+        public UInt32 Height;            //!< Source surface(source mode) height
+        public UInt32 Depth;             //!< Source surface color depth."0" means all 8/16/32bpp
+        public NV_FORMAT ColorFormat;       //!< Color format (optional)
+        public NV_VIEWPORTF SourcePartition;      //!< For multimon support, should be set to (0,0,1.0,1.0) for now.
+        public float XRatio;            //!< Horizontal scaling ratio
+        public float YRatio;            //!< Vertical scaling ratio
+        public NV_TIMING Timing;            //!< Timing used to program TMDS/DAC/LVDS/HDMI/TVEncoder, etc.
+        public UInt32 Flags; //!< If set to 1, it means a hardware modeset without OS update
+
+        //     Gets a boolean value indicating that a hardware mode-set without OS update should be performed.
+        public bool IsHardwareModeSetOnly => Flags.GetBit(0);
+
+        public override bool Equals(object obj) => obj is NV_CUSTOM_DISPLAY_V1 other && this.Equals(other);
+        public bool Equals(NV_CUSTOM_DISPLAY_V1 other)
+        => Version == other.Version &&
+           Width == other.Width &&
+           Height == other.Height &&
+           Depth == other.Depth &&
+           ColorFormat == other.ColorFormat &&
+           SourcePartition == other.SourcePartition &&
+            XRatio == other.XRatio &&
+            YRatio == other.YRatio &&
+            Timing == other.Timing &&
+            Flags == other.Flags;
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, Width, Height, Depth, ColorFormat, SourcePartition, XRatio, YRatio, Timing, Flags).GetHashCode();
+        }
+        public static bool operator ==(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => !(lhs == rhs);
+    }
+
     // ==================================
     // NVImport Class
     // ==================================
@@ -1911,6 +2150,7 @@ namespace DisplayMagicianShared.NVIDIA
         public const UInt32 NVAPI_LONG_STRING_MAX = 256;
         public const UInt32 NVAPI_SHORT_STRING_MAX = 64;
         public const UInt32 NVAPI_MAX_PHYSICAL_GPUS = 64;
+        public const UInt32 NVAPI_MAX_PHYSICAL_GPUS_QUERIED = 32;
         public const UInt32 NVAPI_UNICODE_STRING_MAX = 2048;
         public const UInt32 NVAPI_BINARY_DATA_MAX = 4096;
         public const UInt32 NVAPI_SETTING_MAX_VALUES = 100;
@@ -1938,6 +2178,7 @@ namespace DisplayMagicianShared.NVIDIA
         public static UInt32 NV_MOSAIC_SUPPORTED_TOPO_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_SUPPORTED_TOPO_INFO_V1>(1);
         public static UInt32 NV_MOSAIC_SUPPORTED_TOPO_INFO_V2_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_SUPPORTED_TOPO_INFO_V2>(2);
         public static UInt32 NV_HDR_COLOR_DATA_V2_VER = MAKE_NVAPI_VERSION<NV_HDR_COLOR_DATA_V2>(2);
+        public static UInt32 NV_COLOR_DATA_V5_VER = MAKE_NVAPI_VERSION<NV_COLOR_DATA_V5>(5);
         public static UInt32 NV_HDR_CAPABILITIES_V2_VER = MAKE_NVAPI_VERSION<NV_HDR_CAPABILITIES_V2>(2);
         public static UInt32 NV_MOSAIC_DISPLAY_TOPO_STATUS_V1_VER = MAKE_NVAPI_VERSION<NV_MOSAIC_DISPLAY_TOPO_STATUS_V1>(1);
         public static UInt32 NV_GPU_DISPLAYIDS_V2_VER = MAKE_NVAPI_VERSION<NV_GPU_DISPLAYIDS_V2>(3); // NOTE: There is a bug in R470 that sets the NV_GPU_DISPLAYIDS_V2 version to 3!
@@ -1945,6 +2186,7 @@ namespace DisplayMagicianShared.NVIDIA
         public static UInt32 NV_EDID_V3_VER = MAKE_NVAPI_VERSION<NV_EDID_V3>(3);
         public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V1>(1);
         public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V2_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V2>(2);
+        public static UInt32 NV_CUSTOM_DISPLAY_V1_VER = MAKE_NVAPI_VERSION<NV_CUSTOM_DISPLAY_V1>(1);
 
 
         #region Internal Constant
@@ -2078,9 +2320,11 @@ namespace DisplayMagicianShared.NVIDIA
                 GetDelegate(NvId_DISP_GetGDIPrimaryDisplayId, out DISP_GetGDIPrimaryDisplayIdInternal);
                 GetDelegate(NvId_Disp_GetHdrCapabilities, out Disp_GetHdrCapabilitiesInternal);
                 GetDelegate(NvId_Disp_HdrColorControl, out Disp_HdrColorControlInternal);
-                /*GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
-                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission*/
+                GetDelegate(NvId_Disp_ColorControl, out Disp_ColorControlInternal);
+                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
+                GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission
                 GetDelegate(NvId_DISP_GetDisplayIdByDisplayName, out DISP_GetDisplayIdByDisplayNameInternal);
+                GetDelegate(NvId_DISP_EnumCustomDisplay, out Disp_EnumCustomDisplayInternal);
 
                 // GPUs
                 GetDelegate(NvId_EnumPhysicalGPUs, out EnumPhysicalGPUsInternal);
@@ -2118,13 +2362,13 @@ namespace DisplayMagicianShared.NVIDIA
 
         private static string GetDllName()
         {
-            if (IntPtr.Size == 4)
+            if (IntPtr.Size > 4)
             {
-                return "nvapi.dll";
+                return "nvapi64.dll";
             }
             else
             {
-                return "nvapi64.dll";
+                return "nvapi.dll";
             }
         }
 
@@ -2219,9 +2463,6 @@ namespace DisplayMagicianShared.NVIDIA
             }
 
         }
-
-
-
         #endregion
 
 
@@ -3135,152 +3376,180 @@ namespace DisplayMagicianShared.NVIDIA
 
         // ******** IMPORTANT! This code has an error when attempting to perform the third pass as required by NVAPI documentation *********
         // ******** FOr this reason I have disabled the code as I don't actually need to get it going. ******** 
-        /*        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
-                private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegate(
-                    [In][Out] ref UInt32 pathInfoCount,
-                    [In][Out] IntPtr pathInfoBuffer);
-                private static readonly DISP_GetDisplayConfigDelegate DISP_GetDisplayConfigInternal;
+        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
+        private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegate(
+            [In][Out] ref UInt32 pathInfoCount,
+            [In][Out] IntPtr pathInfoBuffer);
+        private static readonly DISP_GetDisplayConfigDelegate DISP_GetDisplayConfigInternal;
 
-                /// <summary>
-                /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
-                ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
-                ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
-                ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
-                ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
-                ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
-                //                               to number of targetInfoCount(from Second Pass).
-                /// SUPPORTED OS:  Windows 7 and higher
-                /// </summary>
-                /// <param name="PathInfoCount"></param>
-                /// <param name="PathInfo"></param>
-                /// <returns></returns>
-                public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount, ref NV_DISPLAYCONFIG_PATH_INFO_V1[] PathInfos, bool partFilledIn = false)
+        /// <summary>
+        /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
+        ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
+        ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
+        ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
+        ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
+        ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
+        //                               to number of targetInfoCount(from Second Pass).
+        /// SUPPORTED OS:  Windows 7 and higher
+        /// </summary>
+        /// <param name="PathInfoCount"></param>
+        /// <param name="PathInfo"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount, ref NV_DISPLAYCONFIG_PATH_INFO_V2[] PathInfos, bool thirdPass = false)
+        {
+            NVAPI_STATUS status;
+            IntPtr pathInfoBuffer = IntPtr.Zero;
+            IntPtr currentPathInfoBuffer = IntPtr.Zero;
+            if (thirdPass)
+            {
+                // Copy the supplied object for the third pass (when we have the pathInfoCount and the targetInfoCount for each pathInfo, but we want the details)
+                // Third Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
+                //!                               to number of targetInfoCount(from Second Pass).
+                NV_DISPLAYCONFIG_PATH_INFO_V2[] passedPathInfo = PathInfos;
+                PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
+                // Go through the array and create the structure 
+                int overallTargetCount = 0;
+                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                 {
-                    NVAPI_STATUS status;
-                    IntPtr pathInfoBuffer = IntPtr.Zero;
-                    IntPtr currentPathInfoBuffer = IntPtr.Zero;
-                    if (partFilledIn)
-                    {
-                        // Copy the supplied object for the third pass (when we have the pathInfoCount and the targetInfoCount for each pathInfo, but we want the details)
-                        //NV_DISPLAYCONFIG_PATH_INFO_V1[] passedPathInfo = PathInfos;                
-                        //PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V1[PathInfoCount];
-                        // Go through the array and create the structure 
-                        int overallTargetCount = 0;
-                        for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                        {
-                            // Copy the information passed in, into the buffer we want to pass
-                            //PathInfos[x].Version = MAKE_NVAPI_VERSION(Marshal.SizeOf(passedPathInfo[x]),1);
-                            *//*PathInfos[x].SourceId = passedPathInfo[x].SourceId;
-                            PathInfos[x].TargetInfoCount = passedPathInfo[x].TargetInfoCount;
-                            PathInfos[x].TargetInfo = passedPathInfo[x].TargetInfo;                   
-                            PathInfos[x].SourceModeInfo = = passedPathInfo[x].SourceModeInfo;*//*
-                            overallTargetCount += (int)PathInfos[x].TargetInfoCount;
-                        }
-                        // Initialize unmanged memory to hold the unmanaged array of structs
-                        int memorySizeRequired = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V1)) * (int)PathInfoCount;
-                        pathInfoBuffer = Marshal.AllocCoTaskMem(memorySizeRequired);
-                        // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                        // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                        currentPathInfoBuffer = pathInfoBuffer;
-                        // Go through the array and copy things from managed code to unmanaged code
-                        for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                        {
-                            // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                            Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, false);
-                            // advance the buffer forwards to the next object
-                            currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[x]));
-                        }
+                    // Copy the information passed in, into the buffer we want to pass
 
-                    }
-                    else
-                    {
-                        // Build a new blank object for the second pass (when we have the pathInfoCount, but want the targetInfoCount  for each pathInfo)
-                        // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
-                        PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V1[PathInfoCount];
-                        // Initialize unmanged memory to hold the unmanaged array of structs
-                        pathInfoBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V1)) * (int)PathInfoCount);
-                        // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                        // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                        currentPathInfoBuffer = pathInfoBuffer;
-                        // Go through the array and copy things from managed code to unmanaged code
-                        for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                        {
-                            PathInfos[x].Version = MAKE_NVAPI_VERSION(Marshal.SizeOf(PathInfos[x]), 1);
-                            PathInfos[x].SourceModeInfo = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
-                            // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                            Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, false);
-                            // advance the buffer forwards to the next object
-                            currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[x]));
-                        }
-                    }
-
-
-                    if (DISP_GetDisplayConfigInternal != null)
-                    {
-                        // Use the unmanaged buffer in the unmanaged C call
-                        status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoBuffer);
-
-                        if (status == NVAPI_STATUS.NVAPI_OK)
-                        {
-                            // If everything worked, then copy the data back from the unmanaged array into the managed array
-                            // So that we can use it in C# land
-                            // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                            currentPathInfoBuffer = pathInfoBuffer;
-                            // Create a managed array to store the received information within
-                            PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V1[PathInfoCount];
-                            // Go through the memory buffer item by item and copy the items into the managed array
-                            for (int i = 0; i < PathInfoCount; i++)
-                            {
-                                // build a structure in the array slot
-                                PathInfos[i] = new NV_DISPLAYCONFIG_PATH_INFO_V1();
-                                // fill the array slot structure with the data from the buffer
-                                PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V1)Marshal.PtrToStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V1));
-                                // destroy the bit of memory we no longer need
-                                Marshal.DestroyStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V1));
-                                // advance the buffer forwards to the next object
-                                currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[i]));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-                    }
-
-                    Marshal.FreeCoTaskMem(pathInfoBuffer);
-
-                    return status;
+                    PathInfos[x].SourceId = passedPathInfo[x].SourceId;
+                    PathInfos[x].TargetInfoCount = passedPathInfo[x].TargetInfoCount;
+                    PathInfos[x].TargetInfo = passedPathInfo[x].TargetInfo;
+                    PathInfos[x].SourceModeInfo = passedPathInfo[x].SourceModeInfo;
+                    overallTargetCount += (int)PathInfos[x].TargetInfoCount;
+                    PathInfos[x].Version = MAKE_NVAPI_VERSION(Marshal.SizeOf(passedPathInfo[x]), 1);
+                }
+                // Initialize unmanged memory to hold the unmanaged array of structs
+                int memorySizeRequired = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2)) * (int)PathInfoCount;
+                pathInfoBuffer = Marshal.AllocCoTaskMem(memorySizeRequired);
+                // Also set another memory pointer to the same place so that we can do the memory copying item by item
+                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                currentPathInfoBuffer = pathInfoBuffer;
+                // Go through the array and copy things from managed code to unmanaged code
+                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
+                {
+                    // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
+                    Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, false);
+                    // advance the buffer forwards to the next object
+                    currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[x]));
                 }
 
-                // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
-                // NvAPIMosaic_EnumDisplayGrids
-                private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegateNull(
-                    [In][Out] ref UInt32 pathInfoCount,
-                    [In][Out] IntPtr pathInfoBuffer);
-                private static readonly DISP_GetDisplayConfigDelegateNull DISP_GetDisplayConfigInternalNull;
-
-                /// <summary>
-                /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
-                ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
-                ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
-                ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
-                ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
-                ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
-                //                               to number of targetInfoCount(from Second Pass).
-                /// SUPPORTED OS:  Windows 7 and higher
-                /// </summary>
-                /// <param name="PathInfoCount"></param>
-                /// <returns></returns>
-                public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount)
+            }
+            else
+            {
+                // This is the second pass
+                // Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
+                //                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
+                // Build a new blank object for the second pass (when we have the pathInfoCount, but want the targetInfoCount  for each pathInfo)
+                // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
+                PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
+                // Prepare the struct for second pass duties
+                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                 {
-                    NVAPI_STATUS status;
-                    IntPtr pathInfos = IntPtr.Zero;
+                    NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceMode = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
+                    IntPtr sourceModeBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)));
+                    Marshal.StructureToPtr(sourceMode, sourceModeBuffer, true);
+                    PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_VER;
+                    PathInfos[x].SourceModeInfo = sourceModeBuffer;
+                    /*PathInfos[x].SourceModeInfo.Resolution = new NV_RESOLUTION();
+                    PathInfos[x].SourceModeInfo.Position = new NV_POSITION();
+                    //PathInfos[x].SourceModeInfo = null;
+                    PathInfos[x].TargetInfoCount = 0;
+                    PathInfos[x].TargetInfo = IntPtr.Zero;
+                    //!< This field is reserved. There is ongoing debate if we need this field.
+                    //!< Identifies sourceIds used by Windows. If all sourceIds are 0,
+                    //!< these will be computed automatically.
+                    PathInfos[x].SourceId = 0;
+                    PathInfos[x].Flags = 0;
+                    PathInfos[x].OSAdapterID = new NV_LUID();
+                    //PathInfos[x].OSAdapterID = IntPtr.Zero;*/
+                }
+                // Initialize unmanged memory to hold the unmanaged array of structs
+                int sizeOfOneStruct = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
+                int sizeOfAllStructs = sizeOfOneStruct * (int)PathInfoCount;
+                //int sizeOfOneStruct = Marshal.SizeOf(PathInfos);
+                pathInfoBuffer = Marshal.AllocCoTaskMem(sizeOfAllStructs);
+                // Also set another memory pointer to the same place so that we can do the memory copying item by item
+                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                currentPathInfoBuffer = pathInfoBuffer;
+                // Go through the array and copy things from managed code to unmanaged code
+                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
+                {
+                    // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
+                    Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, true);
+                    // advance the buffer forwards to the next object
+                    currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer.ToInt64() + Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)));
+                }
+            }
 
-                    if (DISP_GetDisplayConfigInternalNull != null) { status = DISP_GetDisplayConfigInternalNull(ref PathInfoCount, pathInfos); }
-                    else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
 
-                    return status;
-                }*/
+            if (DISP_GetDisplayConfigInternal != null)
+            {
+                // Use the unmanaged buffer in the unmanaged C call
+                status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoBuffer);
+
+                if (status == NVAPI_STATUS.NVAPI_OK)
+                {
+                    // If everything worked, then copy the data back from the unmanaged array into the managed array
+                    // So that we can use it in C# land
+                    // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
+                    currentPathInfoBuffer = pathInfoBuffer;
+                    // Create a managed array to store the received information within
+                    PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
+                    // Go through the memory buffer item by item and copy the items into the managed array
+                    for (int i = 0; i < PathInfoCount; i++)
+                    {
+                        // build a structure in the array slot
+                        PathInfos[i] = new NV_DISPLAYCONFIG_PATH_INFO_V2();
+                        // fill the array slot structure with the data from the buffer
+                        PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V2)Marshal.PtrToStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
+                        // destroy the bit of memory we no longer need
+                        Marshal.DestroyStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
+                        // advance the buffer forwards to the next object
+                        currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[i]));
+                    }
+                }
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            Marshal.FreeCoTaskMem(pathInfoBuffer);
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DISP_GetDisplayConfig(__inout NvU32 *pathInfoCount, __out_ecount_full_opt(*pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO *pathInfo);
+        // NvAPIMosaic_EnumDisplayGrids
+        private delegate NVAPI_STATUS DISP_GetDisplayConfigDelegateNull(
+            [In][Out] ref UInt32 pathInfoCount,
+            [In][Out] IntPtr pathInfoBuffer);
+        private static readonly DISP_GetDisplayConfigDelegateNull DISP_GetDisplayConfigInternalNull;
+
+        /// <summary>
+        /// DESCRIPTION:     This API lets caller retrieve the current global display configuration.
+        ///       USAGE:     The caller might have to call this three times to fetch all the required configuration details as follows:
+        ///                  First  Pass: Caller should Call NvAPI_DISP_GetDisplayConfig() with pathInfo set to NULL to fetch pathInfoCount.
+        ///                  Second Pass: Allocate memory for pathInfo with respect to the number of pathInfoCount(from First Pass) to fetch
+        ///                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
+        ///             Third  Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
+        //                               to number of targetInfoCount(from Second Pass).
+        /// SUPPORTED OS:  Windows 7 and higher
+        /// </summary>
+        /// <param name="PathInfoCount"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount)
+        {
+            NVAPI_STATUS status;
+            IntPtr pathInfos = IntPtr.Zero;
+
+            if (DISP_GetDisplayConfigInternalNull != null) { status = DISP_GetDisplayConfigInternalNull(ref PathInfoCount, pathInfos); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
 
 
         // NVAPI_INTERFACE NvAPI_DISP_GetDisplayIdByDisplayName(const char *displayName, NvU32* displayId);
@@ -4012,6 +4281,48 @@ namespace DisplayMagicianShared.NVIDIA
             NVAPI_STATUS status;
             pHdrColorData.Version = NVImport.NV_HDR_COLOR_DATA_V2_VER;
             if (Disp_HdrColorControlInternal != null) { status = Disp_HdrColorControlInternal(displayId, ref pHdrColorData); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_Disp_ColorControl(__in NvU32 displayId, __inout NV_HDR_COLOR_DATA *pHdrColorData);
+        private delegate NVAPI_STATUS Disp_ColorControlDelegate(
+            [In] UInt32 displayId,
+            [In][Out] ref NV_COLOR_DATA_V5 colorData);
+        private static readonly Disp_ColorControlDelegate Disp_ColorControlInternal;
+        /// <summary>
+        //!  This API gets and sets the color capabilities of the display.
+        /// <param name="displayId"></param>
+        /// <param name="colorData"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_Disp_ColorControl(UInt32 displayId, ref NV_COLOR_DATA_V5 colorData)
+        {
+            NVAPI_STATUS status;
+            colorData.Version = NVImport.NV_COLOR_DATA_V5_VER;
+            if (Disp_ColorControlInternal != null) { status = Disp_ColorControlInternal(displayId, ref colorData); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_DISP_EnumCustomDisplay(__in NvU32 displayId, __inout NV_HDR_CAPABILITIES *pHdrCapabilities);
+        private delegate NVAPI_STATUS Disp_EnumCustomDisplayDelegate(
+            [In] UInt32 displayId,
+            [In] UInt32 index,
+            [In][Out] ref NV_CUSTOM_DISPLAY_V1 pCustDisp);
+        private static readonly Disp_EnumCustomDisplayDelegate Disp_EnumCustomDisplayInternal;
+        /// <summary>
+        //!  This API gets High Dynamic Range (HDR) capabilities of the display.
+        /// <param name="displayId"></param>
+        /// <param name="pHdrCapabilities"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DISP_EnumCustomDisplay(UInt32 displayId, UInt32 index, ref NV_CUSTOM_DISPLAY_V1 pCustDisp)
+        {
+            NVAPI_STATUS status;
+            pCustDisp.Version = NVImport.NV_CUSTOM_DISPLAY_V1_VER;
+            pCustDisp.SourcePartition = new NV_VIEWPORTF(0, 0, 1, 1);
+            if (Disp_EnumCustomDisplayInternal != null) { status = Disp_EnumCustomDisplayInternal(displayId, index, ref pCustDisp); }
             else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
 
             return status;

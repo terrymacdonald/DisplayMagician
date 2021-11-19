@@ -3,6 +3,8 @@ using NHotkey;
 using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Windows.Forms;
 using WK.Libraries.BootMeUpNS;
@@ -62,6 +64,18 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings MinimiseOnStart set to false");
             }
 
+            // show splashscreen on startup 
+            if (Program.AppProgramSettings.ShowSplashScreen == true)
+            {
+                cb_show_splashscreen.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowSplashScreen set to true");
+            }
+            else
+            {
+                cb_show_splashscreen.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowSplashScreen set to false");
+            }
+
             // start upgrade settings 
             if (Program.AppProgramSettings.UpgradeToPreReleases == true)
             {
@@ -102,8 +116,8 @@ namespace DisplayMagician.UIForms
                     logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Fatal");
                     break;
                 default:
-                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Info"]);
-                    logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Info");
+                    cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Trace"]);
+                    logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Trace");
                     break;
             }
 
@@ -158,10 +172,8 @@ namespace DisplayMagician.UIForms
 
         }
 
-        private void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
+        public static bool SetBootMeUp(bool enabled)
         {
-
-            logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings LogLevel set to Trace");
             var bootMeUp = new BootMeUp
             {
                 UseAlternativeOnFail = true,
@@ -170,7 +182,7 @@ namespace DisplayMagician.UIForms
             };
 
             // save start on Boot up
-            if (cb_start_on_boot.Checked)
+            if (enabled)
             {
                 Program.AppProgramSettings.StartOnBootUp = true;
                 bootMeUp.Enabled = true;
@@ -178,11 +190,15 @@ namespace DisplayMagician.UIForms
                 {
                     logger.Error($"SettingsForm/SettingsForm_FormClosing: Failed to set up DisplayMagician to start when Windows starts");
                     MessageBox.Show("There was an issue setting DisplayMagician to run when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");
+                    return false;
                 }
                 else
+                {
                     logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully set DisplayMagician to start when Windows starts");
+                    return true;
+                }
+                    
             }
-                
             else
             {
                 Program.AppProgramSettings.StartOnBootUp = false;
@@ -191,10 +207,22 @@ namespace DisplayMagician.UIForms
                 {
                     logger.Error($"SettingsForm/SettingsForm_FormClosing: Failed to stop DisplayMagician from starting when Windows starts");
                     MessageBox.Show("There was an issue stopping DisplayMagician from running when the computer starts. Please try launching DisplayMagician again as Admin to see if that helps.");
+                    return false;
                 }
                 else
+                {
                     logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from starting when Windows starts");
+                    return true;
+                }
+                    
             }
+        }
+
+        private void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+
+            logger.Info($"SettingsForm/SettingsForm_Load: Setting BootMeUp to {cb_start_on_boot.Checked}");
+            SetBootMeUp(cb_start_on_boot.Checked);
 
             // save minimise on close
             if (cb_minimise_notification_area.Checked)
@@ -202,6 +230,13 @@ namespace DisplayMagician.UIForms
             else
                 Program.AppProgramSettings.MinimiseOnStart = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved MinimiseOnStart as {Program.AppProgramSettings.MinimiseOnStart}");
+
+            // save show splashscreen on startup
+            if (cb_show_splashscreen.Checked)
+                Program.AppProgramSettings.ShowSplashScreen = true;
+            else
+                Program.AppProgramSettings.ShowSplashScreen = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowSplashScreen as {Program.AppProgramSettings.ShowSplashScreen}");
 
             // save loglevel on close
             // and make that log level live in NLog straight away
@@ -469,6 +504,96 @@ namespace DisplayMagician.UIForms
             catch (Exception) {
                 return String.Empty;
             }
+        }
+
+        private void btn_create_support_package_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+                {
+                    DateTime now = DateTime.Now;
+                    saveFileDialog.InitialDirectory = Environment.SpecialFolder.MyDocuments.ToString();
+                    saveFileDialog.Filter = "Zip Files(*.zip)| *.zip | All files(*.*) | *.*";
+                    saveFileDialog.FilterIndex = 2;
+                    saveFileDialog.RestoreDirectory = true;
+                    saveFileDialog.FileName = $"DisplayMagician-Support-{now.ToString("yyyyMMdd-HHmm")}.zip";
+                    saveFileDialog.Title = "Save a DisplayMagician Support ZIP file";
+
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        //Get the path of specified file
+                        string zipFilePath = saveFileDialog.FileName;
+                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Creating support zip file at {zipFilePath}.");
+
+                        if (File.Exists(zipFilePath))
+                        {
+                            File.Delete(zipFilePath);
+                        }
+
+                        ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
+                                                                                              
+                        // Get the list of files to zip
+                        List<string> listOfFiles = new List<string> {
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
+                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppDataPath,"Settings_2.0.json")
+                        };
+                        foreach (string filename in listOfFiles)
+                        {
+                            try
+                            {
+                                if (File.Exists(filename))
+                                {
+                                    archive.CreateEntryFromFile(filename, Path.GetFileName(filename), CompressionLevel.Optimal);
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Warn($"SettingsForm/btn_create_support_package_Click: Couldn't add {filename} to the support ZIP file {zipFilePath} as it doesn't exist.");
+                                }
+                                
+                            }
+                            catch (ArgumentNullException ex)
+                            {
+                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while adding files to the support zip file.");
+                            }
+                            catch (System.Runtime.InteropServices.ExternalException ex)
+                            {
+                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while adding files to the support zip file.");
+                            }
+                            catch (Exception ex)
+                            {
+                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while adding files to the support zip file.");
+                            }
+
+
+                        }
+
+                        archive.Dispose();
+                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Finished creating support zip file at {zipFilePath}.");
+                        MessageBox.Show($"Created DisplayMagician Support ZIP file {zipFilePath}. You can now attach this file to your GitHub issue.");
+                    }
+                }
+            }
+            catch (ArgumentNullException ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while creating support zip file.");
+            }
+            catch (System.Runtime.InteropServices.ExternalException ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while creating support zip file.");
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while creating support zip file.");
+            }
+
+            
         }
 
     }

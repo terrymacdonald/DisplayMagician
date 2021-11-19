@@ -11,6 +11,7 @@ using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.Serialization;
+using Newtonsoft.Json.Linq;
 
 namespace DisplayMagicianShared
 {
@@ -62,7 +63,7 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.0.json");
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.1.json");
         
 
 
@@ -100,7 +101,7 @@ namespace DisplayMagicianShared
             catch (Exception ex)
             {
                 SharedLogger.logger.Warn(ex, $"ProfileRepository/ProfileRepository: Exception creating the Profiles storage folder.");
-            }
+            }            
         }
         #endregion
 
@@ -586,9 +587,6 @@ namespace DisplayMagicianShared
         public static void UpdateActiveProfile()
         {
 
-
-            //ProfileItem activeProfile;
-
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
             ProfileItem profile;
@@ -693,11 +691,17 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFileName} to memory but File.ReadAllTextthrew an exception.");
                 }
 
+                // Migrate any previous entries to the latest version of the file format to the latest one
+                json = MigrateJsonToLatestVersion(json);
+
+
                 if (!string.IsNullOrWhiteSpace(json))
                 {
+                    List<string> jsonErrors = new List<string>();
+
                      try
                     {
-                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, new JsonSerializerSettings
+                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
                             MissingMemberHandling = MissingMemberHandling.Error,
                             NullValueHandling = NullValueHandling.Include,
@@ -706,12 +710,32 @@ namespace DisplayMagicianShared
                             //DefaultValueHandling = DefaultValueHandling.Ignore,
                             TypeNameHandling = TypeNameHandling.Auto,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
-                        });
+                            
+                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            {
+                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                                args.ErrorContext.Handled = true;
+                            },
+                        };                       
+                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);                       
+
                     }
                     catch (Exception ex) 
                     { 
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
                     }
+
+                    // If we have any JSON.net errors, then we need to records them in the logs
+                    if (jsonErrors.Count > 0)
+                    {
+                        foreach (string jsonError in jsonErrors)
+                        {
+                            SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: {jsonErrors}");
+                        }
+                    }
+
+                    // We need to try and 
+
 
                     SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Finding the current profile in the Profile Repository");
 
@@ -745,10 +769,126 @@ namespace DisplayMagicianShared
             _profilesLoaded = true;
 
             // Update the current active profile
-            UpdateActiveProfile();
+            //UpdateActiveProfile();
             IsPossibleRefresh();
 
             return true;
+        }        
+
+        public static string MigrateJsonToLatestVersion(string json)
+        {
+
+            bool changedJson = false;
+            JArray root = new JArray();
+            try
+            {
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Processing the Profiles json data to migrate any older feature to the latest version.");
+                root = JArray.Parse(json);
+            }
+            catch(JsonReaderException ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+            catch(Exception ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+
+            // We do the change we wre trying to do
+            try
+            {
+                /*// Now we try and add a default NVIDIA Color Settings if there isn't one
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing NVIDIA Color Config.");
+                // Create a default object
+                NVIDIA_DISPLAY_CONFIG myDefaultConfig = new NVIDIA_DISPLAY_CONFIG();
+                myDefaultConfig.ColorConfig.ColorData = new Dictionary<uint, NV_COLOR_DATA_V5>();
+                JObject defaultColorConfig = (JObject)JToken.FromObject(myDefaultConfig.ColorConfig);
+
+                for (int i=0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+                    JObject result = (JObject)profile.SelectToken("NVIDIADisplayConfig.ColorConfig.ColorData");
+                    if (result == null)
+                    {                        
+                        
+                        JObject NVIDIADisplayConfig = (JObject)profile.SelectToken("NVIDIADisplayConfig");
+                        NVIDIADisplayConfig.Add("ColorConfig",defaultColorConfig);
+                        changedJson = true;
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing NVIDIA Color Config in profile {profile.SelectToken("Name")} (index {i}).");
+                    }
+                }
+
+                // Now we try to patch in a Windows GDI device context into the json if there isnt one
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows GDI Device Context.");
+                // Create a default object
+                Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
+                JObject defaultGdiDisplaySettings = (JObject)JToken.FromObject(GdiDisplaySettings);
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+                    JObject result = (JObject)profile.SelectToken("WindowsDisplayConfig.GdiDisplaySettings");
+                    if (result == null)
+                    {
+
+                        JObject WindowsDisplayConfig = (JObject)profile.SelectToken("WindowsDisplayConfig");
+                        WindowsDisplayConfig.Add("GdiDisplaySettings", defaultGdiDisplaySettings);
+                        changedJson = true;
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
+                    }
+                }
+
+                // Now we try to convert the individual sourceids into a list of source ids to cope with cloned devices
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows GDI Device Context.");
+                // Create a default object
+                List<uint> WinDisplaySourcesList = new List<uint>();
+                //JObject WinDisplaySources = (JObject)JToken.FromObject(WinDisplaySourcesList);
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+                    try
+                    {
+                        JObject WindowsDisplaySources = (JObject)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
+                        Dictionary<string, List<uint>> existingDisplaySources = WindowsDisplaySources.ToObject<Dictionary<string, List<uint>>>();
+                    }
+                    catch (Exception ex)
+                    {
+                        JObject WindowsDisplaySources = (JObject)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
+                        //foreach (var displaySource in WindowsDisplaySources.ToObject<Dictionary<string,uint>>())
+                        Dictionary<string, uint> existingDisplaySources = WindowsDisplaySources.ToObject<Dictionary<string, uint>>();
+                        Dictionary<string, List<uint>> newDisplaySources = new Dictionary<string, List<uint>>();
+                        foreach (var sourceName in existingDisplaySources.Keys)
+                        {
+                            List<uint> newList = new List<uint>();
+                            newList.Add((uint)existingDisplaySources[sourceName]);
+                            newDisplaySources[sourceName] = newList;
+                        }
+                        JObject newSourcesDict = JObject.FromObject(newDisplaySources);
+                        JToken WindowsDisplayConfig = (JToken)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
+                        WindowsDisplayConfig.Replace(newSourcesDict);
+                        changedJson = true;
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
+                    }
+                    
+                }                */
+
+            }
+            catch (JsonReaderException ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+            }
+
+            // Now write the changed json to the json string but only if we've changed something
+            if (changedJson)
+            {
+                json = root.ToString(Formatting.Indented);
+            }            
+
+
+            return json;
         }
 
         public static bool SaveProfiles()
@@ -782,11 +922,14 @@ namespace DisplayMagicianShared
             {
                 SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Profiles folder {AppProfileStoragePath} exists.");
             }
+
+            List<string> jsonErrors = new List<string>();
+
             try
             {
                 SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Converting the objects to JSON format.");
 
-                var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, new JsonSerializerSettings
+                JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
                     //NullValueHandling = NullValueHandling.Ignore,
@@ -795,7 +938,13 @@ namespace DisplayMagicianShared
                     TypeNameHandling = TypeNameHandling.Auto,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
-                });
+                    Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                    {
+                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
+                        args.ErrorContext.Handled = true;
+                    },
+                };
+                var json = JsonConvert.SerializeObject(_allProfiles, Formatting.Indented, mySerializerSettings);
 
 
                 if (!string.IsNullOrWhiteSpace(json))
@@ -809,6 +958,15 @@ namespace DisplayMagicianShared
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFileName}.");
+            }
+
+            // If we have any JSON.net errors, then we need to records them in the logs
+            if (jsonErrors.Count > 0)
+            {
+                foreach (string jsonError in jsonErrors)
+                {
+                    SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: {jsonErrors}");
+                }
             }
 
             return false;
@@ -840,7 +998,7 @@ namespace DisplayMagicianShared
         {
             // We need to refresh the cached answer
             // Get the list of connected devices
-            ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
+            //ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
@@ -871,15 +1029,15 @@ namespace DisplayMagicianShared
         {
             if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
-                return NVIDIALibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                return NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers;
             }
             else if (_currentVideoMode == VIDEO_MODE.AMD && AMDLibrary.GetLibrary().IsInstalled)
             {
-                return AMDLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                return AMDLibrary.GetLibrary().CurrentDisplayIdentifiers;
             }
             else
             {
-                return WinLibrary.GetLibrary().GetCurrentDisplayIdentifiers();
+                return WinLibrary.GetLibrary().CurrentDisplayIdentifiers;
             }
         }
 
@@ -940,6 +1098,8 @@ namespace DisplayMagicianShared
                 else
                 {
                     SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.VideoMode.ToString("G")} Profile!");
+                    // We also need to update the ActiveProfile so that DisplayMagician knows things have changed
+                    ProfileRepository.UpdateActiveProfile();
                     return ApplyProfileResult.Successful;
                 }
 
@@ -983,13 +1143,12 @@ namespace DisplayMagicianShared
                 if (wasDisplayChangeSuccessful)
                 {
                     result = "was successful";
+                    ProfileRepository.UpdateActiveProfile();
+
                 }
                 // Display the TimeSpan time and result.
                 SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
             }
-
-
-            ProfileRepository.UpdateActiveProfile();
 
             return ApplyProfileResult.Successful;
         }
@@ -1045,7 +1204,6 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the NVIDIA NVAPI library.");
                     nvidiaLibrary = new NVIDIALibrary();
-                    _currentVideoMode = VIDEO_MODE.NVIDIA;
                 }
                 catch (Exception ex)
                 {
@@ -1060,7 +1218,6 @@ namespace DisplayMagicianShared
                 {
                     SharedLogger.logger.Debug($"ProfileRepository/ProfileRepository: Initialising the AMD ADL library.");
                     amdLibrary = new AMDLibrary();
-                    _currentVideoMode = VIDEO_MODE.AMD;
                 }
                 catch (Exception ex)
                 {

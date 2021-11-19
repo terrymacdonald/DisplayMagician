@@ -33,7 +33,9 @@ namespace DisplayMagician.GameLibraries
 
         public virtual List<Process> Processes { get; set; }
 
-        public Bitmap GameBitmap { get; set; }
+        public ShortcutBitmap GameBitmap { get; set; }
+
+        public List<ShortcutBitmap> AvailableGameBitmaps { get; set; }
 
         #endregion
 

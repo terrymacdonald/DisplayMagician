@@ -61,6 +61,17 @@ namespace DisplayMagician
         public bool DontStartIfAlreadyRunning;
     }
 
+    public struct StopProgram
+    {
+        public int Priority;
+        public bool Disabled;
+        public ProcessPriority ProcessPriority;
+        public string Executable;
+        public string Arguments;
+        public bool ExecutableArgumentsRequired;
+        public bool DontStartIfAlreadyRunning;
+    }
+
     public struct Executable
     {
         public string DifferentExecutableToMonitor;
@@ -88,6 +99,17 @@ namespace DisplayMagician
         public string Name;
         public ShortcutValidity Validity;
         public string Message;
+    }
+
+    public struct ShortcutBitmap
+    {
+        public string UUID;
+        public string Name;
+        public int Order;
+        public string Source;
+        [JsonConverter(typeof(CustomBitmapConverter))]
+        public Bitmap Image;
+        public Size Size;
     }
 
     public class ShortcutItem : IComparable
@@ -128,10 +150,15 @@ namespace DisplayMagician
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
         private List<StartProgram> _startPrograms;
+        private List<StopProgram> _stopPrograms;
         private Bitmap _shortcutBitmap, _originalBitmap;
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
-        public string _originalIconPath;
+        private string _originalIconPath;
+        private bool _userChoseOwnIcon = false;
+        private ShortcutBitmap _selectedImage = new ShortcutBitmap();
+        private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
+
         [JsonIgnore]
         public string _savedShortcutIconCacheFilename;
 #pragma warning restore CS3008 // Identifier is not CLS-compliant
@@ -626,6 +653,20 @@ namespace DisplayMagician
             }
         }
 
+        public List<StopProgram> StopPrograms
+        {
+            get
+            {
+                return _stopPrograms;
+            }
+
+            set
+            {
+                _stopPrograms = value;
+            }
+        }
+
+
         public string OriginalIconPath {
             get
             {
@@ -713,6 +754,35 @@ namespace DisplayMagician
             }
         }
 
+        public ShortcutBitmap SelectedImage
+        {
+            get
+            {
+                return _selectedImage;
+            }
+
+            set
+            {
+                _selectedImage = value;
+
+            }
+        }
+
+        public List<ShortcutBitmap> AvailableImages
+        {
+            get
+            {
+                return _availableImages;
+            }
+
+            set
+            {
+                _availableImages = value;
+
+            }
+        }
+
+
         public void UpdateNoGameShortcut(
             string name,
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
@@ -731,6 +801,7 @@ namespace DisplayMagician
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
             bool autoName = true,
             Keys hotkey = Keys.None,
             string uuid = ""
@@ -776,6 +847,8 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
+            ShortcutBitmap selectedImage, 
+            List<ShortcutBitmap> availableImages,
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool setAudioVolume = false,
@@ -784,7 +857,8 @@ namespace DisplayMagician
             string captureDevice = "",
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
+            List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
             bool autoName = true, 
             string uuid = "",
             Keys hotkey = Keys.None
@@ -818,26 +892,19 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _stopPrograms = stopPrograms;
             _originalIconPath = originalIconPath;
+            _selectedImage = selectedImage; 
+            _availableImages = availableImages;
             _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            // We create the OriginalBitmap
-            // Find the game bitmap that matches the game name we just got
-            foreach (var aGame in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
-            {
-                if (aGame.Name.Equals(_gameName))
-                {
-                    _originalBitmap = aGame.GameBitmap;
-                }                
-            }
-            
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            if (_profileToUse is ProfileItem)
-                _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            // We create the Bitmaps for the game
+            _originalBitmap = selectedImage.Image;
+            // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
+            _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -853,6 +920,8 @@ namespace DisplayMagician
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
             string originalIconPath,
+            ShortcutBitmap selectedImage,
+            List<ShortcutBitmap> availableImages, 
             bool changeAudioDevice = false,
             string audioDevice = "",
             bool setAudioVolume = false,
@@ -861,7 +930,8 @@ namespace DisplayMagician
             string captureDevice = "",
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
-            List<StartProgram> startPrograms = null, 
+            List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
             bool autoName = true,
             Keys hotkey = Keys.None,
             string uuid = ""
@@ -892,22 +962,19 @@ namespace DisplayMagician
             _capturePermanence = capturePermanence;
             _autoName = autoName;
             _startPrograms = startPrograms;
+            _stopPrograms = stopPrograms; 
             _originalIconPath = originalIconPath;
+            _selectedImage = selectedImage;
+            _availableImages = availableImages;
             _hotkey = hotkey;
 
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
-            // We create the OriginalBitmap from the IconPath
-            //_originalLargeBitmap = ToLargeBitmap(_originalIconPath);            
-            // We create the OriginalBitmap
-            _originalBitmap = ImageUtils.GetMeABitmapFromFile(_originalIconPath);
-
-            // We create the ShortcutBitmap from the OriginalBitmap 
-            // (We only do it if there is a valid profile)
-            //if (_profileToUse is ProfileItem)
-            //    _shortcutBitmap = ToBitmapOverlay(_originalLargeBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
-            _shortcutBitmap = ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            // We create the Bitmaps for the executable
+            _originalBitmap = selectedImage.Image;
+            // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
+            _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             ReplaceShortcutIconInCache();
             RefreshValidity();
@@ -923,8 +990,7 @@ namespace DisplayMagician
 
             // Copy all the shortcut data over to the other Shortcut
             shortcut.Name = Name;
-            shortcut.ProfileToUse = ProfileToUse;
-            shortcut.ProfileUUID = ProfileUUID;
+            shortcut.AutoName = false; // Force the autoname to be off, as it's a copy.
             shortcut.DisplayPermanence = DisplayPermanence;
             shortcut.AudioPermanence = AudioPermanence;
             shortcut.CapturePermanence = CapturePermanence;
@@ -941,13 +1007,9 @@ namespace DisplayMagician
             shortcut.StartTimeout = StartTimeout;
             shortcut.GameArguments = GameArguments;
             shortcut.GameArgumentsRequired = GameArgumentsRequired;
-            shortcut.OriginalIconPath = OriginalIconPath;
-            shortcut.OriginalLargeBitmap = OriginalLargeBitmap;
-            shortcut.ShortcutBitmap = ShortcutBitmap;
-            shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename;
+            shortcut.OriginalIconPath = OriginalIconPath;           
             shortcut.IsValid = IsValid;
             shortcut.Errors.AddRange(Errors);
-            shortcut.StartPrograms = StartPrograms;
             shortcut.ChangeAudioDevice = ChangeAudioDevice;
             shortcut.AudioDevice = AudioDevice;
             shortcut.SetAudioVolume = SetAudioVolume;
@@ -956,10 +1018,53 @@ namespace DisplayMagician
             shortcut.CaptureDevice = CaptureDevice;
             shortcut.SetCaptureVolume = SetCaptureVolume;
             shortcut.CaptureVolume = CaptureVolume;
-            shortcut.Hotkey = Hotkey;
+            // shortcut.Hotkey = Hotkey; // We cannot duplicate the Hotkey as it breaks things
+
+            // Duplicate the Images
+
+            shortcut.OriginalLargeBitmap = (Bitmap)OriginalLargeBitmap.Clone();
+            shortcut.ShortcutBitmap = (Bitmap)ShortcutBitmap.Clone();
+            //shortcut.SavedShortcutIconCacheFilename = SavedShortcutIconCacheFilename; // We want a new shortcut icon!
+            shortcut.SelectedImage = ImageUtils.ShortcutBitmapClone(SelectedImage);            
+            shortcut.AvailableImages = ImageUtils.ShortcutBitmapClone(AvailableImages);
+
+            // Duplicate the start programs
+            shortcut.StartPrograms = new List<StartProgram>();
+            foreach (StartProgram sp in StartPrograms)
+            {
+                StartProgram copiedStartProgram = new StartProgram();
+                copiedStartProgram.Arguments = sp.Arguments;
+                copiedStartProgram.CloseOnFinish = sp.CloseOnFinish;
+                copiedStartProgram.Disabled = sp.Disabled;
+                copiedStartProgram.DontStartIfAlreadyRunning = sp.DontStartIfAlreadyRunning;
+                copiedStartProgram.Executable = sp.Executable;
+                copiedStartProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
+                copiedStartProgram.Priority = sp.Priority;
+                copiedStartProgram.ProcessPriority = sp.ProcessPriority;
+                shortcut.StartPrograms.Add(copiedStartProgram);
+            }
+
+            // Duplicate the stop programs
+            shortcut.StopPrograms = new List<StopProgram>();
+            foreach (StopProgram sp in StopPrograms)
+            {
+                StopProgram copiedStopProgram = new StopProgram();
+                copiedStopProgram.Arguments = sp.Arguments;
+                copiedStopProgram.Disabled = sp.Disabled;
+                copiedStopProgram.DontStartIfAlreadyRunning = sp.DontStartIfAlreadyRunning;
+                copiedStopProgram.Executable = sp.Executable;
+                copiedStopProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
+                copiedStopProgram.Priority = sp.Priority;
+                copiedStopProgram.ProcessPriority = sp.ProcessPriority;
+                shortcut.StopPrograms.Add(copiedStopProgram);
+            }
+
+            // Do the profiles last as AutoName will error if done earlier
+            shortcut.ProfileToUse = ProfileToUse;
+            shortcut.ProfileUUID = ProfileUUID;
 
             // Save the shortcut incon to the icon cache
-            shortcut.ReplaceShortcutIconInCache();
+            shortcut.SaveShortcutIconToCache();
             shortcut.RefreshValidity();
 
             return true;
@@ -967,30 +1072,21 @@ namespace DisplayMagician
 
         public void ReplaceShortcutIconInCache()
         {
-            string newShortcutIconFilename;
-            // Work out the name of the shortcut we'll save.
-            newShortcutIconFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
-            logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename is {newShortcutIconFilename}.");
-
-            // If the new shortcut icon should be named differently
-            // then change the name of it
-            if (!newShortcutIconFilename.Equals(_savedShortcutIconCacheFilename))
+            // Figure out if we need to remove the old file
+            if (_savedShortcutIconCacheFilename != null)
             {
-                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename {newShortcutIconFilename} is different to the old shortcut Icon filename {_savedShortcutIconCacheFilename}.");
-                if (System.IO.File.Exists(_savedShortcutIconCacheFilename))
+                // Work out the name of the shortcut we'll save.
+                string oldShortcutIconFilename = _savedShortcutIconCacheFilename;
+                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Old shortcut Icon filename is {oldShortcutIconFilename}.");
+                if (System.IO.File.Exists(oldShortcutIconFilename))
                 {
-                    logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Deleting old shortcut Icon filename {_savedShortcutIconCacheFilename}.");
-                    System.IO.File.Delete(_savedShortcutIconCacheFilename);
+                    logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Deleting old shortcut Icon filename {oldShortcutIconFilename}.");
+                    System.IO.File.Delete(oldShortcutIconFilename);
                 }
 
-                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: Creating the new shortcut Icon filename {newShortcutIconFilename} (calling SaveShortcutIconToCache).");
-                SaveShortcutIconToCache();
             }
-            else
-            {
-                logger.Trace($"ShortcutItem/ReplaceShortcutIconInCache: New shortcut Icon filename {newShortcutIconFilename} matches old shortcut Icon filename {_savedShortcutIconCacheFilename} so skipping the rename.");
-            }
-
+            // Now we save the new file
+            SaveShortcutIconToCache();
         }
 
 
@@ -1000,150 +1096,31 @@ namespace DisplayMagician
             // Work out the name of the shortcut we'll save.
             _savedShortcutIconCacheFilename = Path.Combine(Program.AppShortcutPath, $"{UUID}.ico");
             logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Planning on saving shortcut icon to cache as {_savedShortcutIconCacheFilename}.");
-
-            MultiIcon shortcutIcon;
+            MultiIcon shortcutIcon = new MultiIcon(); 
             try
             {
-                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Creating IconOverlay.");
-                shortcutIcon = ToIconOverlay();
-                if (shortcutIcon != null)
-                {
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving shortcut icon to cache with {_savedShortcutIconCacheFilename} as the name.");
-                    shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
-                }
-                else
-                {
-                    // If we fail to create an icon based on the original executable or game
-                    // Then we use the one appropriate for the game library
-                    SingleIcon si = shortcutIcon.Add("icon");
-                    Bitmap bm = null;
-                    if (_gameLibrary == SupportedGameLibraryType.Steam) 
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Steam icon as the icon instead.");                        
-                        bm = ToBitmapOverlay(Properties.Resources.Steam, _profileToUse.ProfileIcon.ToBitmap(),256,256);                        
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Uplay) 
-                      {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Uplay icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Uplay, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Origin)
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Origin icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Origin, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Epic)
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Epic icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.Epic, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.GOG)
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the GOG icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.GOG, _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    else
-                    {
-                        logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                        bm = ToBitmapOverlay(Properties.Resources.DisplayMagician.ToBitmap(), _profileToUse.ProfileIcon.ToBitmap(), 256, 256);
-                    }
-                    si.Add(bm);
-                    logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the replacement icon for Shortcut '{Name}' to {_savedShortcutIconCacheFilename}.");
-                    shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
-                }
-                    
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Creating Icon from Shortcut bitmap.");
+                // Create a new 
+                SingleIcon si = shortcutIcon.Add("icon");
+                si.Add(_shortcutBitmap);
+                shortcutIcon.SelectedIndex = 0;
+                logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving shortcut icon to cache with {_savedShortcutIconCacheFilename} as the name.");
+                shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
+
             }
             catch (Exception ex)
             {
                 logger.Warn(ex, $"ShortcutItem/SaveShortcutIconToCache: Exception while trying to save the Shortcut icon.");
-
+                shortcutIcon.Clear();
                 // If we fail to create an icon any other way, then we use the default profile icon
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Using the Display Profile icon for {_profileToUse.Name} as the icon instead.");
-                shortcutIcon = _profileToUse.ProfileIcon.ToIcon();
+                SingleIcon si = shortcutIcon.Add("icon2");
+                si.Add(Properties.Resources.DisplayMagician);
+                shortcutIcon.SelectedIndex = 0; 
                 logger.Trace($"ShortcutItem/SaveShortcutIconToCache: Saving the Display Profile icon for {_profileToUse.Name} to {_savedShortcutIconCacheFilename}.");
                 shortcutIcon.Save(_savedShortcutIconCacheFilename, MultiIconFormat.ICO);
             }
 
-        }
-
-        public Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
-        {
-            if (originalBitmap == null)
-            {
-                if (_category == ShortcutCategory.Application)
-                {
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the executable icon as the icon instead.");
-                    originalBitmap = ImageUtils.GetMeABitmapFromFile(_executableNameAndPath);
-                }
-                else if (_category == ShortcutCategory.Game)
-                {
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: OriginalBitmap is null, so we'll try to make the BitmapOverlay using GameLibrary Icon.");
-                    if (_gameLibrary == SupportedGameLibraryType.Steam)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Steam icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Steam;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Uplay)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Uplay icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Uplay;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Origin)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Origin icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Origin;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.Epic)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the Epic icon as the icon instead.");
-                        originalBitmap = Properties.Resources.Epic;
-                    }
-                    else if (_gameLibrary == SupportedGameLibraryType.GOG)
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the GOG icon as the icon instead.");
-                        originalBitmap = Properties.Resources.GOG;
-                    }
-                    else
-                    {
-                        logger.Trace($"ShortcutItem/ToBitmapOverlay: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                        originalBitmap = Properties.Resources.DisplayMagician.ToBitmap();
-                    }
-                }
-                else
-                {
-                    logger.Trace($"ShortcutItem/ToBitmapOverlay: Using the profile icon as the icon instead.");
-                    originalBitmap = _profileToUse.ProfileBitmap;
-                }
-                
-            }
-
-            if (overlayBitmap == null)
-            {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: overlayBitmap is null, so we'll just return the original bitmap without a profile overlay.");
-                return originalBitmap;
-            }
-
-            if (width <= 0 || width > 256)
-            {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: Width is out of range so setting to 256.");
-                width = 256;
-            }
-
-            if (height <= 0 || height > 256)
-            {
-                logger.Trace($"ShortcutItem/ToBitmapOverlay: Height is out of range so setting to 256.");
-                height = 256;
-            }
-
-            return ImageUtils.ToBitmapOverlay(originalBitmap, overlayBitmap, width, height, format);
-
-        }
-
-#pragma warning disable CS3002 // Return type is not CLS-compliant
-        public MultiIcon ToIconOverlay()
-#pragma warning restore CS3002 // Return type is not CLS-compliant
-        {
-            return ImageUtils.ToIconOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap);
         }
 
         public void RefreshValidity()
@@ -1326,7 +1303,9 @@ namespace DisplayMagician
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Error;
                                 }
-                                if (audioDevice.State == DeviceState.Unplugged)
+                                // As per Issue #39, this causes issues on HDMI audio devices and others that *could* work if the screen was enabled.
+                                // Disabling this code as it is too much error checking for audio devices. The user can plug these in after the chagne and they will work.
+                                /*if (audioDevice.State == DeviceState.Unplugged)
                                 {
                                     logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is unplugged!");
                                     ShortcutError error = new ShortcutError();
@@ -1336,7 +1315,7 @@ namespace DisplayMagician
                                     _shortcutErrors.Add(error);
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
-                                }
+                                }*/
                                 break;
                             }
                         }
@@ -1399,7 +1378,9 @@ namespace DisplayMagician
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Error;
                                 }
-                                if (captureDevice.State == DeviceState.Unplugged)
+                                // As per Issue #39, this causes issues on HDMI audiodevices and others that *could* work if the screen was enabled.
+                                // Disabling this code as it is too much error checking for capture devices. The user can plug these in after the chagne and they will work.
+                                /*if (captureDevice.State == DeviceState.Unplugged)
                                 {
                                     logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is unplugged!");
                                     ShortcutError error = new ShortcutError();
@@ -1409,7 +1390,7 @@ namespace DisplayMagician
                                     _shortcutErrors.Add(error);
                                     if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
-                                }
+                                }*/
                                 break;
                             }
                         }
@@ -1481,7 +1462,7 @@ namespace DisplayMagician
             shortcutFileName = Path.ChangeExtension(shortcutFileName, @"lnk");
 
             // And we use the Icon from the shortcutIconCache
-            SaveShortcutIconToCache();
+            //SaveShortcutIconToCache();
             shortcutIconFileName = SavedShortcutIconCacheFilename;
 
             // If the user supplied a file

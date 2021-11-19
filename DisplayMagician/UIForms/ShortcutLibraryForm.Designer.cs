@@ -45,10 +45,12 @@
             this.tsmi_edit = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_run = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_save_to_desktop = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmi_copy = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_delete = new System.Windows.Forms.ToolStripMenuItem();
             this.lbl_mask = new System.Windows.Forms.Label();
             this.btn_help = new System.Windows.Forms.Button();
             this.btn_donate = new System.Windows.Forms.Button();
+            this.btn_copy = new System.Windows.Forms.Button();
             this.cms_shortcuts.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -82,7 +84,7 @@
             this.btn_delete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_delete.ForeColor = System.Drawing.Color.White;
-            this.btn_delete.Location = new System.Drawing.Point(462, 643);
+            this.btn_delete.Location = new System.Drawing.Point(377, 643);
             this.btn_delete.Name = "btn_delete";
             this.btn_delete.Size = new System.Drawing.Size(120, 40);
             this.btn_delete.TabIndex = 26;
@@ -115,7 +117,7 @@
             this.btn_run.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_run.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_run.ForeColor = System.Drawing.Color.White;
-            this.btn_run.Location = new System.Drawing.Point(588, 643);
+            this.btn_run.Location = new System.Drawing.Point(629, 643);
             this.btn_run.Name = "btn_run";
             this.btn_run.Size = new System.Drawing.Size(120, 40);
             this.btn_run.TabIndex = 25;
@@ -132,7 +134,7 @@
             this.btn_edit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_edit.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_edit.ForeColor = System.Drawing.Color.White;
-            this.btn_edit.Location = new System.Drawing.Point(336, 643);
+            this.btn_edit.Location = new System.Drawing.Point(251, 643);
             this.btn_edit.Name = "btn_edit";
             this.btn_edit.Size = new System.Drawing.Size(120, 40);
             this.btn_edit.TabIndex = 28;
@@ -149,7 +151,7 @@
             this.btn_new.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_new.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_new.ForeColor = System.Drawing.Color.White;
-            this.btn_new.Location = new System.Drawing.Point(210, 643);
+            this.btn_new.Location = new System.Drawing.Point(125, 643);
             this.btn_new.Name = "btn_new";
             this.btn_new.Size = new System.Drawing.Size(120, 40);
             this.btn_new.TabIndex = 29;
@@ -166,7 +168,7 @@
             this.btn_save.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_save.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_save.ForeColor = System.Drawing.Color.White;
-            this.btn_save.Location = new System.Drawing.Point(714, 643);
+            this.btn_save.Location = new System.Drawing.Point(755, 643);
             this.btn_save.Name = "btn_save";
             this.btn_save.Size = new System.Drawing.Size(211, 40);
             this.btn_save.TabIndex = 30;
@@ -214,9 +216,10 @@
             this.tsmi_edit,
             this.tsmi_run,
             this.tsmi_save_to_desktop,
+            this.tsmi_copy,
             this.tsmi_delete});
             this.cms_shortcuts.Name = "cms_shortcuts";
-            this.cms_shortcuts.Size = new System.Drawing.Size(216, 92);
+            this.cms_shortcuts.Size = new System.Drawing.Size(216, 114);
             // 
             // tsmi_edit
             // 
@@ -240,6 +243,13 @@
             this.tsmi_save_to_desktop.Size = new System.Drawing.Size(215, 22);
             this.tsmi_save_to_desktop.Text = "Save Shortcut to Desktop...";
             this.tsmi_save_to_desktop.Click += new System.EventHandler(this.tsmi_save_to_desktop_Click);
+            // 
+            // tsmi_copy
+            // 
+            this.tsmi_copy.Name = "tsmi_copy";
+            this.tsmi_copy.Size = new System.Drawing.Size(215, 22);
+            this.tsmi_copy.Text = "Copy Shortcut...";
+            this.tsmi_copy.Click += new System.EventHandler(this.tsmi_copy_Click);
             // 
             // tsmi_delete
             // 
@@ -296,6 +306,23 @@
             this.btn_donate.UseVisualStyleBackColor = true;
             this.btn_donate.Click += new System.EventHandler(this.btn_donate_Click);
             // 
+            // btn_copy
+            // 
+            this.btn_copy.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_copy.BackColor = System.Drawing.Color.Black;
+            this.btn_copy.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_copy.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_copy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_copy.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_copy.ForeColor = System.Drawing.Color.White;
+            this.btn_copy.Location = new System.Drawing.Point(503, 643);
+            this.btn_copy.Name = "btn_copy";
+            this.btn_copy.Size = new System.Drawing.Size(120, 40);
+            this.btn_copy.TabIndex = 36;
+            this.btn_copy.Text = "&Copy";
+            this.btn_copy.UseVisualStyleBackColor = false;
+            this.btn_copy.Click += new System.EventHandler(this.btn_copy_Click);
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -303,6 +330,7 @@
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(1134, 716);
+            this.Controls.Add(this.btn_copy);
             this.Controls.Add(this.btn_donate);
             this.Controls.Add(this.btn_help);
             this.Controls.Add(this.lbl_mask);
@@ -353,5 +381,7 @@
         private System.Windows.Forms.Label lbl_mask;
         private System.Windows.Forms.Button btn_help;
         private System.Windows.Forms.Button btn_donate;
+        private System.Windows.Forms.Button btn_copy;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_copy;
     }
 }

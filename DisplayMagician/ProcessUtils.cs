@@ -2,200 +2,873 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
+using System.IO;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DisplayMagician
 {
-
-    [Flags]
-    public enum ProcessCreationFlags : uint
+    public class ProcessUtils
     {
-        ZERO_FLAG = 0x00000000,
-        CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
-        CREATE_DEFAULT_ERROR_MODE = 0x04000000,
-        CREATE_NEW_CONSOLE = 0x00000010,
-        CREATE_NEW_PROCESS_GROUP = 0x00000200,
-        CREATE_NO_WINDOW = 0x08000000,
-        CREATE_PROTECTED_PROCESS = 0x00040000,
-        CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
-        CREATE_SEPARATE_WOW_VDM = 0x00001000,
-        CREATE_SHARED_WOW_VDM = 0x00001000,
-        CREATE_SUSPENDED = 0x00000004,
-        CREATE_UNICODE_ENVIRONMENT = 0x00000400,
-        DEBUG_ONLY_THIS_PROCESS = 0x00000002,
-        DEBUG_PROCESS = 0x00000001,
-        DETACHED_PROCESS = 0x00000008,
-        EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
-        INHERIT_PARENT_AFFINITY = 0x00010000,
 
-        // Process creations flags
-        ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000,
-        BELOW_NORMAL_PRIORITY_CLASS = 0x00004000,
-        HIGH_PRIORITY_CLASS = 0x00000080,
-        IDLE_PRIORITY_CLASS = 0x00000040,
-        NORMAL_PRIORITY_CLASS = 0x00000020,
-        REALTIME_PRIORITY_CLASS = 0x00000100,
-    }
-
-    public struct PROCESS_INFORMATION
-    {
-        public IntPtr hProcess;
-        public IntPtr hThread;
-        public uint dwProcessId;
-        public uint dwThreadId;
-    }
-
-    public struct STARTUPINFO
-    {
-        public uint cb;
-        public string lpReserved;
-        public string lpDesktop;
-        public string lpTitle;
-        public uint dwX;
-        public uint dwY;
-        public uint dwXSize;
-        public uint dwYSize;
-        public uint dwXCountChars;
-        public uint dwYCountChars;
-        public uint dwFillAttribute;
-        public uint dwFlags;
-        public short wShowWindow;
-        public short cbReserved2;
-        public IntPtr lpReserved2;
-        public IntPtr hStdInput;
-        public IntPtr hStdOutput;
-        public IntPtr hStdError;
-    }
-
-    public static class NativeMethods
-    {
-        [DllImport("kernel32.dll")]
-        public static extern bool CreateProcess(string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes,
-                                 bool bInheritHandles, ProcessCreationFlags dwCreationFlags, IntPtr lpEnvironment,
-                                string lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
-
-        [DllImport("kernel32.dll")]
-        public static extern uint ResumeThread(IntPtr hThread);
-
-        [DllImport("kernel32.dll")]
-        public static extern uint SuspendThread(IntPtr hThread);
-    }
-
-    class ProcessInfo : IComparable<ProcessInfo>
-    {
-        public Process TheProcess;
-        public ProcessInfo Parent;
-        public List<ProcessInfo> Children = new List<ProcessInfo>();
-
-        public ProcessInfo(Process the_process)
-        {
-            TheProcess = the_process;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("{0} [{1}]",
-                TheProcess.ProcessName, TheProcess.Id);
-        }
-
-        public int CompareTo(ProcessInfo other)
-        {
-            return TheProcess.ProcessName.CompareTo(
-                other.TheProcess.ProcessName);
-        }
-    }
-
-    static class ProcessUtils
-    {
-        private static Dictionary<int, ProcessInfo> allProcessInfosDict;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static IntPtr ThreadHandle = IntPtr.Zero;
 
-        public static void Initialise()
+        const uint SE_GROUP_INTEGRITY = 0x00000020;
+
+        [Flags]
+        public enum PROCESS_CREATION_FLAGS : UInt32
         {
-            allProcessInfosDict = new Dictionary<int, ProcessInfo>();
+            ZERO_FLAG = 0x00000000,
+            CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
+            CREATE_DEFAULT_ERROR_MODE = 0x04000000,
+            CREATE_NEW_CONSOLE = 0x00000010,
+            CREATE_NEW_PROCESS_GROUP = 0x00000200,
+            CREATE_NO_WINDOW = 0x08000000,
+            CREATE_PROTECTED_PROCESS = 0x00040000,
+            CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
+            CREATE_SEPARATE_WOW_VDM = 0x00001000,
+            CREATE_SHARED_WOW_VDM = 0x00001000,
+            CREATE_SUSPENDED = 0x00000004,
+            CREATE_UNICODE_ENVIRONMENT = 0x00000400,
+            DEBUG_ONLY_THIS_PROCESS = 0x00000002,
+            DEBUG_PROCESS = 0x00000001,
+            DETACHED_PROCESS = 0x00000008,
+            EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
+            INHERIT_PARENT_AFFINITY = 0x00010000,
 
-            try
-            {
-                // Get the parent/child info.
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(
-                   "SELECT ProcessId, ParentProcessId FROM Win32_Process");
-                ManagementObjectCollection collection = searcher.Get();
-
-                // Get the processes.
-                foreach (Process process in Process.GetProcesses())
-                {
-                    allProcessInfosDict.Add(process.Id, new ProcessInfo(process));
-                }
-
-                // Create the child lists.
-                foreach (var item in collection)
-                {
-                    // Find the parent and child in the dictionary.
-                    int child_id = Convert.ToInt32(item["ProcessId"]);
-                    int parent_id = Convert.ToInt32(item["ParentProcessId"]);
-
-                    ProcessInfo child_info = null;
-                    ProcessInfo parent_info = null;
-                    if (allProcessInfosDict.ContainsKey(child_id))
-                        child_info = allProcessInfosDict[child_id];
-                    if (allProcessInfosDict.ContainsKey(parent_id))
-                        parent_info = allProcessInfosDict[parent_id];
-
-                    if (child_info == null)
-                        Console.WriteLine(
-                            "Cannot find child " + child_id.ToString() +
-                            " for parent " + parent_id.ToString());
-
-                    if (parent_info == null)
-                        Console.WriteLine(
-                            "Cannot find parent " + parent_id.ToString() +
-                            " for child " + child_id.ToString());
-
-                    if ((child_info != null) && (parent_info != null))
-                    {
-                        parent_info.Children.Add(child_info);
-                        child_info.Parent = parent_info;
-                    }
-                }
-
-            }
-            catch(Exception ex)
-            {
-                logger.Error(ex,$"ProcessUtils/Initialise: Exception (re)initialising the process information to figure out process hierarchy");
-            }
-
+            // Process creations flags
+            ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000,
+            BELOW_NORMAL_PRIORITY_CLASS = 0x00004000,
+            HIGH_PRIORITY_CLASS = 0x00000080,
+            IDLE_PRIORITY_CLASS = 0x00000040,
+            NORMAL_PRIORITY_CLASS = 0x00000020,
+            REALTIME_PRIORITY_CLASS = 0x00000100,
         }
 
-        public static List<Process> FindChildProcesses(Process parentProcess)
-        {
-            List<Process> childProcesses = new List<Process>() { };
 
+        public enum SaferLevel : uint
+        {
+            Disallowed = 0,
+            Untrusted = 0x1000,
+            Constrained = 0x10000,
+            NormalUser = 0x20000,
+            FullyTrusted = 0x40000
+        }
+
+        public enum SaferScope : uint
+        {
+            Machine = 1,
+            User = 2
+        }
+
+        [Flags]
+        public enum SaferOpenFlags : uint
+        {
+            Open = 1
+        }
+
+        public enum TOKEN_INFORMATION_CLASS
+        {
+            /// <summary>
+            /// The buffer receives a TOKEN_USER structure that contains the user account of the token.
+            /// </summary>
+            TokenUser = 1,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_GROUPS structure that contains the group accounts associated with the token.
+            /// </summary>
+            TokenGroups,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_PRIVILEGES structure that contains the privileges of the token.
+            /// </summary>
+            TokenPrivileges,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_OWNER structure that contains the default owner security identifier (SID) for newly created objects.
+            /// </summary>
+            TokenOwner,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_PRIMARY_GROUP structure that contains the default primary group SID for newly created objects.
+            /// </summary>
+            TokenPrimaryGroup,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_DEFAULT_DACL structure that contains the default DACL for newly created objects.
+            /// </summary>
+            TokenDefaultDacl,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_SOURCE structure that contains the source of the token. TOKEN_QUERY_SOURCE access is needed to retrieve this information.
+            /// </summary>
+            TokenSource,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_TYPE value that indicates whether the token is a primary or impersonation token.
+            /// </summary>
+            TokenType,
+
+            /// <summary>
+            /// The buffer receives a SECURITY_IMPERSONATION_LEVEL value that indicates the impersonation level of the token. If the access token is not an impersonation token, the function fails.
+            /// </summary>
+            TokenImpersonationLevel,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_STATISTICS structure that contains various token statistics.
+            /// </summary>
+            TokenStatistics,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_GROUPS structure that contains the list of restricting SIDs in a restricted token.
+            /// </summary>
+            TokenRestrictedSids,
+
+            /// <summary>
+            /// The buffer receives a DWORD value that indicates the Terminal Services session identifier that is associated with the token.
+            /// </summary>
+            TokenSessionId,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_GROUPS_AND_PRIVILEGES structure that contains the user SID, the group accounts, the restricted SIDs, and the authentication ID associated with the token.
+            /// </summary>
+            TokenGroupsAndPrivileges,
+
+            /// <summary>
+            /// Reserved.
+            /// </summary>
+            TokenSessionReference,
+
+            /// <summary>
+            /// The buffer receives a DWORD value that is nonzero if the token includes the SANDBOX_INERT flag.
+            /// </summary>
+            TokenSandBoxInert,
+
+            /// <summary>
+            /// Reserved.
+            /// </summary>
+            TokenAuditPolicy,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_ORIGIN value.
+            /// </summary>
+            TokenOrigin,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_ELEVATION_TYPE value that specifies the elevation level of the token.
+            /// </summary>
+            TokenElevationType,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_LINKED_TOKEN structure that contains a handle to another token that is linked to this token.
+            /// </summary>
+            TokenLinkedToken,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_ELEVATION structure that specifies whether the token is elevated.
+            /// </summary>
+            TokenElevation,
+
+            /// <summary>
+            /// The buffer receives a DWORD value that is nonzero if the token has ever been filtered.
+            /// </summary>
+            TokenHasRestrictions,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_ACCESS_INFORMATION structure that specifies security information contained in the token.
+            /// </summary>
+            TokenAccessInformation,
+
+            /// <summary>
+            /// The buffer receives a DWORD value that is nonzero if virtualization is allowed for the token.
+            /// </summary>
+            TokenVirtualizationAllowed,
+
+            /// <summary>
+            /// The buffer receives a DWORD value that is nonzero if virtualization is enabled for the token.
+            /// </summary>
+            TokenVirtualizationEnabled,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_MANDATORY_LABEL structure that specifies the token's integrity level.
+            /// </summary>
+            TokenIntegrityLevel,
+
+            /// <summary>
+            /// The buffer receives a DWORD value that is nonzero if the token has the UIAccess flag set.
+            /// </summary>
+            TokenUIAccess,
+
+            /// <summary>
+            /// The buffer receives a TOKEN_MANDATORY_POLICY structure that specifies the token's mandatory integrity policy.
+            /// </summary>
+            TokenMandatoryPolicy,
+
+            /// <summary>
+            /// The buffer receives the token's logon security identifier (SID).
+            /// </summary>
+            TokenLogonSid,
+
+            /// <summary>
+            /// The maximum value for this enumeration
+            /// </summary>
+            MaxTokenInfoClass
+        }
+
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct STARTUPINFOEX
+        {
+            public STARTUPINFO StartupInfo;
+            public IntPtr lpAttributeList;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct STARTUPINFO
+        {
+            public Int32 cb;
+            public string lpReserved;
+            public string lpDesktop;
+            public string lpTitle;
+            public Int32 dwX;
+            public Int32 dwY;
+            public Int32 dwXSize;
+            public Int32 dwYSize;
+            public Int32 dwXCountChars;
+            public Int32 dwYCountChars;
+            public Int32 dwFillAttribute;
+            public Int32 dwFlags;
+            public Int16 wShowWindow;
+            public Int16 cbReserved2;
+            public IntPtr lpReserved2;
+            public IntPtr hStdInput;
+            public IntPtr hStdOutput;
+            public IntPtr hStdError;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public  struct PROCESS_INFORMATION
+        {
+            public IntPtr hProcess;
+            public IntPtr hThread;
+            public int dwProcessId;
+            public int dwThreadId;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SECURITY_ATTRIBUTES
+        {
+            public int nLength;
+            public IntPtr lpSecurityDescriptor;
+            public int bInheritHandle;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct SID_AND_ATTRIBUTES
+        {
+            public IntPtr Sid;
+            public uint Attributes;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct TOKEN_MANDATORY_LABEL
+        {
+            public SID_AND_ATTRIBUTES Label;
+        }        
+
+        [DllImport("advapi32", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        private static extern bool SaferCreateLevel(SaferScope scope, SaferLevel level, SaferOpenFlags openFlags, out IntPtr pLevelHandle, IntPtr lpReserved);
+
+        [DllImport("advapi32", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        private static extern bool SaferComputeTokenFromLevel(IntPtr LevelHandle, IntPtr InAccessToken, out IntPtr OutAccessToken, int dwFlags, IntPtr lpReserved);
+
+        [DllImport("advapi32", SetLastError = true)]
+        private static extern bool SaferCloseLevel(IntPtr hLevelHandle);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern bool ConvertStringSidToSid(string StringSid, out IntPtr ptrSid);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        private static bool SafeCloseHandle(IntPtr hObject)
+        {
+            return (hObject == IntPtr.Zero) ? true : CloseHandle(hObject);
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern IntPtr LocalFree(IntPtr hMem);
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CreateProcess(
+            string lpApplicationName, string lpCommandLine, ref SECURITY_ATTRIBUTES lpProcessAttributes,
+            ref SECURITY_ATTRIBUTES lpThreadAttributes, bool bInheritHandles, PROCESS_CREATION_FLAGS dwCreationFlags,
+            IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CreateProcess(
+            string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes,
+            IntPtr lpThreadAttributes, bool bInheritHandles, PROCESS_CREATION_FLAGS dwCreationFlags,
+            IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFOEX lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern Boolean SetTokenInformation(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            UInt32 TokenInformationLength);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        static extern bool CreateProcessAsUser(
+            IntPtr hToken,
+            string lpApplicationName,
+            string lpCommandLine,
+            IntPtr lpProcessAttributes,
+            IntPtr lpThreadAttributes,
+            bool bInheritHandles,
+            uint dwCreationFlags,
+            IntPtr lpEnvironment,
+            string lpCurrentDirectory,
+            ref STARTUPINFO lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool UpdateProcThreadAttribute(
+            IntPtr lpAttributeList, uint dwFlags, IntPtr Attribute, IntPtr lpValue,
+            IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool InitializeProcThreadAttributeList(
+            IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DeleteProcThreadAttributeList(IntPtr lpAttributeList);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint ResumeThread(IntPtr hThread);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint SuspendThread(IntPtr hThread);
+
+        public static ProcessPriorityClass TranslatePriorityToClass(ProcessPriority processPriorityClass)
+        {
+            ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
+            switch (processPriorityClass)
+            {
+                case ProcessPriority.High:
+                    wantedPriorityClass = ProcessPriorityClass.High;
+                    break;
+                case ProcessPriority.AboveNormal:
+                    wantedPriorityClass = ProcessPriorityClass.AboveNormal;
+                    break;
+                case ProcessPriority.Normal:
+                    wantedPriorityClass = ProcessPriorityClass.Normal;
+                    break;
+                case ProcessPriority.BelowNormal:
+                    wantedPriorityClass = ProcessPriorityClass.BelowNormal;
+                    break;
+                case ProcessPriority.Idle:
+                    wantedPriorityClass = ProcessPriorityClass.Idle;
+                    break;
+                default:
+                    wantedPriorityClass = ProcessPriorityClass.Normal;
+                    break;
+            }
+            return wantedPriorityClass;
+        }
+
+        public static PROCESS_CREATION_FLAGS TranslatePriorityClassToFlags(ProcessPriorityClass processPriorityClass)
+        {
+            PROCESS_CREATION_FLAGS wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
+            switch (processPriorityClass)
+            {
+                case ProcessPriorityClass.High:
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.HIGH_PRIORITY_CLASS;
+                    break;
+                case ProcessPriorityClass.AboveNormal:
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.ABOVE_NORMAL_PRIORITY_CLASS;
+                    break;
+                case ProcessPriorityClass.Normal:
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
+                    break;
+                case ProcessPriorityClass.BelowNormal:
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.BELOW_NORMAL_PRIORITY_CLASS;
+                    break;
+                case ProcessPriorityClass.Idle:
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.IDLE_PRIORITY_CLASS;
+                    break;
+                default:
+                    wantedPriorityClass = PROCESS_CREATION_FLAGS.NORMAL_PRIORITY_CLASS;
+                    break;
+            }
+            return wantedPriorityClass;
+        }
+
+        public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1)
+        {
+            List<Process> runningProcesses = new List<Process>();
+            Process process = null;
+            PROCESS_INFORMATION processInfo;
+            bool usingChildProcess = false;
             try
             {
-                int parentId = parentProcess.Id;
-                // TODO: We *possibly* could walk the tree to find the program hierarchy, to get the full list of the 
-                // process tree, but this seems like the best way at this stage. I'm expecting I'll find an edge case in the future
-                // that requires some sort of modification, but this is working well in 2 days of testing so far!
-                if (allProcessInfosDict.ContainsKey(parentId))
+                if (CreateProcessWithPriorityAsRestrictedUser(executable, arguments, ProcessUtils.TranslatePriorityToClass(processPriority), out processInfo))
                 {
-                    foreach (ProcessInfo childProcess in allProcessInfosDict[parentId].Children)
+                    if (processInfo.dwProcessId > 0)
                     {
-                        childProcesses.Add(childProcess.TheProcess);
+                        try
+                        {
+                            process = Process.GetProcessById(processInfo.dwProcessId);
+                            Task.Delay(500);
+                            if (process.HasExited)
+                            {
+                                // it's a launcher! We need to look for children
+                                List<Process> childProcesses = GetChildProcesses(process);
+                                runningProcesses.AddRange(childProcesses);
+                                usingChildProcess = true;
+                            }
+                            else
+                            {
+                                runningProcesses.Add(process);
+                            }
+                        }
+                        catch(Exception ex)
+                        {
+                            // it's a launcher! We need to look for children
+                            List<Process> childProcesses = GetChildProcesses(processInfo.dwProcessId);
+                            runningProcesses.AddRange(childProcesses);
+                            usingChildProcess = true;
+                        }
+                        
+                    }
+                    else
+                    {
+                        logger.Warn($"ProcessUtils/StartProcess: CreateProcessWithPriority returned a process with PID 0 when trying to start process {executable}. This indicates that the process was not started, so we'll try it a different way.");
+                        // Start the process using built in process library
+                        ProcessStartInfo psi = new ProcessStartInfo();
+                        psi.FileName = executable;
+                        psi.Arguments = arguments;
+                        psi.WorkingDirectory = Path.GetDirectoryName(executable);
+                        process = Process.Start(psi);
+                        processInfo.hProcess = process.Handle;
+                        processInfo.dwProcessId = process.Id;
+                        if (!process.HasExited)
+                        {
+                            processInfo.dwThreadId = process.Threads[0].Id;
+
+                            // Change priority if we can (not always possible in this mode :(
+                            try
+                            {
+                                // If this process is a protected process, then this will fail!
+                                process.PriorityClass = ProcessUtils.TranslatePriorityToClass(processPriority);
+                            }
+                            catch (Exception ex)
+                            {
+                                // We would need need higher rights for this processto set the priority
+                                // https://docs.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights
+                                // At this stage I am not writing this, as it is a lot of work for a niche issue.
+                            }
+                            runningProcesses.Add(process);
+                        }
+                    }
+                }
+                else
+                {
+                    // Start the process using built in process library
+                    ProcessStartInfo psi = new ProcessStartInfo();
+                    psi.FileName = executable;
+                    psi.Arguments = arguments;
+                    psi.WorkingDirectory = Path.GetDirectoryName(executable);
+                    process = Process.Start(psi);
+                    processInfo.hProcess = process.Handle;
+                    processInfo.dwProcessId = process.Id;
+                    if (!process.HasExited)
+                    {
+                        processInfo.dwThreadId = process.Threads[0].Id;
+                        // Change priority if we can (not always possible in this mode :(
+                        try
+                        {
+                            // If this process is a protected process, then this will fail!
+                            process.PriorityClass = ProcessUtils.TranslatePriorityToClass(processPriority);
+                        }
+                        catch(Exception ex)
+                        {
+                            // We would need need higher rights for this processto set the priority
+                            // https://docs.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights
+                            // At this stage I am not writing this, as it is a lot of work for a niche issue.
+                        }
+                        runningProcesses.Add(process);
                     }
 
                 }
+
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"ProcessUtils/FindChildProcesses: Exception finding the child processes of the parentProcess");
+                if (!process.HasExited)
+                {
+                    // Start the process using built in process library
+                    ProcessStartInfo psi = new ProcessStartInfo();
+                    psi.FileName = executable;
+                    psi.Arguments = arguments;
+                    psi.WorkingDirectory = Path.GetDirectoryName(executable);
+                    process = Process.Start(psi);
+                    processInfo.hProcess = process.Handle;
+                    processInfo.dwProcessId = process.Id;
+                    processInfo.dwThreadId = process.Threads[0].Id;
+                    //pInfo.dwThreadId = process.Threads[0].Id;
+                    // Change priority
+                    if (!process.HasExited)
+                    {
+                        runningProcesses.Add(process);
+                    }
+                }
+                
+            }
+
+
+            // Check the launched exe hasn't exited within 2 secs
+            if (!usingChildProcess)
+            {
+                for (int secs = 0; secs <= (startTimeout * 1000); secs += 500)
+                {
+                    // If we have no more processes left then we're done!
+                    if (process.HasExited)
+                    {
+                        logger.Trace($"ProcessUtils/StartProcess: {executable} has exited early! It's likely to be a launcher! Trying to detect it's children.");
+                        // As the original process has left the building, we'll overwrite it with the children processes
+                        runningProcesses = GetChildProcesses(process);
+                        break;
+                    }
+                    // Send a message to windows so that it doesn't think
+                    // we're locked and try to kill us
+                    System.Threading.Thread.CurrentThread.Join(0);
+                    Thread.Sleep(500);
+                }
+
+            }
+
+            return runningProcesses;
+        }
+
+        public static List<Process> GetChildProcesses(Process process)
+        {
+            List<Process> children = new List<Process>();
+            ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={process.Id}");
+            foreach (ManagementObject mo in mos.Get())
+            {
+                children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+            }
+            return children;
+        }
+
+        public static List<Process> GetChildProcesses(int processId)
+        {
+            List<Process> children = new List<Process>();
+            ManagementObjectSearcher mos = new ManagementObjectSearcher($"Select * From Win32_Process Where ParentProcessID={processId}");
+            foreach (ManagementObject mo in mos.Get())
+            {
+                children.Add(Process.GetProcessById(Convert.ToInt32(mo["ProcessID"])));
+            }
+            return children;
+        }
+
+        public static bool CreateProcessWithPriority(string fileName, string args, ProcessPriorityClass priorityClass, out PROCESS_INFORMATION processInfo)
+        {
+            PROCESS_CREATION_FLAGS processFlags = TranslatePriorityClassToFlags(priorityClass);
+            var cmd = new StringBuilder();
+            cmd.Append('"').Append(fileName).Append('"');
+            if (!string.IsNullOrWhiteSpace(args))
+            {
+                cmd.Append(' ').Append(args);
+            }
+            bool success = false;
+            PROCESS_INFORMATION pInfo = new PROCESS_INFORMATION();
+            var pSec = new SECURITY_ATTRIBUTES();
+            var tSec = new SECURITY_ATTRIBUTES();
+            pSec.nLength = Marshal.SizeOf(pSec);
+            tSec.nLength = Marshal.SizeOf(tSec);
+            var sInfoEx = new STARTUPINFOEX();
+            sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
+            try
+            {
+                success = CreateProcess(fileName, cmd.ToString(), ref pSec, ref tSec, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+            }
+            catch (Exception ex)
+            {
+                // This is a problem
+            }
+            if (!success)
+            {
+                try
+                {
+                    success = CreateProcess(fileName, cmd.ToString(), IntPtr.Zero, IntPtr.Zero, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+                }
+                catch (Exception ex)
+                {
+                    // This is a problem too                    
+                }
+            }
+            processInfo = pInfo;
+
+            return success;
+        }
+
+        /// Runs a process as a non-elevated version of the current user.
+        public static bool CreateProcessWithPriorityAsRestrictedUser(string fileName, string args, ProcessPriorityClass priorityClass, out PROCESS_INFORMATION processInfo)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(fileName));
+
+            var pi = new PROCESS_INFORMATION();
+            if (GetRestrictedSessionUserToken(out var hRestrictedToken))
+            {
+                try
+                {
+                    var si = new STARTUPINFO();
+                    var cmd = new StringBuilder();
+                    cmd.Append('"').Append(fileName).Append('"');
+                    if (!string.IsNullOrWhiteSpace(args))
+                    {
+                        cmd.Append(' ').Append(args);
+                    }
+
+                    if (!CreateProcessAsUser(
+                        hRestrictedToken,
+                        fileName,
+                        cmd.ToString(),
+                        IntPtr.Zero,
+                        IntPtr.Zero,
+                        true, // inherit handle
+                        0,
+                        IntPtr.Zero,
+                        Path.GetDirectoryName(fileName),
+                        ref si,
+                        out pi))
+                    {
+                        processInfo = pi;
+                        return false;
+                    }
+
+                    
+                }
+                finally
+                {
+                    CloseHandle(hRestrictedToken);
+                }
+                processInfo = pi;
+                return true;
+            }
+            else
+            {
+                processInfo = pi;
+                return false;
             }
             
-            return childProcesses;
+        }
+
+        // based on https://stackoverflow.com/a/16110126/862099
+        private static bool GetRestrictedSessionUserToken(out IntPtr token)
+        {
+            token = IntPtr.Zero;
+            if (!SaferCreateLevel(SaferScope.User, SaferLevel.NormalUser, SaferOpenFlags.Open, out var hLevel, IntPtr.Zero))
+            {
+                return false;
+            }
+
+            IntPtr hRestrictedToken = IntPtr.Zero;
+            TOKEN_MANDATORY_LABEL tml = default;
+            tml.Label.Sid = IntPtr.Zero;
+            IntPtr tmlPtr = IntPtr.Zero;
+
+            try
+            {
+                if (!SaferComputeTokenFromLevel(hLevel, IntPtr.Zero, out hRestrictedToken, 0, IntPtr.Zero))
+                {
+                    return false;
+                }
+
+                // Set the token to medium integrity.
+                tml.Label.Attributes = SE_GROUP_INTEGRITY;
+                tml.Label.Sid = IntPtr.Zero;
+                if (!ConvertStringSidToSid("S-1-16-8192", out tml.Label.Sid))
+                {
+                    return false;
+                }
+
+                tmlPtr = Marshal.AllocHGlobal(Marshal.SizeOf(tml));
+                Marshal.StructureToPtr(tml, tmlPtr, false);
+                if (!SetTokenInformation(hRestrictedToken,
+                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                    tmlPtr, (uint)Marshal.SizeOf(tml)))
+                {
+                    return false;
+                }
+
+                token = hRestrictedToken;
+                hRestrictedToken = IntPtr.Zero; // make sure finally() doesn't close the handle
+            }
+            finally
+            {
+                SaferCloseLevel(hLevel);
+                SafeCloseHandle(hRestrictedToken);
+                if (tml.Label.Sid != IntPtr.Zero)
+                {
+                    LocalFree(tml.Label.Sid);
+                }
+                if (tmlPtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(tmlPtr);
+                }
+            }
+
+            return true;
+        }
+
+        public static void ResumeProcess(PROCESS_INFORMATION processInfo)
+        {
+            ResumeThread(processInfo.hThread);
+        }
+
+        public static bool CreateProcessWithParent(int parentProcessId)
+        {
+            const int PROC_THREAD_ATTRIBUTE_PARENT_PROCESS = 0x00020000;
+
+            var pInfo = new PROCESS_INFORMATION();
+            var sInfoEx = new STARTUPINFOEX();
+            sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
+            IntPtr lpValue = IntPtr.Zero;
+
+            try
+            {
+                if (parentProcessId > 0)
+                {
+                    var lpSize = IntPtr.Zero;
+                    var success = InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref lpSize);
+                    if (success || lpSize == IntPtr.Zero)
+                    {
+                        return false;
+                    }
+
+                    sInfoEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
+                    success = InitializeProcThreadAttributeList(sInfoEx.lpAttributeList, 1, 0, ref lpSize);
+                    if (!success)
+                    {
+                        return false;
+                    }
+
+                    var parentHandle = Process.GetProcessById(parentProcessId).Handle;
+                    // This value should persist until the attribute list is destroyed using the DeleteProcThreadAttributeList function
+                    lpValue = Marshal.AllocHGlobal(IntPtr.Size);
+                    Marshal.WriteIntPtr(lpValue, parentHandle);
+
+                    success = UpdateProcThreadAttribute(
+                        sInfoEx.lpAttributeList,
+                        0,
+                        (IntPtr)PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
+                        lpValue,
+                        (IntPtr)IntPtr.Size,
+                        IntPtr.Zero,
+                        IntPtr.Zero);
+                    if (!success)
+                    {
+                        return false;
+                    }
+                }
+
+                var pSec = new SECURITY_ATTRIBUTES();
+                var tSec = new SECURITY_ATTRIBUTES();
+                pSec.nLength = Marshal.SizeOf(pSec);
+                tSec.nLength = Marshal.SizeOf(tSec);
+                var lpApplicationName = Path.Combine(Environment.SystemDirectory, "notepad.exe");
+                return CreateProcess(lpApplicationName, null, ref pSec, ref tSec, false, PROCESS_CREATION_FLAGS.EXTENDED_STARTUPINFO_PRESENT, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+            }
+            finally
+            {
+                // Free the attribute list
+                if (sInfoEx.lpAttributeList != IntPtr.Zero)
+                {
+                    DeleteProcThreadAttributeList(sInfoEx.lpAttributeList);
+                    Marshal.FreeHGlobal(sInfoEx.lpAttributeList);
+                }
+                Marshal.FreeHGlobal(lpValue);
+
+                // Close process and thread handles
+                if (pInfo.hProcess != IntPtr.Zero)
+                {
+                    CloseHandle(pInfo.hProcess);
+                }
+                if (pInfo.hThread != IntPtr.Zero)
+                {
+                    CloseHandle(pInfo.hThread);
+                }
+            }
+        }
+
+        public static bool ProcessExited(Process process)
+        {
+            try
+            {
+                Process processToTest = Process.GetProcessById(process.Id);
+                if (processToTest.HasExited)
+                {
+                    logger.Trace($"ProcessUtils/ProcessExited: {process.Id} has exited and is not running. This means the process has finished!");
+                    return true;
+                }
+                else
+                {
+                    logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is still running as is has not exited yet.");
+                    return false;
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
+                return true;
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.Warn($"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Trace($"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
+                return true;
+            }
+        }
+
+        public static bool ProcessExited(List<Process> processes)
+        {
+            int processClosedCount = 0;
+            foreach (Process p in processes)
+            {
+                if (ProcessExited(p))
+                {
+                    processClosedCount++;
+                }
+            }
+            if (processClosedCount == processes.Count)
+            {
+                logger.Trace($"ProcessUtils/ProcessExited2: All processes being monitored have exited, so no processes still running!");
+                return true;
+            }
+            else
+            {
+                logger.Trace($"ProcessUtils/ProcessExited2: {processClosedCount} processes out of {processes.Count} processes have exited. At least one process is still running!");
+                return false;
+            }
         }
 
         public static bool StopProcess(Process processToStop)
@@ -204,7 +877,7 @@ namespace DisplayMagician
             {
                 // Stop the process
                 processToStop.CloseMainWindow();
-                if (!processToStop.WaitForExit(5000))
+                if (!processToStop.WaitForExit(1000))
                 {
                     logger.Trace($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
                     processToStop.Kill();
@@ -247,76 +920,35 @@ namespace DisplayMagician
             return false;
         }
 
-        public static ProcessPriorityClass TranslatePriorityToClass(ProcessPriority  processPriorityClass)
+        public static bool StopProcess(List<Process> processes)
         {
-            ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
-            switch (processPriorityClass)
+            // Stop the programs in the reverse order we started them
+            foreach (Process processToStop in processes)
             {
-                case ProcessPriority.High:
-                    wantedPriorityClass = ProcessPriorityClass.High;
-                    break;
-                case ProcessPriority.AboveNormal:
-                    wantedPriorityClass = ProcessPriorityClass.AboveNormal;
-                    break;
-                case ProcessPriority.Normal:
-                    wantedPriorityClass = ProcessPriorityClass.Normal;
-                    break;
-                case ProcessPriority.BelowNormal:
-                    wantedPriorityClass = ProcessPriorityClass.BelowNormal;
-                    break;
-                case ProcessPriority.Idle:
-                    wantedPriorityClass = ProcessPriorityClass.Idle;
-                    break;
-                default:
-                    wantedPriorityClass = ProcessPriorityClass.Normal;
-                    break;
+                // Stop the process if it hasn't stopped already
+                try
+                {
+                    if (!processToStop.HasExited)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName}");
+                        if (ProcessUtils.StopProcess(processToStop))
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Successfully stopped process {processToStop.StartInfo.FileName}");
+                        }
+                        else
+                        {
+                            logger.Warn($"ShortcutRepository/RunShortcut: Failed to stop process {processToStop.StartInfo.FileName} after main executable or game was exited by the user.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while checking if processToStop has already exited");
+                }
+
             }
-            return wantedPriorityClass;
+            return true;
         }
+    }
+}       
 
-        public static ProcessCreationFlags TranslatePriorityClassToFlags(ProcessPriorityClass processPriorityClass)
-        {
-            ProcessCreationFlags wantedPriorityClass = ProcessCreationFlags.NORMAL_PRIORITY_CLASS;
-            switch (processPriorityClass)
-            {
-                case ProcessPriorityClass.High:
-                    wantedPriorityClass = ProcessCreationFlags.HIGH_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.AboveNormal:
-                    wantedPriorityClass = ProcessCreationFlags.ABOVE_NORMAL_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.Normal:
-                    wantedPriorityClass = ProcessCreationFlags.NORMAL_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.BelowNormal:
-                    wantedPriorityClass = ProcessCreationFlags.BELOW_NORMAL_PRIORITY_CLASS;
-                    break;
-                case ProcessPriorityClass.Idle:
-                    wantedPriorityClass = ProcessCreationFlags.IDLE_PRIORITY_CLASS;
-                    break;
-                default:
-                    wantedPriorityClass = ProcessCreationFlags.NORMAL_PRIORITY_CLASS;
-                    break;
-            }
-            return wantedPriorityClass;
-        }
-
-        public static bool LaunchProcessWithPriority(string exeName, string cmdLine, ProcessPriorityClass priorityClass, out uint PID)
-        {
-            ProcessCreationFlags processFlags = TranslatePriorityClassToFlags(priorityClass);
-
-            STARTUPINFO si = new STARTUPINFO();
-            PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
-            bool success = NativeMethods.CreateProcess(exeName, cmdLine, IntPtr.Zero, IntPtr.Zero, false, processFlags, IntPtr.Zero, null, ref si, out pi);
-            ThreadHandle = pi.hThread;
-            PID = pi.dwProcessId;
-
-            return success;
-        }
-
-        public static void ResumeProcess()
-        {
-            NativeMethods.ResumeThread(ThreadHandle);
-        }
-    }       
-}

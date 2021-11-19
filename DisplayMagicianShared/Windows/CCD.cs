@@ -98,7 +98,7 @@ namespace DisplayMagicianShared.Windows
     public enum DISPLAYCONFIG_TOPOLOGY_ID : uint
     {
         Zero = 0x0,
-        DISPLAYCONFIG_TOPOLOGY_public = 0x00000001,
+        DISPLAYCONFIG_TOPOLOGY_INTERNAL = 0x00000001,
         DISPLAYCONFIG_TOPOLOGY_CLONE = 0x00000002,
         DISPLAYCONFIG_TOPOLOGY_EXTEND = 0x00000004,
         DISPLAYCONFIG_TOPOLOGY_EXTERNAL = 0x00000008,
@@ -106,7 +106,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_PATH : uint
+    public enum DISPLAYCONFIG_PATH_FLAGS : uint
     {
         Zero = 0x0,
         DISPLAYCONFIG_PATH_ACTIVE = 0x00000001,
@@ -164,6 +164,7 @@ namespace DisplayMagicianShared.Windows
         SDC_FORCE_MODE_ENUMERATION = 0x00001000,
         SDC_ALLOW_PATH_ORDER_CHANGES = 0x00002000,
         SDC_VIRTUAL_MODE_AWARE = 0x00008000,
+        SDC_VIRTUAL_REFRESH_RATE_AWARE = 0x00020000,
 
         // Special common combinations (only set in this library)
         TEST_IF_VALID_DISPLAYCONFIG = (SDC_VALIDATE | SDC_USE_SUPPLIED_DISPLAY_CONFIG),
@@ -519,7 +520,7 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_PATH_SOURCE_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_PATH_SOURCE_INFO other)
             => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after a reboot.
-                //Id == other.Id &&  // Removed the ID from the list as the Display ID it maps to will change after a switch from surround to non-surround profile
+               //Id == other.Id &&  // Removed the ID from the list as the Display ID it maps to will change after a switch from surround to non-surround profile
                 ModeInfoIdx == other.ModeInfoIdx &&
                 StatusFlags.Equals(other.StatusFlags);
 
@@ -566,7 +567,7 @@ namespace DisplayMagicianShared.Windows
 
         public bool Equals(DISPLAYCONFIG_PATH_TARGET_INFO other)
             => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
-                Id == other.Id &&
+               // Id == other.Id && // Removed as ID changes after reboot when the display is a cloned copy :(
                 ModeInfoIdx == other.ModeInfoIdx &&
                 OutputTechnology.Equals(other.OutputTechnology) &&
                 Rotation.Equals(other.Rotation) &&
@@ -591,7 +592,7 @@ namespace DisplayMagicianShared.Windows
     {
         public DISPLAYCONFIG_PATH_SOURCE_INFO SourceInfo;
         public DISPLAYCONFIG_PATH_TARGET_INFO TargetInfo;
-        public uint Flags;
+        public DISPLAYCONFIG_PATH_FLAGS Flags;
 
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_PATH_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_PATH_INFO other)
@@ -637,20 +638,31 @@ namespace DisplayMagicianShared.Windows
             if (InfoType != other.InfoType)
                 return false;
 
+            // This happens when it is a target mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET &&
-                Id == other.Id &&
+                Id == other.Id && // Disabling this check as as the Display ID it maps to will change after a switch from clone to non-clone profile, ruining the equality match
                 TargetMode.Equals(other.TargetMode))
                 return true;
 
+            // This happens when it is a source mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
                 //Id == other.Id && // Disabling this check as as the Display ID it maps to will change after a switch from surround to non-surround profile, ruining the equality match
                 // Only seems to be a problem with the DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE options weirdly enough!
                 SourceMode.Equals(other.SourceMode))
                 return true;
 
+            // This happens when it is a desktop image mode info block
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE &&
-                Id == other.Id &&
+                Id == other.Id &&  // Disabling this check as as the Display ID it maps to will change after a switch from clone to non-clone profile, ruining the equality match
                 DesktopImageInfo.Equals(other.DesktopImageInfo))
+                return true;
+
+            // This happens when it is a clone - there is an extra entry with all zeros in it!
+            if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.Zero &&
+                //Id == other.Id && // Disabling this check as as the Display ID it maps to will change after a switch from clone to non-clone profile, ruining the equality match
+                DesktopImageInfo.Equals(other.DesktopImageInfo) &&
+                TargetMode.Equals(other.TargetMode) &&
+                SourceMode.Equals(other.SourceMode))
                 return true;
 
             return false;
@@ -661,15 +673,20 @@ namespace DisplayMagicianShared.Windows
         {
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
                 return (InfoType, Id, TargetMode).GetHashCode();
+            //return (InfoType, TargetMode).GetHashCode();
 
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
-                return (InfoType, Id, SourceMode).GetHashCode();
+                //return (InfoType, Id, SourceMode).GetHashCode();
+                return (InfoType, SourceMode).GetHashCode();
+
 
             if (InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE)
                 return (InfoType, Id, DesktopImageInfo).GetHashCode();
+            //return (InfoType, DesktopImageInfo).GetHashCode();
 
             // otherwise we return everything
             return (InfoType, Id, TargetMode, SourceMode, DesktopImageInfo).GetHashCode();
+            //return (InfoType, TargetMode, SourceMode, DesktopImageInfo).GetHashCode();
         }
 
         public static bool operator ==(DISPLAYCONFIG_MODE_INFO lhs, DISPLAYCONFIG_MODE_INFO rhs) => lhs.Equals(rhs);
@@ -955,6 +972,19 @@ namespace DisplayMagicianShared.Windows
         public int Right;
         public int Bottom;
 
+        public RECTL(int left, int top, int right, int bottom)
+        {
+            this.Left = left;
+            this.Top = top;
+            this.Right = right;
+            this.Bottom = bottom;
+        }
+
+        public static RECTL FromXYWH(int x, int y, int width, int height)
+        {
+            return new RECTL(x, y, x + width, y + height);
+        }
+
         public override bool Equals(object obj) => obj is RECTL other && this.Equals(other);
         public bool Equals(RECTL other)
             => Left == other.Left &&
@@ -977,6 +1007,7 @@ namespace DisplayMagicianShared.Windows
     {
         // Set some useful constants
         public const SDC SDC_CCD_TEST_IF_VALID = (SDC.SDC_VALIDATE | SDC.SDC_USE_SUPPLIED_DISPLAY_CONFIG);
+        public const uint DISPLAYCONFIG_PATH_MODE_IDX_INVALID = 0xffffffff;
 
 
         // GetDisplayConfigBufferSizes

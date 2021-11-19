@@ -6,6 +6,10 @@ using Microsoft.Win32;
 using System.IO;
 using System.Security;
 using System.Diagnostics;
+using ProtoBuf;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+using System.Globalization;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -404,6 +408,52 @@ namespace DisplayMagician.GameLibraries
 
         }
 
+        public bool GetInstallDirFromRegKey(string regKeyPath, out string filePath)
+        {
+            filePath = "";
+
+            RegistryKey uplayGameInstallKey;
+            if (regKeyPath.StartsWith("HKEY_LOCAL_MACHINE"))
+            {
+                logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKLM reg key {regKeyPath}");
+                string regKeyText = regKeyPath.Replace(@"HKEY_LOCAL_MACHINE\", "");
+                uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(regKeyText, RegistryKeyPermissionCheck.ReadSubTree);
+            }
+            else if (regKeyPath.StartsWith("HKEY_CURRENT_USER"))
+            {
+                logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKCU reg key {regKeyPath}");
+                string regKeyText = regKeyPath.Replace(@"HKEY_CURRENT_USER\", "");
+                uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(regKeyText, RegistryKeyPermissionCheck.ReadSubTree);
+            }
+            else
+            {
+                logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Skipping processing as regkey supplied was odd: {regKeyPath}");
+                return false;
+            }
+
+            // If the key doesn't exist we skip it as the game isn't installed any longer!
+            if (uplayGameInstallKey == null)
+            {
+                logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Skipping Uplay Game as it isn't installed at the moment (it was uninstalled at some point)");
+                return false;
+            }
+
+            // From that we lookup the actual game path
+            string gameInstallDir = uplayGameInstallKey.GetValue("InstallDir", "").ToString();
+            logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: gameInstallDir found  = {gameInstallDir}");
+            if (!String.IsNullOrWhiteSpace(gameInstallDir))
+            {
+                filePath = Path.GetFullPath(gameInstallDir).TrimEnd('\\');
+                return true;
+            }
+            else
+            {
+                logger.Warn($"UplayLibrary/GetInstallDirFromRegKey: gameInstallDir is null or all whitespace!");
+                return false;
+            }
+        }
+
+
         public override bool LoadInstalledGames()
         {
             try
@@ -475,211 +525,331 @@ namespace DisplayMagician.GameLibraries
                 // Access {installdir}\\cache\\configuration\\configurations file
                 string uplayConfigFilePath = _uplayPath + @"cache\configuration\configurations";
                 logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Config File Path = {uplayConfigFilePath }");
-                string uplayConfigFileString = File.ReadAllText(uplayConfigFilePath);
-                uplayConfigFileString = uplayConfigFileString.Remove(0, 12);
-                string[] dividingText = { "version: 2.0" };
-                List<string> uplayConfigFile = uplayConfigFileString.Split(dividingText,StringSplitOptions.RemoveEmptyEntries).ToList();
-                // Split the file into records at the SOH unicode character
-                //List<string> uplayConfigFile = uplayConfigFileString.Split((Char)1).ToList();
 
-                // Go through every record and attempt to parse it
-                foreach (string uplayEntry in uplayConfigFile) {
-                    // Skip any Uplay entry records that don't start with 'version:' 
-                    //if (!uplayEntry.StartsWith("version:",StringComparison.OrdinalIgnoreCase))
-                    //    continue;
+                var deserializer = new DeserializerBuilder()
+                .IgnoreUnmatchedProperties()
+                .Build();
 
-                    logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Entry that starts with 'version: 2.0') = {uplayEntry}");
-
-                    //Split the record into entrylines
-                    string[] delimeters = { "\r\n" };
-                    List<string> uplayEntryLines = uplayEntry.Split(delimeters, System.StringSplitOptions.RemoveEmptyEntries).ToList();
-
-                    // Skip any records NOT containing an entryline with '  start_game:' (note 2 leading spaces)
-                    // All games contain a start_game entry
-                    if (!uplayEntryLines.Exists(a => a.StartsWith("  start_game:")))
-                        continue;
-
-                    // Skip any records containing an entryline with '  third_party_platform:' (note 2 leading spaces)
-                    // We only want the native uplay games....
-                    if (uplayEntryLines.Exists(a => a.StartsWith("  third_party_platform:")))
-                        continue;
-
-                    // if we get here then we have a real game to parse!
-                    // Yay us :). 
-
-                    // First we want to know the index of the start_game entry to use later
-                    //int startGameIndex = uplayEntryLines.FindIndex(a => a.StartsWith("  start_game:"));
-                    MatchCollection mc;
-
-                    // First we check if there are any localization CONSTANTS that we will need to map later.
-                    Dictionary<string, string> localizations = new Dictionary<string, string>();
-                    int localizationsIndex = uplayEntryLines.FindIndex(a => a == "localizations:");
-                    // If there are localizations, then we need to store them for later
-                    if (localizationsIndex != -1)
+                using (var file = File.OpenRead(uplayConfigFilePath))
+                {
+                    try
                     {
-                        // grab the localizations: ->  default: entries to use as a lookup table for the info we need
-                        int defaultIndex = localizationsIndex + 1;
-                        int currentIndex = defaultIndex + 1;
-                        
-                        // Grab all EntryLines with 4 leading spaces (these are all the localizations)
-                        while (uplayEntryLines[currentIndex].StartsWith("    ")){
-                            string[] split = uplayEntryLines[currentIndex].Split(':');
-                            localizations.Add(split[0].Trim(), split[1].Trim());
-                            currentIndex++;
+                        var gameCollection = ProtoBuf.Serializer.Deserialize<UplayCachedGameCollection>(file).Games;
+                        foreach (var item in gameCollection)
+                        {
+                            if (!String.IsNullOrEmpty(item.GameInfo))
+                            {
+                                ProductInformation productInfo;
+                                try
+                                {
+                                    productInfo = deserializer.Deserialize<ProductInformation>(item.GameInfo);
+                                    var root = productInfo.root;
+
+                                    string gameId = ""; 
+                                    string gameName = "";
+                                    string gameExePath = "";
+                                    string gameIconPath = "";
+
+                                    // Try finding the Game Name using the localisation currently in use as a first step
+                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Looking for the Uplay game name.");
+                                    string currentLang = CultureInfo.CurrentCulture.Name;                                    
+                                    foreach (var lang in productInfo.localizations)
+                                    {
+                                        // If we find the same language as the user is using, then let's use that!
+                                        if (lang.Key.Equals(currentLang))
+                                        {
+                                            gameName = lang.Value.l1;
+                                            logger.Trace($"UplayLibrary/LoadInstalledGames: We found the Uplay game name '{gameName}' in the user's language of {currentLang}.");
+                                            break;
+                                        }
+                                    }
+                                    // If the gameName isn't available in the users language, then we go for default
+                                    if (String.IsNullOrEmpty(gameName) && productInfo.localizations.ContainsKey("default"))
+                                    {
+                                        gameName = productInfo.localizations["default"].l1;
+                                        if (!String.IsNullOrEmpty(gameName))
+                                        {
+                                            logger.Trace($"UplayLibrary/LoadInstalledGames: Looking for the Uplay game name with the en language as the local language didn't work. We found game name '{gameName}'. ");
+                                        }
+                                        else
+                                        {
+                                            logger.Trace($"UplayLibrary/LoadInstalledGames: Looking for the Uplay game name with the en language as the local language didn't work. We found no en language. ");
+                                        }
+                                    }
+                                    
+
+                                    // Now we'll try to sort out the rest of the game data!
+                                    // We first look for the online executable information
+                                    if (root.start_game.online.executables.Count > 0)
+                                    {
+                                        logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay game {gameName} has some online executables to process! ");
+
+                                        // First up we look at the online games, cause they're just better!
+                                        foreach (var executable in root.start_game.online.executables)
+                                        {
+                                            string exePath = "";
+
+                                            // Check if its a full path or a relative path
+                                            if (!String.IsNullOrEmpty(executable.path.relative))
+                                            {
+                                                if (executable.working_directory.register.StartsWith("HKEY_LOCAL_MACHINE"))
+                                                {
+                                                    // This copes with relative files using a HKEY_LOCAL_MACHINE registry
+                                                    
+                                                    string regKeyText = executable.working_directory.register;
+                                                    regKeyText = regKeyText.Replace(@"\InstallDir", "");
+                                                    regKeyText = regKeyText.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
+                                                    logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKLM reg key {regKeyText}");
+                                                    if (this.GetInstallDirFromRegKey(regKeyText, out exePath))
+                                                    {
+                                                        gameExePath = Path.Combine(exePath, executable.path.relative);                                                        
+                                                        logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses local machine registry key: {executable.working_directory.register} ");
+                                                    }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
+                                                }
+                                                /*else if (executable.working_directory.register.StartsWith("HKEY_CURRENT_USER"))
+                                                {
+                                                    // This copes with relative files using a HKEY_CURRENT_USER registry
+
+                                                    string regKeyText = executable.working_directory.register;
+                                                    regKeyText = regKeyText.Replace(@"\InstallDir", "");
+                                                    regKeyText = regKeyText.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
+                                                    logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKLM reg key {regKeyText}");
+
+                                                    if (this.GetInstallDirFromRegKey(executable.working_directory.register, out exePath))
+                                                    {
+                                                        gameExePath = Path.Combine(exePath, executable.path.relative);
+                                                        logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses current user registry key: {executable.working_directory.register} ");
+                                                    }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
+                                                }*/
+                                                else if (!String.IsNullOrEmpty(executable.working_directory.append))
+                                                {
+                                                    // This copes with relative files using an appended path
+                                                    gameExePath = Path.Combine(executable.working_directory.append, executable.path.relative);
+                                                    gameIconPath = Path.Combine(executable.working_directory.append, executable.icon_image);
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses appended file path: {executable.working_directory.append} ");
+                                                    gameId = productInfo.uplay_id.ToString();
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
+                                                }
+                                                else
+                                                {
+                                                    // Problem!
+                                                    logger.Error($"UplayLibrary/LoadInstalledGames: Found relative GameExePath {executable.path.relative} for Uplay game {gameName} but no registry key or appended file path! Skipping this game.");
+                                                    continue;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                // This should cope with full pathed files, but we have no examples to test! So log it
+                                                logger.Error($"UplayLibrary/LoadInstalledGames: Found non-relative GameExePath {executable.path} for Uplay game {gameName} but we've not seen it before so no idea how to handle it! Skipping this game.");
+                                                logger.Error($"UplayLibrary/LoadInstalledGames: executable.path for troubleshooting: {executable.path}");
+                                                continue;
+                                            }
+
+                                            // We should check the exe file exists, and if it doesn't then we need to do the next exe
+                                            if (!File.Exists(gameExePath))
+                                            {
+                                                logger.Error($"UplayLibrary/LoadInstalledGames: Couldn't find the GameExePath {gameExePath} for Uplay game {gameName} so skipping this exe, and trying the next one.");
+                                                continue;
+                                            }
+
+                                            // Now try to get the Uplay game icon
+                                            if (!String.IsNullOrEmpty(root.icon_image))
+                                            {
+                                                gameIconPath = Path.Combine(_uplayPath, "data", "games", root.icon_image);
+
+                                                // If the icon file isn't actually there, then use the game exe instead.
+                                                if (!File.Exists(gameIconPath))
+                                                {
+                                                    gameIconPath = gameExePath;
+                                                }
+                                            }
+                                                
+                                            logger.Trace($"UplayLibrary/LoadInstalledGames: Found GameExePath {exePath} and Icon Path {gameIconPath} for Uplay game {gameName}.");
+
+                                            // We do a final check to make sure that we do have a GameName, and if not we use the shortcut
+                                            if (String.IsNullOrEmpty(gameName) && !String.IsNullOrEmpty(executable.shortcut_name))
+                                            {
+                                                gameName = executable.shortcut_name;
+                                                logger.Trace($"UplayLibrary/LoadInstalledGames: Game Name was still empty, so we're using the shortcut name as a last resort: {executable.shortcut_name} ");
+                                            }
+
+                                            // Now we need to save the game name, cause if we're here then we're good enough to save
+                                            // Then we have the gameID, the thumbimage, the icon, the name, the exe path
+                                            // And we add the Game to the list of games we have!
+                                            _allGames.Add(new UplayGame(gameId, gameName, gameExePath, gameIconPath));
+                                            logger.Trace($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {productInfo.uplay_id}, name {gameName}, game exe {gameExePath} and icon path {gameIconPath}");
+                                            break;
+                                        }
+
+                                    }
+                                    // This is the offline exes
+                                    else if (root.start_game.offline.executables.Count > 0)
+                                    {
+                                        logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay game {gameName} has some offline executables to process! ");
+
+                                        // we look at the offline games, cause there weren't any online ones
+                                        foreach (var executable in root.start_game.offline.executables)
+                                        {
+                                            string exePath = "";
+
+                                            // Check if its a full path or a relative path
+                                            if (!String.IsNullOrEmpty(executable.path.relative))
+                                            {
+                                                if (executable.working_directory.register.StartsWith("HKEY_LOCAL_MACHINE"))
+                                                {
+                                                    // This copes with relative files using a HKEY_LOCAL_MACHINE registry
+
+                                                    string regKeyText = executable.working_directory.register;
+                                                    regKeyText = regKeyText.Replace(@"\InstallDir", "");
+                                                    regKeyText = regKeyText.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
+                                                    logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKLM reg key {regKeyText}");
+
+                                                    if (this.GetInstallDirFromRegKey(regKeyText, out exePath))
+                                                    {
+                                                        gameExePath = Path.Combine(exePath, executable.path.relative);
+                                                        logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses local machine registry key: {executable.working_directory.register} ");
+                                                    }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
+
+                                                }
+                                                /*else if (executable.working_directory.register.StartsWith("HKEY_CURRENT_USER"))
+                                                {
+                                                    // This copes with relative files using a HKEY_CURRENT_USER registry
+
+                                                    string regKeyText = executable.working_directory.register;
+                                                    regKeyText = regKeyText.Replace(@"\InstallDir", "");
+                                                    regKeyText = regKeyText.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
+                                                    logger.Trace($"UplayLibrary/GetInstallDirFromRegKey: Accessing HKLM reg key {regKeyText}");
+
+                                                    if (this.GetInstallDirFromRegKey(executable.working_directory.register, out exePath))
+                                                    {
+                                                        gameExePath = Path.Combine(exePath, executable.path.relative);
+                                                        logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses current user registry key: {executable.working_directory.register} ");
+                                                    }
+                                                    // Get the GameID from the reg key
+                                                    string pattern = @"Installs\\(\d+)\\InstallDir";
+                                                    MatchCollection mc = Regex.Matches(executable.working_directory.register, pattern);
+                                                    if (mc.Count > 0)
+                                                    {
+                                                        gameId = mc[0].Groups[1].Value;
+                                                    }
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
+                                                }*/
+                                                else if (!String.IsNullOrEmpty(executable.working_directory.append))
+                                                {
+                                                    // This copes with relative files using an appended path
+                                                    gameExePath = Path.Combine(executable.working_directory.append, executable.path.relative);
+                                                    gameIconPath = Path.Combine(executable.working_directory.append, executable.icon_image);
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Relative executable uses appended file path: {executable.working_directory.append} ");
+                                                    gameId = productInfo.uplay_id.ToString();
+                                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Got uplay Game ID: {gameId} ");
+                                                }
+                                                else
+                                                {
+                                                    // Problem!
+                                                    logger.Error($"UplayLibrary/LoadInstalledGames: Found relative GameExePath {executable.path.relative} for Uplay game {gameName} but no registry key or appended file path! Skipping this game.");
+                                                    continue;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                // This should cope with full pathed files, but we have no examples to test! So log it
+                                                logger.Error($"UplayLibrary/LoadInstalledGames: Found non-relative GameExePath {executable.path} for Uplay game {gameName} but we've not seen it before so no idea how to handle it! Skipping this game.");
+                                                logger.Error($"UplayLibrary/LoadInstalledGames: executable.path for troubleshooting: {executable.path}");
+                                                continue;
+                                            }
+
+                                            // We should check the exe file exists, and if it doesn't then we need to do the next exe
+                                            if (!File.Exists(gameExePath))
+                                            {
+                                                logger.Error($"UplayLibrary/LoadInstalledGames: Couldn't find the GameExePath {gameExePath} for Uplay game {gameName} so skipping this exe, and trying the next one.");
+                                                continue;
+                                            }
+
+                                            // Now try to get the Uplay game icon
+                                            if (!String.IsNullOrEmpty(root.icon_image))
+                                            {
+                                                gameIconPath = Path.Combine(_uplayPath, "data", "games", root.icon_image);
+
+                                                // If the icon file isn't actually there, then use the game exe instead.
+                                                if (!File.Exists(gameIconPath))
+                                                {
+                                                    gameIconPath = gameExePath;
+                                                }
+                                            }
+
+                                            logger.Trace($"UplayLibrary/LoadInstalledGames: Found GameExePath {exePath} and Icon Path {gameIconPath} for Uplay game {gameName}.");
+
+                                            // We do a final check to make sure that we do have a GameName, and if not we use the shortcut
+                                            if (String.IsNullOrEmpty(gameName) && !String.IsNullOrEmpty(executable.shortcut_name))
+                                            {
+                                                gameName = executable.shortcut_name;
+                                                logger.Trace($"UplayLibrary/LoadInstalledGames: Game Name was still empty, so we're using the shortcut name as a last resort: {executable.shortcut_name} ");
+                                            }
+
+                                            // Now we need to save the game name, cause if we're here then we're good enough to save
+                                            // Then we have the gameID, the thumbimage, the icon, the name, the exe path
+                                            // And we add the Game to the list of games we have!
+                                            _allGames.Add(new UplayGame(gameId, gameName, gameExePath, gameIconPath));
+                                            logger.Trace($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {productInfo.uplay_id}, name {gameName}, game exe {gameExePath} and icon path {gameIconPath}");
+                                            break;
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Entry {gameName} doesn't have any executables associated with it! We have to skip adding this game.");
+                                        continue;
+                                    }
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    // If we get an error processing the game YAML, lets try and skip this game and try the next one. It might work!
+                                    if (item.GameInfo.StartsWith("root:"))
+                                    {
+                                        logger.Warn($"UplayLibrary/LoadInstalledGames: Problem deserialising the YAML embedded in the Uplay configuration file {uplayConfigFilePath}. Cannot process this Uplay game! (Uplay ID:{item.UplayId}): {item.GameInfo}");
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        logger.Trace($"UplayLibrary/LoadInstalledGames: This Uplay entry (Uplay ID:{item.UplayId}) in the Uplay configuration file {uplayConfigFilePath} is not a YAML config so skipping: {item.GameInfo}");
+                                    }
+                                }
+
+                            }
                         }
-                            
                     }
-
-                    // for each game record grab:
-                    GameAppInfo uplayGameAppInfo = new GameAppInfo();
-
-                    // find the exe name looking at root: -> start_game: -> online: -> executables: -> path: -> relative: (get ACU.exe)
-                    // Lookup the Game registry key from looking at root: -> start_game: -> online: -> executables: -> working_directory: -> register: (get HKEY_LOCAL_MACHINE\SOFTWARE\Ubisoft\Launcher\Installs\720\InstallDir)
-                    // Extract the GameAppID from the number in the working directory (e.g. 720)
-                    // Lookup the Game install path by reading the game registry key: D:/Ubisoft Game Launcher/Assassin's Creed Unity/
-                    // join the Game install path and the exe name to get the full game exe path: D:/Ubisoft Game Launcher/Assassin's Creed Unity/ACU.exe
-
-                    //if (uplayEntryLines.Find (a => a.StartsWith("  icon_image:", StringComparison.InvariantCultureIgnoreCase)))
-
-                    bool gotGameIconPath = false;
-                    bool gotGameName = false;
-                    string gameFileName = "";
-                    bool gotGameFileName = false;
-                    string gameId = "";
-                    bool gotGameId = false;
-                    string gameRegistryKey = "";
-                    bool gotGameRegistryKey = false;
-                    for (int i = 0; i <= 50; i++)
+                    catch (Exception ex)
                     {
-                        // Stop this loop once we have both filname and gameid
-                        if (gotGameFileName && gotGameId && gotGameIconPath && gotGameName && gotGameRegistryKey)
-                        {
-                            logger.Trace($"UplayLibrary/LoadInstalledGames: We got all the entries: gameFileName = {gameFileName } && gameId = {gameId } && gameIconPath = {uplayGameAppInfo.GameIconPath} && gameName = {uplayGameAppInfo.GameName}");
-                            break;
-                        }
-                            
-                        // This line contains the Game Name
-                        if (uplayEntryLines[i].StartsWith("  name:", StringComparison.OrdinalIgnoreCase) && !gotGameName)
-                        {
-                            mc = Regex.Matches(uplayEntryLines[i], @"  name\: (.*)");
-                            if (mc.Count > 0)
-                            {
-                                uplayGameAppInfo.GameName = mc[0].Groups[1].ToString();
-                                // if the name contains a localization reference, then dereference it
-                                if (localizations.ContainsKey(uplayGameAppInfo.GameName))
-                                {
-                                    uplayGameAppInfo.GameName = localizations[uplayGameAppInfo.GameName];
-                                }
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameName = {uplayGameAppInfo.GameName}");
-                                gotGameName = true;
-                            }                           
-                        }
-                        else if (uplayEntryLines[i].StartsWith("  icon_image:", StringComparison.OrdinalIgnoreCase) && !gotGameIconPath)
-                        {
-                            mc = Regex.Matches(uplayEntryLines[i], @"icon_image: (.*)");
-                            if (mc.Count > 0)
-                            {
-                                string iconImageFileName = mc[0].Groups[1].ToString();
-                                // if the icon_image contains a localization reference, then dereference it
-                                if (localizations.ContainsKey(iconImageFileName))
-                                {
-                                    iconImageFileName = localizations[iconImageFileName];
-                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Found iconImageFile = {iconImageFileName }");
-                                }
-                                //61fdd16f06ae08158d0a6d476f1c6bd5.ico
-                                string uplayGameIconPath = _uplayPath + @"data\games\" + iconImageFileName;
-                                if (File.Exists(uplayGameIconPath) && uplayGameIconPath.EndsWith(".ico"))
-                                {
-                                    uplayGameAppInfo.GameIconPath = uplayGameIconPath;
-                                    logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameAppInfo.GameUplayIconPath = {uplayGameAppInfo.GameIconPath }");
-                                }
-                                gotGameIconPath = true;
-                            }                            
-                        }
-                        // This line contains the filename
-                        else if (uplayEntryLines[i].StartsWith("          relative:") && !gotGameFileName)
-                        {
-                            mc = Regex.Matches(uplayEntryLines[i], @"relative: (.*)");
-                            if (mc.Count > 0)
-                            {
-                                gameFileName = mc[0].Groups[1].ToString();
-                                gotGameFileName = true;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameFileName = {gameFileName}");
-                            }                            
-                        }
-                        // This line contains the registryKey 
-                        else if (uplayEntryLines[i].StartsWith("          register: HKEY_LOCAL_MACHINE") && !gotGameId)
-                        {
-                            
-                            // Lookup the GameId within the registry key
-                            mc = Regex.Matches(uplayEntryLines[i], @"Installs\\(\d+)\\InstallDir");
-                            if (mc.Count > 0)
-                            {
-                                gameId = mc[0].Groups[1].ToString();
-                                gotGameId = true;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameId = {gameId}");
-                            }
-                            mc = Regex.Matches(uplayEntryLines[i], @"HKEY_LOCAL_MACHINE\\(.*?)\\InstallDir");
-                            if (mc.Count > 0)
-                            {
-                                gameRegistryKey = mc[0].Groups[1].ToString();
-                                gameRegistryKey = gameRegistryKey.Replace(@"Ubisoft", @"WOW6432Node\Ubisoft");
-                                gotGameRegistryKey = true;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Found gameRegistryKey = {gameRegistryKey}");
-                            }
-                            
-                        }
+                        // We can't do anything if we hit here.
+                        logger.Error($"UplayLibrary/LoadInstalledGames: Problem deserialising the protobuf Uplay configuration file {uplayConfigFilePath}. Cannot process any Uplay games!");
+                        return false;
                     }
-
-                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameId = {gameId}");
-                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameFileName = {gameFileName}");
-                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameGameIconPath = {uplayGameAppInfo.GameIconPath}");
-                    logger.Trace($"UplayLibrary/LoadInstalledGames: gameRegistryKey = {gameRegistryKey}");
-
-                    if (gotGameRegistryKey)
-                    {
-                        // Now we need to lookup the game install path in registry using the game reg we got above
-                        // We assume its 64-bit OS too (not 32bit)
-                        using (RegistryKey uplayGameInstallKey = Registry.LocalMachine.OpenSubKey(gameRegistryKey, RegistryKeyPermissionCheck.ReadSubTree))
-                        {
-                            // If the key doesn't exist we skip it as the game isn't installed any longer!
-                            if (uplayGameInstallKey == null)
-                            {
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: Skipping Uplay Game {uplayGameAppInfo.GameName} as it isn't installed at the moment (it was uninstalled at some point)");
-                                continue;
-                            }
-
-                            // If we get here, then we have a real game.
-                            foreach (string regKeyName in uplayGameInstallKey.GetValueNames())
-                            {
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameInstallKey[{regKeyName}] = {uplayGameInstallKey.GetValue(regKeyName)}");
-                            }
-
-                            // From that we lookup the actual game path
-                            string gameInstallDir = uplayGameInstallKey.GetValue("InstallDir", "").ToString();
-                            logger.Trace($"UplayLibrary/LoadInstalledGames: gameInstallDir found  = {gameInstallDir}");
-                            if (!String.IsNullOrWhiteSpace(gameInstallDir))
-                            {
-                                uplayGameAppInfo.GameInstallDir = Path.GetFullPath(gameInstallDir).TrimEnd('\\');
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameInstallDir = {uplayGameAppInfo.GameInstallDir }");
-                                uplayGameAppInfo.GameExePath = Path.Combine(uplayGameAppInfo.GameInstallDir, gameFileName);
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameExe = {uplayGameAppInfo.GameExePath}");
-                                uplayGameAppInfo.GameID = gameId;
-                                logger.Trace($"UplayLibrary/LoadInstalledGames: uplayGameAppInfo.GameID = {uplayGameAppInfo.GameID }");
-                            }
-                            else
-                            {
-                                logger.Warn($"UplayLibrary/LoadInstalledGames: gameInstallDir is null or all whitespace!");
-                            }
-
-                            // Then we have the gameID, the thumbimage, the icon, the name, the exe path
-                            // And we add the Game to the list of games we have!
-                            _allGames.Add(new UplayGame(uplayGameAppInfo.GameID, uplayGameAppInfo.GameName, uplayGameAppInfo.GameExePath, uplayGameAppInfo.GameIconPath));
-                            logger.Debug($"UplayLibrary/LoadInstalledGames: Adding Uplay Game with game id {uplayGameAppInfo.GameID}, name {uplayGameAppInfo.GameName}, game exe {uplayGameAppInfo.GameExePath} and icon path {uplayGameAppInfo.GameIconPath}");
-                        }
-                    }
-                    
-                }
+                }                   
 
                 logger.Info($"UplayLibrary/LoadInstalledGames: Found {_allGames.Count} installed Uplay games");
 
@@ -717,7 +887,7 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
-        public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
+        /*public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
         {
             string address = $@"uplay://launch/{game.Id}";
             if (String.IsNullOrWhiteSpace(gameArguments))
@@ -732,6 +902,21 @@ namespace DisplayMagician.GameLibraries
             gameProcess.PriorityClass = processPriority;
             return gameProcess;
 
+        }*/
+
+        public override List<Process> StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
+        {
+            string address = $@"uplay://launch/{game.Id}";
+            if (String.IsNullOrWhiteSpace(gameArguments))
+            {
+                address += @"/" + gameArguments;
+            }
+            else
+            {
+                address += "/0";
+            }
+            List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
+            return gameProcesses;
         }
 
         #endregion

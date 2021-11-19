@@ -157,8 +157,6 @@ namespace DisplayMagicianShared.AMD
         // .NET guarantees thread safety for static initialization
         private static AMDLibrary _instance = new AMDLibrary();
 
-        private static WinLibrary _winLibrary = new WinLibrary();
-
         private bool _initialised = false;
 
         // To detect redundant calls
@@ -167,11 +165,12 @@ namespace DisplayMagicianShared.AMD
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _adlContextHandle = IntPtr.Zero;
+        private AMD_DISPLAY_CONFIG _activeDisplayConfig;
 
         static AMDLibrary() { }
         public AMDLibrary()
         {
-
+            _activeDisplayConfig = CreateDefaultConfig();
             try
             {
                 SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Attempting to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}");
@@ -193,6 +192,8 @@ namespace DisplayMagicianShared.AMD
                     {
                         _initialised = true;
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: AMD ADL2 library was initialised successfully");
+                        SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Running UpdateActiveConfig to ensure there is a config to use later");
+                        _activeDisplayConfig = GetActiveConfig();
                     }
                     else
                     {
@@ -204,7 +205,6 @@ namespace DisplayMagicianShared.AMD
                     SharedLogger.logger.Trace(ex, $"AMDLibrary/AMDLibrary: Exception intialising AMD ADL2 library. ADL2_Main_Control_Create() caused an exception.");
                 }
 
-                _winLibrary = WinLibrary.GetLibrary();
             }
             catch (DllNotFoundException ex)
             {
@@ -274,6 +274,26 @@ namespace DisplayMagicianShared.AMD
             }
         }
 
+        public AMD_DISPLAY_CONFIG ActiveDisplayConfig
+        {
+            get
+            {
+                return _activeDisplayConfig;
+            }
+            set
+            {
+                _activeDisplayConfig = value;
+            }
+        }
+
+        public List<string> CurrentDisplayIdentifiers
+        {
+            get
+            {
+                return _activeDisplayConfig.DisplayIdentifiers;
+            }
+        }
+
         public static AMDLibrary GetLibrary()
         {
             return _instance;
@@ -295,6 +315,22 @@ namespace DisplayMagicianShared.AMD
             myDefaultConfig.DisplayIdentifiers = new List<string>();
 
             return myDefaultConfig;
+        }
+
+        public bool UpdateActiveConfig()
+        {
+            SharedLogger.logger.Trace($"AMDLibrary/UpdateActiveConfig: Updating the currently active config");
+            try
+            {
+                _activeDisplayConfig = GetActiveConfig();
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Trace(ex, $"AMDLibrary/UpdateActiveConfig: Exception updating the currently active config");
+                return false;
+            }
+
+            return true;
         }
 
         public AMD_DISPLAY_CONFIG GetActiveConfig()
@@ -915,7 +951,7 @@ namespace DisplayMagicianShared.AMD
             string stringToReturn = "";
 
             // Get the current config
-            AMD_DISPLAY_CONFIG displayConfig = GetActiveConfig();
+            AMD_DISPLAY_CONFIG displayConfig = ActiveDisplayConfig;
 
             stringToReturn += $"****** AMD VIDEO CARDS *******\n";
 
@@ -1294,9 +1330,6 @@ namespace DisplayMagicianShared.AMD
                 // Set the initial state of the ADL_STATUS
                 ADL_STATUS ADLRet = 0;
 
-                // We want to get the current config
-                AMD_DISPLAY_CONFIG currentDisplayConfig = GetAMDDisplayConfig();
-
                 // set the display locations
                 if (displayConfig.SlsConfig.IsSlsEnabled)
                 {
@@ -1367,12 +1400,12 @@ namespace DisplayMagicianShared.AMD
                     // We need to change to a plain, non-Eyefinity (SLS) profile, so we need to disable any SLS Topologies if they are being used
                     SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is not used in the new display configuration, so we need to set it to disabled if it's configured currently");
 
-                    if (currentDisplayConfig.SlsConfig.IsSlsEnabled)
+                    if (ActiveDisplayConfig.SlsConfig.IsSlsEnabled)
                     {
                         // We need to disable the current Eyefinity (SLS) profile to turn it off
                         SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: SLS is enabled in the current display configuration, so we need to turn it off");
 
-                        foreach (AMD_SLSMAP_CONFIG slsMapConfig in currentDisplayConfig.SlsConfig.SLSMapConfigs)
+                        foreach (AMD_SLSMAP_CONFIG slsMapConfig in ActiveDisplayConfig.SlsConfig.SLSMapConfigs)
                         {
                             // Turn off this SLS Map Config
                             ADLRet = ADLImport.ADL2_Display_SLSMapConfig_SetState(_adlContextHandle, slsMapConfig.SLSMap.AdapterIndex, slsMapConfig.SLSMap.SLSMapIndex, ADLImport.ADL_FALSE);
@@ -1391,48 +1424,6 @@ namespace DisplayMagicianShared.AMD
 
                 }
 
-                // We want to set the AMD HDR settings now
-                // We got through each of the attached displays and set the HDR
-
-                // Go through each of the HDR configs we have
-                foreach (var hdrConfig in displayConfig.HdrConfigs)
-                {
-                    // Try and find the HDR config displays in the list of currently connected displays
-                    foreach (var displayInfoItem in currentDisplayConfig.DisplayTargets)
-                    {
-                        // If we find the HDR config display in the list of currently connected displays then try to set the HDR setting we recorded earlier
-                        if (hdrConfig.Key == displayInfoItem.DisplayID.DisplayLogicalIndex)
-                        {
-                            if (hdrConfig.Value.HDREnabled)
-                            {
-                                ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 1);
-                                if (ADLRet == ADL_STATUS.ADL_OK)
-                                {
-                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was NOT able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
-                                }
-                            }
-                            else
-                            {
-                                ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 0);
-                                if (ADLRet == ADL_STATUS.ADL_OK)
-                                {
-                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Set was NOT able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
-                                }
-                            }
-                            break;
-                        }
-                    }
-
-                }
-
             }
             else
             {
@@ -1443,15 +1434,80 @@ namespace DisplayMagicianShared.AMD
             return true;
         }
 
+
+        public bool SetActiveConfigOverride(AMD_DISPLAY_CONFIG displayConfig)
+        {
+            if (_initialised)
+            {
+                // Set the initial state of the ADL_STATUS
+                ADL_STATUS ADLRet = 0;
+
+                // We want to set the AMD HDR settings now
+                // We got through each of the attached displays and set the HDR
+
+                // Go through each of the HDR configs we have
+                foreach (var hdrConfig in displayConfig.HdrConfigs)
+                {
+                    // Try and find the HDR config displays in the list of currently connected displays
+                    foreach (var displayInfoItem in ActiveDisplayConfig.DisplayTargets)
+                    {
+                        try
+                        {
+                            // If we find the HDR config display in the list of currently connected displays then try to set the HDR setting we recorded earlier
+                            if (hdrConfig.Key == displayInfoItem.DisplayID.DisplayLogicalIndex)
+                            {
+                                if (hdrConfig.Value.HDREnabled)
+                                {
+                                    ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 1);
+                                    if (ADLRet == ADL_STATUS.ADL_OK)
+                                    {
+                                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Error($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was NOT able to turn on HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
+                                }
+                                else
+                                {
+                                    ADLRet = ADLImport.ADL2_Display_HDRState_Set(_adlContextHandle, hdrConfig.Value.AdapterIndex, displayInfoItem.DisplayID, 0);
+                                    if (ADLRet == ADL_STATUS.ADL_OK)
+                                    {
+                                        SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Error($"AMDLibrary/SetActiveConfigOverride: ADL2_Display_HDRState_Set was NOT able to turn off HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"AMDLibrary/GetAMDDisplayConfig: Exception! ADL2_Display_HDRState_Set was NOT able to change HDR for display {displayInfoItem.DisplayID.DisplayLogicalIndex}.");
+                            continue;
+                        }
+                    }
+
+                }
+            }
+            else
+            {
+                SharedLogger.logger.Error($"AMDLibrary/SetActiveConfig: ERROR - Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
+                throw new AMDLibraryException($"Tried to run SetActiveConfigOverride but the AMD ADL library isn't initialised!");
+            }
+            return true;
+        }
+
+
+
         public bool IsActiveConfig(AMD_DISPLAY_CONFIG displayConfig)
         {
-            // Get the current windows display configs to compare to the one we loaded
-            bool allDisplays = false;
-            AMD_DISPLAY_CONFIG currentWindowsDisplayConfig = GetAMDDisplayConfig(allDisplays);
 
             // Check whether the display config is in use now
             SharedLogger.logger.Trace($"AMDLibrary/IsActiveConfig: Checking whether the display configuration is already being used.");
-            if (displayConfig.Equals(currentWindowsDisplayConfig))
+            if (displayConfig.Equals(_activeDisplayConfig))
             {
                 SharedLogger.logger.Trace($"AMDLibrary/IsActiveConfig: The display configuration is already being used (supplied displayConfig Equals currentWindowsDisplayConfig)");
                 return true;

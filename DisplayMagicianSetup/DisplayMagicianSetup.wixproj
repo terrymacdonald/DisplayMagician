@@ -38,7 +38,7 @@
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <SuppressAllWarnings>False</SuppressAllWarnings>
     <Pedantic>True</Pedantic>
-    <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Debug</DefineConstants>
+    <DefineConstants>DisplayMagicianFilesDir=H:\vscode-projects\DisplayMagician\DisplayMagician\bin\Release</DefineConstants>
     <SuppressPdbOutput>True</SuppressPdbOutput>
   </PropertyGroup>
   <ItemGroup>

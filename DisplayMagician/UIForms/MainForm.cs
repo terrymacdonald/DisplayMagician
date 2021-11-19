@@ -123,7 +123,11 @@ namespace DisplayMagician.UIForms
                                         MessageBoxIcon.Error);
                     }
                 }
-            }          
+            }
+
+            // Shut down the splash screen
+            if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
+                Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
             if (Program.AppProgramSettings.MinimiseOnStart) 
             {
@@ -140,7 +144,8 @@ namespace DisplayMagician.UIForms
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
                     .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
                     .AddText("DisplayMagician is minimised", hintMaxLines: 1)
-                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open");
+                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open")
+                    .SetToastDuration(ToastDuration.Short);              
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 var doc = new XmlDocument();
@@ -153,7 +158,7 @@ namespace DisplayMagician.UIForms
                 DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
 
                 // And then show it
-                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);                                   
+                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
             }
             else
@@ -172,7 +177,7 @@ namespace DisplayMagician.UIForms
             {
                 cb_minimise_notification_area.Checked = false;
             }
-
+            
             // If we've been handed a Form of some kind, then open it straight away
             if (formToOpen is DisplayProfileForm)
             {
@@ -183,11 +188,19 @@ namespace DisplayMagician.UIForms
             {
                 var shortcutLibraryForm = new ShortcutLibraryForm();
             shortcutLibraryForm.ShowDialog(this);
+            }            
+            else
+            {
+                // Make this window top most if we're not minimised
+                if (!Program.AppProgramSettings.MinimiseOnStart)
+                {
+                    this.TopMost = true;
+                    this.Activate();
+                    this.TopMost = false;
+                }
             }
 
-
-
-    }
+        }
 
         protected override void SetVisibleCore(bool value)
         {
@@ -317,7 +330,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void RefreshNotifyIconMenus()
+        public void RefreshNotifyIconMenus()
         {
             // Clear all the profiles
             profileToolStripMenuItem.DropDownItems.Clear();
@@ -338,10 +351,19 @@ namespace DisplayMagician.UIForms
                 foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                 {
                     ToolStripMenuItem profileMenuItem = new ToolStripMenuItem(profile.Name, profile.ProfileBitmap, runProfileToolStripMenuItem_Click);
-                    if (profile.IsActive || !profile.IsPossible)
+                    if (!profile.IsPossible)
+                    {
                         profileMenuItem.Enabled = false;
-                    else
+                    }                        
+                    else if (profile.IsActive)
+                    {
                         profileMenuItem.Enabled = true;
+                        profileMenuItem.Font = new Font(profileMenuItem.Font, FontStyle.Bold); 
+                    }
+                    else
+                    {
+                        profileMenuItem.Enabled = true;
+                    }                        
                     profileToolStripMenuItem.DropDownItems.Add(profileMenuItem);
                 }
 
@@ -370,7 +392,9 @@ namespace DisplayMagician.UIForms
                     shortcutToolStripMenuItem.DropDownItems.Add(shortcutMenuItem);
                 }
             }
-                
+
+            // Apply it by running the Application.DoEvents();
+            Application.DoEvents();
 
         }
 
@@ -392,6 +416,12 @@ namespace DisplayMagician.UIForms
                 // Run the shortcut if it's still there
                 if (profileToRun != null)
                     ProfileRepository.ApplyProfile(profileToRun);
+
+                // Also refresh the right-click menu (if we have a main form loaded)
+                if (Program.AppMainForm is Form)
+                {
+                    Program.AppMainForm.RefreshNotifyIconMenus();
+                }
             }
         }
 
@@ -413,6 +443,12 @@ namespace DisplayMagician.UIForms
                 // Run the shortcut if it's still there
                 if (shortcutToRun != null)
                     ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
+
+                // Also refresh the right-click menu (if we have a main form loaded)
+                if (Program.AppMainForm is Form)
+                {
+                    Program.AppMainForm.RefreshNotifyIconMenus();
+                }
             }
         }
 
@@ -422,6 +458,9 @@ namespace DisplayMagician.UIForms
             Restore();
             Show();
             BringToFront();
+            this.TopMost = true;
+            this.Activate();
+            this.TopMost = false;
         }
 
         public void exitApplication()
@@ -450,7 +489,7 @@ namespace DisplayMagician.UIForms
                 allowClose = false;
                 // Enable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = true;
-                Program.AppProgramSettings.StartOnBootUp = true;
+                SettingsForm.SetBootMeUp(true);
                 // Change the exit_button text to say 'Close'
                 btn_exit.Text = "&Close";
             }
@@ -462,7 +501,7 @@ namespace DisplayMagician.UIForms
                 allowClose = true;
                 // Disable the MinimiseOnStart setting
                 Program.AppProgramSettings.MinimiseOnStart = false;
-                Program.AppProgramSettings.StartOnBootUp = false;
+                SettingsForm.SetBootMeUp(false);
                 // Change the exit_button text to say 'Exit'
                 btn_exit.Text = "&Exit";
 

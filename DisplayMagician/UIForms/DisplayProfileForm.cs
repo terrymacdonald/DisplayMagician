@@ -56,9 +56,24 @@ namespace DisplayMagician.UIForms
             // Apply the Profile
             if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             {
-                logger.Error($"DisplayProfileForm/Apply_Click: Waiting 0.5 sec for the display to apply");
+                logger.Trace($"DisplayProfileForm/Apply_Click: The Profile {_selectedProfile.Name} was successfully applied. Waiting 0.5 sec for the display to settle after the change.");
                 System.Threading.Thread.Sleep(500);
+                logger.Trace($"DisplayProfileForm/Apply_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
                 ChangeSelectedProfile(_selectedProfile);
+            }
+            else if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Cancelled)
+            {
+                logger.Warn($"DisplayProfileForm/Apply_Click: The user cancelled changing to Profile {_selectedProfile.Name}.");
+            }
+            else
+            {
+                logger.Warn($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
+            }
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
             }
         }
 
@@ -115,6 +130,15 @@ namespace DisplayMagician.UIForms
 
             }
 
+            // As this may impact which game shortcuts are now usable, also force a refresh of the game shortcuts validity
+            ShortcutRepository.IsValidRefresh();
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
+
         }
 
         private void Save_Click(object sender, EventArgs e)
@@ -169,6 +193,7 @@ namespace DisplayMagician.UIForms
                 {
                     MessageBox.Show(ex.Message, Language.Shortcut, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
+
             }
         }
 
@@ -246,7 +271,7 @@ namespace DisplayMagician.UIForms
 
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
-
+                
         }
 
 
@@ -315,6 +340,12 @@ namespace DisplayMagician.UIForms
 
             // Refresh the image list view
             //RefreshImageListView(profile);
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
 
             // And finally refresh the profile in the display view
             dv_profile.Profile = profile;
@@ -415,6 +446,12 @@ namespace DisplayMagician.UIForms
 
             // now update the profiles image listview
             RefreshDisplayProfileUI();
+
+            // Also refresh the right-click menu (if we have a main form loaded)
+            if (Program.AppMainForm is Form)
+            {
+                Program.AppMainForm.RefreshNotifyIconMenus();
+            }
 
         }
 
