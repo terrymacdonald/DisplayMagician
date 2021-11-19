@@ -1221,6 +1221,7 @@ namespace DisplayMagician.UIForms
 
 
             // Load all the Games into the Games ListView            
+            ilv_games.ClearSelection();
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
                 // Add the game to the game array
@@ -1234,7 +1235,7 @@ namespace DisplayMagician.UIForms
 
             }
 
-            if (_shortcutToEdit.Category == ShortcutCategory.Game && _shortcutToEdit.GameAppId != null)
+            if (_editingExistingShortcut && _shortcutToEdit.Category == ShortcutCategory.Game && _shortcutToEdit.GameAppId != null)
             {
                 bool gameStillInstalled = false;
                 foreach (ImageListViewItem gameItem in ilv_games.Items)
@@ -1242,6 +1243,7 @@ namespace DisplayMagician.UIForms
                     if (gameItem.Text.Equals(_shortcutToEdit.GameName))
                     {
                         gameStillInstalled = true;
+                        gameItem.Selected = true;
                         break;
                     }
 
@@ -1957,11 +1959,7 @@ namespace DisplayMagician.UIForms
                     bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
                     if (!thisLoadedProfileIsAlreadyHere)
                     {
-                        //loadedProfile.SaveProfileImageToCache();
-                        //newItem = new ImageListViewItem(loadedProfile.SavedProfileCacheFilename, loadedProfile.Name);
-                        //newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
                         newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                        //ilv_saved_profiles.Items.Add(newItem);
                         ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
                     }
 
@@ -2902,12 +2900,21 @@ namespace DisplayMagician.UIForms
             // Parse the libraries
             GameLibraries.GameLibrary.RefreshGameBitmaps();
             // Load all the Games into the Games ListView            
+            ImageListViewItem previouslySelectedItem = null;
+            if (ilv_games.SelectedItems.Count > 0)
+            {
+                previouslySelectedItem = ilv_games.SelectedItems[0];
+            }
             ilv_games.Items.Clear();            
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
                 // Add the game to the game array
                 ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
-                if (_editingExistingShortcut && game.Name.Equals(_shortcutToEdit.GameName))
+                if (previouslySelectedItem != null && newItem.Text.Equals(previouslySelectedItem.Text))
+                {
+                    newItem.Selected = true;
+                }
+                else if (_editingExistingShortcut && game.Name.Equals(_shortcutToEdit.GameName))
                 {
                     newItem.Selected = true;                    
                 }
