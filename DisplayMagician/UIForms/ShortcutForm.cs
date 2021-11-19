@@ -1221,7 +1221,7 @@ namespace DisplayMagician.UIForms
 
 
             // Load all the Games into the Games ListView            
-            ilv_games.ClearSelection();
+            ilv_games.Items.Clear();
             foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
             {
                 // Add the game to the game array
@@ -1244,6 +1244,7 @@ namespace DisplayMagician.UIForms
                     {
                         gameStillInstalled = true;
                         gameItem.Selected = true;
+                        ilv_games.EnsureVisible(gameItem.Index);
                         break;
                     }
 
@@ -1257,7 +1258,7 @@ namespace DisplayMagician.UIForms
                         @"Game no longer exists",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
-                }
+                }                
             }
 
 
