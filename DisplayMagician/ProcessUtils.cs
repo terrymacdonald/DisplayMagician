@@ -423,7 +423,8 @@ namespace DisplayMagician
             bool usingChildProcess = false;
             try
             {
-                if (CreateProcessWithPriorityAsRestrictedUser(executable, arguments, ProcessUtils.TranslatePriorityToClass(processPriority), out processInfo))
+                if (CreateProcessWithPriorityAsRestrictedUser(executable, arguments, ProcessUtils.TranslatePriorityToClass(processPriority), out processInfo))                    
+                //if (CreateProcessWithPriority(executable, arguments, ProcessUtils.TranslatePriorityToClass(processPriority), out processInfo))
                 {
                     if (processInfo.dwProcessId > 0)
                     {
@@ -443,14 +444,14 @@ namespace DisplayMagician
                                 runningProcesses.Add(process);
                             }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             // it's a launcher! We need to look for children
                             List<Process> childProcesses = GetChildProcesses(processInfo.dwProcessId);
                             runningProcesses.AddRange(childProcesses);
                             usingChildProcess = true;
                         }
-                        
+
                     }
                     else
                     {
@@ -487,6 +488,17 @@ namespace DisplayMagician
                 {
                     // Start the process using built in process library
                     ProcessStartInfo psi = new ProcessStartInfo();
+                    string extension = Path.GetExtension(executable);
+                    if (extension.Equals("com", StringComparison.CurrentCultureIgnoreCase)
+                        || extension.Equals("exe", StringComparison.CurrentCultureIgnoreCase)
+                        || extension.Equals("msi", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        psi.UseShellExecute = false;
+                    }
+                    else
+                    {
+                        psi.Verb = "Open";                        
+                    }
                     psi.FileName = executable;
                     psi.Arguments = arguments;
                     psi.WorkingDirectory = Path.GetDirectoryName(executable);
@@ -603,7 +615,7 @@ namespace DisplayMagician
             sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
             try
             {
-                success = CreateProcess(fileName, cmd.ToString(), ref pSec, ref tSec, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+                success = CreateProcess(null, cmd.ToString(), ref pSec, ref tSec, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
             }
             catch (Exception ex)
             {
@@ -613,7 +625,7 @@ namespace DisplayMagician
             {
                 try
                 {
-                    success = CreateProcess(fileName, cmd.ToString(), IntPtr.Zero, IntPtr.Zero, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
+                    success = CreateProcess(null, cmd.ToString(), IntPtr.Zero, IntPtr.Zero, false, processFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo);
                 }
                 catch (Exception ex)
                 {
@@ -646,14 +658,14 @@ namespace DisplayMagician
 
                     if (!CreateProcessAsUser(
                         hRestrictedToken,
-                        fileName,
+                        null,
                         cmd.ToString(),
                         IntPtr.Zero,
                         IntPtr.Zero,
                         true, // inherit handle
                         0,
                         IntPtr.Zero,
-                        Path.GetDirectoryName(fileName),
+                        null,
                         ref si,
                         out pi))
                     {

@@ -1663,6 +1663,10 @@ namespace DisplayMagician.UIForms
                     spOrder++;
                 }
             }
+            else
+            {
+                flp_start_programs.Controls.Clear();
+            }
 
             // Setup the single stop program we're beginning with
             if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
