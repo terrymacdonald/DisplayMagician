@@ -1,6 +1,7 @@
 ﻿using AudioSwitcher.AudioApi;
 using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
+using DisplayMagician.Processes;
 using DisplayMagician.InterProcess;
 using DisplayMagicianShared;
 using Microsoft.Toolkit.Uwp.Notifications;
@@ -1921,8 +1922,9 @@ namespace DisplayMagician
                 uint processID = 0;
                 try
                 {
-                    ProcessUtils.PROCESS_INFORMATION processInfo;
-                    if (ProcessUtils.CreateProcessWithPriority(stopProg.Executable, stopProg.Arguments, ProcessUtils.TranslatePriorityToClass(stopProg.ProcessPriority), out processInfo))
+                    //Processes.PROCESS_INFORMATION processInfo;
+                    //if (ProcessUtils.CreateProcessWithPriority(stopProg.Executable, stopProg.Arguments, TranslatePriorityToClass(stopProg.ProcessPriority), out processInfo))
+                    if (ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, TranslatePriorityToClass(stopProg.ProcessPriority), out processInfo))
                     {
                         logger.Trace($"ShortcutRepository/RunShortcut: Successfully started Stop Program {stopProg.Executable} {stopProg.Arguments}");
                     }

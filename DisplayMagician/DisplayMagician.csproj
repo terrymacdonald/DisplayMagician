@@ -121,8 +121,14 @@
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ImageUtils.cs" />
+    <Compile Include="Processes\ImpersonationHelper.cs" />
     <Compile Include="MessageItem.cs" />
-    <Compile Include="ProcessUtils.cs" />
+    <Compile Include="Processes\ImpersonationProcess.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Processes\NativeMethods.cs" />
+    <Compile Include="Processes\ProcessUtils.cs" />
+    <Compile Include="Processes\WindowsAPI.cs" />
     <Compile Include="ProgramSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -137,6 +143,7 @@
     </Compile>
     <Compile Include="ShortcutItem.cs" />
     <Compile Include="ShortcutRepository.cs" />
+    <Compile Include="Processes\SingleInstanceHelper.cs" />
     <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
       <SubType>Form</SubType>
