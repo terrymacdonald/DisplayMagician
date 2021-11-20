@@ -10,6 +10,7 @@ using ProtoBuf;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System.Globalization;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -915,7 +916,8 @@ namespace DisplayMagician.GameLibraries
             {
                 address += "/0";
             }
-            List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
+            //List<Process> gameProcesses = ProcessUtils.StartProcess(address, null, processPriority);
+            List<Process> gameProcesses = ProcessUtils.StartProcess(address, "", ProcessPriority.Normal);
             return gameProcesses;
         }
 

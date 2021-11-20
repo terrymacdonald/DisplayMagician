@@ -936,6 +936,7 @@ namespace DisplayMagician
                     List<Process> processesCreated = new List<Process>();
                     try
                     {
+                        //processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority);
                         processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority);
 
                         // Record the program we started so we can close it later
@@ -1924,14 +1925,15 @@ namespace DisplayMagician
                 {
                     //Processes.PROCESS_INFORMATION processInfo;
                     //if (ProcessUtils.CreateProcessWithPriority(stopProg.Executable, stopProg.Arguments, TranslatePriorityToClass(stopProg.ProcessPriority), out processInfo))
-                    if (ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, TranslatePriorityToClass(stopProg.ProcessPriority), out processInfo))
+                    ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal);
+                    /*if ()
                     {
                         logger.Trace($"ShortcutRepository/RunShortcut: Successfully started Stop Program {stopProg.Executable} {stopProg.Arguments}");
                     }
                     else
                     {
                         logger.Warn($"ShortcutRepository/RunShortcut: Unable to start Stop Program {stopProg.Executable} {stopProg.Arguments}");
-                    }
+                    }*/
                 }
                 catch (Exception ex)
                 {

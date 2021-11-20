@@ -11,6 +11,7 @@ using System.Xml.XPath;
 using System.Web;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {

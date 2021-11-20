@@ -8,6 +8,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Security;
 using System.Diagnostics;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {

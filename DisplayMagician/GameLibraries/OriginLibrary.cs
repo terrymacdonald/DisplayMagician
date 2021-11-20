@@ -11,6 +11,7 @@ using System.Xml.XPath;
 using System.Web;
 using System.Diagnostics;
 using System.Text;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {

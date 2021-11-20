@@ -59,6 +59,13 @@ namespace DisplayMagician.Processes
             List<Process> runningProcesses = new List<Process>();
             Process process = null;
             bool usingChildProcess = false;
+
+            if (TryExecute_AutoImpersonate(executable, arguments, out process))
+            {
+                logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started (ID: {process.Id})");
+                runningProcesses.Add(process);
+            }
+            return runningProcesses;
         }
 
         public static List<Process> GetChildProcesses(Process process)
@@ -259,11 +266,11 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns><c>true</c> if process was executed and finished correctly</returns>
-        public static bool TryExecute_AutoImpersonate(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        public static bool TryExecute_AutoImpersonate(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             return IsImpersonated ?
-              TryExecute_Impersonated(executable, arguments, priorityClass, maxWaitMs) :
-              TryExecute(executable, arguments, priorityClass, maxWaitMs);
+              TryExecute_Impersonated(executable, arguments, out process, priorityClass, maxWaitMs) :
+              TryExecute(executable, arguments, out process, priorityClass, maxWaitMs);
         }
 
         /// <summary>
@@ -275,16 +282,16 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns><c>true</c> if process was executed and finished correctly</returns>
-        public static bool TryExecute_Impersonated(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        public static bool TryExecute_Impersonated(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             IntPtr userToken;
+            process = null;
             if (!ImpersonationHelper.GetTokenByProcess(out userToken, true))
                 return false;
             try
             {
-                Process unused;
                 //return TryExecute_Impersonated(executable, arguments, userToken, false, out unused, priorityClass, maxWaitMs);
-                return TryExecute_Impersonated(executable, arguments, userToken, out unused, priorityClass, maxWaitMs);
+                return TryExecute_Impersonated(executable, arguments, userToken, out process, priorityClass, maxWaitMs);
             }
             finally
             {
