@@ -428,8 +428,48 @@ namespace DisplayMagician.Processes
         /// <returns></returns>
         private static bool TryExecute(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
-            StringBuilder outputBuilder = new StringBuilder();
-            using (Process processCreated = new Process { StartInfo = new ProcessStartInfo(executable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = false} })
+            //StringBuilder outputBuilder = new StringBuilder();
+
+            bool _isFile = false;
+            bool _isExe = false;
+            if (File.Exists(executable))
+            {
+                _isFile = true;
+                if (Path.GetExtension(executable).Equals(".exe",StringComparison.CurrentCultureIgnoreCase) ||
+                    Path.GetExtension(executable).Equals(".com", StringComparison.CurrentCultureIgnoreCase) ||
+                    Path.GetExtension(executable).Equals(".msi", StringComparison.CurrentCultureIgnoreCase) ||
+                    Path.GetExtension(executable).Equals(".bat", StringComparison.CurrentCultureIgnoreCase) ||
+                    Path.GetExtension(executable).Equals(".cmd", StringComparison.CurrentCultureIgnoreCase) ||
+                    Path.GetExtension(executable).Equals(".ps1", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    _isExe = true;
+                }
+            }
+
+            ProcessStartInfo psi;
+            if (_isFile && _isExe)
+            {
+                // Is exe file 
+                psi = new ProcessStartInfo(executable, arguments)
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                    RedirectStandardOutput = false
+                };
+            }
+            else
+            {
+                // Isn't a file (somethign like a url), or is a file but isn't an executable
+                psi = new ProcessStartInfo(executable, arguments)
+                {
+                    UseShellExecute = true,
+                    Verb = "Open",
+                    CreateNoWindow = false,
+                    RedirectStandardOutput = false
+                };
+            }
+
+            using (Process processCreated = new Process { StartInfo = psi })
             {
                 /*if (redirectInputOutput)
                 {
@@ -440,6 +480,9 @@ namespace DisplayMagician.Processes
                     // Attach the event handler for OutputDataReceived before starting the process.
                     process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
                 }*/
+                
+
+
                 processCreated.Start();
                 
                 /*if (redirectInputOutput)
