@@ -56,16 +56,21 @@ namespace DisplayMagician.Processes
 
         public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1)
         {
-            List<Process> runningProcesses = new List<Process>();
-            Process process = null;
-            bool usingChildProcess = false;
+            List<Process> startedProcesses = new List<Process>();
+            List<Process> returnedProcesses;
+            //bool usingChildProcess = false;
 
-            if (TryExecute_AutoImpersonate(executable, arguments, out process))
+            if (TryExecute_AutoImpersonate(executable, arguments, out returnedProcesses))
             {
-                logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started (ID: {process.Id})");
-                runningProcesses.Add(process);
+                logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started");
             }
-            return runningProcesses;
+            else
+            {
+                logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started");
+            }
+            startedProcesses = returnedProcesses;
+
+            return startedProcesses;
         }
 
         public static List<Process> GetChildProcesses(Process process)
@@ -252,7 +257,7 @@ namespace DisplayMagician.Processes
         /// <returns><c>true</c> if process was executed and finished correctly</returns>
         public static bool TryExecute(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
-            Process unused;
+            List<Process> unused;
             return TryExecute(executable, arguments, out unused, priorityClass, maxWaitMs);
         }
 
@@ -266,11 +271,19 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns><c>true</c> if process was executed and finished correctly</returns>
-        public static bool TryExecute_AutoImpersonate(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        public static bool TryExecute_AutoImpersonate(string executable, string arguments, out List<Process> processes, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
-            return IsImpersonated ?
-              TryExecute_Impersonated(executable, arguments, out process, priorityClass, maxWaitMs) :
-              TryExecute(executable, arguments, out process, priorityClass, maxWaitMs);
+            bool result = false;
+            if (IsImpersonated)
+            {
+                result = TryExecute_Impersonated(executable, arguments, out processes, priorityClass, maxWaitMs);
+            }
+            else
+            {
+                result = TryExecute(executable, arguments, out processes, priorityClass, maxWaitMs);
+            }
+            //process = processReturned;
+            return result;
         }
 
         /// <summary>
@@ -282,16 +295,16 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns><c>true</c> if process was executed and finished correctly</returns>
-        public static bool TryExecute_Impersonated(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        public static bool TryExecute_Impersonated(string executable, string arguments, out List<Process> processes, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             IntPtr userToken;
-            process = null;
+            processes = new List<Process>();
             if (!ImpersonationHelper.GetTokenByProcess(out userToken, true))
                 return false;
             try
             {
                 //return TryExecute_Impersonated(executable, arguments, userToken, false, out unused, priorityClass, maxWaitMs);
-                return TryExecute_Impersonated(executable, arguments, userToken, out process, priorityClass, maxWaitMs);
+                return TryExecute_Impersonated(executable, arguments, userToken, out processes, priorityClass, maxWaitMs);
             }
             finally
             {
@@ -309,7 +322,7 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns></returns>
-        public static bool TryExecuteReadString(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        public static bool TryExecuteReadString(string executable, string arguments, out List<Process> process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             return TryExecute(executable, arguments, out process, priorityClass, maxWaitMs);
         }
@@ -324,11 +337,11 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns></returns>
-        public static bool TryExecuteReadString_AutoImpersonate(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        public static bool TryExecuteReadString_AutoImpersonate(string executable, string arguments, out List<Process> processes, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             return IsImpersonated ?
-              TryExecuteReadString_Impersonated(executable, arguments, out process, priorityClass, maxWaitMs) :
-              TryExecuteReadString(executable, arguments, out process, priorityClass, maxWaitMs);
+              TryExecuteReadString_Impersonated(executable, arguments, out processes, priorityClass, maxWaitMs) :
+              TryExecuteReadString(executable, arguments, out processes, priorityClass, maxWaitMs);
         }
 
         /// <summary>
@@ -342,17 +355,17 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns><c>true</c> if process was executed and finished correctly</returns>
-        public static bool TryExecuteReadString_Impersonated(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
+        public static bool TryExecuteReadString_Impersonated(string executable, string arguments, out List<Process> processes, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
         {
             IntPtr userToken;
             if (!ImpersonationHelper.GetTokenByProcess(out userToken, true))
             {
-                process = null;
+                processes = new List<Process>();
                 return false;
             }
             try
             {
-                return TryExecute_Impersonated(executable, arguments, userToken, out process, priorityClass, maxWaitMs);
+                return TryExecute_Impersonated(executable, arguments, userToken, out processes, priorityClass, maxWaitMs);
             }
             finally
             {
@@ -426,10 +439,10 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns></returns>
-        private static bool TryExecute(string executable, string arguments, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        private static bool TryExecute(string executable, string arguments, out List<Process> startedProcesses, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             //StringBuilder outputBuilder = new StringBuilder();
-
+            startedProcesses = new List<Process>();
             bool _isFile = false;
             bool _isExe = false;
             if (File.Exists(executable))
@@ -469,44 +482,102 @@ namespace DisplayMagician.Processes
                 };
             }
 
-            using (Process processCreated = new Process { StartInfo = psi })
+            Process processCreated = new Process { StartInfo = psi };
+            
+            /*if (redirectInputOutput)
             {
-                /*if (redirectInputOutput)
-                {
-                    // Set UTF-8 encoding for standard output.
-                    process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
-                    // Enable raising events because Process does not raise events by default.
-                    process.EnableRaisingEvents = true;
-                    // Attach the event handler for OutputDataReceived before starting the process.
-                    process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
-                }*/
-                
+                // Set UTF-8 encoding for standard output.
+                process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
+                // Enable raising events because Process does not raise events by default.
+                process.EnableRaisingEvents = true;
+                // Attach the event handler for OutputDataReceived before starting the process.
+                process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
+            }*/             
 
-
+            try
+            {
                 processCreated.Start();
-                
-                /*if (redirectInputOutput)
-                    process.BeginOutputReadLine();*/
-
-                if (processCreated.WaitForExit(maxWaitMs))
-                {
-                    //result = RemoveEncodingPreamble(outputBuilder.ToString());
-                    if (!processCreated.HasExited)
-                    {
-                        try 
-                        {
-                            processCreated.PriorityClass = priorityClass;
-                        }
-                        catch(Exception ex)
-                        {
-                            logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to set the Priority Class to {priorityClass.ToString("G")} for {executable}.");
-                        }
-                        process = processCreated;
-                        return true;
-                    }                        
-                }
             }
-            process = null;
+            catch (ObjectDisposedException ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process object has already been disposed.");
+                return false;
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (processCreated.StartInfo.UseShellExecute && (processCreated.StartInfo.RedirectStandardInput || processCreated.StartInfo.RedirectStandardOutput || processCreated.StartInfo.RedirectStandardError))
+                {
+                    logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The UseShellExecute member of the StartInfo property is true while RedirectStandardInput, RedirectStandardOutput, or RedirectStandardError is true.");
+                }
+                else
+                {
+                    logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. No file name was specified in the Process component's StartInfo.");
+                }
+                return false;
+            }
+            catch (Win32Exception ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. There was an error in opening the associated file.");
+                return false;
+            }
+            catch (PlatformNotSupportedException ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Method not supported on operating systems without shell support such as Nano Server (.NET Core only).");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Not sure what specific exception it is.");
+                return false;
+            }
+
+            /*if (redirectInputOutput)
+                process.BeginOutputReadLine();*/
+
+            //result = RemoveEncodingPreamble(outputBuilder.ToString());
+            if (processCreated != null)
+            {
+                try
+                {
+
+                    processCreated.WaitForExit(1000);
+
+                    if (processCreated.HasExited)
+                    {
+                        // If the process has exited, then it's likely to be a launcher, so we try to find the children processes
+                        List<Process> childProcesses = GetChildProcesses(processCreated);
+                        startedProcesses.AddRange(childProcesses);                     
+                    }
+                    else
+                    {
+                        // If we're here then the process was created and hasn't exited!
+                        try
+                        {
+                            if (processCreated.PriorityClass != priorityClass)
+                            {
+                                processCreated.PriorityClass = priorityClass;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Warn(ex, $"ProcessUtils/StartProcess: Exception while trying to set the Priority Class to {priorityClass.ToString("G")} for {executable}.");
+                        }
+                        startedProcesses.Add(processCreated);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    // Oops- the process didn't work.  Let's skip this one
+                    //process = null;
+                    return false;
+                }
+
+                //process = processCreated;
+                return true;
+            }
+
+            //process = null;
             return false;
         }
 
@@ -567,45 +638,105 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns><c>true</c> if process was executed and finished correctly</returns>
-        private static bool TryExecute_Impersonated(string executable, string arguments, IntPtr token, out Process process, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        private static bool TryExecute_Impersonated(string executable, string arguments, IntPtr token, out List<Process> startedProcesses, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             // TODO: code is 99% redundant to TryExecute, refactor Process/ImpersonationProcess and Start/StartAsUser!
             StringBuilder outputBuilder = new StringBuilder();
-            using (ImpersonationProcess processCreated = new ImpersonationProcess { StartInfo = new ProcessStartInfo(executable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = false} })
+            startedProcesses = new List<Process>();
+            ImpersonationProcess processCreated = new ImpersonationProcess { StartInfo = new ProcessStartInfo(executable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = false } };
+            /*if (redirectInputOutput)
             {
-                /*if (redirectInputOutput)
-                {
-                    // Set UTF-8 encoding for standard output.
-                    process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
-                    // Enable raising events because Process does not raise events by default.
-                    process.EnableRaisingEvents = true;
-                    // Attach the event handler for OutputDataReceived before starting the process.
-                    process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
-                }*/
+                // Set UTF-8 encoding for standard output.
+                process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
+                // Enable raising events because Process does not raise events by default.
+                process.EnableRaisingEvents = true;
+                // Attach the event handler for OutputDataReceived before starting the process.
+                process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
+            }*/           
+
+            try
+            {
                 processCreated.StartAsUser(token);
-
-                /*if (redirectInputOutput)
-                    process.BeginOutputReadLine();*/
-
-                if (processCreated.WaitForExit(maxWaitMs))
+            }
+            catch (ObjectDisposedException ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process object has already been disposed.");
+                return false;
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (processCreated.StartInfo.UseShellExecute && (processCreated.StartInfo.RedirectStandardInput || processCreated.StartInfo.RedirectStandardOutput || processCreated.StartInfo.RedirectStandardError))
                 {
-                    //result = RemoveEncodingPreamble(outputBuilder.ToString());
-                    if (!processCreated.HasExited)
+                    logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The UseShellExecute member of the StartInfo property is true while RedirectStandardInput, RedirectStandardOutput, or RedirectStandardError is true.");
+                }
+                else
+                {
+                    logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. No file name was specified in the Process component's StartInfo.");
+                }
+                return false;
+            }
+            catch (Win32Exception ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. There was an error in opening the associated file.");
+                return false;
+            }
+            catch (PlatformNotSupportedException ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Method not supported on operating systems without shell support such as Nano Server (.NET Core only).");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. Not sure what specific exception it is.");
+                return false;
+            }
+
+            /*if (redirectInputOutput)
+                process.BeginOutputReadLine();*/
+
+            if (processCreated != null)
+            {
+                try
+                {
+
+                    processCreated.WaitForExit(1000);
+
+                    if (processCreated.HasExited)
                     {
+                        // If the process has exited, then it's likely to be a launcher, so we try to find the children processes
+                        List<Process> childProcesses = GetChildProcesses(processCreated);
+                        startedProcesses.AddRange(childProcesses);
+
+                    }
+                    else
+                    {
+                        // If we're here then the process was created and hasn't exited!
                         try
                         {
-                            processCreated.PriorityClass = priorityClass;
+                            if (processCreated.PriorityClass != priorityClass)
+                            {
+                                processCreated.PriorityClass = priorityClass;
+                            }
                         }
                         catch (Exception ex)
                         {
-                            logger.Error(ex, $"ProcessUtils/TryExecute_Impersonated: Exception while trying to set the Priority Class to {priorityClass.ToString("G")} for {executable}.");
+                            logger.Warn(ex, $"ProcessUtils/StartProcess: Exception while trying to set the Priority Class to {priorityClass.ToString("G")} for {executable}.");
                         }
-                        process = processCreated;
-                        return true;
+                        startedProcesses.Add(processCreated);
                     }
+
                 }
+                catch (Exception ex)
+                {
+                    // Oops- the process didn't work.  Let's skip this one
+                    //process = null;
+                    return false;
+                }
+
+                //process = processCreated;
+                return true;
             }
-            process = null;
+
             return false;
         }
 
@@ -619,6 +750,33 @@ namespace DisplayMagician.Processes
             if (!string.IsNullOrWhiteSpace(rawString) && rawString.StartsWith(CONSOLE_ENCODING_PREAMBLE))
                 return rawString.Substring(CONSOLE_ENCODING_PREAMBLE.Length);
             return rawString;
+        }
+
+        public static ProcessPriorityClass TranslatePriorityToClass(ProcessPriority processPriorityClass)
+        {
+            ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
+            switch (processPriorityClass)
+            {
+                case ProcessPriority.High:
+                    wantedPriorityClass = ProcessPriorityClass.High;
+                    break;
+                case ProcessPriority.AboveNormal:
+                    wantedPriorityClass = ProcessPriorityClass.AboveNormal;
+                    break;
+                case ProcessPriority.Normal:
+                    wantedPriorityClass = ProcessPriorityClass.Normal;
+                    break;
+                case ProcessPriority.BelowNormal:
+                    wantedPriorityClass = ProcessPriorityClass.BelowNormal;
+                    break;
+                case ProcessPriority.Idle:
+                    wantedPriorityClass = ProcessPriorityClass.Idle;
+                    break;
+                default:
+                    wantedPriorityClass = ProcessPriorityClass.Normal;
+                    break;
+            }
+            return wantedPriorityClass;
         }
 
         public static PROCESS_CREATION_FLAGS TranslatePriorityClassToFlags(ProcessPriorityClass processPriorityClass)

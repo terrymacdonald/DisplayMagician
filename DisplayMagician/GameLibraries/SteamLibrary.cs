@@ -823,6 +823,9 @@ namespace DisplayMagician.GameLibraries
             }
             //Process gameProcess = Process.Start(address);
             List<Process> gameProcesses = ProcessUtils.StartProcess(address,null,processPriority);
+
+            // Wait 1 second then see if we need to find the child processes.
+
             return gameProcesses;
         }
         #endregion

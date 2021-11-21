@@ -1276,6 +1276,15 @@ namespace DisplayMagician
                     // Delay 500ms
                     Thread.Sleep(500);
 
+                    if (gameProcesses.Count == 0)
+                    {
+                        // If there are no children found, then try to find all the running programs with the same names
+                        // (Some games relaunch themselves!)
+                        List<Process> sameNamedProcesses = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(gameToRun.Executable)).ToList();
+                        gameProcesses.AddRange(sameNamedProcesses);
+                    }
+
+
                     // Wait for GameLibrary to start
                     for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                     {
@@ -1659,12 +1668,14 @@ namespace DisplayMagician
 
                         // Now we know the game library app is running then 
                         // we wait until the game has started running (*allows for updates to occur)
+                        bool gameRunning = false;
                         for (int secs = 0; secs <= (shortcutToUse.StartTimeout * 1000); secs += 500)
                         {
 
                             if (gameToRun.IsRunning)
                             {
                                 // The game is running! So now we continue processing
+                                gameRunning = true;
                                 logger.Debug($"ShortcutRepository/RunShortcut: Found the '{gameToRun.Name}' process has started");
 
                                 try
@@ -1683,13 +1694,14 @@ namespace DisplayMagician
                                 break;
                             }
 
+
                             // Delay 500ms
                             Thread.Sleep(500);
 
                         }
 
                         // If the game still isn't running then there is an issue so tell the user and revert things back
-                        if (!gameToRun.IsRunning)
+                        if (!gameRunning)
                         {
                             logger.Error($"ShortcutRepository/RunShortcut: The Game {gameToRun.Name} didn't start for some reason (or the game uses a starter exe that launches the game itself)! so reverting changes back if needed...");
                             logger.Warn($"ShortcutRepository/RunShortcut: We were monitoring {gameToRun.ExePath}. You may need to manually add an alternative game executable to monitor - please run the game manually and check if another executable in {Path.GetDirectoryName(gameToRun.ExePath)} is run, and then monitor that instead.");

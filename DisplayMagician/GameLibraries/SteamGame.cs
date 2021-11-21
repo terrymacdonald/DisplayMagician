@@ -107,8 +107,11 @@ namespace DisplayMagician.GameLibraries
                     {
                         //if (gameProcess.MainModule.FileName.StartsWith(_steamGameExePath))
                         //    numGameProcesses++;
-                        if (gameProcess.ProcessName.Equals(_steamGameProcessName))
+                        if (!gameProcess.HasExited)
+                        {
                             numGameProcesses++;
+                        }
+                            
                     }
                     catch (Exception ex)
                     {
