@@ -939,22 +939,25 @@ namespace DisplayMagician
                         //processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority);
                         processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority);
 
-                        // Record the program we started so we can close it later
-                        if (processToStart.CloseOnFinish)
+                        // Record the program we started so we can close it later (if we have any!)
+                        if (processesCreated.Count > 0)
                         {
-                            foreach (Process p in processesCreated)
+                            if (processToStart.CloseOnFinish)
                             {
-                                logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.StartInfo.FileName} after the main game or executable is closed.");
-                            }                            
-                            startProgramsToStop.AddRange(processesCreated);
-                        }
-                        else
-                        {
-                            foreach (Process p in processesCreated)
-                            {
-                                logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.StartInfo.FileName} after the main game or executable is closed, so we'll just leave it running");
+                                foreach (Process p in processesCreated)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: We need to stop {p.StartInfo.FileName} after the main game or executable is closed.");
+                                }
+                                startProgramsToStop.AddRange(processesCreated);
                             }
-                        }
+                            else
+                            {
+                                foreach (Process p in processesCreated)
+                                {
+                                    logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.StartInfo.FileName} after the main game or executable is closed, so we'll just leave it running");
+                                }
+                            }
+                        }                        
                     }
                     catch (Win32Exception ex)
                     {
