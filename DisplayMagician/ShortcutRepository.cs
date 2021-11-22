@@ -232,7 +232,7 @@ namespace DisplayMagician
         public static bool ContainsShortcut(ShortcutItem shortcut)
         {
 
-            logger.Trace($"ShortcutRepository/ContainsShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
+            //logger.Trace($"ShortcutRepository/ContainsShortcut: Checking whether {shortcut.Name} exists in our shortcut repository");
 
             if (!(shortcut is ShortcutItem))
                 return false;
@@ -241,18 +241,18 @@ namespace DisplayMagician
             {
                 if (testShortcut.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase))
                 {
-                    logger.Trace($"ShortcutRepository/ContainsShortcut: {shortcut.Name} does exist in our shortcut repository");
+                    //logger.Trace($"ShortcutRepository/ContainsShortcut: {shortcut.Name} does exist in our shortcut repository");
                     return true;
                 }
             }
-
+            logger.Trace($"ShortcutRepository/ContainsShortcut: Shortcut with name {shortcut.Name} doesn't exist in our shortcut repository");
             return false;
         }
 
         public static bool ContainsShortcut(string shortcutNameOrUuid)
         {
 
-            logger.Trace($"ShortcutRepository/ContainsShortcut2: Checking whether {shortcutNameOrUuid} exists in our shortcut repository");
+            //logger.Trace($"ShortcutRepository/ContainsShortcut2: Checking whether {shortcutNameOrUuid} exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -267,7 +267,7 @@ namespace DisplayMagician
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with UUID {shortcutNameOrUuid} does exist in our shortcut repository");
+                        //logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with UUID {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
                     }
                 }
@@ -279,7 +279,7 @@ namespace DisplayMagician
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} does exist in our shortcut repository");
+                        //logger.Trace($"ShortcutRepository/ContainsShortcut2: Shortcut with name {shortcutNameOrUuid} does exist in our shortcut repository");
                         return true;
                     }
                 }
