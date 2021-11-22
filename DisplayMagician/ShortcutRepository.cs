@@ -294,7 +294,7 @@ namespace DisplayMagician
 
         public static ShortcutItem GetShortcut(string shortcutNameOrUuid)
         {
-            logger.Trace($"ShortcutRepository/GetShortcut: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
+            //logger.Trace($"ShortcutRepository/GetShortcut: Finding and returning {shortcutNameOrUuid} if it exists in our shortcut repository");
 
             if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
             {
@@ -309,7 +309,7 @@ namespace DisplayMagician
                 {
                     if (testShortcut.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with UUID {shortcutNameOrUuid}");
+                        //logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with UUID {shortcutNameOrUuid}");
                         return testShortcut;
                     }
                 }
@@ -321,14 +321,14 @@ namespace DisplayMagician
                 {
                     if (testShortcut.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with Name {shortcutNameOrUuid}");
+                        //logger.Trace($"ShortcutRepository/GetShortcut: Returning shortcut with Name {shortcutNameOrUuid}");
                         return testShortcut;
                     }
                 }
 
             }
 
-            logger.Trace($"ShortcutRepository/GetShortcut: No shortcut was found to return with UUID or Name {shortcutNameOrUuid}");
+            logger.Warn($"ShortcutRepository/GetShortcut: No shortcut was found to return with UUID or Name {shortcutNameOrUuid}");
             return null;
 
         }

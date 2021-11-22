@@ -169,7 +169,7 @@ namespace DisplayMagician.Processes
                 }
                 else
                 {
-                    logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is still running as is has not exited yet.");
+                    //logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is still running as is has not exited yet.");
                     return false;
                 }
             }
@@ -196,12 +196,12 @@ namespace DisplayMagician.Processes
 
             if (ProcessExited(wantedProcesses))
             {
-                logger.Trace($"ProcessUtils/ProcessExited4: All processes being monitored have exited, so no processes still running!");
+                //logger.Trace($"ProcessUtils/ProcessExited4: All processes being monitored have exited, so no processes still running!");
                 return true;
             }
             else
             {
-                logger.Trace($"ProcessUtils/ProcessExited4: At least one process is still running!");
+                //logger.Trace($"ProcessUtils/ProcessExited4: At least one process is still running!");
                 return false;
             }
         }
@@ -212,12 +212,12 @@ namespace DisplayMagician.Processes
             
             if (ProcessExited(process))
             {
-                logger.Trace($"ProcessUtils/ProcessExited3: Process with ID {processId} has exited, so no processes still running!");
+                //logger.Trace($"ProcessUtils/ProcessExited3: Process with ID {processId} has exited, so no processes still running!");
                 return true;
             }
             else
             {
-                logger.Trace($"ProcessUtils/ProcessExited3: Process with ID {processId} is still running!");
+                //logger.Trace($"ProcessUtils/ProcessExited3: Process with ID {processId} is still running!");
                 return false;
             }
         }
@@ -234,12 +234,12 @@ namespace DisplayMagician.Processes
             }
             if (processClosedCount == processes.Count)
             {
-                logger.Trace($"ProcessUtils/ProcessExited2: All processes being monitored have exited, so no processes still running!");
+                //logger.Trace($"ProcessUtils/ProcessExited2: All processes being monitored have exited, so no processes still running!");
                 return true;
             }
             else
             {
-                logger.Trace($"ProcessUtils/ProcessExited2: {processClosedCount} processes out of {processes.Count} processes have exited. At least one process is still running!");
+                //logger.Trace($"ProcessUtils/ProcessExited2: {processClosedCount} processes out of {processes.Count} processes have exited. At least one process is still running!");
                 return false;
             }
         }

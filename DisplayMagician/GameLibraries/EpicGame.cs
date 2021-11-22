@@ -102,7 +102,7 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                return ProcessUtils.ProcessExited(_epicGameProcessName);
+                return !ProcessUtils.ProcessExited(_epicGameProcessName);
                 /*int numGameProcesses = 0;
                 _epicGameProcesses = Process.GetProcessesByName(_epicGameProcessName).ToList();
                 foreach (Process gameProcess in _epicGameProcesses)

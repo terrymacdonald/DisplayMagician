@@ -101,7 +101,7 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                return ProcessUtils.ProcessExited(_originGameProcessName);
+                return !ProcessUtils.ProcessExited(_originGameProcessName);
                 /*int numGameProcesses = 0;
                 _originGameProcesses = Process.GetProcessesByName(_originGameProcessName).ToList();
                 foreach (Process gameProcess in _originGameProcesses)

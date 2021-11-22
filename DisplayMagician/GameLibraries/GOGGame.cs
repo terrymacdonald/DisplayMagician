@@ -102,7 +102,7 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                return ProcessUtils.ProcessExited(_gogGameProcessName);
+                return !ProcessUtils.ProcessExited(_gogGameProcessName);
                 /*int numGameProcesses = 0;
                 _gogGameProcesses = Process.GetProcessesByName(_gogGameProcessName).ToList();
                 foreach (Process gameProcess in _gogGameProcesses)
