@@ -62,17 +62,20 @@ namespace DisplayMagician.UIForms
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
         private bool _firstShow = true;
+        private ShortcutLoadingForm _loadingScreen;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutForm()
         {
             InitializeComponent();
-            Program.AppSplashScreen = new LoadingForm();
-            Program.AppSplashScreen.Title = "Preparing images...";
-            Program.AppSplashScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";            
+            _loadingScreen = new ShortcutLoadingForm();
+            _loadingScreen.Title = "Preparing images...";
+            _loadingScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            _loadingScreen.StartPosition = FormStartPosition.CenterParent;
+            _loadingScreen.Parent = this.ParentForm;
             var splashThread = new Thread(new ThreadStart(
-                () => Application.Run(Program.AppSplashScreen)));
+                () => Application.Run(_loadingScreen)));
             splashThread.SetApartmentState(ApartmentState.STA);
             splashThread.Start();
 
@@ -1721,8 +1724,8 @@ namespace DisplayMagician.UIForms
         private void CloseTheSplashScreen()
         {
             // Close the splash screen
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
-                Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
+            if (_loadingScreen != null && !_loadingScreen.Disposing && !_loadingScreen.IsDisposed)
+                _loadingScreen.Invoke(new Action(() => _loadingScreen.Close()));
             this.TopMost = true;
             this.Focus();
             this.TopMost = false;

@@ -152,6 +152,12 @@
       <DependentUpon>HotkeyForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UIForms\ImageListViewRenderers.cs" />
+    <Compile Include="UIForms\ShortcutLoadingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\ShortcutLoadingForm.Designer.cs">
+      <DependentUpon>ShortcutLoadingForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="UIForms\LoadingForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -235,6 +241,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\HotkeyForm.resx">
       <DependentUpon>HotkeyForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\ShortcutLoadingForm.resx">
+      <DependentUpon>ShortcutLoadingForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\LoadingForm.resx">
       <DependentUpon>LoadingForm.cs</DependentUpon>
