@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using DisplayMagician.Resources;
 using System.Diagnostics;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -99,7 +100,8 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                int numGameProcesses = 0;
+                return ProcessUtils.ProcessExited(_uplayGameProcessName);
+                /*int numGameProcesses = 0;
                 _uplayGameProcesses = Process.GetProcessesByName(_uplayGameProcessName).ToList();
                 foreach (Process gameProcess in _uplayGameProcesses)
                 {
@@ -133,7 +135,7 @@ namespace DisplayMagician.GameLibraries
                 if (numGameProcesses > 0)
                     return true;
                 else
-                    return false;
+                    return false;*/
             }
         }
 

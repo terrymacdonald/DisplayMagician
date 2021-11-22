@@ -923,8 +923,7 @@ namespace DisplayMagician
                             catch (Exception ex)
                             {
                                 logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception setting priority of already running process {processToStart.Executable} to {processToStart.ProcessPriority.ToString("G")}");
-                            }
-                            
+                            }                            
                             continue;
                         }
                             
@@ -1138,7 +1137,7 @@ namespace DisplayMagician
                     // We use the a user supplied executable as the thing we're monitoring instead!
                     try
                     {
-                        processesToMonitor.AddRange(Process.GetProcessesByName(shortcutToUse.DifferentExecutableToMonitor));
+                        processesToMonitor.AddRange(Process.GetProcessesByName(ProcessUtils.GetProcessName(shortcutToUse.DifferentExecutableToMonitor)));
                         logger.Trace($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} '{shortcutToUse.DifferentExecutableToMonitor}' user specified processes to monitor are running");
                         foundSomethingToMonitor = true;
                     }
@@ -1270,19 +1269,22 @@ namespace DisplayMagician
                     // And then show this notification
                     DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
+                    // Start the game!
+                    // NOTE: We now have to try and find the processes, as the game library will start to run the game itself, and we have no idea what process it is
+                    // We'll have to look for the game exe later on in this process...
                     List<Process> gameProcesses;
                     gameProcesses = gameLibraryToUse.StartGame(gameToRun, shortcutToUse.GameArguments, shortcutToUse.ProcessPriority);
 
                     // Delay 500ms
                     Thread.Sleep(500);
 
-                    if (gameProcesses.Count == 0)
+                    /*if (gameProcesses.Count == 0)
                     {
                         // If there are no children found, then try to find all the running programs with the same names
                         // (Some games relaunch themselves!)
                         List<Process> sameNamedProcesses = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(gameToRun.Executable)).ToList();
                         gameProcesses.AddRange(sameNamedProcesses);
-                    }
+                    }*/
 
 
                     // Wait for GameLibrary to start
@@ -1410,7 +1412,7 @@ namespace DisplayMagician
                     if (shortcutToUse.MonitorDifferentGameExe)
                     {
                         // If we are monitoring a different executable rather than the game itself, then lets get that name ready instead
-                        string altGameProcessToMonitor = System.IO.Path.GetFileNameWithoutExtension(shortcutToUse.DifferentGameExeToMonitor);
+                        string altGameProcessToMonitor = ProcessUtils.GetProcessName(shortcutToUse.DifferentGameExeToMonitor);
 
                         // Now look for the thing we're supposed to monitor
                         // and wait until it starts up

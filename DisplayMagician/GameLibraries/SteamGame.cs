@@ -7,6 +7,7 @@ using System.Security;
 using DisplayMagician.Resources;
 using Microsoft.Win32;
 using System.Diagnostics;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -99,8 +100,9 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                int numGameProcesses = 0;
-                _steamGameProcesses = Process.GetProcessesByName(_steamGameProcessName).ToList();
+                //int numGameProcesses = 0;
+                return ProcessUtils.ProcessExited(_steamGameProcessName);
+                /*_steamGameProcesses = Process.GetProcessesByName(_steamGameProcessName).ToList();
                 foreach (Process gameProcess in _steamGameProcesses)
                 {
                     try
@@ -138,7 +140,7 @@ namespace DisplayMagician.GameLibraries
                 if (numGameProcesses > 0)
                     return true;
                 else
-                    return false;
+                    return false;*/
             }
         }
 
