@@ -69,16 +69,6 @@ namespace DisplayMagician.UIForms
         public ShortcutForm()
         {
             InitializeComponent();
-            _loadingScreen = new ShortcutLoadingForm();
-            _loadingScreen.Title = "Preparing images...";
-            _loadingScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
-            _loadingScreen.StartPosition = FormStartPosition.CenterParent;
-            _loadingScreen.Parent = this.ParentForm;
-            var splashThread = new Thread(new ThreadStart(
-                () => Application.Run(_loadingScreen)));
-            splashThread.SetApartmentState(ApartmentState.STA);
-            splashThread.Start();
-
             // Set the profileAdaptor we need to load images from Profiles
             // into the Profiles ImageListView
             try
@@ -1701,7 +1691,8 @@ namespace DisplayMagician.UIForms
         }
 
         private void ShortcutForm_Load(object sender, EventArgs e)
-        {
+        {            
+
             if (_firstShow)
             {
                 // Parse the game bitmaps now the first time as we need them
@@ -1711,24 +1702,20 @@ namespace DisplayMagician.UIForms
                     GameLibraries.GameLibrary.RefreshGameBitmaps();
                 }
 
-                // Close the splash screen
-                CloseTheSplashScreen();
                 _firstShow = false;
             }
             // Load the shortcut info
             LoadShortcut();
 
-
+            CloseTheSplashScreen();
         }
 
         private void CloseTheSplashScreen()
         {
             // Close the splash screen
-            if (_loadingScreen != null && !_loadingScreen.Disposing && !_loadingScreen.IsDisposed)
-                _loadingScreen.Invoke(new Action(() => _loadingScreen.Close()));
-            this.TopMost = true;
-            this.Focus();
-            this.TopMost = false;
+            if (Program.AppShortcutLoadingSplashScreen != null && !Program.AppShortcutLoadingSplashScreen.Disposing && !Program.AppShortcutLoadingSplashScreen.IsDisposed)
+                Program.AppShortcutLoadingSplashScreen.Invoke(new Action(() => Program.AppShortcutLoadingSplashScreen.Close()));
+            this.Activate();
         }
 
         private void rb_standalone_CheckedChanged(object sender, EventArgs e)

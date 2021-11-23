@@ -83,6 +83,7 @@ namespace DisplayMagician.UIForms
             this.Text = "DisplayMagician is loading....";
             this.UseWaitCursor = true;
             this.Load += new System.EventHandler(this.LoadingForm_Load);
+            this.Shown += new System.EventHandler(this.ShortcutLoadingForm_Shown);
             this.ResumeLayout(false);
 
         }

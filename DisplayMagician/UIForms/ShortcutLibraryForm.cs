@@ -10,6 +10,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -266,14 +267,16 @@ namespace DisplayMagician.UIForms
         {
             this.Cursor = Cursors.WaitCursor;
             ShortcutItem si = new ShortcutItem();
+            ShowShortcutLoadingWindow();
             if (_shortcutForm == null)
             {
                 _shortcutForm = new ShortcutForm();
             } 
+            _shortcutForm.Owner = this;
             //ShortcutRepository.IsValidRefresh()
             // Set the Shortcut to as a new shortcut
             _shortcutForm.Shortcut = si;
-            _shortcutForm.EditingExistingShortcut = false;
+            _shortcutForm.EditingExistingShortcut = false;            
             _shortcutForm.ShowDialog(this);
             if (_shortcutForm.DialogResult == DialogResult.OK)
             {
@@ -290,6 +293,22 @@ namespace DisplayMagician.UIForms
             {
                 Program.AppMainForm.RefreshNotifyIconMenus();
             }
+        }
+
+        private void ShowShortcutLoadingWindow()
+        {
+            Program.AppShortcutLoadingSplashScreen = new ShortcutLoadingForm();
+            Program.AppShortcutLoadingSplashScreen.Title = "Preparing images...";
+            Program.AppShortcutLoadingSplashScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            int resultX = this.DesktopLocation.X + ((this.Width - Program.AppShortcutLoadingSplashScreen.Width) / 2);
+            int resultY = this.DesktopLocation.Y + ((this.Height - Program.AppShortcutLoadingSplashScreen.Height) / 2);
+            Program.AppShortcutLoadingSplashScreen.WantedLocation = new Point(resultX, resultY);
+            //_loadingScreen.CenterParent(ownerRect);
+            //_loadingScreen.StartPosition = FormStartPosition.Manual;
+            var splashThread = new Thread(new ThreadStart(
+                () => Application.Run(Program.AppShortcutLoadingSplashScreen)));
+            splashThread.SetApartmentState(ApartmentState.STA);
+            splashThread.Start();
         }
 
         private void btn_edit_Click(object sender, EventArgs e)
@@ -320,11 +339,12 @@ namespace DisplayMagician.UIForms
                 _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
 
                 this.Cursor = Cursors.WaitCursor;
-                
+                ShowShortcutLoadingWindow();
                 if (_shortcutForm == null)
                 {
                     _shortcutForm = new ShortcutForm();
                 }
+                _shortcutForm.Owner = this;
                 _shortcutForm.Shortcut = _selectedShortcut;
                 _shortcutForm.EditingExistingShortcut = true;
                 //ilv_saved_shortcuts.SuspendLayout();

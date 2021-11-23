@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace DisplayMagician
 {
-    class Utils
+    static class Utils
     {
         // 1. Import InteropServices
 
@@ -51,7 +53,35 @@ namespace DisplayMagician
                 Marshal.FreeCoTaskMem(pathPtr);
             }
         }
-        
+
+        public static void ShowCentered(this Form frm, Form owner)
+        {
+            Rectangle ownerRect = GetOwnerRect(frm, owner);
+            frm.Location = new Point(ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
+                                     ownerRect.Top + (ownerRect.Height - frm.Height) / 2);
+            frm.Show(owner);
+        }
+
+        public static void CenterParent(this Form frm, Rectangle ownerRect)
+        {
+            frm.Location = new Point(ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
+                                     ownerRect.Top + (ownerRect.Height - frm.Height) / 2);
+        }
+
+        public static void ShowDialogCentered(this Form frm, Form owner)
+        {
+            Rectangle ownerRect = GetOwnerRect(frm, owner);
+            frm.Location = new Point(ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
+                                     ownerRect.Top + (ownerRect.Height - frm.Height) / 2);
+            frm.ShowDialog(owner);
+        }
+
+        private static Rectangle GetOwnerRect(Form frm, Form owner)
+        {
+            return owner != null ? owner.DesktopBounds : Screen.GetWorkingArea(frm);
+        }
+
+
     }
 
 

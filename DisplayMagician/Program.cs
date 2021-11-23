@@ -43,6 +43,7 @@ namespace DisplayMagician {
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
         public static LoadingForm AppSplashScreen;
+        public static ShortcutLoadingForm AppShortcutLoadingSplashScreen;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
         private static bool _gamesLoaded = false;
