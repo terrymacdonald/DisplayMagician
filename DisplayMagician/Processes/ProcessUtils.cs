@@ -67,23 +67,23 @@ namespace DisplayMagician.Processes
             {
                 logger.Warn($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute, so attempting with TryExecute_Impersonate");
                 ImpersonationProcess impProcessCreated;
-                if (IsImpersonated())
+                //if (IsImpersonated())
+                //{
+                //logger.Trace($"ProcessUtils/StartProcess: Useer CAN be impersonated, so trying to run {executable} {arguments} with TryExecute_Impersonated");
+                if (TryExecute_Impersonated(executable, arguments, out impProcessCreated))
                 {
-                    logger.Trace($"ProcessUtils/StartProcess: Useer CAN be impersonated, so trying to run {executable} {arguments} with TryExecute_Impersonated");
-                    if (TryExecute_Impersonated(executable, arguments, out impProcessCreated))
-                    {
-                        logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by TryExecute_Impersonated");
-                        processCreated = impProcessCreated;
-                    }
-                    else
-                    {
-                        logger.Error($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute_Impersonated, so giving up");
-                    }
+                    logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by TryExecute_Impersonated");
+                    processCreated = impProcessCreated;
                 }
                 else
                 {
-                    logger.Error($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be attempted by TryExecute_Impersonated as the User can't be impersonated, so giving up");
+                    logger.Error($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute_Impersonated, so giving up");
                 }
+                //}
+                //else
+                //{
+                //    logger.Error($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be attempted by TryExecute_Impersonated as the User can't be impersonated, so giving up");
+                //}
             }
 
             if (processCreated != null && processCreated.Id > 0)
