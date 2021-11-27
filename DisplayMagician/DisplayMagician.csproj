@@ -328,7 +328,7 @@
       <Version>4.0.0-beta.74</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications">
-      <Version>7.1.1</Version>
+      <Version>7.1.2</Version>
     </PackageReference>
     <PackageReference Include="MintPlayer.IconUtils">
       <Version>1.0.4</Version>
