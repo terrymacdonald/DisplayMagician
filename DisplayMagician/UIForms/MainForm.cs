@@ -177,6 +177,19 @@ namespace DisplayMagician.UIForms
             {
                 cb_minimise_notification_area.Checked = false;
             }
+
+            // Set the notifyIcon text with the current profile
+            if (notifyIcon != null)
+            {
+                string shortProfileName = ProfileRepository.CurrentProfile.Name;
+                if (shortProfileName.Length >= 64)
+                {
+                    shortProfileName = ProfileRepository.CurrentProfile.Name.Substring(0, 45);
+                    
+                }
+                notifyIcon.Text = $"DisplayMagician ({shortProfileName })";
+                Application.DoEvents();
+            }
             
             // If we've been handed a Form of some kind, then open it straight away
             if (formToOpen is DisplayProfileForm)

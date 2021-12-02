@@ -1960,7 +1960,18 @@ namespace DisplayMagician
 
 
             // Reset the popup over the system tray icon to what's normal for it.
-            notifyIcon.Text = $"DisplayMagician";
+            // Set the notifyIcon text with the current profile
+            if (notifyIcon != null)
+            {
+                string shortProfileName = ProfileRepository.CurrentProfile.Name;
+                if (shortProfileName.Length >= 64)
+                {
+                    shortProfileName = ProfileRepository.CurrentProfile.Name.Substring(0, 45);
+
+                }
+                notifyIcon.Text = $"DisplayMagician ({shortProfileName })";
+                Application.DoEvents();
+            }
             Application.DoEvents();
 
         }

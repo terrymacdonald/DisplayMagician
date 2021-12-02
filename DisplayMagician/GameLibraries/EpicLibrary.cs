@@ -158,18 +158,25 @@ namespace DisplayMagician.GameLibraries
             {
                 List<Process> epicLibraryProcesses = new List<Process>();
 
-                foreach (string epicLibraryProcessName in _epicProcessList)
+                try
                 {
-                    // Look for the processes with the ProcessName we sorted out earlier
-                    epicLibraryProcesses.AddRange(Process.GetProcessesByName(epicLibraryProcessName));
-                }
+                    foreach (string epicLibraryProcessName in _epicProcessList)
+                    {
+                        // Look for the processes with the ProcessName we sorted out earlier
+                        epicLibraryProcesses.AddRange(Process.GetProcessesByName(epicLibraryProcessName));
+                    }
 
-                // If we have found one or more processes then we should be good to go
-                // so let's break, and get to the next step....
-                if (epicLibraryProcesses.Count > 0)
-                    return true;
-                else
+                    // If we have found one or more processes then we should be good to go
+                    // so let's break, and get to the next step....
+                    if (epicLibraryProcesses.Count > 0)
+                        return true;
+                    else
+                        return false;
+                }
+                catch (Exception ex)
+                {
                     return false;
+                }
             }
 
         }
