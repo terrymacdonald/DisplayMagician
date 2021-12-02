@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Threading;
+using Microsoft.Win32;
 
 namespace DisplayMagician {
 
@@ -39,6 +40,7 @@ namespace DisplayMagician {
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
         public static string AppDownloadsPath = Utils.GetDownloadsPath();
+        public static string AppPermStartMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "DisplayMagician","DisplayMagician.lnk");
         public static string AppTempStartMenuPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.Programs),"DisplayMagician.lnk");
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
@@ -51,6 +53,7 @@ namespace DisplayMagician {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static SharedLogger sharedLogger;
         private static bool _gamesLoaded = false;
+        private static bool _tempShortcutRegistered = false;
 
         /// <summary>
         ///     The main entry point for the application.
@@ -59,20 +62,7 @@ namespace DisplayMagician {
         private static int Main(string[] args)
         {
 
-            // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
-            // Windows 10 recognises the application, and allows features such as Toasts, 
-            // taskbar pinning and similar.
-            // Register AUMID, COM server, and activator
-            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(AppUserModelId);
-            DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
-
-            // Force toasts to work even if we're not 'installed' per se by creating a temp DisplayMagician start menu icon
-            // Allows running from a ZIP file rather than forcing the app to be installed
-            if (!File.Exists(AppTempStartMenuPath))
-            {
-                ShortcutManager.RegisterAppForNotifications(
-                    AppTempStartMenuPath, Assembly.GetExecutingAssembly().Location, null, AppUserModelId, AppActivationId);
-            }
+            RegisterDisplayMagicianWithWindows();
 
             // Prepare NLog for internal logging - Comment out when not required
             //NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
@@ -321,6 +311,7 @@ namespace DisplayMagician {
             app.HelpOption("-?|-h|--help", inherited:true);
 
             app.VersionOption("-v|--version", () => {
+                DeRegisterDisplayMagicianWithWindows();
                 return string.Format("Version {0}", Assembly.GetExecutingAssembly().GetName().Version);
             });
 
@@ -396,6 +387,7 @@ namespace DisplayMagician {
                     GameLibrary.LoadGamesInBackground();
 
                     RunShortcut(argumentShortcut.Value);
+                    DeRegisterDisplayMagicianWithWindows();
                     return 0;
                 });
             });
@@ -465,11 +457,13 @@ namespace DisplayMagician {
                     try
                     {
                         RunProfile(argumentProfile.Value);
+                        DeRegisterDisplayMagicianWithWindows();
                         return 0;
                     }
                     catch (Exception ex)
                     {
                         logger.Error(ex, $"Program/Main exception running ApplyProfile(profileToUse)");
+                        DeRegisterDisplayMagicianWithWindows();
                         return 1;
                     }
                 });
@@ -534,6 +528,7 @@ namespace DisplayMagician {
                     logger.Debug($"CreateProfile commandline command was invoked!");
                     Console.WriteLine("Starting up and creating a new Display Profile...");
                     CreateProfile();
+                    DeRegisterDisplayMagicianWithWindows();
                     return 0;
                 });
             });
@@ -615,6 +610,7 @@ namespace DisplayMagician {
                 GameLibrary.LoadGamesInBackground();
 
                 StartUpApplication();
+                DeRegisterDisplayMagicianWithWindows();
                 return 0;
             });
 
@@ -1028,7 +1024,7 @@ namespace DisplayMagician {
         private static void AutoUpdaterOnParseUpdateInfoEvent(ParseUpdateInfoEventArgs args)
         {
             dynamic json = JsonConvert.DeserializeObject(args.RemoteData);
-            logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Received the following Update JSON file from {AutoUpdater.AppCastURL}: {args.RemoteData}");
+            logger.Trace($"Program/AutoUpdaterOnParseUpdateInfoEvent: Received the following Update JSON file from {AutoUpdater.AppCastURL}: {args.RemoteData}");
             try
             {
                 logger.Trace($"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
@@ -1052,7 +1048,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"MainForm/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
+                logger.Error(ex, $"Program/AutoUpdaterOnParseUpdateInfoEvent: Exception trying to create an UpdateInfoEventArgs object from the received Update JSON file.");
             }
 
         }
@@ -1067,12 +1063,12 @@ namespace DisplayMagician {
                     if (Program.AppProgramSettings.ShowSplashScreen && Program.AppSplashScreen != null && !Program.AppSplashScreen.Disposing && !Program.AppSplashScreen.IsDisposed)
                         Program.AppSplashScreen.Invoke(new Action(() => Program.AppSplashScreen.Close()));
 
-                    logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
+                    logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - There is an upgrade to version {args.CurrentVersion} available from {args.DownloadURL}. We're using version {args.InstalledVersion} at the moment.");
                     DialogResult dialogResult;                    
 
                     if (args.Mandatory.Value)
                     {
-                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
+                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
                         dialogResult =
                             MessageBox.Show(
                                 $@"There is new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is required update. Press Ok to begin updating the application.", @"Update Available",
@@ -1081,7 +1077,7 @@ namespace DisplayMagician {
                     }
                     else
                     {
-                        logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
+                        logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
                         dialogResult =
                             MessageBox.Show(
                                 $@"There is new version {args.CurrentVersion} available. You are using version {
@@ -1098,16 +1094,16 @@ namespace DisplayMagician {
                     {
                         try
                         {
-                            logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Downloading {args.InstalledVersion} update.");
+                            logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - Downloading {args.InstalledVersion} update.");
                             if (AutoUpdater.DownloadUpdate(args))
                             {
-                                logger.Info($"MainForm/AutoUpdaterOnCheckForUpdateEvent - Restarting to apply {args.InstalledVersion} update.");
+                                logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - Restarting to apply {args.InstalledVersion} update.");
                                 Application.Exit();
                             }
                         }
                         catch (Exception ex)
                         {
-                            logger.Warn(ex, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - Exception during update download.");
+                            logger.Warn(ex, $"Program/AutoUpdaterOnCheckForUpdateEvent - Exception during update download.");
                             MessageBox.Show(ex.Message, ex.GetType().ToString(), MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
                         }
@@ -1122,14 +1118,14 @@ namespace DisplayMagician {
 
                 if (args.Error is WebException)
                 {
-                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - WebException - There was a problem reaching the update server.");
+                    logger.Warn(args.Error, $"Program/AutoUpdaterOnCheckForUpdateEvent - WebException - There was a problem reaching the update server.");
                     MessageBox.Show(
                         @"There is a problem reaching update server. Please check your internet connection and try again later.",
                         @"Update Check Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {
-                    logger.Warn(args.Error, $"MainForm/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
+                    logger.Warn(args.Error, $"Program/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
                     MessageBox.Show(args.Error.Message,
                         args.Error.GetType().ToString(), MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -1137,10 +1133,77 @@ namespace DisplayMagician {
             }
         }
 
-    }
-   
+        private static void RegisterDisplayMagicianWithWindows()
+        {
+            // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
+            // Windows 10 recognises the application, and allows features such as Toasts, 
+            // taskbar pinning and similar.
+            // Register AUMID, COM server, and activator
+            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(AppUserModelId);
+            DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
 
-    public class LoadingInstalledGamesException : Exception
+            // Force toasts to work if we're not 'installed' per se by creating a temp DisplayMagician start menu icon
+            // Allows running from a ZIP file rather than forcing the app to be installed. If we don't do this then Toasts just wouldn't work.
+            try
+            {
+                if (!IsInstalledVersion())
+                {
+                    _tempShortcutRegistered = true;
+                    ShortcutManager.RegisterAppForNotifications(
+                        AppTempStartMenuPath, Assembly.GetExecutingAssembly().Location, null, AppUserModelId, AppActivationId);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/RegisterDisplayMagicianWithWindows - Exception while trying to register the temporary application shortcut {AppTempStartMenuPath}. Windows Toasts will not work.");
+            }
+        }
+
+
+        private static void DeRegisterDisplayMagicianWithWindows()
+        {
+            // Remove the temporary shortcut if we have added it
+            if (_tempShortcutRegistered)
+            {
+                try
+                {
+                    File.Delete(AppTempStartMenuPath);
+                }
+                catch(Exception ex)
+                {
+                    logger.Warn(ex, $"Program/DeRegisterDisplayMagicianWithWindows - Exception while deleting the temporary application shortcut {AppTempStartMenuPath} ");
+                }
+                _tempShortcutRegistered = false;
+            }
+        }
+
+        public static bool IsInstalledVersion()
+
+        {
+            string installKey = @"SOFTWARE\DisplayMagician";
+            string thisInstallDir = Path.GetDirectoryName(Application.ExecutablePath) + "\\";
+
+            try
+            {
+                using (RegistryKey rk = Registry.LocalMachine.OpenSubKey(installKey))
+                {
+                    if (rk.GetValue("InstallDir") != null && rk.GetValue("InstallDir").ToString() == thisInstallDir)
+                    {
+                        return true; //exists
+                    }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+    }
+
+
+public class LoadingInstalledGamesException : Exception
     {
         public LoadingInstalledGamesException()
         { }

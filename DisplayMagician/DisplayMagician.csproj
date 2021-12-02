@@ -397,12 +397,6 @@
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj">
-      <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
-      <Name>DisplayMagicianShared</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary">
       <Guid>{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B}</Guid>
       <VersionMajor>1</VersionMajor>
@@ -421,6 +415,12 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj">
+      <Project>{1cacda43-01c7-4cd4-bf6e-9421a29510fc}</Project>
+      <Name>DisplayMagicianShared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
