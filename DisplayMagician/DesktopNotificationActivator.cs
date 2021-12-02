@@ -4,13 +4,15 @@ using DesktopNotifications;
 using Microsoft.QueryStringDotNET;
 using System.Windows.Forms;
 using DisplayMagician.UIForms;
+using DisplayMagicianShared;
 
 namespace DisplayMagician
 {
     // The GUID must be unique to your app. Create a new GUID if copying this code.
     [ClassInterface(ClassInterfaceType.None)]
     [ComSourceInterfaces(typeof(INotificationActivationCallback))]
-    [Guid("56F14154-6339-4B94-8B82-80F78D5BCEAF"), ComVisible(true)]
+    [Guid(Program.AppActivationId), ComVisible(true)]
+    
     public class DesktopNotificationActivator : NotificationActivator
     {
         public override void OnActivated(string arguments, NotificationUserInput userInput, string appUserModelId)
@@ -30,23 +32,25 @@ namespace DisplayMagician
                         // See what action is being requested 
                         switch (args["action"].ToLowerInvariant())
                         {
-                            // Open the image
+                            // Open the Main window
                             case "open":
 
                                 // Open the Main DisplayMagician Window
                                 Program.AppMainForm.openApplicationWindow();
                                 break;
 
-                            // Background: Quick reply to the conversation
+                            // Exit the application
                             case "exit":
 
                                 // Exit the application (overriding the close restriction)
                                 Program.AppMainForm.exitApplication();
                                 break;
 
-                            case "stop":
+                            // Stop waiting so that the monitoring stops, and the UI becomes free
+                            case "stopWaiting":
 
                                 MessageBox.Show("User just asked DisplayMagician to stop monitoring the game");
+                                ShortcutRepository.CancelWait = true;
                                 break;
 
                             default:

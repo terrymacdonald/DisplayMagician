@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using DesktopNotifications;
 using System.Windows.Forms;
 using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
@@ -13,7 +14,7 @@ using DisplayMagician.UIForms;
 using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
 using System.Drawing;
-using DesktopNotifications;
+using Windows.UI.Notifications;
 using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
@@ -38,6 +39,9 @@ namespace DisplayMagician {
         public static string AppUplayIconFilename = Path.Combine(AppIconPath, @"Uplay.ico");
         public static string AppEpicIconFilename = Path.Combine(AppIconPath, @"Epic.ico");
         public static string AppDownloadsPath = Utils.GetDownloadsPath();
+        public static string AppTempStartMenuPath = Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.Programs),"DisplayMagician.lnk");
+        public const string AppUserModelId = "LittleBitBig.DisplayMagician";
+        public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
@@ -59,8 +63,16 @@ namespace DisplayMagician {
             // Windows 10 recognises the application, and allows features such as Toasts, 
             // taskbar pinning and similar.
             // Register AUMID, COM server, and activator
-            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(ShellUtils.AUMID);
+            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(AppUserModelId);
             DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
+
+            // Force toasts to work even if we're not 'installed' per se by creating a temp DisplayMagician start menu icon
+            // Allows running from a ZIP file rather than forcing the app to be installed
+            if (!File.Exists(AppTempStartMenuPath))
+            {
+                ShortcutManager.RegisterAppForNotifications(
+                    AppTempStartMenuPath, Assembly.GetExecutingAssembly().Location, null, AppUserModelId, AppActivationId);
+            }
 
             // Prepare NLog for internal logging - Comment out when not required
             //NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
@@ -291,7 +303,7 @@ namespace DisplayMagician {
                 myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
-            }
+            }           
 
             logger.Debug($"Setting up commandline processing configuration");
             var app = new CommandLineApplication

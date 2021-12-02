@@ -1074,7 +1074,7 @@ namespace DisplayMagician
                     .AddToastActivationInfo("notify=runningApplication", ToastActivationType.Foreground)
                     .AddText($"Running {shortcutToUse.ExecutableNameAndPath}", hintMaxLines: 1)
                     .AddText($"Waiting for all {processToMonitorName } processes to exit...")
-                    .AddButton("Cancel", ToastActivationType.Background, "notify=runningApplication&action=cancel")
+                    .AddButton("Cancel", ToastActivationType.Background, "notify=runningApplication&action=stopWaiting")
                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                 //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                 ToastContent toastContent = tcBuilder.Content;
@@ -1519,7 +1519,7 @@ namespace DisplayMagician
                                 tcBuilder = new ToastContentBuilder()
                                     .AddToastActivationInfo($"notify=runningGame", ToastActivationType.Foreground)
                                     .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
-                                    .AddButton("Cancel", ToastActivationType.Background, "notify=runningGame&action=cancel")
+                                    .AddButton("Cancel", ToastActivationType.Background, "notify=runningGame&action=stopWaiting")
                                     .AddText($"Waiting for the {gameToRun.ProcessName} game process to exit as {altGameProcessToMonitor} alternative game executable wasn't found...");
                                 //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                                 toastContent = tcBuilder.Content;
@@ -1589,7 +1589,7 @@ namespace DisplayMagician
                                 .AddToastActivationInfo($"notify=runningGame", ToastActivationType.Foreground)
                                 .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
                                 .AddText($"Waiting for the {altGameProcessToMonitor} alternative game process to exit...")
-                                .AddButton("Cancel", ToastActivationType.Background, "notify=runningGame&action=cancel")
+                                .AddButton("Cancel", ToastActivationType.Background, "notify=runningGame&action=stopWaiting")
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                             //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                             toastContent = tcBuilder.Content;
@@ -1657,7 +1657,7 @@ namespace DisplayMagician
                             .AddToastActivationInfo($"notify=runningGame", ToastActivationType.Foreground)
                             .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
                             .AddText($"Waiting for the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit...")
-                            .AddButton("Cancel", ToastActivationType.Background, "notify=runningGame&action=cancel")
+                            .AddButton("Cancel", ToastActivationType.Background, "notify=runningGame&action=stopWaiting")
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                         //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
                         toastContent = tcBuilder.Content;

@@ -142,6 +142,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="ShortcutItem.cs" />
+    <Compile Include="ShortcutManager.cs" />
     <Compile Include="ShortcutRepository.cs" />
     <Compile Include="Processes\SingleInstanceHelper.cs" />
     <Compile Include="UIForms\GameAdaptor.cs" />
