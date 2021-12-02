@@ -51,6 +51,7 @@
             this.btn_help = new System.Windows.Forms.Button();
             this.btn_donate = new System.Windows.Forms.Button();
             this.btn_copy = new System.Windows.Forms.Button();
+            this.btn_cancel = new System.Windows.Forms.Button();
             this.cms_shortcuts.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -323,6 +324,25 @@
             this.btn_copy.UseVisualStyleBackColor = false;
             this.btn_copy.Click += new System.EventHandler(this.btn_copy_Click);
             // 
+            // btn_cancel
+            // 
+            this.btn_cancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_cancel.BackColor = System.Drawing.Color.Black;
+            this.btn_cancel.Enabled = false;
+            this.btn_cancel.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_cancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_cancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_cancel.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_cancel.ForeColor = System.Drawing.Color.White;
+            this.btn_cancel.Location = new System.Drawing.Point(503, 488);
+            this.btn_cancel.Name = "btn_cancel";
+            this.btn_cancel.Size = new System.Drawing.Size(120, 40);
+            this.btn_cancel.TabIndex = 37;
+            this.btn_cancel.Text = "&Cancel";
+            this.btn_cancel.UseVisualStyleBackColor = false;
+            this.btn_cancel.Visible = false;
+            this.btn_cancel.Click += new System.EventHandler(this.btn_cancel_Click);
+            // 
             // ShortcutLibraryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -330,6 +350,7 @@
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(1134, 716);
+            this.Controls.Add(this.btn_cancel);
             this.Controls.Add(this.btn_copy);
             this.Controls.Add(this.btn_donate);
             this.Controls.Add(this.btn_help);
@@ -383,5 +404,6 @@
         private System.Windows.Forms.Button btn_donate;
         private System.Windows.Forms.Button btn_copy;
         private System.Windows.Forms.ToolStripMenuItem tsmi_copy;
+        private System.Windows.Forms.Button btn_cancel;
     }
 }
