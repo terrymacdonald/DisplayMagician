@@ -30,7 +30,7 @@ namespace DisplayMagician
                     if (myArg.Name.Equals("action",StringComparison.OrdinalIgnoreCase))
                     {
                         // See what action is being requested 
-                        switch (args["action"].ToLowerInvariant())
+                        switch (args["action"])
                         {
                             // Open the Main window
                             case "open":
@@ -49,7 +49,6 @@ namespace DisplayMagician
                             // Stop waiting so that the monitoring stops, and the UI becomes free
                             case "stopWaiting":
 
-                                MessageBox.Show("User just asked DisplayMagician to stop monitoring the game");
                                 ShortcutRepository.CancelWait = true;
                                 break;
 
