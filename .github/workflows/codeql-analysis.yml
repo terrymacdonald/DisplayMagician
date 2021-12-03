@@ -51,7 +51,6 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@mai
 
     - run: |
-        make bootstrap
         make release
 
     - name: Perform CodeQL Analysis
