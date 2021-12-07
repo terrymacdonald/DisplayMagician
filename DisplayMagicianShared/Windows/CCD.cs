@@ -137,11 +137,20 @@ namespace DisplayMagicianShared.Windows
     public enum QDC : uint
     {
         Zero = 0x0,
-        QDC_ALL_PATHS = 0x00000001, // Get all paths
-        QDC_ONLY_ACTIVE_PATHS = 0x00000002, // Get only the active paths currently in use
-        QDC_DATABASE_CURRENT = 0x00000004, // Get the currently active paths as stored in the display database
-        QDC_VIRTUAL_MODE_AWARE = 0x00000010, // Get the virtual mode aware paths
+        // Get all paths
+        QDC_ALL_PATHS = 0x00000001,
+        // Get only the active paths currently in use
+        QDC_ONLY_ACTIVE_PATHS = 0x00000002,
+        // Get the currently active paths as stored in the display database
+        QDC_DATABASE_CURRENT = 0x00000004,
+        // This flag should be bitwise OR'ed with other flags to indicate that the caller is aware of virtual mode support.  Supported starting in Windows 10.
+        QDC_VIRTUAL_MODE_AWARE = 0x00000010,
+        // This flag should be bitwise OR'ed with QDC_ONLY_ACTIVE_PATHS to indicate that the caller would like to include head-mounted displays (HMDs) in the list of active paths. See Remarks for more information. 
+        // Supported starting in Windows 10 1703 Creators Update.
         QDC_INCLUDE_HMD = 0x00000020,
+        // This flag should be bitwise OR'ed with other flags to indicate that the caller is aware of virtual refresh rate support.
+        // Supported starting in Windows 11.
+        QDC_VIRTUAL_REFRESH_RATE_AWARE = 0x00000040,
     }
 
     [Flags]
