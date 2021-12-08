@@ -682,12 +682,12 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforNVIDIAColor)
                                     {
-                                        SharedLogger.logger.Trace($"NVIDIAInfo/loadFromFile: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
+                                        SharedLogger.logger.Trace($"ProfileRepository/SetActive: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
                                     else
                                     {
-                                        SharedLogger.logger.Trace($"NVIDIAInfo/loadFromFile: The NVIDIA display settings that override windows within the profile {Name} were NOT applied correctly.");
+                                        SharedLogger.logger.Trace($"ProfileRepository/SetActive: The NVIDIA display settings that override windows within the profile {Name} were NOT applied correctly.");
                                     }                                
                                 }
                                 else
@@ -747,12 +747,12 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforAMDColor)
                                     {
-                                        SharedLogger.logger.Trace($"AMDInfo/loadFromFile: The AMD display settings that override windows within the profile {Name} were successfully applied.");
+                                        SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
                                     else
                                     {
-                                        SharedLogger.logger.Trace($"AMDInfo/loadFromFile: The AMD display settings that override windows within the profile {Name} were NOT applied correctly.");
+                                        SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings that override windows within the profile {Name} were NOT applied correctly.");
                                     }                                    
                                 }
                                 else
