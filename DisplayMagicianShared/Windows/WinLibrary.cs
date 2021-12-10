@@ -359,28 +359,41 @@ namespace DisplayMagicianShared.Windows
             // Next, extract the UID entries for the displays as that's what the Path IDs are normally supposed to be
             // This is how we know the actual target id's ofd the monitors currently connected
             Regex rx = new Regex(@"UID(?<uid>\d+)#", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            HashSet<uint> physicalTargetIdsToFind = new HashSet<uint>();
+            HashSet<uint> physicalTargetIdsAvailable = new HashSet<uint>();
             foreach (string displayIdentifier in windowsDisplayConfig.DisplayIdentifiers)
             {
                 MatchCollection mc = rx.Matches(displayIdentifier);
                 if (mc.Count > 0)
                 {
-                    physicalTargetIdsToFind.Add(UInt32.Parse(mc[0].Groups["uid"].Value));
+                    physicalTargetIdsAvailable.Add(UInt32.Parse(mc[0].Groups["uid"].Value));
                 }
             }
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
-            HashSet<uint> targetIdsToChange = new HashSet<uint>();
+            List<uint> targetPathIdsToChange = new List<uint>();
+            List<uint> targetModeIdsToChange = new List<uint>();
+            List<uint> targetIdsFound = new List<uint>();
+            List<uint> replacementIds = new List<uint>();
+            bool isClonedProfile = false;
             var hdrInfos = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
             int hdrInfoCount = 0;
             for (int i = 0; i < paths.Length; i++)
             {
+                bool gotSourceDeviceName = false;
+                bool gotAdapterName = false;
+                bool gotAdvancedColorInfo = false;
+                bool gotSdrWhiteLevel = false;
+
                 // Figure out if this path has a physical targetId, and if it doesn't store it
-                if (!physicalTargetIdsToFind.Contains(paths[i].TargetInfo.Id))
+                if (physicalTargetIdsAvailable.Contains(paths[i].TargetInfo.Id))
+                {
+                    targetIdsFound.Add(paths[i].TargetInfo.Id);
+                }
+                else
                 {
                     // Add to the list of physical path target ids we need to patch later
-                    targetIdsToChange.Add(paths[i].TargetInfo.Id);
+                    targetPathIdsToChange.Add(paths[i].TargetInfo.Id);
                 }
 
                 // Track if this display is a cloned path
@@ -394,12 +407,14 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
+                    gotSourceDeviceName = true;
                     // Store it for later
                     if (windowsDisplayConfig.DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
                     {
                         // We already have at least one display using this source, so we need to add the other cloned display to the existing list
                         windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Add(paths[i].SourceInfo.Id);
                         isClonedPath = true;
+                        isClonedProfile = true;
                         windowsDisplayConfig.IsCloned = true;
                     }
                     else
@@ -440,6 +455,7 @@ namespace DisplayMagicianShared.Windows
                     err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
                     if (err == WIN32STATUS.ERROR_SUCCESS)
                     {
+                        gotAdapterName = true;
                         // Store it for later
                         windowsDisplayConfig.DisplayAdapters.Add(paths[i].TargetInfo.AdapterId.Value, adapterInfo.AdapterDevicePath);
                         SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found adapter name {adapterInfo.AdapterDevicePath} for adapter {paths[i].TargetInfo.AdapterId.Value}.");
@@ -460,6 +476,7 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
+                    gotAdvancedColorInfo = true;
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found color info for display {paths[i].TargetInfo.Id}.");
                     if (colorInfo.AdvancedColorSupported)
                     {
@@ -484,7 +501,7 @@ namespace DisplayMagicianShared.Windows
                 }
 
                 // get SDR white levels
-                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get SDR white levels for adapter {paths[i].TargetInfo.AdapterId.Value}.");
+                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get SDR white levels for display {paths[i].TargetInfo.Id}.");
                 var whiteLevelInfo = new DISPLAYCONFIG_SDR_WHITE_LEVEL();
                 whiteLevelInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
                 whiteLevelInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SDR_WHITE_LEVEL>();
@@ -493,6 +510,7 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref whiteLevelInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
+                    gotSdrWhiteLevel = true;
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found SDR White levels for display {paths[i].TargetInfo.Id}.");
                 }
                 else
@@ -503,39 +521,103 @@ namespace DisplayMagicianShared.Windows
                 hdrInfos[hdrInfoCount] = new ADVANCED_HDR_INFO_PER_PATH();
                 hdrInfos[hdrInfoCount].AdapterId = paths[i].TargetInfo.AdapterId;
                 hdrInfos[hdrInfoCount].Id = paths[i].TargetInfo.Id;
-                hdrInfos[hdrInfoCount].AdvancedColorInfo = colorInfo;
-                hdrInfos[hdrInfoCount].SDRWhiteLevel = whiteLevelInfo;
+                if (gotAdvancedColorInfo)
+                {
+                    hdrInfos[hdrInfoCount].AdvancedColorInfo = colorInfo;
+                }
+                if (gotSdrWhiteLevel)
+                {
+                    hdrInfos[hdrInfoCount].SDRWhiteLevel = whiteLevelInfo;
+                }
                 hdrInfoCount++;
             }
 
-            // Now we need to figure out the maps between the cloned ID and the real physical target id
-            // the Advanced color info structure actually holds this information! So lets mine it.
-            Dictionary<uint, uint> targetIdMap = new Dictionary<uint, uint>();
-            foreach (var hdrInfo in hdrInfos)
-            {
-                targetIdMap[hdrInfo.Id] = hdrInfo.AdvancedColorInfo.Header.Id;
-            }
 
-            // Now we need to go through the list of paths again and patch the 'cloned' displays with a real display ID so the config works
-            for (int i = 0; i < paths.Length; i++)
+            // Go through the list of physicalTargetIdsAvailable
+            // ignore the ones that were found
+            // if one was not found, then
+            // go through the modes
+            // patch the target
+            if (isClonedProfile)
             {
-                if (targetIdsToChange.Contains(paths[i].TargetInfo.Id))
+                // Figure out which available displays are unused (in path priority order)
+                foreach (var physicalTargetId in physicalTargetIdsAvailable)
                 {
-                    // Patch the cloned ids with a real working one!
-                    paths[i].TargetInfo.Id = targetIdMap[paths[i].TargetInfo.Id];
+                    if (!targetIdsFound.Contains(physicalTargetId))
+                    {
+                        // this is a candidate physical target id to use as a replacement
+                        replacementIds.Add(physicalTargetId);
+                    }
+                }
+
+                // Now go through and figure out a mapping of old target id to new replacement id
+                Dictionary<uint, uint> targetIdMap = new Dictionary<uint, uint>();
+                for (int i = 0; i < targetPathIdsToChange.Count; i++)
+                {
+                    uint targetPathId = targetPathIdsToChange[i];
+                    if (i < replacementIds.Count)
+                    {
+                        targetIdMap[targetPathId] = replacementIds[i];
+                    }
+                }
+
+
+                // Now we need to go through the list of paths again and patch the 'cloned' displays with a real display ID so the config works
+                for (int i = 0; i < paths.Length; i++)
+                {
+                    if (targetIdMap.ContainsKey(paths[i].TargetInfo.Id))
+                    {
+                        // Patch the cloned ids with a real working one!
+                        paths[i].TargetInfo.Id = targetIdMap[paths[i].TargetInfo.Id];
+                    }
+                }
+
+                // And then we need to go through the list of modes again and patch the 'cloned' displays with a real display ID so the display layout is right in cloned displays
+                for (int i = 0; i < modes.Length; i++)
+                {
+                    // We only change the ids that match in InfoType for target displays
+                    if (modes[i].InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET && targetIdMap.ContainsKey(modes[i].Id))
+                    {
+                        // Patch the cloned ids with a real working one!
+                        modes[i].Id = targetIdMap[modes[i].Id];
+                    }
                 }
             }
 
-            // And then we need to go through the list of modes again and patch the 'cloned' displays with a real display ID so the display layout is right in cloned displays
-            for (int i = 0; i < modes.Length; i++)
+
+            /*if (hdrInfos.Length > 0)
             {
-                // We only change the ids that match in InfoType for target displays
-                if (modes[i].InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET && targetIdsToChange.Contains(modes[i].Id))
+                // If the screen
+                foreach (var hdrInfo in hdrInfos)
                 {
-                    // Patch the cloned ids with a real working one!
-                    modes[i].Id = targetIdMap[modes[i].Id];
+                    targetIdMap[hdrInfo.Id] = hdrInfo.SDRWhiteLevel.Header.Id;
+                }
+
+                // Now we need to go through the list of paths again and patch the 'cloned' displays with a real display ID so the config works
+                for (int i = 0; i < paths.Length; i++)
+                {
+                    if (targetIdsToChange.Contains(paths[i].TargetInfo.Id))
+                    {
+                        // Patch the cloned ids with a real working one!
+                        paths[i].TargetInfo.Id = targetIdMap[paths[i].TargetInfo.Id];
+                    }
+                }
+
+                // And then we need to go through the list of modes again and patch the 'cloned' displays with a real display ID so the display layout is right in cloned displays
+                for (int i = 0; i < modes.Length; i++)
+                {
+                    // We only change the ids that match in InfoType for target displays
+                    if (modes[i].InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET && targetIdsToChange.Contains(modes[i].Id))
+                    {
+                        // Patch the cloned ids with a real working one!
+                        modes[i].Id = targetIdMap[modes[i].Id];
+                    }
                 }
             }
+            else
+            {
+                SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - There weren't any HDR Info objects created, so we have none to parse!");
+            }*/
 
             // Store the active paths and modes in our display config object
             windowsDisplayConfig.DisplayConfigPaths = paths;
@@ -688,7 +770,6 @@ namespace DisplayMagicianShared.Windows
 
             return DisplaySources;
         }
-
 
         private LUID AdapterValueToLUID(ulong adapterValue)
         {
