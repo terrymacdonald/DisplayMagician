@@ -37,7 +37,7 @@ namespace DisplayMagicianShared.Windows
         public Dictionary<ulong, string> DisplayAdapters;
         public DISPLAYCONFIG_PATH_INFO[] DisplayConfigPaths;
         public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
-        public ADVANCED_HDR_INFO_PER_PATH[] DisplayHDRStates;
+        public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
         public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
@@ -159,7 +159,7 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplayAdapters = new Dictionary<ulong, string>();
             myDefaultConfig.DisplayConfigModes = new DISPLAYCONFIG_MODE_INFO[0];
             myDefaultConfig.DisplayConfigPaths = new DISPLAYCONFIG_PATH_INFO[0];
-            myDefaultConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[0];
+            myDefaultConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
             myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
             myDefaultConfig.IsCloned = false;
@@ -245,18 +245,19 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Going through the display config HDR info to update the adapter id");
             // Update the HDRInfo with the current adapter id
-            for (int i = 0; i < savedDisplayConfig.DisplayHDRStates.Length; i++)
+            for (int i = 0; i < savedDisplayConfig.DisplayHDRStates.Count; i++)
             {
+                ADVANCED_HDR_INFO_PER_PATH hdrInfo = savedDisplayConfig.DisplayHDRStates[i];
                 // Change the Mode AdapterID
                 if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value))
                 {
                     // We get here if there is a matching adapter
                     newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value];
-                    savedDisplayConfig.DisplayHDRStates[i].AdapterId = AdapterValueToLUID(newAdapterValue);
+                    hdrInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
                     newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdvancedColorInfo.Header.AdapterId.Value];
-                    savedDisplayConfig.DisplayHDRStates[i].AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    hdrInfo.AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                     newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId.Value];
-                    savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    hdrInfo.SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
                 else
                 {
@@ -264,9 +265,9 @@ namespace DisplayMagicianShared.Windows
                     // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
                     newAdapterValue = currentAdapterMap.First().Key;
                     SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value} didn't have a current match! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
-                    savedDisplayConfig.DisplayHDRStates[i].AdapterId = AdapterValueToLUID(newAdapterValue);
-                    savedDisplayConfig.DisplayHDRStates[i].AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
-                    savedDisplayConfig.DisplayHDRStates[i].SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    hdrInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    hdrInfo.AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
+                    hdrInfo.SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                 }
             }
 
@@ -349,7 +350,7 @@ namespace DisplayMagicianShared.Windows
             // Prepare the empty windows display config
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
             windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
-            windowsDisplayConfig.DisplayHDRStates = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
+            windowsDisplayConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
             windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
             windowsDisplayConfig.IsCloned = false;
 
@@ -376,8 +377,6 @@ namespace DisplayMagicianShared.Windows
             List<uint> targetIdsFound = new List<uint>();
             List<uint> replacementIds = new List<uint>();
             bool isClonedProfile = false;
-            var hdrInfos = new ADVANCED_HDR_INFO_PER_PATH[pathCount];
-            int hdrInfoCount = 0;
             for (int i = 0; i < paths.Length; i++)
             {
                 bool gotSourceDeviceName = false;
@@ -465,6 +464,11 @@ namespace DisplayMagicianShared.Windows
                         SharedLogger.logger.Error($"WinLibrary/GetWindowsDisplayConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to query the adapter name for adapter {paths[i].TargetInfo.AdapterId.Value}.");
                     }
                 }
+                else
+                {
+                    // We already have the adapter name
+                    gotAdapterName = true;
+                }
 
                 // Get advanced color info
                 SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get advanced color info for display {paths[i].TargetInfo.Id}.");
@@ -518,18 +522,20 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get SDR White levels for display {paths[i].TargetInfo.Id}.");
                 }
 
-                hdrInfos[hdrInfoCount] = new ADVANCED_HDR_INFO_PER_PATH();
-                hdrInfos[hdrInfoCount].AdapterId = paths[i].TargetInfo.AdapterId;
-                hdrInfos[hdrInfoCount].Id = paths[i].TargetInfo.Id;
+                // Only create and add the ADVANCED_HDR_INFO_PER_PATH if the info is there
                 if (gotAdvancedColorInfo)
                 {
-                    hdrInfos[hdrInfoCount].AdvancedColorInfo = colorInfo;
+                    ADVANCED_HDR_INFO_PER_PATH hdrInfo = new ADVANCED_HDR_INFO_PER_PATH();
+                    hdrInfo.AdapterId = paths[i].TargetInfo.AdapterId;
+                    hdrInfo.Id = paths[i].TargetInfo.Id;
+                    hdrInfo.AdvancedColorInfo = colorInfo;
+                    if (gotSdrWhiteLevel)
+                    {
+                        hdrInfo.SDRWhiteLevel = whiteLevelInfo;
+                    }
+                    windowsDisplayConfig.DisplayHDRStates.Add(hdrInfo);
                 }
-                if (gotSdrWhiteLevel)
-                {
-                    hdrInfos[hdrInfoCount].SDRWhiteLevel = whiteLevelInfo;
-                }
-                hdrInfoCount++;
+
             }
 
 
@@ -622,7 +628,6 @@ namespace DisplayMagicianShared.Windows
             // Store the active paths and modes in our display config object
             windowsDisplayConfig.DisplayConfigPaths = paths;
             windowsDisplayConfig.DisplayConfigModes = modes;
-            windowsDisplayConfig.DisplayHDRStates = hdrInfos;
             windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
 
             return windowsDisplayConfig;
