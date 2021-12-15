@@ -467,6 +467,7 @@ namespace DisplayMagicianShared.Windows
                 else
                 {
                     // We already have the adapter name
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We already have the adapter name {windowsDisplayConfig.DisplayAdapters[paths[i].TargetInfo.AdapterId.Value]} for adapter {paths[i].TargetInfo.AdapterId.Value} so skipping storing it.");
                     gotAdapterName = true;
                 }
 
@@ -1219,8 +1220,8 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
 
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting 0.5 seconds to let the display change take place before adjusting the Windows CCD HDR settings");
-            System.Threading.Thread.Sleep(500);
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting 0.1 second to let the display change take place before adjusting the Windows CCD HDR settings");
+            System.Threading.Thread.Sleep(100);
 
             // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting
             // This code will only turn on the HDR setting.
@@ -1642,7 +1643,7 @@ namespace DisplayMagicianShared.Windows
             // Get the size of the largest Active Paths and Modes arrays
             int pathCount = 0;
             int modeCount = 0;
-            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS | QDC.QDC_INCLUDE_HMD, out pathCount, out modeCount);
+            WIN32STATUS err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ALL_PATHS | QDC.QDC_INCLUDE_HMD, out pathCount, out modeCount);
             if (err != WIN32STATUS.ERROR_SUCCESS)
             {
                 SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes");
@@ -1652,14 +1653,14 @@ namespace DisplayMagicianShared.Windows
             SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
             var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
             var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
-            err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS | QDC.QDC_INCLUDE_HMD, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+            err = CCDImport.QueryDisplayConfig(QDC.QDC_ALL_PATHS | QDC.QDC_INCLUDE_HMD, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
             if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
             {
                 SharedLogger.logger.Warn($"WinLibrary/GetCurrentPCIVideoCardVendors: The displays were modified between GetDisplayConfigBufferSizes and QueryDisplayConfig so we need to get the buffer sizes again.");
                 SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Getting the size of the largest Active Paths and Modes arrays");
                 // Screen changed in between GetDisplayConfigBufferSizes and QueryDisplayConfig, so we need to get buffer sizes again
                 // as per https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig 
-                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ONLY_ACTIVE_PATHS, out pathCount, out modeCount);
+                err = CCDImport.GetDisplayConfigBufferSizes(QDC.QDC_ALL_PATHS, out pathCount, out modeCount);
                 if (err != WIN32STATUS.ERROR_SUCCESS)
                 {
                     SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - GetDisplayConfigBufferSizes returned WIN32STATUS {err} when trying to get the maximum path and mode sizes again");
@@ -1668,7 +1669,7 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Getting the current Display Config path and mode arrays");
                 paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
                 modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
-                err = CCDImport.QueryDisplayConfig(QDC.QDC_ONLY_ACTIVE_PATHS | QDC.QDC_INCLUDE_HMD, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+                err = CCDImport.QueryDisplayConfig(QDC.QDC_ALL_PATHS | QDC.QDC_INCLUDE_HMD, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
                 if (err == WIN32STATUS.ERROR_INSUFFICIENT_BUFFER)
                 {
                     SharedLogger.logger.Error($"WinLibrary/GetCurrentPCIVideoCardVendors: ERROR - The displays were still modified between GetDisplayConfigBufferSizes and QueryDisplayConfig, even though we tried twice. Something is wrong.");
@@ -1688,12 +1689,12 @@ namespace DisplayMagicianShared.Windows
 
             foreach (var path in paths)
             {
-                if (path.TargetInfo.TargetAvailable == false)
+                /*if (path.TargetInfo.TargetAvailable == false)
                 {
                     // We want to skip this one cause it's not valid
                     SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Skipping path due to TargetAvailable not existing in display #{path.TargetInfo.Id}");
                     continue;
-                }
+                }*/
 
                 // get display adapter name
                 var adapterInfo = new DISPLAYCONFIG_ADAPTER_NAME();
@@ -1713,25 +1714,45 @@ namespace DisplayMagicianShared.Windows
 
                 try
                 {
-                    // The AdapterDevicePath is something like "\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"
+                    // The AdapterDevicePath is something like "\\?\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}" if it's a PCI card
+                    // or it is something like "\\?\USB#VID_17E9&PID_430C&MI_00#8&d6f23a6&1&0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}" if it's a USB card (or USB emulating)
+                    // or it is something like "\\?\SuperDisplay#Display#1&3343b12b&0&1234#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}" if it's a SuperDisplay device (allows Android tablet device to be used as directly attached screen)
                     // We only want the vendor ID
                     SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The AdapterDevicePath for this path is :{adapterInfo.AdapterDevicePath}");
                     // Match against the vendor ID
-                    string pattern = @"VEN_([\d\w]{4})&";
+                    string pattern = @"(PCI|USB)#(?:VEN|VID)_([\d\w]{4})&";
                     Match match = Regex.Match(adapterInfo.AdapterDevicePath, pattern);
                     if (match.Success)
                     {
-                        string VendorId = match.Groups[1].Value;
-                        SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The matched PCI Vendor ID is :{VendorId }");
-                        if (!videoCardVendorIds.Contains(VendorId))
+                        string pciType = match.Groups[1].Value;
+                        string vendorId = match.Groups[2].Value;
+                        SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The matched PCI Vendor ID is :{vendorId } and the PCI device is a {pciType} device.");
+                        if (!videoCardVendorIds.Contains(vendorId))
                         {
-                            videoCardVendorIds.Add(VendorId);
-                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Stored PCI vendor ID {VendorId} as we haven't already got it");
+                            videoCardVendorIds.Add(vendorId);
+                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Stored PCI vendor ID {vendorId} as we haven't already got it");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The PCI Vendor ID pattern wasn't matched so we didn't record a vendor ID.");
+                        SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The device is not a USB or PCI card, sp trying to see if it is a SuperDisplay device.");
+                        string pattern2 = @"SuperDisplay#";
+                        Match match2 = Regex.Match(adapterInfo.AdapterDevicePath, pattern2);
+                        if (match2.Success)
+                        {
+                            string pciType = "SuperDisplay";
+                            string vendorId = "SuperDisplay";
+                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The matched PCI Vendor ID is :{vendorId } and the PCI device is a {pciType} device.");
+                            if (!videoCardVendorIds.Contains(vendorId))
+                            {
+                                videoCardVendorIds.Add(vendorId);
+                                SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: Stored PCI vendor ID {vendorId} as we haven't already got it");
+                            }
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"WinLibrary/GetCurrentPCIVideoCardVendors: The PCI Vendor ID pattern wasn't matched so we didn't record a vendor ID. AdapterDevicePath = {adapterInfo.AdapterDevicePath}");
+                        }
                     }
 
                 }
