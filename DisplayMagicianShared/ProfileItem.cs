@@ -23,6 +23,7 @@ namespace DisplayMagicianShared
         public int ScreenWidth;
         public int ScreenHeight;
         public string Name;
+        public string AdapterName;
         public string Library;
         public bool IsPrimary;
         public bool IsClone;
@@ -997,17 +998,20 @@ namespace DisplayMagicianShared
                 // For each path we go through and get the relevant info we need.
                 if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
                 {
-                    // Set some basics about the screen
-                    ScreenPosition screen = new ScreenPosition();
-                    screen.Library = "NVIDIA";
-                    screen.IsSpanned = false;
-                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
 
+                    UInt64 adapterId = path.SourceInfo.AdapterId.Value;
                     UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
 
+                    // Set some basics about the screen
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "NVIDIA";
+                    //screen.AdapterName = adapterId.ToString();
+                    screen.IsSpanned = false;
+                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
+                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
                         if (displaySource.Value.Contains(sourceId))
@@ -1027,7 +1031,7 @@ namespace DisplayMagicianShared
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
                         // Find the matching Display Config Source Mode
-                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
                         {
                             screen.Name = targetId.ToString();
                             //screen.DisplayConnector = displayMode.DisplayConnector;
@@ -1254,17 +1258,19 @@ namespace DisplayMagicianShared
                 // For each path we go through and get the relevant info we need.
                 if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
                 {
-                    // Set some basics about the screen
-                    ScreenPosition screen = new ScreenPosition();
-                    screen.Library = "AMD";
-                    screen.IsSpanned = false;
-                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
-
+                    UInt64 adapterId = path.SourceInfo.AdapterId.Value;
                     UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
 
+                    // Set some basics about the screen
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "AMD";
+                    //screen.AdapterName = adapterId.ToString();
+                    screen.IsSpanned = false;
+                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
+                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
                         if (displaySource.Value.Contains(sourceId))
@@ -1283,7 +1289,7 @@ namespace DisplayMagicianShared
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
                         // Find the matching Display Config Source Mode
-                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
                         {
                             screen.Name = targetId.ToString();
                             //screen.DisplayConnector = displayMode.DisplayConnector;
@@ -1369,17 +1375,19 @@ namespace DisplayMagicianShared
                 // For each path we go through and get the relevant info we need.
                 if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
                 {
-                    // Set some basics about the screen
-                    ScreenPosition screen = new ScreenPosition();
-                    screen.Library = "WINDOWS";
-                    screen.IsSpanned = false;
-                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
-
+                    UInt64 adapterId = path.SourceInfo.AdapterId.Value;
                     UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
 
+                    // Set some basics about the screen
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "WINDOWS";
+                    //screen.AdapterName = adapterId.ToString();
+                    screen.IsSpanned = false;
+                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
+                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
                         if (displaySource.Value.Contains(sourceId))
@@ -1398,7 +1406,7 @@ namespace DisplayMagicianShared
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
                         // Find the matching Display Config Source Mode
-                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
                         {
                             screen.Name = targetId.ToString();
                             //screen.DisplayConnector = displayMode.DisplayConnector;
