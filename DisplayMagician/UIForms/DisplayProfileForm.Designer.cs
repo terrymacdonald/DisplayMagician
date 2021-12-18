@@ -232,6 +232,8 @@ namespace DisplayMagician.UIForms
             // txt_profile_save_name
             // 
             this.txt_profile_save_name.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txt_profile_save_name.BackColor = System.Drawing.Color.White;
+            this.txt_profile_save_name.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txt_profile_save_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_profile_save_name.Location = new System.Drawing.Point(271, 437);
             this.txt_profile_save_name.MaxLength = 200;
@@ -293,12 +295,13 @@ namespace DisplayMagician.UIForms
             this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
             this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_save_profile.Location = new System.Drawing.Point(319, 9);
+            this.lbl_save_profile.Location = new System.Drawing.Point(319, 95);
             this.lbl_save_profile.Name = "lbl_save_profile";
             this.lbl_save_profile.Size = new System.Drawing.Size(296, 102);
             this.lbl_save_profile.TabIndex = 33;
-            this.lbl_save_profile.Text = "Setup your displays with NVIDIA Setup, AMD Setup or Windows Setup, then return to" +
-    " DisplayMagician and click \'Save As\' to save this Display Profile.";
+            this.lbl_save_profile.Text = "Setup your display layout in NVIDIA Control Panel, AMD Radeon Adrenalin or Window" +
+    "s Setup, then return to DisplayMagician and click \'Save As\' to store this Displa" +
+    "y Profile for later.";
             this.lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btn_save

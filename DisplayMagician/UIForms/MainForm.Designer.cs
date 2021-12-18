@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btn_help = new System.Windows.Forms.Button();
             this.btn_donate = new System.Windows.Forms.Button();
             this.btn_settings = new System.Windows.Forms.Button();
             this.lbl_create_profile = new System.Windows.Forms.Label();
@@ -55,7 +56,6 @@
             this.shortcutToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.btn_help = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -89,6 +89,16 @@
             this.splitContainer1.Panel2.Controls.Add(this.btn_exit);
             this.splitContainer1.Panel2.Controls.Add(this.pb_game_shortcut);
             this.splitContainer1.TabStop = false;
+            // 
+            // btn_help
+            // 
+            resources.ApplyResources(this.btn_help, "btn_help");
+            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_help.ForeColor = System.Drawing.Color.White;
+            this.btn_help.Name = "btn_help";
+            this.btn_help.UseVisualStyleBackColor = true;
+            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
             // 
             // btn_donate
             // 
@@ -269,16 +279,6 @@
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             resources.ApplyResources(this.exitToolStripMenuItem, "exitToolStripMenuItem");
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
-            // 
-            // btn_help
-            // 
-            resources.ApplyResources(this.btn_help, "btn_help");
-            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_help.ForeColor = System.Drawing.Color.White;
-            this.btn_help.Name = "btn_help";
-            this.btn_help.UseVisualStyleBackColor = true;
-            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
             // 
             // MainForm
             // 
