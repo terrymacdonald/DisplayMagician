@@ -1,0 +1,13 @@
+[
+	{
+		"Id":1,
+		"MessageMode":"rtf",
+		"MinVersion": "2.1.1.0",
+		"MaxVersion": "2.1.2.3",
+		"StartDate": null,
+		"EndDate": null,
+		"HeadingText": "DisplayMagician 2.1.2 Upgrade Message",
+		"ButtonText": "&Close",
+		"Url": "https://displaymagician.littlebitbig.com/messages/DisplayMagician20211219.rtf",
+	}
+]
