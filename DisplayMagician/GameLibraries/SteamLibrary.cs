@@ -176,18 +176,25 @@ namespace DisplayMagician.GameLibraries
             {
                 List<Process> steamLibraryProcesses = new List<Process>();
 
-                foreach (string steamLibraryProcessName in _steamProcessList)
+                try
                 {
-                    // Look for the processes with the ProcessName we sorted out earlier
-                    steamLibraryProcesses.AddRange(Process.GetProcessesByName(steamLibraryProcessName));
-                }
+                    foreach (string steamLibraryProcessName in _steamProcessList)
+                    {
+                        // Look for the processes with the ProcessName we sorted out earlier
+                        steamLibraryProcesses.AddRange(Process.GetProcessesByName(steamLibraryProcessName));
+                    }
 
-                // If we have found one or more processes then we should be good to go
-                // so let's break, and get to the next step....
-                if (steamLibraryProcesses.Count > 0)
-                    return true;
-                else
+                    // If we have found one or more processes then we should be good to go
+                    // so let's break, and get to the next step....
+                    if (steamLibraryProcesses.Count > 0)
+                        return true;
+                    else
+                        return false;
+                }
+                catch (Exception ex)
+                {
                     return false;
+                }
             }
 
         }

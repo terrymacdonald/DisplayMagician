@@ -23,6 +23,7 @@ namespace DisplayMagicianShared
         public int ScreenWidth;
         public int ScreenHeight;
         public string Name;
+        public string AdapterName;
         public string Library;
         public bool IsPrimary;
         public bool IsClone;
@@ -391,7 +392,7 @@ namespace DisplayMagicianShared
             {
                 if (!NVIDIALibrary.GetLibrary().IsValidConfig(_nvidiaDisplayConfig))
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/IsValid: The profile {Name} has an invalid NVIDIA display config");
+                    SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid NVIDIA display config");
                     return false;
                 }
             }
@@ -399,7 +400,7 @@ namespace DisplayMagicianShared
             {
                 if (!AMDLibrary.GetLibrary().IsValidConfig(_amdDisplayConfig))
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/IsValid: The profile {Name} has an invalid AMD display config");
+                    SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid AMD display config");
                     return false;
                 }                    
             }
@@ -407,13 +408,13 @@ namespace DisplayMagicianShared
             {
                 if (!WinLibrary.GetLibrary().IsValidConfig(_windowsDisplayConfig))
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/IsValid: The profile {Name} has an invalid Windows CCD display config");
+                    SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an invalid Windows CCD display config");
                     return false;
                 }
             }
             else
             {
-                SharedLogger.logger.Error($"ProfileRepository/IsValid: The profile {Name} has an unknown video mode!");
+                SharedLogger.logger.Error($"ProfileItem/IsValid: The profile {Name} has an unknown video mode!");
             }
 
             // The rest of the 
@@ -507,7 +508,7 @@ namespace DisplayMagicianShared
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, $"ProfileRepository/CreateProfileFromCurrentDisplaySettings: Exception getting the config settings!");
+                SharedLogger.logger.Error(ex, $"ProfileItem/CreateProfileFromCurrentDisplaySettings: Exception getting the config settings!");
                 return false;
             }
         }
@@ -566,7 +567,7 @@ namespace DisplayMagicianShared
                 }
                 catch (Exception ex)
                 {
-                    SharedLogger.logger.Warn(ex, $"ShortcutItem/CreateShortcut: Execption while creating desktop shortcut!");
+                    SharedLogger.logger.Warn(ex, $"ProfileItem/CreateShortcut: Execption while creating desktop shortcut!");
 
                     // Clean up a failed attempt
                     if (System.IO.File.Exists(shortcutFileName))
@@ -586,7 +587,7 @@ namespace DisplayMagicianShared
             // Check whether this profile is the same as the video mode, otherwise it's not possible
             if (ProfileRepository.CurrentVideoMode != VideoMode)
             {
-                SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
+                SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
                 _isPossible = false;
                 return;
             }
@@ -597,13 +598,13 @@ namespace DisplayMagicianShared
                 if (NVIDIALibrary.GetLibrary().IsPossibleConfig(_nvidiaDisplayConfig))
                 {
 
-                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is possible!");
+                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is possible!");
                     _isPossible = true;
 
                 }
                 else
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
+                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The NVIDIA profile {Name} is NOT possible!");
                     _isPossible = false;
                 }
             }
@@ -612,13 +613,13 @@ namespace DisplayMagicianShared
                 if (AMDLibrary.GetLibrary().IsPossibleConfig(_amdDisplayConfig))
                 {
 
-                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The AMD profile {Name} is possible!");
+                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The AMD profile {Name} is possible!");
                     _isPossible = true;
 
                 }
                 else
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The AMD profile {Name} is NOT possible!");
+                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The AMD profile {Name} is NOT possible!");
                     _isPossible = false;
                 }
             }
@@ -627,19 +628,19 @@ namespace DisplayMagicianShared
                 if (WinLibrary.GetLibrary().IsPossibleConfig(_windowsDisplayConfig))
                 {
 
-                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
+                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is possible!");
                     _isPossible = true;
 
                 }
                 else
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
+                    SharedLogger.logger.Debug($"ProfileItem/IsPossibleRefresh: The Windows CCD profile {Name} is NOT possible!");
                     _isPossible = false;
                 }
             }
             else
             {
-                SharedLogger.logger.Warn($"ProfileRepository/IsPossibleRefresh: We have a current video mode we don't understand, or it's not installed! The current video mode is {ProfileRepository.CurrentVideoMode}. The profile {Name} has a {VideoMode.ToString("G")} video mode and NVIDIALibrary IsInstalled is {NVIDIALibrary.GetLibrary().IsInstalled}, AMDLibrary IsInstalled is {AMDLibrary.GetLibrary().IsInstalled} and WinLibrary IsInstalled is {WinLibrary.GetLibrary().IsInstalled} ");
+                SharedLogger.logger.Warn($"ProfileItem/IsPossibleRefresh: We have a current video mode we don't understand, or it's not installed! The current video mode is {ProfileRepository.CurrentVideoMode}. The profile {Name} has a {VideoMode.ToString("G")} video mode and NVIDIALibrary IsInstalled is {NVIDIALibrary.GetLibrary().IsInstalled}, AMDLibrary IsInstalled is {AMDLibrary.GetLibrary().IsInstalled} and WinLibrary IsInstalled is {WinLibrary.GetLibrary().IsInstalled} ");
                 _isPossible = false;
             }
         }
@@ -657,15 +658,20 @@ namespace DisplayMagicianShared
                     {
                         if (nvidiaLibrary.IsPossibleConfig(_nvidiaDisplayConfig))
                         {
-                            SharedLogger.logger.Trace($"ProfileRepository/SetActive: The NVIDIA display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
+                            SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
                             bool itWorkedforNVIDIA = nvidiaLibrary.SetActiveConfig(_nvidiaDisplayConfig);
 
                             if (itWorkedforNVIDIA)
                             {
-                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: The NVIDIA display settings within profile {Name} were successfully applied.");
+                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within profile {Name} were successfully applied.");
 
-                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: Waiting 0.5 seconds to let the NVIDIA display change take place before setting the Windows CCD display settings");
-                                System.Threading.Thread.Sleep(500);
+                                /*SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the NVIDIA display change take place before setting the Windows CCD display settings");
+                                System.Threading.Thread.Sleep(500);*/
+
+                                // Lets update the screens so Windows knows whats happening
+                                // NVIDIA makes such large changes to the available screens in windows, we need to do this.
+                                winLibrary.UpdateActiveConfig();
+
 
                                 // Then let's try to also apply the windows changes
                                 // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a Mosaic config,
@@ -677,34 +683,34 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforNVIDIAColor)
                                     {
-                                        SharedLogger.logger.Trace($"NVIDIAInfo/loadFromFile: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
+                                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
                                     else
                                     {
-                                        SharedLogger.logger.Trace($"NVIDIAInfo/loadFromFile: The NVIDIA display settings that override windows within the profile {Name} were NOT applied correctly.");
+                                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings that override windows within the profile {Name} were NOT applied correctly.");
                                     }                                
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
+                                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
                                 }
 
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: The NVIDIA display settings within profile {Name} were NOT applied correctly.");
+                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within profile {Name} were NOT applied correctly.");
                             }
 
                         }
                         else
                         {
-                            SharedLogger.logger.Error($"ProfileRepository/SetActive: ERROR - Cannot apply the NVIDIA display config in profile {Name} as it is not currently possible to use it.");
+                            SharedLogger.logger.Error($"ProfileItem/SetActive: ERROR - Cannot apply the NVIDIA display config in profile {Name} as it is not currently possible to use it.");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Info($"ProfileRepository/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
+                        SharedLogger.logger.Info($"ProfileItem/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
                     }
                 }
             }
@@ -718,19 +724,23 @@ namespace DisplayMagicianShared
                     {
                         if (amdLibrary.IsPossibleConfig(_amdDisplayConfig))
                         {
-                            SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
-                            bool itWorkedforNVIDIA = amdLibrary.SetActiveConfig(_amdDisplayConfig);
+                            SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within profile {Name} are possible to use right now, so we'll use attempt to use them.");
+                            bool itWorkedforAMD = amdLibrary.SetActiveConfig(_amdDisplayConfig);
 
-                            if (itWorkedforNVIDIA)
+                            if (itWorkedforAMD)
                             {
-                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings within profile {Name} were successfully applied.");
+                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within profile {Name} were successfully applied.");
 
-                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: Waiting 0.5 seconds to let the AMD display change take place before setting the Windows CCD display settings");
+                                /*SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the AMD display change take place before setting the Windows CCD display settings");
                                 System.Threading.Thread.Sleep(500);
+*/
+                                // Lets update the screens so Windows knows whats happening
+                                // AMD makes such large changes to the available screens in windows, we need to do this.
+                                winLibrary.UpdateActiveConfig();
 
                                 // Then let's try to also apply the windows changes
-                                // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a Mosaic config,
-                                // or if the display config we want to change to is a Mosaic config. So we just have to assume that it will work!
+                                // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is an Eyefinity config,
+                                // or if the display config we want to change to is an Eyefinity config. So we just have to assume that it will work!
                                 bool itWorkedforWindows = winLibrary.SetActiveConfig(_windowsDisplayConfig);
                                 if (itWorkedforWindows)
                                 {
@@ -738,34 +748,34 @@ namespace DisplayMagicianShared
 
                                     if (itWorkedforAMDColor)
                                     {
-                                        SharedLogger.logger.Trace($"AMDInfo/loadFromFile: The AMD display settings that override windows within the profile {Name} were successfully applied.");
+                                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings that override windows within the profile {Name} were successfully applied.");
                                         return true;
                                     }
                                     else
                                     {
-                                        SharedLogger.logger.Trace($"AMDInfo/loadFromFile: The AMD display settings that override windows within the profile {Name} were NOT applied correctly.");
+                                        SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings that override windows within the profile {Name} were NOT applied correctly.");
                                     }                                    
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
+                                    SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
                                 }
 
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"ProfileRepository/SetActive: The AMD display settings within profile {Name} were NOT applied correctly.");
+                                SharedLogger.logger.Trace($"ProfileItem/SetActive: The AMD display settings within profile {Name} were NOT applied correctly.");
                             }
 
                         }
                         else
                         {
-                            SharedLogger.logger.Error($"ProfileRepository/SetActive: ERROR - Cannot apply the AMD display config in profile {Name} as it is not currently possible to use it.");
+                            SharedLogger.logger.Error($"ProfileItem/SetActive: ERROR - Cannot apply the AMD display config in profile {Name} as it is not currently possible to use it.");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Info($"ProfileRepository/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
+                        SharedLogger.logger.Info($"ProfileItem/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
                     }
                 }
             }
@@ -778,17 +788,17 @@ namespace DisplayMagicianShared
                     {
                         if (winLibrary.SetActiveConfig(_windowsDisplayConfig))
                         {
-                            SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
+                            SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within profile {Name} were successfully applied.");
                             return true;
                         }
                         else
                         {
-                            SharedLogger.logger.Trace($"ProfileRepository/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
+                            SharedLogger.logger.Trace($"ProfileItem/SetActive: The Windows CCD display settings within profile {Name} were NOT applied correctly.");
                         }
                     }
                     else
                     {
-                        SharedLogger.logger.Info($"ProfileRepository/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
+                        SharedLogger.logger.Info($"ProfileItem/SetActive: The display settings in profile {Name} are already installed. No need to install them again. Exiting.");
                     }
                 }
                 
@@ -832,12 +842,10 @@ namespace DisplayMagicianShared
                 // Return an empty screen if we have no Display Config Paths to use!
                 return _screens;
             }
-            // Now we need to check for Spanned screens
+
+            // Now we need to check for Spanned screens (Surround)
             if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
             {
-
-                // Create a dictionary of all the screen sizes we want
-                //Dictionary<string,SpannedScreenPosition> MosaicScreens = new Dictionary<string,SpannedScreenPosition>();
                 for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
                 {
                     ScreenPosition screen = new ScreenPosition();
@@ -912,6 +920,7 @@ namespace DisplayMagicianShared
 
                             // Add the spanned screen to the screen
                             screen.SpannedScreens.Add(spannedScreen);
+                            
                         }
 
                         // Need to look for the Windows layout details now we know the size of this display
@@ -976,150 +985,109 @@ namespace DisplayMagicianShared
                         }
 
                     }
-                    else if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount == 1)
+
+                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+
+                    _screens.Add(screen);
+                }
+            }
+
+            // Now we go through all the windows displays, and we skip the Windows one that matches the NVIDIA one (as we added it earlier)
+            foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
+            {
+                // For each path we go through and get the relevant info we need.
+                if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
+                {
+
+                    UInt64 adapterId = path.SourceInfo.AdapterId.Value;
+                    UInt32 sourceId = path.SourceInfo.Id;
+                    UInt32 targetId = path.TargetInfo.Id;
+
+                    // Set some basics about the screen
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "NVIDIA";
+                    //screen.AdapterName = adapterId.ToString();
+                    screen.IsSpanned = false;
+                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
+                    screen.IsClone = false;
+                    screen.ClonedCopies = 0;
+                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
+                    foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
-                        // This is a single screen with an adjoining mosaic screen
-                        // Set some basics about the screen
-                        try
+                        if (displaySource.Value.Contains(sourceId))
                         {
-                            string displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
-                            string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
-                            List<uint> sourceIndexes = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
-                            for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
+                            if (displaySource.Value.Count > 1)
                             {
-                                // Skip this if its not a source info config type
-                                if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
-                                {
-                                    continue;
-                                }
-
-                                // If the source index matches the index of the source info object we're looking at, then process it!
-                                if (sourceIndexes.Contains(_windowsDisplayConfig.DisplayConfigModes[x].Id))
-                                {
-                                    screen.Name = displayId.ToString();
-
-                                    screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
-                                    screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
-                                    screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
-                                    screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
-                                    break;
-                                }
+                                // We have a cloned display
+                                screen.IsClone = true;
+                                screen.ClonedCopies = displaySource.Value.Count;
                             }
+                            break;
+                        }
+                    }
+
+
+                    // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
+                    foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
+                    {
+                        // Find the matching Display Config Source Mode
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
+                        {
+                            screen.Name = targetId.ToString();
+                            //screen.DisplayConnector = displayMode.DisplayConnector;
+                            screen.ScreenX = displayMode.SourceMode.Position.X;
+                            screen.ScreenY = displayMode.SourceMode.Position.Y;
+                            screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                            screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+
                             // If we're at the 0,0 coordinate then we're the primary monitor
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
                             {
                                 screen.IsPrimary = true;
                                 screen.Colour = primaryScreenColor;
                             }
-
+                            break;
                         }
-                        catch (KeyNotFoundException ex)
-                        {
-                            // Thrown if the Windows display doesn't match the NVIDIA display.
-                            // Typically happens during configuration of a new Mosaic mode.
-                            // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
-                            // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
-                            // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
-                            continue;
-                        }
-                        catch (Exception ex)
-                        {
-                            // Some other exception has occurred and we need to report it.
-                            SharedLogger.logger.Info(ex, $"ProfileRepository/GetNVIDIAScreenPositions: An exception happened when trying to create a screen from a single Mosaic desktop");
-                            continue;
-                        }
-
                     }
 
-                    _screens.Add(screen);
-                }
-            }
-            else
-            {
-                foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
-                {
-                    // For each path we go through and get the relevant info we need.
-                    if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
+                    // Decide if this screen is one we've had earlier, and if so, skip it
+                    if (_screens.Any( s => s.ScreenX == screen.ScreenX && s.ScreenY == screen.ScreenY && s.ScreenWidth == screen.ScreenWidth && s.ScreenHeight == screen.ScreenHeight))
                     {
-                        // Set some basics about the screen
-                        ScreenPosition screen = new ScreenPosition();
-                        screen.Library = "NVIDIA";
-                        screen.IsSpanned = false;
-                        screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: We've already got the {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) screen from the NVIDIA driver, so skipping it from the Windows driver.");
+                        continue;
+                    }
 
-                        UInt32 sourceId = path.SourceInfo.Id;
-                        UInt32 targetId = path.TargetInfo.Id;
-
-                        screen.IsClone = false;
-                        screen.ClonedCopies = 0;
-                        foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
+                    foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                    {
+                        // Find the matching HDR information
+                        if (hdrInfo.Id == targetId)
                         {
-                            if (displaySource.Value.Contains(sourceId))
+                            // HDR information
+                            if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
                             {
-                                if (displaySource.Value.Count > 1)
+                                screen.HDRSupported = true;
+                                if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
                                 {
-                                    // We have a cloned display
-                                    screen.IsClone = true;
-                                    screen.ClonedCopies = displaySource.Value.Count;
-                                }
-                                break;
-                            }
-                        }
-
-
-                        // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
-                        foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
-                        {
-                            // Find the matching Display Config Source Mode
-                            if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
-                            {
-                                screen.Name = targetId.ToString();
-                                //screen.DisplayConnector = displayMode.DisplayConnector;
-                                screen.ScreenX = displayMode.SourceMode.Position.X;
-                                screen.ScreenY = displayMode.SourceMode.Position.Y;
-                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
-
-                                // If we're at the 0,0 coordinate then we're the primary monitor
-                                if (screen.ScreenX == 0 && screen.ScreenY == 0)
-                                {
-                                    screen.IsPrimary = true;
-                                    screen.Colour = primaryScreenColor;
-                                }
-                                break;
-                            }
-                        }
-
-                        foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
-                        {
-                            // Find the matching HDR information
-                            if (hdrInfo.Id == targetId)
-                            {
-                                // HDR information
-                                if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
-                                {
-                                    screen.HDRSupported = true;
-                                    if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
-                                    {
-                                        screen.HDREnabled = true;
-                                    }
-                                    else
-                                    {
-                                        screen.HDREnabled = false;
-                                    }
-
+                                    screen.HDREnabled = true;
                                 }
                                 else
                                 {
-                                    screen.HDRSupported = false;
                                     screen.HDREnabled = false;
                                 }
-                                break;
-                            }
-                        }
 
-                        _screens.Add(screen);
+                            }
+                            else
+                            {
+                                screen.HDRSupported = false;
+                                screen.HDREnabled = false;
+                            }
+                            break;
+                        }
                     }
+
+                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+
+                    _screens.Add(screen);
                 }
             }
 
@@ -1183,7 +1151,8 @@ namespace DisplayMagicianShared
                 // Return an empty screen if we have no Display Config Paths to use!
                 return _screens;
             }
-            // Now we need to check for Spanned screens
+
+            // Go through the AMD Eyefinity screens
             if (_amdDisplayConfig.SlsConfig.IsSlsEnabled)
             {
                 for (int i = 0; i < _amdDisplayConfig.DisplayMaps.Count; i++)
@@ -1275,96 +1244,109 @@ namespace DisplayMagicianShared
                         {
                             screen.Colour = primaryScreenColor;
                         }
-                    }                    
+                    }
+
+                    SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                     _screens.Add(screen);
                 }
             }
-            else
+
+            // Next, go through the screens as Windows knows them, and then enhance the info with Eyefinity data if it applies
+            foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
             {
-                foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
+                // For each path we go through and get the relevant info we need.
+                if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
                 {
-                    // For each path we go through and get the relevant info we need.
-                    if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
+                    UInt64 adapterId = path.SourceInfo.AdapterId.Value;
+                    UInt32 sourceId = path.SourceInfo.Id;
+                    UInt32 targetId = path.TargetInfo.Id;
+
+                    // Set some basics about the screen
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "AMD";
+                    //screen.AdapterName = adapterId.ToString();
+                    screen.IsSpanned = false;
+                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
+                    screen.IsClone = false;
+                    screen.ClonedCopies = 0;
+                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
+                    foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
-                        // Set some basics about the screen
-                        ScreenPosition screen = new ScreenPosition();
-                        screen.Library = "AMD";
-                        screen.IsSpanned = false;
-                        screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
-
-                        UInt32 sourceId = path.SourceInfo.Id;
-                        UInt32 targetId = path.TargetInfo.Id;
-
-                        screen.IsClone = false;
-                        screen.ClonedCopies = 0;
-                        foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
+                        if (displaySource.Value.Contains(sourceId))
                         {
-                            if (displaySource.Value.Contains(sourceId))
+                            if (displaySource.Value.Count > 1)
                             {
-                                if (displaySource.Value.Count > 1)
-                                {
-                                    // We have a cloned display
-                                    screen.IsClone = true;
-                                    screen.ClonedCopies = displaySource.Value.Count;
-                                }
-                                break;
+                                // We have a cloned display
+                                screen.IsClone = true;
+                                screen.ClonedCopies = displaySource.Value.Count;
                             }
+                            break;
                         }
+                    }
 
-                        // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
-                        foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
+                    // Go through the screens as Windows knows them, and then enhance the info with Mosaic data if it applies
+                    foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
+                    {
+                        // Find the matching Display Config Source Mode
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
                         {
-                            // Find the matching Display Config Source Mode
-                            if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
-                            {
-                                screen.Name = targetId.ToString();
-                                //screen.DisplayConnector = displayMode.DisplayConnector;
-                                screen.ScreenX = displayMode.SourceMode.Position.X;
-                                screen.ScreenY = displayMode.SourceMode.Position.Y;
-                                screen.ScreenWidth = (int)displayMode.SourceMode.Width;
-                                screen.ScreenHeight = (int)displayMode.SourceMode.Height;
+                            screen.Name = targetId.ToString();
+                            //screen.DisplayConnector = displayMode.DisplayConnector;
+                            screen.ScreenX = displayMode.SourceMode.Position.X;
+                            screen.ScreenY = displayMode.SourceMode.Position.Y;
+                            screen.ScreenWidth = (int)displayMode.SourceMode.Width;
+                            screen.ScreenHeight = (int)displayMode.SourceMode.Height;
 
-                                // If we're at the 0,0 coordinate then we're the primary monitor
-                                if (screen.ScreenX == 0 && screen.ScreenY == 0)
-                                {
-                                    screen.IsPrimary = true;
-                                    screen.Colour = primaryScreenColor;
-                                }
-                                break;
+                            // If we're at the 0,0 coordinate then we're the primary monitor
+                            if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                            {
+                                screen.IsPrimary = true;
+                                screen.Colour = primaryScreenColor;
                             }
+                            break;
                         }
+                    }
 
-                        foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                    // Decide if this screen is one we've had earlier, and if so, skip it
+                    if (_screens.Any(s => s.ScreenX == screen.ScreenX && s.ScreenY == screen.ScreenY && s.ScreenWidth == screen.ScreenWidth && s.ScreenHeight == screen.ScreenHeight))
+                    {
+                        SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: We've already got the {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) screen from the AMD driver, so skipping it from the Windows driver.");
+                        continue;
+                    }
+
+
+                    foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                    {
+                        // Find the matching HDR information
+                        if (hdrInfo.Id == targetId)
                         {
-                            // Find the matching HDR information
-                            if (hdrInfo.Id == targetId)
+                            // HDR information
+                            if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
                             {
-                                // HDR information
-                                if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
+                                screen.HDRSupported = true;
+                                if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
                                 {
-                                    screen.HDRSupported = true;
-                                    if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
-                                    {
-                                        screen.HDREnabled = true;
-                                    }
-                                    else
-                                    {
-                                        screen.HDREnabled = false;
-                                    }
-
+                                    screen.HDREnabled = true;
                                 }
                                 else
                                 {
-                                    screen.HDRSupported = false;
                                     screen.HDREnabled = false;
                                 }
-                                break;
-                            }
-                        }
 
-                        _screens.Add(screen);
+                            }
+                            else
+                            {
+                                screen.HDRSupported = false;
+                                screen.HDREnabled = false;
+                            }
+                            break;
+                        }
                     }
+
+                    SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+
+                    _screens.Add(screen);
                 }
             }
 
@@ -1393,17 +1375,19 @@ namespace DisplayMagicianShared
                 // For each path we go through and get the relevant info we need.
                 if (_windowsDisplayConfig.DisplayConfigPaths.Length > 0)
                 {
-                    // Set some basics about the screen
-                    ScreenPosition screen = new ScreenPosition();
-                    screen.Library = "WINDOWS";
-                    screen.IsSpanned = false;
-                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
-
+                    UInt64 adapterId = path.SourceInfo.AdapterId.Value;
                     UInt32 sourceId = path.SourceInfo.Id;
                     UInt32 targetId = path.TargetInfo.Id;
 
+                    // Set some basics about the screen
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "WINDOWS";
+                    //screen.AdapterName = adapterId.ToString();
+                    screen.IsSpanned = false;
+                    screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
+                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
                         if (displaySource.Value.Contains(sourceId))
@@ -1422,7 +1406,7 @@ namespace DisplayMagicianShared
                     foreach (DISPLAYCONFIG_MODE_INFO displayMode in _windowsDisplayConfig.DisplayConfigModes)
                     {
                         // Find the matching Display Config Source Mode
-                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId)
+                        if (displayMode.InfoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE && displayMode.Id == sourceId && displayMode.AdapterId.Value == adapterId)
                         {
                             screen.Name = targetId.ToString();
                             //screen.DisplayConnector = displayMode.DisplayConnector;
@@ -1468,6 +1452,8 @@ namespace DisplayMagicianShared
                             break;
                         }
                     }
+
+                    SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                     _screens.Add(screen);
                 }

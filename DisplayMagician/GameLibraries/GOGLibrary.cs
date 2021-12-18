@@ -163,18 +163,24 @@ namespace DisplayMagician.GameLibraries
             {
                 List<Process> gogLibraryProcesses = new List<Process>();
 
-                foreach (string gogLibraryProcessName in _gogProcessList)
+                try
                 {
-                    // Look for the processes with the ProcessName we sorted out earlier
-                    gogLibraryProcesses.AddRange(Process.GetProcessesByName(gogLibraryProcessName));
-                }
+                    foreach (string gogLibraryProcessName in _gogProcessList)
+                    {
+                        // Look for the processes with the ProcessName we sorted out earlier
+                        gogLibraryProcesses.AddRange(Process.GetProcessesByName(gogLibraryProcessName));
+                    }
 
-                // If we have found one or more processes then we should be good to go
-                // so let's break, and get to the next step....
-                if (gogLibraryProcesses.Count > 0)
-                    return true;
-                else
-                    return false;
+                    // If we have found one or more processes then we should be good to go
+                    // so let's break, and get to the next step....
+                    if (gogLibraryProcesses.Count > 0)
+                        return true;
+                    else
+                        return false;
+                }                
+                catch (Exception ex) { 
+                    return false; 
+                }
             }
 
         }

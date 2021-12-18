@@ -157,18 +157,26 @@ namespace DisplayMagician.GameLibraries
             {
                 List<Process> uplayLibraryProcesses = new List<Process>();
 
-                foreach (string uplayLibraryProcessName in _uplayProcessList)
+                try
                 {
-                    // Look for the processes with the ProcessName we sorted out earlier
-                    uplayLibraryProcesses.AddRange(Process.GetProcessesByName(uplayLibraryProcessName));
-                }
+                    foreach (string uplayLibraryProcessName in _uplayProcessList)
+                    {
+                        // Look for the processes with the ProcessName we sorted out earlier
+                        uplayLibraryProcesses.AddRange(Process.GetProcessesByName(uplayLibraryProcessName));
+                    }
 
-                // If we have found one or more processes then we should be good to go
-                // so let's break, and get to the next step....
-                if (uplayLibraryProcesses.Count > 0)
-                    return true;
-                else
+                    // If we have found one or more processes then we should be good to go
+                    // so let's break, and get to the next step....
+                    if (uplayLibraryProcesses.Count > 0)
+                        return true;
+                    else
+                        return false;
+                }
+                catch (Exception ex)
+                {
                     return false;
+                }
+                
             }
 
         }

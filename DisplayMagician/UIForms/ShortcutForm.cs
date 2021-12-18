@@ -43,7 +43,7 @@ namespace DisplayMagician.UIForms
         private bool _setCaptureVolume = false;
         private decimal _captureVolume = -1;
         private ShortcutItem _shortcutToEdit = null;
-        //List<Game> allGames = new List<Game>();
+        Game _selectedGame = null;
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
@@ -966,8 +966,6 @@ namespace DisplayMagician.UIForms
 
         private void LoadShortcut()
         {
-            Game shortcutGame = null;
-
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
@@ -1223,7 +1221,7 @@ namespace DisplayMagician.UIForms
                 ilv_games.Items.Add(newItem, _gameAdaptor);
                 if (_editingExistingShortcut && game.Name.Equals(_shortcutToEdit.GameName))
                 {
-                    shortcutGame = game;
+                    _selectedGame = game;
                 }
 
             }
@@ -1478,12 +1476,12 @@ namespace DisplayMagician.UIForms
                         // If this is a shortcut we're editing
                         _availableImages = new List<ShortcutBitmap>();
                         // If the game is selected, then grab images from the game
-                        if (shortcutGame != null)
+                        if (_selectedGame != null)
                         {
-                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.IconPath));
-                            if (shortcutGame.ExePath != shortcutGame.IconPath)
+                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.IconPath));
+                            if (_selectedGame.ExePath != _selectedGame.IconPath)
                             {
-                                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(shortcutGame.ExePath));
+                                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.ExePath));
                             }
 
                         }
@@ -1731,9 +1729,10 @@ namespace DisplayMagician.UIForms
                 p_standalone.Enabled = true;
                 // Disable the Game Panel
                 p_game.Enabled = false;
+                ilv_games.Enabled = false;
 
                 // Empty the bitmaps
-                EmptyTheImages();
+                // EmptyTheImages();
 
                 if (!String.IsNullOrWhiteSpace(txt_executable.Text) && File.Exists(txt_executable.Text))
                 {
@@ -1757,11 +1756,25 @@ namespace DisplayMagician.UIForms
 
                 // Enable the Game Panel
                 p_game.Enabled = true;
+                ilv_games.Enabled = true;
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
 
                 // Empty the bitmaps
-                EmptyTheImages();
+                //EmptyTheImages();
+
+                if (!String.IsNullOrWhiteSpace(txt_game_name.Text) && ilv_games.SelectedItems.Count == 1 && _selectedGame != null && pb_game_icon.Image == null)
+                {
+                    _gameLauncher = _selectedGame.GameLibrary.ToString("G");
+                    lbl_game_library.Text = $"Game Library: {_gameLauncher}";
+                    _gameId = _selectedGame.Id;
+                    _availableImages = _selectedGame.AvailableGameBitmaps;
+                    _shortcutToEdit.AvailableImages = _selectedGame.AvailableGameBitmaps;
+                    _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                    _shortcutToEdit.SelectedImage = _selectedImage;
+                    pb_game_icon.Image = _selectedImage.Image;
+                    btn_choose_game_icon.Enabled = true;
+                }
 
                 SuggestShortcutName();
                 EnableSaveButtonIfValid();
@@ -1789,6 +1802,7 @@ namespace DisplayMagician.UIForms
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
                 // Disable the Game Panel
+                ilv_games.Enabled = false;
                 p_game.Enabled = false;
 
                 SuggestShortcutName();
@@ -2777,6 +2791,7 @@ namespace DisplayMagician.UIForms
                 {
                     if (_loadedShortcut)
                         _isUnsaved = true;
+                    _selectedGame = game;
                     _gameLauncher = game.GameLibrary.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = game.Id;
@@ -2930,6 +2945,16 @@ namespace DisplayMagician.UIForms
                 @"Games List Updated",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Exclamation);
+        }
+
+        private void pb_game_icon_Click(object sender, EventArgs e)
+        {
+            btn_choose_game_icon.PerformClick();
+        }
+
+        private void pb_exe_icon_Click(object sender, EventArgs e)
+        {
+            btn_choose_exe_icon.PerformClick();
         }
 
     }

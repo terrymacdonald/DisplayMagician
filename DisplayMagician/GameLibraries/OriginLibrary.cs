@@ -159,18 +159,25 @@ namespace DisplayMagician.GameLibraries
             {
                 List<Process> originLibraryProcesses = new List<Process>();
 
-                foreach (string originLibraryProcessName in _originProcessList)
+                try
                 {
-                    // Look for the processes with the ProcessName we sorted out earlier
-                    originLibraryProcesses.AddRange(Process.GetProcessesByName(originLibraryProcessName));
-                }
+                    foreach (string originLibraryProcessName in _originProcessList)
+                    {
+                        // Look for the processes with the ProcessName we sorted out earlier
+                        originLibraryProcesses.AddRange(Process.GetProcessesByName(originLibraryProcessName));
+                    }
 
-                // If we have found one or more processes then we should be good to go
-                // so let's break, and get to the next step....
-                if (originLibraryProcesses.Count > 0)
-                    return true;
-                else
+                    // If we have found one or more processes then we should be good to go
+                    // so let's break, and get to the next step....
+                    if (originLibraryProcesses.Count > 0)
+                        return true;
+                    else
+                        return false;
+                }
+                catch (Exception ex)
+                {
                     return false;
+                }
             }
 
         }

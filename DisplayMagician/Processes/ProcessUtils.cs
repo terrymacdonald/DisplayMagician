@@ -66,7 +66,7 @@ namespace DisplayMagician.Processes
             else
             {
                 logger.Warn($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute, so attempting with TryExecute_Impersonate");
-                ImpersonationProcess impProcessCreated;
+                /*ImpersonationProcess impProcessCreated;
                 //if (IsImpersonated())
                 //{
                 //logger.Trace($"ProcessUtils/StartProcess: Useer CAN be impersonated, so trying to run {executable} {arguments} with TryExecute_Impersonated");
@@ -78,7 +78,7 @@ namespace DisplayMagician.Processes
                 else
                 {
                     logger.Error($"ProcessUtils/StartProcess: {executable} {arguments} was unable to be started by TryExecute_Impersonated, so giving up");
-                }
+                }*/
                 //}
                 //else
                 //{

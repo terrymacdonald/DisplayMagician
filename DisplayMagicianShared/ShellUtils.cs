@@ -1,10 +1,10 @@
-﻿using System.Runtime.InteropServices;
+﻿//using System.Runtime.InteropServices;
 
-namespace DisplayMagicianShared
+/*namespace DisplayMagicianShared
 {
     public class ShellUtils
     {
-        public static string AUMID = "LittleBitBig.DisplayMagician";
+        public const string AUMID = "LittleBitBig.DisplayMagician";
 
         // Add the ability to set an Application AUMID so that Windows 10+ recognises the
         // application and things like Toasts, Tasbar pinning and similar functionality
@@ -20,4 +20,4 @@ namespace DisplayMagicianShared
         }
 
     }
-}
+}*/

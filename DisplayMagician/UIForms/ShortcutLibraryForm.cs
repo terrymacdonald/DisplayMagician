@@ -453,6 +453,11 @@ namespace DisplayMagician.UIForms
             lbl_mask.BringToFront();
             lbl_mask.Visible = true;
 
+            // Show the cancel button
+            btn_cancel.Visible = true;
+            btn_cancel.Enabled = true;
+            btn_cancel.BringToFront();
+
             ilv_saved_shortcuts.SuspendLayout();
             ilv_saved_shortcuts.Refresh();
 
@@ -477,6 +482,11 @@ namespace DisplayMagician.UIForms
             // REmove the Masked Control to allow the user to start using DisplayMagician again.
             lbl_mask.Visible = false;
             lbl_mask.SendToBack();
+
+            // Hide the cancel button
+            btn_cancel.Visible = false;
+            btn_cancel.Enabled = false;
+
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
@@ -588,5 +598,10 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void btn_cancel_Click(object sender, EventArgs e)
+        {
+            // Inform the ShortcutRepository that it needs to cancel the running shortcut.
+            ShortcutRepository.CancelWait = true;
+        }
     }
 }

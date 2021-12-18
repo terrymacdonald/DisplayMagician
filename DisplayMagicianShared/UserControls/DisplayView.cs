@@ -203,15 +203,21 @@ namespace DisplayMagicianShared.UserControls
                 Rectangle wordRect = new Rectangle(screen.ScreenX + screenBezel + screenWordBuffer, screen.ScreenY + screenBezel + screenWordBuffer, screen.ScreenWidth - (screenBezel * 2) - (screenWordBuffer * 2), screen.ScreenHeight - (screenBezel * 2) - (screenWordBuffer * 2));
                 Color wordTextColour = pickTextColorBasedOnBgColour(screen.Colour, lightTextColour, darkTextColour);
                 // Draw the name of the screen and the size of it
-                string str = $"{screen.Name}{Environment.NewLine}{screen.ScreenWidth}×{screen.ScreenHeight}{Environment.NewLine}{screen.DisplayConnector}";
+                string str = $"{screen.Name}{Environment.NewLine}";
+                str += $"{screen.ScreenWidth}×{ screen.ScreenHeight}{ Environment.NewLine}{ screen.DisplayConnector}";
                 if (screen.IsPrimary)
                 {
                     str = $"Primary Display{Environment.NewLine}" + str;
                 }
                 if (screen.IsClone)
                 {
-                    str = str + $"(+{screen.ClonedCopies-1} Clone)";
+                    str += $"(+{screen.ClonedCopies-1} Clone)";
                 }
+                if (!String.IsNullOrEmpty(screen.AdapterName))
+                {
+                    str += $"Adapter {screen.AdapterName}{Environment.NewLine}";
+                }
+
 
                 DrawString(g, str, wordTextColour, selectedWordFont, wordRect.Size, wordRect.Location);
 
