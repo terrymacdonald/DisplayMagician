@@ -144,11 +144,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ## Credits
 Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the names of these amazing people:
 
-* Original HelioDisplayManagement project created by the amazing Soroush Falahati
-* Various icons made by Freepik from www.flaticon.com
 * Sean at SimCraft (Thank you so much for your generous donation!)
-* Domenic (Thanks for the solid month of troubleshooting help!)
-* Erbkaiser (One of the most impressive testers with an anamzing eye for detail)
+* NudeNull (Thank you for your sponsorship)
+* 20vmki (Thank you for your sponsorship)
+* Lazerwolf22 (Thank you for your sponsorship)
+* Spmac (Thank you for your sponsorship)
+* Mcdbergh (thanks for the bug report)
+* JSchoonbrood (Great help testing multiple display adapter bugs and SuperDisplay Android Tablet support)
+* Outerspacejunky16 (Thanks for testing AMD support)
+* Matthex (Great help testing multiple display adapter bugs and 7 different screens!)
+* Dev1981 (Great help testing multiple display adapter bugs and DisplayLink USB)
+* Domenic (Thanks for the solid month of troubleshooting help and the sponsorship!)
+* Gretzer (thanks for the cool idea)
+* Erbkaiser (One of the most impressive testers with an amazing eye for detail)
 * SneakingJ (Major props for the help getting cloned display profiles to work)
 * Scowling (Again, without you, AMD support wouldn’t exist AT ALL! )
 * Slippery-silvia (Again, thanks for the testing help for Mosaic cards with v2.1)
@@ -164,3 +172,5 @@ Thanks for the work and the time that all of our contributors put into making th
 * RBZL (thanks for the donation)
 * Neilperson (thanks for the cool idea)
 * DragRedSim (thanks for the bug report)
+* Original HelioDisplayManagement project created by the amazing Soroush Falahati
+* Various icons made by Freepik from www.flaticon.com
