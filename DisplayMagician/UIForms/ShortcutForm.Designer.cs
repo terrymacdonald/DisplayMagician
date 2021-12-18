@@ -74,6 +74,7 @@ namespace DisplayMagician.UIForms
             this.label3 = new System.Windows.Forms.Label();
             this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.tabp_game = new System.Windows.Forms.TabPage();
+            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.p_gametostart = new System.Windows.Forms.Panel();
             this.btn_find_examples_game = new System.Windows.Forms.Button();
             this.p_standalone = new System.Windows.Forms.Panel();
@@ -112,7 +113,6 @@ namespace DisplayMagician.UIForms
             this.nud_timeout_game = new System.Windows.Forms.NumericUpDown();
             this.lbl_game_library = new System.Windows.Forms.Label();
             this.rb_launcher = new System.Windows.Forms.RadioButton();
-            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.tabp_after = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.txt_run_cmd_afterwards_args = new System.Windows.Forms.TextBox();
@@ -739,6 +739,21 @@ namespace DisplayMagician.UIForms
             this.tabp_game.TabIndex = 2;
             this.tabp_game.Text = "4. Choose Game to start";
             // 
+            // ilv_games
+            // 
+            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ilv_games.IntegralScroll = true;
+            this.ilv_games.Location = new System.Drawing.Point(3, 523);
+            this.ilv_games.Name = "ilv_games";
+            this.ilv_games.PersistentCacheDirectory = "";
+            this.ilv_games.PersistentCacheSize = ((long)(100));
+            this.ilv_games.Size = new System.Drawing.Size(1046, 205);
+            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
+            this.ilv_games.TabIndex = 42;
+            this.ilv_games.UseWIC = true;
+            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
+            // 
             // p_gametostart
             // 
             this.p_gametostart.Controls.Add(this.btn_find_examples_game);
@@ -1233,21 +1248,6 @@ namespace DisplayMagician.UIForms
             this.rb_launcher.UseVisualStyleBackColor = true;
             this.rb_launcher.CheckedChanged += new System.EventHandler(this.rb_launcher_CheckedChanged);
             this.rb_launcher.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
-            // 
-            // ilv_games
-            // 
-            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ilv_games.IntegralScroll = true;
-            this.ilv_games.Location = new System.Drawing.Point(3, 523);
-            this.ilv_games.Name = "ilv_games";
-            this.ilv_games.PersistentCacheDirectory = "";
-            this.ilv_games.PersistentCacheSize = ((long)(100));
-            this.ilv_games.Size = new System.Drawing.Size(1046, 205);
-            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
-            this.ilv_games.TabIndex = 42;
-            this.ilv_games.UseWIC = true;
-            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
             // 
             // tabp_after
             // 
