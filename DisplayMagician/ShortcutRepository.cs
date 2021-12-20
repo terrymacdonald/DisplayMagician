@@ -54,7 +54,14 @@ namespace DisplayMagician
             }
 
             // Load the Shortcuts from storage
-            LoadShortcuts();
+            try
+            {
+                LoadShortcuts();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"ShortcutRepository/ShortcutRepository: Exception while trying to load the Shortcuts from the ShortcutRespository initialiser. You probably have an issue with the configuration of your Shortcuts JSON file.");
+            }
         }
 
         #endregion
@@ -466,8 +473,8 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the SHortcut JSON file!");
-                        throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the SHortcut JSON file!");
+                        logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
+                        throw new Exception("ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");
                     }
 
                     // If we have any JSON.net errors, then we need to records them in the logs
@@ -479,6 +486,7 @@ namespace DisplayMagician
                         }
                     }
 
+                    
                     // Lookup all the Profile Names in the Saved Profiles
                     // and link the profiles to the Shortcuts as we only 
                     // store the profile names to allow users to uodate profiles
@@ -486,17 +494,30 @@ namespace DisplayMagician
                     logger.Debug($"ShortcutRepository/LoadShortcuts: Connecting Shortcut profile names to the real profile objects");
                     foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
+                        if (!String.IsNullOrWhiteSpace(updatedShortcut.ProfileUUID))
+                        {
+                            logger.Error($"ShortcutRepository/LoadShortcuts: Shortcut '{updatedShortcut.Name}' profile UUID is null or whitespace! Skipping this processing this entry, and setting ProfileToUse to null.");
+                            updatedShortcut.ProfileToUse = null;
+                            continue;
+                        }
+
                         bool foundProfile = false;
                         foreach (ProfileItem profile in ProfileRepository.AllProfiles)
                         {
-
-                            if (profile.UUID.Equals(updatedShortcut.ProfileUUID))
+                            try
                             {
-                                // And assign the matching Profile if we find it.
-                                updatedShortcut.ProfileToUse = profile;
-                                foundProfile = true;
-                                logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile!");
-                                break;
+                                if (!String.IsNullOrWhiteSpace(profile.UUID) && profile.UUID.Equals(updatedShortcut.ProfileUUID))
+                                {
+                                    // And assign the matching Profile if we find it.
+                                    updatedShortcut.ProfileToUse = profile;
+                                    foundProfile = true;
+                                    logger.Debug($"ShortcutRepository/LoadShortcuts: Found the profile with UUID {updatedShortcut.ProfileUUID} and linked it to a profile!");
+                                    break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Error looking for Profile UUID {updatedShortcut.ProfileUUID} in the list of profiles in the Profile Repository.");
                             }
                         }
 
@@ -505,8 +526,10 @@ namespace DisplayMagician
                             // We should only get here if there isn't a profile to match to.
                             logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the profile with UUID {updatedShortcut.ProfileUUID} so couldn't link it to a profile! We can't use this shortcut.");
                             updatedShortcut.ProfileToUse = null;
-                        }                            
+                        }
                     }
+                    
+
 
                     // Sort the shortcuts alphabetically
                     _allShortcuts.Sort();

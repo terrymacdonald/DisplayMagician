@@ -67,7 +67,7 @@ namespace DisplayMagician.UIForms
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
-            this.p_start_program = new System.Windows.Forms.Panel();
+            this.p_start_program_upper = new System.Windows.Forms.Panel();
             this.btn_find_examples_startprograms = new System.Windows.Forms.Button();
             this.btn_add_new_start_program = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
@@ -134,6 +134,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.p_profiles = new System.Windows.Forms.Panel();
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
@@ -146,7 +147,7 @@ namespace DisplayMagician.UIForms
             this.gb_audio_volume.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).BeginInit();
             this.tabp_before.SuspendLayout();
-            this.p_start_program.SuspendLayout();
+            this.p_start_program_upper.SuspendLayout();
             this.tabp_game.SuspendLayout();
             this.p_gametostart.SuspendLayout();
             this.p_standalone.SuspendLayout();
@@ -160,6 +161,7 @@ namespace DisplayMagician.UIForms
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gb_display_after.SuspendLayout();
+            this.p_profiles.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -232,11 +234,8 @@ namespace DisplayMagician.UIForms
             // tabp_display
             // 
             this.tabp_display.BackColor = System.Drawing.Color.Black;
-            this.tabp_display.Controls.Add(this.pbLogo);
-            this.tabp_display.Controls.Add(this.lbl_profile_shown_subtitle);
-            this.tabp_display.Controls.Add(this.lbl_profile_shown);
             this.tabp_display.Controls.Add(this.ilv_saved_profiles);
-            this.tabp_display.Controls.Add(this.dv_profile);
+            this.tabp_display.Controls.Add(this.p_profiles);
             this.tabp_display.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_display.ForeColor = System.Drawing.Color.White;
             this.tabp_display.Location = new System.Drawing.Point(4, 32);
@@ -251,7 +250,7 @@ namespace DisplayMagician.UIForms
             // 
             this.pbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.pbLogo.BackColor = System.Drawing.Color.DimGray;
-            this.pbLogo.Location = new System.Drawing.Point(923, 20);
+            this.pbLogo.Location = new System.Drawing.Point(898, 26);
             this.pbLogo.Name = "pbLogo";
             this.pbLogo.Size = new System.Drawing.Size(100, 49);
             this.pbLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -264,7 +263,7 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown_subtitle.BackColor = System.Drawing.Color.DimGray;
             this.lbl_profile_shown_subtitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown_subtitle.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(18, 49);
+            this.lbl_profile_shown_subtitle.Location = new System.Drawing.Point(3, 55);
             this.lbl_profile_shown_subtitle.Name = "lbl_profile_shown_subtitle";
             this.lbl_profile_shown_subtitle.Size = new System.Drawing.Size(397, 20);
             this.lbl_profile_shown_subtitle.TabIndex = 26;
@@ -276,7 +275,7 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown.BackColor = System.Drawing.Color.DimGray;
             this.lbl_profile_shown.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_profile_shown.ForeColor = System.Drawing.Color.White;
-            this.lbl_profile_shown.Location = new System.Drawing.Point(18, 20);
+            this.lbl_profile_shown.Location = new System.Drawing.Point(3, 26);
             this.lbl_profile_shown.Name = "lbl_profile_shown";
             this.lbl_profile_shown.Size = new System.Drawing.Size(308, 29);
             this.lbl_profile_shown.TabIndex = 25;
@@ -290,12 +289,12 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.AllowItemReorder = false;
             this.ilv_saved_profiles.AllowPaneResize = false;
             this.ilv_saved_profiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ilv_saved_profiles.Location = new System.Drawing.Point(3, 475);
+            this.ilv_saved_profiles.Location = new System.Drawing.Point(3, 478);
             this.ilv_saved_profiles.MultiSelect = false;
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(1046, 253);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(1046, 250);
             this.ilv_saved_profiles.TabIndex = 24;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -633,8 +632,8 @@ namespace DisplayMagician.UIForms
             // tabp_before
             // 
             this.tabp_before.BackColor = System.Drawing.Color.Black;
-            this.tabp_before.Controls.Add(this.p_start_program);
             this.tabp_before.Controls.Add(this.flp_start_programs);
+            this.tabp_before.Controls.Add(this.p_start_program_upper);
             this.tabp_before.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_before.ForeColor = System.Drawing.Color.White;
             this.tabp_before.Location = new System.Drawing.Point(4, 32);
@@ -644,16 +643,16 @@ namespace DisplayMagician.UIForms
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
             // 
-            // p_start_program
+            // p_start_program_upper
             // 
-            this.p_start_program.Controls.Add(this.btn_find_examples_startprograms);
-            this.p_start_program.Controls.Add(this.btn_add_new_start_program);
-            this.p_start_program.Controls.Add(this.label3);
-            this.p_start_program.Dock = System.Windows.Forms.DockStyle.Top;
-            this.p_start_program.Location = new System.Drawing.Point(3, 3);
-            this.p_start_program.Name = "p_start_program";
-            this.p_start_program.Size = new System.Drawing.Size(1046, 121);
-            this.p_start_program.TabIndex = 41;
+            this.p_start_program_upper.Controls.Add(this.btn_find_examples_startprograms);
+            this.p_start_program_upper.Controls.Add(this.btn_add_new_start_program);
+            this.p_start_program_upper.Controls.Add(this.label3);
+            this.p_start_program_upper.Dock = System.Windows.Forms.DockStyle.Top;
+            this.p_start_program_upper.Location = new System.Drawing.Point(3, 3);
+            this.p_start_program_upper.Name = "p_start_program_upper";
+            this.p_start_program_upper.Size = new System.Drawing.Size(1046, 121);
+            this.p_start_program_upper.TabIndex = 41;
             // 
             // btn_find_examples_startprograms
             // 
@@ -669,6 +668,7 @@ namespace DisplayMagician.UIForms
             this.btn_find_examples_startprograms.TabIndex = 43;
             this.btn_find_examples_startprograms.Text = "Show me &Examples";
             this.btn_find_examples_startprograms.UseVisualStyleBackColor = true;
+            this.btn_find_examples_startprograms.Click += new System.EventHandler(this.btn_find_examples_startprograms_Click);
             // 
             // btn_add_new_start_program
             // 
@@ -684,6 +684,7 @@ namespace DisplayMagician.UIForms
             this.btn_add_new_start_program.TabIndex = 41;
             this.btn_add_new_start_program.Text = "&Add Start Program";
             this.btn_add_new_start_program.UseVisualStyleBackColor = true;
+            this.btn_add_new_start_program.Click += new System.EventHandler(this.btn_add_new_start_program_Click);
             // 
             // label3
             // 
@@ -704,9 +705,9 @@ namespace DisplayMagician.UIForms
             this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
             this.flp_start_programs.BackColor = System.Drawing.Color.White;
             this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flp_start_programs.Location = new System.Drawing.Point(3, 3);
+            this.flp_start_programs.Location = new System.Drawing.Point(3, 124);
             this.flp_start_programs.Name = "flp_start_programs";
-            this.flp_start_programs.Size = new System.Drawing.Size(1046, 725);
+            this.flp_start_programs.Size = new System.Drawing.Size(1046, 604);
             this.flp_start_programs.TabIndex = 0;
             // 
             // tabp_game
@@ -1521,6 +1522,18 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
+            // p_profiles
+            // 
+            this.p_profiles.Controls.Add(this.dv_profile);
+            this.p_profiles.Controls.Add(this.pbLogo);
+            this.p_profiles.Controls.Add(this.lbl_profile_shown_subtitle);
+            this.p_profiles.Controls.Add(this.lbl_profile_shown);
+            this.p_profiles.Dock = System.Windows.Forms.DockStyle.Top;
+            this.p_profiles.Location = new System.Drawing.Point(3, 3);
+            this.p_profiles.Name = "p_profiles";
+            this.p_profiles.Size = new System.Drawing.Size(1046, 475);
+            this.p_profiles.TabIndex = 39;
+            // 
             // dv_profile
             // 
             this.dv_profile.BackColor = System.Drawing.Color.DimGray;
@@ -1528,13 +1541,13 @@ namespace DisplayMagician.UIForms
             this.dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
             this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(3, 3);
+            this.dv_profile.Location = new System.Drawing.Point(0, 0);
             this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
             this.dv_profile.Name = "dv_profile";
             this.dv_profile.PaddingX = 100;
             this.dv_profile.PaddingY = 100;
             this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(1046, 472);
+            this.dv_profile.Size = new System.Drawing.Size(1046, 475);
             this.dv_profile.TabIndex = 23;
             // 
             // ShortcutForm
@@ -1565,7 +1578,6 @@ namespace DisplayMagician.UIForms
             this.Load += new System.EventHandler(this.ShortcutForm_Load);
             this.tabc_shortcut.ResumeLayout(false);
             this.tabp_display.ResumeLayout(false);
-            this.tabp_display.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
             this.tabp_audio.ResumeLayout(false);
             this.tabp_audio.PerformLayout();
@@ -1580,8 +1592,8 @@ namespace DisplayMagician.UIForms
             this.gb_audio_volume.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_audio_volume)).EndInit();
             this.tabp_before.ResumeLayout(false);
-            this.p_start_program.ResumeLayout(false);
-            this.p_start_program.PerformLayout();
+            this.p_start_program_upper.ResumeLayout(false);
+            this.p_start_program_upper.PerformLayout();
             this.tabp_game.ResumeLayout(false);
             this.p_gametostart.ResumeLayout(false);
             this.p_gametostart.PerformLayout();
@@ -1602,6 +1614,8 @@ namespace DisplayMagician.UIForms
             this.groupBox1.PerformLayout();
             this.gb_display_after.ResumeLayout(false);
             this.gb_display_after.PerformLayout();
+            this.p_profiles.ResumeLayout(false);
+            this.p_profiles.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1667,7 +1681,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TextBox txt_run_cmd_afterwards_args;
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_args;
         private System.Windows.Forms.TabPage tabp_before;
-        private System.Windows.Forms.Panel p_start_program;
+        private System.Windows.Forms.Panel p_start_program_upper;
         private System.Windows.Forms.Button btn_find_examples_startprograms;
         private System.Windows.Forms.Button btn_add_new_start_program;
         private System.Windows.Forms.Label label3;
@@ -1711,5 +1725,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_game_library;
         private System.Windows.Forms.RadioButton rb_launcher;
         internal Manina.Windows.Forms.ImageListView ilv_games;
+        private System.Windows.Forms.Panel p_profiles;
     }
 }
