@@ -919,6 +919,39 @@ namespace DisplayMagician.UIForms
 
         private void ClearForm()
         {
+            // Reset all the tracking variables back to default
+            _editingExistingShortcut = false;
+            //_loadedProfiles = new List<ProfileItem>();
+            _profileToUse = null;
+            _gameLauncher = "";
+            //_gameToUse;
+            // _executableToUse;
+            _displayPermanence = ShortcutPermanence.Temporary;
+            _audioPermanence = ShortcutPermanence.Temporary;
+            _capturePermanence = ShortcutPermanence.Temporary;
+            _startPrograms = new List<StartProgram>();
+            _stopPrograms = new List<StopProgram>();
+            _audioDevice = "";
+            _changeAudioDevice = false;
+            _setAudioVolume = false;
+            _audioVolume = -1;
+            _captureDevice = "";
+            _changeCaptureDevice = false;
+            _setCaptureVolume = false;
+            _captureVolume = -1;
+            _shortcutToEdit = null;
+            _selectedGame = null;
+            _isUnsaved = true;
+            _loadedShortcut = false;
+            _autoName = true;
+            _gameId = "0";
+            _uuid = "";
+            audioDevices = null;
+            selectedAudioDevice = null;
+            captureDevices = null;
+            selectedCaptureDevice = null;
+            _hotkey = Keys.None;
+
             // Clear the textboxes
             txt_alternative_executable.Text = "";
             txt_alternative_game.Text = "";
@@ -1376,10 +1409,10 @@ namespace DisplayMagician.UIForms
                 cb_wait_alternative_game.Checked = false;
             }
 
-            // Set the launcher items if we have them
+            // Show an error message if there isn't a game launcher selected
             if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
             {
-                if (DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
+                if (GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
                 {
                     // Fill in the game library information to highlight there isn't one detected.
                     _gameLauncher = "None detected";
@@ -1398,6 +1431,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
+                // Set the launcher items if we have them
                 _gameLauncher = _shortcutToEdit.GameLibrary.ToString("G");
                 txt_game_name.Text = _shortcutToEdit.GameName;
                 _gameId = _shortcutToEdit.GameAppId;

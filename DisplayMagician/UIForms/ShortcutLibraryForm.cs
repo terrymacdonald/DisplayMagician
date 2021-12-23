@@ -43,13 +43,14 @@ namespace DisplayMagician.UIForms
             // Refresh the profiles and the shortcut validity to start
             // The rest of the refreshing happens as the shortcuts are added
             // and deleted.
+            logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing Possibilty.");
             ProfileRepository.IsPossibleRefresh();
+            logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing Validity.");
             ShortcutRepository.IsValidRefresh();
-
+            logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Refreshing SHortutLibraryUI.");
             // Refresh the Shortcut Library UI
             RefreshShortcutLibraryUI();
-
-
+            logger.Trace($"ShortcutLibraryForm/ShortcutLibraryForm_Load: Remove the UI warning if we do have some shortcuts to show the user.");
             RemoveWarningIfShortcuts();
         }
 
@@ -61,13 +62,18 @@ namespace DisplayMagician.UIForms
                 return;
 
             // Temporarily stop updating the saved_profiles listview
+            logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Suspending the imagelistview layout");
             ilv_saved_shortcuts.SuspendLayout();            
 
-            ImageListViewItem newItem = null;            
+            ImageListViewItem newItem = null;
+            logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Emptying shortcut list");
             ilv_saved_shortcuts.Items.Clear();
 
+            
             foreach (ShortcutItem loadedShortcut in ShortcutRepository.AllShortcuts.OrderBy(s => s.Name))
             {
+                logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Adding shortcut {loadedShortcut.Name} into the list of shortcuts shown to the user ");
+
                 // Ignore any shortcuts with incompatible game libraries
                 if (loadedShortcut.Category == ShortcutCategory.Game && (!Enum.IsDefined(typeof(SupportedGameLibraryType), loadedShortcut.GameLibrary) || loadedShortcut.GameLibrary == SupportedGameLibraryType.Unknown))
                 {
@@ -81,26 +87,31 @@ namespace DisplayMagician.UIForms
                 // Select it if its the selectedProfile
                 if (_selectedShortcut is ShortcutItem && _selectedShortcut.Equals(loadedShortcut))
                 {
+                    logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: This shortcut {loadedShortcut.Name} is the selected one so selecting it in the UI");
                     newItem.Selected = true;
                     // Hide the run button if the shortcut isn't valid
                     if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
                     {
+                        logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: This shortcut {loadedShortcut.Name} is the selected one and is invalid ({_selectedShortcut.IsValid.ToString("G")}), so highlighting that in the UI");
                         btn_run.Visible = false;
                         cms_shortcuts.Items[1].Enabled = false;
                     }
 
                     else
                     {
+                        logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: This shortcut {loadedShortcut.Name} is the selected one and is valid, so highlighting that in the UI");
                         btn_run.Visible = true;
                         cms_shortcuts.Items[1].Enabled = true;
                     }
                 }
 
                 //ilv_saved_profiles.Items.Add(newItem);
+                logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Adding this shortcut {loadedShortcut.Name} to the imagelistview");
                 ilv_saved_shortcuts.Items.Add(newItem, _shortcutAdaptor);
             }
 
-    
+            logger.Trace($"ShortcutLibraryForm/RefreshShortcutLibraryUI: Resuming the imagelistview layout");
+
             // Restart updating the saved_profiles listview
             ilv_saved_shortcuts.ResumeLayout();
 

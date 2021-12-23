@@ -1159,6 +1159,7 @@ namespace DisplayMagician
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Application))
             {
+                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is an Application");
                 // We need to check if the Application still exists
                 if (!System.IO.File.Exists(ExecutableNameAndPath))
                 {
@@ -1180,41 +1181,76 @@ namespace DisplayMagician
             else if (Category.Equals(ShortcutCategory.Game))
             {
                 GameLibrary gameLibraryToUse = null;
-
+                logger.Trace($"ShortcutItem/RefreshValidity: This shortcut is a Game");
                 // If the game is a Steam Game we check for that
                 if (GameLibrary.Equals(SupportedGameLibraryType.Steam))
                 {
                     logger.Trace($"ShortcutItem/RefreshValidity: The game library is Steam");
                     // We now need to get the SteamGame info
-                    gameLibraryToUse = SteamLibrary.GetLibrary();
+                    try 
+                    {
+                        gameLibraryToUse = SteamLibrary.GetLibrary();
+                    }
+                    catch(Exception ex)
+                    {
+                        logger.Error(ex,$"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Steam library");
+                    }
                 }
                 // If the game is a Uplay Uplay Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Uplay))
                 {
                     logger.Trace($"ShortcutItem/RefreshValidity: The game library is Uplay");
                     // We now need to get the Uplay Game  info
-                    gameLibraryToUse = UplayLibrary.GetLibrary();
+                    try
+                    {
+                        gameLibraryToUse = UplayLibrary.GetLibrary();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Uplay library");
+                    }
                 }
                 // If the game is an Origin Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Origin))
                 {
                     logger.Trace($"ShortcutItem/RefreshValidity: The game library is Origin");
                     // We now need to get the Uplay Game  info
-                    gameLibraryToUse = OriginLibrary.GetLibrary();
+                    try
+                    {
+                        gameLibraryToUse = OriginLibrary.GetLibrary();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Origin library");
+                    }
                 }
                 // If the game is an Epic Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.Epic))
                 {
                     logger.Trace($"ShortcutItem/RefreshValidity: The game library is Epic");
                     // We now need to get the Epic Game  info
-                    gameLibraryToUse = EpicLibrary.GetLibrary();
+                    try
+                    {
+                        gameLibraryToUse = EpicLibrary.GetLibrary();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the Epic library");
+                    }
                 }
                 // If the game is an GOG Game we check for that
                 else if (GameLibrary.Equals(SupportedGameLibraryType.GOG))
                 {
                     logger.Trace($"ShortcutItem/RefreshValidity: The game library is GOG");
-                    // We now need to get the GOG Game  info
-                    gameLibraryToUse = GogLibrary.GetLibrary();
+                    // We now need to get the GOG Game  info                    
+                    try
+                    {
+                        gameLibraryToUse = GogLibrary.GetLibrary();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"ShortcutItem/RefreshValidity: Exception while trying to get a handle to the GOG library");
+                    }
                 }
                 else
                 {
@@ -1256,7 +1292,18 @@ namespace DisplayMagician
                         if (worstError != ShortcutValidity.Error)
                             worstError = ShortcutValidity.Error;
                     }
-                }                
+                }
+                else
+                {
+                    logger.Trace($"ShortcutItem/RefreshValidity: The GameLibrary was not created properly during the validity check!");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "GameLibraryToUseNotCreated";
+                    error.Validity = ShortcutValidity.Error;
+                    error.Message = $"The GameLibrary was not created properly during the validity check.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Error;
+                }
             }
             // Check the Audio Device is still valid (if one is specified)
             CoreAudioController audioController = ShortcutRepository.AudioController;
@@ -1268,22 +1315,26 @@ namespace DisplayMagician
                     try
                     {
                         audioDevices = audioController.GetPlaybackDevices();
+                        logger.Trace($"ShortcutItem/RefreshValidity: Audio Controller successfully detected");
                     }
                     catch (Exception ex)
                     {
-                        logger.Warn(ex, $"ShortcutRepository/RefreshValidity: Exception trying to get all playback devices!");
+                        logger.Warn(ex, $"ShortcutItem/RefreshValidity: Exception trying to get all playback devices!");
                     }
                     if (audioDevices != null)
                     {
+                        bool audioFound = false;
+                        logger.Trace($"ShortcutItem/RefreshValidity: Audio Controller successfully returned a list of audio playback devices");
                         foreach (CoreAudioDevice audioDevice in audioDevices)
                         {
                             logger.Trace($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName}");
                             if (audioDevice.FullName.Equals(AudioDevice))
                             {
+                                audioFound = true;
                                 logger.Trace($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want!");
                                 if (audioDevice.State == DeviceState.Disabled)
                                 {
-                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is disabled!");
+                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is disabled!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "AudioDeviceDisabled";
                                     error.Validity = ShortcutValidity.Warning;
@@ -1294,36 +1345,39 @@ namespace DisplayMagician
                                 }
                                 if (audioDevice.State == DeviceState.NotPresent)
                                 {
-                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is not present!");
+                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is not present!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "AudioDeviceNotPresent";
-                                    error.Validity = ShortcutValidity.Error;
+                                    error.Validity = ShortcutValidity.Warning;
                                     error.Message = $"The Audio Device {AudioDevice} is not present, so the shortcut '{Name}' cannot be used.";
                                     _shortcutErrors.Add(error);
                                     if (worstError != ShortcutValidity.Error)
-                                        worstError = ShortcutValidity.Error;
-                                }
-                                // As per Issue #39, this causes issues on HDMI audio devices and others that *could* work if the screen was enabled.
-                                // Disabling this code as it is too much error checking for audio devices. The user can plug these in after the chagne and they will work.
-                                /*if (audioDevice.State == DeviceState.Unplugged)
-                                {
-                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected audio playback device {audioDevice.FullName} is the one we want, but it is unplugged!");
-                                    ShortcutError error = new ShortcutError();
-                                    error.Name = "AudioDeviceUnplugged";
-                                    error.Validity = ShortcutValidity.Warning;
-                                    error.Message = $"The Audio Device {AudioDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the audio device to use this shortcut, or edit the shortcut to change the audio device.";
-                                    _shortcutErrors.Add(error);
-                                    if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
-                                }*/
+                                }
                                 break;
                             }
                         }
+
+                        if (!audioFound)
+                        {
+                            logger.Warn($"ShortcutItem/RefreshValidity: The audio device {AudioDevice} was not found in the list of audio devices currently available!");
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "AudioDeviceNotFound";
+                            error.Validity = ShortcutValidity.Warning;
+                            error.Message = $"The audio device {AudioDevice} was not found in the list of audio devices currently available!";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Warning;
+                        }
                     }                    
+                    else
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: No audio devices detected by Capture Audio. That's fine though, so not logging as an error.");
+                    }
                 }
                 else
                 {
-                    logger.Error($"ShortcutRepository/RefreshValidity: The audio device chipset is not supported by DisplayMagician!");
+                    logger.Error($"ShortcutItem/RefreshValidity: The audio device chipset is not supported by DisplayMagician!");
                     ShortcutError error = new ShortcutError();
                     error.Name = "AudioChipsetNotSupported";
                     error.Validity = ShortcutValidity.Warning;
@@ -1345,20 +1399,22 @@ namespace DisplayMagician
                     }
                     catch(Exception ex)
                     {
-                        logger.Warn(ex, $"ShortcutRepository/RefreshValidity: Exception trying to get all capture devices!");
+                        logger.Warn(ex, $"ShortcutItem/RefreshValidity: Exception trying to get all capture devices!");
                     }
 
                     if (captureDevices != null)
                     {
+                        bool captureFound = false;
                         foreach (CoreAudioDevice captureDevice in captureDevices)
                         {
                             logger.Trace($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName}");
                             if (captureDevice.FullName.Equals(CaptureDevice))
                             {
+                                captureFound = true;
                                 logger.Trace($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want!");
                                 if (captureDevice.State == DeviceState.Disabled)
                                 {
-                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is disabled!");
+                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is disabled!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "CaptureDeviceDisabled";
                                     error.Validity = ShortcutValidity.Warning;
@@ -1369,40 +1425,43 @@ namespace DisplayMagician
                                 }
                                 if (captureDevice.State == DeviceState.NotPresent)
                                 {
-                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is not present!");
+                                    logger.Warn($"ShortcutItem/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is not present!");
                                     ShortcutError error = new ShortcutError();
                                     error.Name = "CaptureDeviceNotPresent";
-                                    error.Validity = ShortcutValidity.Error;
+                                    error.Validity = ShortcutValidity.Warning;
                                     error.Message = $"The Capture Device {CaptureDevice} is not present, so the shortcut '{Name}' cannot be used.";
                                     _shortcutErrors.Add(error);
                                     if (worstError != ShortcutValidity.Error)
-                                        worstError = ShortcutValidity.Error;
-                                }
-                                // As per Issue #39, this causes issues on HDMI audiodevices and others that *could* work if the screen was enabled.
-                                // Disabling this code as it is too much error checking for capture devices. The user can plug these in after the chagne and they will work.
-                                /*if (captureDevice.State == DeviceState.Unplugged)
-                                {
-                                    logger.Warn($"ShortcutRepository/RefreshValidity: Detected capture device {captureDevice.FullName} is the one we want, but it is unplugged!");
-                                    ShortcutError error = new ShortcutError();
-                                    error.Name = "CaptureDeviceUnplugged";
-                                    error.Validity = ShortcutValidity.Warning;
-                                    error.Message = $"The Capture Device {CaptureDevice} is unplugged, so the shortcut '{Name}' cannot be used. You need to plug in the capture device to use this shortcut, or edit the shortcut to change the capture device.";
-                                    _shortcutErrors.Add(error);
-                                    if (worstError != ShortcutValidity.Error)
                                         worstError = ShortcutValidity.Warning;
-                                }*/
+                                }
                                 break;
                             }
                         }
-                    }                    
+
+                        if (!captureFound)
+                        {
+                            logger.Warn($"ShortcutItem/RefreshValidity: The capture device {CaptureDevice} was not found in the list of capture devices currently available!");
+                            ShortcutError error = new ShortcutError();
+                            error.Name = "CaptureDeviceNotFound";
+                            error.Validity = ShortcutValidity.Warning;
+                            error.Message = $"The capture device {CaptureDevice} was not found in the list of capture devices currently available!";
+                            _shortcutErrors.Add(error);
+                            if (worstError != ShortcutValidity.Error)
+                                worstError = ShortcutValidity.Warning;
+                        }
+                    }   
+                    else
+                    {
+                        logger.Warn($"ShortcutItem/RefreshValidity: No capture devices detected by Capture Audio. That's fine though, so not logging as an error.");
+                    }
                 } 
                 else
                 {
-                    logger.Error($"ShortcutRepository/RefreshValidity: The capture device chipset is not supported by DisplayMagician!");
+                    logger.Error($"ShortcutItem/RefreshValidity: The capture device chipset is not supported by DisplayMagician!");
                     ShortcutError error = new ShortcutError();
-                    error.Name = "AudioChipsetNotSupported";
+                    error.Name = "CaptureChipsetNotSupported";
                     error.Validity = ShortcutValidity.Warning;
-                    error.Message = $"The Audio chipset isn't supported by DisplayMagician. You need to edit the shortcut to not change the microphone input settings.";
+                    error.Message = $"The Capture chipset isn't supported by DisplayMagician. You need to edit the shortcut to not change the microphone input settings.";
                     _shortcutErrors.Add(error);
                     if (worstError != ShortcutValidity.Error)
                         worstError = ShortcutValidity.Warning;

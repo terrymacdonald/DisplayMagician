@@ -272,6 +272,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_setup_display_profiles_Click(object sender, EventArgs e)
         {
+            logger.Trace($"MainForm/btn_setup_display_profiles_Click: User pressed the Display Profiles button (or selected the menu item)");
             DisplayProfileForm displayProfileForm = null;
             if (Application.OpenForms.OfType<DisplayProfileForm>().Any())
             {
@@ -295,6 +296,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_setup_game_shortcuts_Click(object sender, EventArgs e)
         {
+            logger.Trace($"MainForm/btn_setup_game_shortcuts_Click: User pressed the Game Shortcuts button (or selected the menu item)");
             ShortcutLibraryForm shortcutLibraryForm = null;
             if (Application.OpenForms.OfType<ShortcutLibraryForm>().Any())
             {

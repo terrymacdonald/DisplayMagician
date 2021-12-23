@@ -482,11 +482,13 @@ namespace DisplayMagician
                     {
                         foreach (string jsonError in jsonErrors)
                         {
-                            logger.Error($"ShortcutRepository/LoadShortcuts: {jsonErrors}");
+                            logger.Error($"ShortcutRepository/LoadShortcuts: JSON.Net Error found while loading {_shortcutStorageJsonFileName}: {jsonErrors}");
                         }
                     }
 
-                    
+                    logger.Trace($"ShortcutRepository/LoadShortcuts: Loaded {_allShortcuts.Count} shortcuts from {_shortcutStorageJsonFileName} Shortcut JSON file");
+
+
                     // Lookup all the Profile Names in the Saved Profiles
                     // and link the profiles to the Shortcuts as we only 
                     // store the profile names to allow users to uodate profiles
@@ -494,7 +496,7 @@ namespace DisplayMagician
                     logger.Debug($"ShortcutRepository/LoadShortcuts: Connecting Shortcut profile names to the real profile objects");
                     foreach (ShortcutItem updatedShortcut in _allShortcuts)
                     {
-                        if (!String.IsNullOrWhiteSpace(updatedShortcut.ProfileUUID))
+                        if (String.IsNullOrWhiteSpace(updatedShortcut.ProfileUUID))
                         {
                             logger.Error($"ShortcutRepository/LoadShortcuts: Shortcut '{updatedShortcut.Name}' profile UUID is null or whitespace! Skipping this processing this entry, and setting ProfileToUse to null.");
                             updatedShortcut.ProfileToUse = null;
@@ -528,10 +530,10 @@ namespace DisplayMagician
                             updatedShortcut.ProfileToUse = null;
                         }
                     }
-                    
 
 
                     // Sort the shortcuts alphabetically
+                    logger.Trace($"ShortcutRepository/LoadShortcuts: Sorting the Shortcuts alphabetically.");
                     _allShortcuts.Sort();
                 }
                 else
@@ -543,10 +545,17 @@ namespace DisplayMagician
             {
                 logger.Debug($"ShortcutRepository/LoadShortcuts: Couldn't find the {_shortcutStorageJsonFileName} shortcut JSON file that contains the Shortcuts");
             }
-            _shortcutsLoaded = true;
-
-            IsValidRefresh();
-            return true;
+            logger.Trace($"ShortcutRepository/LoadShortcuts: Checking validity of the loaded shortcuts to make sure they're ok to use now");
+            try
+            {
+                _shortcutsLoaded = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Exception while checking the validity of the loaded shortcuts to make sure they're ok to use");
+                return false;
+            }            
         }
 
         public static bool SaveShortcuts()
@@ -632,11 +641,13 @@ namespace DisplayMagician
         {
             // We need to refresh the cached answer
             // Get the list of connected devices
-
+            logger.Trace($"ShortcutRepository/IsValidRefresh: IsValidRefresh starting.");
             foreach (ShortcutItem loadedShortcut in AllShortcuts)
             {
+                logger.Trace($"ShortcutRepository/IsValidRefresh: Running RefreshValidity on Shortcut {loadedShortcut.Name}");
                 loadedShortcut.RefreshValidity();
             }
+            logger.Trace($"ShortcutRepository/IsValidRefresh: IsValidRefresh completed.");
         }
 
         private static ProcessPriorityClass TranslatePriorityClassToClass(ProcessPriority processPriority)

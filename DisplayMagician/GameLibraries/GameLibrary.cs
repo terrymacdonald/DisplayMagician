@@ -269,7 +269,8 @@ namespace DisplayMagician.GameLibraries
             EpicLibrary.GetLibrary().AllInstalledGames.Clear();
             GogLibrary.GetLibrary().AllInstalledGames.Clear();
             // Produce a single array of Games we can reference later
-            GameLibrary.AllInstalledGamesInAllLibraries = SteamLibrary.GetLibrary().AllInstalledGames;
+            GameLibrary.AllInstalledGamesInAllLibraries = new List<Game>();
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(SteamLibrary.GetLibrary().AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
             GameLibrary.AllInstalledGamesInAllLibraries.AddRange(EpicLibrary.GetLibrary().AllInstalledGames);

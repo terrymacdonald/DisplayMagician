@@ -482,7 +482,7 @@ namespace DisplayMagician.GameLibraries
                     if (uplayInstallKey != null)
                     {
                         int uplayGamesInstalledCount = 0;
-                        // Loop through the subKeys as they are the Steam Game IDs
+                        // Loop through the subKeys as they are the Uplay Game IDs
                         foreach (string uplayGameKeyName in uplayInstallKey.GetSubKeyNames())
                         {
                             logger.Trace($"UplayLibrary/LoadInstalledGames: Found uplayGameKeyName = {uplayGameKeyName}");
@@ -497,7 +497,7 @@ namespace DisplayMagician.GameLibraries
                                     if (!uplayGameKey.GetValue(@"InstallDir", "").ToString().Equals(""))
                                     {
                                         logger.Trace($"UplayLibrary/LoadInstalledGames: {uplayGameKey} contains an 'InstallDir' value so is an installed Uplay Game.");
-                                        // Add this Steam App ID to the list we're keeping for later
+                                        // Add this Uplay App ID to the list we're keeping for later
                                         uplayGamesInstalledCount++;
                                     }
                                     else
