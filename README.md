@@ -50,6 +50,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
+* Supports USB display devices and works with SuperDisplay (Android Tablets as a display)
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
 
 ## Planned features
@@ -61,7 +62,6 @@ DisplayMagician lets you set up the following information for each game or appli
 ## Requirements
 
 * DisplayMagician only supports 64-bit Windows 10/11
-* Your displays must use HDMI or DisplayPort connections and support EDID
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
 
@@ -122,7 +122,7 @@ Have fun!
 
 ## License
 
-Copyright © Terry MacDonald 2020-2021
+Copyright © Terry MacDonald 2020-2022
 
 Original HelioDisplayManagement - copyright © Soroush Falahati 2017-2020
 
