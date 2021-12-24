@@ -186,47 +186,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        public int GameTimeout
-        {
-            get
-            {
-                return (int)nud_timeout_game.Value;
-            }
-            set
-            {
-                nud_timeout_game.Value = value;
-            }
-        }
-
-        public string GameArguments
-        {
-            get => cb_args_game.Checked ? txt_args_game.Text : string.Empty;
-            set
-            {
-                txt_args_game.Text = value;
-                cb_args_game.Checked = true;
-            }
-        }
-
-        private void btn_app_executable_Click(object sender, EventArgs e)
-        {
-            if (dialog_open.ShowDialog(this) == DialogResult.OK)
-            {
-                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
-                {
-                    txt_executable.Text = dialog_open.FileName;
-                    dialog_open.FileName = string.Empty;
-                }
-                else
-                {
-                    MessageBox.Show(
-                        Language.Selected_file_is_not_a_valid_file,
-                        Language.Executable,
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
-            }
-        }
+        
 
         private void btn_save_Click(object sender, EventArgs e)
         {
@@ -774,6 +734,26 @@ namespace DisplayMagician.UIForms
             this.Hide();
         }
 
+        private void btn_app_executable_Click(object sender, EventArgs e)
+        {
+            if (dialog_open.ShowDialog(this) == DialogResult.OK)
+            {
+                if (File.Exists(dialog_open.FileName) && Path.GetExtension(dialog_open.FileName) == @".exe")
+                {
+                    txt_executable.Text = dialog_open.FileName;
+                    dialog_open.FileName = string.Empty;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        Language.Selected_file_is_not_a_valid_file,
+                        Language.Executable,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+            }
+        }
+
         private void txt_alternative_executable_TextChanged(object sender, EventArgs e)
         {
             if (_loadedShortcut)
@@ -920,7 +900,6 @@ namespace DisplayMagician.UIForms
         private void ClearForm()
         {
             // Reset all the tracking variables back to default
-            _editingExistingShortcut = false;
             //_loadedProfiles = new List<ProfileItem>();
             _profileToUse = null;
             _gameLauncher = "";
@@ -939,7 +918,6 @@ namespace DisplayMagician.UIForms
             _changeCaptureDevice = false;
             _setCaptureVolume = false;
             _captureVolume = -1;
-            _shortcutToEdit = null;
             _selectedGame = null;
             _isUnsaved = true;
             _loadedShortcut = false;
@@ -951,6 +929,161 @@ namespace DisplayMagician.UIForms
             captureDevices = null;
             selectedCaptureDevice = null;
             _hotkey = Keys.None;
+
+            // Prepare the Game process priority combo box
+            cbx_game_priority.DataSource = new ComboItem[] {
+                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
+                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
+                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
+                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
+                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
+                };
+            cbx_game_priority.ValueMember = "Value";
+            cbx_game_priority.DisplayMember = "Text";
+            cbx_game_priority.SelectedIndex = 2; //Normal
+            cbx_game_priority.Enabled = true;
+
+            // Prepare the exe process priority combo box
+            cbx_exe_priority.DataSource = new ComboItem[] {
+                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
+                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
+                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
+                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
+                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
+                };
+            cbx_exe_priority.ValueMember = "Value";
+            cbx_exe_priority.DisplayMember = "Text";
+            cbx_exe_priority.SelectedIndex = 2; //Normal
+            cbx_exe_priority.Enabled = true;
+
+            // Empty the selected game in case this is a reload
+            txt_alternative_executable.Text = "";
+
+
+            // Populate all the Profiles in the profile listview
+            if (ProfileRepository.ProfileCount > 0)
+            {
+
+                // Temporarily stop updating the saved_profiles listview
+                ilv_saved_profiles.SuspendLayout();
+
+                ImageListViewItem newItem = null;
+                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+                {
+                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
+                    if (!thisLoadedProfileIsAlreadyHere)
+                    {
+                        newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
+                        ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
+                    }
+
+                }
+
+                // Restart updating the saved_profiles listview
+                ilv_saved_profiles.ResumeLayout();
+            }
+
+            // Populate all the Games into the Games ListView            
+            ilv_games.Items.Clear(); 
+            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
+            {
+                // Add the game to the game array
+                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
+                //ilv_saved_profiles.Items.Add(newItem);
+                ilv_games.Items.Add(newItem, _gameAdaptor);
+            }
+
+            // Populate all the audio devices in the audio devices select box
+            if (audioController != null)
+            {
+                cb_audio_device.Items.Clear();
+                try
+                {
+                    audioDevices = audioController.GetPlaybackDevices(DeviceState.Active).ToList();
+                    if (audioDevices != null && audioDevices.Count > 0)
+                    {
+                        
+                        // we populate the audio devce list 
+                        foreach (CoreAudioDevice audioDevice in audioDevices)
+                        {
+                            int index = cb_audio_device.Items.Add(audioDevice.FullName);
+                            // Set the audio device to the default device by default
+                            if (audioDevice.IsDefaultDevice)
+                            {
+                                selectedAudioDevice = audioDevice;
+                                cb_audio_device.SelectedIndex = index;
+                                nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                            }
+                        }
+                        rb_keep_audio_volume.Checked = true;                       
+                    }
+                    else
+                    {
+                        // There are no active audio devices found
+                        // so we hide all audio changing controls
+                        gb_audio_settings.Visible = false;
+                        lbl_no_active_audio_devices.Visible = true;
+                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active playback devices so hiding the audio output controls.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active playback devices.");
+                }                
+
+
+                // Populate all the Capture devices in the capture devices list.
+                cb_capture_device.Items.Clear();
+                try
+                {
+                    captureDevices = audioController.GetCaptureDevices(DeviceState.Active).ToList();
+                    if (captureDevices != null && captureDevices.Count > 0)
+                    {
+                        
+                        // Then we need to populate the list 
+                        foreach (CoreAudioDevice captureDevice in captureDevices)
+                        {
+                            int index = cb_capture_device.Items.Add(captureDevice.FullName);
+                            // Set the capture device to the default device by default
+                            if (captureDevice.IsDefaultDevice)
+                            {
+                                selectedCaptureDevice = captureDevice;
+                                cb_capture_device.SelectedIndex = index;
+                                nud_capture_volume.Value = Convert.ToDecimal(captureDevice.Volume);
+                            }
+                        }
+                        rb_keep_capture_volume.Checked = true;                      
+                    }
+                    else
+                    {
+                        // There are no active audio devices found
+                        // so we hide all audio changing controls
+                        gb_capture_settings.Visible = false;
+                        lbl_no_active_capture_devices.Visible = true;
+                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active capture devices so hiding the microphone input controls.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active capture devices.");
+                }
+            }
+            else
+            {
+                // Audio Controller == null, so the audio device isn't supported by AudioSwitcher.CoreAudio!
+                // We just have to disable the switching functionality at present :(
+                // Hopefully I find another library that works with everything including RealTek Audio
+                gb_audio_settings.Visible = false;
+                gb_capture_settings.Visible = false;
+                lbl_disabled_shortcut_audio_chipset.Visible = true;
+
+                // We also force the audio settings to off, just in case
+                rb_change_audio.Checked = false;
+                rb_set_audio_volume.Checked = false;
+                rb_change_capture.Checked = false;
+                rb_set_capture_volume.Checked = false;
+            }          
+
 
             // Clear the textboxes
             txt_alternative_executable.Text = "";
@@ -995,6 +1128,9 @@ namespace DisplayMagician.UIForms
             {
                 pb_game_icon.Image = null;
             }
+
+            // Select the DisplayProfile tab
+            tabc_shortcut.SelectedTab = tabp_display;
         }
 
         private void LoadShortcut()
@@ -1003,71 +1139,122 @@ namespace DisplayMagician.UIForms
             bool foundChosenProfileInLoadedProfiles = false;
             ProfileItem chosenProfile = null;
 
+            // Close the splash screen
+            CloseTheSplashScreen();
+
+            // =============================================
+            // CLEAR THE FORM
+            // =============================================
             ClearForm();
 
-            // Prepare the Game process priority combo box
-            cbx_game_priority.DataSource = new ComboItem[] {
-                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
-                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
-                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
-                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
-                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
-                };
-            cbx_game_priority.ValueMember = "Value";
-            cbx_game_priority.DisplayMember = "Text";
-            cbx_game_priority.SelectedIndex = 2; //Normal
-            cbx_game_priority.Enabled = true;
+            // =============================================
+            // SETTING COMMON VARIABLES
+            // =============================================
 
-            // Prepare the exe process priority combo box
-            cbx_exe_priority.DataSource = new ComboItem[] {
-                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
-                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
-                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
-                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
-                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
-                };
-            cbx_exe_priority.ValueMember = "Value";
-            cbx_exe_priority.DisplayMember = "Text";
-            cbx_exe_priority.SelectedIndex = 2; //Normal
-            cbx_exe_priority.Enabled = true;
+            // *** Hidden Shortcut variables ***
+            // Track the shortcut UUID
+            _uuid = _shortcutToEdit.UUID;
 
-            // Empty the selected game in case this is a reload
-            txt_alternative_executable.Text = "";
-
-            // Populate all the Audio devices in the audio devices list.
-            // Set the Audio device to the shortcut audio device only if 
-            // the Change Audio radiobutton is set
-            if (audioController != null)
+            // =============================================
+            // IF THE SHORTCUT IS AN EXISTING SHORTCUT
+            // =============================================
+            if (_editingExistingShortcut)
             {
-                rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
-                cb_audio_device.Items.Clear();
+                // *** Main Shortcut controls ***
+                // Set the shortcut name
+                txt_shortcut_save_name.Text = _shortcutToEdit.Name;
+                // Set the autoname checkbox
+                cb_autosuggest.Checked = _shortcutToEdit.AutoName;
+                // Set the Hotkey text
+                UpdateHotkeyLabel(_shortcutToEdit.Hotkey);
 
-                try
+                // *** 1. Choose Display Profile Tab ***
+                // Find the profile
+                if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
                 {
-                    audioDevices = audioController.GetPlaybackDevices(DeviceState.Active).ToList();
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active playback devices.");
-                }
+                    // We have loaded the profile used last time
+                    // so we need to show the selected profile in the UI
+                    chosenProfile = ProfileRepository.GetProfile(_shortcutToEdit.ProfileUUID);
+                    foundChosenProfileInLoadedProfiles = true;
 
-                if (audioDevices != null && audioDevices.Count > 0)
-                {
-                    // If the shortcut is to change the audio device
-                    if (_shortcutToEdit.ChangeAudioDevice)
+                    // If the profile is the same, but the user has renamed the profile
+                    // since the shortcut was last created, then we need to tell the user
+                    if (!chosenProfile.IsPossible)
                     {
-                        // Then we need to populate the list 
-                        bool foundAudioDevice = false;
-                        foreach (CoreAudioDevice audioDevice in audioDevices)
-                        {
+                        MessageBox.Show(
+                        $"The '{chosenProfile.Name}' Display Profile used by this Shortcut still exists, but it isn't possible to use it right now. You can either change the Display Profile this Shortcut uses, or you can change your Displays to make the Display Profile valid again.",
+                        @"Display Profile isn't possible now",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
 
-                            int index = cb_audio_device.Items.Add(audioDevice.FullName);
-                            // Set the audio device to the default device by default
-                            if (audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
+                    }
+
+                }
+
+                if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
+                {
+                    MessageBox.Show(
+                        @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut.",
+                        @"Display Profile no longer exists",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                }
+                // If we get to the end of the loaded profiles and haven't
+                // found a matching profile, then we need to show the current profile
+                // that we're running now (only if that's been saved)
+                else if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
+                {
+                    ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
+                    bool foundCurrentProfile = false;
+                    foreach (ProfileItem profileToCheck in ProfileRepository.AllProfiles)
+                    {
+                        if (profileToCheck.Equals(currentProfile))
+                        {
+                            chosenProfile = currentProfile;
+                            foundCurrentProfile = true;
+                        }
+                    }
+
+                    // If we get here, and we still haven't matched the profile, then just pick the first one
+                    if (!foundCurrentProfile)
+                    {
+                        if (ProfileRepository.ProfileCount > 0)
+                        {
+                            chosenProfile = ProfileRepository.AllProfiles[0];
+                        }
+
+                    }
+
+                }
+
+                // *** 2. Choose Audio Tab ***
+                // Populate all the Audio devices in the audio devices list.
+                // Set the Audio device to the shortcut audio device only if 
+                // the Change Audio radiobutton is set
+                if (audioController != null)
+                {
+                    rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
+                    if (audioDevices != null && audioDevices.Count > 0)
+                    {
+                        // If the shortcut is to change the audio device
+                        if (_shortcutToEdit.ChangeAudioDevice)
+                        {
+                            // Then we need to select the item in the list if it exists
+                            bool foundAudioDevice = false;
+                            bool foundAudioDeviceList = false;
+                            int cbIndex = cb_audio_device.FindStringExact(_shortcutToEdit.AudioDevice);
+                            if (cbIndex >= 0)
                             {
-                                foundAudioDevice = true;
-                                selectedAudioDevice = audioDevice;
-                                cb_audio_device.SelectedIndex = index;
+                                foundAudioDeviceList = true;
+                                cb_audio_device.SelectedIndex = cbIndex;
+                                foreach (CoreAudioDevice audioDevice in audioDevices)
+                                {
+                                    if (audioDevice.FullName.Equals(_shortcutToEdit.AudioDevice))
+                                    {
+                                        selectedAudioDevice = audioDevice;
+                                        foundAudioDevice = true;
+                                    }
+                                }
                                 if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
                                 {
                                     nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
@@ -1075,94 +1262,70 @@ namespace DisplayMagician.UIForms
                                 }
                                 else
                                 {
-                                    nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
+                                    nud_audio_volume.Value = Convert.ToDecimal(selectedAudioDevice.Volume);
                                     rb_set_audio_volume.Checked = false;
                                 }
                             }
-                        }
 
-                        // We need to handle the edgecase where the selected audio device
-                        // isn't currently plugged in. We don't want to break the shortcut
-                        // as it could be plugged in when it comes time to actually run
-                        // the shortcut, so we need to just add it to the list to not break
-                        // the UI.
+                            // We need to handle the edgecase where the selected audio device
+                            // isn't currently plugged in. We don't want to break the shortcut
+                            // as it could be plugged in when it comes time to actually run
+                            // the shortcut, so we need to just add it to the list to not break
+                            // the UI.
 
-                        if (!foundAudioDevice)
-                        {
-                            int index = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
-                            cb_audio_device.SelectedIndex = index;
-                            selectedAudioDevice = null;
-                            if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
+                            if (!foundAudioDevice || !foundAudioDeviceList)
                             {
-                                rb_set_audio_volume.Checked = true;
-                                nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
-                            }
-                            else
-                            {
-                                rb_keep_audio_volume.Checked = true;
-                                nud_audio_volume.Value = 50;
+                                int dIndex = cb_audio_device.Items.Add(_shortcutToEdit.AudioDevice);
+                                cb_audio_device.SelectedIndex = dIndex;
+                                selectedAudioDevice = null;
+                                if (_shortcutToEdit.SetAudioVolume && _shortcutToEdit.AudioVolume >= 0 && _shortcutToEdit.AudioVolume <= 100)
+                                {
+                                    rb_set_audio_volume.Checked = true;
+                                    nud_audio_volume.Value = _shortcutToEdit.AudioVolume;
+                                }
+                                else
+                                {
+                                    rb_keep_audio_volume.Checked = true;
+                                    nud_audio_volume.Value = 50;
+                                }
                             }
                         }
                     }
                     else
                     {
-                        // Then we need to populate the list 
-                        foreach (CoreAudioDevice audioDevice in audioDevices)
-                        {
-                            int index = cb_audio_device.Items.Add(audioDevice.FullName);
-                            // Set the audio device to the default device by default
-                            if (audioDevice.IsDefaultDevice)
-                            {
-                                selectedAudioDevice = audioDevice;
-                                cb_audio_device.SelectedIndex = index;
-                                nud_audio_volume.Value = Convert.ToDecimal(audioDevice.Volume);
-                            }
-                        }
-                        rb_keep_audio_volume.Checked = true;
+                        // There are no active audio devices found
+                        // so we hide all audio changing controls
+                        gb_audio_settings.Visible = false;
+                        lbl_no_active_audio_devices.Visible = true;
+                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active playback devices so hiding the audio output controls.");
                     }
 
-                }
-                else
-                {
-                    // There are no active audio devices found
-                    // so we hide all audio changing controls
-                    gb_audio_settings.Visible = false;
-                    lbl_no_active_audio_devices.Visible = true;
-                    logger.Warn($"ShortcutForm/ShortcutForm_Load: No active playback devices so hiding the audio output controls.");
-                }
 
-
-                // Populate all the Capture devices in the capture devices list.
-                // Set the Capture device to the shortcut capture device only if 
-                // the Change Capture radiobutton is set
-                rb_change_capture.Checked = _shortcutToEdit.ChangeCaptureDevice;
-                cb_capture_device.Items.Clear();
-
-                try
-                {
-                    captureDevices = audioController.GetCaptureDevices(DeviceState.Active).ToList();
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active capture devices.");
-                }
-
-                if (captureDevices != null && captureDevices.Count > 0)
-                {
-                    // If the shortcut is to change the capture device
-                    if (_shortcutToEdit.ChangeCaptureDevice)
+                    // Populate all the Capture devices in the capture devices list.
+                    // Set the Capture device to the shortcut capture device only if 
+                    // the Change Capture radiobutton is set
+                    rb_change_capture.Checked = _shortcutToEdit.ChangeCaptureDevice;
+                    if (captureDevices != null && captureDevices.Count > 0)
                     {
-                        // Then we need to populate the list 
-                        bool foundCaptureDevice = false;
-                        foreach (CoreAudioDevice captureDevice in captureDevices)
+                        // If the shortcut is to change the capture device
+                        if (_shortcutToEdit.ChangeCaptureDevice)
                         {
-                            int index = cb_capture_device.Items.Add(captureDevice.FullName);
-                            // Set the capture device to the default device by default
-                            if (captureDevice.FullName.Equals(_shortcutToEdit.CaptureDevice))
+                            // Then we need to select the item in the list if it exists
+                            bool foundCaptureDevice = false;
+                            bool foundCaptureDeviceList = false;
+                            int cbIndex = cb_capture_device.FindStringExact(_shortcutToEdit.CaptureDevice);
+                            if (cbIndex >= 0)
                             {
-                                foundCaptureDevice = true;
-                                selectedCaptureDevice = captureDevice;
-                                cb_capture_device.SelectedIndex = index;
+                                foundCaptureDeviceList = true;
+                                cb_capture_device.SelectedIndex = cbIndex;
+                                foreach (CoreAudioDevice captureDevice in captureDevices)
+                                {
+                                    if (captureDevice.FullName.Equals(_shortcutToEdit.CaptureDevice))
+                                    {
+                                        selectedCaptureDevice = captureDevice;
+                                        foundCaptureDevice = true;
+                                    }
+                                }
                                 if (_shortcutToEdit.SetCaptureVolume && _shortcutToEdit.CaptureVolume >= 0 && _shortcutToEdit.CaptureVolume <= 100)
                                 {
                                     nud_capture_volume.Value = _shortcutToEdit.CaptureVolume;
@@ -1170,342 +1333,294 @@ namespace DisplayMagician.UIForms
                                 }
                                 else
                                 {
-                                    nud_capture_volume.Value = Convert.ToDecimal(captureDevice.Volume);
+                                    nud_capture_volume.Value = Convert.ToDecimal(selectedCaptureDevice.Volume);
                                     rb_set_capture_volume.Checked = false;
                                 }
                             }
-                        }
 
-                        // We need to handle the edgecase where the selected capture device
-                        // isn't currently plugged in. We don't want to break the shortcut
-                        // as it could be plugged in when it comes time to actually run
-                        // the shortcut, so we need to just add it to the list to not break
-                        // the UI.
+                            // We need to handle the edgecase where the selected capture device
+                            // isn't currently plugged in. We don't want to break the shortcut
+                            // as it could be plugged in when it comes time to actually run
+                            // the shortcut, so we need to just add it to the list to not break
+                            // the UI.
 
-                        if (!foundCaptureDevice)
-                        {
-                            int index = cb_capture_device.Items.Add(_shortcutToEdit.CaptureDevice);
-                            cb_capture_device.SelectedIndex = index;
-                            selectedCaptureDevice = null;
-                            if (_shortcutToEdit.SetCaptureVolume && _shortcutToEdit.CaptureVolume >= 0 && _shortcutToEdit.CaptureVolume <= 100)
+                            if (!foundCaptureDevice || !foundCaptureDeviceList)
                             {
-                                rb_set_capture_volume.Checked = true;
-                                nud_capture_volume.Value = _shortcutToEdit.CaptureVolume;
-                            }
-                            else
-                            {
-                                rb_keep_capture_volume.Checked = true;
-                                nud_capture_volume.Value = 50;
+                                int dIndex = cb_capture_device.Items.Add(_shortcutToEdit.CaptureDevice);
+                                cb_capture_device.SelectedIndex = dIndex;
+                                selectedCaptureDevice = null;
+                                if (_shortcutToEdit.SetCaptureVolume && _shortcutToEdit.CaptureVolume >= 0 && _shortcutToEdit.CaptureVolume <= 100)
+                                {
+                                    rb_set_capture_volume.Checked = true;
+                                    nud_capture_volume.Value = _shortcutToEdit.CaptureVolume;
+                                }
+                                else
+                                {
+                                    rb_keep_capture_volume.Checked = true;
+                                    nud_capture_volume.Value = 50;
+                                }
                             }
                         }
                     }
                     else
                     {
-                        // Then we need to populate the list 
-                        foreach (CoreAudioDevice captureDevice in captureDevices)
-                        {
-                            int index = cb_capture_device.Items.Add(captureDevice.FullName);
-                            // Set the capture device to the default device by default
-                            if (captureDevice.IsDefaultDevice)
-                            {
-                                selectedCaptureDevice = captureDevice;
-                                cb_capture_device.SelectedIndex = index;
-                                nud_capture_volume.Value = Convert.ToDecimal(captureDevice.Volume);
-                            }
-                        }
-                        rb_keep_capture_volume.Checked = true;
+                        // There are no active audio devices found
+                        // so we hide all audio changing controls
+                        gb_capture_settings.Visible = false;
+                        lbl_no_active_capture_devices.Visible = true;
+                        logger.Warn($"ShortcutForm/ShortcutForm_Load: No active capture devices so hiding the microphone input controls.");
                     }
 
+                }
+
+                // *** 3. Choose what happens before Tab ***
+                // Set up the start programs
+                if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
+                {
+                    flp_start_programs.Controls.Clear();
+
+                    Padding firstStartProgramMargin = new Padding(10) { };
+                    Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
+
+                    // Order the inital list in order of priority
+                    int spOrder = 1;
+                    foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
+                    {
+                        if (String.IsNullOrWhiteSpace(myStartProgram.Executable))
+                        {
+                            logger.Warn($"ShortcutForm/ShortcutForm_Load: Start program #{myStartProgram.Priority} is empty, so skipping.");
+                            continue;
+                        }
+
+                        StartProgramControl startProgramControl = new StartProgramControl(myStartProgram, spOrder);
+                        startProgramControl.Dock = DockStyle.None;
+                        if (spOrder == 1)
+                        {
+                            startProgramControl.Margin = firstStartProgramMargin;
+                        }
+                        else
+                        {
+                            startProgramControl.Margin = otherStartProgramMargin;
+                        }
+                        startProgramControl.Width = flp_start_programs.Width - 40;
+                        startProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
+                        startProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
+                        startProgramControl.DragDrop += new DragEventHandler(StartProgramControl_DragDrop);
+                        startProgramControl.AllowDrop = true;
+                        flp_start_programs.Controls.Add(startProgramControl);
+                        spOrder++;
+                    }
                 }
                 else
                 {
-                    // There are no active audio devices found
-                    // so we hide all audio changing controls
-                    gb_capture_settings.Visible = false;
-                    lbl_no_active_capture_devices.Visible = true;
-                    logger.Warn($"ShortcutForm/ShortcutForm_Load: No active capture devices so hiding the microphone input controls.");
+                    flp_start_programs.Controls.Clear();
                 }
 
-            }
-            else
-            {
-                // Audio Controller == null, so the audio device isn't supported by AudioSwitcher.CoreAudio!
-                // We just have to disable the switching functionality at present :(
-                // Hopefully I find another library that works with everything including RealTek Audio
-                gb_audio_settings.Visible = false;
-                gb_capture_settings.Visible = false;
-                lbl_disabled_shortcut_audio_chipset.Visible = true;
-
-                // We also force the audio settings to off, just in case
-                rb_change_audio.Checked = false;
-                rb_set_audio_volume.Checked = false;
-                rb_change_capture.Checked = false;
-                rb_set_capture_volume.Checked = false;
-            }
-
-
-            // Load all the Games into the Games ListView            
-            ilv_games.Items.Clear();
-            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
-            {
-                // Add the game to the game array
-                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
-                //ilv_saved_profiles.Items.Add(newItem);
-                ilv_games.Items.Add(newItem, _gameAdaptor);
-                if (_editingExistingShortcut && game.Name.Equals(_shortcutToEdit.GameName))
+                // *** 4. Choose Game to Start ***
+                // Set the shortcut category
+                switch (_shortcutToEdit.Category)
                 {
-                    _selectedGame = game;
-                }
-
-            }
-
-            if (_editingExistingShortcut && _shortcutToEdit.Category == ShortcutCategory.Game && _shortcutToEdit.GameAppId != null)
-            {
-                bool gameStillInstalled = false;
-                foreach (ImageListViewItem gameItem in ilv_games.Items)
-                {
-                    if (gameItem.Text.Equals(_shortcutToEdit.GameName))
-                    {
-                        gameStillInstalled = true;
-                        gameItem.Selected = true;
-                        ilv_games.EnsureVisible(gameItem.Index);
+                    case ShortcutCategory.NoGame:
+                        rb_no_game.Checked = true;
                         break;
-                    }
-
-                }
-                if (!gameStillInstalled)
-                {
-                    // Close the splash screen
-                    CloseTheSplashScreen();
-                    DialogResult result = MessageBox.Show(
-                        $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
-                        @"Game no longer exists",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }                
-            }
-
-
-            if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
-            {
-                // We have loaded the profile used last time
-                // so we need to show the selected profile in the UI
-                chosenProfile = ProfileRepository.GetProfile(_shortcutToEdit.ProfileUUID);
-                foundChosenProfileInLoadedProfiles = true;
-
-                // If the profile is the same, but the user has renamed the profile
-                // since the shortcut was last created, then we need to tell the user
-                if (!chosenProfile.IsPossible)
-                {
-                    // Close the splash screen
-                    CloseTheSplashScreen();
-                    MessageBox.Show(
-                    $"The '{chosenProfile.Name}' Display Profile used by this Shortcut still exists, but it isn't possible to use it right now. You can either change the Display Profile this Shortcut uses, or you can change your Displays to make the Display Profile valid again.",
-                    @"Display Profile isn't possible now",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Exclamation);
-
+                    case ShortcutCategory.Game:
+                        rb_launcher.Checked = true;
+                        break;
+                    case ShortcutCategory.Application:
+                        rb_standalone.Checked = true;
+                        break;
                 }
 
-            }
 
-            if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
-            {
-                // Close the splash screen
-                CloseTheSplashScreen();
-                MessageBox.Show(
-                    @"The Display Profile used by this Shortcut no longer exists and cannot be used. You need to choose a new Display Profile for this Shortcut.",
-                    @"Display Profile no longer exists",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Exclamation);
-            }
-            // If we get to the end of the loaded profiles and haven't
-            // found a matching profile, then we need to show the current profile
-            // that we're running now (only if that's been saved)
-            else if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
-            {
-                ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
-                bool foundCurrentProfile = false;
-                foreach(ProfileItem profileToCheck in ProfileRepository.AllProfiles)
+                // =============================================
+                // IF THE EXISTING SHORTCUT IS AN APPLICATION
+                // =============================================
+                if (_shortcutToEdit.Category == ShortcutCategory.Application)
                 {
-                    if (profileToCheck.Equals(currentProfile))
+                    // If we have a selected image, then we need to set it
+                    if (_shortcutToEdit.SelectedImage.Image != null)
                     {
-                        chosenProfile = currentProfile;
-                        foundCurrentProfile = true;
-                    }
-                }
-
-                // If we get here, and we still haven't matched the profile, then just pick the first one
-                if (!foundCurrentProfile)
-                {
-                    if (ProfileRepository.ProfileCount > 0)
-                    {
-                        chosenProfile = ProfileRepository.AllProfiles[0];
-                    }
-                    
-                }
-                    
-            }
-
-
-            // Now start populating the other fields if they need it
-            _uuid = _shortcutToEdit.UUID;
-
-            // Set if we launch App/Game/NoGame
-            switch (_shortcutToEdit.Category)
-            {
-                case ShortcutCategory.NoGame:
-                    rb_no_game.Checked = true;
-                    break;
-                case ShortcutCategory.Game:
-                    rb_launcher.Checked = true;
-                    break;
-                case ShortcutCategory.Application:
-                    rb_standalone.Checked = true;
-                    break;
-            }
-
-            switch (_shortcutToEdit.DisplayPermanence)
-            {
-                case ShortcutPermanence.Permanent:
-                    rb_switch_display_permanent.Checked = true;
-                    break;
-                case ShortcutPermanence.Temporary:
-                    rb_switch_display_temp.Checked = true;
-                    break;
-            }
-
-            switch (_shortcutToEdit.AudioPermanence)
-            {
-                case ShortcutPermanence.Permanent:
-                    rb_switch_audio_permanent.Checked = true;
-                    break;
-                case ShortcutPermanence.Temporary:
-                    rb_switch_audio_temp.Checked = true;
-                    break;
-            }
-
-            switch (_shortcutToEdit.CapturePermanence)
-            {
-                case ShortcutPermanence.Permanent:
-                    rb_switch_capture_permanent.Checked = true;
-                    break;
-                case ShortcutPermanence.Temporary:
-                    rb_switch_capture_temp.Checked = true;
-                    break;
-            }
-
-            // Monitor the alternative game exe if we have it
-            if (_shortcutToEdit.MonitorDifferentGameExe)
-            {
-                cb_wait_alternative_game.Checked = true;
-                if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
-                {
-                    txt_alternative_game.Text = _shortcutToEdit.DifferentGameExeToMonitor;
-                }
-            }
-            else
-            {
-                cb_wait_alternative_game.Checked = false;
-            }
-
-            // Show an error message if there isn't a game launcher selected
-            if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
-            {
-                if (GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
-                {
-                    // Fill in the game library information to highlight there isn't one detected.
-                    _gameLauncher = "None detected";
-                    txt_game_name.Text = "No supported game libraries detected";
-                    txt_args_game.Text = "";
-
-                    // Disable the Game library option, and select the Executable option instead.
-                    p_game.Enabled = false;
-                    p_game.Visible = false;
-                    rb_wait_executable.Checked = true;
-                    rb_launcher.Enabled = false;
-                    rb_launcher.Visible = false;
-                    lbl_no_game_libraries.Visible = true;
-
-                }
-            }
-            else
-            {
-                // Set the launcher items if we have them
-                _gameLauncher = _shortcutToEdit.GameLibrary.ToString("G");
-                txt_game_name.Text = _shortcutToEdit.GameName;
-                _gameId = _shortcutToEdit.GameAppId;
-                nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
-                txt_args_game.Text = _shortcutToEdit.GameArguments;
-                cbx_game_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
-                lbl_game_library.Text = $"Game Library: {_gameLauncher}";
-                if (_shortcutToEdit.GameArgumentsRequired)
-                {
-                    cb_args_game.Checked = true;
-                }
-            }
-
-            // Set the autoname checkbox
-            cb_autosuggest.Checked = _shortcutToEdit.AutoName;
-
-            // Set the executable items if we have them
-            txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
-            nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
-            txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
-            cbx_exe_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
-            if (_shortcutToEdit.ExecutableArgumentsRequired)
-            {
-                cb_args_executable.Checked = true;
-            }
-            else
-            {
-                cb_args_executable.Checked = false;
-            }
-            if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
-            {
-                rb_wait_executable.Checked = true;
-            }
-            else
-            {
-                rb_wait_alternative_executable.Checked = true;
-            }
-            txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
-
-            // Set the shortcut name
-            if (_editingExistingShortcut)
-            {
-                txt_shortcut_save_name.Text = _shortcutToEdit.Name;
-            }
-
-
-            // Set the selected image and available images (originalBitmap is set during shortcut update)
-
-
-            if (_editingExistingShortcut)
-            {
-                //ShortcutBitmap defaultBitmap = new ShortcutBitmap();
-
-                // Check if AvailableImages have been set, because if not, then we need to 'upgrade' the image structure
-                // To use this new way of working
-                if (_shortcutToEdit.AvailableImages.Count > 0)
-                {
-                    _selectedImage = _shortcutToEdit.SelectedImage;
-                    _availableImages = _shortcutToEdit.AvailableImages;
-                    if (_shortcutToEdit.Category == ShortcutCategory.Game)
-                    {
-                        pb_game_icon.Image = _shortcutToEdit.SelectedImage.Image;
-                        btn_choose_game_icon.Enabled = true;
-                    }
-                    else if (_shortcutToEdit.Category == ShortcutCategory.Application)
-                    {
+                        _selectedImage = _shortcutToEdit.SelectedImage;
                         pb_exe_icon.Image = _shortcutToEdit.SelectedImage.Image;
                         btn_choose_exe_icon.Enabled = true;
                     }
+
+                    // If we don't have any available images, then we need to get some
+                    if (_shortcutToEdit.AvailableImages.Count > 0)
+                    {
+                        _availableImages = _shortcutToEdit.AvailableImages;
+                    }
+                    else
+                    {                        
+                        _availableImages = new List<ShortcutBitmap>();
+                        // If the exe is selected, then grab images from the exe
+                        _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.ExecutableNameAndPath));
+                        // If the different exe to monitor is set, then grab the icons from there too!
+                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
+                        {
+                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.DifferentExecutableToMonitor));
+                        }
+
+                        if (_availableImages.Count == 0)
+                        {
+                            logger.Trace($"ShortcutForm/ShortcutForm_Load: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
+                            ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
+                            _availableImages.Add(bm);
+
+                        }
+
+                        bool matchedImage = false;
+                        if (_shortcutToEdit.OriginalLargeBitmap != null)
+                        {
+                            // go through available images and match the one we had
+                            foreach (ShortcutBitmap sc in _availableImages)
+                            {
+                                if (ImageUtils.ImagesAreEqual(sc.Image, _shortcutToEdit.OriginalLargeBitmap))
+                                {
+                                    // We've found the original image!
+                                    _selectedImage = sc;
+                                    pb_game_icon.Image = _selectedImage.Image;
+                                    matchedImage = true;
+                                }
+                            }
+                        }
+
+                        if (!matchedImage)
+                        {
+                            _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
+                            pb_game_icon.Image = _selectedImage.Image;
+                        }
+
+                        if (_shortcutToEdit.OriginalLargeBitmap != null)
+                        {
+                            btn_choose_exe_icon.Enabled = true;
+                        }
+                    }
+
+                    // Set the executable items if we have them
+                    txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
+                    nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
+                    txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
+                    cbx_exe_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
+                    if (_shortcutToEdit.ExecutableArgumentsRequired)
+                    {
+                        cb_args_executable.Checked = true;
+                    }
+                    else
+                    {
+                        cb_args_executable.Checked = false;
+                    }
+                    if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
+                    {
+                        rb_wait_executable.Checked = true;
+                    }
+                    else
+                    {
+                        rb_wait_alternative_executable.Checked = true;
+                    }
+                    txt_alternative_executable.Text = _shortcutToEdit.DifferentExecutableToMonitor;
+
                 }
-                else
+                // =============================================
+                // IF THE EXISTING SHORTCUT IS A GAME
+                // =============================================
+                else if (_shortcutToEdit.Category == ShortcutCategory.Game)
                 {
-                    // if there aren't any available images, then we need to find some!
-                    if (_shortcutToEdit.Category == ShortcutCategory.Game)
+                    // Set up the game launcher radio button
+                    rb_launcher.Checked = true;
+
+                    // Show an error message if there isn't a game launcher selected
+                    if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
+                    {
+                        if (GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
+                        {
+                            // Fill in the game library information to highlight there isn't one detected.
+                            _gameLauncher = "None detected";
+                            txt_game_name.Text = "No supported game libraries detected";
+                            txt_args_game.Text = "";
+
+                            // Disable the Game library option, and select the Executable option instead.
+                            p_game.Enabled = false;
+                            p_game.Visible = false;
+                            rb_wait_executable.Checked = true;
+                            rb_launcher.Enabled = false;
+                            rb_launcher.Visible = false;
+                            lbl_no_game_libraries.Visible = true;
+
+                        }
+                    }
+                    else
+                    {
+                        // Set the launcher items if we have them
+                        _gameLauncher = _shortcutToEdit.GameLibrary.ToString("G");
+                        txt_game_name.Text = _shortcutToEdit.GameName;
+                        _gameId = _shortcutToEdit.GameAppId;
+                        nud_timeout_game.Value = _shortcutToEdit.StartTimeout;
+                        txt_args_game.Text = _shortcutToEdit.GameArguments;
+                        cbx_game_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
+                        lbl_game_library.Text = $"Game Library: {_gameLauncher}";
+                        if (_shortcutToEdit.GameArgumentsRequired)
+                        {
+                            cb_args_game.Checked = true;
+                        }
+                    }
+
+                    if (_shortcutToEdit.GameAppId != null)
+                    {
+                        bool gameStillInstalled = false;
+                        foreach (ImageListViewItem gameItem in ilv_games.Items)
+                        {
+                            if (gameItem.Text.Equals(_shortcutToEdit.GameName))
+                            {
+                                gameStillInstalled = true;
+                                gameItem.Selected = true;
+                                ilv_games.EnsureVisible(gameItem.Index);
+                                break;
+                            }
+
+                        }
+                        if (!gameStillInstalled)
+                        {
+                            // Close the splash screen
+                            CloseTheSplashScreen();
+                            DialogResult result = MessageBox.Show(
+                                $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
+                                @"Game no longer exists",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Exclamation);
+                        }
+                    }
+
+                    
+                    // Monitor the alternative game exe if we have it
+                    if (_shortcutToEdit.MonitorDifferentGameExe)
+                    {
+                        cb_wait_alternative_game.Checked = true;
+                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentGameExeToMonitor))
+                        {
+                            txt_alternative_game.Text = _shortcutToEdit.DifferentGameExeToMonitor;
+                        }
+                    }
+                    else
+                    {
+                        cb_wait_alternative_game.Checked = false;
+                    }
+
+                    // If we have a selected image, then we need to set it
+                    if (_shortcutToEdit.SelectedImage.Image != null)
+                    {
+                        // Set up the selected Game Image
+                        _selectedImage = _shortcutToEdit.SelectedImage;
+                        pb_game_icon.Image = _shortcutToEdit.SelectedImage.Image;
+                        btn_choose_game_icon.Enabled = true;
+                    }
+
+                    // If we don't have any available images, then we need to get some
+                    if (_shortcutToEdit.AvailableImages.Count > 0)
+                    {
+                        _availableImages = _shortcutToEdit.AvailableImages;
+                    }
+                    else
                     {
                         // If this is a shortcut we're editing
                         _availableImages = new List<ShortcutBitmap>();
@@ -1594,120 +1709,123 @@ namespace DisplayMagician.UIForms
                         {
                             btn_choose_game_icon.Enabled = true;
                         }
-
                     }
-                    else if (_shortcutToEdit.Category == ShortcutCategory.Application)
-                    {
-                        // If this is a shortcut we're editing
-                        _availableImages = new List<ShortcutBitmap>();
-                        // If the exe is selected, then grab images from the exe
-                        _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.ExecutableNameAndPath));
-                        // If the different exe to monitor is set, then grab the icons from there too!
-                        if (!String.IsNullOrWhiteSpace(_shortcutToEdit.DifferentExecutableToMonitor) && File.Exists(_shortcutToEdit.DifferentExecutableToMonitor))
-                        {
-                            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_shortcutToEdit.DifferentExecutableToMonitor));
-                        }
 
-                        if (_availableImages.Count == 0)
-                        {
-                            logger.Trace($"ShortcutForm/ShortcutForm_Load: Unknown Game Library, so using the DisplayMagician icon as the icon instead.");
-                            ShortcutBitmap bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.DisplayMagician.ToBitmap(), "DisplayMagician Icon", "", 0);
-                            _availableImages.Add(bm);
-
-                        }
-
-                        bool matchedImage = false;
-                        if (_shortcutToEdit.OriginalLargeBitmap != null)
-                        {
-                            // go through available images and match the one we had
-                            foreach (ShortcutBitmap sc in _availableImages)
-                            {
-                                if (ImageUtils.ImagesAreEqual(sc.Image, _shortcutToEdit.OriginalLargeBitmap))
-                                {
-                                    // We've found the original image!
-                                    _selectedImage = sc;
-                                    pb_game_icon.Image = _selectedImage.Image;
-                                    matchedImage = true;
-                                }
-                            }
-                        }
-
-                        if (!matchedImage)
-                        {
-                            _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
-                            pb_game_icon.Image = _selectedImage.Image;
-                        }
-
-                        if (_shortcutToEdit.OriginalLargeBitmap != null)
-                        {
-                            btn_choose_exe_icon.Enabled = true;
-                        }
-                    }
                 }
-            }
-            else
-            {
-                // We're editing a new shortcut, so no game or anything selected
-                ilv_games.ClearSelection();
-            }
-
-            // Set up the start programs
-            if (_shortcutToEdit.StartPrograms is List<StartProgram> && _shortcutToEdit.StartPrograms.Count > 0)
-            {
-                flp_start_programs.Controls.Clear();
-
-                Padding firstStartProgramMargin = new Padding(10) { };
-                Padding otherStartProgramMargin = new Padding(10, 0, 10, 10) { };
-
-                // Order the inital list in order of priority
-                int spOrder = 1;
-                foreach (StartProgram myStartProgram in _shortcutToEdit.StartPrograms.OrderBy(sp => sp.Priority))
+                // ==================================================
+                // IF THE EXISTING SHORTCUT IS NO GAME OR APPLICATION
+                // ==================================================
+                else
                 {
-                    if (String.IsNullOrWhiteSpace(myStartProgram.Executable))
+                    // Set up the selected images if we have some available images
+                    if (_shortcutToEdit.AvailableImages.Count > 0)
                     {
-                        logger.Warn($"ShortcutForm/ShortcutForm_Load: Start program #{myStartProgram.Priority} is empty, so skipping.");
-                        continue;
+                        _selectedImage = _shortcutToEdit.SelectedImage;
+                        _availableImages = _shortcutToEdit.AvailableImages;
                     }
-
-                    StartProgramControl startProgramControl = new StartProgramControl(myStartProgram, spOrder);
-                    startProgramControl.Dock = DockStyle.None;
-                    if (spOrder == 1)
-                    {
-                        startProgramControl.Margin = firstStartProgramMargin;
-                    }
-                    else
-                    {
-                        startProgramControl.Margin = otherStartProgramMargin;
-                    }
-                    startProgramControl.Width = flp_start_programs.Width - 40;
-                    startProgramControl.MouseDown += new MouseEventHandler(StartProgramControl_MouseDown);
-                    startProgramControl.DragOver += new DragEventHandler(StartProgramControl_DragOver);
-                    startProgramControl.DragDrop += new DragEventHandler(StartProgramControl_DragDrop);
-                    startProgramControl.AllowDrop = true;
-                    flp_start_programs.Controls.Add(startProgramControl);
-                    spOrder++;
                 }
-            }
-            else
-            {
-                flp_start_programs.Controls.Clear();
-            }
 
-            // Setup the single stop program we're beginning with
-            if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
-            {
-                cb_run_cmd_afterwards.Checked = true;
-                txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
-                if (_shortcutToEdit.StopPrograms[0].ExecutableArgumentsRequired)
+                // *** 5. Choose what happens afterwards tab ***
+                switch (_shortcutToEdit.DisplayPermanence)
                 {
-                    cb_run_cmd_afterwards_args.Checked = true;
-                    txt_run_cmd_afterwards_args.Text = _shortcutToEdit.StopPrograms[0].Arguments;
+                    case ShortcutPermanence.Permanent:
+                        rb_switch_display_permanent.Checked = true;
+                        break;
+                    case ShortcutPermanence.Temporary:
+                        rb_switch_display_temp.Checked = true;
+                        break;
                 }
+
+                switch (_shortcutToEdit.AudioPermanence)
+                {
+                    case ShortcutPermanence.Permanent:
+                        rb_switch_audio_permanent.Checked = true;
+                        break;
+                    case ShortcutPermanence.Temporary:
+                        rb_switch_audio_temp.Checked = true;
+                        break;
+                }
+
+                switch (_shortcutToEdit.CapturePermanence)
+                {
+                    case ShortcutPermanence.Permanent:
+                        rb_switch_capture_permanent.Checked = true;
+                        break;
+                    case ShortcutPermanence.Temporary:
+                        rb_switch_capture_temp.Checked = true;
+                        break;
+                }
+
+                // Setup the single stop program we're beginning with
+                if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
+                {
+                    cb_run_cmd_afterwards.Checked = true;
+                    txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
+                    if (_shortcutToEdit.StopPrograms[0].ExecutableArgumentsRequired)
+                    {
+                        cb_run_cmd_afterwards_args.Checked = true;
+                        txt_run_cmd_afterwards_args.Text = _shortcutToEdit.StopPrograms[0].Arguments;
+                    }
+                }
+                else
+                {
+                    cb_run_cmd_afterwards.Checked = false;
+                }
+
+
             }
+            // =============================================
+            // IF THE SHORTCUT IS A NEW SHORTCUT
+            // =============================================
             else
             {
-                cb_run_cmd_afterwards.Checked = false;
+                // Not sure if I need this
+                //ilv_games.ClearSelection();
+
+                // We need to show the current profile
+                // that we're running now (only if that's been saved)
+                if (ProfileRepository.ProfileCount > 0)
+                {
+                    ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
+                    bool foundCurrentProfile = false;
+                    foreach (ProfileItem profileToCheck in ProfileRepository.AllProfiles)
+                    {
+                        if (profileToCheck.Equals(currentProfile))
+                        {
+                            chosenProfile = currentProfile;
+                            foundCurrentProfile = true;
+                        }
+                    }
+
+                    // If we get here, and we still haven't matched the profile, then just pick the first one
+                    if (!foundCurrentProfile)
+                    {
+                        if (ProfileRepository.ProfileCount > 0)
+                        {
+                            chosenProfile = ProfileRepository.AllProfiles[0];
+                        }
+
+                    }
+
+                }
+
+                // Set up the new shortcut as a game
+                _shortcutToEdit.Category = ShortcutCategory.Game;
+                rb_launcher.Checked = true;
+
+                // Set up display permanance as temporary
+                _shortcutToEdit.DisplayPermanence = ShortcutPermanence.Temporary;
+                rb_switch_display_temp.Checked = true;
+
+                // Set up audio permanance as temporary
+                _shortcutToEdit.AudioPermanence = ShortcutPermanence.Temporary;
+                rb_switch_audio_temp.Checked = true;
+
+                // Set up capture permanance as temporary
+                _shortcutToEdit.CapturePermanence = ShortcutPermanence.Temporary;
+                rb_switch_capture_temp.Checked = true;
             }
+
 
             // Refresh the Shortcut UI
             RefreshShortcutUI();
@@ -2654,6 +2772,8 @@ namespace DisplayMagician.UIForms
             flp_start_programs.Controls.Remove(startProgramControlToRemove);
             RedrawStartPrograms();
             flp_start_programs.ResumeLayout();
+            if (_loadedShortcut)
+                _isUnsaved = true;
         }
 
         public void StartProgramEarlier(StartProgramControl startProgramControlToRemove)
@@ -2667,6 +2787,8 @@ namespace DisplayMagician.UIForms
             flp_start_programs.Controls.SetChildIndex(startProgramControlToRemove,newIndex);
             RedrawStartPrograms();
             flp_start_programs.ResumeLayout();
+            if (_loadedShortcut)
+                _isUnsaved = true;
         }
 
         public void StartProgramLater(StartProgramControl startProgramControlToRemove)
@@ -2680,6 +2802,8 @@ namespace DisplayMagician.UIForms
             flp_start_programs.Controls.SetChildIndex(startProgramControlToRemove, newIndex);
             RedrawStartPrograms();
             flp_start_programs.ResumeLayout();
+            if (_loadedShortcut)
+                _isUnsaved = true;
         }
 
         private void btn_hotkey_Click(object sender, EventArgs e)
@@ -2792,6 +2916,9 @@ namespace DisplayMagician.UIForms
                 RedrawStartPrograms();
                 flp_start_programs.ResumeLayout();
                 flp_start_programs.Invalidate();
+
+                if (_loadedShortcut)
+                    _isUnsaved = true;
             }
 
         }
@@ -2814,6 +2941,8 @@ namespace DisplayMagician.UIForms
             RedrawStartPrograms();
             flp_start_programs.ResumeLayout();
             flp_start_programs.Invalidate();
+            if (_loadedShortcut)
+                _isUnsaved = true;
         }
 
         private void ilv_games_ItemClick(object sender, ItemClickEventArgs e)
@@ -2878,6 +3007,8 @@ namespace DisplayMagician.UIForms
                 exeIconForm.SelectedImage = _selectedImage;
                 if (exeIconForm.ShowDialog() == DialogResult.OK)
                 {
+                    if (_loadedShortcut)
+                        _isUnsaved = true;
                     _availableImages = exeIconForm.AvailableImages;
                     _selectedImage = exeIconForm.SelectedImage;
                     pb_exe_icon.Image = exeIconForm.SelectedImage.Image;
@@ -2895,6 +3026,8 @@ namespace DisplayMagician.UIForms
                 gameIconForm.SelectedImage = _selectedImage;
                 if (gameIconForm.ShowDialog() == DialogResult.OK)
                 {
+                    if (_loadedShortcut)
+                        _isUnsaved = true;
                     _availableImages = gameIconForm.AvailableImages;
                     _selectedImage = gameIconForm.SelectedImage;
                     pb_game_icon.Image = gameIconForm.SelectedImage.Image;                     
@@ -2991,6 +3124,11 @@ namespace DisplayMagician.UIForms
             btn_choose_exe_icon.PerformClick();
         }
 
+        private void txt_alternative_game_TextChanged(object sender, EventArgs e)
+        {
+            if (_loadedShortcut)
+                _isUnsaved = true;
+        }
     }
 
     // Class used to populate combo boxes

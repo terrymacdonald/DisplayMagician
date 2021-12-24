@@ -38,10 +38,12 @@ namespace DisplayMagician.UIForms
             this.dialog_open = new System.Windows.Forms.OpenFileDialog();
             this.tabc_shortcut = new System.Windows.Forms.TabControl();
             this.tabp_display = new System.Windows.Forms.TabPage();
+            this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
+            this.p_profiles = new System.Windows.Forms.Panel();
+            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.pbLogo = new System.Windows.Forms.PictureBox();
             this.lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             this.lbl_profile_shown = new System.Windows.Forms.Label();
-            this.ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             this.tabp_audio = new System.Windows.Forms.TabPage();
             this.lbl_no_active_capture_devices = new System.Windows.Forms.Label();
             this.lbl_no_active_audio_devices = new System.Windows.Forms.Label();
@@ -67,11 +69,11 @@ namespace DisplayMagician.UIForms
             this.rb_change_audio = new System.Windows.Forms.RadioButton();
             this.rb_no_change_audio = new System.Windows.Forms.RadioButton();
             this.tabp_before = new System.Windows.Forms.TabPage();
+            this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.p_start_program_upper = new System.Windows.Forms.Panel();
             this.btn_find_examples_startprograms = new System.Windows.Forms.Button();
             this.btn_add_new_start_program = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
-            this.flp_start_programs = new System.Windows.Forms.FlowLayoutPanel();
             this.tabp_game = new System.Windows.Forms.TabPage();
             this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.p_gametostart = new System.Windows.Forms.Panel();
@@ -134,10 +136,9 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.p_profiles = new System.Windows.Forms.Panel();
-            this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
+            this.p_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
             this.tabp_audio.SuspendLayout();
             this.gb_capture_settings.SuspendLayout();
@@ -161,7 +162,6 @@ namespace DisplayMagician.UIForms
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gb_display_after.SuspendLayout();
-            this.p_profiles.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -246,6 +246,53 @@ namespace DisplayMagician.UIForms
             this.tabp_display.Text = "1. Choose Display Profile";
             this.tabp_display.ToolTipText = "Choose which previously saved Display Profile you will use with this shortcut.";
             // 
+            // ilv_saved_profiles
+            // 
+            this.ilv_saved_profiles.AllowCheckBoxClick = false;
+            this.ilv_saved_profiles.AllowColumnClick = false;
+            this.ilv_saved_profiles.AllowColumnResize = false;
+            this.ilv_saved_profiles.AllowItemReorder = false;
+            this.ilv_saved_profiles.AllowPaneResize = false;
+            this.ilv_saved_profiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ilv_saved_profiles.Location = new System.Drawing.Point(3, 478);
+            this.ilv_saved_profiles.MultiSelect = false;
+            this.ilv_saved_profiles.Name = "ilv_saved_profiles";
+            this.ilv_saved_profiles.PersistentCacheDirectory = "";
+            this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(1046, 250);
+            this.ilv_saved_profiles.TabIndex = 24;
+            this.ilv_saved_profiles.UseWIC = true;
+            this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
+            this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
+            // 
+            // p_profiles
+            // 
+            this.p_profiles.Controls.Add(this.dv_profile);
+            this.p_profiles.Controls.Add(this.pbLogo);
+            this.p_profiles.Controls.Add(this.lbl_profile_shown_subtitle);
+            this.p_profiles.Controls.Add(this.lbl_profile_shown);
+            this.p_profiles.Dock = System.Windows.Forms.DockStyle.Top;
+            this.p_profiles.Location = new System.Drawing.Point(3, 3);
+            this.p_profiles.Name = "p_profiles";
+            this.p_profiles.Size = new System.Drawing.Size(1046, 475);
+            this.p_profiles.TabIndex = 39;
+            // 
+            // dv_profile
+            // 
+            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
+            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
+            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.dv_profile.Location = new System.Drawing.Point(0, 0);
+            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
+            this.dv_profile.Name = "dv_profile";
+            this.dv_profile.PaddingX = 100;
+            this.dv_profile.PaddingY = 100;
+            this.dv_profile.Profile = null;
+            this.dv_profile.Size = new System.Drawing.Size(1046, 475);
+            this.dv_profile.TabIndex = 23;
+            // 
             // pbLogo
             // 
             this.pbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -280,25 +327,6 @@ namespace DisplayMagician.UIForms
             this.lbl_profile_shown.Size = new System.Drawing.Size(308, 29);
             this.lbl_profile_shown.TabIndex = 25;
             this.lbl_profile_shown.Text = "No Display Profile Selected";
-            // 
-            // ilv_saved_profiles
-            // 
-            this.ilv_saved_profiles.AllowCheckBoxClick = false;
-            this.ilv_saved_profiles.AllowColumnClick = false;
-            this.ilv_saved_profiles.AllowColumnResize = false;
-            this.ilv_saved_profiles.AllowItemReorder = false;
-            this.ilv_saved_profiles.AllowPaneResize = false;
-            this.ilv_saved_profiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ilv_saved_profiles.Location = new System.Drawing.Point(3, 478);
-            this.ilv_saved_profiles.MultiSelect = false;
-            this.ilv_saved_profiles.Name = "ilv_saved_profiles";
-            this.ilv_saved_profiles.PersistentCacheDirectory = "";
-            this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(1046, 250);
-            this.ilv_saved_profiles.TabIndex = 24;
-            this.ilv_saved_profiles.UseWIC = true;
-            this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
-            this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
             // 
             // tabp_audio
             // 
@@ -643,6 +671,19 @@ namespace DisplayMagician.UIForms
             this.tabp_before.TabIndex = 1;
             this.tabp_before.Text = "3. Choose what happens before";
             // 
+            // flp_start_programs
+            // 
+            this.flp_start_programs.AllowDrop = true;
+            this.flp_start_programs.AutoScroll = true;
+            this.flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
+            this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
+            this.flp_start_programs.BackColor = System.Drawing.Color.White;
+            this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flp_start_programs.Location = new System.Drawing.Point(3, 124);
+            this.flp_start_programs.Name = "flp_start_programs";
+            this.flp_start_programs.Size = new System.Drawing.Size(1046, 604);
+            this.flp_start_programs.TabIndex = 0;
+            // 
             // p_start_program_upper
             // 
             this.p_start_program_upper.Controls.Add(this.btn_find_examples_startprograms);
@@ -696,19 +737,6 @@ namespace DisplayMagician.UIForms
             this.label3.TabIndex = 42;
             this.label3.Text = "Add one or more additional programs to start before the main Game starts. They wi" +
     "ll start in the order listed below.";
-            // 
-            // flp_start_programs
-            // 
-            this.flp_start_programs.AllowDrop = true;
-            this.flp_start_programs.AutoScroll = true;
-            this.flp_start_programs.AutoScrollMargin = new System.Drawing.Size(5, 0);
-            this.flp_start_programs.AutoScrollMinSize = new System.Drawing.Size(5, 0);
-            this.flp_start_programs.BackColor = System.Drawing.Color.White;
-            this.flp_start_programs.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flp_start_programs.Location = new System.Drawing.Point(3, 124);
-            this.flp_start_programs.Name = "flp_start_programs";
-            this.flp_start_programs.Size = new System.Drawing.Size(1046, 604);
-            this.flp_start_programs.TabIndex = 0;
             // 
             // tabp_game
             // 
@@ -893,7 +921,7 @@ namespace DisplayMagician.UIForms
             this.txt_alternative_executable.Name = "txt_alternative_executable";
             this.txt_alternative_executable.Size = new System.Drawing.Size(314, 26);
             this.txt_alternative_executable.TabIndex = 4;
-            this.txt_alternative_executable.Click += new System.EventHandler(this.txt_alternative_executable_TextChanged);
+            this.txt_alternative_executable.TextChanged += new System.EventHandler(this.txt_alternative_executable_TextChanged);
             // 
             // rb_wait_alternative_executable
             // 
@@ -929,7 +957,7 @@ namespace DisplayMagician.UIForms
             this.txt_executable.Name = "txt_executable";
             this.txt_executable.Size = new System.Drawing.Size(489, 26);
             this.txt_executable.TabIndex = 1;
-            this.txt_executable.Click += new System.EventHandler(this.txt_executable_TextChanged);
+            this.txt_executable.TextChanged += new System.EventHandler(this.txt_executable_TextChanged);
             // 
             // lbl_app_executable
             // 
@@ -1123,6 +1151,7 @@ namespace DisplayMagician.UIForms
             this.txt_alternative_game.Name = "txt_alternative_game";
             this.txt_alternative_game.Size = new System.Drawing.Size(548, 26);
             this.txt_alternative_game.TabIndex = 24;
+            this.txt_alternative_game.TextChanged += new System.EventHandler(this.txt_alternative_game_TextChanged);
             // 
             // txt_game_name
             // 
@@ -1522,34 +1551,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
-            // p_profiles
-            // 
-            this.p_profiles.Controls.Add(this.dv_profile);
-            this.p_profiles.Controls.Add(this.pbLogo);
-            this.p_profiles.Controls.Add(this.lbl_profile_shown_subtitle);
-            this.p_profiles.Controls.Add(this.lbl_profile_shown);
-            this.p_profiles.Dock = System.Windows.Forms.DockStyle.Top;
-            this.p_profiles.Location = new System.Drawing.Point(3, 3);
-            this.p_profiles.Name = "p_profiles";
-            this.p_profiles.Size = new System.Drawing.Size(1046, 475);
-            this.p_profiles.TabIndex = 39;
-            // 
-            // dv_profile
-            // 
-            this.dv_profile.BackColor = System.Drawing.Color.DimGray;
-            this.dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.dv_profile.Dock = System.Windows.Forms.DockStyle.Top;
-            this.dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.dv_profile.Location = new System.Drawing.Point(0, 0);
-            this.dv_profile.Margin = new System.Windows.Forms.Padding(18);
-            this.dv_profile.Name = "dv_profile";
-            this.dv_profile.PaddingX = 100;
-            this.dv_profile.PaddingY = 100;
-            this.dv_profile.Profile = null;
-            this.dv_profile.Size = new System.Drawing.Size(1046, 475);
-            this.dv_profile.TabIndex = 23;
-            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1578,6 +1579,8 @@ namespace DisplayMagician.UIForms
             this.Load += new System.EventHandler(this.ShortcutForm_Load);
             this.tabc_shortcut.ResumeLayout(false);
             this.tabp_display.ResumeLayout(false);
+            this.p_profiles.ResumeLayout(false);
+            this.p_profiles.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
             this.tabp_audio.ResumeLayout(false);
             this.tabp_audio.PerformLayout();
@@ -1614,8 +1617,6 @@ namespace DisplayMagician.UIForms
             this.groupBox1.PerformLayout();
             this.gb_display_after.ResumeLayout(false);
             this.gb_display_after.PerformLayout();
-            this.p_profiles.ResumeLayout(false);
-            this.p_profiles.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
