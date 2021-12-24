@@ -982,16 +982,7 @@ namespace DisplayMagician.UIForms
                 // Restart updating the saved_profiles listview
                 ilv_saved_profiles.ResumeLayout();
             }
-
-            // Populate all the Games into the Games ListView            
-            ilv_games.Items.Clear(); 
-            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
-            {
-                // Add the game to the game array
-                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
-                //ilv_saved_profiles.Items.Add(newItem);
-                ilv_games.Items.Add(newItem, _gameAdaptor);
-            }
+            
 
             // Populate all the audio devices in the audio devices select box
             if (audioController != null)
@@ -1130,7 +1121,8 @@ namespace DisplayMagician.UIForms
             }
 
             // Select the DisplayProfile tab
-            tabc_shortcut.SelectedTab = tabp_display;
+            //tabc_shortcut.SelectedTab = tabp_display;
+            tabc_shortcut.SelectedTab = tabp_game;
         }
 
         private void LoadShortcut()
@@ -1154,6 +1146,27 @@ namespace DisplayMagician.UIForms
             // *** Hidden Shortcut variables ***
             // Track the shortcut UUID
             _uuid = _shortcutToEdit.UUID;
+
+            // Populate all the Games into the Games ListView            
+            ilv_games.Enabled = true;
+            ilv_games.Visible = true;
+            ilv_games.SuspendLayout();
+            ilv_games.Items.Clear();
+            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
+            {
+                // Add the game to the game array
+                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
+                ilv_games.Items.Add(newItem, _gameAdaptor);
+                newItem.Update();
+            }
+            // Make sure that if the item is selected that it's visible
+            if (ilv_games.SelectedItems.Count > 0)
+            {
+                int selectedIndex = ilv_games.SelectedItems[0].Index;
+                ilv_games.EnsureVisible(selectedIndex);
+            }
+            ilv_games.Update();
+            ilv_games.ResumeLayout();
 
             // =============================================
             // IF THE SHORTCUT IS AN EXISTING SHORTCUT
@@ -1437,12 +1450,16 @@ namespace DisplayMagician.UIForms
                 // =============================================
                 if (_shortcutToEdit.Category == ShortcutCategory.Application)
                 {
-                    // If we have a selected image, then we need to set it
-                    if (_shortcutToEdit.SelectedImage.Image != null)
+
+                    // Check that the executable to run still exists
+                    if (!String.IsNullOrWhiteSpace(_shortcutToEdit.ExecutableNameAndPath) && !File.Exists(_shortcutToEdit.ExecutableNameAndPath))
                     {
-                        _selectedImage = _shortcutToEdit.SelectedImage;
-                        pb_exe_icon.Image = _shortcutToEdit.SelectedImage.Image;
-                        btn_choose_exe_icon.Enabled = true;
+                        MessageBox.Show(
+                        $"The '{_shortcutToEdit.ExecutableNameAndPath}' application used by this Shortcut no longer exists. Your shortcut won't work unless you reinstall the missing application or choose a different one.",
+                        @"Application doesn't exist",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+
                     }
 
                     // If we don't have any available images, then we need to get some
@@ -1479,7 +1496,7 @@ namespace DisplayMagician.UIForms
                                 {
                                     // We've found the original image!
                                     _selectedImage = sc;
-                                    pb_game_icon.Image = _selectedImage.Image;
+                                    pb_exe_icon.Image = _selectedImage.Image;
                                     matchedImage = true;
                                 }
                             }
@@ -1488,7 +1505,7 @@ namespace DisplayMagician.UIForms
                         if (!matchedImage)
                         {
                             _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
-                            pb_game_icon.Image = _selectedImage.Image;
+                           pb_exe_icon.Image = _selectedImage.Image;
                         }
 
                         if (_shortcutToEdit.OriginalLargeBitmap != null)
@@ -1496,6 +1513,15 @@ namespace DisplayMagician.UIForms
                             btn_choose_exe_icon.Enabled = true;
                         }
                     }
+
+                    // If we have a selected image, then we need to set it
+                    if (_shortcutToEdit.SelectedImage.Image != null)
+                    {
+                        _selectedImage = _shortcutToEdit.SelectedImage;
+                        pb_exe_icon.Image = _shortcutToEdit.SelectedImage.Image;
+                        btn_choose_exe_icon.Enabled = true;
+                    }
+
 
                     // Set the executable items if we have them
                     txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
@@ -1580,9 +1606,7 @@ namespace DisplayMagician.UIForms
 
                         }
                         if (!gameStillInstalled)
-                        {
-                            // Close the splash screen
-                            CloseTheSplashScreen();
+                        {                            
                             DialogResult result = MessageBox.Show(
                                 $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
                                 @"Game no longer exists",
@@ -1604,15 +1628,6 @@ namespace DisplayMagician.UIForms
                     else
                     {
                         cb_wait_alternative_game.Checked = false;
-                    }
-
-                    // If we have a selected image, then we need to set it
-                    if (_shortcutToEdit.SelectedImage.Image != null)
-                    {
-                        // Set up the selected Game Image
-                        _selectedImage = _shortcutToEdit.SelectedImage;
-                        pb_game_icon.Image = _shortcutToEdit.SelectedImage.Image;
-                        btn_choose_game_icon.Enabled = true;
                     }
 
                     // If we don't have any available images, then we need to get some
@@ -1709,6 +1724,15 @@ namespace DisplayMagician.UIForms
                         {
                             btn_choose_game_icon.Enabled = true;
                         }
+                    }
+
+                    // If we have a selected image, then we need to set it
+                    if (_shortcutToEdit.SelectedImage.Image != null)
+                    {
+                        // Set up the selected Game Image
+                        _selectedImage = _shortcutToEdit.SelectedImage;
+                        pb_game_icon.Image = _shortcutToEdit.SelectedImage.Image;
+                        btn_choose_game_icon.Enabled = true;
                     }
 
                 }
