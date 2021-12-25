@@ -477,6 +477,15 @@ namespace DisplayMagician.UIForms
                     stopProgram.Arguments = "";
                 }
                 stopProgram.ProcessPriority = ProcessPriority.Normal;
+                if (cb_run_cmd_afterwards_dont_start.Checked)
+                {
+                    stopProgram.DontStartIfAlreadyRunning = true;
+                }
+                else
+                {
+                    stopProgram.DontStartIfAlreadyRunning = false;
+                }
+
                 _stopPrograms.Add(stopProgram);
             }
 
@@ -1799,10 +1808,26 @@ namespace DisplayMagician.UIForms
                         cb_run_cmd_afterwards_args.Checked = true;
                         txt_run_cmd_afterwards_args.Text = _shortcutToEdit.StopPrograms[0].Arguments;
                     }
+                    else
+                    {
+                        
+                        cb_run_cmd_afterwards_args.Checked = false;
+                        txt_run_cmd_afterwards_args.Text = "";
+                        
+                    }
+                    if (_shortcutToEdit.StopPrograms[0].DontStartIfAlreadyRunning)
+                    {
+                        cb_run_cmd_afterwards_dont_start.Checked = true;
+                    }
+                    else
+                    {
+                        cb_run_cmd_afterwards_dont_start.Checked = false;
+                    }
                 }
                 else
                 {
                     cb_run_cmd_afterwards.Checked = false;
+                    cb_run_cmd_afterwards_dont_start.Checked = false;
                 }
 
 

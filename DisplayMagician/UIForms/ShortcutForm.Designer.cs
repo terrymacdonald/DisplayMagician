@@ -137,6 +137,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.p_game_list = new System.Windows.Forms.Panel();
             this.ilv_games = new Manina.Windows.Forms.ImageListView();
+            this.cb_run_cmd_afterwards_dont_start = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.p_profiles.SuspendLayout();
@@ -1269,6 +1270,7 @@ namespace DisplayMagician.UIForms
             // groupBox3
             // 
             this.groupBox3.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards_dont_start);
             this.groupBox3.Controls.Add(this.txt_run_cmd_afterwards_args);
             this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards_args);
             this.groupBox3.Controls.Add(this.btn_run_cmd_afterwards);
@@ -1276,9 +1278,9 @@ namespace DisplayMagician.UIForms
             this.groupBox3.Controls.Add(this.cb_run_cmd_afterwards);
             this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox3.ForeColor = System.Drawing.Color.White;
-            this.groupBox3.Location = new System.Drawing.Point(175, 582);
+            this.groupBox3.Location = new System.Drawing.Point(175, 544);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(765, 122);
+            this.groupBox3.Size = new System.Drawing.Size(765, 157);
             this.groupBox3.TabIndex = 14;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Run a program or command afterwards?";
@@ -1343,9 +1345,9 @@ namespace DisplayMagician.UIForms
             this.groupBox2.Controls.Add(this.rb_switch_capture_temp);
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.ForeColor = System.Drawing.Color.White;
-            this.groupBox2.Location = new System.Drawing.Point(175, 395);
+            this.groupBox2.Location = new System.Drawing.Point(175, 368);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(765, 161);
+            this.groupBox2.Size = new System.Drawing.Size(765, 150);
             this.groupBox2.TabIndex = 13;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "What happens to the Microphone afterwards?";
@@ -1354,7 +1356,7 @@ namespace DisplayMagician.UIForms
             // 
             this.rb_switch_capture_permanent.AutoSize = true;
             this.rb_switch_capture_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_capture_permanent.Location = new System.Drawing.Point(98, 96);
+            this.rb_switch_capture_permanent.Location = new System.Drawing.Point(98, 92);
             this.rb_switch_capture_permanent.Name = "rb_switch_capture_permanent";
             this.rb_switch_capture_permanent.Size = new System.Drawing.Size(492, 24);
             this.rb_switch_capture_permanent.TabIndex = 12;
@@ -1367,7 +1369,7 @@ namespace DisplayMagician.UIForms
             this.rb_switch_capture_temp.AutoSize = true;
             this.rb_switch_capture_temp.Checked = true;
             this.rb_switch_capture_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_capture_temp.Location = new System.Drawing.Point(98, 48);
+            this.rb_switch_capture_temp.Location = new System.Drawing.Point(98, 44);
             this.rb_switch_capture_temp.Name = "rb_switch_capture_temp";
             this.rb_switch_capture_temp.Size = new System.Drawing.Size(553, 24);
             this.rb_switch_capture_temp.TabIndex = 11;
@@ -1383,9 +1385,9 @@ namespace DisplayMagician.UIForms
             this.groupBox1.Controls.Add(this.rb_switch_audio_temp);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.ForeColor = System.Drawing.Color.White;
-            this.groupBox1.Location = new System.Drawing.Point(175, 210);
+            this.groupBox1.Location = new System.Drawing.Point(175, 191);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(765, 161);
+            this.groupBox1.Size = new System.Drawing.Size(765, 150);
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "What happens to the Audio output afterwards?";
@@ -1394,7 +1396,7 @@ namespace DisplayMagician.UIForms
             // 
             this.rb_switch_audio_permanent.AutoSize = true;
             this.rb_switch_audio_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_audio_permanent.Location = new System.Drawing.Point(98, 96);
+            this.rb_switch_audio_permanent.Location = new System.Drawing.Point(98, 92);
             this.rb_switch_audio_permanent.Name = "rb_switch_audio_permanent";
             this.rb_switch_audio_permanent.Size = new System.Drawing.Size(502, 24);
             this.rb_switch_audio_permanent.TabIndex = 12;
@@ -1407,7 +1409,7 @@ namespace DisplayMagician.UIForms
             this.rb_switch_audio_temp.AutoSize = true;
             this.rb_switch_audio_temp.Checked = true;
             this.rb_switch_audio_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_audio_temp.Location = new System.Drawing.Point(98, 48);
+            this.rb_switch_audio_temp.Location = new System.Drawing.Point(98, 44);
             this.rb_switch_audio_temp.Name = "rb_switch_audio_temp";
             this.rb_switch_audio_temp.Size = new System.Drawing.Size(563, 24);
             this.rb_switch_audio_temp.TabIndex = 11;
@@ -1425,7 +1427,7 @@ namespace DisplayMagician.UIForms
             this.gb_display_after.ForeColor = System.Drawing.Color.White;
             this.gb_display_after.Location = new System.Drawing.Point(175, 22);
             this.gb_display_after.Name = "gb_display_after";
-            this.gb_display_after.Size = new System.Drawing.Size(765, 162);
+            this.gb_display_after.Size = new System.Drawing.Size(765, 146);
             this.gb_display_after.TabIndex = 11;
             this.gb_display_after.TabStop = false;
             this.gb_display_after.Text = "What happens to the Display Profile afterwards?";
@@ -1434,7 +1436,7 @@ namespace DisplayMagician.UIForms
             // 
             this.rb_switch_display_permanent.AutoSize = true;
             this.rb_switch_display_permanent.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_display_permanent.Location = new System.Drawing.Point(98, 96);
+            this.rb_switch_display_permanent.Location = new System.Drawing.Point(98, 92);
             this.rb_switch_display_permanent.Name = "rb_switch_display_permanent";
             this.rb_switch_display_permanent.Size = new System.Drawing.Size(508, 24);
             this.rb_switch_display_permanent.TabIndex = 12;
@@ -1447,7 +1449,7 @@ namespace DisplayMagician.UIForms
             this.rb_switch_display_temp.AutoSize = true;
             this.rb_switch_display_temp.Checked = true;
             this.rb_switch_display_temp.ForeColor = System.Drawing.Color.White;
-            this.rb_switch_display_temp.Location = new System.Drawing.Point(98, 48);
+            this.rb_switch_display_temp.Location = new System.Drawing.Point(98, 44);
             this.rb_switch_display_temp.Name = "rb_switch_display_temp";
             this.rb_switch_display_temp.Size = new System.Drawing.Size(569, 24);
             this.rb_switch_display_temp.TabIndex = 11;
@@ -1566,6 +1568,19 @@ namespace DisplayMagician.UIForms
             this.ilv_games.TabIndex = 43;
             this.ilv_games.UseWIC = true;
             this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
+            // 
+            // cb_run_cmd_afterwards_dont_start
+            // 
+            this.cb_run_cmd_afterwards_dont_start.AutoSize = true;
+            this.cb_run_cmd_afterwards_dont_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_run_cmd_afterwards_dont_start.ForeColor = System.Drawing.Color.White;
+            this.cb_run_cmd_afterwards_dont_start.Location = new System.Drawing.Point(98, 114);
+            this.cb_run_cmd_afterwards_dont_start.Name = "cb_run_cmd_afterwards_dont_start";
+            this.cb_run_cmd_afterwards_dont_start.Size = new System.Drawing.Size(289, 24);
+            this.cb_run_cmd_afterwards_dont_start.TabIndex = 27;
+            this.cb_run_cmd_afterwards_dont_start.Text = "Don\'t start if program already running";
+            this.cb_run_cmd_afterwards_dont_start.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_run_cmd_afterwards_dont_start.UseVisualStyleBackColor = true;
             // 
             // ShortcutForm
             // 
@@ -1745,5 +1760,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel p_profiles;
         private System.Windows.Forms.Panel p_game_list;
         private Manina.Windows.Forms.ImageListView ilv_games;
+        private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_dont_start;
     }
 }

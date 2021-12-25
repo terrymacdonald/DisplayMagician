@@ -2059,17 +2059,28 @@ namespace DisplayMagician
                 uint processID = 0;
                 try
                 {
-                    //Processes.PROCESS_INFORMATION processInfo;
-                    //if (ProcessUtils.CreateProcessWithPriority(stopProg.Executable, stopProg.Arguments, TranslatePriorityToClass(stopProg.ProcessPriority), out processInfo))
-                    ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal);
-                    /*if ()
+                    // If required, check whether a process is started already
+                    if (stopProg.DontStartIfAlreadyRunning)
                     {
-                        logger.Trace($"ShortcutRepository/RunShortcut: Successfully started Stop Program {stopProg.Executable} {stopProg.Arguments}");
+                        logger.Info($"ShortcutRepository/RunShortcut: Checking if Stop Program {stopProg.Executable} is already running");
+                        Process[] alreadyRunningProcesses = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(stopProg.Executable));
+                        if (alreadyRunningProcesses.Length > 0)
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Process {stopProg.Executable} is already running, so we won't start a new one");                                                       
+                        }
+                        else
+                        {
+                            logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable} as no other processes running");
+                            ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal);                            
+                        }
+
                     }
                     else
                     {
-                        logger.Warn($"ShortcutRepository/RunShortcut: Unable to start Stop Program {stopProg.Executable} {stopProg.Arguments}");
-                    }*/
+                        logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable}.");
+                        ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal);
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
