@@ -75,7 +75,6 @@ namespace DisplayMagician.UIForms
             this.btn_add_new_start_program = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.tabp_game = new System.Windows.Forms.TabPage();
-            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.p_gametostart = new System.Windows.Forms.Panel();
             this.btn_find_examples_game = new System.Windows.Forms.Button();
             this.p_standalone = new System.Windows.Forms.Panel();
@@ -136,6 +135,8 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.p_game_list = new System.Windows.Forms.Panel();
+            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.p_profiles.SuspendLayout();
@@ -162,6 +163,7 @@ namespace DisplayMagician.UIForms
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gb_display_after.SuspendLayout();
+            this.p_game_list.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -741,7 +743,7 @@ namespace DisplayMagician.UIForms
             // tabp_game
             // 
             this.tabp_game.BackColor = System.Drawing.Color.Black;
-            this.tabp_game.Controls.Add(this.ilv_games);
+            this.tabp_game.Controls.Add(this.p_game_list);
             this.tabp_game.Controls.Add(this.p_gametostart);
             this.tabp_game.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabp_game.ForeColor = System.Drawing.Color.White;
@@ -751,21 +753,6 @@ namespace DisplayMagician.UIForms
             this.tabp_game.Size = new System.Drawing.Size(1052, 731);
             this.tabp_game.TabIndex = 2;
             this.tabp_game.Text = "4. Choose Game to start";
-            // 
-            // ilv_games
-            // 
-            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ilv_games.IntegralScroll = true;
-            this.ilv_games.Location = new System.Drawing.Point(3, 523);
-            this.ilv_games.Name = "ilv_games";
-            this.ilv_games.PersistentCacheDirectory = "";
-            this.ilv_games.PersistentCacheSize = ((long)(100));
-            this.ilv_games.Size = new System.Drawing.Size(1046, 205);
-            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
-            this.ilv_games.TabIndex = 42;
-            this.ilv_games.UseWIC = true;
-            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
             // 
             // p_gametostart
             // 
@@ -1551,6 +1538,34 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
+            // p_game_list
+            // 
+            this.p_game_list.Controls.Add(this.ilv_games);
+            this.p_game_list.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.p_game_list.Location = new System.Drawing.Point(3, 523);
+            this.p_game_list.Name = "p_game_list";
+            this.p_game_list.Size = new System.Drawing.Size(1046, 205);
+            this.p_game_list.TabIndex = 44;
+            // 
+            // ilv_games
+            // 
+            this.ilv_games.AllowCheckBoxClick = false;
+            this.ilv_games.AllowColumnClick = false;
+            this.ilv_games.AllowColumnResize = false;
+            this.ilv_games.AllowItemReorder = false;
+            this.ilv_games.AllowPaneResize = false;
+            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ilv_games.IntegralScroll = true;
+            this.ilv_games.Location = new System.Drawing.Point(0, 0);
+            this.ilv_games.Name = "ilv_games";
+            this.ilv_games.PersistentCacheDirectory = "";
+            this.ilv_games.PersistentCacheSize = ((long)(100));
+            this.ilv_games.Size = new System.Drawing.Size(1046, 205);
+            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
+            this.ilv_games.TabIndex = 43;
+            this.ilv_games.UseWIC = true;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1617,6 +1632,7 @@ namespace DisplayMagician.UIForms
             this.groupBox1.PerformLayout();
             this.gb_display_after.ResumeLayout(false);
             this.gb_display_after.PerformLayout();
+            this.p_game_list.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1725,7 +1741,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.NumericUpDown nud_timeout_game;
         private System.Windows.Forms.Label lbl_game_library;
         private System.Windows.Forms.RadioButton rb_launcher;
-        internal Manina.Windows.Forms.ImageListView ilv_games;
         private System.Windows.Forms.Panel p_profiles;
+        private System.Windows.Forms.Panel p_game_list;
+        private Manina.Windows.Forms.ImageListView ilv_games;
     }
 }

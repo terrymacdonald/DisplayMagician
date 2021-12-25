@@ -1157,7 +1157,7 @@ namespace DisplayMagician.UIForms
                 // Add the game to the game array
                 ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
                 ilv_games.Items.Add(newItem, _gameAdaptor);
-                newItem.Update();
+                //newItem.Update();
             }
             // Make sure that if the item is selected that it's visible
             if (ilv_games.SelectedItems.Count > 0)
@@ -1167,6 +1167,7 @@ namespace DisplayMagician.UIForms
             }
             ilv_games.Update();
             ilv_games.ResumeLayout();
+            Application.DoEvents();
 
             // =============================================
             // IF THE SHORTCUT IS AN EXISTING SHORTCUT
@@ -1905,7 +1906,7 @@ namespace DisplayMagician.UIForms
                 p_standalone.Enabled = true;
                 // Disable the Game Panel
                 p_game.Enabled = false;
-                ilv_games.Enabled = false;
+                p_game_list.Enabled = false;
 
                 // Empty the bitmaps
                 // EmptyTheImages();
@@ -1932,7 +1933,7 @@ namespace DisplayMagician.UIForms
 
                 // Enable the Game Panel
                 p_game.Enabled = true;
-                ilv_games.Enabled = true;
+                p_game_list.Enabled = true;
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
 
@@ -1978,7 +1979,7 @@ namespace DisplayMagician.UIForms
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
                 // Disable the Game Panel
-                ilv_games.Enabled = false;
+                p_game_list.Enabled = false;
                 p_game.Enabled = false;
 
                 SuggestShortcutName();
