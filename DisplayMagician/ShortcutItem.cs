@@ -833,6 +833,22 @@ namespace DisplayMagician
             _originalBitmap = profile.ProfileBitmap;
             _shortcutBitmap = profile.ProfileBitmap;
 
+            // Empty out the unused shortcut data
+            _executableNameAndPath = "";
+            _executableArgumentsRequired = false;
+            _executableArguments = "";            
+            _processNameToMonitorUsesExecutable = false;
+            _differentExecutableToMonitor = "";
+
+            _gameAppId = "";
+            _gameArgumentsRequired = false;
+            _gameArguments = "";
+            _gameLibrary = SupportedGameLibraryType.Unknown;
+            _monitorDifferentGameExe = false;
+            _differentGameExeToMonitor = "";
+            _processPriority = ProcessPriority.Normal;
+            _startTimeout = 20;
+
             ReplaceShortcutIconInCache();
             RefreshValidity();
         }
@@ -906,6 +922,13 @@ namespace DisplayMagician
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
             _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            // Empty out the unused shortcut data
+            _executableNameAndPath = "";
+            _executableArgumentsRequired = false;
+            _executableArguments = "";
+            _processNameToMonitorUsesExecutable = false;
+            _differentExecutableToMonitor = "";
+
             ReplaceShortcutIconInCache();
             RefreshValidity();
         }
@@ -976,6 +999,14 @@ namespace DisplayMagician
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
             _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
+            // Empty out the unused shortcut data
+            _gameAppId = "";
+            _gameArgumentsRequired = false;
+            _gameArguments = "";
+            _gameLibrary = SupportedGameLibraryType.Unknown;
+            _monitorDifferentGameExe = false;
+            _differentGameExeToMonitor = "";
+
             ReplaceShortcutIconInCache();
             RefreshValidity();
         }
@@ -989,7 +1020,7 @@ namespace DisplayMagician
                 shortcut.UUID = UUID;
 
             // Copy all the shortcut data over to the other Shortcut
-            shortcut.Name = Name;
+            shortcut.Name = Name + " (Copy)";
             shortcut.AutoName = false; // Force the autoname to be off, as it's a copy.
             shortcut.DisplayPermanence = DisplayPermanence;
             shortcut.AudioPermanence = AudioPermanence;

@@ -1565,6 +1565,7 @@ namespace DisplayMagician.UIForms
             this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
             this.ilv_games.TabIndex = 43;
             this.ilv_games.UseWIC = true;
+            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
             // 
             // ShortcutForm
             // 

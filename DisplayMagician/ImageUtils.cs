@@ -679,5 +679,42 @@ namespace DisplayMagician
             }
             return null;            
         }
+
+        // Convert the Bitmap to grayscale.
+        public static Bitmap ConvertBitmapToGrayscale(Bitmap bm, bool use_average=false)
+        {
+            if (bm == null)
+            {
+                return null;
+            }
+
+            Bitmap greyBm = new Bitmap(bm);
+
+            for (int i = 0; i < greyBm.Width; i++)
+            {
+                for (int j = 0; j < greyBm.Height; j++)
+                {
+                    Color c = greyBm.GetPixel(i, j);
+
+                    //Apply conversion equation
+                    byte gray = (byte)(.21 * c.R + .71 * c.G + .071 * c.B);
+
+                    //Set the color of this pixel
+                    greyBm.SetPixel(i, j, Color.FromArgb(gray, gray, gray));
+                }
+            }
+
+            return greyBm;
+        }
+
+        public static Image ConvertBitmapToGrayscale(Image image, bool use_average = false)
+        {
+            if (image == null)
+            {
+                return null;
+            }
+            Bitmap greyBm = ConvertBitmapToGrayscale((Bitmap)image);
+            return (Image)greyBm;
+        }
     }
 }

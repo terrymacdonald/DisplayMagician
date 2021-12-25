@@ -1613,6 +1613,15 @@ namespace DisplayMagician.UIForms
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Exclamation);
                         }
+
+                        foreach (Game game in GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+                        {
+                            if (game.Name == _shortcutToEdit.GameName)
+                            {
+                                _selectedGame = game;
+                                break;
+                            }
+                        }
                     }
 
                     
@@ -1906,10 +1915,11 @@ namespace DisplayMagician.UIForms
                 // Disable the Game Panel
                 p_game.Enabled = false;
                 p_game_list.Enabled = false;
+                pb_game_icon.Enabled = false;
+                pb_game_icon.Image = ImageUtils.ConvertBitmapToGrayscale(pb_game_icon.Image);
 
                 // Empty the bitmaps
                 // EmptyTheImages();
-
                 if (!String.IsNullOrWhiteSpace(txt_executable.Text) && File.Exists(txt_executable.Text))
                 {
                     UpdateExeImagesUI();
@@ -1935,11 +1945,12 @@ namespace DisplayMagician.UIForms
                 p_game_list.Enabled = true;
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
+                pb_exe_icon.Image = ImageUtils.ConvertBitmapToGrayscale(pb_exe_icon.Image);
 
                 // Empty the bitmaps
                 //EmptyTheImages();
 
-                if (!String.IsNullOrWhiteSpace(txt_game_name.Text) && ilv_games.SelectedItems.Count == 1 && _selectedGame != null && pb_game_icon.Image == null)
+                if (!String.IsNullOrWhiteSpace(txt_game_name.Text) && ilv_games.SelectedItems.Count == 1 && _selectedGame != null)
                 {
                     _gameLauncher = _selectedGame.GameLibrary.ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
@@ -1977,9 +1988,11 @@ namespace DisplayMagician.UIForms
 
                 // Disable the Standalone Panel
                 p_standalone.Enabled = false;
+                pb_exe_icon.Image = ImageUtils.ConvertBitmapToGrayscale(pb_exe_icon.Image);
                 // Disable the Game Panel
                 p_game_list.Enabled = false;
                 p_game.Enabled = false;
+                pb_game_icon.Image = ImageUtils.ConvertBitmapToGrayscale(pb_game_icon.Image);
 
                 SuggestShortcutName();
                 EnableSaveButtonIfValid();
