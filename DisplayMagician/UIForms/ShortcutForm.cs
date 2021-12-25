@@ -1121,8 +1121,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Select the DisplayProfile tab
-            //tabc_shortcut.SelectedTab = tabp_display;
-            tabc_shortcut.SelectedTab = tabp_game;
+            tabc_shortcut.SelectedTab = tabp_display;
         }
 
         private void LoadShortcut()
