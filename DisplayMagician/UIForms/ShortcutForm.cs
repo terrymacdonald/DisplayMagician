@@ -485,6 +485,14 @@ namespace DisplayMagician.UIForms
                 {
                     stopProgram.DontStartIfAlreadyRunning = false;
                 }
+                if (cb_run_cmd_afterwards_run_as_administrator.Checked)
+                {
+                    stopProgram.RunAsAdministrator = true;
+                }
+                else
+                {
+                    stopProgram.RunAsAdministrator = false;
+                }                
 
                 _stopPrograms.Add(stopProgram);
             }
@@ -603,6 +611,7 @@ namespace DisplayMagician.UIForms
                     ExecutableArguments = txt_args_executable.Text,
                     ExecutableArgumentsRequired = cb_args_executable.Checked,
                     ExecutableNameAndPath = txt_executable.Text,
+                    RunAsAdministrator = cb_run_exe_as_administrator.Checked,
                     ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value),
                     ProcessPriority = (ProcessPriority)cbx_exe_priority.SelectedValue,
                 };
@@ -856,6 +865,11 @@ namespace DisplayMagician.UIForms
 
             }
 
+            if (cb_run_cmd_afterwards.Checked && String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text))
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -1104,7 +1118,7 @@ namespace DisplayMagician.UIForms
             rb_change_capture.Checked = false;
             rb_keep_capture_volume.Checked = false;
             rb_no_change_capture.Checked = true;
-            rb_set_capture_volume.Checked = false;
+            rb_set_capture_volume.Checked = false;            
 
             // Set the game mode on load
             rb_launcher.Checked = true;
@@ -1118,6 +1132,10 @@ namespace DisplayMagician.UIForms
             cb_run_cmd_afterwards.Checked = false;
             cb_run_cmd_afterwards_args.Checked = false;
             cb_wait_alternative_game.Checked = false;
+            cb_run_exe_as_administrator.Checked = false;
+
+            // Wipe the start programs flp
+            flp_start_programs.Controls.Clear();
 
             // Wipe the pictureboxes if they're in use
             if (pb_exe_icon.Image != null)
@@ -1537,6 +1555,14 @@ namespace DisplayMagician.UIForms
                     nud_timeout_executable.Value = _shortcutToEdit.StartTimeout;
                     txt_args_executable.Text = _shortcutToEdit.ExecutableArguments;
                     cbx_exe_priority.SelectedValue = _shortcutToEdit.ProcessPriority;
+                    if (_shortcutToEdit.RunExeAsAdministrator)
+                    {
+                        cb_run_exe_as_administrator.Checked = true;
+                    }
+                    else
+                    {
+                        cb_run_exe_as_administrator.Checked = false;
+                    }
                     if (_shortcutToEdit.ExecutableArgumentsRequired)
                     {
                         cb_args_executable.Checked = true;
@@ -1801,6 +1827,12 @@ namespace DisplayMagician.UIForms
                 // Setup the single stop program we're beginning with
                 if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
                 {
+                    txt_run_cmd_afterwards.Enabled = true;
+                    btn_run_cmd_afterwards.Enabled = true;
+                    cb_run_cmd_afterwards_args.Enabled = true;
+                    cb_run_cmd_afterwards_dont_start.Enabled = true;
+                    cb_run_cmd_afterwards_run_as_administrator.Enabled = true;
+
                     cb_run_cmd_afterwards.Checked = true;
                     txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
                     if (_shortcutToEdit.StopPrograms[0].ExecutableArgumentsRequired)
@@ -1823,11 +1855,28 @@ namespace DisplayMagician.UIForms
                     {
                         cb_run_cmd_afterwards_dont_start.Checked = false;
                     }
+                    if (_shortcutToEdit.StopPrograms[0].RunAsAdministrator)
+                    {
+                        cb_run_cmd_afterwards_run_as_administrator.Checked = true;
+                    }
+                    else
+                    {
+                        cb_run_cmd_afterwards_run_as_administrator.Checked = false;
+                    }                    
+
                 }
                 else
                 {
+                    txt_run_cmd_afterwards.Enabled = false;
+                    btn_run_cmd_afterwards.Enabled = false;
+                    cb_run_cmd_afterwards_args.Enabled = false;
+                    cb_run_cmd_afterwards_dont_start.Enabled = false;
+                    cb_run_cmd_afterwards_run_as_administrator.Enabled = false;
+
                     cb_run_cmd_afterwards.Checked = false;
+                    cb_run_cmd_afterwards_args.Checked = false;
                     cb_run_cmd_afterwards_dont_start.Checked = false;
+                    cb_run_cmd_afterwards_run_as_administrator.Checked = false;
                 }
 
 
@@ -3103,11 +3152,17 @@ namespace DisplayMagician.UIForms
             {
                 txt_run_cmd_afterwards.Enabled = true;
                 btn_run_cmd_afterwards.Enabled = true;
+                cb_run_cmd_afterwards_args.Enabled = true;
+                cb_run_cmd_afterwards_dont_start.Enabled = true;
+                cb_run_cmd_afterwards_run_as_administrator.Enabled = true;
             }
             else
             {
                 txt_run_cmd_afterwards.Enabled = false;
                 btn_run_cmd_afterwards.Enabled = false;
+                cb_run_cmd_afterwards_args.Enabled = false;
+                cb_run_cmd_afterwards_dont_start.Enabled = false;
+                cb_run_cmd_afterwards_run_as_administrator.Enabled = false;
             }
         }
 

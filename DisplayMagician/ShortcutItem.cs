@@ -59,6 +59,7 @@ namespace DisplayMagician
         public bool ExecutableArgumentsRequired;
         public bool CloseOnFinish;
         public bool DontStartIfAlreadyRunning;
+        public bool RunAsAdministrator;
     }
 
     public struct StopProgram
@@ -70,12 +71,14 @@ namespace DisplayMagician
         public string Arguments;
         public bool ExecutableArgumentsRequired;
         public bool DontStartIfAlreadyRunning;
+        public bool RunAsAdministrator;
     }
 
     public struct Executable
     {
         public string DifferentExecutableToMonitor;
         public string ExecutableNameAndPath;
+        public bool RunAsAdministrator;
         public int ExecutableTimeout;
         public string ExecutableArguments;
         public bool ExecutableArgumentsRequired;
@@ -124,6 +127,7 @@ namespace DisplayMagician
         private string _executableNameAndPath = "";
         private string _executableArguments;
         private bool _executableArgumentsRequired = false;
+        private bool _runExeAsAdministrator = false;
         private bool _processNameToMonitorUsesExecutable = true;
         private ProcessPriority _processPriority = ProcessPriority.Normal;
         private string _gameAppId;
@@ -401,6 +405,19 @@ namespace DisplayMagician
             set
             {
                 _executableArgumentsRequired = value;
+            }
+        }
+
+        public bool RunExeAsAdministrator
+        {
+            get
+            {
+                return _runExeAsAdministrator;
+            }
+
+            set
+            {
+                _runExeAsAdministrator = value;
             }
         }
 
@@ -836,7 +853,8 @@ namespace DisplayMagician
             // Empty out the unused shortcut data
             _executableNameAndPath = "";
             _executableArgumentsRequired = false;
-            _executableArguments = "";            
+            _executableArguments = "";
+            _runExeAsAdministrator = false;
             _processNameToMonitorUsesExecutable = false;
             _differentExecutableToMonitor = "";
 
@@ -926,6 +944,7 @@ namespace DisplayMagician
             _executableNameAndPath = "";
             _executableArgumentsRequired = false;
             _executableArguments = "";
+            _runExeAsAdministrator = false;
             _processNameToMonitorUsesExecutable = false;
             _differentExecutableToMonitor = "";
 
@@ -967,6 +986,7 @@ namespace DisplayMagician
             _category = ShortcutCategory.Application;
             _differentExecutableToMonitor = executable.DifferentExecutableToMonitor;
             _executableNameAndPath = executable.ExecutableNameAndPath;
+            _runExeAsAdministrator = executable.RunAsAdministrator;
             _startTimeout = executable.ExecutableTimeout;
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
@@ -1030,6 +1050,7 @@ namespace DisplayMagician
             shortcut.ExecutableNameAndPath = ExecutableNameAndPath;
             shortcut.ExecutableArguments = ExecutableArguments;
             shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
+            shortcut.RunExeAsAdministrator = RunExeAsAdministrator;
             shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
             shortcut.ProcessPriority = ProcessPriority;
             shortcut.GameAppId = GameAppId;

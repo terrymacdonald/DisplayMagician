@@ -378,8 +378,6 @@ namespace DisplayMagician
             if (shortcut.CopyTo(copiedShortcut,false))
             {
                 // Copy worked!
-                // We add (Copy) to the end of the shortcut name
-                copiedShortcut.Name = copiedShortcut.Name + " (Copy)";
                 // Add the shortcut to the list of shortcuts
                 _allShortcuts.Add(copiedShortcut);
 
@@ -970,7 +968,7 @@ namespace DisplayMagician
                     try
                     {
                         //processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority);
-                        processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority);
+                        processesCreated = ProcessUtils.StartProcess(processToStart.Executable, processToStart.Arguments, processToStart.ProcessPriority, 10, processToStart.RunAsAdministrator);
 
                         // Record the program we started so we can close it later (if we have any!)
                         if (processesCreated.Count > 0)
@@ -1129,7 +1127,7 @@ namespace DisplayMagician
                 List<Process> processesCreated = new List<Process>();
                 try
                 {
-                    processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority);
+                    processesCreated = ProcessUtils.StartProcess(shortcutToUse.ExecutableNameAndPath, shortcutToUse.ExecutableArguments, shortcutToUse.ProcessPriority, shortcutToUse.StartTimeout, shortcutToUse.RunExeAsAdministrator);
 
                     // Record the program we started so we can close it later
                     foreach (Process p in processesCreated)
@@ -2071,14 +2069,14 @@ namespace DisplayMagician
                         else
                         {
                             logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable} as no other processes running");
-                            ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal);                            
+                            ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal,10,stopProg.RunAsAdministrator);                            
                         }
 
                     }
                     else
                     {
                         logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable}.");
-                        ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal);
+                        ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator);
                     }
                     
                 }

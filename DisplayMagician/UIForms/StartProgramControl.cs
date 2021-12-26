@@ -78,7 +78,7 @@ namespace DisplayMagician.UIForms
             cb_start_program_close.Checked = myStartProgram.CloseOnFinish;
             cb_dont_start_if_running.Checked = myStartProgram.DontStartIfAlreadyRunning;
             cbx_start_program_priority.SelectedValue = myStartProgram.ProcessPriority;
-
+            cb_run_as_administrator.Checked = myStartProgram.RunAsAdministrator;
         }
 
         public void ChangePriority(int priority)
@@ -108,6 +108,7 @@ namespace DisplayMagician.UIForms
                 cb_start_program_close.Enabled = false;
                 cb_dont_start_if_running.Enabled = false;
                 cbx_start_program_priority.Enabled = false;
+                cb_run_as_administrator.Enabled = false;
             }
             else
             {
@@ -120,6 +121,7 @@ namespace DisplayMagician.UIForms
                 cb_start_program_close.Enabled = true;
                 cb_dont_start_if_running.Enabled = true;
                 cbx_start_program_priority.Enabled = true;
+                cb_run_as_administrator.Enabled = true;
             }            
         }
 
@@ -236,6 +238,18 @@ namespace DisplayMagician.UIForms
         private void cbx_start_program_priority_SelectedIndexChanged(object sender, EventArgs e)
         {
             myStartProgram.ProcessPriority = (ProcessPriority)cbx_start_program_priority.SelectedValue;
+        }
+
+        private void cb_run_as_administrator_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cb_run_as_administrator.Checked)
+            {
+                myStartProgram.RunAsAdministrator = true;
+            }
+            else
+            {
+                myStartProgram.RunAsAdministrator = false;
+            }
         }
     }    
 }

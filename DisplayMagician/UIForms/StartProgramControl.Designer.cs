@@ -43,6 +43,7 @@ namespace DisplayMagician.UIForms
             this.pb_down_arrow = new System.Windows.Forms.PictureBox();
             this.cbx_start_program_priority = new System.Windows.Forms.ComboBox();
             this.lbl_start_program_priority = new System.Windows.Forms.Label();
+            this.cb_run_as_administrator = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.pb_up_arrow)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.SuspendLayout();
@@ -52,7 +53,7 @@ namespace DisplayMagician.UIForms
             this.cb_dont_start_if_running.AutoSize = true;
             this.cb_dont_start_if_running.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_dont_start_if_running.ForeColor = System.Drawing.Color.White;
-            this.cb_dont_start_if_running.Location = new System.Drawing.Point(160, 83);
+            this.cb_dont_start_if_running.Location = new System.Drawing.Point(160, 115);
             this.cb_dont_start_if_running.Name = "cb_dont_start_if_running";
             this.cb_dont_start_if_running.Size = new System.Drawing.Size(289, 24);
             this.cb_dont_start_if_running.TabIndex = 26;
@@ -79,12 +80,11 @@ namespace DisplayMagician.UIForms
             this.cb_start_program_close.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_start_program_close.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_start_program_close.ForeColor = System.Drawing.Color.White;
-            this.cb_start_program_close.Location = new System.Drawing.Point(506, 115);
+            this.cb_start_program_close.Location = new System.Drawing.Point(614, 126);
             this.cb_start_program_close.Name = "cb_start_program_close";
-            this.cb_start_program_close.Size = new System.Drawing.Size(458, 24);
+            this.cb_start_program_close.Size = new System.Drawing.Size(290, 44);
             this.cb_start_program_close.TabIndex = 24;
-            this.cb_start_program_close.Text = "Close started program when finished (unless already running)";
-            this.cb_start_program_close.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_start_program_close.Text = "Close started program when finished \r\n(unless already running)";
             this.cb_start_program_close.UseVisualStyleBackColor = true;
             this.cb_start_program_close.CheckedChanged += new System.EventHandler(this.cb_start_program_close_CheckedChanged);
             // 
@@ -145,7 +145,7 @@ namespace DisplayMagician.UIForms
             this.cb_disable_start_program.AutoSize = true;
             this.cb_disable_start_program.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cb_disable_start_program.ForeColor = System.Drawing.Color.White;
-            this.cb_disable_start_program.Location = new System.Drawing.Point(159, 115);
+            this.cb_disable_start_program.Location = new System.Drawing.Point(159, 146);
             this.cb_disable_start_program.Name = "cb_disable_start_program";
             this.cb_disable_start_program.Size = new System.Drawing.Size(312, 24);
             this.cb_disable_start_program.TabIndex = 28;
@@ -223,12 +223,27 @@ namespace DisplayMagician.UIForms
             this.lbl_start_program_priority.TabIndex = 33;
             this.lbl_start_program_priority.Text = "Start Program Priority:";
             // 
+            // cb_run_as_administrator
+            // 
+            this.cb_run_as_administrator.AutoSize = true;
+            this.cb_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_run_as_administrator.ForeColor = System.Drawing.Color.White;
+            this.cb_run_as_administrator.Location = new System.Drawing.Point(160, 84);
+            this.cb_run_as_administrator.Name = "cb_run_as_administrator";
+            this.cb_run_as_administrator.Size = new System.Drawing.Size(238, 24);
+            this.cb_run_as_administrator.TabIndex = 35;
+            this.cb_run_as_administrator.Text = "Run program as administrator";
+            this.cb_run_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_run_as_administrator.UseVisualStyleBackColor = true;
+            this.cb_run_as_administrator.CheckedChanged += new System.EventHandler(this.cb_run_as_administrator_CheckedChanged);
+            // 
             // StartProgramControl
             // 
             this.AllowDrop = true;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoSize = true;
             this.BackColor = System.Drawing.Color.Black;
+            this.Controls.Add(this.cb_run_as_administrator);
             this.Controls.Add(this.cbx_start_program_priority);
             this.Controls.Add(this.lbl_start_program_priority);
             this.Controls.Add(this.pb_up_arrow);
@@ -246,7 +261,7 @@ namespace DisplayMagician.UIForms
             this.ForeColor = System.Drawing.Color.White;
             this.Margin = new System.Windows.Forms.Padding(10);
             this.Name = "StartProgramControl";
-            this.Size = new System.Drawing.Size(1036, 148);
+            this.Size = new System.Drawing.Size(1036, 180);
             ((System.ComponentModel.ISupportInitialize)(this.pb_up_arrow)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
             this.ResumeLayout(false);
@@ -270,5 +285,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.PictureBox pb_up_arrow;
         private System.Windows.Forms.ComboBox cbx_start_program_priority;
         private System.Windows.Forms.Label lbl_start_program_priority;
+        private System.Windows.Forms.CheckBox cb_run_as_administrator;
     }
 }

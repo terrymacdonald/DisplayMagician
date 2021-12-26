@@ -55,11 +55,11 @@ namespace DisplayMagician.Processes
 
         private const int INFINITE = -1;
 
-        public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1)
+        public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
         {
             List<Process> returnedProcesses = new List<Process>();
             Process processCreated;
-            if (TryExecute(executable, arguments, out processCreated))
+            if (TryExecute(executable, arguments, out processCreated, runAsAdministrator))
             {
                 logger.Trace($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by TryExecute");
             }
@@ -518,19 +518,33 @@ namespace DisplayMagician.Processes
         /// <param name="priorityClass">Process priority</param>
         /// <param name="maxWaitMs">Maximum time to wait for completion</param>
         /// <returns></returns>
-        private static bool TryExecute(string executable, string arguments, out Process processCreated, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+        private static bool TryExecute(string executable, string arguments, out Process processCreated, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
         {
             //StringBuilder outputBuilder = new StringBuilder();            
             ProcessStartInfo psi;
             if (File.Exists(executable) && IsExecutableFileType(executable))
             {
                 // Is exe file 
-                psi = new ProcessStartInfo(executable, arguments)
+                if (runAsAdministrator)
                 {
-                    UseShellExecute = false,
-                    CreateNoWindow = false,
-                    RedirectStandardOutput = false
-                };
+                    psi = new ProcessStartInfo(executable, arguments)
+                    {
+                        UseShellExecute = true,
+                        Verb = "Runas",
+                        CreateNoWindow = false,
+                        RedirectStandardOutput = false
+                    };
+                }
+                else
+                {
+                    psi = new ProcessStartInfo(executable, arguments)
+                    {
+                        UseShellExecute = false,
+                        CreateNoWindow = false,
+                        RedirectStandardOutput = false
+                    };
+                }
+                
             }
             else
             {
