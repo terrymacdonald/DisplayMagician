@@ -75,9 +75,12 @@ namespace DisplayMagician.UIForms
             this.btn_add_new_start_program = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.tabp_game = new System.Windows.Forms.TabPage();
+            this.p_game_list = new System.Windows.Forms.Panel();
+            this.ilv_games = new Manina.Windows.Forms.ImageListView();
             this.p_gametostart = new System.Windows.Forms.Panel();
             this.btn_find_examples_game = new System.Windows.Forms.Button();
             this.p_standalone = new System.Windows.Forms.Panel();
+            this.cb_run_exe_as_administrator = new System.Windows.Forms.CheckBox();
             this.btn_choose_exe_icon = new System.Windows.Forms.Button();
             this.pb_exe_icon = new System.Windows.Forms.PictureBox();
             this.cbx_exe_priority = new System.Windows.Forms.ComboBox();
@@ -115,6 +118,8 @@ namespace DisplayMagician.UIForms
             this.rb_launcher = new System.Windows.Forms.RadioButton();
             this.tabp_after = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.cb_run_cmd_afterwards_run_as_administrator = new System.Windows.Forms.CheckBox();
+            this.cb_run_cmd_afterwards_dont_start = new System.Windows.Forms.CheckBox();
             this.txt_run_cmd_afterwards_args = new System.Windows.Forms.TextBox();
             this.cb_run_cmd_afterwards_args = new System.Windows.Forms.CheckBox();
             this.btn_run_cmd_afterwards = new System.Windows.Forms.Button();
@@ -135,11 +140,6 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
-            this.p_game_list = new System.Windows.Forms.Panel();
-            this.ilv_games = new Manina.Windows.Forms.ImageListView();
-            this.cb_run_cmd_afterwards_dont_start = new System.Windows.Forms.CheckBox();
-            this.cb_run_exe_as_administrator = new System.Windows.Forms.CheckBox();
-            this.cb_run_cmd_afterwards_run_as_administrator = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.p_profiles.SuspendLayout();
@@ -154,6 +154,7 @@ namespace DisplayMagician.UIForms
             this.tabp_before.SuspendLayout();
             this.p_start_program_upper.SuspendLayout();
             this.tabp_game.SuspendLayout();
+            this.p_game_list.SuspendLayout();
             this.p_gametostart.SuspendLayout();
             this.p_standalone.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_exe_icon)).BeginInit();
@@ -166,7 +167,6 @@ namespace DisplayMagician.UIForms
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gb_display_after.SuspendLayout();
-            this.p_game_list.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_save
@@ -757,6 +757,35 @@ namespace DisplayMagician.UIForms
             this.tabp_game.TabIndex = 2;
             this.tabp_game.Text = "4. Choose Game to start";
             // 
+            // p_game_list
+            // 
+            this.p_game_list.Controls.Add(this.ilv_games);
+            this.p_game_list.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.p_game_list.Location = new System.Drawing.Point(3, 523);
+            this.p_game_list.Name = "p_game_list";
+            this.p_game_list.Size = new System.Drawing.Size(1046, 205);
+            this.p_game_list.TabIndex = 44;
+            // 
+            // ilv_games
+            // 
+            this.ilv_games.AllowCheckBoxClick = false;
+            this.ilv_games.AllowColumnClick = false;
+            this.ilv_games.AllowColumnResize = false;
+            this.ilv_games.AllowItemReorder = false;
+            this.ilv_games.AllowPaneResize = false;
+            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ilv_games.IntegralScroll = true;
+            this.ilv_games.Location = new System.Drawing.Point(0, 0);
+            this.ilv_games.Name = "ilv_games";
+            this.ilv_games.PersistentCacheDirectory = "";
+            this.ilv_games.PersistentCacheSize = ((long)(100));
+            this.ilv_games.Size = new System.Drawing.Size(1046, 205);
+            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
+            this.ilv_games.TabIndex = 43;
+            this.ilv_games.UseWIC = true;
+            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
+            // 
             // p_gametostart
             // 
             this.p_gametostart.Controls.Add(this.btn_find_examples_game);
@@ -811,6 +840,20 @@ namespace DisplayMagician.UIForms
             this.p_standalone.Name = "p_standalone";
             this.p_standalone.Size = new System.Drawing.Size(1046, 201);
             this.p_standalone.TabIndex = 46;
+            // 
+            // cb_run_exe_as_administrator
+            // 
+            this.cb_run_exe_as_administrator.AutoSize = true;
+            this.cb_run_exe_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_run_exe_as_administrator.ForeColor = System.Drawing.Color.White;
+            this.cb_run_exe_as_administrator.Location = new System.Drawing.Point(171, 81);
+            this.cb_run_exe_as_administrator.Name = "cb_run_exe_as_administrator";
+            this.cb_run_exe_as_administrator.Size = new System.Drawing.Size(256, 24);
+            this.cb_run_exe_as_administrator.TabIndex = 39;
+            this.cb_run_exe_as_administrator.Text = "Run executable as administrator";
+            this.cb_run_exe_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_run_exe_as_administrator.UseVisualStyleBackColor = true;
+            this.cb_run_exe_as_administrator.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
             // 
             // btn_choose_exe_icon
             // 
@@ -1289,6 +1332,34 @@ namespace DisplayMagician.UIForms
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Run a program or command afterwards?";
             // 
+            // cb_run_cmd_afterwards_run_as_administrator
+            // 
+            this.cb_run_cmd_afterwards_run_as_administrator.AutoSize = true;
+            this.cb_run_cmd_afterwards_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_run_cmd_afterwards_run_as_administrator.ForeColor = System.Drawing.Color.White;
+            this.cb_run_cmd_afterwards_run_as_administrator.Location = new System.Drawing.Point(492, 114);
+            this.cb_run_cmd_afterwards_run_as_administrator.Name = "cb_run_cmd_afterwards_run_as_administrator";
+            this.cb_run_cmd_afterwards_run_as_administrator.Size = new System.Drawing.Size(238, 24);
+            this.cb_run_cmd_afterwards_run_as_administrator.TabIndex = 36;
+            this.cb_run_cmd_afterwards_run_as_administrator.Text = "Run program as administrator";
+            this.cb_run_cmd_afterwards_run_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_run_cmd_afterwards_run_as_administrator.UseVisualStyleBackColor = true;
+            this.cb_run_cmd_afterwards_run_as_administrator.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            // 
+            // cb_run_cmd_afterwards_dont_start
+            // 
+            this.cb_run_cmd_afterwards_dont_start.AutoSize = true;
+            this.cb_run_cmd_afterwards_dont_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_run_cmd_afterwards_dont_start.ForeColor = System.Drawing.Color.White;
+            this.cb_run_cmd_afterwards_dont_start.Location = new System.Drawing.Point(98, 114);
+            this.cb_run_cmd_afterwards_dont_start.Name = "cb_run_cmd_afterwards_dont_start";
+            this.cb_run_cmd_afterwards_dont_start.Size = new System.Drawing.Size(289, 24);
+            this.cb_run_cmd_afterwards_dont_start.TabIndex = 27;
+            this.cb_run_cmd_afterwards_dont_start.Text = "Don\'t start if program already running";
+            this.cb_run_cmd_afterwards_dont_start.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.cb_run_cmd_afterwards_dont_start.UseVisualStyleBackColor = true;
+            this.cb_run_cmd_afterwards_dont_start.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
+            // 
             // txt_run_cmd_afterwards_args
             // 
             this.txt_run_cmd_afterwards_args.Enabled = false;
@@ -1545,76 +1616,6 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
-            // p_game_list
-            // 
-            this.p_game_list.Controls.Add(this.ilv_games);
-            this.p_game_list.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.p_game_list.Location = new System.Drawing.Point(3, 523);
-            this.p_game_list.Name = "p_game_list";
-            this.p_game_list.Size = new System.Drawing.Size(1046, 205);
-            this.p_game_list.TabIndex = 44;
-            // 
-            // ilv_games
-            // 
-            this.ilv_games.AllowCheckBoxClick = false;
-            this.ilv_games.AllowColumnClick = false;
-            this.ilv_games.AllowColumnResize = false;
-            this.ilv_games.AllowItemReorder = false;
-            this.ilv_games.AllowPaneResize = false;
-            this.ilv_games.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ilv_games.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ilv_games.IntegralScroll = true;
-            this.ilv_games.Location = new System.Drawing.Point(0, 0);
-            this.ilv_games.Name = "ilv_games";
-            this.ilv_games.PersistentCacheDirectory = "";
-            this.ilv_games.PersistentCacheSize = ((long)(100));
-            this.ilv_games.Size = new System.Drawing.Size(1046, 205);
-            this.ilv_games.SortOrder = Manina.Windows.Forms.SortOrder.Ascending;
-            this.ilv_games.TabIndex = 43;
-            this.ilv_games.UseWIC = true;
-            this.ilv_games.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_games_ItemClick);
-            // 
-            // cb_run_cmd_afterwards_dont_start
-            // 
-            this.cb_run_cmd_afterwards_dont_start.AutoSize = true;
-            this.cb_run_cmd_afterwards_dont_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_run_cmd_afterwards_dont_start.ForeColor = System.Drawing.Color.White;
-            this.cb_run_cmd_afterwards_dont_start.Location = new System.Drawing.Point(98, 114);
-            this.cb_run_cmd_afterwards_dont_start.Name = "cb_run_cmd_afterwards_dont_start";
-            this.cb_run_cmd_afterwards_dont_start.Size = new System.Drawing.Size(289, 24);
-            this.cb_run_cmd_afterwards_dont_start.TabIndex = 27;
-            this.cb_run_cmd_afterwards_dont_start.Text = "Don\'t start if program already running";
-            this.cb_run_cmd_afterwards_dont_start.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_cmd_afterwards_dont_start.UseVisualStyleBackColor = true;
-            this.cb_run_cmd_afterwards_dont_start.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
-            // 
-            // cb_run_exe_as_administrator
-            // 
-            this.cb_run_exe_as_administrator.AutoSize = true;
-            this.cb_run_exe_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_run_exe_as_administrator.ForeColor = System.Drawing.Color.White;
-            this.cb_run_exe_as_administrator.Location = new System.Drawing.Point(171, 81);
-            this.cb_run_exe_as_administrator.Name = "cb_run_exe_as_administrator";
-            this.cb_run_exe_as_administrator.Size = new System.Drawing.Size(256, 24);
-            this.cb_run_exe_as_administrator.TabIndex = 39;
-            this.cb_run_exe_as_administrator.Text = "Run executable as administrator";
-            this.cb_run_exe_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_exe_as_administrator.UseVisualStyleBackColor = true;
-            // 
-            // cb_run_cmd_afterwards_run_as_administrator
-            // 
-            this.cb_run_cmd_afterwards_run_as_administrator.AutoSize = true;
-            this.cb_run_cmd_afterwards_run_as_administrator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_run_cmd_afterwards_run_as_administrator.ForeColor = System.Drawing.Color.White;
-            this.cb_run_cmd_afterwards_run_as_administrator.Location = new System.Drawing.Point(492, 114);
-            this.cb_run_cmd_afterwards_run_as_administrator.Name = "cb_run_cmd_afterwards_run_as_administrator";
-            this.cb_run_cmd_afterwards_run_as_administrator.Size = new System.Drawing.Size(238, 24);
-            this.cb_run_cmd_afterwards_run_as_administrator.TabIndex = 36;
-            this.cb_run_cmd_afterwards_run_as_administrator.Text = "Run program as administrator";
-            this.cb_run_cmd_afterwards_run_as_administrator.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cb_run_cmd_afterwards_run_as_administrator.UseVisualStyleBackColor = true;
-            this.cb_run_cmd_afterwards_run_as_administrator.Paint += new System.Windows.Forms.PaintEventHandler(this.checkbox_Paint);
-            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1662,6 +1663,7 @@ namespace DisplayMagician.UIForms
             this.p_start_program_upper.ResumeLayout(false);
             this.p_start_program_upper.PerformLayout();
             this.tabp_game.ResumeLayout(false);
+            this.p_game_list.ResumeLayout(false);
             this.p_gametostart.ResumeLayout(false);
             this.p_gametostart.PerformLayout();
             this.p_standalone.ResumeLayout(false);
@@ -1681,7 +1683,6 @@ namespace DisplayMagician.UIForms
             this.groupBox1.PerformLayout();
             this.gb_display_after.ResumeLayout(false);
             this.gb_display_after.PerformLayout();
-            this.p_game_list.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 

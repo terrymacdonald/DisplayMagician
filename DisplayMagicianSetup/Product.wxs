@@ -31,7 +31,7 @@
 		</Condition>-->
 		<!--<MajorUpgrade IgnoreRemoveFailure="yes" AllowDowngrades="no" AllowSameVersionUpgrades="no"  DowngradeErrorMessage="!(loc.DowngradeErrorMessage)" />-->
 		<!-- Reference the global WIXNETFX4RELEASEINSTALLED property so that will automatically pull in the .Net 4.8 variables (WiX 3.14 and higher only supported) -->
-		<!--<PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED"/>
+		<!-- <PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED"/>
 		<Condition Message="!(loc.DotNetFrameworkNeeded)">
 			<![CDATA[Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED]]>
 		</Condition>-->
@@ -133,7 +133,7 @@
 		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />-->
 
 		<!-- Preapre custom actions to register and unregisterthe ShellExtension DLL -->
-		<CustomAction Id="InstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='install "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll -os64" -codebase' Execute="deferred" Return="check" Impersonate="no" />
+		<CustomAction Id="InstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='install "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll" -codebase' Execute="deferred" Return="check" Impersonate="no" />
 		<CustomAction Id="UninstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='uninstall "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll"' Execute="deferred" Return="check" Impersonate="no" />
 
 		<!-- Plumb the registering and unregistering of the ShellExtension DLL into the instllation sequence -->

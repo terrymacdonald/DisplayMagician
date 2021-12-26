@@ -1116,7 +1116,7 @@ namespace DisplayMagician.UIForms
             rb_keep_audio_volume.Checked = true;
             rb_set_audio_volume.Checked = false;
             rb_change_capture.Checked = false;
-            rb_keep_capture_volume.Checked = false;
+            rb_keep_capture_volume.Checked = true;
             rb_no_change_capture.Checked = true;
             rb_set_capture_volume.Checked = false;            
 
