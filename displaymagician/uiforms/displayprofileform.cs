@@ -329,7 +329,7 @@ namespace DisplayMagician.UIForms
             {
                 // we don't have the profile stored yet
                 _saveOrRenameMode = "save";
-                btn_save_or_rename.Text = "Save As";
+                btn_save_or_rename.Text = "Save";
                 lbl_profile_shown_subtitle.Text = "The current Display configuration hasn't been saved as a Display Profile yet.";
                 btn_apply.Visible = false;
                 lbl_save_profile.Visible = true;
@@ -356,12 +356,19 @@ namespace DisplayMagician.UIForms
 
         private void btn_save_as_Click(object sender, EventArgs e)
         {
+            // Check there is a name
+            if (String.IsNullOrWhiteSpace(txt_profile_save_name.Text))
+            {
+                logger.Warn($"DisplayProfileForm/btn_save_as_Click: You need to provide a name for this profile before it can be saved.");
+                MessageBox.Show("You need to provide a name for this profile before it can be saved.", "Your profile needs a name", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             // Check the name is valid
             if (!Program.IsValidFilename(txt_profile_save_name.Text))
             {
-                MessageBox.Show("The profile name cannot contain the following characters:" + Path.GetInvalidFileNameChars(), "Invalid characters in profile name", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
+                logger.Warn($"DisplayProfileForm/btn_save_as_Click: The profile name cannot contain the following characters: {Path.GetInvalidFileNameChars()}. Unable to save this profile.");
+                MessageBox.Show($"The profile name cannot contain the following characters: [{Path.GetInvalidFileNameChars()}]. Please change the profile name.", "Invalid characters in profile name", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -371,7 +378,8 @@ namespace DisplayMagician.UIForms
                 //if (String.Equals(txt_profile_save_name.Text, savedProfile.Name, StringComparison.InvariantCultureIgnoreCase))
                 if (savedProfile.Name.Equals(txt_profile_save_name.Text))
                 {
-                    MessageBox.Show("Sorry, each saved display profile needs a unique name.", "Profile name already exists", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: The profile name {txt_profile_save_name.Text} already exists. Each profile name must be unique. Unable to save this profile.");
+                    MessageBox.Show("Sorry, each saved display profile needs a unique name. Please change the profile name.", "Profile name already exists", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
@@ -383,7 +391,7 @@ namespace DisplayMagician.UIForms
                 // We're in 'save' mode!
 
                 // Check we're not already saving this profile
-                string previouslySavedProfileName = "";
+                string previouslySavedProfileName;
                 if (ProfileRepository.ContainsCurrentProfile(out previouslySavedProfileName))
                 { 
                     MessageBox.Show($"Sorry, this display profile was already saved as '{previouslySavedProfileName}'.", "Profile already saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -606,5 +614,10 @@ namespace DisplayMagician.UIForms
             }                
         }
 
+        private void btn_help_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup";
+            System.Diagnostics.Process.Start(targetURL);
+        }
     }
 }

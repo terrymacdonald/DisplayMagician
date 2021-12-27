@@ -60,11 +60,11 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.p_upper = new System.Windows.Forms.Panel();
+            this.btn_help = new System.Windows.Forms.Button();
             this.btn_profile_settings = new System.Windows.Forms.Button();
             this.pbLogo = new System.Windows.Forms.PictureBox();
             this.p_lower = new System.Windows.Forms.Panel();
             this.p_fill = new System.Windows.Forms.Panel();
-            this.btn_help = new System.Windows.Forms.Button();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.p_upper.SuspendLayout();
@@ -296,13 +296,11 @@ namespace DisplayMagician.UIForms
             this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
             this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_save_profile.Location = new System.Drawing.Point(319, 95);
+            this.lbl_save_profile.Location = new System.Drawing.Point(290, 63);
             this.lbl_save_profile.Name = "lbl_save_profile";
-            this.lbl_save_profile.Size = new System.Drawing.Size(296, 102);
+            this.lbl_save_profile.Size = new System.Drawing.Size(365, 157);
             this.lbl_save_profile.TabIndex = 33;
-            this.lbl_save_profile.Text = "Setup your display layout in NVIDIA Control Panel, AMD Radeon Adrenalin or Window" +
-    "s Setup, then return to DisplayMagician and click \'Save As\' to store this Displa" +
-    "y Profile for later.";
+            this.lbl_save_profile.Text = resources.GetString("lbl_save_profile.Text");
             this.lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btn_save
@@ -398,6 +396,23 @@ namespace DisplayMagician.UIForms
             this.p_upper.Size = new System.Drawing.Size(934, 517);
             this.p_upper.TabIndex = 37;
             // 
+            // btn_help
+            // 
+            this.btn_help.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_help.BackColor = System.Drawing.Color.Black;
+            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_help.ForeColor = System.Drawing.Color.White;
+            this.btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.btn_help.Location = new System.Drawing.Point(847, 63);
+            this.btn_help.Name = "btn_help";
+            this.btn_help.Size = new System.Drawing.Size(75, 23);
+            this.btn_help.TabIndex = 39;
+            this.btn_help.Text = "&Help";
+            this.btn_help.UseVisualStyleBackColor = false;
+            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
+            // 
             // btn_profile_settings
             // 
             this.btn_profile_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
@@ -449,23 +464,6 @@ namespace DisplayMagician.UIForms
             this.p_fill.Name = "p_fill";
             this.p_fill.Size = new System.Drawing.Size(934, 141);
             this.p_fill.TabIndex = 39;
-            // 
-            // btn_help
-            // 
-            this.btn_help.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_help.BackColor = System.Drawing.Color.Black;
-            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_help.ForeColor = System.Drawing.Color.White;
-            this.btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.btn_help.Location = new System.Drawing.Point(847, 63);
-            this.btn_help.Name = "btn_help";
-            this.btn_help.Size = new System.Drawing.Size(75, 23);
-            this.btn_help.TabIndex = 39;
-            this.btn_help.Text = "&Help";
-            this.btn_help.UseVisualStyleBackColor = false;
-            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
             // 
             // DisplayProfileForm
             // 
