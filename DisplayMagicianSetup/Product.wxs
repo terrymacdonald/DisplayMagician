@@ -133,7 +133,7 @@
 		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />-->
 
 		<!-- Preapre custom actions to register and unregisterthe ShellExtension DLL -->
-		<CustomAction Id="InstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='install "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll" -codebase' Execute="deferred" Return="check" Impersonate="no" />
+		<CustomAction Id="InstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='install "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll" -os64 -codebase' Execute="deferred" Return="check" Impersonate="no" />
 		<CustomAction Id="UninstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='uninstall "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll"' Execute="deferred" Return="check" Impersonate="no" />
 
 		<!-- Plumb the registering and unregistering of the ShellExtension DLL into the instllation sequence -->
