@@ -64,6 +64,7 @@ namespace DisplayMagician.UIForms
             this.pbLogo = new System.Windows.Forms.PictureBox();
             this.p_lower = new System.Windows.Forms.Panel();
             this.p_fill = new System.Windows.Forms.Panel();
+            this.btn_help = new System.Windows.Forms.Button();
             this.menu_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.p_upper.SuspendLayout();
@@ -201,7 +202,7 @@ namespace DisplayMagician.UIForms
             this.btn_save_or_rename.Name = "btn_save_or_rename";
             this.btn_save_or_rename.Size = new System.Drawing.Size(151, 33);
             this.btn_save_or_rename.TabIndex = 1;
-            this.btn_save_or_rename.Text = "&Save As";
+            this.btn_save_or_rename.Text = "&Save";
             this.btn_save_or_rename.UseVisualStyleBackColor = false;
             this.btn_save_or_rename.Click += new System.EventHandler(this.btn_save_as_Click);
             // 
@@ -379,6 +380,7 @@ namespace DisplayMagician.UIForms
             // 
             this.p_upper.BackColor = System.Drawing.Color.DimGray;
             this.p_upper.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("p_upper.BackgroundImage")));
+            this.p_upper.Controls.Add(this.btn_help);
             this.p_upper.Controls.Add(this.txt_profile_save_name);
             this.p_upper.Controls.Add(this.lbl_save_profile);
             this.p_upper.Controls.Add(this.btn_profile_settings);
@@ -448,6 +450,23 @@ namespace DisplayMagician.UIForms
             this.p_fill.Size = new System.Drawing.Size(934, 141);
             this.p_fill.TabIndex = 39;
             // 
+            // btn_help
+            // 
+            this.btn_help.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_help.BackColor = System.Drawing.Color.Black;
+            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_help.ForeColor = System.Drawing.Color.White;
+            this.btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.btn_help.Location = new System.Drawing.Point(847, 63);
+            this.btn_help.Name = "btn_help";
+            this.btn_help.Size = new System.Drawing.Size(75, 23);
+            this.btn_help.TabIndex = 39;
+            this.btn_help.Text = "&Help";
+            this.btn_help.UseVisualStyleBackColor = false;
+            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
+            // 
             // DisplayProfileForm
             // 
             this.AcceptButton = this.btn_apply;
@@ -513,6 +532,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_profile_settings;
         private System.Windows.Forms.Panel p_lower;
         private System.Windows.Forms.Panel p_fill;
+        private System.Windows.Forms.Button btn_help;
     }
 }
 

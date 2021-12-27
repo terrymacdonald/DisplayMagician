@@ -3246,6 +3246,12 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
         }
+
+        private void btn_help_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup";
+            System.Diagnostics.Process.Start(targetURL);
+        }
     }
 
     // Class used to populate combo boxes

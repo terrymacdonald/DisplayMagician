@@ -140,6 +140,7 @@ namespace DisplayMagician.UIForms
             this.cb_autosuggest = new System.Windows.Forms.CheckBox();
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
+            this.btn_help = new System.Windows.Forms.Button();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.p_profiles.SuspendLayout();
@@ -1616,6 +1617,22 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.Visible = false;
             this.lbl_hotkey_assigned.Click += new System.EventHandler(this.lbl_hotkey_assigned_Click);
             // 
+            // btn_help
+            // 
+            this.btn_help.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_help.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_help.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_help.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_help.ForeColor = System.Drawing.Color.White;
+            this.btn_help.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.btn_help.Location = new System.Drawing.Point(997, 14);
+            this.btn_help.Name = "btn_help";
+            this.btn_help.Size = new System.Drawing.Size(75, 23);
+            this.btn_help.TabIndex = 38;
+            this.btn_help.Text = "&Help";
+            this.btn_help.UseVisualStyleBackColor = true;
+            this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1624,6 +1641,7 @@ namespace DisplayMagician.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.CancelButton = this.btn_cancel;
             this.ClientSize = new System.Drawing.Size(1084, 943);
+            this.Controls.Add(this.btn_help);
             this.Controls.Add(this.lbl_hotkey_assigned);
             this.Controls.Add(this.btn_hotkey);
             this.Controls.Add(this.cb_autosuggest);
@@ -1797,5 +1815,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_dont_start;
         private System.Windows.Forms.CheckBox cb_run_exe_as_administrator;
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_run_as_administrator;
+        private System.Windows.Forms.Button btn_help;
     }
 }
