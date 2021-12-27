@@ -42,8 +42,22 @@
 		</Condition>
 
 		<Property Id="MSIRESTARTMANAGERCONTROL" Value="0" />
-		<Property Id="MSIRMSHUTDOWN" Value="2" />
+		<Property Id="MSIRMSHUTDOWN" Value="0" />
 		<Property Id="MSIDISABLERMRESTART" Value="0" />
+
+		<util:RestartResource Id="RestartExplorer"
+                              Path="[EXPLORERPATH]"
+                              ProcessName="explorer.exe"/>
+
+		<Property Id="EXPLORERPATH" >
+			<DirectorySearch Id="FindExplorerDir"
+                             AssignToProperty="no"
+                             Depth="0"
+                             Path="[WindowsFolder]">
+				<FileSearch Id="FindExplorer"
+                            Name="explorer.exe" />
+			</DirectorySearch>
+		</Property>
 
 		<!-- 
     Startup conditions that checks if .Net Framework 4.8 is installed or if 
