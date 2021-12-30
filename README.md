@@ -145,6 +145,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the names of these amazing people:
 
 * Sean at SimCraft (Thank you so much for your generous donation!)
+* Fifowole (Thank you for your donation)
+* Brett Horton (Thank you for your donation)
+* Patrickdiezi  (Thank you for your donation)
+* NoDepth (For your bug report)
+* Chris5gd (For your bug report)
+* JabberJon (Thank you for your donation)
+* Sikhalv (Thank you for your donation)
+* Friedobaer (Thank you for your donation)
+* PanthaRhei (Thank you for your donation)
+* Matthex (Great help testing multiple display adapter bugs and 7 different screens! And for your donation!)
 * NudeNull (Thank you for your sponsorship)
 * 20vmki (Thank you for your sponsorship)
 * Lazerwolf22 (Thank you for your sponsorship)

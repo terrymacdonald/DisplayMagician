@@ -1965,6 +1965,9 @@ namespace DisplayMagician.UIForms
             LoadShortcut();
 
             CloseTheSplashScreen();
+
+            this.Focus();
+            this.BringToFront();
         }
 
         private void CloseTheSplashScreen()
