@@ -242,6 +242,27 @@ namespace DisplayMagician {
             Application.SetCompatibleTextRenderingDefault(false); 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
+
+            if (SingleInstance.InitializeAsFirstInstance("DisplayMagician"))
+            {
+                _syncContext = SynchronizationContext.Current;
+                // Setup Named Pipe listener
+                NamedPipeServerCreateServer();
+                return true;
+            }
+            else
+            {
+                // We are not the first instance, send the named pipe message with our payload and stop loading
+                var namedPipeXmlPayload = new Payload
+                {
+                    CommandLineArguments = Environment.GetCommandLineArgs().ToList()
+                };
+
+                // Send the message
+                NamedPipeClientSendOptions(namedPipeXmlPayload);
+                return false; // Signal to quit
+            }
+
             // Check if it's an upgrade from DisplayMagician v1 to v2
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.

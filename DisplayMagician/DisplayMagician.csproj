@@ -86,6 +86,7 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
@@ -121,6 +122,8 @@
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ImageUtils.cs" />
+    <Compile Include="ISingleInstanceApp.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="Processes\ImpersonationHelper.cs" />
     <Compile Include="MessageItem.cs" />
     <Compile Include="Processes\ImpersonationProcess.cs">
@@ -145,6 +148,7 @@
     <Compile Include="ShortcutManager.cs" />
     <Compile Include="ShortcutRepository.cs" />
     <Compile Include="Processes\SingleInstanceHelper.cs" />
+    <Compile Include="SingleInstance.cs" />
     <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
       <SubType>Form</SubType>
