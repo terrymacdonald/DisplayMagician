@@ -22,7 +22,7 @@ namespace DisplayMagician
         /// <summary>
         /// Unique name to base the single instance decision on. Default's to a hash based on the executable location.
         /// </summary>
-        public static string UniqueName { get; set; } = "DisplayMagician";
+        public static string UniqueName { get; set; } = $"DisplayMagician";
 
         private static Mutex _mutexApplication;
         private static readonly object _mutexLock = new object();
@@ -32,8 +32,10 @@ namespace DisplayMagician
         private static Action<string[]> _otherInstanceCallback;
         private static readonly object _namedPiperServerThreadLock = new object();
 
-        private static string GetMutexName() => $@"Mutex_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
-        private static string GetPipeName() => $@"Pipe_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
+        //private static string GetMutexName() => $@"Mutex_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
+        //private static string GetPipeName() => $@"Pipe_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
+        private static string GetMutexName() => $@"Mutex_{UniqueName}";
+        private static string GetPipeName() => $@"Pipe_{UniqueName}";
 
         /// <summary>
         /// Determines if the application should continue launching or return because it's not the first instance.
@@ -138,17 +140,28 @@ namespace DisplayMagician
                 pipeSecurity.AddAccessRule(accessRule);
             }
 
-            // Create pipe and start the async connection wait
-            _namedPipeServerStream = new NamedPipeServerStream(
-                GetPipeName(),
-                PipeDirection.In,
-                1,
-                PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous,
-                0,
-                0,
-                pipeSecurity);
+            try
+            {
+                // Create pipe and start the async connection wait
+                _namedPipeServerStream = new NamedPipeServerStream(
+                    GetPipeName(),
+                    PipeDirection.In,
+                    1,
+                    PipeTransmissionMode.Byte,
+                    PipeOptions.Asynchronous,
+                    0,
+                    0,
+                    pipeSecurity);
 
+            }
+            catch (PlatformNotSupportedException ex)
+            {
+                Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Cannot create a named pipe server. This NamedPipeServerStream function does not support this platform.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Exception ");
+            }
             // Begin async wait for connections
             _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);
         }

@@ -71,8 +71,17 @@ namespace DisplayMagician {
             }
             else
             {
-                Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions.");
-                Application.Exit();
+                Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
+                if (System.Windows.Forms.Application.MessageLoop)
+                {
+                    // WinForms have loaded
+                    Application.Exit();
+                }
+                else
+                {
+                    // Console app
+                    Environment.Exit(1);
+                }
             }
 
             // If we get here, then we're the first instance!
