@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using DesktopNotifications;
 using System.Windows.Forms;
-using DisplayMagician.InterProcess;
+//using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagician.UIForms;
@@ -62,6 +62,20 @@ namespace DisplayMagician {
         private static int Main(string[] args)
         {
 
+            // Create the remote server if we're first instance, or
+            // If we're a subsequent instance, pass the command line parameters to the first instance and then 
+            bool isFirstInstance = SingleInstance.LaunchOrReturn(otherInstance => { MessageBox.Show("got data: " + otherInstance.Skip(1).FirstOrDefault()); }, args);
+            if (isFirstInstance)
+            {
+                Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
+            }
+            else
+            {
+                Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions.");
+                Application.Exit();
+            }
+
+            // If we get here, then we're the first instance!
             RegisterDisplayMagicianWithWindows();
 
             // Prepare NLog for internal logging - Comment out when not required
@@ -85,7 +99,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Program/StartUpNormally exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                    Console.WriteLine($"Program/Main Exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 }
             }
 
@@ -240,28 +254,7 @@ namespace DisplayMagician {
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false); 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-
-            if (SingleInstance.InitializeAsFirstInstance("DisplayMagician"))
-            {
-                _syncContext = SynchronizationContext.Current;
-                // Setup Named Pipe listener
-                NamedPipeServerCreateServer();
-                return true;
-            }
-            else
-            {
-                // We are not the first instance, send the named pipe message with our payload and stop loading
-                var namedPipeXmlPayload = new Payload
-                {
-                    CommandLineArguments = Environment.GetCommandLineArgs().ToList()
-                };
-
-                // Send the message
-                NamedPipeClientSendOptions(namedPipeXmlPayload);
-                return false; // Signal to quit
-            }
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;            
 
             // Check if it's an upgrade from DisplayMagician v1 to v2
             // and if it is then copy the old configs to the new filenames and
@@ -688,13 +681,13 @@ namespace DisplayMagician {
             try
             {
                 // Start the IPC Service to 
-                if (!IPCService.StartService())
+                /*if (!IPCService.StartService())
                 {
                     throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
-                }
+                }*/
 
             
-                IPCService.GetInstance().Status = InstanceStatus.User;
+                //IPCService.GetInstance().Status = InstanceStatus.User;
 
                 // Close the splash screen
                 if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
@@ -724,10 +717,10 @@ namespace DisplayMagician {
             try
             {
                 // Start the IPC Service to 
-                if (!IPCService.StartService())
+                /*if (!IPCService.StartService())
                 {
                     throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
-                }
+                }*/
 
                 // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppIconPath))
@@ -758,7 +751,7 @@ namespace DisplayMagician {
                     logger.Error(ex, $"Program/StartUpApplication exception create Icon files for future use in {AppIconPath}");
                 }
 
-                IPCService.GetInstance().Status = InstanceStatus.User;
+                //IPCService.GetInstance().Status = InstanceStatus.User;
 
                 // Check for updates
                 CheckForUpdates();
@@ -806,7 +799,7 @@ namespace DisplayMagician {
 
             // Check there is only one version of this application so we won't
             // mess with another monitoring session
-            if (
+            /*if (
                 IPCClient.QueryAll()
                     .Any(
                         client =>
@@ -816,7 +809,7 @@ namespace DisplayMagician {
                 throw new Exception(
                     Language
                         .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
-            }
+            }*/
 
             // Match the ShortcutName to the actual shortcut listed in the shortcut library
             // And error if we can't find it.
@@ -836,7 +829,7 @@ namespace DisplayMagician {
                 ShortcutRepository.RunShortcut(shortcutToRun);
             }
 
-            IPCService.GetInstance().Status = InstanceStatus.Busy;
+            //IPCService.GetInstance().Status = InstanceStatus.Busy;
 
         }
 
@@ -1219,6 +1212,13 @@ namespace DisplayMagician {
             {
                 return false;
             }
+        }
+
+        public static bool SignalExternalCommandLineArgs(IList<string> args)
+        {
+            // handle command line arguments of second instance
+            // …
+            return true;
         }
 
     }

@@ -122,7 +122,6 @@
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ImageUtils.cs" />
-    <Compile Include="ISingleInstanceApp.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Processes\ImpersonationHelper.cs" />
     <Compile Include="MessageItem.cs" />
@@ -215,10 +214,6 @@
     </Compile>
     <Compile Include="Utils.cs" />
     <Compile Include="Validators.cs" />
-    <Compile Include="InterProcess\IPCClient.cs" />
-    <Compile Include="InterProcess\InstanceStatus.cs" />
-    <Compile Include="InterProcess\IService.cs" />
-    <Compile Include="InterProcess\IPCService.cs" />
     <Compile Include="Resources\Language.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

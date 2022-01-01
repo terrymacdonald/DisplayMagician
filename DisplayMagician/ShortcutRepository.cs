@@ -2,7 +2,7 @@
 using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
-using DisplayMagician.InterProcess;
+//using DisplayMagician.InterProcess;
 using DisplayMagicianShared;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
