@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 using System.Xml.Serialization;
 
 namespace DisplayMagician
@@ -37,6 +38,12 @@ namespace DisplayMagician
         private static string GetMutexName() => $@"Mutex_{UniqueName}";
         private static string GetPipeName() => $@"Pipe_{UniqueName}";
 
+        public static void executeAnActionCallback(string[] args)
+        {
+            MessageBox.Show("got data: " + String.Join(" ",args));
+        }           
+
+
         /// <summary>
         /// Determines if the application should continue launching or return because it's not the first instance.
         /// When not the first instance, the command line args will be passed to the first one. 
@@ -45,9 +52,9 @@ namespace DisplayMagician
         /// Will not run on the main thread, marshalling may be required.</param>
         /// <param name="args">Arguments from Main()</param>
         /// <returns>true if the first instance, false if it's not the first instance.</returns>
-        public static bool LaunchOrReturn(Action<string[]> otherInstanceCallback, string[] args)
+        public static bool LaunchOrReturn(string[] args)
         {
-            _otherInstanceCallback = otherInstanceCallback ?? throw new ArgumentNullException(nameof(otherInstanceCallback));
+            _otherInstanceCallback = executeAnActionCallback;
 
             if (IsApplicationFirstInstance())
             {
@@ -160,7 +167,7 @@ namespace DisplayMagician
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Exception ");
+                Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Exception - Source: {ex.Source} {ex.TargetSite} - {ex.Message} - {ex.StackTrace}");
             }
             // Begin async wait for connections
             _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);

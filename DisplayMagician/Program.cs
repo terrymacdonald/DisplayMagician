@@ -64,7 +64,7 @@ namespace DisplayMagician {
 
             // Create the remote server if we're first instance, or
             // If we're a subsequent instance, pass the command line parameters to the first instance and then 
-            bool isFirstInstance = SingleInstance.LaunchOrReturn(otherInstance => { MessageBox.Show("got data: " + otherInstance.Skip(1).FirstOrDefault()); }, args);
+            bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
             if (isFirstInstance)
             {
                 Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
