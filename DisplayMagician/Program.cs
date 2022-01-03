@@ -683,7 +683,7 @@ namespace DisplayMagician {
             return 0;
         }       
 
-        private static void CreateProfile()
+        public static void CreateProfile()
         {
             logger.Debug($"Program/CreateProfile: Starting");
 
@@ -796,29 +796,15 @@ namespace DisplayMagician {
         }
 
         // ReSharper disable once CyclomaticComplexity
-        private static void RunShortcut(string shortcutUUID)
+        public static void RunShortcut(string shortcutUUID)
         {
-            logger.Debug($"Program/RunShortcut: Starting");
+            logger.Debug($"Program/RunShortcut: Running shortcut {shortcutUUID}");
 
             ShortcutItem shortcutToRun = null;
 
             // Close the splash screen
             if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
-
-            // Check there is only one version of this application so we won't
-            // mess with another monitoring session
-            /*if (
-                IPCClient.QueryAll()
-                    .Any(
-                        client =>
-                            client.Status == InstanceStatus.Busy ||
-                            client.Status == InstanceStatus.OnHold))
-            {
-                throw new Exception(
-                    Language
-                        .Another_instance_of_this_program_is_in_working_state_Please_close_other_instances_before_trying_to_switch_profile);
-            }*/
 
             // Match the ShortcutName to the actual shortcut listed in the shortcut library
             // And error if we can't find it.
@@ -827,18 +813,15 @@ namespace DisplayMagician {
                 // make sure we trim the "" if there are any
                 shortcutUUID = shortcutUUID.Trim('"');
                 shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
+                if (shortcutToRun is ShortcutItem)
+                {
+                    ShortcutRepository.RunShortcut(shortcutToRun);
+                }
             }
             else
             {
                 throw new Exception(Language.Cannot_find_shortcut_in_library);
             }
-
-            if (shortcutToRun is ShortcutItem)
-            {
-                ShortcutRepository.RunShortcut(shortcutToRun);
-            }
-
-            //IPCService.GetInstance().Status = InstanceStatus.Busy;
 
         }
 
@@ -854,7 +837,7 @@ namespace DisplayMagician {
 
         public static void RunProfile(string profileName)
         {
-            logger.Trace($"Program/RunProfile: Starting");
+            logger.Trace($"Program/RunProfile: Running profile {profileName}");
 
             // Close the splash screen
             if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)

@@ -9,6 +9,7 @@ using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Serialization;
@@ -33,6 +34,8 @@ namespace DisplayMagician
         private static Action<string[]> _otherInstanceCallback;
         private static readonly object _namedPiperServerThreadLock = new object();
 
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         //private static string GetMutexName() => $@"Mutex_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
         //private static string GetPipeName() => $@"Pipe_{Environment.UserDomainName}_{Environment.UserName}_{UniqueName}";
         private static string GetMutexName() => $@"Mutex_{UniqueName}";
@@ -40,7 +43,56 @@ namespace DisplayMagician
 
         public static void executeAnActionCallback(string[] args)
         {
-            MessageBox.Show("got data: " + String.Join(" ",args));
+            logger.Trace($"SingleInstance/executeAnActionCallback: Received data from another DisplayMagician instance: {String.Join(" ",args)}");
+            // Now we want to figure out if it's an actionable command
+            // The command is in an array, and the first item is the full path to the displaymagician instance that ran. 
+            // We only want to see if we should action this command if it has more args than just the single file path
+            if (args.Length > 1)
+            {
+                // Setup a regex to match the UUID format we use
+                Regex uuid = new Regex("[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}");
+                // Now we check for the three commandline parameters that we support
+                switch (args[1])
+                {
+                    case "RunShortcut":
+                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the RunShortcut command: '{args[1]} {args[2]}'");
+                        if (uuid.IsMatch(args[2])) 
+                        {
+                            Program.RunShortcut(args[2]);
+                        }
+                        else
+                        {
+                            logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an invalid shortcut UUID to the RunShortcut command: '{args[2]}'");
+                        }
+                        break;
+                    case "ChangeProfile":
+                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the ChangeProfile command: '{args[1]} {args[2]}'");
+                        if (uuid.IsMatch(args[2]))
+                        {
+                            Program.RunProfile(args[2]);
+                        }
+                        else
+                        {
+                            logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an invalid profile UUID to the ChangeProfile command: '{args[2]}'");
+                        }
+                        break;
+                    case "CreateProfile":
+                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the CreateProfile command: '{args[1]} {args[2]}'");
+                        Program.CreateProfile();
+                        break;
+                    default:
+                        logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an unsupported command: '{args[1]}'");
+                        break;
+                }
+            }
+            else if (args.Length == 1)
+            {
+                logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments, only the path '{args[0]}'");
+            }
+            else
+            {
+                logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments at all. THat's not supposed to happen.");
+            }
         }           
 
 
