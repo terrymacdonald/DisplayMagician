@@ -430,7 +430,8 @@ namespace DisplayMagician.UIForms
 
                 // Run the shortcut if it's still there
                 if (profileToRun != null)
-                    ProfileRepository.ApplyProfile(profileToRun);
+                    //ProfileRepository.ApplyProfile(profileToRun);
+                    Program.ApplyProfileTask(profileToRun);
 
                 // Also refresh the right-click menu (if we have a main form loaded)
                 if (Program.AppMainForm is Form)
@@ -590,7 +591,8 @@ namespace DisplayMagician.UIForms
                 string displayProfileUUID = e.Name;
                 ProfileItem chosenProfile = ProfileRepository.GetProfile(displayProfileUUID);
                 if (chosenProfile is ProfileItem)
-                    ProfileRepository.ApplyProfile(chosenProfile);
+                    //ProfileRepository.ApplyProfile(chosenProfile);
+                    Program.ApplyProfileTask(chosenProfile);
             }
             else if (hotkeyShortcuts.Contains(e.Name))
             {

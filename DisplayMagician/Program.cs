@@ -45,6 +45,9 @@ namespace DisplayMagician {
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
+        //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
+        public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
+
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static MainForm AppMainForm;
@@ -815,7 +818,8 @@ namespace DisplayMagician {
                 shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (shortcutToRun is ShortcutItem)
                 {
-                    ShortcutRepository.RunShortcut(shortcutToRun);
+                    //ShortcutRepository.RunShortcut(shortcutToRun);
+                    Program.RunShortcutTask(shortcutToRun);
                 }
             }
             else
@@ -823,16 +827,6 @@ namespace DisplayMagician {
                 throw new Exception(Language.Cannot_find_shortcut_in_library);
             }
 
-        }
-
-        public static bool IsValidFilename(string testName)
-        {
-            string strTheseAreInvalidFileNameChars = new string(Path.GetInvalidFileNameChars());
-            Regex regInvalidFileName = new Regex("[" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
-
-            if (regInvalidFileName.IsMatch(testName)) { return false; };
-
-            return true;
         }
 
         public static void RunProfile(string profileName)
@@ -847,11 +841,64 @@ namespace DisplayMagician {
             ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
             logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
 
-            ProfileRepository.ApplyProfile(profileToUse);
-
+            Program.ApplyProfileTask(profileToUse);
         }
 
-        
+
+        public static bool IsValidFilename(string testName)
+        {
+            string strTheseAreInvalidFileNameChars = new string(Path.GetInvalidFileNameChars());
+            Regex regInvalidFileName = new Regex("[" + Regex.Escape(strTheseAreInvalidFileNameChars) + "]");
+
+            if (regInvalidFileName.IsMatch(testName)) { return false; };
+
+            return true;
+        }
+
+        public async static void RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        {
+            //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
+            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount > 0)
+            {
+                logger.Error($"Program/RunShortcutTask: Cannot run the shortcut {shortcutToUse.Name} as another task is running!");
+                return;
+            }
+            await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            try
+            {
+                await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, notifyIcon));
+            }
+            finally
+            {
+                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
+                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
+                Program.AppBackgroundTaskSemaphoreSlim.Release();
+            }
+        }
+
+        public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
+        {
+            //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
+            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount > 0)
+            {
+                logger.Error($"Program/ApplyProfileTask: Cannot apply the display profile {profile.Name} as another task is running!");
+                return ApplyProfileResult.Error;
+            }
+            await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            ApplyProfileResult result = ApplyProfileResult.Error;
+            try
+            {
+                result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
+            }
+            finally
+            {
+                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
+                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
+                Program.AppBackgroundTaskSemaphoreSlim.Release();
+            }
+            return result;
+        }
+
         public static string HotkeyToString(Keys hotkey)
         {
             string parsedHotkey = String.Empty;
@@ -1204,13 +1251,6 @@ namespace DisplayMagician {
             {
                 return false;
             }
-        }
-
-        public static bool SignalExternalCommandLineArgs(IList<string> args)
-        {
-            // handle command line arguments of second instance
-            // …
-            return true;
         }
 
     }

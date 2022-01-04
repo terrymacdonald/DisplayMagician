@@ -677,7 +677,6 @@ namespace DisplayMagician
         }
 
 
-        // ReSharper disable once CyclomaticComplexity
         public static void RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         {
             logger.Debug($"ShortcutRepository/RunShortcut: Running the shortcut {shortcutToUse.Name}.");
@@ -2027,7 +2026,7 @@ namespace DisplayMagician
                 logger.Debug($"ShortcutRepository/RunShortcut: Rolling back display profile to {rollbackProfile.Name}");
 
                 ApplyProfileResult result = ProfileRepository.ApplyProfile(rollbackProfile);
-                                
+
                 if (result == ApplyProfileResult.Error)
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: Error rolling back display profile to {rollbackProfile.Name}");

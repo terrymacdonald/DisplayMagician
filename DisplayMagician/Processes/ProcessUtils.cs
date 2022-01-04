@@ -250,15 +250,12 @@ namespace DisplayMagician.Processes
             {
                 // Stop the process
                 processToStop.CloseMainWindow();
-                if (!processToStop.WaitForExit(1000))
+                processToStop.WaitForExit(1000);
+                if (!ProcessExited(processToStop))
                 {
                     logger.Trace($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} wouldn't stop cleanly. Forcing program close.");
                     processToStop.Kill();
-                    if (!processToStop.WaitForExit(5000))
-                    {
-                        logger.Error($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
-                        return false;
-                    }
+                    processToStop.WaitForExit(5000);
                     if (!ProcessExited(processToStop))
                     {
                         logger.Error($"ProcessUtils/StopProcess: Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
@@ -276,11 +273,7 @@ namespace DisplayMagician.Processes
             {
                 logger.Warn(ex, $"ProcessUtils/StopProcess: Win32Exception! Couldn't access the wait status for a named process we're trying to stop. So now just killing the process.");
                 processToStop.Kill();
-                if (!processToStop.WaitForExit(5000))
-                {
-                    logger.Error($"ProcessUtils/StopProcess: Win32Exception! Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
-                    return false;
-                }
+                processToStop.WaitForExit(5000);
                 if (!ProcessExited(processToStop))
                 {
                     logger.Error($"ProcessUtils/StopProcess: Win32Exception! Process {processToStop.StartInfo.FileName} couldn't be killed! It seems like something is actively preventing us from stopping the process");
@@ -303,6 +296,10 @@ namespace DisplayMagician.Processes
             {
                 logger.Error(ae, $"ProcessUtils/StopProcess: Got an AggregateException.");
             }
+            finally
+            {
+                processToStop.Close();
+            }
             return false;
         }
 
@@ -316,14 +313,15 @@ namespace DisplayMagician.Processes
                 {
                     if (!ProcessExited(processToStop))
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processToStop.StartInfo.FileName}");
+                        string processFileName = processToStop.StartInfo.FileName;
+                        logger.Debug($"ShortcutRepository/RunShortcut: Stopping process {processFileName }");
                         if (ProcessUtils.StopProcess(processToStop))
                         {
-                            logger.Debug($"ShortcutRepository/RunShortcut: Successfully stopped process {processToStop.StartInfo.FileName}");
+                            logger.Debug($"ShortcutRepository/RunShortcut: Successfully stopped process {processFileName }");
                         }
                         else
                         {
-                            logger.Warn($"ShortcutRepository/RunShortcut: Failed to stop process {processToStop.StartInfo.FileName} after main executable or game was exited by the user.");
+                            logger.Warn($"ShortcutRepository/RunShortcut: Failed to stop process {processFileName } after main executable or game was exited by the user.");
                         }
                     }
                 }
