@@ -465,7 +465,14 @@ namespace DisplayMagician.UIForms
                 stopProgram.Executable = txt_run_cmd_afterwards.Text;
                 stopProgram.Priority = 0;
                 stopProgram.DontStartIfAlreadyRunning = false;                
-                stopProgram.Disabled = false;
+                if (cb_run_cmd_afterwards.Checked)
+                {
+                    stopProgram.Disabled = false;
+                }
+                else
+                {
+                    stopProgram.Disabled = true;
+                }
                 if (cb_run_cmd_afterwards_args.Checked)
                 {
                     stopProgram.ExecutableArgumentsRequired = true;
@@ -1827,13 +1834,25 @@ namespace DisplayMagician.UIForms
                 // Setup the single stop program we're beginning with
                 if (_shortcutToEdit.StopPrograms is List<StopProgram> && _shortcutToEdit.StopPrograms.Count > 0)
                 {
-                    txt_run_cmd_afterwards.Enabled = true;
-                    btn_run_cmd_afterwards.Enabled = true;
-                    cb_run_cmd_afterwards_args.Enabled = true;
-                    cb_run_cmd_afterwards_dont_start.Enabled = true;
-                    cb_run_cmd_afterwards_run_as_administrator.Enabled = true;
+                    if (_shortcutToEdit.StopPrograms[0].Disabled == false)
+                    {
+                        txt_run_cmd_afterwards.Enabled = true;
+                        btn_run_cmd_afterwards.Enabled = true;
+                        cb_run_cmd_afterwards_args.Enabled = true;
+                        cb_run_cmd_afterwards_dont_start.Enabled = true;
+                        cb_run_cmd_afterwards_run_as_administrator.Enabled = true;
+                        cb_run_cmd_afterwards.Checked = true;
+                    }
+                    else
+                    {
+                        txt_run_cmd_afterwards.Enabled = false;
+                        btn_run_cmd_afterwards.Enabled = false;
+                        cb_run_cmd_afterwards_args.Enabled = false;
+                        cb_run_cmd_afterwards_dont_start.Enabled = false;
+                        cb_run_cmd_afterwards_run_as_administrator.Enabled = false;
+                        cb_run_cmd_afterwards.Checked = false;
+                    }
 
-                    cb_run_cmd_afterwards.Checked = true;
                     txt_run_cmd_afterwards.Text = _shortcutToEdit.StopPrograms[0].Executable;
                     if (_shortcutToEdit.StopPrograms[0].ExecutableArgumentsRequired)
                     {
