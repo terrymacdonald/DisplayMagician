@@ -62,6 +62,8 @@ namespace DisplayMagician.UIForms
                 System.Threading.Thread.Sleep(500);
                 logger.Trace($"DisplayProfileForm/Apply_Click: Changing the selected profile in the imagelistview to Profile {_selectedProfile.Name}.");
                 ChangeSelectedProfile(_selectedProfile);
+                MainForm myMainForm = Program.AppMainForm;
+                myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
             }
             else if (result == ApplyProfileResult.Cancelled)
             {

@@ -898,7 +898,17 @@ namespace DisplayMagician {
                 if (result == ApplyProfileResult.Successful)
                 {
                     MainForm myMainForm = Program.AppMainForm;
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
+                    if (myMainForm.InvokeRequired)
+                    {
+                        myMainForm.Invoke((MethodInvoker)delegate {
+                            myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
+                        });
+                    }
+                    else
+                    {
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
+                    }
+
                     logger.Trace($"Program/ApplyProfileTask: Successfully applied Profile {profile.Name}.");
                 }
                 else if (result == ApplyProfileResult.Cancelled)
