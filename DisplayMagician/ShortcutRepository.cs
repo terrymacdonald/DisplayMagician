@@ -24,6 +24,12 @@ using Windows.UI.Notifications;
 namespace DisplayMagician
 {
 
+    public enum RunShortcutResult
+    {
+        Successful,
+        Cancelled,
+        Error
+    }
     public static class ShortcutRepository
     {
         #region Class Variables
@@ -677,7 +683,7 @@ namespace DisplayMagician
         }
 
 
-        public static void RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         {
             logger.Debug($"ShortcutRepository/RunShortcut: Running the shortcut {shortcutToUse.Name}.");
 
@@ -686,7 +692,7 @@ namespace DisplayMagician
             // including checking the Profile in the shortcut is possible
             // (in other words check everything in the shortcut is still valid)
             if (!(shortcutToUse is ShortcutItem))
-                return;
+                return RunShortcutResult.Error;
 
             // Check the shortcut is still valid.
             shortcutToUse.RefreshValidity();
@@ -700,8 +706,8 @@ namespace DisplayMagician
                     @"Cannot run the Shortcut",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
-                
-                return;
+
+                return RunShortcutResult.Error;
             }
 
             // Remember the profile we are on now
@@ -729,12 +735,12 @@ namespace DisplayMagician
                 if (result == ApplyProfileResult.Error)
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: Cannot apply '{shortcutToUse.ProfileToUse.Name}' Display Profile");
-                    return;
+                    return RunShortcutResult.Error;
                 }
                 else if (result == ApplyProfileResult.Cancelled)
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: User cancelled applying '{shortcutToUse.ProfileToUse.Name}' Display Profile");
-                    return;
+                    return RunShortcutResult.Cancelled;
                 }
                 else if (result == ApplyProfileResult.Successful)
                 {
@@ -922,9 +928,6 @@ namespace DisplayMagician
             {
                 logger.Error($"ShortcutRepository/RunShortcut: CoreAudio Controller is null, so we can't set Audio or Capture Devices!");
             }
-
-            // Set the IP Service status back to what it was
-            //IPCService.GetInstance().Status = rollbackInstanceStatus;
 
             // Now run the pre-start applications
             List<Process> startProgramsToStop = new List<Process>();
@@ -2030,12 +2033,12 @@ namespace DisplayMagician
                 if (result == ApplyProfileResult.Error)
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: Error rolling back display profile to {rollbackProfile.Name}");
-                    return;
+                    return RunShortcutResult.Error;
                 }
                 else if (result == ApplyProfileResult.Cancelled)
                 {
                     logger.Error($"ShortcutRepository/RunShortcut: User cancelled rolling back display profile to {rollbackProfile.Name}");
-                    return;
+                    return RunShortcutResult.Cancelled;
                 }
                 else if (result == ApplyProfileResult.Successful)
                 {
@@ -2056,26 +2059,42 @@ namespace DisplayMagician
                 uint processID = 0;
                 try
                 {
-                    // If required, check whether a process is started already
-                    if (stopProg.DontStartIfAlreadyRunning)
+                    // Only start if not disabled
+                    if (!stopProg.Disabled)
                     {
-                        logger.Info($"ShortcutRepository/RunShortcut: Checking if Stop Program {stopProg.Executable} is already running");
-                        Process[] alreadyRunningProcesses = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(stopProg.Executable));
-                        if (alreadyRunningProcesses.Length > 0)
+                        // Check if the application we want to start is actually still there
+                        if (!String.IsNullOrWhiteSpace(stopProg.Executable) && File.Exists(stopProg.Executable))
                         {
-                            logger.Info($"ShortcutRepository/RunShortcut: Process {stopProg.Executable} is already running, so we won't start a new one");                                                       
-                        }
+                            // If required, check whether a process is started already
+                            if (stopProg.DontStartIfAlreadyRunning)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Checking if Stop Program {stopProg.Executable} is already running");
+                                Process[] alreadyRunningProcesses = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(stopProg.Executable));
+                                if (alreadyRunningProcesses.Length > 0)
+                                {
+                                    logger.Info($"ShortcutRepository/RunShortcut: Process {stopProg.Executable} is already running, so we won't start a new one");
+                                }
+                                else
+                                {
+                                    logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable} as no other processes running");
+                                    ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator);
+                                }
+
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable}.");
+                                ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator);
+                            }
+                        }    
                         else
                         {
-                            logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable} as no other processes running");
-                            ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal,10,stopProg.RunAsAdministrator);                            
+                            logger.Trace($"ShortcutRepository/RunShortcut: Skipping starting Stop Program {stopProg.Executable} as it doesn't current exist! We can't start it if it's not there.");
                         }
-
                     }
                     else
                     {
-                        logger.Info($"ShortcutRepository/RunShortcut: Starting Stop Program {stopProg.Executable}.");
-                        ProcessUtils.StartProcess(stopProg.Executable, stopProg.Arguments, ProcessPriority.Normal, 10, stopProg.RunAsAdministrator);
+                        logger.Trace($"ShortcutRepository/RunShortcut: Skipping starting Stop Program {stopProg.Executable} as it is disabled.");
                     }
                     
                 }
@@ -2100,6 +2119,8 @@ namespace DisplayMagician
                 Application.DoEvents();
             }
             Application.DoEvents();
+
+            return RunShortcutResult.Successful;
 
         }
 

@@ -472,6 +472,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.SuspendLayout();
             ilv_saved_shortcuts.Refresh();
 
+            RunShortcutResult result = RunShortcutResult.Error;
             if (!Program.AppProgramSettings.MinimiseOnStart)
             {
                 
@@ -480,14 +481,14 @@ namespace DisplayMagician.UIForms
 
                 // Run the shortcut
                 //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
-                Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon);
+                result = Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon).Result;
 
             }
             else
             {
                 // Run the shortcut
                 //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
-                Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon);
+                result = Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon).Result;
             }
 
             ilv_saved_shortcuts.ResumeLayout();

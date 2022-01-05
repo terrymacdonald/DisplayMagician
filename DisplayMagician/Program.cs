@@ -855,18 +855,22 @@ namespace DisplayMagician {
             return true;
         }
 
-        public async static void RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount > 0)
+            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
             {
                 logger.Error($"Program/RunShortcutTask: Cannot run the shortcut {shortcutToUse.Name} as another task is running!");
-                return;
+                return RunShortcutResult.Error;
             }
             await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, notifyIcon));
+                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, notifyIcon));
+                result = taskToRun.GetAwaiter().GetResult();
+                // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
+                //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, notifyIcon));
             }
             finally
             {
@@ -874,12 +878,13 @@ namespace DisplayMagician {
                 //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
                 Program.AppBackgroundTaskSemaphoreSlim.Release();
             }
+            return result;
         }
 
         public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount > 0)
+            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
             {
                 logger.Error($"Program/ApplyProfileTask: Cannot apply the display profile {profile.Name} as another task is running!");
                 return ApplyProfileResult.Error;
@@ -888,7 +893,10 @@ namespace DisplayMagician {
             ApplyProfileResult result = ApplyProfileResult.Error;
             try
             {
-                result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
+                Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
+                result = taskToRun.GetAwaiter().GetResult();
+                // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
+                //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
             }
             finally
             {
