@@ -458,7 +458,8 @@ namespace DisplayMagician.UIForms
 
                 // Run the shortcut if it's still there
                 if (shortcutToRun != null)
-                    ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
+                    //ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
+                    Program.RunShortcutTask(shortcutToRun, notifyIcon);
 
                 // Also refresh the right-click menu (if we have a main form loaded)
                 if (Program.AppMainForm is Form)
@@ -471,9 +472,10 @@ namespace DisplayMagician.UIForms
         public void openApplicationWindow()
         {
             allowVisible = true;
-            Restore();
-            Show();
-            BringToFront();
+            this.Restore();
+            this.Show();
+            this.Focus();
+            this.BringToFront();
             this.TopMost = true;
             this.Activate();
             this.TopMost = false;
@@ -599,7 +601,8 @@ namespace DisplayMagician.UIForms
                 string shortcutUUID = e.Name;
                 ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (chosenShortcut is ShortcutItem)
-                    ShortcutRepository.RunShortcut(chosenShortcut);
+                    //ShortcutRepository.RunShortcut(chosenShortcut);
+                    Program.RunShortcutTask(chosenShortcut);
             }
         }
 
@@ -608,5 +611,6 @@ namespace DisplayMagician.UIForms
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki";
             System.Diagnostics.Process.Start(targetURL);
         }
+
     }
 }

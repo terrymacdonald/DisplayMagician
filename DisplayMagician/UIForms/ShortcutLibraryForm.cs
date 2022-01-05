@@ -479,13 +479,15 @@ namespace DisplayMagician.UIForms
                 MainForm mainForm = (MainForm)this.Owner;
 
                 // Run the shortcut
-                ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
+                //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
+                Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon);
 
             }
             else
             {
                 // Run the shortcut
-                ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
+                //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
+                Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon);
             }
 
             ilv_saved_shortcuts.ResumeLayout();
