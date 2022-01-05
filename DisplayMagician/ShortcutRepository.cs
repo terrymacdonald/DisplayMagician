@@ -2,6 +2,7 @@
 using AudioSwitcher.AudioApi.CoreAudio;
 using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
+using DisplayMagician.UIForms;
 //using DisplayMagician.InterProcess;
 using DisplayMagicianShared;
 using Microsoft.Toolkit.Uwp.Notifications;
@@ -35,8 +36,6 @@ namespace DisplayMagician
         #region Class Variables
         // Common items to the class
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
-        //public static Dictionary<string, bool> _shortcutWarningLookup = new Dictionary<string, bool>();
-        //public static Dictionary<string, bool> _shortcutErrorLookup = new Dictionary<string, bool>();
         private static bool _shortcutsLoaded = false;
         private static bool _cancelWait = false;
         // Other constants that are useful
@@ -710,6 +709,8 @@ namespace DisplayMagician
                 return RunShortcutResult.Error;
             }
 
+            MainForm myMainForm = Program.AppMainForm;            
+
             // Remember the profile we are on now
             bool needToChangeProfiles = false;
             ProfileItem rollbackProfile = ProfileRepository.CurrentProfile;
@@ -1019,7 +1020,6 @@ namespace DisplayMagician
             // Add a status notification icon in the status area
             // but only if we are going to wait for a process to finish
             string oldNotifyText = "";
-            bool temporaryNotifyIcon = false;
             ContextMenuStrip oldContextMenuStrip = null;
 
             // If we're running the shortcut from the ShortcutLibrary
@@ -1030,50 +1030,60 @@ namespace DisplayMagician
             // Conversely, if temporaryIcon is true, then we need 
             // to create a NotifyIncon as MainForm isn't running to create
             // one for us already!
-            if (notifyIcon == null)
+            /*            if (notifyIcon == null)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: We need to create a temporary system tray icon as we're running from a shortcut");
+                            temporaryNotifyIcon = true;
+                        }
+
+                        if (temporaryNotifyIcon)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Create a temporary system tray icon (user clicked a desktop shortcut)");
+
+                            if (!shortcutToUse.Category.Equals(ShortcutCategory.NoGame))
+                            {
+
+                                try
+                                {
+                                    notifyIcon = new NotifyIcon
+                                    {
+                                        Icon = Properties.Resources.DisplayMagician,
+                                        Visible = true
+                                    };
+                                    Application.DoEvents();
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"ShortcutRepository/RunShortcut exception: Trying to  {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                                    logger.Error(ex, $"ShortcutRepository/RunShortcut exception setting NotifyIcon");
+                                    // ignored
+                                }
+                            }
+                        }
+                        else
+                        {
+
+                            logger.Debug($"ShortcutRepository/RunShortcut: Updating existing system tray icon (we're running a shortcut from within the main application window)");
+                            // If we reach here then we're running the shortcut
+                            // from the ShortcutLibrary window, so we need to 
+                            // remember what the text was so we can return it to
+                            // normal after we're done!
+                            oldNotifyText = notifyIcon.Text;
+                            oldContextMenuStrip = notifyIcon.ContextMenuStrip;
+                            notifyIcon.ContextMenuStrip = null;
+                            Application.DoEvents();
+                        }*/
+
+            // If we're starting from a desktop shortcut or desktop background menu, then there isn't an already existing MainForm.
+            // We need to start one, so that we're able to update the NotifyIcon.
+            bool temporaryMainForm = false;
+            if (myMainForm == null)
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: We need to create a temporary system tray icon as we're running from a shortcut");
-                temporaryNotifyIcon = true;
+                temporaryMainForm = true;                
+                myMainForm = new MainForm();
+                Program.AppMainForm = myMainForm;
             }
-
-            if (temporaryNotifyIcon)
-            {
-                logger.Debug($"ShortcutRepository/RunShortcut: Create a temporary system tray icon (user clicked a desktop shortcut)");
-
-                if (!shortcutToUse.Category.Equals(ShortcutCategory.NoGame))
-                {
-
-                    try
-                    {
-                        notifyIcon = new NotifyIcon
-                        {
-                            Icon = Properties.Resources.DisplayMagician,
-                            Visible = true
-                        };
-                        Application.DoEvents();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"ShortcutRepository/RunShortcut exception: Trying to  {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                        logger.Error(ex, $"ShortcutRepository/RunShortcut exception setting NotifyIcon");
-                        // ignored
-                    }
-                }
-            }
-            else
-            {
-
-                logger.Debug($"ShortcutRepository/RunShortcut: Updating existing system tray icon (we're running a shortcut from within the main application window)");
-                // If we reach here then we're running the shortcut
-                // from the ShortcutLibrary window, so we need to 
-                // remember what the text was so we can return it to
-                // normal after we're done!
-                oldNotifyText = notifyIcon.Text;
-                oldContextMenuStrip = notifyIcon.ContextMenuStrip;
-                notifyIcon.ContextMenuStrip = null;
-                Application.DoEvents();
-            }
-
 
             // Now start the main game/exe, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
@@ -1083,13 +1093,7 @@ namespace DisplayMagician
                 //IPCService.GetInstance().Status = InstanceStatus.OnHold;
 
                 // Add a status notification icon in the status area
-                string notificationText = $"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...";
-                if (notificationText.Length >= 64)
-                {
-                    string thingToRun = shortcutToUse.ExecutableNameAndPath.Substring(0, 34);
-                    notifyIcon.Text = $"DisplayMagician: Running {thingToRun}...";
-                }
-                Application.DoEvents();
+                myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...");
 
                 string processToMonitorName;
                 if (shortcutToUse.ProcessNameToMonitorUsesExecutable)
@@ -1300,13 +1304,7 @@ namespace DisplayMagician
                     }
 
                     // Add a status notification icon in the status area
-                    string notificationText = $"DisplayMagician: Running {gameLibraryToUse.GameLibraryName}...";
-                    if (notificationText.Length >= 64)
-                    {
-                        string thingToRun = gameLibraryToUse.GameLibraryName.Substring(0, 34);
-                        notifyIcon.Text = $"DisplayMagician: Running {thingToRun}...";
-                    }
-                    Application.DoEvents();
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameLibraryToUse.GameLibraryName}");
 
                     // Now we want to tell the user we're start a game
                     // Construct the Windows toast content
@@ -1456,14 +1454,7 @@ namespace DisplayMagician
                     }
 
                     // Now we actually start looking for and monitoring the game!
-
-                    notificationText = $"DisplayMagician: Running {gameToRun.Name}...";
-                    if (notificationText.Length >= 64)
-                    {
-                        string thingToRun = gameToRun.Name.Substring(0, 34);
-                        notifyIcon.Text = $"DisplayMagician: Running {thingToRun}...";
-                    }
-                    Application.DoEvents();
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {gameToRun.Name}");
 
                     // At this point, if the user wants to actually monitor a different process, 
                     // then we actually need to monitor that instead
@@ -1901,7 +1892,7 @@ namespace DisplayMagician
 
             // Remove the status notification icon from the status area
             // once we've exited the game, but only if its a game or app
-            logger.Debug($"ShortcutRepository/RunShortcut: Changing the system tray icon message back to what it was.");
+            /*logger.Debug($"ShortcutRepository/RunShortcut: Changing the system tray icon message back to what it was.");
             if (temporaryNotifyIcon)
             {
                 
@@ -1922,7 +1913,7 @@ namespace DisplayMagician
                 notifyIcon.Text = oldNotifyText;
                 notifyIcon.ContextMenuStrip = oldContextMenuStrip;
                 Application.DoEvents();
-            }
+            }*/
 
             // Only replace the notification if we're minimised
             if (Program.AppProgramSettings.MinimiseOnStart)
@@ -2107,17 +2098,15 @@ namespace DisplayMagician
 
             // Reset the popup over the system tray icon to what's normal for it.
             // Set the notifyIcon text with the current profile
-            if (notifyIcon != null)
-            {
-                string shortProfileName = ProfileRepository.CurrentProfile.Name;
-                if (shortProfileName.Length >= 64)
-                {
-                    shortProfileName = ProfileRepository.CurrentProfile.Name.Substring(0, 45);
+            myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
 
-                }
-                notifyIcon.Text = $"DisplayMagician ({shortProfileName })";
-                Application.DoEvents();
+            // If we're running DisplayMagician from a Desktop Shortcut and then shutting down again, then it will quit, leaving behind a desktop icon
+            // We need to remove that Desktopicon to tidy up in that case.
+            if (temporaryMainForm)
+            {
+                myMainForm.Dispose();
             }
+
             Application.DoEvents();
 
             return RunShortcutResult.Successful;

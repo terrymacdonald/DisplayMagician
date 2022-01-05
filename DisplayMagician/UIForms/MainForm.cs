@@ -612,5 +612,19 @@ namespace DisplayMagician.UIForms
             System.Diagnostics.Process.Start(targetURL);
         }
 
+        public void UpdateNotifyIconText(string text)
+        {
+            if (notifyIcon != null)
+            {
+                string shortText = text;
+                if (shortText.Length >= 64)
+                {
+                    shortText = text.Substring(0, 45);
+
+                }
+                notifyIcon.Text = shortText;
+                Application.DoEvents();
+            }
+        }
     }
 }

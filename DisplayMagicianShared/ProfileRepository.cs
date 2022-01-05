@@ -12,6 +12,8 @@ using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
+using System.Windows.Forms;
+using System.Threading;
 
 namespace DisplayMagicianShared
 {
@@ -1149,7 +1151,6 @@ namespace DisplayMagicianShared
                 // Display the TimeSpan time and result.
                 SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
             }
-
             return ApplyProfileResult.Successful;
         }
 

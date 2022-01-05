@@ -895,6 +895,21 @@ namespace DisplayMagician {
             {
                 Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
                 result = taskToRun.GetAwaiter().GetResult();
+                if (result == ApplyProfileResult.Successful)
+                {
+                    MainForm myMainForm = Program.AppMainForm;
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
+                    logger.Trace($"Program/ApplyProfileTask: Successfully applied Profile {profile.Name}.");
+                }
+                else if (result == ApplyProfileResult.Cancelled)
+                {
+                    logger.Warn($"Program/ApplyProfileTask: The user cancelled changing to Profile {profile.Name}.");
+                }
+                else
+                {
+                    logger.Warn($"Program/ApplyProfileTask: Error applying the Profile {profile.Name}. Unable to change the display layout.");
+                }
+
                 // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
                 //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
             }
@@ -1259,7 +1274,7 @@ namespace DisplayMagician {
             {
                 return false;
             }
-        }
+        }        
 
     }
 
