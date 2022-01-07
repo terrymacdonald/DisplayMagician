@@ -533,15 +533,16 @@ namespace DisplayMagician.UIForms
 
                         ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
                                                                                               
-                        // Get the list of files to zip
+                        // Get the list of files we want to look for to zip (they may or may not exist)
                         List<string> listOfFiles = new List<string> {
-                            // Add the DisplayMagician.log file
                             Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
-                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppLogPath,"DisplayMagician1.log"),
+                            Path.Combine(Program.AppLogPath,"DisplayMagician2.log"),
+                            Path.Combine(Program.AppLogPath,"DisplayMagician3.log"),
+                            Path.Combine(Program.AppLogPath,"DisplayMagician4.log"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
-                            // Add the DisplayMagician.log file
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
-                            // Add the DisplayMagician.log file
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json")
                         };
                         foreach (string filename in listOfFiles)

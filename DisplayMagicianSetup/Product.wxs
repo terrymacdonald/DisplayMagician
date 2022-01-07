@@ -42,10 +42,10 @@
 		</Condition>
 
 		<Property Id="MSIRESTARTMANAGERCONTROL" Value="0" />
-		<Property Id="MSIRMSHUTDOWN" Value="0" />
+		<Property Id="MSIRMSHUTDOWN" Value="1" />
 		<Property Id="MSIDISABLERMRESTART" Value="0" />
 
-		<util:RestartResource Id="RestartExplorer"
+		<!-- <util:RestartResource Id="RestartExplorer"
                               Path="[EXPLORERPATH]"
                               ProcessName="explorer.exe"/>
 
@@ -57,7 +57,7 @@
 				<FileSearch Id="FindExplorer"
                             Name="explorer.exe" />
 			</DirectorySearch>
-		</Property>
+		</Property> -->
 
 		<!-- 
     Startup conditions that checks if .Net Framework 4.8 is installed or if 
@@ -148,13 +148,14 @@
 
 		<!-- Preapre custom actions to register and unregisterthe ShellExtension DLL -->
 		<CustomAction Id="InstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='install "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll" -os64 -codebase' Execute="deferred" Return="check" Impersonate="no" />
-		<CustomAction Id="UninstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='uninstall "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll"' Execute="deferred" Return="check" Impersonate="no" />
-
+		<CustomAction Id="UninstallShell" FileKey="ServerRegistrationManager.exe" ExeCommand='uninstall "[APPLICATIONROOTDIRECTORY]\DisplayMagicianShellExtension.dll"' Execute="deferred" Return="check" Impersonate="no" /> 
+		
 		<!-- Plumb the registering and unregistering of the ShellExtension DLL into the instllation sequence -->
 		<InstallExecuteSequence>
 			<RemoveExistingProducts After="InstallValidate"/>
+			<ScheduleReboot After="InstallFinalize">NOT Installed</ScheduleReboot>
 			<Custom Action="InstallShell" After="InstallFiles">NOT Installed</Custom>
-			<Custom Action="UninstallShell" Before="RemoveFiles">(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+			<Custom Action="UninstallShell" Before="RemoveFiles">(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>			
 			<Custom Action='AlreadyUpdated' After='FindRelatedProducts'>SELFFOUND</Custom>
 			<Custom Action='NoDowngrade' After='FindRelatedProducts'>NEWERFOUND</Custom>
 		</InstallExecuteSequence>
@@ -168,7 +169,7 @@
 
 			<!-- Add in the 3 ShellExtension files we need to make the COM registration work -->
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
-				<File Id="DisplayMagicianShellExtension.dll" KeyPath="yes" Source="$(var.DisplayMagicianShellExtension.TargetDir)\DisplayMagicianShellExtension.dll"/>
+				<File Id="DisplayMagicianShellExtension.dll" Source="$(var.DisplayMagicianShellExtension.TargetDir)\DisplayMagicianShellExtension.dll" KeyPath="yes" />
 			</Component>
 			<Component Guid="*" Directory="APPLICATIONROOTDIRECTORY">
 				<File Id="ServerRegistrationManager.exe" Source="$(var.DisplayMagicianShellExtension.TargetDir)\ServerRegistrationManager.exe" KeyPath="yes" />
