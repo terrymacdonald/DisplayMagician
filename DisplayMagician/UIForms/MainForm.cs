@@ -313,9 +313,10 @@ namespace DisplayMagician.UIForms
         }
 
         private void MainForm_Load(object sender, EventArgs e)
-        {
-            // Start loading the Steam Games just after the Main form opens
-            //SteamGame.GetAllInstalledGames();
+        {            
+            // Update the Notify Icon menu
+            RefreshNotifyIconMenus();
+
             EnableShortcutButtonIfProfiles();
 
             logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
@@ -400,6 +401,7 @@ namespace DisplayMagician.UIForms
                 foreach (ShortcutItem shortcut in ShortcutRepository.AllShortcuts)
                 {
                     ToolStripMenuItem shortcutMenuItem = new ToolStripMenuItem(shortcut.Name, shortcut.ShortcutBitmap, runShortcutToolStripMenuItem_Click);
+                    shortcut.RefreshValidity();
                     if (shortcut.IsValid == ShortcutValidity.Warning || shortcut.IsValid == ShortcutValidity.Error)
                         shortcutMenuItem.Enabled = false;
                     else
