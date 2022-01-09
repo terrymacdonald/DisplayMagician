@@ -722,15 +722,6 @@ namespace DisplayMagician {
 
             try
             {
-                // Start the IPC Service to 
-                /*if (!IPCService.StartService())
-                {
-                    throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
-                }*/
-
-            
-                //IPCService.GetInstance().Status = InstanceStatus.User;
-
                 // Close the splash screen
                 if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                     AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
@@ -758,11 +749,6 @@ namespace DisplayMagician {
 
             try
             {
-                // Start the IPC Service to 
-                /*if (!IPCService.StartService())
-                {
-                    throw new Exception(Language.Can_not_open_a_named_pipe_for_Inter_process_communication);
-                }*/
 
                 // Create the Shortcut Icon Cache if it doesn't exist so that it's avilable for all the program
                 if (!Directory.Exists(AppIconPath))
@@ -792,8 +778,6 @@ namespace DisplayMagician {
                 {
                     logger.Error(ex, $"Program/StartUpApplication exception create Icon files for future use in {AppIconPath}");
                 }
-
-                //IPCService.GetInstance().Status = InstanceStatus.User;
 
                 // Check for updates
                 CheckForUpdates();
@@ -900,10 +884,24 @@ namespace DisplayMagician {
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
-                result = taskToRun.GetAwaiter().GetResult();
+                //Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
+                //result = taskToRun.GetAwaiter().GetResult();
                 // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
-                //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, notifyIcon));
+                //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon));
+
+                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);                
+                //result = taskToRun.GetAwaiter().GetResult();
+
+                while (!taskToRun.IsCompleted)
+                {
+                    Task.Delay(1000);
+                    Application.DoEvents();
+                    if (Program.AppCancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                }
+                result = taskToRun.Result;
             }
             finally
             {

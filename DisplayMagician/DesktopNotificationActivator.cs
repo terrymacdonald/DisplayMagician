@@ -19,7 +19,7 @@ namespace DisplayMagician
         {
             // Invoke the code we're running on the UI Thread to avoid
             // cross thread exceptions
-            Program.AppMainForm.BeginInvoke((MethodInvoker)delegate
+            Program.AppMainForm.Invoke((MethodInvoker)delegate
             {
                 // This code is running on the main UI thread!
                 // Parse the query string (using NuGet package QueryString.NET)
