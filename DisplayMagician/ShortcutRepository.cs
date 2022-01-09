@@ -37,7 +37,7 @@ namespace DisplayMagician
         // Common items to the class
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
         private static bool _shortcutsLoaded = false;
-        private static bool _cancelWait = false;
+        //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.0.json");
@@ -111,10 +111,10 @@ namespace DisplayMagician
             get => _shortcutStorageJsonFileName;
         }
 
-        public static bool CancelWait {
+        /*public static bool CancelWait {
             get => _cancelWait;
             set => _cancelWait = value;
-        }
+        }*/
 
         #endregion
 
@@ -682,7 +682,7 @@ namespace DisplayMagician
         }
 
 
-        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, CancellationToken cancelToken, NotifyIcon notifyIcon = null)
         {
             logger.Debug($"ShortcutRepository/RunShortcut: Running the shortcut {shortcutToUse.Name}.");
 
@@ -1044,7 +1044,7 @@ namespace DisplayMagician
                 // Add a status notification icon in the status area
                 if (myMainForm.InvokeRequired)
                 {
-                    myMainForm.Invoke((MethodInvoker)delegate {
+                    myMainForm.BeginInvoke((MethodInvoker)delegate {
                         myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {shortcutToUse.ExecutableNameAndPath}...");
                     });
                 }
@@ -1159,7 +1159,7 @@ namespace DisplayMagician
                             break;
                         }
 
-                        if (_cancelWait)
+                        if (cancelToken.IsCancellationRequested)
                         {
                             logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for application {shortcutToUse.ExecutableNameAndPath} to close.");
                             break;
@@ -1170,8 +1170,8 @@ namespace DisplayMagician
                         Thread.Sleep(1000);
                     }
                 }
-
-                if (_cancelWait)
+               
+                if (cancelToken.IsCancellationRequested)
                 {
                     // The monitoring was stopped by the user
                     logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
@@ -1264,7 +1264,7 @@ namespace DisplayMagician
                     // Add a status notification icon in the status area
                     if (myMainForm.InvokeRequired)
                     {
-                        myMainForm.Invoke((MethodInvoker)delegate {
+                        myMainForm.BeginInvoke((MethodInvoker)delegate {
                             myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameLibraryToUse.GameLibraryName}...");
                         });
                     }
@@ -1423,7 +1423,7 @@ namespace DisplayMagician
                     // Now we actually start looking for and monitoring the game!
                     if (myMainForm.InvokeRequired)
                     {
-                        myMainForm.Invoke((MethodInvoker)delegate {
+                        myMainForm.BeginInvoke((MethodInvoker)delegate {
                             myMainForm.UpdateNotifyIconText($"DisplayMagician: Running {gameToRun.Name}...");
                         });
                     }
@@ -1569,7 +1569,7 @@ namespace DisplayMagician
                                         break;
                                     }
 
-                                    if (_cancelWait)
+                                    if (cancelToken.IsCancellationRequested)
                                     {
                                         logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
                                         break;
@@ -1581,7 +1581,7 @@ namespace DisplayMagician
                                     Thread.Sleep(1000);
                                 }
 
-                                if (_cancelWait)
+                                if (cancelToken.IsCancellationRequested)
                                 {
                                     // The monitoring was stopped by the user
                                     logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
@@ -1658,7 +1658,7 @@ namespace DisplayMagician
                                     break;
                                 }
 
-                                if (_cancelWait)
+                                if (cancelToken.IsCancellationRequested)
                                 {
                                     logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
                                     break;
@@ -1672,7 +1672,7 @@ namespace DisplayMagician
                                 Thread.Sleep(1000);
                             }
 
-                            if (_cancelWait)
+                            if (cancelToken.IsCancellationRequested)
                             {
                                 // The monitoring was stopped by the user
                                 logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the Alternative Game Executable {altGameProcessToMonitor} monitoring was stopped by the user.");
@@ -1807,7 +1807,7 @@ namespace DisplayMagician
                                     break;
                                 }
 
-                                if (_cancelWait)
+                                if (cancelToken.IsCancellationRequested)
                                 {
                                     logger.Debug($"ShortcutRepository/RunShortcut: User requested we stop waiting. Exiting loop while waiting for {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to close.");
                                     break;
@@ -1819,7 +1819,7 @@ namespace DisplayMagician
                                 Thread.Sleep(1000);
                             }
 
-                            if (_cancelWait)
+                            if (cancelToken.IsCancellationRequested)
                             {
                                 // The monitoring was stopped by the user
                                 logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
@@ -2050,7 +2050,7 @@ namespace DisplayMagician
             // Set the notifyIcon text with the current profile
             if (myMainForm.InvokeRequired)
             {
-                myMainForm.Invoke((MethodInvoker)delegate {
+                myMainForm.BeginInvoke((MethodInvoker)delegate {
                     myMainForm.UpdateNotifyIconText($"DisplayMagician ({ProfileRepository.CurrentProfile.Name})");
                 });
             }

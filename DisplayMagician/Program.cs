@@ -45,6 +45,7 @@ namespace DisplayMagician {
         public const string AppUserModelId = "LittleBitBig.DisplayMagician";
         public const string AppActivationId = "4F319902-EB8C-43E6-8A51-8EA74E4308F8";        
         public static bool AppToastActivated = false;
+        public static CancellationTokenSource AppCancellationTokenSource = new CancellationTokenSource();
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
 
@@ -708,6 +709,9 @@ namespace DisplayMagician {
             logger.Debug($"Stopping logging processes");
             NLog.LogManager.Shutdown();
 
+            // Dispose of the CancellationTokenSource
+            Program.AppCancellationTokenSource.Dispose();
+
             // Exit with a 0 Errorlevel to indicate everything worked fine!
             return 0;
         }       
@@ -823,7 +827,7 @@ namespace DisplayMagician {
             AppMainForm.Activate();
             AppMainForm.TopMost = false;
         }
-
+       
         // ReSharper disable once CyclomaticComplexity
         public static void RunShortcut(string shortcutUUID)
         {
@@ -866,7 +870,7 @@ namespace DisplayMagician {
             // Lookup the profile
             ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
             logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
-
+           
             Program.ApplyProfileTask(profileToUse);
         }
 
@@ -890,10 +894,13 @@ namespace DisplayMagician {
                 return RunShortcutResult.Error;
             }
             await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            // This line creates a new cancellationtokensource, just in case the user used the last one up cancelling something.
+            // Each cancellationtoken can only be consumed once, and then needs to be replaced.
+            Program.AppCancellationTokenSource = new CancellationTokenSource();
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, notifyIcon));
+                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
                 result = taskToRun.GetAwaiter().GetResult();
                 // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
                 //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, notifyIcon));
@@ -926,7 +933,7 @@ namespace DisplayMagician {
                     MainForm myMainForm = Program.AppMainForm;
                     if (myMainForm.InvokeRequired)
                     {
-                        myMainForm.Invoke((MethodInvoker)delegate {
+                        myMainForm.BeginInvoke((MethodInvoker)delegate {
                             myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
                         });
                     }

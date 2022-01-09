@@ -19,7 +19,7 @@ namespace DisplayMagician
         {
             // Invoke the code we're running on the UI Thread to avoid
             // cross thread exceptions
-            Program.AppMainForm.Invoke((MethodInvoker)delegate
+            Program.AppMainForm.BeginInvoke((MethodInvoker)delegate
             {
                 // This code is running on the main UI thread!
                 // Parse the query string (using NuGet package QueryString.NET)
@@ -49,7 +49,7 @@ namespace DisplayMagician
                             // Stop waiting so that the monitoring stops, and the UI becomes free
                             case "stopWaiting":
 
-                                ShortcutRepository.CancelWait = true;
+                                Program.AppCancellationTokenSource.Cancel();
                                 break;
 
                             default:

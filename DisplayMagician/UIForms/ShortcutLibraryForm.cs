@@ -473,22 +473,34 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.Refresh();
 
             RunShortcutResult result = RunShortcutResult.Error;
-            if (!Program.AppProgramSettings.MinimiseOnStart)
+            try
             {
-                
-                // Get the MainForm so we can access the NotifyIcon on it.
-                MainForm mainForm = (MainForm)this.Owner;
+                if (!Program.AppProgramSettings.MinimiseOnStart)
+                {
 
-                // Run the shortcut
-                //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
-                result = Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon).Result;
+                    // Get the MainForm so we can access the NotifyIcon on it.
+                    MainForm mainForm = (MainForm)this.Owner;
 
+                    // Run the shortcut
+                    //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
+                    result = Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon).Result;
+
+                }
+                else
+                {
+                    // Run the shortcut
+                    //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
+                    result = Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon).Result;
+                }
             }
-            else
+            catch (OperationCanceledException ex)
             {
-                // Run the shortcut
-                //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
-                result = Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon).Result;
+                if (ex.CancellationToken == Program.AppCancellationTokenSource.Token)
+                    logger.Trace($"ShortcutLibraryForm/btn_run_Click: Cancellation token provided while running shortcut {_selectedShortcut.Name}. User asked to cancel.");
+            }            
+            catch(Exception ex)
+            {
+                logger.Error(ex, $"ShortcutLibraryForm/btn_run_Click: An exception occurred while trying to run the shortcut {_selectedShortcut.Name}.");
             }
 
             ilv_saved_shortcuts.ResumeLayout();
@@ -561,8 +573,8 @@ namespace DisplayMagician.UIForms
             {
                 if (e.KeyChar == 27)
                 {
-                    // We set the CancelWait to be true on ShortcutRespository, and it will be picked up bythe shortcut check.
-                    ShortcutRepository.CancelWait = true;
+                    // We set the CancellationTokenSource to true and it will be picked up by the shortcut check.
+                    Program.AppCancellationTokenSource.Cancel();
                 }
             }
         }
@@ -615,7 +627,7 @@ namespace DisplayMagician.UIForms
         private void btn_cancel_Click(object sender, EventArgs e)
         {
             // Inform the ShortcutRepository that it needs to cancel the running shortcut.
-            ShortcutRepository.CancelWait = true;
+            Program.AppCancellationTokenSource.Cancel();
         }
     }
 }
