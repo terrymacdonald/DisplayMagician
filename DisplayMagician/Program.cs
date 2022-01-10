@@ -869,7 +869,8 @@ namespace DisplayMagician {
             return true;
         }
 
-        public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        //public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
             if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
@@ -877,7 +878,17 @@ namespace DisplayMagician {
                 logger.Error($"Program/RunShortcutTask: Cannot run the shortcut {shortcutToUse.Name} as another task is running!");
                 return RunShortcutResult.Error;
             }
-            await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            if (Program.AppBackgroundTaskSemaphoreSlim.Wait(0))
+            {
+                logger.Trace($"Program/RunShortcutTask: Got exclusive control of the RunShortcutTask");
+            }
+            else
+            {
+                logger.Error($"Program/RunShortcutTask: Failed to get control of the RunShortcutTask, so unable to continue. Returning an Error.");
+                return RunShortcutResult.Error;
+            }
+            
             // This line creates a new cancellationtokensource, just in case the user used the last one up cancelling something.
             // Each cancellationtoken can only be consumed once, and then needs to be replaced.
             Program.AppCancellationTokenSource = new CancellationTokenSource();
@@ -889,9 +900,10 @@ namespace DisplayMagician {
                 // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
                 //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon));
 
-                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);                
+                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
+                //taskToRun.RunSynchronously();
+                taskToRun.Wait(Program.AppCancellationTokenSource.Token);
                 //result = taskToRun.GetAwaiter().GetResult();
-
                 while (!taskToRun.IsCompleted)
                 {
                     Task.Delay(1000);
@@ -912,7 +924,8 @@ namespace DisplayMagician {
             return result;
         }
 
-        public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
+        //public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
+        public static ApplyProfileResult ApplyProfileTask(ProfileItem profile)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
             if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
@@ -920,12 +933,24 @@ namespace DisplayMagician {
                 logger.Error($"Program/ApplyProfileTask: Cannot apply the display profile {profile.Name} as another task is running!");
                 return ApplyProfileResult.Error;
             }
-            await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
+            if (Program.AppBackgroundTaskSemaphoreSlim.Wait(0))
+            {
+                logger.Trace($"Program/ApplyProfileTask: Got exclusive control of the ApplyProfileTask");
+            }
+            else
+            {
+                logger.Error($"Program/ApplyProfileTask: Failed to get control of the ApplyProfileTask, so unable to continue. Returning an Error.");
+                return ApplyProfileResult.Error;
+            }
             ApplyProfileResult result = ApplyProfileResult.Error;
             try
             {
                 Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                result = taskToRun.GetAwaiter().GetResult();
+                //taskToRun.RunSynchronously();
+                //result = taskToRun.GetAwaiter().GetResult();
+                taskToRun.Wait(120, Program.AppCancellationTokenSource.Token);
+                result = taskToRun.Result;
                 if (result == ApplyProfileResult.Successful)
                 {
                     MainForm myMainForm = Program.AppMainForm;

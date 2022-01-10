@@ -473,7 +473,8 @@ namespace DisplayMagicianShared
             // (C# Structs populate with default values which mean that arrays start with null)
 
             try
-            {                            
+            {
+                //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();

@@ -55,7 +55,7 @@ namespace DisplayMagician.UIForms
 
             // Apply the Profile
             //if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
-            ApplyProfileResult result = Program.ApplyProfileTask(_selectedProfile).Result;
+            ApplyProfileResult result = Program.ApplyProfileTask(_selectedProfile);
             if (result == ApplyProfileResult.Successful)
             {
                 logger.Trace($"DisplayProfileForm/Apply_Click: The Profile {_selectedProfile.Name} was successfully applied. Waiting 0.5 sec for the display to settle after the change.");
@@ -268,8 +268,15 @@ namespace DisplayMagician.UIForms
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
 
-            // Update the Current Profile
+            // Update the Current Profile, but if another task is running then just wait.
+            if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
+            {
+                logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Waiting to run the UpdateActiveProfile as there is another Task running!");
+            }
+            Program.AppBackgroundTaskSemaphoreSlim.Wait();
+            logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Running the UpdateActiveProfile as there are no other Tasks running!");
             ProfileRepository.UpdateActiveProfile();
+            Program.AppBackgroundTaskSemaphoreSlim.Release();
 
             ChangeSelectedProfile(ProfileRepository.CurrentProfile);
 

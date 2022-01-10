@@ -483,14 +483,14 @@ namespace DisplayMagician.UIForms
 
                     // Run the shortcut
                     //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon).Result;
+                    result = Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon);
 
                 }
                 else
                 {
                     // Run the shortcut
                     //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon).Result;
+                    result = Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon);
                 }
             }
             catch (OperationCanceledException ex)

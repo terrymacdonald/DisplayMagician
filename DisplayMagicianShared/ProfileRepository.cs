@@ -619,7 +619,7 @@ namespace DisplayMagicianShared
                     VideoMode = VIDEO_MODE.WINDOWS
                 };
             }
-
+            
             profile.CreateProfileFromCurrentDisplaySettings();
 
             if (_profilesLoaded && _allProfiles.Count > 0)
