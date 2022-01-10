@@ -888,9 +888,13 @@ namespace DisplayMagician {
                 logger.Error($"Program/RunShortcutTask: Failed to get control of the RunShortcutTask, so unable to continue. Returning an Error.");
                 return RunShortcutResult.Error;
             }
-            
+
             // This line creates a new cancellationtokensource, just in case the user used the last one up cancelling something.
             // Each cancellationtoken can only be consumed once, and then needs to be replaced.
+            if (Program.AppCancellationTokenSource != null)
+            {
+                Program.AppCancellationTokenSource.Dispose();
+            }
             Program.AppCancellationTokenSource = new CancellationTokenSource();
             RunShortcutResult result = RunShortcutResult.Error;
             try
@@ -902,8 +906,6 @@ namespace DisplayMagician {
 
                 Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
                 //taskToRun.RunSynchronously();
-                taskToRun.Wait(Program.AppCancellationTokenSource.Token);
-                //result = taskToRun.GetAwaiter().GetResult();
                 while (!taskToRun.IsCompleted)
                 {
                     Task.Delay(1000);
@@ -913,7 +915,16 @@ namespace DisplayMagician {
                         break;
                     }
                 }
+                taskToRun.Wait(Program.AppCancellationTokenSource.Token);
                 result = taskToRun.Result;
+            }
+            catch (OperationCanceledException ex)
+            {
+                logger.Trace($"Program/RunShortcutTask: User cancelled the running the shortcut {shortcutToUse.Name}.");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/RunShortcutTask: Exception while trying to run the shortcut {shortcutToUse.Name}.");
             }
             finally
             {
@@ -943,14 +954,37 @@ namespace DisplayMagician {
                 logger.Error($"Program/ApplyProfileTask: Failed to get control of the ApplyProfileTask, so unable to continue. Returning an Error.");
                 return ApplyProfileResult.Error;
             }
-            ApplyProfileResult result = ApplyProfileResult.Error;
+            ApplyProfileResult result = ApplyProfileResult.Error;            
             try
             {
-                Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
+                if (Program.AppCancellationTokenSource != null)
+                {
+                    Program.AppCancellationTokenSource.Dispose();
+                }                
+                Program.AppCancellationTokenSource = new CancellationTokenSource();
+                try
+                {
+                    Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
+                    taskToRun.Wait(120);
+                    result = taskToRun.Result;
+                }   
+                catch (OperationCanceledException ex)
+                {
+                    logger.Trace($"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
+                }
+                catch( Exception ex)
+                {
+                    logger.Error(ex, $"Program/ApplyProfileTask: Exception while trying to apply Profile {profile.Name}.");
+                }
+                finally
+                {
+                    //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
+                    //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
+                    Program.AppBackgroundTaskSemaphoreSlim.Release();
+                }
+
                 //taskToRun.RunSynchronously();
-                //result = taskToRun.GetAwaiter().GetResult();
-                taskToRun.Wait(120, Program.AppCancellationTokenSource.Token);
-                result = taskToRun.Result;
+                //result = taskToRun.GetAwaiter().GetResult();                
                 if (result == ApplyProfileResult.Successful)
                 {
                     MainForm myMainForm = Program.AppMainForm;
