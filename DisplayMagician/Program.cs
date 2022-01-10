@@ -1252,6 +1252,8 @@ namespace DisplayMagician {
 
         private static void RegisterDisplayMagicianWithWindows()
         {
+
+            // If we are installed, then 
             // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
             // Windows 10 recognises the application, and allows features such as Toasts, 
             // taskbar pinning and similar.
@@ -1259,16 +1261,17 @@ namespace DisplayMagician {
             DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(AppUserModelId);
             DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
 
-            // Force toasts to work if we're not 'installed' per se by creating a temp DisplayMagician start menu icon
-            // Allows running from a ZIP file rather than forcing the app to be installed. If we don't do this then Toasts just wouldn't work.
             try
             {
                 if (!IsInstalledVersion())
                 {
+                    // Force toasts to work if we're not 'installed' per se by creating a temp DisplayMagician start menu icon
+                    // Allows running from a ZIP file rather than forcing the app to be installed. If we don't do this then Toasts just wouldn't work.
                     _tempShortcutRegistered = true;
                     ShortcutManager.RegisterAppForNotifications(
                         AppTempStartMenuPath, Assembly.GetExecutingAssembly().Location, null, AppUserModelId, AppActivationId);
                 }
+            
             }
             catch (Exception ex)
             {
