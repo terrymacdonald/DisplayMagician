@@ -148,7 +148,7 @@ namespace DisplayMagician.UIForms
                     .SetToastDuration(ToastDuration.Short);              
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
-                var doc = new XmlDocument();
+                var doc = new Windows.Data.Xml.Dom.XmlDocument();
                 doc.LoadXml(toastContent.GetContent());
 
                 // And create the toast notification
@@ -250,7 +250,7 @@ namespace DisplayMagician.UIForms
                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
-                var doc = new XmlDocument();
+                var doc = new Windows.Data.Xml.Dom.XmlDocument();
                 doc.LoadXml(toastContent.GetContent());
 
                 // And create the toast notification

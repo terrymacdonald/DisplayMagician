@@ -256,7 +256,7 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.Name = "ilv_saved_profiles";
             this.ilv_saved_profiles.PersistentCacheDirectory = "";
             this.ilv_saved_profiles.PersistentCacheSize = ((long)(100));
-            this.ilv_saved_profiles.Size = new System.Drawing.Size(934, 141);
+            this.ilv_saved_profiles.Size = new System.Drawing.Size(934, 161);
             this.ilv_saved_profiles.TabIndex = 21;
             this.ilv_saved_profiles.UseWIC = true;
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
@@ -450,7 +450,7 @@ namespace DisplayMagician.UIForms
             this.p_lower.Controls.Add(this.btn_save);
             this.p_lower.Controls.Add(this.btn_back);
             this.p_lower.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.p_lower.Location = new System.Drawing.Point(0, 658);
+            this.p_lower.Location = new System.Drawing.Point(0, 678);
             this.p_lower.Name = "p_lower";
             this.p_lower.Size = new System.Drawing.Size(934, 83);
             this.p_lower.TabIndex = 38;
@@ -462,7 +462,7 @@ namespace DisplayMagician.UIForms
             this.p_fill.Dock = System.Windows.Forms.DockStyle.Fill;
             this.p_fill.Location = new System.Drawing.Point(0, 517);
             this.p_fill.Name = "p_fill";
-            this.p_fill.Size = new System.Drawing.Size(934, 141);
+            this.p_fill.Size = new System.Drawing.Size(934, 161);
             this.p_fill.TabIndex = 39;
             // 
             // DisplayProfileForm
@@ -473,13 +473,13 @@ namespace DisplayMagician.UIForms
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.CancelButton = this.btn_back;
-            this.ClientSize = new System.Drawing.Size(934, 741);
+            this.ClientSize = new System.Drawing.Size(934, 761);
             this.Controls.Add(this.p_fill);
             this.Controls.Add(this.p_lower);
             this.Controls.Add(this.p_upper);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(950, 780);
+            this.MinimumSize = new System.Drawing.Size(950, 800);
             this.Name = "DisplayProfileForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
