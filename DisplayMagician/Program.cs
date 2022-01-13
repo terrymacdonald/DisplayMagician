@@ -879,7 +879,8 @@ namespace DisplayMagician {
                 return RunShortcutResult.Error;
             }
             //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
-            if (Program.AppBackgroundTaskSemaphoreSlim.Wait(0))
+            bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
+            if (gotGreenLightToProceed)
             {
                 logger.Trace($"Program/RunShortcutTask: Got exclusive control of the RunShortcutTask");
             }
@@ -930,7 +931,10 @@ namespace DisplayMagician {
             {
                 //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
                 //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                Program.AppBackgroundTaskSemaphoreSlim.Release();
+                if (gotGreenLightToProceed)
+                {
+                    Program.AppBackgroundTaskSemaphoreSlim.Release();
+                }
             }
             return result;
         }
@@ -945,7 +949,8 @@ namespace DisplayMagician {
                 return ApplyProfileResult.Error;
             }
             //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
-            if (Program.AppBackgroundTaskSemaphoreSlim.Wait(0))
+            bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
+            if (gotGreenLightToProceed)
             {
                 logger.Trace($"Program/ApplyProfileTask: Got exclusive control of the ApplyProfileTask");
             }
@@ -980,7 +985,10 @@ namespace DisplayMagician {
                 {
                     //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
                     //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                    Program.AppBackgroundTaskSemaphoreSlim.Release();
+                    if (gotGreenLightToProceed)
+                    {
+                        Program.AppBackgroundTaskSemaphoreSlim.Release();
+                    }                        
                 }
 
                 //taskToRun.RunSynchronously();
