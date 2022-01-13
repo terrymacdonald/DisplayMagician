@@ -960,73 +960,64 @@ namespace DisplayMagician {
                 return ApplyProfileResult.Error;
             }
             ApplyProfileResult result = ApplyProfileResult.Error;            
+            if (Program.AppCancellationTokenSource != null)
+            {
+                Program.AppCancellationTokenSource.Dispose();
+            }                
+            Program.AppCancellationTokenSource = new CancellationTokenSource();
             try
             {
-                if (Program.AppCancellationTokenSource != null)
-                {
-                    Program.AppCancellationTokenSource.Dispose();
-                }                
-                Program.AppCancellationTokenSource = new CancellationTokenSource();
-                try
-                {
-                    Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                    taskToRun.Wait(120);
-                    result = taskToRun.Result;
-                }   
-                catch (OperationCanceledException ex)
-                {
-                    logger.Trace($"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
-                }
-                catch( Exception ex)
-                {
-                    logger.Error(ex, $"Program/ApplyProfileTask: Exception while trying to apply Profile {profile.Name}.");
-                }
-                finally
-                {
-                    //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
-                    //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                    if (gotGreenLightToProceed)
-                    {
-                        Program.AppBackgroundTaskSemaphoreSlim.Release();
-                    }                        
-                }
-
-                //taskToRun.RunSynchronously();
-                //result = taskToRun.GetAwaiter().GetResult();                
-                if (result == ApplyProfileResult.Successful)
-                {
-                    MainForm myMainForm = Program.AppMainForm;
-                    if (myMainForm.InvokeRequired)
-                    {
-                        myMainForm.BeginInvoke((MethodInvoker)delegate {
-                            myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                        });
-                    }
-                    else
-                    {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                    }
-
-                    logger.Trace($"Program/ApplyProfileTask: Successfully applied Profile {profile.Name}.");
-                }
-                else if (result == ApplyProfileResult.Cancelled)
-                {
-                    logger.Warn($"Program/ApplyProfileTask: The user cancelled changing to Profile {profile.Name}.");
-                }
-                else
-                {
-                    logger.Warn($"Program/ApplyProfileTask: Error applying the Profile {profile.Name}. Unable to change the display layout.");
-                }
-
-                // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
-                //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
+                Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
+                taskToRun.Wait(120);
+                result = taskToRun.Result;
+            }   
+            catch (OperationCanceledException ex)
+            {
+                logger.Trace($"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
+            }
+            catch( Exception ex)
+            {
+                logger.Error(ex, $"Program/ApplyProfileTask: Exception while trying to apply Profile {profile.Name}.");
             }
             finally
             {
                 //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
                 //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                Program.AppBackgroundTaskSemaphoreSlim.Release();
+                if (gotGreenLightToProceed)
+                {
+                    Program.AppBackgroundTaskSemaphoreSlim.Release();
+                }                        
             }
+
+            //taskToRun.RunSynchronously();
+            //result = taskToRun.GetAwaiter().GetResult();                
+            if (result == ApplyProfileResult.Successful)
+            {
+                MainForm myMainForm = Program.AppMainForm;
+                if (myMainForm.InvokeRequired)
+                {
+                    myMainForm.BeginInvoke((MethodInvoker)delegate {
+                        myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
+                    });
+                }
+                else
+                {
+                    myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
+                }
+
+                logger.Trace($"Program/ApplyProfileTask: Successfully applied Profile {profile.Name}.");
+            }
+            else if (result == ApplyProfileResult.Cancelled)
+            {
+                logger.Warn($"Program/ApplyProfileTask: The user cancelled changing to Profile {profile.Name}.");
+            }
+            else
+            {
+                logger.Warn($"Program/ApplyProfileTask: Error applying the Profile {profile.Name}. Unable to change the display layout.");
+            }
+
+            // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
+            //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
             return result;
         }
 
