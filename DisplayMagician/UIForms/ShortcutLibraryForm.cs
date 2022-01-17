@@ -116,16 +116,6 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.ResumeLayout();
 
         }
-    
-        private ShortcutItem GetShortcutFromName(string shortcutName)
-        {
-            return (from item in ShortcutRepository.AllShortcuts where item.Name == shortcutName select item).First();
-        }
-
-        private ShortcutItem GetShortcutFromUUID(string shortcutUUID)
-        {
-            return (from item in ShortcutRepository.AllShortcuts where item.UUID == shortcutUUID select item).First();
-        }
 
         private void btn_save_Click(object sender, EventArgs e)
         {
@@ -231,7 +221,8 @@ namespace DisplayMagician.UIForms
         private void ilv_saved_shortcuts_ItemClick(object sender, ItemClickEventArgs e)
         {
             // This is the single click to select
-            _selectedShortcut = GetShortcutFromName(e.Item.Text);
+            //_selectedShortcut = GetShortcutFromName(e.Item.Text);
+            _selectedShortcut = ShortcutRepository.GetShortcut(e.Item.Text);
 
             // Hide the run button if the shortcut isn't valid
             if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
@@ -255,7 +246,7 @@ namespace DisplayMagician.UIForms
         private void ilv_saved_shortcuts_ItemDoubleClick(object sender, ItemClickEventArgs e)
         {
             // This is the double click to run
-            _selectedShortcut = GetShortcutFromName(e.Item.Text);
+            _selectedShortcut = ShortcutRepository.GetShortcut(e.Item.Text);
             
             // Hide the run button if the shortcut isn't valid
             if (_selectedShortcut.IsValid == ShortcutValidity.Warning || _selectedShortcut.IsValid == ShortcutValidity.Error)
@@ -347,7 +338,7 @@ namespace DisplayMagician.UIForms
             {
                 int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
                 string shortcutUUID = ilv_saved_shortcuts.Items[currentIlvIndex].EquipmentModel;
-                _selectedShortcut = GetShortcutFromUUID(shortcutUUID);
+                _selectedShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
 
                 this.Cursor = Cursors.WaitCursor;
                 ShowShortcutLoadingWindow();
@@ -628,6 +619,16 @@ namespace DisplayMagician.UIForms
         {
             // Inform the ShortcutRepository that it needs to cancel the running shortcut.
             Program.AppCancellationTokenSource.Cancel();
+        }
+
+        private void sendToClipboardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_selectedShortcut != null)
+            {
+                string commandline = _selectedShortcut.CreateCommand();
+                Clipboard.SetText(commandline);
+            }
+                
         }
     }
 }

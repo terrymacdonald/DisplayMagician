@@ -1616,8 +1616,11 @@ namespace DisplayMagician
             return shortcutFileName != null && System.IO.File.Exists(shortcutFileName);
         }
 
+        public string CreateCommand()
+        {
+            return $"{Application.ExecutablePath} {DisplayMagicianStartupAction.RunShortcut} \"{UUID}\"";
+        }
 
-        
 
         public void AutoSuggestShortcutName()
         {

@@ -36,13 +36,11 @@ namespace DisplayMagician.UIForms
             this.btn_apply = new System.Windows.Forms.Button();
             this.btn_back = new System.Windows.Forms.Button();
             this.btn_delete = new System.Windows.Forms.Button();
-            this.menu_profiles = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.cms_profiles = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.applyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
-            this.cloneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.createShortcutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveProfileToDesktopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sendToClipboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteProfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.il_profiles = new System.Windows.Forms.ImageList(this.components);
             this.btn_view_current = new System.Windows.Forms.Button();
             this.btn_save_or_rename = new System.Windows.Forms.Button();
@@ -65,7 +63,7 @@ namespace DisplayMagician.UIForms
             this.pbLogo = new System.Windows.Forms.PictureBox();
             this.p_lower = new System.Windows.Forms.Panel();
             this.p_fill = new System.Windows.Forms.Panel();
-            this.menu_profiles.SuspendLayout();
+            this.cms_profiles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).BeginInit();
             this.p_upper.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
@@ -122,49 +120,44 @@ namespace DisplayMagician.UIForms
             this.btn_delete.UseVisualStyleBackColor = true;
             this.btn_delete.Click += new System.EventHandler(this.Delete_Click);
             // 
-            // menu_profiles
+            // cms_profiles
             // 
-            this.menu_profiles.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cms_profiles.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.applyToolStripMenuItem,
-            this.toolStripMenuItem2,
-            this.cloneToolStripMenuItem,
-            this.createShortcutToolStripMenuItem,
-            this.editToolStripMenuItem,
-            this.deleteToolStripMenuItem});
-            this.menu_profiles.Name = "menu_profiles";
-            this.menu_profiles.Size = new System.Drawing.Size(68, 120);
+            this.saveProfileToDesktopToolStripMenuItem,
+            this.sendToClipboardToolStripMenuItem,
+            this.deleteProfileToolStripMenuItem});
+            this.cms_profiles.Name = "menu_profiles";
+            this.cms_profiles.Size = new System.Drawing.Size(205, 92);
             // 
             // applyToolStripMenuItem
             // 
+            this.applyToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.applyToolStripMenuItem.Name = "applyToolStripMenuItem";
-            this.applyToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
-            this.applyToolStripMenuItem.Click += new System.EventHandler(this.Apply_Click);
+            this.applyToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
+            this.applyToolStripMenuItem.Text = "Apply Profile...";
+            this.applyToolStripMenuItem.Click += new System.EventHandler(this.applyToolStripMenuItem_Click);
             // 
-            // toolStripMenuItem2
+            // saveProfileToDesktopToolStripMenuItem
             // 
-            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(64, 6);
+            this.saveProfileToDesktopToolStripMenuItem.Name = "saveProfileToDesktopToolStripMenuItem";
+            this.saveProfileToDesktopToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
+            this.saveProfileToDesktopToolStripMenuItem.Text = "Save Profile to Desktop...";
+            this.saveProfileToDesktopToolStripMenuItem.Click += new System.EventHandler(this.saveProfileToDesktopToolStripMenuItem_Click);
             // 
-            // cloneToolStripMenuItem
+            // sendToClipboardToolStripMenuItem
             // 
-            this.cloneToolStripMenuItem.Name = "cloneToolStripMenuItem";
-            this.cloneToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
+            this.sendToClipboardToolStripMenuItem.Name = "sendToClipboardToolStripMenuItem";
+            this.sendToClipboardToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
+            this.sendToClipboardToolStripMenuItem.Text = "Send to Clipboard...";
+            this.sendToClipboardToolStripMenuItem.Click += new System.EventHandler(this.sendToClipboardToolStripMenuItem_Click);
             // 
-            // createShortcutToolStripMenuItem
+            // deleteProfileToolStripMenuItem
             // 
-            this.createShortcutToolStripMenuItem.Name = "createShortcutToolStripMenuItem";
-            this.createShortcutToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
-            // 
-            // editToolStripMenuItem
-            // 
-            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
-            // 
-            // deleteToolStripMenuItem
-            // 
-            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(67, 22);
-            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.Delete_Click);
+            this.deleteProfileToolStripMenuItem.Name = "deleteProfileToolStripMenuItem";
+            this.deleteProfileToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
+            this.deleteProfileToolStripMenuItem.Text = "Delete Profile...";
+            this.deleteProfileToolStripMenuItem.Click += new System.EventHandler(this.deleteProfileToolStripMenuItem_Click);
             // 
             // il_profiles
             // 
@@ -262,6 +255,7 @@ namespace DisplayMagician.UIForms
             this.ilv_saved_profiles.View = Manina.Windows.Forms.View.HorizontalStrip;
             this.ilv_saved_profiles.ItemClick += new Manina.Windows.Forms.ItemClickEventHandler(this.ilv_saved_profiles_ItemClick);
             this.ilv_saved_profiles.ItemHover += new Manina.Windows.Forms.ItemHoverEventHandler(this.ilv_saved_profiles_ItemHover);
+            this.ilv_saved_profiles.ItemDoubleClick += new Manina.Windows.Forms.ItemDoubleClickEventHandler(this.ilv_saved_profiles_ItemDoubleClick);
             // 
             // lbl_profile_shown_subtitle
             // 
@@ -486,7 +480,7 @@ namespace DisplayMagician.UIForms
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "DisplayMagician - Display Profiles";
             this.Load += new System.EventHandler(this.DisplayProfileForm_Load);
-            this.menu_profiles.ResumeLayout(false);
+            this.cms_profiles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pb_down_arrow)).EndInit();
             this.p_upper.ResumeLayout(false);
             this.p_upper.PerformLayout();
@@ -503,13 +497,9 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_apply;
         private System.Windows.Forms.Button btn_back;
         private System.Windows.Forms.Button btn_delete;
-        private System.Windows.Forms.ContextMenuStrip menu_profiles;
-        private System.Windows.Forms.ToolStripMenuItem cloneToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip cms_profiles;
+        private System.Windows.Forms.ToolStripMenuItem sendToClipboardToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem applyToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
-        private System.Windows.Forms.ToolStripMenuItem createShortcutToolStripMenuItem;
         private System.Windows.Forms.ImageList il_profiles;
         private System.Windows.Forms.Button btn_view_current;
         private System.Windows.Forms.Button btn_save_or_rename;
@@ -531,6 +521,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Panel p_lower;
         private System.Windows.Forms.Panel p_fill;
         private System.Windows.Forms.Button btn_help;
+        private System.Windows.Forms.ToolStripMenuItem deleteProfileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveProfileToDesktopToolStripMenuItem;
     }
 }
 

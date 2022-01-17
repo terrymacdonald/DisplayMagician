@@ -45,6 +45,7 @@
             this.tsmi_edit = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_run = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_save_to_desktop = new System.Windows.Forms.ToolStripMenuItem();
+            this.sendToClipboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_copy = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_delete = new System.Windows.Forms.ToolStripMenuItem();
             this.lbl_mask = new System.Windows.Forms.Label();
@@ -217,10 +218,11 @@
             this.tsmi_edit,
             this.tsmi_run,
             this.tsmi_save_to_desktop,
+            this.sendToClipboardToolStripMenuItem,
             this.tsmi_copy,
             this.tsmi_delete});
             this.cms_shortcuts.Name = "cms_shortcuts";
-            this.cms_shortcuts.Size = new System.Drawing.Size(216, 114);
+            this.cms_shortcuts.Size = new System.Drawing.Size(216, 158);
             // 
             // tsmi_edit
             // 
@@ -245,11 +247,18 @@
             this.tsmi_save_to_desktop.Text = "Save Shortcut to Desktop...";
             this.tsmi_save_to_desktop.Click += new System.EventHandler(this.tsmi_save_to_desktop_Click);
             // 
+            // sendToClipboardToolStripMenuItem
+            // 
+            this.sendToClipboardToolStripMenuItem.Name = "sendToClipboardToolStripMenuItem";
+            this.sendToClipboardToolStripMenuItem.Size = new System.Drawing.Size(215, 22);
+            this.sendToClipboardToolStripMenuItem.Text = "Send to Clipboard...";
+            this.sendToClipboardToolStripMenuItem.Click += new System.EventHandler(this.sendToClipboardToolStripMenuItem_Click);
+            // 
             // tsmi_copy
             // 
             this.tsmi_copy.Name = "tsmi_copy";
             this.tsmi_copy.Size = new System.Drawing.Size(215, 22);
-            this.tsmi_copy.Text = "Copy Shortcut...";
+            this.tsmi_copy.Text = "Duplicate Shortcut...";
             this.tsmi_copy.Click += new System.EventHandler(this.tsmi_copy_Click);
             // 
             // tsmi_delete
@@ -405,5 +414,6 @@
         private System.Windows.Forms.Button btn_copy;
         private System.Windows.Forms.ToolStripMenuItem tsmi_copy;
         private System.Windows.Forms.Button btn_cancel;
+        private System.Windows.Forms.ToolStripMenuItem sendToClipboardToolStripMenuItem;
     }
 }

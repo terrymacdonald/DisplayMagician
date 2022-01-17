@@ -1587,6 +1587,11 @@ namespace DisplayMagicianShared
             return (Name ?? Language.UN_TITLED_PROFILE);
         }
 
+        public string CreateCommand()
+        {
+            return $"{Application.ExecutablePath} {DisplayMagicianStartupAction.ChangeProfile} \"{UUID}\"";
+        }
+
     }
 }
 
