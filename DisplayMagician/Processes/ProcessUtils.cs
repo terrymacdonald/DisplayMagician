@@ -599,7 +599,25 @@ namespace DisplayMagician.Processes
             }
             catch (Win32Exception ex)
             {
-                logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. There was an error in opening the associated file.");
+                if (ex.ErrorCode == -2147467259)
+                {
+                    logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
+                    if (TryExecute(executable, arguments, out processCreated, true, priorityClass, maxWaitMs))
+                    {
+                        logger.Trace($"ProcessUtils/TryExecute: Running the {executable} a second time with administrative rights worked!");
+                        return true;
+                    }
+                    else
+                    {
+                        logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable} for a second time with administrative rights. Giving up.");
+                        return false;
+                    }
+
+                }
+                else
+                {
+                    logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. There was an error in opening the associated file.");
+                }                
                 return false;
             }
             catch (PlatformNotSupportedException ex)

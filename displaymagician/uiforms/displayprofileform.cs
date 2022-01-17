@@ -328,11 +328,13 @@ namespace DisplayMagician.UIForms
                     {
                         btn_apply.Visible = false;
                         lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
+                        cms_profiles.Items[0].Enabled = false;
                     }
                     else
                     {
                         btn_apply.Visible = true;
                         lbl_profile_shown_subtitle.Text = "";
+                        cms_profiles.Items[0].Enabled = true;
                     }
                 }
             }
@@ -483,7 +485,12 @@ namespace DisplayMagician.UIForms
                     ChangeSelectedProfile(savedProfile);
                 }
             }
-            
+
+            if (e.Buttons == MouseButtons.Right)
+            {
+                cms_profiles.Show(ilv_saved_profiles, e.Location);
+            }
+
         }
 
         private void btn_view_current_Click(object sender, EventArgs e)
@@ -630,6 +637,36 @@ namespace DisplayMagician.UIForms
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup";
             System.Diagnostics.Process.Start(targetURL);
+        }
+
+        private void saveProfileToDesktopToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btn_save.PerformClick();
+        }
+
+        private void applyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btn_apply.PerformClick();
+        }
+
+        private void deleteProfileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btn_delete.PerformClick();
+        }
+
+        private void sendToClipboardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string commandline = _selectedProfile.CreateCommand();
+            Clipboard.SetText(commandline);
+        }
+
+        private void ilv_saved_profiles_ItemDoubleClick(object sender, ItemClickEventArgs e)
+        {
+            // This is the double click to apply
+            _selectedProfile = ProfileRepository.GetProfile(e.Item.Text);            
+
+            // Apply the selected profile
+            btn_apply.PerformClick();
         }
     }
 }
