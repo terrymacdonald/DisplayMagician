@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using DesktopNotifications;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.QueryStringDotNET;
 using System.Windows.Forms;
 using DisplayMagician.UIForms;

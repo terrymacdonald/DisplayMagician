@@ -142,10 +142,18 @@ namespace DisplayMagician.UIForms
                 // Remind the user that DisplayMagician is running the in background
                 // Construct the toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                    .AddToastActivationInfo("notify=minimiseStart&action=open", ToastActivationType.Foreground)
-                    .AddText("DisplayMagician is minimised", hintMaxLines: 1)
-                    .AddButton("Open", ToastActivationType.Background, "notify=minimiseStart&action=open")
-                    .SetToastDuration(ToastDuration.Short);              
+                    .AddText("DisplayMagician is minimised...", hintMaxLines: 1)
+                    .AddText("DisplayMagician will wait in the background until you need it.")
+                    .AddButton(new ToastButton()
+                        .SetContent("Open")
+                        .AddArgument("action", "open")
+                        .SetBackgroundActivation())
+                    .AddButton(new ToastButton()
+                        .SetContent("Exit")
+                        .AddArgument("action", "exit")
+                        .SetBackgroundActivation())
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                    .SetToastDuration(ToastDuration.Short);
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 var doc = new Windows.Data.Xml.Dom.XmlDocument();
@@ -155,10 +163,10 @@ namespace DisplayMagician.UIForms
                 var toast = new ToastNotification(doc);
 
                 // Remove any other Notifications from us
-                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                ToastNotificationManagerCompat.History.Clear();
 
                 // And then show it
-                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
 
             }
             else
@@ -242,12 +250,18 @@ namespace DisplayMagician.UIForms
                 // Tell the user that 
                 // Construct the toast content
                 ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                    .AddToastActivationInfo("notify=stillRunning", ToastActivationType.Foreground)
-                    .AddText("DisplayMagician is still running...", hintMaxLines: 1)
+                    .AddText("DisplayMagician is minimised...", hintMaxLines: 1)
                     .AddText("DisplayMagician will wait in the background until you need it.")
-                    .AddButton("Open DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=open")
-                    .AddButton("Exit DisplayMagician", ToastActivationType.Background, "notify=stillRunning&action=exit")
-                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
+                    .AddButton(new ToastButton()
+                        .SetContent("Open")
+                        .AddArgument("action", "open")
+                        .SetBackgroundActivation())
+                    .AddButton(new ToastButton()
+                        .SetContent("Exit")
+                        .AddArgument("action", "exit")
+                        .SetBackgroundActivation())
+                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                    .SetToastDuration(ToastDuration.Short);
                 ToastContent toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
                 var doc = new Windows.Data.Xml.Dom.XmlDocument();
@@ -257,10 +271,10 @@ namespace DisplayMagician.UIForms
                 var toast = new ToastNotification(doc);
 
                 // Remove any other Notifications from us
-                DesktopNotifications.DesktopNotificationManagerCompat.History.Clear();
+                ToastNotificationManagerCompat.History.Clear();
                 
                 // And then show it
-                DesktopNotifications.DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
             }
             Application.Exit();
         }

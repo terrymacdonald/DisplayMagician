@@ -97,7 +97,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DesktopNotificationActivator.cs" />
-    <Compile Include="DesktopNotificationManagerCompat.cs" />
     <Compile Include="GameLibraries\GOGGame.cs" />
     <Compile Include="GameLibraries\GOGLibrary.cs" />
     <Compile Include="GameLibraries\Game.cs" />

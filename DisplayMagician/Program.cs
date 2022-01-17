@@ -5,16 +5,14 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using DesktopNotifications;
+using Microsoft.Toolkit.Uwp.Notifications;
 using System.Windows.Forms;
-//using DisplayMagician.InterProcess;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
 using System.Drawing;
-using Windows.UI.Notifications;
 using System.Runtime.Serialization;
 using NLog.Config;
 using System.Collections.Generic;
@@ -703,7 +701,7 @@ namespace DisplayMagician {
 
             logger.Debug($"Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
-            DesktopNotificationManagerCompat.History.Clear();
+            ToastNotificationManagerCompat.History.Clear();
 
             // Shutdown NLog
             logger.Debug($"Stopping logging processes");
@@ -1310,14 +1308,76 @@ namespace DisplayMagician {
 
         private static void RegisterDisplayMagicianWithWindows()
         {
+            // Listen to notification activation
+            ToastNotificationManagerCompat.OnActivated += toastArgs =>
+            {
+                // Obtain the arguments from the notification
+                ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
 
-            // If we are installed, then 
-            // This sets the Application User Model ID to "LittleBitBig.DisplayMagician" so that
-            // Windows 10 recognises the application, and allows features such as Toasts, 
-            // taskbar pinning and similar.
-            // Register AUMID, COM server, and activator
-            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DesktopNotificationActivator>(AppUserModelId);
-            DesktopNotificationManagerCompat.RegisterActivator<DesktopNotificationActivator>();
+                // Obtain any user input (text boxes, menu selections) from the notification
+                //ValueSet userInput = toastArgs.UserInput;
+
+                // Need to dispatch to UI thread if performing UI operations
+                /*Application.Current.Dispatcher.Invoke(delegate
+                {
+                    // TODO: Show the corresponding content
+                    MessageBox.Show("Toast activated. Args: " + toastArgs.Argument);
+                });*/
+
+                // This code is running on the main UI thread!
+                // Parse the query string (using NuGet package QueryString.NET)
+                if (args.Contains("action"))
+                {
+                    // See what action is being requested 
+                    switch (args["action"])
+                    {
+                        // Open the Main window
+                        case "open":
+
+                            // Open the Main DisplayMagician Window, if the app has started and the mainform is loaded
+                            if (Program.AppMainForm != null)
+                            {
+                                Program.AppMainForm.Invoke((MethodInvoker)delegate
+                                {
+                                    Program.AppMainForm.openApplicationWindow();
+                                });
+                                
+                            }                                
+                            break;
+
+                        // Exit the application
+                        case "exit":
+
+                            // Exit the application (overriding the close restriction)                            
+                            if (Program.AppMainForm != null)
+                            {
+                                Program.AppMainForm.Invoke((MethodInvoker)delegate
+                                {
+                                    Program.AppMainForm.exitApplication();
+                                });
+
+                            }
+                            break;
+
+                        // Stop waiting so that the monitoring stops, and the UI becomes free
+                        case "stopWaiting":
+                            
+                            if (Program.AppMainForm != null)
+                            {
+                                Program.AppMainForm.Invoke((MethodInvoker)delegate
+                                {
+                                    Program.AppCancellationTokenSource.Cancel();
+                                });
+
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+            };
 
             try
             {
