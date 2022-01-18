@@ -1263,7 +1263,7 @@ namespace DisplayMagicianShared.Windows
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Skipping setting HDR on Display {myHDRstate.Id} as it does not support HDR");
+                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Skipping setting HDR on Display {myHDRstate.Id} as it is already in the correct HDR mode: {colorInfo.AdvancedColorEnabled}");
                     }
                 }
                 else

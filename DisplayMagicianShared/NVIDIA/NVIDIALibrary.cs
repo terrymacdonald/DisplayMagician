@@ -1310,7 +1310,7 @@ namespace DisplayMagicianShared.NVIDIA
                         }
 
                         // If the setting for this display is not the same as we want, then we set it to NV_COLOR_SELECTION_POLICY_BEST_QUALITY
-                        if (ActiveDisplayConfig.ColorConfig.ColorData[displayId].ColorSelectionPolicy != colorData.ColorSelectionPolicy)
+                        if (ActiveDisplayConfig.ColorConfig.ColorData[displayId].ColorSelectionPolicy != NV_COLOR_SELECTION_POLICY.NV_COLOR_SELECTION_POLICY_BEST_QUALITY)
                         {
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to turn off NVIDIA customer colour settings for display {displayId}.");
 
@@ -1408,7 +1408,7 @@ namespace DisplayMagicianShared.NVIDIA
                         }
 
                         // if it's not the same HDR we want, then we turn off HDR (and will apply it if needed later on in SetActiveOverride)
-                        if (ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode != hdrColorData.HdrMode)
+                        if (ActiveDisplayConfig.HdrConfig.HdrColorData[displayId].HdrMode != NV_HDR_MODE.OFF)
                         {
                             SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We want to turn on custom HDR mode for display {displayId}.");
 
