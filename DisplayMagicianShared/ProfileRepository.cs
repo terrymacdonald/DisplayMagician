@@ -705,7 +705,7 @@ namespace DisplayMagicianShared
                     {
                         JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
-                            MissingMemberHandling = MissingMemberHandling.Error,
+                            MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Include,
                             //NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Include,

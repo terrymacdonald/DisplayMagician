@@ -71,7 +71,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                logger.Warn($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
+                logger.Error($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
             }
 
             // Also refresh the right-click menu (if we have a main form loaded)
@@ -274,7 +274,7 @@ namespace DisplayMagician.UIForms
                 logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Waiting to run the UpdateActiveProfile as there is another Task running!");
             }
             Program.AppBackgroundTaskSemaphoreSlim.Wait();
-            logger.Error($"DisplayProfileForm/DisplayProfileForm_Load: Running the UpdateActiveProfile as there are no other Tasks running!");
+            logger.Trace($"DisplayProfileForm/DisplayProfileForm_Load: Running the UpdateActiveProfile as there are no other Tasks running!");
             ProfileRepository.UpdateActiveProfile();
             Program.AppBackgroundTaskSemaphoreSlim.Release();
 
