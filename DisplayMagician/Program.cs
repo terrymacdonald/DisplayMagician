@@ -291,24 +291,55 @@ namespace DisplayMagician {
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false); 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;            
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
+            // Check if it's an upgrade from DisplayMagician v2.x to v2.2
+            // and if it is then copy the old configs to the new filenames and
+            // explain to the user what they need to do.
+            string dp22 = Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json");
+            string dp21 = Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json");
+            string dp20 = Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json");
+            string dp10 = Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json");
+
+            if ((File.Exists(dp21) || File.Exists(dp20)) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
+            {
+                logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician version to DisplayMagician v2.2, so performing some upgrade steps.");
+
+                // Copy the older files across to the new names, then the migrate JSON function
+                // within the ProfileRepository will take care of the rest
+                if (File.Exists(dp20))
+                {
+                    File.Copy(dp20, dp22);
+                }
+                else if (File.Exists(dp21))
+                {
+                    File.Copy(dp21, dp22);
+                }
+
+                // Warn the user about the fact we need them to recreate their Display Profiles again!
+                StartMessageForm myMessageWindow = new StartMessageForm();
+                myMessageWindow.MessageMode = "rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician21to22.rtf";
+                myMessageWindow.HeadingText = "DisplayMagician v2.2 Upgrade Warning";
+                myMessageWindow.ButtonText = "&Close";
+                myMessageWindow.ShowDialog();
+            }
             // Check if it's an upgrade from DisplayMagician v1 to v2
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
-            // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.1.json doesn't
-            if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json")))
+            // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.2.json doesn't
+            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.1, so performing some upgrade steps.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.2, so performing some upgrade steps.");
                 // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
                 if (upgradedSettingsFile)
                 {
-                    logger.Info($"Program/Main: Upgraded v1.0 settings file {oldSettingsFile} to v2.0 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
+                    logger.Info($"Program/Main: Upgraded v1.0 settings file {oldSettingsFile} to v2.2 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
                 }                
 
                 // Copy the old Game Shortcuts file to the new v2 name
                 string oldShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
-                string newShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
+                string newShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
                 try
                 {                    
                     if (File.Exists(oldShortcutsFile) && !File.Exists(newShortcutsFile))
@@ -325,26 +356,12 @@ namespace DisplayMagician {
                 // Warn the user about the fact we need a new DisplayProfiles_2.0.json
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician1to2.rtf";
-                myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
             }
-            // Check if it's an upgrade from DisplayMagician v2.0 to v2.1
-            // and if it is then copy the old configs to the new filenames and
-            // explain to the user what they need to do.
-            // e.g. DisplayProfiles_2.1.json exists, but DisplayProfiles_2.0.json doesn't
-            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json")))
-            {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.1, so performing some upgrade steps.");
-                // Warn the user about the fact we need a new DisplayProfiles_2.0.json
-                StartMessageForm myMessageWindow = new StartMessageForm();
-                myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician20to21.rtf";
-                myMessageWindow.HeadingText = "DisplayMagician v2.1.0 Upgrade Warning";
-                myMessageWindow.ButtonText = "&Close";
-                myMessageWindow.ShowDialog();
-            }           
+                       
 
             logger.Debug($"Setting up commandline processing configuration");
             var app = new CommandLineApplication

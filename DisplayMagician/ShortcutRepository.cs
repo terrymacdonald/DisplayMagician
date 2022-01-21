@@ -473,6 +473,20 @@ namespace DisplayMagician
                         _allShortcuts = JsonConvert.DeserializeObject<List<ShortcutItem>>(json, mySerializerSettings);
                         
                     }
+                    catch (JsonReaderException ex)
+                    {
+                        // If there is a error in the JSON format
+                        if (ex.HResult == -2146233088)
+                        {
+                            MessageBox.Show($"The Game Shortcuts file {_shortcutStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException - The Shortcuts file {_shortcutStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error(ex, $"ShortcutRepository/LoadShortcuts: JSONReaderException while trying to process the Shortcuts json data file {_shortcutStorageJsonFileName} but JsonConvert threw an exception.");
+                        }
+
+                    }
                     catch (Exception ex)
                     {
                         logger.Error(ex, $"ShortcutRepository/LoadShortcuts: Tried to parse the JSON in the {_shortcutStorageJsonFileName} but the JsonConvert threw an exception. There is an error in the Shortcut JSON file!");

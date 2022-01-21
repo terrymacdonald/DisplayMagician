@@ -65,7 +65,7 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.1.json");
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.2.json");
         
 
 
@@ -696,7 +696,6 @@ namespace DisplayMagicianShared
                 // Migrate any previous entries to the latest version of the file format to the latest one
                 json = MigrateJsonToLatestVersion(json);
 
-
                 if (!string.IsNullOrWhiteSpace(json))
                 {
                     List<string> jsonErrors = new List<string>();
@@ -705,7 +704,7 @@ namespace DisplayMagicianShared
                     {
                         JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                         {
-                            MissingMemberHandling = MissingMemberHandling.Error,
+                            MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Include,
                             //NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Include,
@@ -720,6 +719,20 @@ namespace DisplayMagicianShared
                             },
                         };                       
                         _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);                       
+
+                    }
+                    catch (JsonReaderException ex)
+                    {
+                        // If there is a error in the JSON format
+                        if (ex.HResult == -2146233088)
+                        {
+                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFileName} but JsonConvert threw an exception.");
+                        }
 
                     }
                     catch (Exception ex) 
@@ -789,89 +802,44 @@ namespace DisplayMagicianShared
             }
             catch(JsonReaderException ex)
             {
-                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+                // If there is a error in the JSON format
+                if (ex.HResult == -2146233088)
+                {
+                    MessageBox.Show("The Display Profiles file contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException - The Display Profiles file contains a syntax error. Please check the file for correctness with a JSON validator.");
+                }
+                else
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+                }
+                
             }
             catch(Exception ex)
             {
-                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+                SharedLogger.logger.Error(ex,$"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
             }
 
-            // We do the change we wre trying to do
+            // We do the actual change we were trying to do
             try
             {
-                /*// Now we try and add a default NVIDIA Color Settings if there isn't one
-                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing NVIDIA Color Config.");
-                // Create a default object
-                NVIDIA_DISPLAY_CONFIG myDefaultConfig = new NVIDIA_DISPLAY_CONFIG();
-                myDefaultConfig.ColorConfig.ColorData = new Dictionary<uint, NV_COLOR_DATA_V5>();
-                JObject defaultColorConfig = (JObject)JToken.FromObject(myDefaultConfig.ColorConfig);
 
-                for (int i=0; i < root.Count; i++)
-                {
-                    JObject profile = (JObject)root[i];
-                    JObject result = (JObject)profile.SelectToken("NVIDIADisplayConfig.ColorConfig.ColorData");
-                    if (result == null)
-                    {                        
-                        
-                        JObject NVIDIADisplayConfig = (JObject)profile.SelectToken("NVIDIADisplayConfig");
-                        NVIDIADisplayConfig.Add("ColorConfig",defaultColorConfig);
-                        changedJson = true;
-                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing NVIDIA Color Config in profile {profile.SelectToken("Name")} (index {i}).");
-                    }
-                }
-
-                // Now we try to patch in a Windows GDI device context into the json if there isnt one
-                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows GDI Device Context.");
+                // Now we try to patch in a Windows Taskbar Stuck Rects list into the json if there isnt one
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows Taskbar settings.");
                 // Create a default object
-                Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
-                JObject defaultGdiDisplaySettings = (JObject)JToken.FromObject(GdiDisplaySettings);
+                List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
                 for (int i = 0; i < root.Count; i++)
                 {
                     JObject profile = (JObject)root[i];
-                    JObject result = (JObject)profile.SelectToken("WindowsDisplayConfig.GdiDisplaySettings");
-                    if (result == null)
+                    JArray WindowsTaskBarLayout = (JArray)profile.SelectToken("WindowsDisplayConfig.TaskBarLayout");
+                    if (WindowsTaskBarLayout == null)
                     {
-
-                        JObject WindowsDisplayConfig = (JObject)profile.SelectToken("WindowsDisplayConfig");
-                        WindowsDisplayConfig.Add("GdiDisplaySettings", defaultGdiDisplaySettings);
+                        JObject WindowsDisplayConfig = (JObject)profile.SelectToken("WindowsDisplayConfig"); 
+                        JArray newTaskBarLayout = JArray.FromObject(taskBarStuckRectangles);
+                        WindowsDisplayConfig.Add("TaskBarLayout",newTaskBarLayout);
                         changedJson = true;
-                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows TaskBarLayout in profile {profile.SelectToken("Name")} (index {i}).");
                     }
-                }
-
-                // Now we try to convert the individual sourceids into a list of source ids to cope with cloned devices
-                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows GDI Device Context.");
-                // Create a default object
-                List<uint> WinDisplaySourcesList = new List<uint>();
-                //JObject WinDisplaySources = (JObject)JToken.FromObject(WinDisplaySourcesList);
-                for (int i = 0; i < root.Count; i++)
-                {
-                    JObject profile = (JObject)root[i];
-                    try
-                    {
-                        JObject WindowsDisplaySources = (JObject)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
-                        Dictionary<string, List<uint>> existingDisplaySources = WindowsDisplaySources.ToObject<Dictionary<string, List<uint>>>();
-                    }
-                    catch (Exception ex)
-                    {
-                        JObject WindowsDisplaySources = (JObject)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
-                        //foreach (var displaySource in WindowsDisplaySources.ToObject<Dictionary<string,uint>>())
-                        Dictionary<string, uint> existingDisplaySources = WindowsDisplaySources.ToObject<Dictionary<string, uint>>();
-                        Dictionary<string, List<uint>> newDisplaySources = new Dictionary<string, List<uint>>();
-                        foreach (var sourceName in existingDisplaySources.Keys)
-                        {
-                            List<uint> newList = new List<uint>();
-                            newList.Add((uint)existingDisplaySources[sourceName]);
-                            newDisplaySources[sourceName] = newList;
-                        }
-                        JObject newSourcesDict = JObject.FromObject(newDisplaySources);
-                        JToken WindowsDisplayConfig = (JToken)profile.SelectToken("WindowsDisplayConfig.DisplaySources");
-                        WindowsDisplayConfig.Replace(newSourcesDict);
-                        changedJson = true;
-                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows GDI Device Context in profile {profile.SelectToken("Name")} (index {i}).");
-                    }
-                    
-                }                */
+                }                
 
             }
             catch (JsonReaderException ex)

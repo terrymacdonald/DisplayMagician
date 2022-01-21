@@ -58,7 +58,8 @@ namespace DisplayMagicianShared.Windows
            // Additionally, we had to disable the DEviceKey from the equality testing within the GDI library itself as that waould also change after changing back from NVIDIA surround
            // This still allows us to detect when refresh rates change, which will allow DisplayMagician to detect profile differences.
            GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
-           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
+           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers) &&
+           TaskBarLayout.SequenceEqual(other.TaskBarLayout);
 
         public override int GetHashCode()
         {
@@ -163,9 +164,10 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplayConfigPaths = new DISPLAYCONFIG_PATH_INFO[0];
             myDefaultConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
-            myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
-            myDefaultConfig.IsCloned = false;
+            myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();            
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
+            myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
+            myDefaultConfig.IsCloned = false;
 
             return myDefaultConfig;
         }

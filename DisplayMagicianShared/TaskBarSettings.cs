@@ -16,6 +16,19 @@ namespace DisplayMagicianShared
 
         public TaskBarStuckRectangle SingleMonitorStuckRectangle { get; set; }
 
+        public override bool Equals(object obj) => obj is TaskBarSettings other && this.Equals(other);
+        public bool Equals(TaskBarSettings other)
+        => Options == other.Options &&
+           SingleMonitorStuckRectangle.Equals(other.SingleMonitorStuckRectangle);
+
+        public override int GetHashCode()
+        {
+            return (Options, SingleMonitorStuckRectangle).GetHashCode();
+        }
+        public static bool operator ==(TaskBarSettings lhs, TaskBarSettings rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(TaskBarSettings lhs, TaskBarSettings rhs) => !(lhs == rhs);
+
         public static TaskBarSettings GetCurrent()
         {
             var taskBarOptions = new List<Tuple<string, int>>();

@@ -252,6 +252,22 @@ namespace DisplayMagicianShared
 
         public int Version { get; set; }
 
+        public override bool Equals(object obj) => obj is TaskBarStuckRectangle other && this.Equals(other);
+        public bool Equals(TaskBarStuckRectangle other)
+        => Version == other.Version &&
+           DevicePath == other.DevicePath &&
+           Binary.Equals(other.Binary);
+
+
+        public override int GetHashCode()
+        {
+            //return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, GdiDisplaySettings.Values, IsCloned, DisplayIdentifiers).GetHashCode();
+            return (Version, DevicePath, Binary).GetHashCode();
+        }
+        public static bool operator ==(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => !(lhs == rhs);
+
         public static TaskBarStuckRectangle GetCurrent()
         {
             return GetCurrent((string)null);
