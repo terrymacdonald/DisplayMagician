@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Win32;
 
 // This file is taken from Soroush Falahati's amazing HeliosDisplayManagement software
 // available at https://github.com/falahati/HeliosDisplayManagement
+
+// Modifications made by Terry MacDonald
 
 namespace DisplayMagicianShared.Windows
 {
@@ -14,16 +17,13 @@ namespace DisplayMagicianShared.Windows
 
         public Tuple<string, int>[] Options { get; set; }
 
-        public TaskBarStuckRectangle SingleMonitorStuckRectangle { get; set; }
-
         public override bool Equals(object obj) => obj is TaskBarSettings other && this.Equals(other);
         public bool Equals(TaskBarSettings other)
-        => Options == other.Options &&
-           SingleMonitorStuckRectangle.Equals(other.SingleMonitorStuckRectangle);
+        => Options.All(a => other.Options.Any(x => x.Item1 == a.Item1 && x.Item2 == a.Item2));
 
         public override int GetHashCode()
         {
-            return (Options, SingleMonitorStuckRectangle).GetHashCode();
+            return (Options).GetHashCode();
         }
         public static bool operator ==(TaskBarSettings lhs, TaskBarSettings rhs) => lhs.Equals(rhs);
 
@@ -77,15 +77,13 @@ namespace DisplayMagicianShared.Windows
 
             return new TaskBarSettings
             {
-                Options = taskBarOptions.ToArray(),
-                SingleMonitorStuckRectangle = TaskBarStuckRectangle.GetCurrent()
+                Options = taskBarOptions.ToArray()
             };
         }
 
         public bool Apply()
         {
-            if (SingleMonitorStuckRectangle == null ||
-                Options.Length == 0)
+            if (Options.Length == 0)
             {
                 throw new InvalidOperationException();
             }

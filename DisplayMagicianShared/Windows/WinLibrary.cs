@@ -624,11 +624,6 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
             TaskBarSettings taskBarSettings = TaskBarSettings.GetCurrent();
-            if (taskBarSettings == null)
-            {
-                // We need to setup a default taskBarSettings object instead
-                taskBarSettings = new TaskBarSettings();
-            }
 
             // Store the active paths and modes in our display config object
             windowsDisplayConfig.DisplayConfigPaths = paths;
@@ -1410,6 +1405,7 @@ namespace DisplayMagicianShared.Windows
                 RestartManagerSession restartManager = new RestartManagerSession();
                 FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
                 restartManager.RegisterProcessFile(explorerFileInfo);
+                restartManager.Shutdown(RestartManagerSession.ShutdownType.ForceShutdown); 
                 restartManager.Restart();
                 restartManager.Dispose();
             }

@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 // This file is taken from Soroush Falahati's amazing HeliosDisplayManagement software
 // available at https://github.com/falahati/HeliosDisplayManagement
 
+// Modifications made by Terry MacDonald
+
 namespace DisplayMagicianShared.Windows
 {
     public class TaskBarStuckRectangle
@@ -382,7 +384,7 @@ namespace DisplayMagicianShared.Windows
                 try
                 {
                     stuckRectanglesKey.SetValue(DevicePath ?? "Settings", Binary);
-                    SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings!");
+                    SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for {DevicePath}!");
                 }
                 catch (Exception ex)
                 {
