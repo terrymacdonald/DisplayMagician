@@ -8,11 +8,11 @@ using Newtonsoft.Json;
 // This file is taken from Soroush Falahati's amazing HeliosDisplayManagement software
 // available at https://github.com/falahati/HeliosDisplayManagement
 
-namespace DisplayMagicianShared
+namespace DisplayMagicianShared.Windows
 {
     public class TaskBarStuckRectangle
     {
-        public enum TaskBarEdge : uint
+        public enum TaskBarEdge : UInt32
         {
             Left = 0,
             Top = 1,
@@ -21,7 +21,7 @@ namespace DisplayMagicianShared
         }
 
         [Flags]
-        public enum TaskBarOptions : uint
+        public enum TaskBarOptions : UInt32
         {
             None = 0,
             AutoHide = 1 << 0,
@@ -87,7 +87,7 @@ namespace DisplayMagicianShared
         public string DevicePath { get; set; }
 
         [JsonIgnore]
-        public uint DPI
+        public UInt32 DPI
         {
             get
             {
@@ -256,7 +256,7 @@ namespace DisplayMagicianShared
         public bool Equals(TaskBarStuckRectangle other)
         => Version == other.Version &&
            DevicePath == other.DevicePath &&
-           Binary.Equals(other.Binary);
+           Xor(Binary,other.Binary);
 
 
         public override int GetHashCode()
@@ -267,6 +267,24 @@ namespace DisplayMagicianShared
         public static bool operator ==(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => !(lhs == rhs);
+
+        static bool Xor(byte[] a, byte[] b)
+
+        {
+
+            int x = a.Length ^ b.Length;
+
+            for (int i = 0; i < a.Length && i < b.Length; ++i)
+
+            {
+
+                x |= a[i] ^ b[i];
+
+            }
+
+            return x == 0;
+
+        }
 
         public static TaskBarStuckRectangle GetCurrent()
         {
@@ -320,9 +338,9 @@ namespace DisplayMagicianShared
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // ignored
+                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to read the TaskBarStuckRectangle registry settings due to an exception!");
                 }
             }
 
@@ -364,10 +382,12 @@ namespace DisplayMagicianShared
                 try
                 {
                     stuckRectanglesKey.SetValue(DevicePath ?? "Settings", Binary);
+                    SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings!");
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // ignored
+                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/Apply: Unable to apply TaskBarStuckRectangle registry settings due to an exception!");
+                    return false;
                 }
             }
 

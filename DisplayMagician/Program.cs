@@ -319,8 +319,8 @@ namespace DisplayMagician {
                 // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagician21to22.rtf";
-                myMessageWindow.HeadingText = "DisplayMagician v2.2 Upgrade Warning";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
             }

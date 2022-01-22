@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using System.Text.RegularExpressions;
 using DisplayMagicianShared;
+using System.IO;
 
 namespace DisplayMagicianShared.Windows
 {
@@ -41,6 +42,7 @@ namespace DisplayMagicianShared.Windows
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
         public List<TaskBarStuckRectangle> TaskBarLayout;
+        public TaskBarSettings TaskBarSettings;
         public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
@@ -59,12 +61,12 @@ namespace DisplayMagicianShared.Windows
            // This still allows us to detect when refresh rates change, which will allow DisplayMagician to detect profile differences.
            GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers) &&
-           TaskBarLayout.SequenceEqual(other.TaskBarLayout);
+           TaskBarLayout.SequenceEqual(other.TaskBarLayout) &&
+           TaskBarSettings.Equals(other.TaskBarSettings);
 
         public override int GetHashCode()
         {
-            //return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, GdiDisplaySettings.Values, IsCloned, DisplayIdentifiers).GetHashCode();
-            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers).GetHashCode();
+            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarSettings).GetHashCode();
         }
         public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -167,6 +169,7 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();            
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
             myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
+            myDefaultConfig.TaskBarSettings = new TaskBarSettings();
             myDefaultConfig.IsCloned = false;
 
             return myDefaultConfig;
@@ -595,7 +598,7 @@ namespace DisplayMagicianShared.Windows
                 }
             }
 
-            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
+            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar layout.");
             List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
             // Now attempt to get the windows taskbar location for each display
             // We use the information we already got from the display identifiers
@@ -619,11 +622,20 @@ namespace DisplayMagicianShared.Windows
                 }
             }
 
+            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
+            TaskBarSettings taskBarSettings = TaskBarSettings.GetCurrent();
+            if (taskBarSettings == null)
+            {
+                // We need to setup a default taskBarSettings object instead
+                taskBarSettings = new TaskBarSettings();
+            }
+
             // Store the active paths and modes in our display config object
             windowsDisplayConfig.DisplayConfigPaths = paths;
             windowsDisplayConfig.DisplayConfigModes = modes;
             windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
             windowsDisplayConfig.TaskBarLayout = taskBarStuckRectangles;
+            windowsDisplayConfig.TaskBarSettings = taskBarSettings;
 
             return windowsDisplayConfig;
         }
@@ -1085,6 +1097,8 @@ namespace DisplayMagicianShared.Windows
 
         public bool SetActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig)
         {
+            bool needToRestartExplorer = false;
+
             // Get the all possible windows display configs
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Generating a list of all the current display configs");
             WINDOWS_DISPLAY_CONFIG allWindowsDisplayConfig = GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS | QDC.QDC_INCLUDE_HMD);
@@ -1344,15 +1358,17 @@ namespace DisplayMagicianShared.Windows
                 
             }
 
+            
             // Now set the taskbar position for each screen
             if (displayConfig.TaskBarLayout.Count > 0)
             {
                 foreach (TaskBarStuckRectangle tbStuckRect in displayConfig.TaskBarLayout)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar for {tbStuckRect.DevicePath} against the {tbStuckRect.Edge} edge, positioning at ({tbStuckRect.Location.X},{tbStuckRect.Location.Y}) and being {tbStuckRect.Location.Width}x{tbStuckRect.Location.Height} in size.");
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar layout for {tbStuckRect.DevicePath} against the {tbStuckRect.Edge} edge, positioning at ({tbStuckRect.Location.X},{tbStuckRect.Location.Y}) and being {tbStuckRect.Location.Width}x{tbStuckRect.Location.Height} in size.");
                     if (tbStuckRect.Apply())
                     {
                         SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the taskbar layout for {tbStuckRect.DevicePath} successfully.");
+                        needToRestartExplorer = true;
                     }
                     else
                     {
@@ -1362,7 +1378,40 @@ namespace DisplayMagicianShared.Windows
             }
             else
             {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: No taskbar settings in display profile so skipping setting it!");
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: No taskbar layout in display profile so skipping setting it!");
+            }
+
+            // Now set the taskbar settings
+            TaskBarSettings currentTaskBarSettings = TaskBarSettings.GetCurrent();
+            if (!displayConfig.TaskBarSettings.Equals(currentTaskBarSettings))
+            {
+                // The settings are different, so we should apply them
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar settings .");
+                if (displayConfig.TaskBarSettings.Apply())
+                {
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the taskbar settings successfully!");
+                    needToRestartExplorer = true;
+                }
+                else
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to set the taskbar settings.");
+                }
+            }
+            else
+            {
+                // The settings are the same, so we should skip applying them
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: The current taskbar settings are the same as the one's we want, so skipping setting them!");
+            }
+
+            // Restart Widnows Explorer if we need to make any TaskBar changes
+            // If we get here, then we need to restart Windows Explorer for the taskbar registry changes to take effect!
+            if (needToRestartExplorer)
+            {
+                RestartManagerSession restartManager = new RestartManagerSession();
+                FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
+                restartManager.RegisterProcessFile(explorerFileInfo);
+                restartManager.Restart();
+                restartManager.Dispose();
             }
 
             return true;

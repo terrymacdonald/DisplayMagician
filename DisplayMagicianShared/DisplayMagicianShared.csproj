@@ -82,8 +82,8 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
     </Compile>
-    <Compile Include="TaskBarSettings.cs" />
-    <Compile Include="TaskBarStuckRectangle.cs" />
+    <Compile Include="Windows\TaskBarSettings.cs" />
+    <Compile Include="Windows\TaskBarStuckRectangle.cs" />
     <Compile Include="UserControls\DisplayView.cs">
       <SubType>UserControl</SubType>
     </Compile>

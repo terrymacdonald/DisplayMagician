@@ -5,7 +5,7 @@ using Microsoft.Win32;
 // This file is taken from Soroush Falahati's amazing HeliosDisplayManagement software
 // available at https://github.com/falahati/HeliosDisplayManagement
 
-namespace DisplayMagicianShared
+namespace DisplayMagicianShared.Windows
 {
     public class TaskBarSettings
     {
