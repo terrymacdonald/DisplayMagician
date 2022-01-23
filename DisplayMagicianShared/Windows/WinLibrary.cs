@@ -6,6 +6,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Text.RegularExpressions;
 using DisplayMagicianShared;
 using System.IO;
+using System.ComponentModel;
 
 namespace DisplayMagicianShared.Windows
 {
@@ -598,30 +599,12 @@ namespace DisplayMagicianShared.Windows
                 }
             }
 
-            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar layout.");
-            List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
             // Now attempt to get the windows taskbar location for each display
             // We use the information we already got from the display identifiers
-            foreach (string displayId in windowsDisplayConfig.DisplayIdentifiers)
-            {
-                TaskBarStuckRectangle tbStuckRect;
-                // e.g. "WINAPI|\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}|DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI|54074|4318|\\\\?\\DISPLAY#NVS10DE#5&2b46c695&0&UID185344#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}|NV Surround"
-                string[] winapiLine = displayId.Split('|');
-                string pattern = @"DISPLAY\#(.*)\#\{";
-                Match match = Regex.Match(winapiLine[5], pattern);
-                if (match.Success)
-                {
-                    string tbStuckRectKey = match.Groups[1].Value;
-                    tbStuckRect = TaskBarStuckRectangle.GetCurrent(tbStuckRectKey);
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {tbStuckRect.DevicePath} is against the {tbStuckRect.Edge} edge, is positioned at ({tbStuckRect.Location.X},{tbStuckRect.Location.Y}) and is {tbStuckRect.Location.Width}x{tbStuckRect.Location.Height} in size.");
-                    taskBarStuckRectangles.Add(tbStuckRect);
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: We were unable to figure out the DevicePath for the '{displayId}' display identifier.");
-                }
-            }
-
+            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar layout.");
+            List<TaskBarStuckRectangle> taskBarStuckRectangles = TaskBarStuckRectangle.GetCurrent(windowsDisplayConfig.DisplayIdentifiers);
+            
+            // Now we try to get the taskbar settings too
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
             TaskBarSettings taskBarSettings = TaskBarSettings.GetCurrent();
 
@@ -1357,18 +1340,17 @@ namespace DisplayMagicianShared.Windows
             // Now set the taskbar position for each screen
             if (displayConfig.TaskBarLayout.Count > 0)
             {
-                foreach (TaskBarStuckRectangle tbStuckRect in displayConfig.TaskBarLayout)
+                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar layout.");
+                if (TaskBarStuckRectangle.Apply(displayConfig.TaskBarLayout))
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar layout for {tbStuckRect.DevicePath} against the {tbStuckRect.Edge} edge, positioning at ({tbStuckRect.Location.X},{tbStuckRect.Location.Y}) and being {tbStuckRect.Location.Width}x{tbStuckRect.Location.Height} in size.");
-                    if (tbStuckRect.Apply())
-                    {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the taskbar layout for {tbStuckRect.DevicePath} successfully.");
-                        needToRestartExplorer = true;
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to set the taskbar layout for {tbStuckRect.DevicePath}.");
-                    }
+                    // TODO - We need to detect if it is Windows 11, as we need to restart explorer.exe for the settings to take
+                    //        No need to do it in Windows 10, as explorere auto-detects the registry key change, and moves the taskbar
+                    //        (In fact, if you try to restart explorer.exe on Win10 it actually stops the taskbar move from working!)
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the taskbar layout successfully.");
+                }
+                else
+                {
+                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to set the taskbar layout.");
                 }
             }
             else
@@ -1400,15 +1382,10 @@ namespace DisplayMagicianShared.Windows
 
             // Restart Widnows Explorer if we need to make any TaskBar changes
             // If we get here, then we need to restart Windows Explorer for the taskbar registry changes to take effect!
-            if (needToRestartExplorer)
+            /*if (needToRestartExplorer)
             {
-                RestartManagerSession restartManager = new RestartManagerSession();
-                FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
-                restartManager.RegisterProcessFile(explorerFileInfo);
-                restartManager.Shutdown(RestartManagerSession.ShutdownType.ForceShutdown); 
-                restartManager.Restart();
-                restartManager.Dispose();
-            }
+                RestartExplorer();
+            }*/
 
             return true;
         }
@@ -1929,6 +1906,66 @@ namespace DisplayMagicianShared.Windows
             {
                 return false;
             }
+        }
+
+        public static bool RestartExplorer()
+        {
+            try
+            {
+                RestartManagerSession restartManager = new RestartManagerSession();
+                FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
+                restartManager.RegisterProcessFile(explorerFileInfo);
+                restartManager.Shutdown(RestartManagerSession.ShutdownType.ForceShutdown);
+                restartManager.Restart();
+                restartManager.Dispose();
+                return true;
+            }
+            catch (Win32Exception ex)
+            {
+                if (ex.ErrorCode == 776)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_REQUEST_OUT_OF_SEQUENCE (779): This error value is returned if the RmRestart function is called with a valid session handle before calling the RmShutdown function.");
+                }                
+                else if (ex.ErrorCode == 352)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_FAIL_RESTART (352): One or more applications could not be restarted.");
+                }
+                else if (ex.ErrorCode == 121)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_SEM_TIMEOUT (121): A Restart Manager function could not obtain a registry write mutex in the allotted time. A system restart is recommended because further use of the Restart Manager is likely to fail.");
+                }
+                else if (ex.ErrorCode == 1223)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_CANCELLED (1223): This error value is returned by the RmRestart function when the request to cancel an operation is successful.");
+                }
+                else if (ex.ErrorCode == 160)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_BAD_ARGUMENTS (160): One or more arguments are not correct. This error value is returned by the Restart Manager function if a NULL pointer or 0 is passed in a parameter that requires a non-null and non-zero value.");
+                }
+                else if (ex.ErrorCode == 29)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_WRITE_FAULT (29): An operation was unable to read or write to the registry.");
+                }
+                else if (ex.ErrorCode == 14)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_OUTOFMEMORY (14): A Restart Manager operation could not complete because not enough memory was available.");
+                }
+                else if (ex.ErrorCode == 6)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_INVALID_HANDLE (6): No Restart Manager session exists for the handle supplied.");
+                }
+                else
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ErrorCode = {ex.ErrorCode}.");
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: General exception when trying to restart Windows Explorer!");
+                return false;
+            }
+            
         }
 
     }

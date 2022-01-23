@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Text.RegularExpressions;
 using DisplayMagicianShared.Windows;
 using Microsoft.Win32;
 using Newtonsoft.Json;
@@ -87,6 +88,8 @@ namespace DisplayMagicianShared.Windows
         public byte[] Binary { get; set; }
 
         public string DevicePath { get; set; }
+
+        public bool MainScreen{ get; set; }
 
         [JsonIgnore]
         public UInt32 DPI
@@ -257,6 +260,7 @@ namespace DisplayMagicianShared.Windows
         public override bool Equals(object obj) => obj is TaskBarStuckRectangle other && this.Equals(other);
         public bool Equals(TaskBarStuckRectangle other)
         => Version == other.Version &&
+           MainScreen == other.MainScreen &&
            DevicePath == other.DevicePath &&
            Xor(Binary,other.Binary);
 
@@ -264,7 +268,7 @@ namespace DisplayMagicianShared.Windows
         public override int GetHashCode()
         {
             //return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, GdiDisplaySettings.Values, IsCloned, DisplayIdentifiers).GetHashCode();
-            return (Version, DevicePath, Binary).GetHashCode();
+            return (Version, MainScreen, DevicePath, Binary).GetHashCode();
         }
         public static bool operator ==(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => lhs.Equals(rhs);
 
@@ -288,10 +292,10 @@ namespace DisplayMagicianShared.Windows
 
         }
 
-        public static TaskBarStuckRectangle GetCurrent()
+        /*public static TaskBarStuckRectangle GetCurrent()
         {
             return GetCurrent((string)null);
-        }
+        }*/
 
         /*public static TaskBarStuckRectangle GetCurrent(PathDisplayTarget pathTargetInfo)
         {
@@ -313,83 +317,168 @@ namespace DisplayMagicianShared.Windows
             return GetCurrent(devicePath);
         }*/
 
-        public static TaskBarStuckRectangle GetCurrent(string devicePath)
+        public static List<TaskBarStuckRectangle> GetCurrent(List<string> displayIdentifiers)
         {
-            var stuckRectanglesVersion = 0;
-            byte[] stuckRectanglesBinary = null;
+            List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
 
-            // Try to extract the latest version of StuckRectangles available on the User Registry
-            foreach (var version in Headers.Keys)
+            int version = 2;
+            var address = string.Format(MainDisplayAddress, version);
+            if (Registry.CurrentUser.OpenSubKey(address) == null)
             {
+                // If it's not version 2, then try version 3
+                version = 3;
+                address = string.Format(MainDisplayAddress, version);
+                if (Registry.CurrentUser.OpenSubKey(address) == null)
+                {
+                    // It's not v2 or v3, so error
+                    version = -1;
+                }
+            }
+            
+            if (version >= 2) 
+            {
+                // Grab the main screen taskbar placement
                 try
                 {
-                    var address = devicePath != null
-                        ? string.Format(MultiDisplayAddress, version)
-                        : string.Format(MainDisplayAddress, version);
-
                     using (var key = Registry.CurrentUser.OpenSubKey(
                         address,
                         RegistryKeyPermissionCheck.ReadSubTree))
                     {
-                        var settings = key?.GetValue(devicePath ?? "Settings") as byte[];
+                        var settings = key?.GetValue("Settings") as byte[];
 
                         if (settings?.Length > 0)
                         {
-                            stuckRectanglesBinary = settings;
-                            stuckRectanglesVersion = version;
+                            TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle
+                            {
+                                MainScreen = true,
+                                DevicePath = "Settings",
+                                Binary = settings,
+                                Version = version
+                            };
+                            taskBarStuckRectangles.Add(taskBarStuckRectangle);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to read the TaskBarStuckRectangle registry settings due to an exception!");
+                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to read the Main Screen TaskBarStuckRectangle registry settings due to an exception!");
                 }
             }
 
-            if (stuckRectanglesVersion == 0 || stuckRectanglesBinary == null)
+            version = 2;
+            address = string.Format(MultiDisplayAddress, version);
+            if (Registry.CurrentUser.OpenSubKey(address) == null)
             {
-                return null;
+                // If it's not version 2, then try version 3
+                version = 3;
+                address = string.Format(MultiDisplayAddress, version);
+                if (Registry.CurrentUser.OpenSubKey(address) == null)
+                {
+                    // It's not v2 or v3, so error
+                    version = -1;
+                }
             }
 
-            return new TaskBarStuckRectangle
+            if (version >= 2)
             {
-                DevicePath = devicePath,
-                Binary = stuckRectanglesBinary,
-                Version = stuckRectanglesVersion
-            };
+                foreach (string displayId in displayIdentifiers)
+                {
+                    TaskBarStuckRectangle tbStuckRect;
+                    // e.g. "WINAPI|\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}|DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI|54074|4318|\\\\?\\DISPLAY#NVS10DE#5&2b46c695&0&UID185344#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}|NV Surround"
+                    string[] winapiLine = displayId.Split('|');
+                    string pattern = @"DISPLAY\#(.*)\#\{";
+                    Match match = Regex.Match(winapiLine[5], pattern);
+                    if (match.Success)
+                    {
+                        TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle();
+                        string tbStuckRectKey = match.Groups[1].Value;
+                        using (var key = Registry.CurrentUser.OpenSubKey(
+                            address,
+                            RegistryKeyPermissionCheck.ReadSubTree))
+                        {
+                            var settings = key?.GetValue(tbStuckRectKey) as byte[];
+
+                            if (settings?.Length > 0)
+                            {
+                                taskBarStuckRectangle = new TaskBarStuckRectangle
+                                {
+                                    MainScreen = false,
+                                    DevicePath = tbStuckRectKey,
+                                    Binary = settings,
+                                    Version = version
+                                };
+                                taskBarStuckRectangles.Add(taskBarStuckRectangle);
+
+                            }
+                        }
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {taskBarStuckRectangle.DevicePath} is against the {taskBarStuckRectangle.Edge} edge, is positioned at ({taskBarStuckRectangle.Location.X},{taskBarStuckRectangle.Location.Y}) and is {taskBarStuckRectangle.Location.Width}x{taskBarStuckRectangle.Location.Height} in size.");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: We were unable to figure out the DevicePath for the '{displayId}' display identifier.");
+                    }
+                }
+            }
+
+            return taskBarStuckRectangles;
+
         }
 
-        public bool Apply()
+        public static bool Apply(List<TaskBarStuckRectangle> taskBarStuckRectangles)
         {
-            if (Binary == null ||
-                Binary.Length == 0 ||
-                Version <= 0)
+            if (taskBarStuckRectangles.Count == 0)
             {
-                throw new InvalidOperationException();
+                return false;
             }
 
-            var address = DevicePath != null
-                ? string.Format(MultiDisplayAddress, Version)
-                : string.Format(MainDisplayAddress, Version);
+            string address;
 
-            using (var stuckRectanglesKey = Registry.CurrentUser.OpenSubKey(
-                address,
-                RegistryKeyPermissionCheck.ReadWriteSubTree))
+            foreach (TaskBarStuckRectangle tbsr in taskBarStuckRectangles)
             {
-                if (stuckRectanglesKey == null)
+                if (tbsr.Version >= 2 && tbsr.Version <= 3)
                 {
-                    return false;
+                    if (tbsr.MainScreen)
+                    {
+                        address = string.Format(MainDisplayAddress, tbsr.Version);
+                        // Grab the main screen taskbar placement
+                        try
+                        {
+                            using (var key = Registry.CurrentUser.OpenSubKey(
+                                address,
+                                RegistryKeyPermissionCheck.ReadWriteSubTree))
+                            {
+                                key.SetValue("Settings", tbsr.Binary);
+                                SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for the Main Screen!");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to set the Main Screen TaskBarStuckRectangle registry settings due to an exception!");
+                        }
+                    }
+                    else
+                    {
+                        address = string.Format(MultiDisplayAddress, tbsr.Version);
+                        // Grab the main screen taskbar placement
+                        try
+                        {
+                            using (var key = Registry.CurrentUser.OpenSubKey(
+                                address,
+                                RegistryKeyPermissionCheck.ReadWriteSubTree))
+                            {
+                                key.SetValue(tbsr.DevicePath, tbsr.Binary);
+                                SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for the {tbsr.DevicePath} Screen!");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to set the Main Screen TaskBarStuckRectangle registry settings due to an exception!");
+                        }
+                    }
                 }
-
-                try
+                else
                 {
-                    stuckRectanglesKey.SetValue(DevicePath ?? "Settings", Binary);
-                    SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for {DevicePath}!");
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/Apply: Unable to apply TaskBarStuckRectangle registry settings due to an exception!");
-                    return false;
+                    SharedLogger.logger.Error($"TaskBarStuckRectangle/GetCurrent: Unable to set the Main Screen TaskBarStuckRectangle registry settings due to an exception!");
                 }
             }
 
