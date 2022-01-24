@@ -11,9 +11,30 @@ using Microsoft.Win32;
 namespace DisplayMagicianShared.Windows
 {
     public class TaskBarSettings
-    {
+    {                
         private const string AdvancedSettingsAddress =
             "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced";
+
+        private static List<string> WantedAdvancedSettingValues = new List<string>
+        {
+            // Win10/11 registry keys (not all will be populated, only those that the user modified from default at least once)
+            "MMTaskbarEnabled", //  Multiple Taskbars:  0 for show taskbar on main screen only, 1 for show taskbar on all screens            
+            "MMTaskbarMode", // Show taskbar buttons on: 0 = all taskbars, 1 = main taskbar and where windows is open, 2 = taskbar where window is open
+            "MMTaskbarGlomLevel", // Buttons on other taskbars: 0 = always combine, combine when the taskbar is full, 2 = never combine
+            "NoTaskGrouping", // Disable all Task Grouping (overrides "TaskbarGroupSize"): 0 = enable task grouping, 1 = disable task grouping
+            "SearchboxTaskbarMode", // Show Search Button in Taskbar: 0 = remove search button, 1 = show search button
+            "ShowTaskViewButton", // Show Taskview Button in Taskbar: 0 = remove taskview button, 1 = show taskview button
+            "TaskbarAl", // Start Button Alignment: 0 for left, 1 for center, 
+            "TaskbarDa", // Show Widgets button in Taskbar: 0 = remove widgets button, 1 = Show widgets button
+            "TaskbarGlomLevel", // Buttons on main screen: 0 = always combine, combine when the taskbar is full, 2 = never combine
+            "TaskbarGroupSize", // TaskBar left/right grouping by age: 0 = oldest first (default), 1 = roup by size largest first, 2 = group all with 2 or more, 3 = group all with 3 or more (see NoTaskGrouping to prevent Grouping )
+            "TaskbarMn", // Show Chat Button in Taskbar: 0 = remove chat button, 1 = show chat button
+            "TaskbarSi", // Taskbar Size: 0 = small, 1 = medium, 2 = Large
+            "TaskbarSizeMove", // Lock the Taskbar (prevent resizing): 0 = taskbar size is locked, 1 = taskbar size is unlocked
+            "TaskbarSmallIcons", // Small Taskbar Icons: 0 = normal sized icons, 1 = small icons
+            "TaskbarSd", // Show Desktop Button in Taskbar: 0 for hid the show desktop button, 1 for show the Show desktop button
+        };
+
 
         public Tuple<string, int>[] Options { get; set; }
 
@@ -33,7 +54,8 @@ namespace DisplayMagicianShared.Windows
         {
             var taskBarOptions = new List<Tuple<string, int>>();
 
-            // Get stored integer Taskbar options from the User Registry
+            // Get modified and stored Taskbar options from the User Registry
+            // Note: Only the taskbar options changed from default at least once in the past will be listed in Registry
             try
             {
                 using (var key = Registry.CurrentUser.OpenSubKey(
@@ -42,24 +64,22 @@ namespace DisplayMagicianShared.Windows
                 {
                     if (key != null)
                     {
-                        foreach (var valueName in key.GetValueNames())
+                        foreach (var valueName in WantedAdvancedSettingValues)
                         {
                             try
                             {
-                                if (!string.IsNullOrWhiteSpace(valueName) && valueName.ToLower().Contains("taskbar"))
-                                {
-                                    var value = key.GetValue(valueName, null,
-                                        RegistryValueOptions.DoNotExpandEnvironmentNames);
+                                
+                                var value = key.GetValue(valueName, null,
+                                    RegistryValueOptions.DoNotExpandEnvironmentNames);
 
-                                    if (value != null && value is int intValue)
-                                    {
-                                        taskBarOptions.Add(new Tuple<string, int>(valueName, intValue));
-                                    }
+                                if (value != null && value is int intValue)
+                                {
+                                    taskBarOptions.Add(new Tuple<string, int>(valueName, intValue));
                                 }
                             }
                             catch (Exception)
                             {
-                                // ignored
+                                // ignored, as this will happen
                             }
                         }
                     }
