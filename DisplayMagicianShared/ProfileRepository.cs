@@ -706,9 +706,7 @@ namespace DisplayMagicianShared
                         {
                             MissingMemberHandling = MissingMemberHandling.Ignore,
                             NullValueHandling = NullValueHandling.Include,
-                            //NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Include,
-                            //DefaultValueHandling = DefaultValueHandling.Ignore,
                             TypeNameHandling = TypeNameHandling.Auto,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             
