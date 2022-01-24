@@ -301,20 +301,29 @@ namespace DisplayMagician {
             string dp20 = Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json");
             string dp10 = Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json");
 
-            if ((File.Exists(dp21) || File.Exists(dp20)) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
+            if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
             {
-                logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician version to DisplayMagician v2.2, so performing some upgrade steps.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.2, so performing some upgrade steps.");
 
                 // Copy the older files across to the new names, then the migrate JSON function
                 // within the ProfileRepository will take care of the rest
-                if (File.Exists(dp20))
-                {
-                    File.Copy(dp20, dp22);
-                }
-                else if (File.Exists(dp21))
-                {
-                    File.Copy(dp21, dp22);
-                }
+                File.Copy(dp21, dp22);
+
+                /*// Warn the user about the fact we need them to recreate their Display Profiles again!
+                StartMessageForm myMessageWindow = new StartMessageForm();
+                myMessageWindow.MessageMode = "rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
+                myMessageWindow.ButtonText = "&Close";
+                myMessageWindow.ShowDialog();*/
+            }
+            else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
+            {
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.2, so performing some upgrade steps.");
+
+                // Copy the older files across to the new names, then the migrate JSON function
+                // within the ProfileRepository will take care of the rest
+                File.Copy(dp20, dp22);
 
                 // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();

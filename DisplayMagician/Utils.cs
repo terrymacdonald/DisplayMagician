@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -79,6 +80,16 @@ namespace DisplayMagician
         private static Rectangle GetOwnerRect(Form frm, Form owner)
         {
             return owner != null ? owner.DesktopBounds : Screen.GetWorkingArea(frm);
+        }
+
+        public static bool IsWindows11()
+        {
+            var reg = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+
+            var currentBuildStr = (string)reg.GetValue("CurrentBuild");
+            var currentBuild = int.Parse(currentBuildStr);
+
+            return currentBuild >= 22000;
         }
 
 
