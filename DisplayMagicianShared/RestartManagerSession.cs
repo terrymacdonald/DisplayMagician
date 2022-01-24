@@ -292,5 +292,65 @@ namespace DisplayMagicianShared
                 };
             }
         }
+
+        public static bool RestartExplorer()
+        {
+            try
+            {
+                RestartManagerSession restartManager = new RestartManagerSession();
+                FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
+                restartManager.RegisterProcessFile(explorerFileInfo);
+                restartManager.Shutdown(RestartManagerSession.ShutdownType.ForceShutdown);
+                restartManager.Restart();
+                restartManager.Dispose();
+                return true;
+            }
+            catch (Win32Exception ex)
+            {
+                if (ex.ErrorCode == 776)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_REQUEST_OUT_OF_SEQUENCE (779): This error value is returned if the RmRestart function is called with a valid session handle before calling the RmShutdown function.");
+                }
+                else if (ex.ErrorCode == 352)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_FAIL_RESTART (352): One or more applications could not be restarted.");
+                }
+                else if (ex.ErrorCode == 121)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_SEM_TIMEOUT (121): A Restart Manager function could not obtain a registry write mutex in the allotted time. A system restart is recommended because further use of the Restart Manager is likely to fail.");
+                }
+                else if (ex.ErrorCode == 1223)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_CANCELLED (1223): This error value is returned by the RmRestart function when the request to cancel an operation is successful.");
+                }
+                else if (ex.ErrorCode == 160)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_BAD_ARGUMENTS (160): One or more arguments are not correct. This error value is returned by the Restart Manager function if a NULL pointer or 0 is passed in a parameter that requires a non-null and non-zero value.");
+                }
+                else if (ex.ErrorCode == 29)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_WRITE_FAULT (29): An operation was unable to read or write to the registry.");
+                }
+                else if (ex.ErrorCode == 14)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_OUTOFMEMORY (14): A Restart Manager operation could not complete because not enough memory was available.");
+                }
+                else if (ex.ErrorCode == 6)
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_INVALID_HANDLE (6): No Restart Manager session exists for the handle supplied.");
+                }
+                else
+                {
+                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ErrorCode = {ex.ErrorCode}.");
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: General exception when trying to restart Windows Explorer!");
+                return false;
+            }
+
+        }
     }
 }
