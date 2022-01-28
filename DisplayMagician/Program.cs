@@ -296,12 +296,15 @@ namespace DisplayMagician {
             // Check if it's an upgrade from DisplayMagician v2.x to v2.2
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
+            
             string dp22 = Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json");
             string dp21 = Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json");
             string dp20 = Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json");
             string dp10 = Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json");
 
-            if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
+            string targetdp = dp22;
+
+            if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
                 logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.2, so performing some upgrade steps.");
 
@@ -309,15 +312,15 @@ namespace DisplayMagician {
                 // within the ProfileRepository will take care of the rest
                 File.Copy(dp21, dp22);
 
-                /*// Warn the user about the fact we need them to recreate their Display Profiles again!
+                // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
                 myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
                 myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
                 myMessageWindow.ButtonText = "&Close";
-                myMessageWindow.ShowDialog();*/
+                myMessageWindow.ShowDialog();
             }
-            else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
+            else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
                 logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.2, so performing some upgrade steps.");
 
@@ -337,7 +340,7 @@ namespace DisplayMagician {
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
             // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.2.json doesn't
-            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json")))
+            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
                 logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.2, so performing some upgrade steps.");
                 // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
@@ -359,7 +362,7 @@ namespace DisplayMagician {
                 }    
                 catch(Exception ex)
                 {
-                    logger.Error(ex, $"Program/Main: Exception upgrading v1.0 shortcut file {oldShortcutsFile} to v2.0 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
+                    logger.Error(ex, $"Program/Main: Exception upgrading v1.0 shortcut file {oldShortcutsFile} to v2.2 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
                 }
 
                 // Warn the user about the fact we need a new DisplayProfiles_2.0.json
