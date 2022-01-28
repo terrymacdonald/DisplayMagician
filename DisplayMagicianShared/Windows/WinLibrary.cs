@@ -1906,7 +1906,7 @@ namespace DisplayMagicianShared.Windows
             {
                 return false;
             }
-        }
+        }        
 
     }
 
