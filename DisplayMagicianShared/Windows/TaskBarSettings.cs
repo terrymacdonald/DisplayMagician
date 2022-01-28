@@ -11,7 +11,7 @@ using Microsoft.Win32;
 namespace DisplayMagicianShared.Windows
 {
     public class TaskBarSettings
-    {                
+    {
         private const string AdvancedSettingsAddress =
             "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced";
 
@@ -68,7 +68,7 @@ namespace DisplayMagicianShared.Windows
                         {
                             try
                             {
-                                
+
                                 var value = key.GetValue(valueName, null,
                                     RegistryValueOptions.DoNotExpandEnvironmentNames);
 

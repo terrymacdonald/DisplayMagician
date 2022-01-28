@@ -89,7 +89,7 @@ namespace DisplayMagicianShared.Windows
 
         public string DevicePath { get; set; }
 
-        public bool MainScreen{ get; set; }
+        public bool MainScreen { get; set; }
 
         [JsonIgnore]
         public UInt32 DPI
@@ -262,7 +262,7 @@ namespace DisplayMagicianShared.Windows
         => Version == other.Version &&
            MainScreen == other.MainScreen &&
            DevicePath == other.DevicePath &&
-           Xor(Binary,other.Binary);
+           Xor(Binary, other.Binary);
 
 
         public override int GetHashCode()
@@ -334,8 +334,8 @@ namespace DisplayMagicianShared.Windows
                     version = -1;
                 }
             }
-            
-            if (version >= 2) 
+
+            if (version >= 2)
             {
                 // Grab the main screen taskbar placement
                 try
@@ -383,7 +383,6 @@ namespace DisplayMagicianShared.Windows
             {
                 foreach (string displayId in displayIdentifiers)
                 {
-                    TaskBarStuckRectangle tbStuckRect;
                     // e.g. "WINAPI|\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}|DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI|54074|4318|\\\\?\\DISPLAY#NVS10DE#5&2b46c695&0&UID185344#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}|NV Surround"
                     string[] winapiLine = displayId.Split('|');
                     string pattern = @"DISPLAY\#(.*)\#\{";

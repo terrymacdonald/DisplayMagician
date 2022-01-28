@@ -167,7 +167,7 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplayConfigPaths = new DISPLAYCONFIG_PATH_INFO[0];
             myDefaultConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
-            myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();            
+            myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
             myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
             myDefaultConfig.TaskBarSettings = new TaskBarSettings();
@@ -387,8 +387,8 @@ namespace DisplayMagicianShared.Windows
             bool isClonedProfile = false;
             for (int i = 0; i < paths.Length; i++)
             {
-                bool gotSourceDeviceName = false;
-                bool gotAdapterName = false;
+                //bool gotSourceDeviceName = false;
+                //bool gotAdapterName = false;
                 bool gotAdvancedColorInfo = false;
                 bool gotSdrWhiteLevel = false;
 
@@ -414,7 +414,7 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
-                    gotSourceDeviceName = true;
+                    //gotSourceDeviceName = true;
                     // Store it for later
                     if (windowsDisplayConfig.DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
                     {
@@ -462,7 +462,7 @@ namespace DisplayMagicianShared.Windows
                     err = CCDImport.DisplayConfigGetDeviceInfo(ref adapterInfo);
                     if (err == WIN32STATUS.ERROR_SUCCESS)
                     {
-                        gotAdapterName = true;
+                        //gotAdapterName = true;
                         // Store it for later
                         windowsDisplayConfig.DisplayAdapters.Add(paths[i].TargetInfo.AdapterId.Value, adapterInfo.AdapterDevicePath);
                         SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found adapter name {adapterInfo.AdapterDevicePath} for adapter {paths[i].TargetInfo.AdapterId.Value}.");
@@ -476,7 +476,7 @@ namespace DisplayMagicianShared.Windows
                 {
                     // We already have the adapter name
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We already have the adapter name {windowsDisplayConfig.DisplayAdapters[paths[i].TargetInfo.AdapterId.Value]} for adapter {paths[i].TargetInfo.AdapterId.Value} so skipping storing it.");
-                    gotAdapterName = true;
+                    //gotAdapterName = true;
                 }
 
                 // Get advanced color info
@@ -603,7 +603,7 @@ namespace DisplayMagicianShared.Windows
             // We use the information we already got from the display identifiers
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar layout.");
             List<TaskBarStuckRectangle> taskBarStuckRectangles = TaskBarStuckRectangle.GetCurrent(windowsDisplayConfig.DisplayIdentifiers);
-            
+
             // Now we try to get the taskbar settings too
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
             TaskBarSettings taskBarSettings = TaskBarSettings.GetCurrent();
@@ -1075,7 +1075,7 @@ namespace DisplayMagicianShared.Windows
 
         public bool SetActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig)
         {
-            bool needToRestartExplorer = false;
+            //bool needToRestartExplorer = false;
 
             // Get the all possible windows display configs
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Generating a list of all the current display configs");
@@ -1333,10 +1333,10 @@ namespace DisplayMagicianShared.Windows
                 {
                     SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Display {displayDeviceKey} is not currently in use, so cannot set it!");
                 }
-                
+
             }
 
-            
+
             // Now set the taskbar position for each screen
             if (displayConfig.TaskBarLayout.Count > 0)
             {
@@ -1367,7 +1367,7 @@ namespace DisplayMagicianShared.Windows
                 if (displayConfig.TaskBarSettings.Apply())
                 {
                     SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the taskbar settings successfully!");
-                    needToRestartExplorer = true;
+                    //needToRestartExplorer = true;
                 }
                 else
                 {
@@ -1906,66 +1906,6 @@ namespace DisplayMagicianShared.Windows
             {
                 return false;
             }
-        }
-
-        public static bool RestartExplorer()
-        {
-            try
-            {
-                RestartManagerSession restartManager = new RestartManagerSession();
-                FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
-                restartManager.RegisterProcessFile(explorerFileInfo);
-                restartManager.Shutdown(RestartManagerSession.ShutdownType.ForceShutdown);
-                restartManager.Restart();
-                restartManager.Dispose();
-                return true;
-            }
-            catch (Win32Exception ex)
-            {
-                if (ex.ErrorCode == 776)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_REQUEST_OUT_OF_SEQUENCE (779): This error value is returned if the RmRestart function is called with a valid session handle before calling the RmShutdown function.");
-                }                
-                else if (ex.ErrorCode == 352)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_FAIL_RESTART (352): One or more applications could not be restarted.");
-                }
-                else if (ex.ErrorCode == 121)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_SEM_TIMEOUT (121): A Restart Manager function could not obtain a registry write mutex in the allotted time. A system restart is recommended because further use of the Restart Manager is likely to fail.");
-                }
-                else if (ex.ErrorCode == 1223)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_CANCELLED (1223): This error value is returned by the RmRestart function when the request to cancel an operation is successful.");
-                }
-                else if (ex.ErrorCode == 160)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_BAD_ARGUMENTS (160): One or more arguments are not correct. This error value is returned by the Restart Manager function if a NULL pointer or 0 is passed in a parameter that requires a non-null and non-zero value.");
-                }
-                else if (ex.ErrorCode == 29)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_WRITE_FAULT (29): An operation was unable to read or write to the registry.");
-                }
-                else if (ex.ErrorCode == 14)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_OUTOFMEMORY (14): A Restart Manager operation could not complete because not enough memory was available.");
-                }
-                else if (ex.ErrorCode == 6)
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ERROR_INVALID_HANDLE (6): No Restart Manager session exists for the handle supplied.");
-                }
-                else
-                {
-                    SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: RestartManager was unable to restart Windows Explorer. ErrorCode = {ex.ErrorCode}.");
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, $"WinLibrary/RestartExplorer: General exception when trying to restart Windows Explorer!");
-                return false;
-            }
-            
         }
 
     }
