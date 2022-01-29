@@ -407,12 +407,12 @@ namespace DisplayMagician.UIForms
             // label4
             // 
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(242, 189);
+            this.label4.Location = new System.Drawing.Point(237, 189);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(262, 32);
+            this.label4.Size = new System.Drawing.Size(277, 32);
             this.label4.TabIndex = 44;
-            this.label4.Text = "Use this button to add or remove the DisplayMagician Desktop Background Context M" +
-    "enu from your system.";
+            this.label4.Text = "Adds or remove the Desktop Background Context Menu. IMPORTANT: Windows Explorer w" +
+    "ill be restarted.";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // SettingsForm
