@@ -22,11 +22,11 @@ namespace DisplayMagicianShellExtension
     public class DisplayMagicianDesktopMenuExtension : SharpContextMenu
     {
         // Other constants that are useful
-        internal static Version _version = new Version(0, 2, 0);
+        internal static Version _version = new Version(2, 2, 0);
         internal static string AlternateAppHomePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DisplayMagician");
         internal static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.1.json");
+        private static string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.2.json");
         internal static string registryDisplayMagician = @"SOFTWARE\DisplayMagician";
         string DisplayMagicianFullname = "";
         string DisplayMagicianInstallDir = "";
