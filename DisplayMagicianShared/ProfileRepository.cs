@@ -14,6 +14,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DisplayMagicianShared
 {
@@ -59,6 +60,7 @@ namespace DisplayMagicianShared
         // Make the default video mode Windows
         private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
         private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
+        private static bool _pauseReadsUntilChangeCompleted = false;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -619,7 +621,24 @@ namespace DisplayMagicianShared
                     VideoMode = VIDEO_MODE.WINDOWS
                 };
             }
-            
+
+            int totalDelay = 0;
+            if (_pauseReadsUntilChangeCompleted)
+            {
+                SharedLogger.logger.Warn($"ProfileRepository/UpdateActiveProfile: Pausing updating display settings as a display change is currently taking place.");
+                while (!_pauseReadsUntilChangeCompleted)
+                {
+                    Task.Delay(200);
+                    totalDelay += 200;
+                    if (totalDelay > 10000)
+                    {
+                        SharedLogger.logger.Warn($"ProfileRepository/UpdateActiveProfile: Timeout while pausing updating display settingss as it took longer than 10 seconds.");
+                        break;
+                    }
+                }
+                SharedLogger.logger.Trace($"ProfileRepository/UpdateActiveProfile: Paused updating display settings for {totalDelay} milliseconds.");
+            }
+
             profile.CreateProfileFromCurrentDisplaySettings();
 
             if (_profilesLoaded && _allProfiles.Count > 0)
@@ -994,6 +1013,22 @@ namespace DisplayMagicianShared
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
+                int totalDelay = 0;
+                if (_pauseReadsUntilChangeCompleted)
+                {
+                    SharedLogger.logger.Warn($"ProfileRepository/IsPossibleRefresh: Pausing refreshing display profile possibility as a display change is currently taking place.");
+                    while (!_pauseReadsUntilChangeCompleted)
+                    {
+                        Task.Delay(200);
+                        totalDelay += 200;
+                        if (totalDelay > 10000)
+                        {
+                            SharedLogger.logger.Warn($"ProfileRepository/IsPossibleRefresh: Timeout while refreshing display profile possibility as it took longer than 10 seconds.");
+                            break;
+                        }
+                    }
+                    SharedLogger.logger.Trace($"ProfileRepository/IsPossibleRefresh: Paused refreshing display profile possibility for {totalDelay} milliseconds.");
+                }
 
                 foreach (ProfileItem loadedProfile in AllProfiles)
                     loadedProfile.RefreshPossbility();
@@ -1003,6 +1038,24 @@ namespace DisplayMagicianShared
 
         public static List<string> GetAllConnectedDisplayIdentifiers()
         {
+            int totalDelay = 0;
+            if (_pauseReadsUntilChangeCompleted)
+            {
+                SharedLogger.logger.Warn($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Pausing checking for all connected display identifiers as a display change is currently taking place.");
+                while (!_pauseReadsUntilChangeCompleted)
+                {
+                    Task.Delay(200);
+                    totalDelay += 200;
+                    if (totalDelay > 10000)
+                    {
+                        SharedLogger.logger.Warn($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Timeout while pausing checking for all connected display identifiers as it took longer than 10 seconds.");
+                        break;
+                    }
+                }
+                SharedLogger.logger.Trace($"ProfileRepository/GetAllConnectedDisplayIdentifiers: Paused checking for all connected display identifiers for {totalDelay} milliseconds.");
+            }
+            
+
             if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
                 return NVIDIALibrary.GetLibrary().GetAllConnectedDisplayIdentifiers();
@@ -1019,6 +1072,23 @@ namespace DisplayMagicianShared
 
         public static List<string> GetCurrentDisplayIdentifiers()
         {
+            int totalDelay = 0;
+            if (_pauseReadsUntilChangeCompleted)
+            {
+                SharedLogger.logger.Warn($"ProfileRepository/GetCurrentDisplayIdentifiers: Pausing checking for currently connected display identifiers as a display change is currently taking place.");
+                while (!_pauseReadsUntilChangeCompleted)
+                {
+                    Task.Delay(200);
+                    totalDelay += 200;
+                    if (totalDelay > 10000)
+                    {
+                        SharedLogger.logger.Warn($"ProfileRepository/GetCurrentDisplayIdentifiers: Timeout while pausing checking for currently connected display identifiers as it took longer than 10 seconds.");
+                        break;
+                    }
+                }
+                SharedLogger.logger.Trace($"ProfileRepository/GetCurrentDisplayIdentifiers: Paused checking for currently connected display identifiers for {totalDelay} milliseconds.");
+            }
+            
             if (_currentVideoMode == VIDEO_MODE.NVIDIA && NVIDIALibrary.GetLibrary().IsInstalled)
             {
                 return NVIDIALibrary.GetLibrary().CurrentDisplayIdentifiers;
@@ -1081,6 +1151,9 @@ namespace DisplayMagicianShared
                 // We start the timer just before we attempt the display change
                 stopWatch.Start();
 
+                // We also set the lock to pause reads until the profile change has happened
+                _pauseReadsUntilChangeCompleted = true;
+
                 // We try to swap profiles. The profiles have checking logic in them
                 if (!(profile.SetActive()))
                 {
@@ -1090,11 +1163,8 @@ namespace DisplayMagicianShared
                 else
                 {
                     SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.VideoMode.ToString("G")} Profile!");
-                    // We also need to update the ActiveProfile so that DisplayMagician knows things have changed
-                    ProfileRepository.UpdateActiveProfile();
                     return ApplyProfileResult.Successful;
-                }
-
+                }                
             }
             catch (Exception ex)
             {
@@ -1129,6 +1199,7 @@ namespace DisplayMagicianShared
                 }
                 // We stop the stop watch
                 stopWatch.Stop();
+                _pauseReadsUntilChangeCompleted = false;
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
                 string result = "failed";
@@ -1167,6 +1238,24 @@ namespace DisplayMagicianShared
             else
             {
                 // We do normal video library detection based on the video card!
+                // First we check if we need to pause
+
+                int totalDelay = 0;
+                if (_pauseReadsUntilChangeCompleted)
+                {
+                    SharedLogger.logger.Warn($"ProfileRepository/SetVideoCardMode: Pausing detecting video card PCI vendors as a display change is currently taking place.");
+                    while (!_pauseReadsUntilChangeCompleted)
+                    {
+                        Task.Delay(200);
+                        totalDelay += 200;
+                        if (totalDelay > 10000)
+                        {
+                            SharedLogger.logger.Warn($"ProfileRepository/SetVideoCardMode: Timeout while detecting video card PCI vendors as it took longer than 10 seconds.");
+                            break;
+                        }
+                    }
+                    SharedLogger.logger.Trace($"ProfileRepository/SetVideoCardMode: Paused detecting video card PCI vendors for {totalDelay} milliseconds.");
+                }
 
                 // Figure out the Video Cards and see what mode we want
                 // Get a list of all the PCI Vendor IDs
