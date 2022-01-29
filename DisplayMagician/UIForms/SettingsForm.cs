@@ -627,6 +627,7 @@ namespace DisplayMagician.UIForms
                 {
                     _installedDesktopContextMenu = false;
                     btn_context_menu.Text = "Install Desktop Context Menu";
+                    RestartManagerSession.RestartExplorer();
                 }
                 else
                 {
@@ -640,6 +641,7 @@ namespace DisplayMagician.UIForms
                 {
                     _installedDesktopContextMenu = true;
                     btn_context_menu.Text = "Uninstall Desktop Context Menu";
+                    RestartManagerSession.RestartExplorer();
                 }
                 else
                 {
