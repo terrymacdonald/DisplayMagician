@@ -31,6 +31,7 @@ namespace DisplayMagician.UIForms
         {
             this.btn_back = new System.Windows.Forms.Button();
             this.gb_general = new System.Windows.Forms.GroupBox();
+            this.cb_show_splashscreen = new System.Windows.Forms.CheckBox();
             this.cb_start_on_boot = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.cmb_loglevel = new System.Windows.Forms.ComboBox();
@@ -53,7 +54,8 @@ namespace DisplayMagician.UIForms
             this.gb_support = new System.Windows.Forms.GroupBox();
             this.btn_create_support_package = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
-            this.cb_show_splashscreen = new System.Windows.Forms.CheckBox();
+            this.btn_context_menu = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
             this.gb_general.SuspendLayout();
             this.gb_hotkeys.SuspendLayout();
             this.gb_upgrades.SuspendLayout();
@@ -78,6 +80,8 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            this.gb_general.Controls.Add(this.label4);
+            this.gb_general.Controls.Add(this.btn_context_menu);
             this.gb_general.Controls.Add(this.cb_show_splashscreen);
             this.gb_general.Controls.Add(this.cb_start_on_boot);
             this.gb_general.Controls.Add(this.label1);
@@ -91,6 +95,20 @@ namespace DisplayMagician.UIForms
             this.gb_general.TabIndex = 11;
             this.gb_general.TabStop = false;
             this.gb_general.Text = "General Settings";
+            // 
+            // cb_show_splashscreen
+            // 
+            this.cb_show_splashscreen.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cb_show_splashscreen.AutoSize = true;
+            this.cb_show_splashscreen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.cb_show_splashscreen.ForeColor = System.Drawing.Color.White;
+            this.cb_show_splashscreen.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.cb_show_splashscreen.Location = new System.Drawing.Point(28, 113);
+            this.cb_show_splashscreen.Name = "cb_show_splashscreen";
+            this.cb_show_splashscreen.Size = new System.Drawing.Size(312, 20);
+            this.cb_show_splashscreen.TabIndex = 15;
+            this.cb_show_splashscreen.Text = "Show DisplayMagician splash screen on startup";
+            this.cb_show_splashscreen.UseVisualStyleBackColor = true;
             // 
             // cb_start_on_boot
             // 
@@ -111,7 +129,7 @@ namespace DisplayMagician.UIForms
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Transparent;
-            this.label1.Location = new System.Drawing.Point(26, 157);
+            this.label1.Location = new System.Drawing.Point(26, 152);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(137, 16);
             this.label1.TabIndex = 13;
@@ -121,7 +139,7 @@ namespace DisplayMagician.UIForms
             // 
             this.cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmb_loglevel.FormattingEnabled = true;
-            this.cmb_loglevel.Location = new System.Drawing.Point(169, 154);
+            this.cmb_loglevel.Location = new System.Drawing.Point(169, 149);
             this.cmb_loglevel.Name = "cmb_loglevel";
             this.cmb_loglevel.Size = new System.Drawing.Size(333, 24);
             this.cmb_loglevel.TabIndex = 12;
@@ -370,19 +388,32 @@ namespace DisplayMagician.UIForms
     "this file to GitHub when you have a problem you need me to fix";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // cb_show_splashscreen
+            // btn_context_menu
             // 
-            this.cb_show_splashscreen.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.cb_show_splashscreen.AutoSize = true;
-            this.cb_show_splashscreen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.cb_show_splashscreen.ForeColor = System.Drawing.Color.White;
-            this.cb_show_splashscreen.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.cb_show_splashscreen.Location = new System.Drawing.Point(28, 113);
-            this.cb_show_splashscreen.Name = "cb_show_splashscreen";
-            this.cb_show_splashscreen.Size = new System.Drawing.Size(312, 20);
-            this.cb_show_splashscreen.TabIndex = 15;
-            this.cb_show_splashscreen.Text = "Show DisplayMagician splash screen on startup";
-            this.cb_show_splashscreen.UseVisualStyleBackColor = true;
+            this.btn_context_menu.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_context_menu.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_context_menu.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_context_menu.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_context_menu.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_context_menu.ForeColor = System.Drawing.Color.White;
+            this.btn_context_menu.Location = new System.Drawing.Point(28, 188);
+            this.btn_context_menu.Name = "btn_context_menu";
+            this.btn_context_menu.Size = new System.Drawing.Size(208, 33);
+            this.btn_context_menu.TabIndex = 43;
+            this.btn_context_menu.Text = "Uninstall Desktop Context Menu";
+            this.btn_context_menu.UseVisualStyleBackColor = true;
+            this.btn_context_menu.Click += new System.EventHandler(this.btn_context_menu_Click);
+            // 
+            // label4
+            // 
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.Location = new System.Drawing.Point(242, 189);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(262, 32);
+            this.label4.TabIndex = 44;
+            this.label4.Text = "Use this button to add or remove the DisplayMagician Desktop Background Context M" +
+    "enu from your system.";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // SettingsForm
             // 
@@ -443,5 +474,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_create_support_package;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox cb_show_splashscreen;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button btn_context_menu;
     }
 }

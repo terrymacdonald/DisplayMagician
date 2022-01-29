@@ -16,6 +16,7 @@ namespace DisplayMagician.UIForms
     {
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private bool _installedDesktopContextMenu = true;
 
         private Dictionary<string, string> logLevelText = new Dictionary<string, string>();
 
@@ -86,6 +87,19 @@ namespace DisplayMagician.UIForms
             {
                 cb_upgrade_prerelease.Checked = false;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeToPreReleases set to false");
+            }
+
+            if (Program.AppProgramSettings.InstalledDesktopContextMenu == true)
+            {
+                _installedDesktopContextMenu = true;
+                btn_context_menu.Text = "Uninstall Desktop Context Menu";
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings InstalledDesktopContextMenu set to true");
+            }
+            else
+            {
+                _installedDesktopContextMenu = false;
+                btn_context_menu.Text = "Install Desktop Context Menu";
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings InstalledDesktopContextMenu set to false");
             }
 
             // setup loglevel on start
@@ -237,6 +251,13 @@ namespace DisplayMagician.UIForms
             else
                 Program.AppProgramSettings.ShowSplashScreen = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowSplashScreen as {Program.AppProgramSettings.ShowSplashScreen}");
+
+            // save install desktop context menu setting
+            if (_installedDesktopContextMenu)
+                Program.AppProgramSettings.InstalledDesktopContextMenu = true;
+            else
+                Program.AppProgramSettings.InstalledDesktopContextMenu = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved InstallDesktopContextMenu as {Program.AppProgramSettings.InstalledDesktopContextMenu}");
 
             // save loglevel on close
             // and make that log level live in NLog straight away
@@ -598,5 +619,20 @@ namespace DisplayMagician.UIForms
             
         }
 
+        private void btn_context_menu_Click(object sender, EventArgs e)
+        {
+            if (_installedDesktopContextMenu)
+            {
+                Program.InstallDeskTopContextMenu(false);
+                _installedDesktopContextMenu = false;
+                btn_context_menu.Text = "Install Desktop Context Menu";
+            }
+            else
+            {
+                Program.InstallDeskTopContextMenu();
+                _installedDesktopContextMenu = true;
+                btn_context_menu.Text = "Uninstall Desktop Context Menu";
+            }
+        }
     }
 }

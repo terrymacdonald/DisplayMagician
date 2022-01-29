@@ -20,6 +20,7 @@ using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Win32;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician {
 
@@ -1465,8 +1466,56 @@ namespace DisplayMagician {
             {
                 return false;
             }
-        }        
+        }
 
+        public static bool InstallDeskTopContextMenu(bool install = true)
+        {
+            // Install the DesktopShortcutContextMenu
+            string serverRegistrationManager = Path.Combine(AppStartupPath, "ServerRegistrationManager.exe");
+            if (!File.Exists(serverRegistrationManager))
+            {
+                logger.Error($"Program/InstallDeskTopContextMenu: Unable to register the DisplayMagician Desktop Context Menu plugin using ServerRegistrationManager as it does not exist at {serverRegistrationManager}");
+                return false;
+            }
+
+            string desktopContextMenu = Path.Combine(AppStartupPath, "DisplayMagicianShellExtension.dll");
+            if (!File.Exists(desktopContextMenu))
+            {
+                logger.Error($"Program/InstallDeskTopContextMenu: Unable to register the DisplayMagician Desktop Context Menu plugin using ServerRegistrationManager as the Shell Extension dll does not exist at {desktopContextMenu}");
+                return false;
+            }
+
+            if (install)
+            {
+                logger.Trace($"Program/InstallDeskTopContextMenu: Installing the DisplayMagician Desktop Context Menu plugin using ServerRegistrationManager");
+                try
+                {
+                    string arguments = $"install \"{desktopContextMenu}\" -os64 -codebase";
+                    // Request elevated administrative rights.
+                    ProcessUtils.StartProcess(serverRegistrationManager, arguments, ProcessPriority.Normal, 1, true);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/InstallDeskTopContextMenu: Exception while attempting to install the Desktop Context Menu");
+                }
+            }
+            else
+            {
+                logger.Trace($"Program/InstallDeskTopContextMenu: Removing the DisplayMagician Desktop Context Menu plugin using ServerRegistrationManager");
+                try
+                {
+                    string arguments = $"uninstall \"{desktopContextMenu}\"";
+                    // Request elevated administrative rights.
+                    ProcessUtils.StartProcess(serverRegistrationManager, arguments, ProcessPriority.Normal, 1, true);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Program/InstallDeskTopContextMenu: Exception while attempting to install the Desktop Context Menu");
+                }
+
+            }
+            return true;
+        }
     }
 
 

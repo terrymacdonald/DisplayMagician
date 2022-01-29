@@ -24,6 +24,7 @@ namespace DisplayMagician
         private bool _minimiseOnStart = false;
         private bool _showSplashScreen = true;
         private bool _upgradeToPrereleases = false;
+        private bool _installedDesktopContextMenu = true;
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Info.ToString();
@@ -98,6 +99,23 @@ namespace DisplayMagician
                 if (_programSettingsLoaded)
                     SaveSettings();
             } 
+        }
+
+        public bool InstalledDesktopContextMenu
+        {
+            get
+            {
+                return _installedDesktopContextMenu;
+            }
+            set
+            {
+                _installedDesktopContextMenu = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
         }
 
         public int LastMessageIdRead
