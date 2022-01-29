@@ -407,10 +407,13 @@ namespace DisplayMagicianShared.Windows
                                     Version = version
                                 };
                                 taskBarStuckRectangles.Add(taskBarStuckRectangle);
-
+                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {taskBarStuckRectangle.DevicePath} is against the {taskBarStuckRectangle.Edge} edge, is positioned at ({taskBarStuckRectangle.Location.X},{taskBarStuckRectangle.Location.Y}) and is {taskBarStuckRectangle.Location.Width}x{taskBarStuckRectangle.Location.Height} in size.");
                             }
-                        }
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {taskBarStuckRectangle.DevicePath} is against the {taskBarStuckRectangle.Edge} edge, is positioned at ({taskBarStuckRectangle.Location.X},{taskBarStuckRectangle.Location.Y}) and is {taskBarStuckRectangle.Location.Width}x{taskBarStuckRectangle.Location.Height} in size.");
+                            else
+                            {
+                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Unable to get the TaskBarStuckRectangle for {displayId}.");
+                            }
+                        }                        
                     }
                     else
                     {
