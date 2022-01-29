@@ -623,15 +623,30 @@ namespace DisplayMagician.UIForms
         {
             if (_installedDesktopContextMenu)
             {
-                Program.InstallDeskTopContextMenu(false);
-                _installedDesktopContextMenu = false;
-                btn_context_menu.Text = "Install Desktop Context Menu";
+                if (Program.InstallDeskTopContextMenu(false))
+                {
+                    _installedDesktopContextMenu = false;
+                    btn_context_menu.Text = "Install Desktop Context Menu";
+                }
+                else
+                {
+                    MessageBox.Show("We were unable to uninstall the DisplayMagician Desktop Context Menu! Please check your DisplayMagician.log file for more details.",
+                                         "Error uninstalling Desktop Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             else
             {
-                Program.InstallDeskTopContextMenu();
-                _installedDesktopContextMenu = true;
-                btn_context_menu.Text = "Uninstall Desktop Context Menu";
+                if (Program.InstallDeskTopContextMenu())
+                {
+                    _installedDesktopContextMenu = true;
+                    btn_context_menu.Text = "Uninstall Desktop Context Menu";
+                }
+                else
+                {
+                    MessageBox.Show("We were unable to install the DisplayMagician Desktop Context Menu! Please check your DisplayMagician.log file for more details.",
+                                         "Error uninstalling Desktop Context Menu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                }
             }
         }
     }
