@@ -1,4 +1,5 @@
 ﻿using DisplayMagicianShared;
+using DisplayMagicianShared.Windows;
 //using Microsoft.Win32;
 using NHotkey;
 using NHotkey.WindowsForms;
@@ -19,6 +20,7 @@ namespace DisplayMagician.UIForms
 
         private Dictionary<Wallpaper.Style, string> wallpaperStyleText = new Dictionary<Wallpaper.Style, string>();
         Bitmap wallpaperImage = null;
+        private Dictionary<TaskBarStuckRectangle.TaskBarForcedEdge, string> forcedTaskBarEdgeText = new Dictionary<TaskBarStuckRectangle.TaskBarForcedEdge, string>();
         private bool _profileSettingChanged = false;
 
         public ProfileSettingsForm()
@@ -38,6 +40,28 @@ namespace DisplayMagician.UIForms
             cmb_wallpaper_display_mode.DisplayMember = "Value";
             cmb_wallpaper_display_mode.ValueMember = "Text";
             cmb_wallpaper_display_mode.DataSource = new BindingSource(wallpaperStyleText, null);
+
+            // Populate the Forced Taskbar Location dictionary
+            if (Utils.IsWindows11())
+            {
+                // Is Windows 11
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Left, "Left");
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Top, "Top");
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Right, "Right");
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Bottom, "Bottom");
+            }
+            else
+            {
+                // Is Windows 10
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Left, "Left");
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Top, "Top");
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Right, "Right");
+                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Bottom, "Bottom");
+            }
+
+            cmb_forced_taskbar_location.DisplayMember = "Value";
+            cmb_forced_taskbar_location.ValueMember = "Text";
+            cmb_forced_taskbar_location.DataSource = new BindingSource(forcedTaskBarEdgeText, null);
         }
 
         public ProfileItem Profile
@@ -89,6 +113,18 @@ namespace DisplayMagician.UIForms
                 cmb_wallpaper_display_mode.SelectedIndex = 0;
             }
             
+
+            if (Profile.ForcedTaskBarEdge.Equals(TaskBarStuckRectangle.TaskBarForcedEdge.None))
+            {
+                rb_default_taskbar.Checked = true;
+                cmb_forced_taskbar_location.SelectedIndex = 3;
+            }
+            else
+            {
+                rb_forced_taskbar.Checked = true;
+                cmb_forced_taskbar_location.SelectedIndex = cmb_forced_taskbar_location.FindStringExact(forcedTaskBarEdgeText[Profile.ForcedTaskBarEdge]);
+            }
+
         }
 
         private void ProfileSettingsForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -107,6 +143,18 @@ namespace DisplayMagician.UIForms
             }
 
             Profile.WallpaperStyle = ((KeyValuePair<Wallpaper.Style, string>)cmb_wallpaper_display_mode.SelectedItem).Key;
+
+            if (rb_default_taskbar.Checked)
+            {
+                Profile.ForcedTaskBarEdge = TaskBarStuckRectangle.TaskBarForcedEdge.None;
+            }
+            else
+            {
+                Profile.ForcedTaskBarEdge = ((KeyValuePair<TaskBarStuckRectangle.TaskBarForcedEdge, string>)cmb_forced_taskbar_location.SelectedItem).Key;
+            }
+            // Apply the changed taskbar settings to the windows config if needed
+            WINDOWS_DISPLAY_CONFIG winDispConfig = Profile.WindowsDisplayConfig;
+            TaskBarStuckRectangle.ForceTaskBarIfNeeded(ref winDispConfig.TaskBarLayout, Profile.ForcedTaskBarEdge);
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -314,6 +362,31 @@ namespace DisplayMagician.UIForms
                 cmb_wallpaper_display_mode.Enabled = false;
             }
 
+        }
+
+        private void cmb_forced_taskbar_location_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
+        }
+
+        private void rb_default_taskbar_CheckedChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
+            if (rb_default_taskbar.Checked)
+            {
+                // Disable all the things
+                cmb_forced_taskbar_location.Enabled = false;
+            }
+        }
+
+        private void rb_forced_taskbar_CheckedChanged(object sender, EventArgs e)
+        {
+            _profileSettingChanged = true;
+            if (rb_forced_taskbar.Checked)
+            {
+                // Disable all the things
+                cmb_forced_taskbar_location.Enabled = true;
+            }
         }
     }
 }

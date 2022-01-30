@@ -839,7 +839,24 @@ namespace DisplayMagicianShared
             // We do the actual change we were trying to do
             try
             {
-                
+                // Now we try to patch in a Windows Taskbar Stuck Rects list into the json if there isnt one
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for a missing ForcedTaskBarEdge setting in Profile.");
+                // Create a default object (a default of NONE)
+                TaskBarStuckRectangle.TaskBarForcedEdge taskBarForcedEdge = TaskBarStuckRectangle.TaskBarForcedEdge.None;
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+                    JValue forcedTaskBarEdge = (JValue)profile.SelectToken("ForcedTaskBarEdge");
+                    if (forcedTaskBarEdge == null)
+                    {
+                        JProperty newForcedTaskBarEdge = new JProperty("ForcedTaskBarEdge", TaskBarStuckRectangle.TaskBarForcedEdge.None);
+                        profile.Add("ForcedTaskBarEdge", newForcedTaskBarEdge);
+                        changedJson = true;
+                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing ForcedTaskBarEdge in profile {profile.SelectToken("Name")} (index {i}).");
+                    }
+                }
+
+
                 // Now we try to patch in a Windows Taskbar Stuck Rects list into the json if there isnt one
                 SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows Taskbar layout.");
                 // Create a default object (an empty list)
@@ -879,11 +896,11 @@ namespace DisplayMagicianShared
             }
             catch (JsonReaderException ex)
             {
-                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/MigrateJsonToLatestVersion: JSONReaderException while trying to process the Profiles json data to migrate any older feature to the latest version.");
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error($"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
+                SharedLogger.logger.Error(ex, $"ProfileRepository/MigrateJsonToLatestVersion: Exception while trying to process the Profiles json data to migrate any older feature to the latest version.");
             }
 
             // Now write the changed json to the json string but only if we've changed something

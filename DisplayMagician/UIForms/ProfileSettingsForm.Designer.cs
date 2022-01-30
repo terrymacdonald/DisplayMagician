@@ -40,8 +40,13 @@ namespace DisplayMagician.UIForms
             this.btn_select = new System.Windows.Forms.Button();
             this.lbl_style = new System.Windows.Forms.Label();
             this.cmb_wallpaper_display_mode = new System.Windows.Forms.ComboBox();
+            this.gb_taskbar = new System.Windows.Forms.GroupBox();
+            this.cmb_forced_taskbar_location = new System.Windows.Forms.ComboBox();
+            this.rb_default_taskbar = new System.Windows.Forms.RadioButton();
+            this.rb_forced_taskbar = new System.Windows.Forms.RadioButton();
             this.gb_general.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_wallpaper)).BeginInit();
+            this.gb_taskbar.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_back
@@ -52,7 +57,7 @@ namespace DisplayMagician.UIForms
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(476, 436);
+            this.btn_back.Location = new System.Drawing.Point(476, 554);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 9;
@@ -73,7 +78,7 @@ namespace DisplayMagician.UIForms
             this.gb_general.Controls.Add(this.cmb_wallpaper_display_mode);
             this.gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_general.ForeColor = System.Drawing.Color.White;
-            this.gb_general.Location = new System.Drawing.Point(27, 27);
+            this.gb_general.Location = new System.Drawing.Point(27, 131);
             this.gb_general.Name = "gb_general";
             this.gb_general.Size = new System.Drawing.Size(525, 381);
             this.gb_general.TabIndex = 11;
@@ -205,12 +210,62 @@ namespace DisplayMagician.UIForms
             this.cmb_wallpaper_display_mode.TabIndex = 12;
             this.cmb_wallpaper_display_mode.SelectedIndexChanged += new System.EventHandler(this.cmb_wallpaper_display_mode_SelectedIndexChanged);
             // 
+            // gb_taskbar
+            // 
+            this.gb_taskbar.Controls.Add(this.rb_default_taskbar);
+            this.gb_taskbar.Controls.Add(this.rb_forced_taskbar);
+            this.gb_taskbar.Controls.Add(this.cmb_forced_taskbar_location);
+            this.gb_taskbar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gb_taskbar.ForeColor = System.Drawing.Color.White;
+            this.gb_taskbar.Location = new System.Drawing.Point(27, 22);
+            this.gb_taskbar.Name = "gb_taskbar";
+            this.gb_taskbar.Size = new System.Drawing.Size(524, 100);
+            this.gb_taskbar.TabIndex = 12;
+            this.gb_taskbar.TabStop = false;
+            this.gb_taskbar.Text = "TaskBar Settings";
+            // 
+            // cmb_forced_taskbar_location
+            // 
+            this.cmb_forced_taskbar_location.Enabled = false;
+            this.cmb_forced_taskbar_location.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmb_forced_taskbar_location.FormattingEnabled = true;
+            this.cmb_forced_taskbar_location.Location = new System.Drawing.Point(220, 59);
+            this.cmb_forced_taskbar_location.Name = "cmb_forced_taskbar_location";
+            this.cmb_forced_taskbar_location.Size = new System.Drawing.Size(189, 24);
+            this.cmb_forced_taskbar_location.TabIndex = 13;
+            this.cmb_forced_taskbar_location.SelectedIndexChanged += new System.EventHandler(this.cmb_forced_taskbar_location_SelectedIndexChanged);
+            // 
+            // rb_default_taskbar
+            // 
+            this.rb_default_taskbar.AutoSize = true;
+            this.rb_default_taskbar.Checked = true;
+            this.rb_default_taskbar.Location = new System.Drawing.Point(28, 34);
+            this.rb_default_taskbar.Name = "rb_default_taskbar";
+            this.rb_default_taskbar.Size = new System.Drawing.Size(288, 20);
+            this.rb_default_taskbar.TabIndex = 24;
+            this.rb_default_taskbar.TabStop = true;
+            this.rb_default_taskbar.Text = "Leave TaskBar Location as set by Windows";
+            this.rb_default_taskbar.UseVisualStyleBackColor = true;
+            this.rb_default_taskbar.CheckedChanged += new System.EventHandler(this.rb_default_taskbar_CheckedChanged);
+            // 
+            // rb_forced_taskbar
+            // 
+            this.rb_forced_taskbar.AutoSize = true;
+            this.rb_forced_taskbar.Location = new System.Drawing.Point(28, 60);
+            this.rb_forced_taskbar.Name = "rb_forced_taskbar";
+            this.rb_forced_taskbar.Size = new System.Drawing.Size(190, 20);
+            this.rb_forced_taskbar.TabIndex = 23;
+            this.rb_forced_taskbar.Text = "Force TaskBar Location to :";
+            this.rb_forced_taskbar.UseVisualStyleBackColor = true;
+            this.rb_forced_taskbar.CheckedChanged += new System.EventHandler(this.rb_forced_taskbar_CheckedChanged);
+            // 
             // ProfileSettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(580, 483);
+            this.ClientSize = new System.Drawing.Size(580, 594);
+            this.Controls.Add(this.gb_taskbar);
             this.Controls.Add(this.gb_general);
             this.Controls.Add(this.btn_back);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -227,6 +282,8 @@ namespace DisplayMagician.UIForms
             this.gb_general.ResumeLayout(false);
             this.gb_general.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_wallpaper)).EndInit();
+            this.gb_taskbar.ResumeLayout(false);
+            this.gb_taskbar.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -243,5 +300,9 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.RadioButton rb_leave_wallpaper;
         private System.Windows.Forms.RadioButton rb_clear_wallpaper;
         private System.Windows.Forms.RadioButton rb_apply_wallpaper;
+        private System.Windows.Forms.GroupBox gb_taskbar;
+        private System.Windows.Forms.RadioButton rb_default_taskbar;
+        private System.Windows.Forms.RadioButton rb_forced_taskbar;
+        private System.Windows.Forms.ComboBox cmb_forced_taskbar_location;
     }
 }

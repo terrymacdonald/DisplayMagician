@@ -300,7 +300,7 @@ namespace DisplayMagicianShared
                 RestartManagerSession restartManager = new RestartManagerSession();
                 FileInfo explorerFileInfo = new FileInfo(@"C:\Windows\explorer.exe");
                 restartManager.RegisterProcessFile(explorerFileInfo);
-                restartManager.Shutdown(RestartManagerSession.ShutdownType.ForceShutdown);
+                restartManager.Shutdown(RestartManagerSession.ShutdownType.Normal);
                 restartManager.Restart();
                 restartManager.Dispose();
                 return true;

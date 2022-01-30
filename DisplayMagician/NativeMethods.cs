@@ -131,6 +131,22 @@ namespace DisplayMagician
     [SuppressUnmanagedCodeSecurity]
     internal static class NativeMethods
     {
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)] 
+        private static extern IntPtr SendMessageTimeout(IntPtr windowHandle, uint message, IntPtr wordParameter, IntPtr longParameter, SendMessageTimeoutFlag flag, uint timeout, out IntPtr resultHandle);
+
+        [Flags]
+        public enum SendMessageTimeoutFlag : uint
+        { 
+            SMTO_NORMAL = 0x0, 
+            SMTO_BLOCK = 0x1, 
+            SMTO_ABORTIFHUNG = 0x2, 
+            SMTO_NOTIMEOUTIFNOTHUNG = 0x8, 
+            SMTO_ERRORONEXIT = 0x20 
+        }
+
+        public const Int32 WM_WININICHANGE = 0x001A;
+
         /// <summary>
         /// Delegate declaration that matches WndProc signatures.
         /// </summary>

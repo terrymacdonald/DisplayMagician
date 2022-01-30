@@ -629,6 +629,7 @@ namespace DisplayMagician.UIForms
             // otherwise we'll save it only when the user wants to save this profile.
             if (_saveOrRenameMode == "rename" && profileSettingsForm.ProfileSettingChanged)
             {
+                //_selectedProfile = profileSettingsForm.Profile;
                 ProfileRepository.SaveProfiles();
             }                
         }
