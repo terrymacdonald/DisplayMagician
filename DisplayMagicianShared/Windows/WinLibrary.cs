@@ -56,7 +56,7 @@ namespace DisplayMagicianShared.Windows
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
         public List<TaskBarStuckRectangle> TaskBarLayout;
-        public List<TaskBarStuckRectangle> OriginalTaskBarLayout;
+        //public List<TaskBarStuckRectangle> OriginalTaskBarLayout;
         public TaskBarForcedEdge TaskBarForcedEdge;
 
         public TaskBarSettings TaskBarSettings;
@@ -187,7 +187,7 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
             myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
-            myDefaultConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>();
+            //myDefaultConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>();
             myDefaultConfig.TaskBarSettings = new TaskBarSettings();
             myDefaultConfig.TaskBarForcedEdge = TaskBarForcedEdge.None;
             myDefaultConfig.IsCloned = false;
@@ -653,7 +653,7 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplayConfigModes = modes;
             windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
             windowsDisplayConfig.TaskBarLayout = taskBarStuckRectangles;
-            windowsDisplayConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>(taskBarStuckRectangles);
+            //windowsDisplayConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>(taskBarStuckRectangles);
             windowsDisplayConfig.TaskBarSettings = taskBarSettings;
 
             return windowsDisplayConfig;
@@ -1401,7 +1401,7 @@ namespace DisplayMagicianShared.Windows
                     }
                     else
                     {
-                        SharedLogger.logger.Error($"WinLibrary/GetCurrent: Unable to set the {tbsr.DevicePath} TaskBarStuckRectangle registry settings as the version isn't v2 or v3!");
+                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to set the {tbsr.DevicePath} TaskBarStuckRectangle registry settings as the version isn't v2 or v3!");
                     }
                 }
 

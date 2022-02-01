@@ -100,16 +100,18 @@ namespace DisplayMagicianShared.Windows
                             MainScreen = false;
                             DevicePath = devicePath;
                             Binary = binary;
+                            OriginalBinary = new byte[binary.Length];
+                            binary.CopyTo(OriginalBinary, 0);
                             Version = version;
 
                             // Extract the values from the binary byte field
                             PopulateFieldsFromBinary();
 
-                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {DevicePath} is against the {Edge} edge, is positioned at ({Location.X},{Location.Y}) and is {Location.Width}x{Location.Height} in size.");
+                            SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: The taskbar for {DevicePath} is against the {Edge} edge, is positioned at ({Location.X},{Location.Y}) and is {Location.Width}x{Location.Height} in size.");
                         }
                         else
                         {
-                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen.");
+                            SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen.");
                         }
                     }
                 }
@@ -156,16 +158,18 @@ namespace DisplayMagicianShared.Windows
                                 MainScreen = true;
                                 DevicePath = devicePath;
                                 Binary = binary;
+                                OriginalBinary = new byte[binary.Length];
+                                binary.CopyTo(OriginalBinary, 0);
                                 Version = version;
 
                                 // Extract the values from the binary byte field
                                 PopulateFieldsFromBinary();
 
-                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {DevicePath} is against the {Edge} edge, is positioned at ({Location.X},{Location.Y}) and is {Location.Width}x{Location.Height} in size.");
+                                SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: The taskbar for {DevicePath} is against the {Edge} edge, is positioned at ({Location.X},{Location.Y}) and is {Location.Width}x{Location.Height} in size.");
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen.");
+                                SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen.");
                             }
                         }
                     }
@@ -603,12 +607,12 @@ namespace DisplayMagicianShared.Windows
                         RegistryKeyPermissionCheck.ReadWriteSubTree))
                     {
                         key.SetValue(DevicePath, Binary);
-                        SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for the {DevicePath} Screen in {address}!");
+                        SharedLogger.logger.Trace($"TaskBarStuckRectangle/WriteToRegistry: Successfully applied TaskBarStuckRectangle registry settings for the {DevicePath} Screen in {address}!");
                     }
                 }
                 catch (Exception ex)
                 {
-                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to set the {DevicePath} TaskBarStuckRectangle registry settings in {address} due to an exception!");
+                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/WriteToRegistry: Unable to set the {DevicePath} TaskBarStuckRectangle registry settings in {address} due to an exception!");
                 }
             }
 

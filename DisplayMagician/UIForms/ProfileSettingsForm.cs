@@ -146,7 +146,7 @@ namespace DisplayMagician.UIForms
 
             WINDOWS_DISPLAY_CONFIG winConfig = Profile.WindowsDisplayConfig;
             // Reset the taskbar layout binary to the original one we stored when the profile was made
-            winConfig.TaskBarLayout = new List<TaskBarStuckRectangle>(winConfig.OriginalTaskBarLayout);
+            //winConfig.TaskBarLayout = new List<TaskBarStuckRectangle>(winConfig.OriginalTaskBarLayout);
             if (rb_default_taskbar.Checked)
             {
                 winConfig.TaskBarForcedEdge = TaskBarForcedEdge.None;
