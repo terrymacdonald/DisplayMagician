@@ -73,8 +73,7 @@ namespace DisplayMagicianShared
         private bool _isPossible = false;
         private Keys _hotkey = Keys.None;
         private string _wallpaperBitmapFilename = "";
-        private TaskBarStuckRectangle.TaskBarForcedEdge _forcedTaskBarEdge = TaskBarStuckRectangle.TaskBarForcedEdge.None;
-
+        
 
         #region JsonConverterBitmap
         internal class CustomBitmapConverter : JsonConverter
@@ -291,16 +290,6 @@ namespace DisplayMagicianShared
 
         public string SavedProfileIconCacheFilename { get; set; }
         
-        public TaskBarStuckRectangle.TaskBarForcedEdge ForcedTaskBarEdge {
-            get
-            {
-                return _forcedTaskBarEdge;
-            }
-            set
-            {
-                _forcedTaskBarEdge = value;
-            }
-        }
 
         public Wallpaper.Mode WallpaperMode { get; set; }
 
@@ -461,7 +450,6 @@ namespace DisplayMagicianShared
             profile.WallpaperMode = WallpaperMode;
             profile.WallpaperBitmapFilename = WallpaperBitmapFilename;
             profile.WallpaperStyle = WallpaperStyle;
-            profile.ForcedTaskBarEdge = ForcedTaskBarEdge;
             return true;
         }
 

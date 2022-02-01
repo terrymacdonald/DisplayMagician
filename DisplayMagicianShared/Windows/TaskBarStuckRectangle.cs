@@ -16,15 +16,7 @@ namespace DisplayMagicianShared.Windows
 {
     public class TaskBarStuckRectangle
     {
-        public enum TaskBarForcedEdge : UInt32
-        {
-            Left = 0,
-            Top = 1,
-            Right = 2,
-            Bottom = 3,
-            None = 9999
-        }
-
+        
         public enum TaskBarEdge : UInt32
         {
             Left = 0,
@@ -59,51 +51,153 @@ namespace DisplayMagicianShared.Windows
         private const string MultiDisplayAddress =
             "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MMStuckRects{0:D}";
 
-        private static readonly Dictionary<int, byte[]> Headers = new Dictionary<int, byte[]>
+        /*private static readonly Dictionary<int, byte[]> Headers = new Dictionary<int, byte[]>
         {
             {2, new byte[] {0x28, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF}},
             {3, new byte[] {0x30, 0x00, 0x00, 0x00, 0xFE, 0xFF, 0xFF, 0xFF}}
         };
-
-        public TaskBarStuckRectangle(int version, string devicePath) : this(version)
+*/
+        public TaskBarStuckRectangle(string devicePath)
         {
-            DevicePath = devicePath;
-        }
-
-        public TaskBarStuckRectangle(int version)
-        {
-            if (!Headers.ContainsKey(version))
+            bool MMStuckRectVerFound = false;
+            // Check if key exists
+            int version = 2;
+            string address = string.Format(MultiDisplayAddress, version);
+            if (Registry.CurrentUser.OpenSubKey(address) != null)
             {
-                throw new ArgumentException(@"Invalid version number specified.", nameof(version));
+                MMStuckRectVerFound = true;
+            }
+            else
+            {                
+                // If it's not version 2, then try version 3
+                version = 3;
+                address = string.Format(MultiDisplayAddress, version);
+                if (Registry.CurrentUser.OpenSubKey(address) != null)
+                {
+                    MMStuckRectVerFound = true;
+                }
+                else
+                {
+                    // It's not v2 or v3, so it must be a single display
+                    MMStuckRectVerFound = false;
+                }
             }
 
-            Version = version;
-            DevicePath = null;
+            bool foundDevicePath = false;
+            if (MMStuckRectVerFound)
+            {
+                // Check if value exists
+                if (version >= 2 && version <= 3)
+                {
+                    using (var key = Registry.CurrentUser.OpenSubKey(
+                                address,
+                                RegistryKeyPermissionCheck.ReadSubTree))
+                    {
+                        var binary = key?.GetValue(devicePath) as byte[];
+                        if (binary?.Length > 0)
+                        {
+                            foundDevicePath = true;
+                            MainScreen = false;
+                            DevicePath = devicePath;
+                            Binary = binary;
+                            Version = version;
 
-            Binary = new byte[Headers[Version][0]];
-            Array.Copy(Headers[Version], 0, Binary, 0, Headers[Version].Length);
+                            // Extract the values from the binary byte field
+                            PopulateFieldsFromBinary();
 
-            DPI = 96;
-            Rows = 1;
-            Location = Rectangle.Empty;
-            MinSize = Size.Empty;
-            Edge = TaskBarEdge.Bottom;
-            Options = TaskBarOptions.KeepOnTop;
+                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {DevicePath} is against the {Edge} edge, is positioned at ({Location.X},{Location.Y}) and is {Location.Width}x{Location.Height} in size.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen.");
+                        }
+                    }
+                }
+            }
+
+            if (!foundDevicePath)
+            {
+                bool StuckRectVerFound = false;
+                // Check if string exists
+                version = 2;
+                address = string.Format(MainDisplayAddress, version);
+                if (Registry.CurrentUser.OpenSubKey(address) != null)
+                {
+                    StuckRectVerFound = true;
+                }
+                else
+                {
+                    // If it's not version 2, then try version 3
+                    version = 3;
+                    address = string.Format(MainDisplayAddress, version);
+                    if (Registry.CurrentUser.OpenSubKey(address) != null)
+                    {
+                        StuckRectVerFound = true;
+                    }
+                    else 
+                    {
+                        return;
+                    }
+                }
+
+                if (StuckRectVerFound)
+                {
+                    // Check if value exists
+                    if (version >= 2 && version <= 3)
+                    {
+                        using (var key = Registry.CurrentUser.OpenSubKey(
+                                    address,
+                                    RegistryKeyPermissionCheck.ReadSubTree))
+                        {
+                            var binary = key?.GetValue(devicePath) as byte[];
+                            if (binary?.Length > 0)
+                            {
+                                foundDevicePath = true;
+                                MainScreen = true;
+                                DevicePath = devicePath;
+                                Binary = binary;
+                                Version = version;
+
+                                // Extract the values from the binary byte field
+                                PopulateFieldsFromBinary();
+
+                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {DevicePath} is against the {Edge} edge, is positioned at ({Location.X},{Location.Y}) and is {Location.Width}x{Location.Height} in size.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen.");
+                            }
+                        }
+                    }
+                }
+            }
         }
-
+        
         public TaskBarStuckRectangle()
         {
         }
 
         public byte[] Binary { get; set; }
 
-        public byte[] BinaryBackup { get; set; }
+        public byte[] OriginalBinary { get; set; }
 
         public string DevicePath { get; set; }
 
         public bool MainScreen { get; set; }
 
-        [JsonIgnore]
+        public UInt32 DPI { get; set; }
+
+        public TaskBarEdge Edge { get; set; }
+
+        public Rectangle Location { get; set; }
+
+        public Size MinSize { get; set; }
+
+        public TaskBarOptions Options { get; set; }
+
+        public uint Rows { get; set; }
+
+        /*[JsonIgnore]
         public UInt32 DPI
         {
             get
@@ -125,9 +219,9 @@ namespace DisplayMagicianShared.Windows
                 var bytes = BitConverter.GetBytes(value);
                 Array.Copy(bytes, 0, Binary, 40, 4);
             }
-        }
+        }*/
 
-        [JsonIgnore]
+        /*[JsonIgnore]
         public TaskBarEdge Edge
         {
             get
@@ -149,9 +243,9 @@ namespace DisplayMagicianShared.Windows
                 var bytes = BitConverter.GetBytes((uint)value);
                 Array.Copy(bytes, 0, Binary, 12, 4);
             }
-        }
+        }*/
 
-        [JsonIgnore]
+        /*[JsonIgnore]
         public Rectangle Location
         {
             get
@@ -187,9 +281,9 @@ namespace DisplayMagicianShared.Windows
                 bytes = BitConverter.GetBytes(value.Bottom);
                 Array.Copy(bytes, 0, Binary, 36, 4);
             }
-        }
+        }*/
 
-        [JsonIgnore]
+        /*[JsonIgnore]
         public Size MinSize
         {
             get
@@ -217,9 +311,9 @@ namespace DisplayMagicianShared.Windows
                 bytes = BitConverter.GetBytes(value.Height);
                 Array.Copy(bytes, 0, Binary, 20, 4);
             }
-        }
+        }*/
 
-        [JsonIgnore]
+        /*[JsonIgnore]
         public TaskBarOptions Options
         {
             get
@@ -241,9 +335,9 @@ namespace DisplayMagicianShared.Windows
                 var bytes = BitConverter.GetBytes((uint)value);
                 Array.Copy(bytes, 0, Binary, 8, 4);
             }
-        }
+        }*/
 
-        [JsonIgnore]
+        /*[JsonIgnore]
         public uint Rows
         {
             get
@@ -265,29 +359,28 @@ namespace DisplayMagicianShared.Windows
                 var bytes = BitConverter.GetBytes(value);
                 Array.Copy(bytes, 0, Binary, 44, 4);
             }
-        }
+        }*/
 
         public int Version { get; set; }
 
         public override bool Equals(object obj) => obj is TaskBarStuckRectangle other && this.Equals(other);
         public bool Equals(TaskBarStuckRectangle other)
         {
-            // We return all the fields
             return Version == other.Version &&
-                MainScreen == other.MainScreen &&
                 DevicePath == other.DevicePath &&
+                MainScreen == other.MainScreen &&
+                DPI == other.DPI &&
                 Edge == other.Edge &&
-                Location == other.Location;
-                // &&
-                //Xor(Binary, other.Binary);
+                Location == other.Location &&
+                MinSize == other.MinSize &&
+                Options == other.Options &&
+                Rows == other.Rows;
         }
-        
-
 
         public override int GetHashCode()
         {
             //return (Version, MainScreen, DevicePath, Binary).GetHashCode();
-            return (Version, MainScreen, DevicePath, Edge, Location).GetHashCode();
+            return (Version, MainScreen, DevicePath, DPI, Edge, Location, MinSize, Options, Rows).GetHashCode();
         }
         public static bool operator ==(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => lhs.Equals(rhs);
 
@@ -311,231 +404,217 @@ namespace DisplayMagicianShared.Windows
 
         }
 
-
-        public static List<TaskBarStuckRectangle> GetCurrent(List<string> displayIdentifiers)
+        private bool PopulateFieldsFromBinary()
         {
-            List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
-
-            int version = 2;
-            string address = "";
-            address = string.Format(MultiDisplayAddress, version);
-            if (Registry.CurrentUser.OpenSubKey(address) == null)
+            // Now we decipher the binary properties features to populate the stuckrectangle 
+            // DPI 
+            if (Binary.Length < 44)
             {
-                // If it's not version 2, then try version 3
-                version = 3;
-                address = string.Format(MultiDisplayAddress, version);
-                if (Registry.CurrentUser.OpenSubKey(address) == null)
-                {
-                    // It's not v2 or v3, so error
-                    version = -1;
-                }
+                DPI = 0;
             }
-
-            if (version >= 2)
+            else
             {
-                foreach (string displayId in displayIdentifiers)
+                DPI = BitConverter.ToUInt32(Binary, 40);
+            }
+            // Edge
+            if (Binary.Length < 16)
+            {
+                Edge = TaskBarEdge.Bottom;
+            }
+            else
+            {
+                Edge = (TaskBarEdge)BitConverter.ToUInt32(Binary, 12);
+            }
+            // Location
+            if (Binary.Length < 40)
+            {
+                Location = Rectangle.Empty;
+            }
+            else
+            {
+                var left = BitConverter.ToInt32(Binary, 24);
+                var top = BitConverter.ToInt32(Binary, 28);
+                var right = BitConverter.ToInt32(Binary, 32);
+                var bottom = BitConverter.ToInt32(Binary, 36);
+
+                Location = Rectangle.FromLTRB(left, top, right, bottom);
+            }
+            // MinSize
+            if (Binary.Length < 24)
+            {
+                MinSize = Size.Empty;
+            }
+            else
+            {
+                var width = BitConverter.ToInt32(Binary, 16);
+                var height = BitConverter.ToInt32(Binary, 20);
+
+                MinSize = new Size(width, height);
+            }
+            // Options
+            if (Binary.Length < 12)
+            {
+                Options = 0;
+            }
+            else
+            {
+                Options = (TaskBarOptions)BitConverter.ToUInt32(Binary, 8);
+            }
+            // Rows
+            if (Binary.Length < 48)
+            {
+                Rows = 1;
+            }
+            else
+            {
+                Rows = BitConverter.ToUInt32(Binary, 44);
+            }
+            
+            return true;
+        }
+
+        public bool PopulateBinaryFromFields()
+        {
+            // Set the DPI
+            if (Binary.Length < 44)
+            {
+                DPI = 0;
+            }
+            else
+            {
+                var bytes = BitConverter.GetBytes(DPI);
+                Array.Copy(bytes, 0, Binary, 40, 4);
+            }
+            // Edge
+            if (Binary.Length < 16)
+            {
+                Edge = TaskBarEdge.Bottom;
+            }
+            else
+            {
+                var bytes = BitConverter.GetBytes((uint)Edge);
+                Array.Copy(bytes, 0, Binary, 12, 4);
+            }
+            // Location
+            if (Binary.Length < 40)
+            {
+                var bytes = BitConverter.GetBytes(0);
+                Array.Copy(bytes, 0, Binary, 24, 4);
+
+                bytes = BitConverter.GetBytes(0);
+                Array.Copy(bytes, 0, Binary, 28, 4);
+
+                bytes = BitConverter.GetBytes(0);
+                Array.Copy(bytes, 0, Binary, 32, 4);
+
+                bytes = BitConverter.GetBytes(0);
+                Array.Copy(bytes, 0, Binary, 36, 4);
+            }
+            else
+            {
+                var bytes = BitConverter.GetBytes(Location.Left);
+                Array.Copy(bytes, 0, Binary, 24, 4);
+
+                bytes = BitConverter.GetBytes(Location.Top);
+                Array.Copy(bytes, 0, Binary, 28, 4);
+
+                bytes = BitConverter.GetBytes(Location.Right);
+                Array.Copy(bytes, 0, Binary, 32, 4);
+
+                bytes = BitConverter.GetBytes(Location.Bottom);
+                Array.Copy(bytes, 0, Binary, 36, 4);
+            }
+            // MinSize
+            if (Binary.Length < 24)
+            {
+                var bytes = BitConverter.GetBytes(0);
+                Array.Copy(bytes, 0, Binary, 16, 4);
+
+                bytes = BitConverter.GetBytes(0);
+                Array.Copy(bytes, 0, Binary, 20, 4);
+            }
+            else
+            {
+                var bytes = BitConverter.GetBytes(MinSize.Width);
+                Array.Copy(bytes, 0, Binary, 16, 4);
+
+                bytes = BitConverter.GetBytes(MinSize.Height);
+                Array.Copy(bytes, 0, Binary, 20, 4);
+            }
+            // Options
+            if (Binary.Length < 12)
+            {
+                var bytes = BitConverter.GetBytes((uint)0);
+                Array.Copy(bytes, 0, Binary, 8, 4);
+            }
+            else
+            {
+                var bytes = BitConverter.GetBytes((uint)Options);
+                Array.Copy(bytes, 0, Binary, 8, 4);
+            }
+            // Rows
+            if (Binary.Length < 48)
+            {
+                var bytes = BitConverter.GetBytes(1);
+                Array.Copy(bytes, 0, Binary, 44, 4);
+            }
+            else
+            {
+                var bytes = BitConverter.GetBytes(Rows);
+                Array.Copy(bytes, 0, Binary, 44, 4);
+            }
+            return true;
+        }
+
+        public bool WriteToRegistry()
+        {
+            // Update the binary with the current settings from the object
+            PopulateBinaryFromFields();
+
+            // Write the binary field to registry
+            string address;
+            if (MainScreen)
+            {
+                address = string.Format(MainDisplayAddress, Version);
+                // Set the Main Screen 
+                try
                 {
-                    // e.g. "WINAPI|\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}|DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI|54074|4318|\\\\?\\DISPLAY#NVS10DE#5&2b46c695&0&UID185344#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}|NV Surround"
-                    string[] winapiLine = displayId.Split('|');
-                    string pattern = @"DISPLAY\#(.*)\#\{";
-                    Match match = Regex.Match(winapiLine[5], pattern);
-                    if (match.Success)
+                    using (var key = Registry.CurrentUser.OpenSubKey(
+                        address,
+                        RegistryKeyPermissionCheck.ReadWriteSubTree))
                     {
-                        TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle();
-                        string tbStuckRectKey = match.Groups[1].Value;
-                        using (var key = Registry.CurrentUser.OpenSubKey(
-                            address,
-                            RegistryKeyPermissionCheck.ReadSubTree))
-                        {
-                            var settings = key?.GetValue(tbStuckRectKey) as byte[];
-                            if (settings?.Length > 0)
-                            {
-                                taskBarStuckRectangle = new TaskBarStuckRectangle
-                                {
-                                    MainScreen = false,
-                                    DevicePath = tbStuckRectKey,
-                                    Binary = settings,
-                                    BinaryBackup = settings,
-                                    Version = version
-                                };
-                                taskBarStuckRectangles.Add(taskBarStuckRectangle);
-                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: The taskbar for {taskBarStuckRectangle.DevicePath} is against the {taskBarStuckRectangle.Edge} edge, is positioned at ({taskBarStuckRectangle.Location.X},{taskBarStuckRectangle.Location.Y}) and is {taskBarStuckRectangle.Location.Width}x{taskBarStuckRectangle.Location.Height} in size.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Unable to get the TaskBarStuckRectangle for {displayId}.");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: We were unable to figure out the DevicePath for the '{displayId}' display identifier.");
+                        key.SetValue(DevicePath, Binary);
+                        SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for the {DevicePath} Screen in {address}!");
                     }
                 }
-            }
-
-            version = 2;
-            address = string.Format(MainDisplayAddress, version);
-            if (Registry.CurrentUser.OpenSubKey(address) == null)
-            {
-                // If it's not version 2, then try version 3
-                version = 3;
-                address = string.Format(MainDisplayAddress, version);
-                if (Registry.CurrentUser.OpenSubKey(address) == null)
+                catch (Exception ex)
                 {
-                    // It's not v2 or v3, so error
-                    version = -1;
+                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to set the {DevicePath} TaskBarStuckRectangle registry settings in {address} due to an exception!");
                 }
             }
-
-            if (version >= 2)
+            else
             {
+                address = string.Format(MultiDisplayAddress, Version);
                 // Grab the main screen taskbar placement
                 try
                 {
                     using (var key = Registry.CurrentUser.OpenSubKey(
                         address,
-                        RegistryKeyPermissionCheck.ReadSubTree))
+                        RegistryKeyPermissionCheck.ReadWriteSubTree))
                     {
-                        var settings = key?.GetValue("Settings") as byte[];
-
-                        if (settings?.Length > 0)
-                        {
-                            TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle
-                            {
-                                MainScreen = true,
-                                DevicePath = "Settings",
-                                Binary = settings,
-                                BinaryBackup = settings,
-                                Version = version
-                            };
-                            taskBarStuckRectangles.Add(taskBarStuckRectangle);
-                        }
+                        key.SetValue(DevicePath, Binary);
+                        SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for the {DevicePath} Screen in {address}!");
                     }
                 }
                 catch (Exception ex)
                 {
-                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to read the Main Screen TaskBarStuckRectangle registry settings due to an exception!");
+                    SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to set the {DevicePath} TaskBarStuckRectangle registry settings in {address} due to an exception!");
                 }
             }
-
-
-            return taskBarStuckRectangles;
-
-        }
-
-        public static bool ForceTaskBarIfNeeded(ref List<TaskBarStuckRectangle> taskBarStuckRectangles, TaskBarForcedEdge forcedEdge = TaskBarForcedEdge.None)
-        {
-            try
-            {
-                if (forcedEdge != TaskBarForcedEdge.None)
-                {
-                    for (int i = 0; i < taskBarStuckRectangles.Count; i++)
-                    {
-                        // Force the taskbar change
-                        taskBarStuckRectangles[i].Edge = (TaskBarEdge)forcedEdge;
-                        taskBarStuckRectangles[i].Location = Rectangle.Empty;
-                    }
-                }
-                else if (forcedEdge == TaskBarForcedEdge.None)
-                {
-                    // Revert the forced taskbar change from the backup
-                    for (int i = 0; i < taskBarStuckRectangles.Count; i++)
-                    {
-                        taskBarStuckRectangles[i].Binary = taskBarStuckRectangles[i].BinaryBackup;
-                    }
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-
-        }
-
-        public static bool Apply(List<TaskBarStuckRectangle> taskBarStuckRectangles, TaskBarForcedEdge forcedEdge = TaskBarForcedEdge.None)
-        {
-            string address;
-            if (taskBarStuckRectangles.Count < 1)
-            {
-                SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: There are no TaskBarStuckRectangle registry settings to apply! This taskbar configuration is invalid.");
-                return false;
-            }
-
-            foreach (TaskBarStuckRectangle tbsr in taskBarStuckRectangles)
-            {
-                if (tbsr.Version >= 2 && tbsr.Version <= 3)
-                {
-                    if (!tbsr.MainScreen)
-                    {
-                        address = string.Format(MultiDisplayAddress, tbsr.Version);
-                        // Grab the main screen taskbar placement
-                        try
-                        {
-                            using (var key = Registry.CurrentUser.OpenSubKey(
-                                address,
-                                RegistryKeyPermissionCheck.ReadWriteSubTree))
-                            {
-                                key.SetValue(tbsr.DevicePath, tbsr.Binary);
-                                SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for the {tbsr.DevicePath} Screen!");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to set the {tbsr.DevicePath} TaskBarStuckRectangle registry settings due to an exception!");
-                        }
-                    }
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"TaskBarStuckRectangle/GetCurrent: Unable to set the {tbsr.DevicePath} TaskBarStuckRectangle registry settings as the version isn't v2 or v3!");
-                }
-            }
-
-            // Tell Windows to refresh the Windows Taskbar (which will only refresh the non-main screen)
-            Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
-
-            foreach (TaskBarStuckRectangle tbsr in taskBarStuckRectangles)
-            {
-                if (tbsr.Version >= 2 && tbsr.Version <= 3)
-                {
-                    if (tbsr.MainScreen)
-                    {
-
-                        address = string.Format(MainDisplayAddress, tbsr.Version);
-                        // Grab the main screen taskbar placement
-                        try
-                        {
-                            using (var key2 = Registry.CurrentUser.OpenSubKey(
-                                address,
-                                RegistryKeyPermissionCheck.ReadWriteSubTree))
-                            {
-                                key2.SetValue("Settings", tbsr.Binary);
-                                SharedLogger.logger.Trace($"TaskBarStuckRectangle/Apply: Successfully applied TaskBarStuckRectangle registry settings for the Main Screen!");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"TaskBarStuckRectangle/GetCurrent: Unable to set the Main Screen TaskBarStuckRectangle registry settings due to an exception!");
-                        }
-                    }
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"TaskBarStuckRectangle/GetCurrent: Unable to set the Main Screen TaskBarStuckRectangle registry settings as the version isn't v2 or v3!");
-                }
-            }
-
-            // Tell Windows to refresh the Windows Taskbar (which will only refresh the non-main screen)
-            Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
-
-            Task.Delay(2000);
-
-            // This will refresh the main screen as well. No idea why the above notification doesn't update the main screen too :/)
-            //RestartManagerSession.RestartExplorer();
 
             return true;
         }
+
+       
     }
 }

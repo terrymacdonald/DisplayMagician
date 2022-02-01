@@ -20,7 +20,7 @@ namespace DisplayMagician.UIForms
 
         private Dictionary<Wallpaper.Style, string> wallpaperStyleText = new Dictionary<Wallpaper.Style, string>();
         Bitmap wallpaperImage = null;
-        private Dictionary<TaskBarStuckRectangle.TaskBarForcedEdge, string> forcedTaskBarEdgeText = new Dictionary<TaskBarStuckRectangle.TaskBarForcedEdge, string>();
+        private Dictionary<TaskBarForcedEdge, string> forcedTaskBarEdgeText = new Dictionary<TaskBarForcedEdge, string>();
         private bool _profileSettingChanged = false;
 
         public ProfileSettingsForm()
@@ -45,18 +45,18 @@ namespace DisplayMagician.UIForms
             if (Utils.IsWindows11())
             {
                 // Is Windows 11
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Left, "Left");
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Top, "Top");
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Right, "Right");
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Bottom, "Bottom");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Left, "Left");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Top, "Top");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Right, "Right");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Bottom, "Bottom");
             }
             else
             {
                 // Is Windows 10
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Left, "Left");
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Top, "Top");
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Right, "Right");
-                forcedTaskBarEdgeText.Add(TaskBarStuckRectangle.TaskBarForcedEdge.Bottom, "Bottom");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Left, "Left");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Top, "Top");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Right, "Right");
+                forcedTaskBarEdgeText.Add(TaskBarForcedEdge.Bottom, "Bottom");
             }
 
             cmb_forced_taskbar_location.DisplayMember = "Value";
@@ -112,9 +112,9 @@ namespace DisplayMagician.UIForms
                 rb_leave_wallpaper.Checked = true;
                 cmb_wallpaper_display_mode.SelectedIndex = 0;
             }
-            
 
-            if (Profile.ForcedTaskBarEdge.Equals(TaskBarStuckRectangle.TaskBarForcedEdge.None))
+            WINDOWS_DISPLAY_CONFIG winConfig = Profile.WindowsDisplayConfig;
+            if (winConfig.TaskBarForcedEdge.Equals(TaskBarForcedEdge.None))
             {
                 rb_default_taskbar.Checked = true;
                 cmb_forced_taskbar_location.SelectedIndex = 3;
@@ -122,7 +122,7 @@ namespace DisplayMagician.UIForms
             else
             {
                 rb_forced_taskbar.Checked = true;
-                cmb_forced_taskbar_location.SelectedIndex = cmb_forced_taskbar_location.FindStringExact(forcedTaskBarEdgeText[Profile.ForcedTaskBarEdge]);
+                cmb_forced_taskbar_location.SelectedIndex = cmb_forced_taskbar_location.FindStringExact(forcedTaskBarEdgeText[winConfig.TaskBarForcedEdge]);
             }
 
         }
@@ -144,17 +144,18 @@ namespace DisplayMagician.UIForms
 
             Profile.WallpaperStyle = ((KeyValuePair<Wallpaper.Style, string>)cmb_wallpaper_display_mode.SelectedItem).Key;
 
+            WINDOWS_DISPLAY_CONFIG winConfig = Profile.WindowsDisplayConfig;
+            // Reset the taskbar layout binary to the original one we stored when the profile was made
+            winConfig.TaskBarLayout = new List<TaskBarStuckRectangle>(winConfig.OriginalTaskBarLayout);
             if (rb_default_taskbar.Checked)
             {
-                Profile.ForcedTaskBarEdge = TaskBarStuckRectangle.TaskBarForcedEdge.None;
+                winConfig.TaskBarForcedEdge = TaskBarForcedEdge.None;
+                
             }
             else
             {
-                Profile.ForcedTaskBarEdge = ((KeyValuePair<TaskBarStuckRectangle.TaskBarForcedEdge, string>)cmb_forced_taskbar_location.SelectedItem).Key;
+                winConfig.TaskBarForcedEdge = ((KeyValuePair<TaskBarForcedEdge, string>)cmb_forced_taskbar_location.SelectedItem).Key;
             }
-            // Apply the changed taskbar settings to the windows config if needed
-            WINDOWS_DISPLAY_CONFIG winDispConfig = Profile.WindowsDisplayConfig;
-            TaskBarStuckRectangle.ForceTaskBarIfNeeded(ref winDispConfig.TaskBarLayout, Profile.ForcedTaskBarEdge);
         }
 
         private void btn_back_Click(object sender, EventArgs e)

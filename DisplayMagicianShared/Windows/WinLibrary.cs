@@ -7,9 +7,22 @@ using System.Text.RegularExpressions;
 using DisplayMagicianShared;
 using System.IO;
 using System.ComponentModel;
+using Microsoft.Win32;
+using System.Threading.Tasks;
 
 namespace DisplayMagicianShared.Windows
 {
+
+    public enum TaskBarForcedEdge : UInt32
+    {
+        Left = 0,
+        Top = 1,
+        Right = 2,
+        Bottom = 3,
+        None = 9999
+    }
+
+
     [StructLayout(LayoutKind.Sequential)]
     public struct ADVANCED_HDR_INFO_PER_PATH : IEquatable<ADVANCED_HDR_INFO_PER_PATH>
     {
@@ -43,6 +56,9 @@ namespace DisplayMagicianShared.Windows
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
         public List<TaskBarStuckRectangle> TaskBarLayout;
+        public List<TaskBarStuckRectangle> OriginalTaskBarLayout;
+        public TaskBarForcedEdge TaskBarForcedEdge;
+
         public TaskBarSettings TaskBarSettings;
         public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
@@ -63,11 +79,12 @@ namespace DisplayMagicianShared.Windows
            GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers) &&
            TaskBarLayout.SequenceEqual(other.TaskBarLayout) &&
+           TaskBarForcedEdge == other.TaskBarForcedEdge &&
            TaskBarSettings.Equals(other.TaskBarSettings);
 
         public override int GetHashCode()
         {
-            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarSettings).GetHashCode();
+            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarForcedEdge, TaskBarSettings).GetHashCode();
         }
         public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -170,7 +187,9 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
             myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
+            myDefaultConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>();
             myDefaultConfig.TaskBarSettings = new TaskBarSettings();
+            myDefaultConfig.TaskBarForcedEdge = TaskBarForcedEdge.None;
             myDefaultConfig.IsCloned = false;
 
             return myDefaultConfig;
@@ -602,7 +621,28 @@ namespace DisplayMagicianShared.Windows
             // Now attempt to get the windows taskbar location for each display
             // We use the information we already got from the display identifiers
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar layout.");
-            List<TaskBarStuckRectangle> taskBarStuckRectangles = TaskBarStuckRectangle.GetCurrent(windowsDisplayConfig.DisplayIdentifiers);
+            List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
+            foreach (var displayId in windowsDisplayConfig.DisplayIdentifiers)
+            {
+                // e.g. "WINAPI|\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}|DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI|54074|4318|\\\\?\\DISPLAY#NVS10DE#5&2b46c695&0&UID185344#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}|NV Surround"
+                string[] winapiLine = displayId.Split('|');
+                string pattern = @"DISPLAY\#(.*)\#\{";
+                Match match = Regex.Match(winapiLine[5], pattern);
+                if (match.Success)
+                {
+                    string devicePath = match.Groups[1].Value;
+                    TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle(devicePath);
+                    taskBarStuckRectangles.Add(taskBarStuckRectangle);
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: We were unable to figure out the DevicePath for the '{displayId}' display identifier.");
+                }
+
+            }
+            // And we get the Main Screen taskbar too
+            TaskBarStuckRectangle mainTaskBarStuckRectangle = new TaskBarStuckRectangle("Settings");
+            taskBarStuckRectangles.Add(mainTaskBarStuckRectangle);
 
             // Now we try to get the taskbar settings too
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
@@ -1341,17 +1381,26 @@ namespace DisplayMagicianShared.Windows
             if (displayConfig.TaskBarLayout.Count > 0)
             {
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar layout.");
-                if (TaskBarStuckRectangle.Apply(displayConfig.TaskBarLayout))
+                foreach (TaskBarStuckRectangle tbsr in displayConfig.TaskBarLayout)
                 {
-                    // TODO - We need to detect if it is Windows 11, as we need to restart explorer.exe for the settings to take
-                    //        No need to do it in Windows 10, as explorere auto-detects the registry key change, and moves the taskbar
-                    //        (In fact, if you try to restart explorer.exe on Win10 it actually stops the taskbar move from working!)
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the taskbar layout successfully.");
+                    if (tbsr.Version >= 2 && tbsr.Version <= 3)
+                    {
+                        tbsr.WriteToRegistry();
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Error($"WinLibrary/GetCurrent: Unable to set the {tbsr.DevicePath} TaskBarStuckRectangle registry settings as the version isn't v2 or v3!");
+                    }
                 }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to set the taskbar layout.");
-                }
+
+                // Tell Windows to refresh the Windows Taskbar (which will only refresh the non-main screen)
+                Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
+
+                Task.Delay(2000);
+
+                // This will refresh the main screen as well. No idea why the above notification doesn't update the main screen too :/)
+                //RestartManagerSession.RestartExplorer();
+
             }
             else
             {
