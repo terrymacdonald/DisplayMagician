@@ -653,6 +653,7 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplayConfigModes = modes;
             windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
             windowsDisplayConfig.TaskBarLayout = taskBarStuckRectangles;
+            windowsDisplayConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>(taskBarStuckRectangles);
             windowsDisplayConfig.TaskBarSettings = taskBarSettings;
 
             return windowsDisplayConfig;
@@ -1385,6 +1386,17 @@ namespace DisplayMagicianShared.Windows
                 {
                     if (tbsr.Version >= 2 && tbsr.Version <= 3)
                     {
+                        // Reset the Binary string back to when we grabbed it
+                        tbsr.OriginalBinary.CopyTo(tbsr.Binary, 0);
+
+                        // If we have any forced edge, then force it!
+                        if (displayConfig.TaskBarForcedEdge != TaskBarForcedEdge.None)
+                        {
+                            // Force the edge if it needs forcing
+                            tbsr.Edge = (TaskBarStuckRectangle.TaskBarEdge)displayConfig.TaskBarForcedEdge;
+                        }
+
+                        // Write the changes to registry
                         tbsr.WriteToRegistry();
                     }
                     else
