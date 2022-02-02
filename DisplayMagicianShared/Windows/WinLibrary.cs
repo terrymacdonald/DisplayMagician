@@ -380,6 +380,7 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
             windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
             windowsDisplayConfig.IsCloned = false;
+            windowsDisplayConfig.TaskBarForcedEdge = TaskBarForcedEdge.None;
 
             // First of all generate the current displayIdentifiers
             windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();

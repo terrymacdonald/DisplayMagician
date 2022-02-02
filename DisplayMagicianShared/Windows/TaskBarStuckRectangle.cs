@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 // This file is taken from Soroush Falahati's amazing HeliosDisplayManagement software
 // available at https://github.com/falahati/HeliosDisplayManagement
 
-// Modifications made by Terry MacDonald
+// Substantial modifications made by Terry MacDonald 2022 onwards
 
 namespace DisplayMagicianShared.Windows
 {

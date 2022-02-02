@@ -122,7 +122,11 @@ namespace DisplayMagician.UIForms
             else
             {
                 rb_forced_taskbar.Checked = true;
-                cmb_forced_taskbar_location.SelectedIndex = cmb_forced_taskbar_location.FindStringExact(forcedTaskBarEdgeText[winConfig.TaskBarForcedEdge]);
+                int forcedTaskBarSelectedIndex = cmb_forced_taskbar_location.FindStringExact(forcedTaskBarEdgeText[winConfig.TaskBarForcedEdge]);
+                if (forcedTaskBarSelectedIndex >= 0)
+                {
+                    cmb_forced_taskbar_location.SelectedIndex = forcedTaskBarSelectedIndex;
+                }                    
             }
 
         }
@@ -154,7 +158,8 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                winConfig.TaskBarForcedEdge = ((KeyValuePair<TaskBarForcedEdge, string>)cmb_forced_taskbar_location.SelectedItem).Key;
+                TaskBarForcedEdge forcedTaskBarSelected = cmb_forced_taskbar_location.FindStringExact(forcedTaskBarEdgeText[winConfig.TaskBarForcedEdge]).Key;
+                winConfig.TaskBarForcedEdge = forcedTaskBarSelected;
             }
         }
 
