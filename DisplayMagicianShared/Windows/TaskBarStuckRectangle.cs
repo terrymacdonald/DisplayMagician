@@ -15,8 +15,8 @@ using Newtonsoft.Json;
 namespace DisplayMagicianShared.Windows
 {
     public class TaskBarStuckRectangle
-    {
-        
+    {        
+
         public enum TaskBarEdge : UInt32
         {
             Left = 0,

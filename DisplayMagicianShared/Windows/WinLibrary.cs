@@ -13,16 +13,6 @@ using System.Threading.Tasks;
 namespace DisplayMagicianShared.Windows
 {
 
-    public enum TaskBarForcedEdge : UInt32
-    {
-        Left = 0,
-        Top = 1,
-        Right = 2,
-        Bottom = 3,
-        None = 9999
-    }
-
-
     [StructLayout(LayoutKind.Sequential)]
     public struct ADVANCED_HDR_INFO_PER_PATH : IEquatable<ADVANCED_HDR_INFO_PER_PATH>
     {
@@ -56,8 +46,6 @@ namespace DisplayMagicianShared.Windows
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
         public List<TaskBarStuckRectangle> TaskBarLayout;
-        //public List<TaskBarStuckRectangle> OriginalTaskBarLayout;
-        public TaskBarForcedEdge TaskBarForcedEdge;
 
         public TaskBarSettings TaskBarSettings;
         public bool IsCloned;
@@ -79,12 +67,11 @@ namespace DisplayMagicianShared.Windows
            GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers) &&
            TaskBarLayout.SequenceEqual(other.TaskBarLayout) &&
-           TaskBarForcedEdge == other.TaskBarForcedEdge &&
            TaskBarSettings.Equals(other.TaskBarSettings);
 
         public override int GetHashCode()
         {
-            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarForcedEdge, TaskBarSettings).GetHashCode();
+            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarSettings).GetHashCode();
         }
         public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -189,7 +176,6 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
             //myDefaultConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>();
             myDefaultConfig.TaskBarSettings = new TaskBarSettings();
-            myDefaultConfig.TaskBarForcedEdge = TaskBarForcedEdge.None;
             myDefaultConfig.IsCloned = false;
 
             return myDefaultConfig;
@@ -380,7 +366,6 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
             windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
             windowsDisplayConfig.IsCloned = false;
-            windowsDisplayConfig.TaskBarForcedEdge = TaskBarForcedEdge.None;
 
             // First of all generate the current displayIdentifiers
             windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
@@ -1387,17 +1372,7 @@ namespace DisplayMagicianShared.Windows
                 {
                     if (tbsr.Version >= 2 && tbsr.Version <= 3)
                     {
-                        // Reset the Binary string back to when we grabbed it
-                        tbsr.OriginalBinary.CopyTo(tbsr.Binary, 0);
-
-                        // If we have any forced edge, then force it!
-                        if (displayConfig.TaskBarForcedEdge != TaskBarForcedEdge.None)
-                        {
-                            // Force the edge if it needs forcing
-                            tbsr.Edge = (TaskBarStuckRectangle.TaskBarEdge)displayConfig.TaskBarForcedEdge;
-                        }
-
-                        // Write the changes to registry
+                        // Write the settings to registry
                         tbsr.WriteToRegistry();
                     }
                     else

@@ -839,23 +839,6 @@ namespace DisplayMagicianShared
             // We do the actual change we were trying to do
             try
             {
-                // Now we try to patch in a Windows Taskbar Stuck Rects list into the json if there isnt one
-                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for a missing ForcedTaskBarEdge setting in Profile.");
-                // Create a default object (a default of NONE)
-                TaskBarForcedEdge taskBarForcedEdge = TaskBarForcedEdge.None;
-                for (int i = 0; i < root.Count; i++)
-                {
-                    JObject profile = (JObject)root[i];
-                    JValue forcedTaskBarEdge = (JValue)profile.SelectToken("ForcedTaskBarEdge");
-                    if (forcedTaskBarEdge == null)
-                    {
-                        JProperty newForcedTaskBarEdge = new JProperty("ForcedTaskBarEdge", TaskBarForcedEdge.None);
-                        profile.Add("ForcedTaskBarEdge", newForcedTaskBarEdge);
-                        changedJson = true;
-                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing ForcedTaskBarEdge in profile {profile.SelectToken("Name")} (index {i}).");
-                    }
-                }
-
 
                 // Now we try to patch in a Windows Taskbar Stuck Rects list into the json if there isnt one
                 SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows Taskbar layout.");
@@ -871,8 +854,6 @@ namespace DisplayMagicianShared
                         JArray newTaskBarLayout = JArray.FromObject(taskBarStuckRectangles);
                         WindowsDisplayConfig.Add("TaskBarLayout",newTaskBarLayout);
                         WindowsDisplayConfig.Add("OriginalTaskBarLayout", newTaskBarLayout);
-                        JProperty newTaskBarForcedEdge = new JProperty("TaskBarForcedEdge", TaskBarForcedEdge.None);
-                        WindowsDisplayConfig.Add("TaskBarForcedEdge", newTaskBarForcedEdge);
                         changedJson = true;
                         SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows TaskBarLayout in profile {profile.SelectToken("Name")} (index {i}).");
                     }
