@@ -150,6 +150,7 @@ namespace DisplayMagicianShared.NVIDIA
 
         private bool _initialised = false;
         private NVIDIA_DISPLAY_CONFIG _activeDisplayConfig;
+        public List<NV_MONITOR_CONN_TYPE> SkippedColorConnectionTypes;
 
         // To detect redundant calls
         private bool _disposed = false;
@@ -197,6 +198,15 @@ namespace DisplayMagicianShared.NVIDIA
                 // If this fires, then the DLL isn't available, so we need don't try to do anything else
                 SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed.");
             }
+
+            // Populate the list of ConnectionTypes we want to skip as they don't support querying
+            SkippedColorConnectionTypes = new List<NV_MONITOR_CONN_TYPE> { 
+                NV_MONITOR_CONN_TYPE.VGA,
+                NV_MONITOR_CONN_TYPE.COMPONENT,
+                NV_MONITOR_CONN_TYPE.SVIDEO,
+                NV_MONITOR_CONN_TYPE.DVI,
+                NV_MONITOR_CONN_TYPE.COMPOSITE,
+            };
 
         }
 
@@ -563,7 +573,7 @@ namespace DisplayMagicianShared.NVIDIA
                     {
                         SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting Mosaic Topology! NvAPI_Mosaic_EnumDisplayGrids() returned error code {NVStatus}");
                     }
-
+                    
                     myDisplayConfig.MosaicConfig.MosaicGridTopos = mosaicGridTopos;
                     myDisplayConfig.MosaicConfig.MosaicGridCount = mosaicGridCount;
 
@@ -925,164 +935,170 @@ namespace DisplayMagicianShared.NVIDIA
                                 }
                             }
 
-                            // We get the Color Capabilities of the display
-                            NV_COLOR_DATA_V5 colorData = new NV_COLOR_DATA_V5();
-                            // Set the command as a 'GET'
-                            colorData.Cmd = NV_COLOR_CMD.NV_COLOR_CMD_GET;
-                            NVStatus = NVImport.NvAPI_Disp_ColorControl(displayIds[displayIndex].DisplayId, ref colorData);
-                            if (NVStatus == NVAPI_STATUS.NVAPI_OK)
+                            // We need to skip recording anything that doesn't support color communication
+                            if (!SkippedColorConnectionTypes.Contains(displayIds[displayIndex].ConnectorType))
                             {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Your monitor {displayIds[displayIndex].DisplayId} has the following color settings set. BPC = {colorData.Bpc.ToString("G")}. Color Format = {colorData.ColorFormat.ToString("G")}. Colorimetry = {colorData.Colorimetry.ToString("G")}. Color Selection Policy = {colorData.ColorSelectionPolicy.ToString("G")}. Color Depth = {colorData.Depth.ToString("G")}. Dynamic Range = {colorData.DynamicRange.ToString("G")}. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
-                                allColorData.Add(displayIds[displayIndex].DisplayId.ToString(), colorData);
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_NOT_SUPPORTED)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: A miscellaneous error occurred. NvAPI_Disp_ColorControl() returned error code {NVStatus}.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting HDR color settings! NvAPI_Disp_ColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayIds[displayIndex].DisplayId} doesn't support HDR.");
-                            }
-
-                            // Now we get the HDR capabilities of the display
-                            NV_HDR_CAPABILITIES_V2 hdrCapabilities = new NV_HDR_CAPABILITIES_V2();
-                            NVStatus = NVImport.NvAPI_Disp_GetHdrCapabilities(displayIds[displayIndex].DisplayId, ref hdrCapabilities);
-                            if (NVStatus == NVAPI_STATUS.NVAPI_OK)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_GetHdrCapabilities returned OK.");
-                                if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsST2084EotfSupported))
+                                // skip this monitor connection type as it won't provide the data in the section, and just creates errors                                
+                                // We get the Color Capabilities of the display
+                                NV_COLOR_DATA_V5 colorData = new NV_COLOR_DATA_V5();
+                                // Set the command as a 'GET'
+                                colorData.Cmd = NV_COLOR_CMD.NV_COLOR_CMD_GET;
+                                NVStatus = NVImport.NvAPI_Disp_ColorControl(displayIds[displayIndex].DisplayId, ref colorData);
+                                if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                                 {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports HDR mode ST2084 EOTF");
+                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Your monitor {displayIds[displayIndex].DisplayId} has the following color settings set. BPC = {colorData.Bpc.ToString("G")}. Color Format = {colorData.ColorFormat.ToString("G")}. Colorimetry = {colorData.Colorimetry.ToString("G")}. Color Selection Policy = {colorData.ColorSelectionPolicy.ToString("G")}. Color Depth = {colorData.Depth.ToString("G")}. Dynamic Range = {colorData.DynamicRange.ToString("G")}. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                                    allColorData.Add(displayIds[displayIndex].DisplayId.ToString(), colorData);
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_NOT_SUPPORTED)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_ColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: A miscellaneous error occurred. NvAPI_Disp_ColorControl() returned error code {NVStatus}.");
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support HDR mode ST2084 EOTF");
-                                }
-                                if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsDolbyVisionSupported))
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports DolbyVision HDR");
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support DolbyVision HDR");
-                                }
-                                if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsEdrSupported))
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports EDR");
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support EDR");
-                                }
-                                if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsTraditionalHdrGammaSupported))
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports Traditional HDR Gama");
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support Traditional HDR Gama");
+                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting HDR color settings! NvAPI_Disp_ColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayIds[displayIndex].DisplayId} doesn't support HDR.");
                                 }
 
-                                if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsTraditionalSdrGammaSupported))
+                                // Now we get the HDR capabilities of the display
+                                NV_HDR_CAPABILITIES_V2 hdrCapabilities = new NV_HDR_CAPABILITIES_V2();
+                                NVStatus = NVImport.NvAPI_Disp_GetHdrCapabilities(displayIds[displayIndex].DisplayId, ref hdrCapabilities);
+                                if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                                 {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports Traditional SDR Gama");
+                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_GetHdrCapabilities returned OK.");
+                                    if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsST2084EotfSupported))
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports HDR mode ST2084 EOTF");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support HDR mode ST2084 EOTF");
+                                    }
+                                    if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsDolbyVisionSupported))
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports DolbyVision HDR");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support DolbyVision HDR");
+                                    }
+                                    if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsEdrSupported))
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports EDR");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support EDR");
+                                    }
+                                    if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsTraditionalHdrGammaSupported))
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports Traditional HDR Gama");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support Traditional HDR Gama");
+                                    }
+
+                                    if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.IsTraditionalSdrGammaSupported))
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports Traditional SDR Gama");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT supports Traditional SDR Gama");
+                                    }
+                                    if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.DriverExpandDefaultHdrParameters))
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports Driver Expanded Default HDR Parameters");
+                                    }
+                                    else
+                                    {
+                                        SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support Driver Expanded Default HDR Parameters ");
+                                    }
+
+                                    allHdrCapabilities.Add(displayIds[displayIndex].DisplayId.ToString(), hdrCapabilities);
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: A miscellaneous error occurred. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT supports Traditional SDR Gama");
+                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting HDR color capabilities from your display! NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}. It's most likely that your monitor {displayIds[displayIndex].DisplayId} doesn't support HDR.");
                                 }
-                                if (hdrCapabilities.SupportFlags.HasFlag(NV_HDR_CAPABILITIES_V2_FLAGS.DriverExpandDefaultHdrParameters))
+
+                                // Now we get the HDR colour settings of the display
+                                NV_HDR_COLOR_DATA_V2 hdrColorData = new NV_HDR_COLOR_DATA_V2();
+                                hdrColorData.Cmd = NV_HDR_CMD.CMD_GET;
+                                NVStatus = NVImport.NvAPI_Disp_HdrColorControl(displayIds[displayIndex].DisplayId, ref hdrColorData);
+                                if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                                 {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} supports Driver Expanded Default HDR Parameters");
+                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_HdrColorControl returned OK. HDR mode is set to {hdrColorData.HdrMode.ToString("G")}.");
+                                    if (hdrColorData.HdrMode != NV_HDR_MODE.OFF)
+                                    {
+                                        isNvHdrEnabled = true;
+                                    }
+                                    allHdrColorData.Add(displayIds[displayIndex].DisplayId.ToString(), hdrColorData);
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
+                                }
+                                else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: A miscellaneous error occurred. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}.");
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Display {displayIds[displayIndex].DisplayId} DOES NOT support Driver Expanded Default HDR Parameters ");
+                                    SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting HDR color settings! NvAPI_Disp_HdrColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayIds[displayIndex].DisplayId} doesn't support HDR.");
                                 }
 
-                                allHdrCapabilities.Add(displayIds[displayIndex].DisplayId.ToString(), hdrCapabilities);
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: A miscellaneous error occurred. NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting HDR color capabilities from your display! NvAPI_Disp_GetHdrCapabilities() returned error code {NVStatus}. It's most likely that your monitor {displayIds[displayIndex].DisplayId} doesn't support HDR.");
-                            }
-
-                            // Now we get the HDR colour settings of the display
-                            NV_HDR_COLOR_DATA_V2 hdrColorData = new NV_HDR_COLOR_DATA_V2();
-                            hdrColorData.Cmd = NV_HDR_CMD.CMD_GET;
-                            NVStatus = NVImport.NvAPI_Disp_HdrColorControl(displayIds[displayIndex].DisplayId, ref hdrColorData);
-                            if (NVStatus == NVAPI_STATUS.NVAPI_OK)
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_HdrColorControl returned OK. HDR mode is set to {hdrColorData.HdrMode.ToString("G")}.");
-                                if (hdrColorData.HdrMode != NV_HDR_MODE.OFF)
-                                {
-                                    isNvHdrEnabled = true;
-                                }
-                                allHdrColorData.Add(displayIds[displayIndex].DisplayId.ToString(), hdrColorData);
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_INSUFFICIENT_BUFFER)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input buffer is not large enough to hold it's contents. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_INVALID_DISPLAY_ID)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The input monitor is either not connected or is not a DP or HDMI panel. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_API_NOT_INITIALIZED)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The NvAPI API needs to be initialized first. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_NO_IMPLEMENTATION)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: This entry point not available in this NVIDIA Driver. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}");
-                            }
-                            else if (NVStatus == NVAPI_STATUS.NVAPI_ERROR)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: A miscellaneous error occurred. NvAPI_Disp_HdrColorControl() returned error code {NVStatus}.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Some non standard error occurred while getting HDR color settings! NvAPI_Disp_HdrColorControl() returned error code {NVStatus}. It's most likely that your monitor {displayIds[displayIndex].DisplayId} doesn't support HDR.");
                             }
 
 
