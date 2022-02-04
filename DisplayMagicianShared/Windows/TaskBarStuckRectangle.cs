@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DisplayMagicianShared;
@@ -61,25 +62,28 @@ namespace DisplayMagicianShared.Windows
         {
             bool MMStuckRectVerFound = false;
             // Check if key exists
-            int version = 2;
+            int version = 3;
             string address = string.Format(MultiDisplayAddress, version);
             if (Registry.CurrentUser.OpenSubKey(address) != null)
             {
                 MMStuckRectVerFound = true;
+                SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Found MMStuckRect3 registry key! {address}");
             }
             else
             {                
-                // If it's not version 2, then try version 3
-                version = 3;
+                // If it's not version 3, then try version 2
+                version = 2;
                 address = string.Format(MultiDisplayAddress, version);
                 if (Registry.CurrentUser.OpenSubKey(address) != null)
                 {
                     MMStuckRectVerFound = true;
+                    SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Found MMStuckRect2 registry key! {address}");
                 }
                 else
                 {
                     // It's not v2 or v3, so it must be a single display
                     MMStuckRectVerFound = false;
+                    SharedLogger.logger.Warn($"TaskBarStuckRectangle/TaskBarStuckRectangle: Couldn't find an MMStuckRect2 or MMStuckRect3 registry key! Going to test if it is a single display only.");
                 }
             }
 
@@ -121,23 +125,26 @@ namespace DisplayMagicianShared.Windows
             {
                 bool StuckRectVerFound = false;
                 // Check if string exists
-                version = 2;
+                version = 3;
                 address = string.Format(MainDisplayAddress, version);
                 if (Registry.CurrentUser.OpenSubKey(address) != null)
                 {
                     StuckRectVerFound = true;
+                    SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Found StuckRect3 single display registry key! {address}");
                 }
                 else
                 {
-                    // If it's not version 2, then try version 3
-                    version = 3;
+                    // If it's not version 3, then try version 2
+                    version = 2;
                     address = string.Format(MainDisplayAddress, version);
                     if (Registry.CurrentUser.OpenSubKey(address) != null)
                     {
                         StuckRectVerFound = true;
+                        SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Found StuckRect2 single display registry key! {address}");
                     }
                     else 
                     {
+                        SharedLogger.logger.Error($"TaskBarStuckRectangle/TaskBarStuckRectangle: Couldn't find an single display StuckRect2 or StuckRect3 registry key! So we have to just return after doing nothing as there is nothing we can do.");
                         return;
                     }
                 }
@@ -473,7 +480,9 @@ namespace DisplayMagicianShared.Windows
             {
                 Rows = BitConverter.ToUInt32(Binary, 44);
             }
-            
+
+            SharedLogger.logger.Trace($"TaskBarStuckRectangle/PopulateFieldsFromBinary: Grabbed the following settings for {DevicePath} from the registry: DPI = {DPI}, Edge = {Edge}, Location = ({Location.X},{Location.Y}), MinSize = {Location.Width}x{Location.Height}, Options = {Options}, Rows = {Rows}.");
+
             return true;
         }
 
@@ -483,6 +492,8 @@ namespace DisplayMagicianShared.Windows
             if (Binary.Length < 44)
             {
                 DPI = 0;
+                var bytes = BitConverter.GetBytes(DPI);
+                Array.Copy(bytes, 0, Binary, 40, 4);
             }
             else
             {
@@ -493,11 +504,13 @@ namespace DisplayMagicianShared.Windows
             if (Binary.Length < 16)
             {
                 Edge = TaskBarEdge.Bottom;
+                var bytes = BitConverter.GetBytes((uint)Edge);
+                Array.Copy(bytes, 0, Binary, 12, 1);
             }
             else
-            {
+            { 
                 var bytes = BitConverter.GetBytes((uint)Edge);
-                Array.Copy(bytes, 0, Binary, 12, 4);
+                Array.Copy(bytes, 0, Binary, 12, 1);
             }
             // Location
             if (Binary.Length < 40)
@@ -567,6 +580,9 @@ namespace DisplayMagicianShared.Windows
                 var bytes = BitConverter.GetBytes(Rows);
                 Array.Copy(bytes, 0, Binary, 44, 4);
             }
+
+            SharedLogger.logger.Trace($"TaskBarStuckRectangle/PopulateBinaryFromFields: Set the following settings for {DevicePath} into registry: DPI = {DPI}, Edge = {Edge}, Location = ({Location.X},{Location.Y}), MinSize = {Location.Width}x{Location.Height}, Options = {Options}, Rows = {Rows}.");
+
             return true;
         }
 
@@ -619,6 +635,35 @@ namespace DisplayMagicianShared.Windows
             return true;
         }
 
-       
+        public static bool RepositionMainTaskBar(TaskBarEdge edge)
+        {
+            // Tell Windows to refresh the Main Screen Windows Taskbar
+            // Find the "Shell_TrayWnd" window 
+            IntPtr mainToolBarHWnd = Utils.FindWindow("Shell_TrayWnd", null);
+            // Send the "Shell_TrayWnd" window a WM_USER_REFRESHTASKBAR with a wParameter of 0006 and a lParamater of the position (e.g. 0000 for left, 0001 for top, 0002 for right and 0003 for bottom)
+            IntPtr taskBarPositionBuffer = new IntPtr((Int32)edge);
+            Utils.SendMessage(mainToolBarHWnd, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
+            return true;
+        }
+
+        public static bool RepositionSecondaryTaskBars()
+        {
+            // Tell Windows to refresh the Other Windows Taskbars if needed
+            IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
+            for (int i = 0; i < 100; i++)
+            {
+                // Find the next "Shell_SecondaryTrayWnd" window 
+                IntPtr nextTaskBarWindowHwnd = Utils.FindWindowEx((IntPtr)Utils.NULL, lastTaskBarWindowHwnd, "Shell_SecondaryTrayWnd", null);
+                if (nextTaskBarWindowHwnd == (IntPtr)Utils.NULL)
+                {
+                    // No more windows taskbars to notify
+                    break;
+                }
+                // Send the "Shell_TrayWnd" window a WM_SETTINGCHANGE with a wParameter of SPI_SETWORKAREA
+                Utils.SendMessage(lastTaskBarWindowHwnd, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+                lastTaskBarWindowHwnd = nextTaskBarWindowHwnd;
+            }
+            return true;
+        }
     }
 }

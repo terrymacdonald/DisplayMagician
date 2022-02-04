@@ -21,10 +21,19 @@ namespace DisplayMagicianShared
         }
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr FindWindow(string lpClassName, String lpWindowName);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern IntPtr SendMessageTimeout(IntPtr windowHandle, uint message, IntPtr wordParameter, IntPtr longParameter, SendMessageTimeoutFlag flag, uint timeout, out IntPtr resultHandle);
 
         [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool SendNotifyMessage(IntPtr hWnd, uint Msg, UIntPtr wParam, string lParam);
+
+        [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int SendMessage(IntPtr hWnd, uint wMsg, IntPtr wParam, IntPtr lParam);
 
         [Flags]
         public enum SendMessageTimeoutFlag : uint
@@ -39,5 +48,8 @@ namespace DisplayMagicianShared
         public const int NULL = 0;
         public const int HWND_BROADCAST = 0xffff;
         public const int WM_SETTINGCHANGE = 0x001a;
+        public const int SPI_SETWORKAREA  = 0x002F;
+        public const int WM_USER_REFRESHTASKBAR = 0x05CA;
+        public const int wParam_SHELLTRAY = 0x00000006;
     }
 }

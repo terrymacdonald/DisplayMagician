@@ -1374,6 +1374,11 @@ namespace DisplayMagicianShared.Windows
                     {
                         // Write the settings to registry
                         tbsr.WriteToRegistry();
+
+                        if (tbsr.MainScreen)
+                        {
+                            TaskBarStuckRectangle.RepositionMainTaskBar(tbsr.Edge);
+                        }
                     }
                     else
                     {
@@ -1381,10 +1386,22 @@ namespace DisplayMagicianShared.Windows
                     }
                 }
 
-                // Tell Windows to refresh the Windows Taskbar (which will only refresh the non-main screen)
-                Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
 
-                Task.Delay(2000);
+                // Tell Windows to refresh the Other Windows Taskbars if needed
+                IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
+                if (displayConfig.TaskBarLayout.Count > 1)
+                {
+                    TaskBarStuckRectangle.RepositionSecondaryTaskBars();
+                }
+
+
+                //Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
+                //Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
+
+
+                //Task.Delay(2000);
+
+                //Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
 
                 // This will refresh the main screen as well. No idea why the above notification doesn't update the main screen too :/)
                 //RestartManagerSession.RestartExplorer();
