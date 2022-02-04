@@ -39,6 +39,7 @@ namespace DisplayMagicianShared
         public List<SpannedScreenPosition> SpannedScreens;
         public int SpannedColumns;
         public int SpannedRows;
+        public TaskBarStuckRectangle.TaskBarEdge TaskBarEdge;
     }
 
     public struct SpannedScreenPosition
@@ -860,7 +861,7 @@ namespace DisplayMagicianShared
                         screen.IsSpanned = true;
                         screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
                         screen.SpannedColumns = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
-                        screen.Colour = spannedScreenColor;
+                        screen.Colour = spannedScreenColor;                        
 
                         // This is a combined surround/mosaic screen
                         // We need to build the size of the screen to match it later so we check the MosaicViewports
@@ -1012,6 +1013,17 @@ namespace DisplayMagicianShared
                     screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
+                    try
+                    {
+                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.DevicePath.Contains($"UID{targetId}")).Edge;
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                    }                    
+                    catch (Exception ex)
+                    {
+                        // Guess that it is at the bottom (90% correct)
+                        SharedLogger.logger.Error(ex,$"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
+                    }
                     //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
@@ -1084,6 +1096,12 @@ namespace DisplayMagicianShared
                             }
                             break;
                         }
+                    }
+
+                    // And now put the taskbar location into the screen
+                    foreach (TaskBarStuckRectangle tbsr in _windowsDisplayConfig.TaskBarLayout)
+                    {
+
                     }
 
                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
@@ -1271,7 +1289,18 @@ namespace DisplayMagicianShared
                     screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
-                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
+                    try
+                    {
+                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.DevicePath.Contains($"UID{targetId}")).Edge;
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Guess that it is at the bottom (90% correct)
+                        SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
+                    }
+
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
                         if (displaySource.Value.Contains(sourceId))
@@ -1388,7 +1417,17 @@ namespace DisplayMagicianShared
                     screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
                     screen.ClonedCopies = 0;
-                    //screen.DisplayConnector = path.TargetInfo.OutputTechnology.ToString("G");
+                    try
+                    {
+                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.DevicePath.Contains($"UID{targetId}")).Edge;
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Guess that it is at the bottom (90% correct)
+                        SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
+                    }
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
                         if (displaySource.Value.Contains(sourceId))
