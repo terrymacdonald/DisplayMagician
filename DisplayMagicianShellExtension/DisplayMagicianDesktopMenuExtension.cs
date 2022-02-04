@@ -139,7 +139,7 @@ namespace DisplayMagicianShellExtension
 
             }
 
-            var extensionMenu = new ToolStripMenuItem("DisplayMagician: Change display profiles...", Properties.Resources.MenuImage);
+            var extensionMenu = new ToolStripMenuItem("DisplayMagician Profiles", Properties.Resources.MenuImage);
             explorerMenuStrip.Items.Add(extensionMenu);
 
             // Add the first menu to create a new Display Profile
