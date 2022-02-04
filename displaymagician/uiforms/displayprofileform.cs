@@ -669,5 +669,18 @@ namespace DisplayMagician.UIForms
             // Apply the selected profile
             btn_apply.PerformClick();
         }
+
+        private void btn_donate_Click(object sender, EventArgs e)
+        {
+            string targetURL = @"https://github.com/sponsors/terrymacdonald";
+            System.Diagnostics.Process.Start(targetURL);
+        }
+
+        private void btn_tools_Click(object sender, EventArgs e)
+        {
+            ProfileToolsForm profileToolsForm = new ProfileToolsForm();
+            profileToolsForm.CurrentProfile = _selectedProfile;
+            profileToolsForm.ShowDialog(this);
+        }
     }
 }
