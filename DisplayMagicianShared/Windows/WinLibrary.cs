@@ -1394,18 +1394,6 @@ namespace DisplayMagicianShared.Windows
                     TaskBarStuckRectangle.RepositionSecondaryTaskBars();
                 }
 
-
-                //Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
-                //Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
-
-
-                //Task.Delay(2000);
-
-                //Utils.SendNotifyMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (UIntPtr)Utils.NULL, "TraySettings");
-
-                // This will refresh the main screen as well. No idea why the above notification doesn't update the main screen too :/)
-                //RestartManagerSession.RestartExplorer();
-
             }
             else
             {

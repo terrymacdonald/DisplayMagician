@@ -73,7 +73,7 @@ namespace DisplayMagician.UIForms
             this.gb_general.Controls.Add(this.cmb_wallpaper_display_mode);
             this.gb_general.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_general.ForeColor = System.Drawing.Color.White;
-            this.gb_general.Location = new System.Drawing.Point(27, 23);
+            this.gb_general.Location = new System.Drawing.Point(26, 23);
             this.gb_general.Name = "gb_general";
             this.gb_general.Size = new System.Drawing.Size(525, 381);
             this.gb_general.TabIndex = 11;
