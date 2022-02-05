@@ -226,7 +226,6 @@ namespace DisplayMagicianShared.Windows
 
         public override int GetHashCode()
         {
-            //return (Version, MainScreen, DevicePath, Binary).GetHashCode();
             return (Version, MainScreen, DevicePath, DPI, Edge, Location, MinSize, Options, Rows).GetHashCode();
         }
         public static bool operator ==(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => lhs.Equals(rhs);

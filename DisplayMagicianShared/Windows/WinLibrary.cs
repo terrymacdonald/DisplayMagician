@@ -46,7 +46,6 @@ namespace DisplayMagicianShared.Windows
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
         public List<TaskBarStuckRectangle> TaskBarLayout;
-
         public TaskBarSettings TaskBarSettings;
         public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
@@ -174,7 +173,6 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
             myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
-            //myDefaultConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>();
             myDefaultConfig.TaskBarSettings = new TaskBarSettings();
             myDefaultConfig.IsCloned = false;
 
@@ -1379,6 +1377,7 @@ namespace DisplayMagicianShared.Windows
                         {
                             TaskBarStuckRectangle.RepositionMainTaskBar(tbsr.Edge);
                         }
+
                     }
                     else
                     {

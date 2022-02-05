@@ -134,7 +134,7 @@ namespace DisplayMagicianShared.UserControls
 
             // How wide the Bezel is on the screen graphics
             int screenBezel = 60;
-            int screenWordBuffer = 30;
+            int screenWordBuffer = 60;
 
             Color lightTextColour = Color.White;
             Color darkTextColour = Color.Black;
@@ -161,18 +161,21 @@ namespace DisplayMagicianShared.UserControls
 
             foreach (ScreenPosition screen in _profile.Screens)
             {
-                
+
+                Rectangle screenRect;
+                Rectangle outlineRect;
+
                 // draw the screen 
                 if (screen.IsSpanned)
                 {
                     // We do these things only if the screen IS spanned!                    
                     // Draw the outline of the spanned monitor
-                    Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
                     g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
                     g.DrawRectangle(Pens.Black, outlineRect);
 
                     // Draw the screen of the monitor
-                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));                   
+                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));                   
                     g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
 
@@ -190,15 +193,48 @@ namespace DisplayMagicianShared.UserControls
                 {                   
                     // We do these things only if the screen isn't spanned!
                     // Draw the outline of the monitor
-                    Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
                     g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
                     g.DrawRectangle(Pens.Black, outlineRect);
 
                     // Draw the screen of the monitor
-                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
                     g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
-                }                
+                }
+
+                // Draw the location of the taskbar for this screen
+                Rectangle taskBarRect;
+                Rectangle startButtonRect;
+                int taskBarWidth = (int)(0.05 * screenRect.Height);
+                int startButtonSpacer = (int)(0.25 * taskBarWidth);
+                int startButtonSize = 2 * startButtonSpacer;
+                switch (screen.TaskBarEdge)
+                {
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Left:
+                        taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
+                        startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
+                        break;
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Top:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
+                        startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
+                        break;
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Right:
+                        taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
+                        startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
+                        break;
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Bottom:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
+                        startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
+                        break;
+                    default:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
+                        startButtonRect = new Rectangle(taskBarRect.X + startButtonSpacer, taskBarRect.Y + startButtonSpacer, startButtonSize, startButtonSize);
+                        break;
+                }
+                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 200, 200, 200)), taskBarRect);
+                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 3, 194, 252)), startButtonRect);
+                //g.DrawRectangle(Pens.Black, outlineRect);
 
                 Rectangle wordRect = new Rectangle(screen.ScreenX + screenBezel + screenWordBuffer, screen.ScreenY + screenBezel + screenWordBuffer, screen.ScreenWidth - (screenBezel * 2) - (screenWordBuffer * 2), screen.ScreenHeight - (screenBezel * 2) - (screenWordBuffer * 2));
                 Color wordTextColour = pickTextColorBasedOnBgColour(screen.Colour, lightTextColour, darkTextColour);

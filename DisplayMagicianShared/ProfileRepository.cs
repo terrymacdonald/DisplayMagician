@@ -853,7 +853,6 @@ namespace DisplayMagicianShared
                         JObject WindowsDisplayConfig = (JObject)profile.SelectToken("WindowsDisplayConfig"); 
                         JArray newTaskBarLayout = JArray.FromObject(taskBarStuckRectangles);
                         WindowsDisplayConfig.Add("TaskBarLayout",newTaskBarLayout);
-                        WindowsDisplayConfig.Add("OriginalTaskBarLayout", newTaskBarLayout);
                         changedJson = true;
                         SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows TaskBarLayout in profile {profile.SelectToken("Name")} (index {i}).");
                     }

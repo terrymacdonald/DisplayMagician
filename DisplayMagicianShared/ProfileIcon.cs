@@ -282,18 +282,19 @@ namespace DisplayMagicianShared
             // Now go through and draw the screens
             foreach (ScreenPosition screen in _profile.Screens)
             {
-
+                Rectangle outlineRect;
+                Rectangle screenRect;
                 // draw the screen 
                 if (screen.IsSpanned)
                 {
                     // We do these things only if the screen IS spanned!
                     // Draw the outline of the spanned monitor
-                    Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
                     g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
                     g.DrawRectangle(Pens.Black, outlineRect);
 
                     // Draw the screen of the monitor
-                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
 
                     g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
@@ -302,17 +303,43 @@ namespace DisplayMagicianShared
                 {
 
                     // Draw the outline of the monitor
-                    Rectangle outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                    outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
                     g.FillRectangle(new SolidBrush(Color.FromArgb(255, 33, 33, 33)), outlineRect);
                     g.DrawRectangle(Pens.Black, outlineRect);
 
                     // Draw the screen of the monitor
-                    Rectangle screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+                    screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
                     
                     g.FillRectangle(new SolidBrush(screen.Colour), screenRect);
                     g.DrawRectangle(Pens.Black, screenRect);
 
                 }
+
+                // Draw the location of the taskbar for this screen
+                Rectangle taskBarRect;
+                //Rectangle startButtonRect;
+                int taskBarWidth = (int)(0.15 * screenRect.Height);
+                //int startButtonSpacer = (int)(0.25 * taskBarWidth);
+                //int startButtonSize = 2 * startButtonSpacer;
+                switch (screen.TaskBarEdge)
+                {
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Left:
+                        taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
+                        break;
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Top:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
+                        break;
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Right:
+                        taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
+                        break;
+                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Bottom:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
+                        break;
+                    default:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
+                        break;
+                }
+                g.FillRectangle(new SolidBrush(Color.FromArgb(255, 200, 200, 200)), taskBarRect);
             }
         }
 

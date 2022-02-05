@@ -27,6 +27,9 @@ namespace DisplayMagician.UIForms
 
             InitializeComponent();
 
+            // Set up the default return value of Cancel
+            DialogResult = DialogResult.Cancel;
+
             // Populate the Forced Taskbar Location dictionary
             if (Utils.IsWindows11())
             {
@@ -69,6 +72,8 @@ namespace DisplayMagician.UIForms
 
         private void btn_apply_Click(object sender, EventArgs e)
         {
+            ProfileRepository.UpdateActiveProfile();
+
             // Now set the taskbar position for each screen
             if (CurrentProfile.WindowsDisplayConfig.TaskBarLayout.Count > 0)
             {
@@ -83,6 +88,14 @@ namespace DisplayMagician.UIForms
                     {
                         if (tbsr.Version >= 2 && tbsr.Version <= 3)
                         {
+                            tbsr.Edge = taskbarForcedEdge;
+                            if (tbsr.MainScreen)
+                            {
+                                tbsr.Location = new Rectangle(0, 1392, 2560, 48);
+                                tbsr.Options = (TaskBarStuckRectangle.TaskBarOptions)62586;
+                            }
+
+
                             // Write the settings to registry
                             tbsr.WriteToRegistry();
 
@@ -90,6 +103,7 @@ namespace DisplayMagician.UIForms
                             {
                                 TaskBarStuckRectangle.RepositionMainTaskBar(taskbarForcedEdge);
                             }
+
                         }
                         else
                         {
@@ -103,6 +117,9 @@ namespace DisplayMagician.UIForms
                     SharedLogger.logger.Trace($"ProfileToolsForm/btn_apply_Click: No taskbar layout in display profile so skipping setting it!");
                 }
                 TaskBarStuckRectangle.RepositionSecondaryTaskBars();
+
+                // Now set the option to completed.
+                DialogResult = DialogResult.OK;
             }
         }
     }
