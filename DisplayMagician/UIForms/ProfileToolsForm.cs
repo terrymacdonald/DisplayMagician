@@ -74,6 +74,22 @@ namespace DisplayMagician.UIForms
         {
             ProfileRepository.UpdateActiveProfile();
 
+            if (CurrentProfile.NVIDIADisplayConfig.MosaicConfig.IsMosaicEnabled)
+            {
+                MessageBox.Show(this, "You cannot change the taskbar position while in a NVIDIA Surround/Mosaic display profile",
+                    "Taskbar move failed",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                return;
+            }
+            if (CurrentProfile.AMDDisplayConfig.SlsConfig.IsSlsEnabled)
+            {
+                MessageBox.Show(this, "You cannot change the taskbar position while in an AMD Eyefinity display profile",
+                    "Taskbar move failed",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                return;
+            }
             // Now set the taskbar position for each screen
             if (CurrentProfile.WindowsDisplayConfig.TaskBarLayout.Count > 0)
             {
