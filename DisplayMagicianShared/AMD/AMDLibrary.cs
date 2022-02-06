@@ -166,6 +166,7 @@ namespace DisplayMagicianShared.AMD
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _adlContextHandle = IntPtr.Zero;
         private AMD_DISPLAY_CONFIG _activeDisplayConfig;
+        public List<ADL_DISPLAY_CONNECTION_TYPE> SkippedColorConnectionTypes;
 
         static AMDLibrary() { }
         public AMDLibrary()
@@ -211,6 +212,16 @@ namespace DisplayMagicianShared.AMD
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
             }
+
+            // Populate the list of ConnectionTypes we want to skip as they don't support querying
+            SkippedColorConnectionTypes = new List<ADL_DISPLAY_CONNECTION_TYPE> {
+                ADL_DISPLAY_CONNECTION_TYPE.Composite,
+                ADL_DISPLAY_CONNECTION_TYPE.DVI_D,
+                ADL_DISPLAY_CONNECTION_TYPE.DVI_I,
+                ADL_DISPLAY_CONNECTION_TYPE.RCA_3Component,
+                ADL_DISPLAY_CONNECTION_TYPE.SVideo,
+                ADL_DISPLAY_CONNECTION_TYPE.VGA
+            };
 
         }
 
@@ -887,48 +898,104 @@ namespace DisplayMagicianShared.AMD
                     }
 
 
+                    int forceDetect = 0;
+                    int numDisplays;
+                    IntPtr displayInfoBuffer;
+                    ADLRet = ADLImport.ADL2_Display_DisplayInfo_Get(_adlContextHandle, adapterIndex, out numDisplays, out displayInfoBuffer, forceDetect);
+                    if (ADLRet == ADL_STATUS.ADL_OK)
+                    {
+                        SharedLogger.logger.Trace($"AMDLibrary/PrintActiveConfig: ADL2_Display_DisplayInfo_Get returned information about all displaytargets connected to AMD adapter #{adapterIndex}.");
+                    }
+                    else if (ADLRet == ADL_STATUS.ADL_ERR_NULL_POINTER || ADLRet == ADL_STATUS.ADL_ERR_NOT_SUPPORTED)
+                    {
+                        SharedLogger.logger.Trace($"AMDLibrary/PrintActiveConfig: ADL2_Display_DisplayInfo_Get returned ADL_ERR_NULL_POINTER so skipping getting display info from AMD adapter #{adapterIndex}.");
+                        continue;
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Error($"AMDLibrary/PrintActiveConfig: ERROR - ADL2_Display_DisplayInfo_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter #{adapterIndex}.");
+                    }
+
+                    ADL_DISPLAY_INFO[] displayInfoArray = { };
+                    if (numDisplays > 0)
+                    {
+                        IntPtr currentDisplayInfoBuffer = displayInfoBuffer;
+                        displayInfoArray = new ADL_DISPLAY_INFO[numDisplays];
+                        for (int i = 0; i < numDisplays; i++)
+                        {
+                            // build a structure in the array slot
+                            displayInfoArray[i] = new ADL_DISPLAY_INFO();
+                            // fill the array slot structure with the data from the buffer
+                            displayInfoArray[i] = (ADL_DISPLAY_INFO)Marshal.PtrToStructure(currentDisplayInfoBuffer, typeof(ADL_DISPLAY_INFO));
+                            // destroy the bit of memory we no longer need
+                            Marshal.DestroyStructure(currentDisplayInfoBuffer, typeof(ADL_DISPLAY_INFO));
+                            // advance the buffer forwards to the next object
+                            currentDisplayInfoBuffer = (IntPtr)((long)currentDisplayInfoBuffer + Marshal.SizeOf(displayInfoArray[i]));
+                            //currentDisplayTargetBuffer = (IntPtr)((long)currentDisplayTargetBuffer + Marshal.SizeOf(displayTargetArray[i]));
+
+                        }
+                        // Free the memory used by the buffer                        
+                        Marshal.FreeCoTaskMem(displayInfoBuffer);
+                    }
+
                     myDisplayConfig.HdrConfigs = new Dictionary<int, AMD_HDR_CONFIG>();
+                    
                     // Now we need to get all the displays connected to this adapter so that we can get their HDR state
                     foreach (var displayTarget in displayTargetArray)
                     {
-                        // Go through each display and see if HDR is supported
-                        int supported = 0;
-                        int enabled = 0;
-                        ADLRet = ADLImport.ADL2_Display_HDRState_Get(_adlContextHandle, adapterIndex, displayTarget.DisplayID, out supported, out enabled);
-                        if (ADLRet == ADL_STATUS.ADL_OK)
+                        // We need to skip recording anything that doesn't support color communication
+                        // Firstly find the display connector if we can
+                        ADL_DISPLAY_CONNECTION_TYPE displayConnector;
+                        try
                         {
-                            if (supported > 0 && enabled > 0)
+                            displayConnector = displayInfoArray.First(d => d.DisplayID == displayTarget.DisplayID).DisplayConnector;                            
+                        }
+                        catch (Exception ex)
+                        {
+                            displayConnector = ADL_DISPLAY_CONNECTION_TYPE.Unknown;
+                        }
+                        SharedLogger.logger.Trace($"AMDLibrary/PrintActiveConfig: Display {displayTarget.DisplayID} on AMD adapter #{adapterIndex} has a {displayConnector} connector.");
+                        // Then only get the HDR config stuff if the connection actually suports getting the HDR info!
+                        if (!SkippedColorConnectionTypes.Contains(displayConnector))
+                        {
+                            // Go through each display and see if HDR is supported
+                            int supported = 0;
+                            int enabled = 0;
+                            ADLRet = ADLImport.ADL2_Display_HDRState_Get(_adlContextHandle, adapterIndex, displayTarget.DisplayID, out supported, out enabled);
+                            if (ADLRet == ADL_STATUS.ADL_OK)
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Get says that display {displayTarget.DisplayID.DisplayLogicalIndex} on adapter {adapterIndex} supports HDR and HDR is enabled.");
-                            }
-                            else if (supported > 0 && enabled == 0)
-                            {
-                                SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Get says that display {displayTarget.DisplayID.DisplayLogicalIndex} on adapter {adapterIndex} supports HDR and HDR is NOT enabled.");
+                                if (supported > 0 && enabled > 0)
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Get says that display {displayTarget.DisplayID.DisplayLogicalIndex} on adapter {adapterIndex} supports HDR and HDR is enabled.");
+                                }
+                                else if (supported > 0 && enabled == 0)
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Get says that display {displayTarget.DisplayID.DisplayLogicalIndex} on adapter {adapterIndex} supports HDR and HDR is NOT enabled.");
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Get says that display {displayTarget.DisplayID.DisplayLogicalIndex} on adapter {adapterIndex} does NOT support HDR.");
+                                }
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: ADL2_Display_HDRState_Get says that display {displayTarget.DisplayID.DisplayLogicalIndex} on adapter {adapterIndex} does NOT support HDR.");
+                                SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - ADL2_Display_HDRState_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer.");
+                                throw new AMDLibraryException($"ADL2_Display_HDRState_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer");
+                            }
+
+                            AMD_HDR_CONFIG hdrConfig = new AMD_HDR_CONFIG();
+                            hdrConfig.AdapterIndex = displayTarget.DisplayID.DisplayPhysicalAdapterIndex;
+                            hdrConfig.HDREnabled = enabled > 0 ? true : false;
+                            hdrConfig.HDRSupported = supported > 0 ? true : false;
+
+                            // Now add this to the HDR config list.                        
+                            if (!myDisplayConfig.HdrConfigs.ContainsKey(displayTarget.DisplayID.DisplayLogicalIndex))
+                            {
+                                // Save the new display config only if we haven't already
+                                myDisplayConfig.HdrConfigs.Add(displayTarget.DisplayID.DisplayLogicalIndex, hdrConfig);
                             }
                         }
-                        else
-                        {
-                            SharedLogger.logger.Error($"AMDLibrary/GetAMDDisplayConfig: ERROR - ADL2_Display_HDRState_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer.");
-                            throw new AMDLibraryException($"ADL2_Display_HDRState_Get returned ADL_STATUS {ADLRet} when trying to get the display target info from AMD adapter {adapterIndex} in the computer");
-                        }
-
-                        AMD_HDR_CONFIG hdrConfig = new AMD_HDR_CONFIG();
-                        hdrConfig.AdapterIndex = displayTarget.DisplayID.DisplayPhysicalAdapterIndex;
-                        hdrConfig.HDREnabled = enabled > 0 ? true : false;
-                        hdrConfig.HDRSupported = supported > 0 ? true : false;
-
-                        // Now add this to the HDR config list.                        
-                        if (!myDisplayConfig.HdrConfigs.ContainsKey(displayTarget.DisplayID.DisplayLogicalIndex))
-                        {
-                            // Save the new display config only if we haven't already
-                            myDisplayConfig.HdrConfigs.Add(displayTarget.DisplayID.DisplayLogicalIndex, hdrConfig);
-                        }
                     }
-
 
                 }
 

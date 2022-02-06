@@ -87,6 +87,7 @@ namespace DisplayMagicianShared.Windows
 
         private bool _initialised = false;
         private WINDOWS_DISPLAY_CONFIG _activeDisplayConfig;
+        public List<DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> SkippedColorConnectionTypes;
 
         // To detect redundant calls
         private bool _disposed = false;
@@ -97,6 +98,15 @@ namespace DisplayMagicianShared.Windows
         static WinLibrary() { }
         public WinLibrary()
         {
+            // Populate the list of ConnectionTypes we want to skip as they don't support querying
+            SkippedColorConnectionTypes = new List<DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> {
+                DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HD15,
+                DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPONENT_VIDEO,
+                DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPOSITE_VIDEO,
+                DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI,
+                DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SVIDEO
+            };
+
             SharedLogger.logger.Trace("WinLibrary/WinLibrary: Intialising Windows CCD library interface");
             _initialised = true;
             _activeDisplayConfig = GetActiveConfig();
@@ -484,70 +494,78 @@ namespace DisplayMagicianShared.Windows
 
                 // Get advanced color info
                 SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get advanced color info for display {paths[i].TargetInfo.Id}.");
-                var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
-                colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
-                colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
-                colorInfo.Header.AdapterId = paths[i].TargetInfo.AdapterId;
-                colorInfo.Header.Id = paths[i].TargetInfo.Id;
-                err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
+
+                // We need to skip recording anything from a connection that doesn't support color communication
+                if (!SkippedColorConnectionTypes.Contains(paths[i].TargetInfo.OutputTechnology))
                 {
-                    gotAdvancedColorInfo = true;
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found color info for display {paths[i].TargetInfo.Id}.");
-                    if (colorInfo.AdvancedColorSupported)
+                    var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
+                    colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+                    colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
+                    colorInfo.Header.AdapterId = paths[i].TargetInfo.AdapterId;
+                    colorInfo.Header.Id = paths[i].TargetInfo.Id;
+                    err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
+                    if (err == WIN32STATUS.ERROR_SUCCESS)
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is supported for display {paths[i].TargetInfo.Id}.");
+                        gotAdvancedColorInfo = true;
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found color info for display {paths[i].TargetInfo.Id}.");
+                        if (colorInfo.AdvancedColorSupported)
+                        {
+                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is supported for display {paths[i].TargetInfo.Id}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT supported for display {paths[i].TargetInfo.Id}.");
+                        }
+                        if (colorInfo.AdvancedColorEnabled)
+                        {
+                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is enabled for display {paths[i].TargetInfo.Id}.");
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT enabled for display {paths[i].TargetInfo.Id}.");
+                        }
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT supported for display {paths[i].TargetInfo.Id}.");
+                        SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get advanced color settings for display {paths[i].TargetInfo.Id}.");
                     }
-                    if (colorInfo.AdvancedColorEnabled)
+
+                    // get SDR white levels
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get SDR white levels for display {paths[i].TargetInfo.Id}.");
+                    var whiteLevelInfo = new DISPLAYCONFIG_SDR_WHITE_LEVEL();
+                    whiteLevelInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
+                    whiteLevelInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SDR_WHITE_LEVEL>();
+                    whiteLevelInfo.Header.AdapterId = paths[i].TargetInfo.AdapterId;
+                    whiteLevelInfo.Header.Id = paths[i].TargetInfo.Id;
+                    err = CCDImport.DisplayConfigGetDeviceInfo(ref whiteLevelInfo);
+                    if (err == WIN32STATUS.ERROR_SUCCESS)
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is enabled for display {paths[i].TargetInfo.Id}.");
+                        gotSdrWhiteLevel = true;
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found SDR White levels for display {paths[i].TargetInfo.Id}.");
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: HDR is NOT enabled for display {paths[i].TargetInfo.Id}.");
+                        SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get SDR White levels for display {paths[i].TargetInfo.Id}.");
+                    }
+
+                    // Only create and add the ADVANCED_HDR_INFO_PER_PATH if the info is there
+                    if (gotAdvancedColorInfo)
+                    {
+                        ADVANCED_HDR_INFO_PER_PATH hdrInfo = new ADVANCED_HDR_INFO_PER_PATH();
+                        hdrInfo.AdapterId = paths[i].TargetInfo.AdapterId;
+                        hdrInfo.Id = paths[i].TargetInfo.Id;
+                        hdrInfo.AdvancedColorInfo = colorInfo;
+                        if (gotSdrWhiteLevel)
+                        {
+                            hdrInfo.SDRWhiteLevel = whiteLevelInfo;
+                        }
+                        windowsDisplayConfig.DisplayHDRStates.Add(hdrInfo);
                     }
                 }
                 else
                 {
-                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get advanced color settings for display {paths[i].TargetInfo.Id}.");
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Skipping getting HDR and SDR White levels information as display {paths[i].TargetInfo.Id} uses a {paths[i].TargetInfo.OutputTechnology} connector that doesn't support HDR.");
                 }
-
-                // get SDR white levels
-                SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get SDR white levels for display {paths[i].TargetInfo.Id}.");
-                var whiteLevelInfo = new DISPLAYCONFIG_SDR_WHITE_LEVEL();
-                whiteLevelInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
-                whiteLevelInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SDR_WHITE_LEVEL>();
-                whiteLevelInfo.Header.AdapterId = paths[i].TargetInfo.AdapterId;
-                whiteLevelInfo.Header.Id = paths[i].TargetInfo.Id;
-                err = CCDImport.DisplayConfigGetDeviceInfo(ref whiteLevelInfo);
-                if (err == WIN32STATUS.ERROR_SUCCESS)
-                {
-                    gotSdrWhiteLevel = true;
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found SDR White levels for display {paths[i].TargetInfo.Id}.");
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get SDR White levels for display {paths[i].TargetInfo.Id}.");
-                }
-
-                // Only create and add the ADVANCED_HDR_INFO_PER_PATH if the info is there
-                if (gotAdvancedColorInfo)
-                {
-                    ADVANCED_HDR_INFO_PER_PATH hdrInfo = new ADVANCED_HDR_INFO_PER_PATH();
-                    hdrInfo.AdapterId = paths[i].TargetInfo.AdapterId;
-                    hdrInfo.Id = paths[i].TargetInfo.Id;
-                    hdrInfo.AdvancedColorInfo = colorInfo;
-                    if (gotSdrWhiteLevel)
-                    {
-                        hdrInfo.SDRWhiteLevel = whiteLevelInfo;
-                    }
-                    windowsDisplayConfig.DisplayHDRStates.Add(hdrInfo);
-                }
-
             }
 
 

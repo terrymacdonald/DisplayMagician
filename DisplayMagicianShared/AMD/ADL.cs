@@ -81,7 +81,7 @@ namespace DisplayMagicianShared.AMD
         ATICV_NONI2C_JPN_Dongle = 7,
         Proprietary = 8,
         HDMITypeA = 10,
-        HTMITypeB = 11,
+        HDMITypeB = 11,
         SVideo = 12,
         Composite = 13,
         RCA_3Component = 14,
@@ -794,7 +794,7 @@ namespace DisplayMagicianShared.AMD
         public bool DisplayConnectorIsATICVDongleNonI2CNTSC => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.ATICV_NONI2C_NTSC_Dongle;
         public bool DisplayConnectorIsProprietary => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.Proprietary;
         public bool DisplayConnectorIsHDMITypeA => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.HDMITypeA;
-        public bool DisplayConnectorIsHDMITypeB => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.HTMITypeB;
+        public bool DisplayConnectorIsHDMITypeB => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.HDMITypeB;
         public bool DisplayConnectorIsSVideo => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.SVideo;
         public bool DisplayConnectorIsComposite => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.Composite;
         public bool DisplayConnectorIsRCA3Component => DisplayConnector == ADL_DISPLAY_CONNECTION_TYPE.RCA_3Component;
