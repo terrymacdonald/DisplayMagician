@@ -500,5 +500,52 @@ namespace DisplayMagicianShared.Windows
             }
             return true;
         }
+
+        public static void RefreshTrayArea()
+        {
+            // Tell Windows to refresh the Main Screen Windows Taskbar
+            // Find the "Shell_TrayWnd" window 
+            //IntPtr SystemTrayHWnd = Utils.FindWindow("ToolbarWindow32", "User Promoted Notification Area");
+            //RefreshTrayArea(SystemTrayHWnd);
+
+            IntPtr systemTrayContainerHandle = Utils.FindWindow("Shell_TrayWnd", null);
+            IntPtr systemTrayHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "TrayNotifyWnd", null);
+            IntPtr sysPagerHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "SysPager", null);
+            IntPtr notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "Notification Area");
+            if (notificationAreaHandle == IntPtr.Zero)
+            {
+                notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "User Promoted Notification Area");
+                IntPtr notifyIconOverflowWindowHandle = Utils.FindWindow("NotifyIconOverflowWindow", null);
+                IntPtr overflowNotificationAreaHandle = Utils.FindWindowEx(notifyIconOverflowWindowHandle, IntPtr.Zero, "ToolbarWindow32", "Overflow Notification Area");
+                //Utils.SendNotifyMessage(overflowNotificationAreaHandle, Utils.WM_PAINT, (UIntPtr)Utils.NULL, "");
+                //Utils.SendNotifyMessage(overflowNotificationAreaHandle, Utils.WM_MOUSEMOVE, (UIntPtr)Utils.NULL, "");
+                RefreshTrayArea(overflowNotificationAreaHandle);
+                notifyIconOverflowWindowHandle = IntPtr.Zero;
+                overflowNotificationAreaHandle = IntPtr.Zero;
+            }
+            RefreshTrayArea(notificationAreaHandle);
+            systemTrayContainerHandle = IntPtr.Zero;
+            systemTrayHandle = IntPtr.Zero;
+            sysPagerHandle = IntPtr.Zero;
+            notificationAreaHandle = IntPtr.Zero;
+
+        }
+
+
+        private static void RefreshTrayArea(IntPtr windowHandle)
+        {
+            // WM_CHANGEUISTATE wParam 0000000000010001, lParam 0000000000000000
+            // WM_PAINT wParam 0000000000000000, lParam 0000000000000000
+            // WM_NCPAINT wParam 0000000000000001, lParam 0000000000000000
+            // WM_SETREDRAW wParam 0000000000000001, lParam 0000000000000000 (true)
+            // WM_CHILDACTIVATE wParam 0000000000000000, lParam 0000000000000000
+
+            Utils.RECT rect;
+            Utils.GetWindowRect(windowHandle, out rect);
+            for (var x = rect.left; x < rect.right; x += 10)
+                for (var y = rect.top; y < rect.bottom; y += 10)
+                    Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, (y << 16) + x);
+
+        }
     }
 }

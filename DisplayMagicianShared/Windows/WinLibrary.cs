@@ -1439,12 +1439,8 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: The current taskbar settings are the same as the one's we want, so skipping setting them!");
             }
 
-            // Restart Windows Explorer if we are in Win11 and if we need to make any TaskBar changes
-            // If we get here, then we need to restart Windows Explorer for the taskbar registry changes to take effect!
-            /*if (needToRestartExplorer && Utils.IsWindows11())
-            {
-                RestartExplorer();
-            }*/
+            // Lastly refesh the System Tray area so that any stopped programs disappear
+            TaskBarStuckRectangle.RefreshTrayArea();
 
             return true;
         }
