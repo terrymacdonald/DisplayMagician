@@ -53,6 +53,7 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
+            
             // Apply the Profile
             //if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             ApplyProfileResult result = Program.ApplyProfileTask(_selectedProfile);
