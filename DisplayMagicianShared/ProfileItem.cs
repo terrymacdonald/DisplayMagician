@@ -12,6 +12,7 @@ using IWshRuntimeLibrary;
 using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
+using System.Runtime.InteropServices;
 
 namespace DisplayMagicianShared
 {
@@ -808,7 +809,6 @@ namespace DisplayMagicianShared
             return false;
         }
 
-
         public List<ScreenPosition> GetScreenPositions()
         {
             if (VideoMode == VIDEO_MODE.NVIDIA)
@@ -824,8 +824,7 @@ namespace DisplayMagicianShared
                 return GetWindowsScreenPositions();
             }
             return new List<ScreenPosition>();
-        }
-
+        }        
 
         private List<ScreenPosition> GetNVIDIAScreenPositions()
         {
