@@ -501,64 +501,50 @@ namespace DisplayMagicianShared.Windows
             return true;
         }
 
-        /*public static void RefreshTrayArea()
+        public static void RefreshTrayArea()
         {
-            // Tell Windows to refresh the Main Screen Windows Taskbar
-            // Find the "Shell_TrayWnd" window 
-            //IntPtr SystemTrayHWnd = Utils.FindWindow("ToolbarWindow32", "User Promoted Notification Area");
-            //RefreshTrayArea(SystemTrayHWnd);
-
+            // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "Notification Area" containing the visible notification area icons (windows 7 version)
             IntPtr systemTrayContainerHandle = Utils.FindWindow("Shell_TrayWnd", null);
             IntPtr systemTrayHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "TrayNotifyWnd", null);
             IntPtr sysPagerHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "SysPager", null);
             IntPtr notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "Notification Area");
+            // If the visible notification area icons (Windows 7 aren't found, then we're on a later version of windows, and we need to look for different window names
             if (notificationAreaHandle == IntPtr.Zero)
             {
+                // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "User Promoted Notification Area" containing the visible notification area icons (windows 10+ version)
                 notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "User Promoted Notification Area");
+                // Also attempt to find the NotifyIconOverflowWindow -> "Overflow Notification Area' window which is the hidden windoww that notification icons live when they are 
+                // too numberous or are hidden by the user.
                 IntPtr notifyIconOverflowWindowHandle = Utils.FindWindow("NotifyIconOverflowWindow", null);
                 IntPtr overflowNotificationAreaHandle = Utils.FindWindowEx(notifyIconOverflowWindowHandle, IntPtr.Zero, "ToolbarWindow32", "Overflow Notification Area");
-                //Utils.SendNotifyMessage(overflowNotificationAreaHandle, Utils.WM_PAINT, (UIntPtr)Utils.NULL, "");
-                //Utils.SendNotifyMessage(overflowNotificationAreaHandle, Utils.WM_MOUSEMOVE, (UIntPtr)Utils.NULL, "");
+                // Fool the "Overflow Notification Area' window into thinking the mouse is moving over it
+                // which will force windows to refresh the "Overflow Notification Area' window and remove old icons.
                 RefreshTrayArea(overflowNotificationAreaHandle);
                 notifyIconOverflowWindowHandle = IntPtr.Zero;
                 overflowNotificationAreaHandle = IntPtr.Zero;
             }
+            // Fool the "Notification Area" or "User Promoted Notification Area" window (depends on the version of windows) into thinking the mouse is moving over it
+            // which will force windows to refresh the "Notification Area" or "User Promoted Notification Area" window and remove old icons.
             RefreshTrayArea(notificationAreaHandle);
             systemTrayContainerHandle = IntPtr.Zero;
             systemTrayHandle = IntPtr.Zero;
             sysPagerHandle = IntPtr.Zero;
             notificationAreaHandle = IntPtr.Zero;
 
-        }*/
-
-
-        /*private static void RefreshTrayArea(IntPtr windowHandle)
-        {
-            // WM_CHANGEUISTATE wParam 0x0000000000010001, lParam 0x0000000000000000 
-            const int WM_CHANGEUISTATE = 0x127; // An application sends the WM_CHANGEUISTATE message to indicate that the user interface (UI) state should be changed.
-            // WM_PAINT wParam 0000000000000000, lParam 0000000000000000
-            const int WM_PAINT = 0xF; // Occurs when the control needs repainting
-            // WM_NCPAINT wParam 0000000000000001, lParam 0000000000000000
-            const int WM_NCPAINT = 0x85; // The WM_NCPAINT message is sent to a window when its frame must be painted.
-            // WM_SETREDRAW wParam 0000000000000001, lParam 0000000000000000 (true)
-            const int WM_SETREDRAW = 0xB; // An application sends the WM_SETREDRAW message to a window to allow changes in that window to be redrawn or to prevent changes in that window from being redrawn.
-            // WM_CHILDACTIVATE wParam 0000000000000000, lParam 0000000000000000
-            const int WM_CHILDACTIVATE = 0x22; // The WM_CHILDACTIVATE message is sent to a child window when the user clicks the window's title bar or when the window is activated, moved, or sized.
-            const int WM_SETTINGCHANGE = 0x001a;
-
-            //Utils.SendMessage(windowHandle, WM_SETTINGCHANGE, 0, 0);
-
-            Utils.RECT rect;
-            Utils.GetWindowRect(windowHandle, out rect);
-            int lrStep = Convert.ToInt32((rect.right - rect.left) / 20);
-            int tbStep = Convert.ToInt32((rect.bottom - rect.top) / 20);
-            for (var x = rect.left; x < rect.right; x += lrStep)
-                for (var y = rect.top; y < rect.bottom; y += tbStep)
-                    Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, Utils.MakeLParam(x,y));
-
         }
 
-        public void DoMouseLeftClick(IntPtr handle, Point x)
+
+        private static void RefreshTrayArea(IntPtr windowHandle)
+        {
+            // Moves the mouse around within the window area of the supplied window
+            Utils.RECT rect;
+            Utils.GetClientRect(windowHandle, out rect);
+            for (var x = 0; x < rect.right; x += 5)
+                for (var y = 0; y < rect.bottom; y += 5)
+                    Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, (y << 16) + x);
+        }
+
+        /*public void DoMouseLeftClick(IntPtr handle, Point x)
         {
             Utils.SendMessage(handle, (int)Utils.WM_MOUSEMOVE, 0, Utils.MakeLParam(x.X, x.Y));
             //SendMessage(handle, (int)Utils.WM_LBUTTONUP, 0, Utils.MakeLParam(x.X, x.Y));
@@ -569,7 +555,7 @@ namespace DisplayMagicianShared.Windows
 
             Utils.PostMessage(handle, Utils.WM_MOUSEMOVE, 0, Utils.MakeLParam(x.X, x.Y));
             //PostMessage(handle, (uint)Utils.WM_LBUTTONUP, 0, Utils.MakeLParam(x.X, x.Y));
-        }*/
-
+        }
+*/
     }
 }

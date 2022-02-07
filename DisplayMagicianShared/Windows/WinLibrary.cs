@@ -1440,8 +1440,7 @@ namespace DisplayMagicianShared.Windows
             }
 
             // Lastly refesh the System Tray area so that any stopped programs disappear
-            //TaskBarStuckRectangle.RefreshTrayArea();
-            Utils.RefreshNotificationTray();
+            TaskBarStuckRectangle.RefreshTrayArea();
 
             return true;
         }
