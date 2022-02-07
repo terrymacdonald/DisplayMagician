@@ -1921,8 +1921,12 @@ namespace DisplayMagician
 
                 // Shutdown the processes
                 ProcessUtils.StopProcess(startProgramsToStop);
+
+                // Refresh the system tray / notification tray area to clean out any applications we stopped
+                DisplayMagicianShared.Windows.TaskBarStuckRectangle.RefreshTrayArea();
             }
 
+         
             // Change Audio Device back (if one specified)
             if (activeAudioDevices.Count > 0)
             {
@@ -2066,6 +2070,8 @@ namespace DisplayMagician
                     logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while starting Stop Program {stopProg.Executable} {stopProg.Arguments}");
                 }
             }
+
+            
 
 
             // Reset the popup over the system tray icon to what's normal for it.

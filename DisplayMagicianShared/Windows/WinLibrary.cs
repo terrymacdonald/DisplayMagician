@@ -1439,9 +1439,6 @@ namespace DisplayMagicianShared.Windows
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: The current taskbar settings are the same as the one's we want, so skipping setting them!");
             }
 
-            // Lastly refesh the System Tray area so that any stopped programs disappear
-            TaskBarStuckRectangle.RefreshTrayArea();
-
             return true;
         }
 
