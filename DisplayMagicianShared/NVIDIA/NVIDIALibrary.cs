@@ -161,6 +161,15 @@ namespace DisplayMagicianShared.NVIDIA
         static NVIDIALibrary() { }
         public NVIDIALibrary()
         {
+            // Populate the list of ConnectionTypes we want to skip as they don't support querying
+            SkippedColorConnectionTypes = new List<NV_MONITOR_CONN_TYPE> {
+                NV_MONITOR_CONN_TYPE.VGA,
+                NV_MONITOR_CONN_TYPE.COMPONENT,
+                NV_MONITOR_CONN_TYPE.SVIDEO,
+                NV_MONITOR_CONN_TYPE.DVI,
+                NV_MONITOR_CONN_TYPE.COMPOSITE,
+            };
+
             _activeDisplayConfig = CreateDefaultConfig();
             try
             {
@@ -197,16 +206,7 @@ namespace DisplayMagicianShared.NVIDIA
             {
                 // If this fires, then the DLL isn't available, so we need don't try to do anything else
                 SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed.");
-            }
-
-            // Populate the list of ConnectionTypes we want to skip as they don't support querying
-            SkippedColorConnectionTypes = new List<NV_MONITOR_CONN_TYPE> { 
-                NV_MONITOR_CONN_TYPE.VGA,
-                NV_MONITOR_CONN_TYPE.COMPONENT,
-                NV_MONITOR_CONN_TYPE.SVIDEO,
-                NV_MONITOR_CONN_TYPE.DVI,
-                NV_MONITOR_CONN_TYPE.COMPOSITE,
-            };
+            }            
 
         }
 

@@ -171,6 +171,16 @@ namespace DisplayMagicianShared.AMD
         static AMDLibrary() { }
         public AMDLibrary()
         {
+            // Populate the list of ConnectionTypes we want to skip as they don't support querying
+            SkippedColorConnectionTypes = new List<ADL_DISPLAY_CONNECTION_TYPE> {
+                ADL_DISPLAY_CONNECTION_TYPE.Composite,
+                ADL_DISPLAY_CONNECTION_TYPE.DVI_D,
+                ADL_DISPLAY_CONNECTION_TYPE.DVI_I,
+                ADL_DISPLAY_CONNECTION_TYPE.RCA_3Component,
+                ADL_DISPLAY_CONNECTION_TYPE.SVideo,
+                ADL_DISPLAY_CONNECTION_TYPE.VGA
+            };
+
             _activeDisplayConfig = CreateDefaultConfig();
             try
             {
@@ -211,17 +221,7 @@ namespace DisplayMagicianShared.AMD
             {
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
-            }
-
-            // Populate the list of ConnectionTypes we want to skip as they don't support querying
-            SkippedColorConnectionTypes = new List<ADL_DISPLAY_CONNECTION_TYPE> {
-                ADL_DISPLAY_CONNECTION_TYPE.Composite,
-                ADL_DISPLAY_CONNECTION_TYPE.DVI_D,
-                ADL_DISPLAY_CONNECTION_TYPE.DVI_I,
-                ADL_DISPLAY_CONNECTION_TYPE.RCA_3Component,
-                ADL_DISPLAY_CONNECTION_TYPE.SVideo,
-                ADL_DISPLAY_CONNECTION_TYPE.VGA
-            };
+            }            
 
         }
 
