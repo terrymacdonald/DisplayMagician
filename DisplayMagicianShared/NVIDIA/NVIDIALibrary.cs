@@ -59,8 +59,9 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool Equals(object obj) => obj is NVIDIA_HDR_CONFIG other && this.Equals(other);
         public bool Equals(NVIDIA_HDR_CONFIG other)
         => HdrCapabilities.SequenceEqual(other.HdrCapabilities) &&
-           HdrColorData.SequenceEqual(other.HdrColorData) &&
-           IsNvHdrEnabled == other.IsNvHdrEnabled;
+                    HdrColorData.SequenceEqual(other.HdrColorData) &&
+                    IsNvHdrEnabled == other.IsNvHdrEnabled;
+       
 
         public override int GetHashCode()
         {
@@ -124,12 +125,13 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool Equals(object obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
 
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
-        => MosaicConfig.Equals(other.MosaicConfig) &&
-           HdrConfig.Equals(other.HdrConfig) &&
+           => HdrConfig.Equals(other.HdrConfig) &&
+            MosaicConfig.Equals(other.MosaicConfig) &&
            ColorConfig.Equals(other.ColorConfig) &&
            CustomDisplays.SequenceEqual(other.CustomDisplays) &&
            DisplayConfigs.SequenceEqual(other.DisplayConfigs) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
+        
 
         public override int GetHashCode()
         {
@@ -282,6 +284,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Fill in the minimal amount we need to avoid null references
             // so that we won't break json.net when we save a default config
 
+            myDefaultConfig.MosaicConfig.IsMosaicEnabled = false;
             myDefaultConfig.MosaicConfig.MosaicGridTopos = new NV_MOSAIC_GRID_TOPO_V2[0];
             myDefaultConfig.MosaicConfig.MosaicViewports = new List<NV_RECT[]>();
             myDefaultConfig.HdrConfig.HdrCapabilities = new Dictionary<string, NV_HDR_CAPABILITIES_V2>();
@@ -320,7 +323,7 @@ namespace DisplayMagicianShared.NVIDIA
 
         private NVIDIA_DISPLAY_CONFIG GetNVIDIADisplayConfig(bool allDisplays = false)
         {
-            NVIDIA_DISPLAY_CONFIG myDisplayConfig = new NVIDIA_DISPLAY_CONFIG();
+            NVIDIA_DISPLAY_CONFIG myDisplayConfig = CreateDefaultConfig();
 
             if (_initialised)
             {

@@ -9,6 +9,7 @@ using System.IO;
 using System.ComponentModel;
 using Microsoft.Win32;
 using System.Threading.Tasks;
+using static DisplayMagicianShared.Windows.TaskBarStuckRectangle;
 
 namespace DisplayMagicianShared.Windows
 {
@@ -320,6 +321,10 @@ namespace DisplayMagicianShared.Windows
 
         private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS | QDC.QDC_INCLUDE_HMD)
         {
+
+            // Prepare the empty windows display config
+            WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = CreateDefaultConfig();
+
             // Get the size of the largest Active Paths and Modes arrays
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the size of the largest Active Paths and Modes arrays");
             int pathCount = 0;
@@ -368,13 +373,7 @@ namespace DisplayMagicianShared.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
-            // Prepare the empty windows display config
-            WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
-            windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
-            windowsDisplayConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
-            windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
-            windowsDisplayConfig.IsCloned = false;
-
+            
             // First of all generate the current displayIdentifiers
             windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
 
@@ -633,6 +632,7 @@ namespace DisplayMagicianShared.Windows
                 if (match.Success)
                 {
                     string devicePath = match.Groups[1].Value;
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found devicePath {devicePath} from the display identifier {displayId}.");
                     TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle(devicePath);
                     taskBarStuckRectangles.Add(taskBarStuckRectangle);
                 }
@@ -1393,7 +1393,7 @@ namespace DisplayMagicianShared.Windows
 
                         if (tbsr.MainScreen)
                         {
-                            TaskBarStuckRectangle.RepositionMainTaskBar(tbsr.Edge);
+                            RepositionMainTaskBar(tbsr.Edge);
                         }
 
                     }
@@ -1408,7 +1408,7 @@ namespace DisplayMagicianShared.Windows
                 IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
                 if (displayConfig.TaskBarLayout.Count > 1)
                 {
-                    TaskBarStuckRectangle.RepositionSecondaryTaskBars();
+                    RepositionSecondaryTaskBars();
                 }
 
             }
@@ -1958,7 +1958,111 @@ namespace DisplayMagicianShared.Windows
             {
                 return false;
             }
-        }        
+        }
+
+        public static bool RepositionMainTaskBar(TaskBarEdge edge)
+        {
+            // Tell Windows to refresh the Main Screen Windows Taskbar
+            // Find the "Shell_TrayWnd" window 
+            IntPtr mainToolBarHWnd = Utils.FindWindow("Shell_TrayWnd", null);
+            // Send the "Shell_TrayWnd" window a WM_USER_REFRESHTASKBAR with a wParameter of 0006 and a lParamater of the position (e.g. 0000 for left, 0001 for top, 0002 for right and 0003 for bottom)
+            IntPtr taskBarPositionBuffer = new IntPtr((Int32)edge);
+            Utils.SendMessage(mainToolBarHWnd, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
+            return true;
+        }
+
+        public static bool RepositionSecondaryTaskBars()
+        {
+            // Tell Windows to refresh the Other Windows Taskbars if needed
+            IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
+            for (int i = 0; i < 100; i++)
+            {
+                // Find the next "Shell_SecondaryTrayWnd" window 
+                IntPtr nextTaskBarWindowHwnd = Utils.FindWindowEx((IntPtr)Utils.NULL, lastTaskBarWindowHwnd, "Shell_SecondaryTrayWnd", null);
+                if (nextTaskBarWindowHwnd == (IntPtr)Utils.NULL)
+                {
+                    // No more windows taskbars to notify
+                    break;
+                }
+                // Send the "Shell_TrayWnd" window a WM_SETTINGCHANGE with a wParameter of SPI_SETWORKAREA
+                Utils.SendMessage(lastTaskBarWindowHwnd, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+                lastTaskBarWindowHwnd = nextTaskBarWindowHwnd;
+            }
+            return true;
+        }
+
+        public static bool RefreshTaskBars()
+        {
+            // Tell Windows to refresh the Main Screen Windows Taskbar registry settings by telling Explorer to update.
+            // Find the "Shell_TrayWnd" window 
+            IntPtr mainToolBarHWnd = Utils.FindWindow("Shell_TrayWnd", null);
+            Utils.SendMessage(mainToolBarHWnd, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+            // Tell Windows to refresh the Other Windows Taskbars if needed
+            IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
+            for (int i = 0; i < 100; i++)
+            {
+                // Find the next "Shell_SecondaryTrayWnd" window 
+                IntPtr nextTaskBarWindowHwnd = Utils.FindWindowEx((IntPtr)Utils.NULL, lastTaskBarWindowHwnd, "Shell_SecondaryTrayWnd", null);
+                if (nextTaskBarWindowHwnd == (IntPtr)Utils.NULL)
+                {
+                    // No more windows taskbars to notify
+                    break;
+                }
+                // Send the "Shell_TrayWnd" window a WM_SETTINGCHANGE with a wParameter of SPI_SETWORKAREA
+                Utils.SendMessage(lastTaskBarWindowHwnd, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+                lastTaskBarWindowHwnd = nextTaskBarWindowHwnd;
+            }
+
+            //IntPtr explorerToolBarHWnd = Utils.FindWindow("Shell_TrayWnd", null);
+            //Utils.PostMessage((IntPtr)Utils.HWND_BROADCAST, Utils.SHELLHOOK, 0x13, (int) mainToolBarHWnd);
+            //Utils.PostMessage((IntPtr)Utils.HWND_BROADCAST, Utils.WM_SETTINGCHANGE, (int)Utils.SPI_SETWORKAREA, (int)Utils.NULL);
+            /*IntPtr result;
+            Utils.SendMessageTimeout((IntPtr)Utils.HWND_BROADCAST, Utils.WM_USER_1, (IntPtr)Utils.NULL, (IntPtr)Utils.NULL, Utils.SendMessageTimeoutFlag.SMTO_ABORTIFHUNG, 15, out result);*/
+            return true;
+        }
+
+        public static void RefreshTrayArea()
+        {
+            // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "Notification Area" containing the visible notification area icons (windows 7 version)
+            IntPtr systemTrayContainerHandle = Utils.FindWindow("Shell_TrayWnd", null);
+            IntPtr systemTrayHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "TrayNotifyWnd", null);
+            IntPtr sysPagerHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "SysPager", null);
+            IntPtr notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "Notification Area");
+            // If the visible notification area icons (Windows 7 aren't found, then we're on a later version of windows, and we need to look for different window names
+            if (notificationAreaHandle == IntPtr.Zero)
+            {
+                // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "User Promoted Notification Area" containing the visible notification area icons (windows 10+ version)
+                notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "User Promoted Notification Area");
+                // Also attempt to find the NotifyIconOverflowWindow -> "Overflow Notification Area' window which is the hidden windoww that notification icons live when they are 
+                // too numberous or are hidden by the user.
+                IntPtr notifyIconOverflowWindowHandle = Utils.FindWindow("NotifyIconOverflowWindow", null);
+                IntPtr overflowNotificationAreaHandle = Utils.FindWindowEx(notifyIconOverflowWindowHandle, IntPtr.Zero, "ToolbarWindow32", "Overflow Notification Area");
+                // Fool the "Overflow Notification Area' window into thinking the mouse is moving over it
+                // which will force windows to refresh the "Overflow Notification Area' window and remove old icons.
+                RefreshTrayArea(overflowNotificationAreaHandle);
+                notifyIconOverflowWindowHandle = IntPtr.Zero;
+                overflowNotificationAreaHandle = IntPtr.Zero;
+            }
+            // Fool the "Notification Area" or "User Promoted Notification Area" window (depends on the version of windows) into thinking the mouse is moving over it
+            // which will force windows to refresh the "Notification Area" or "User Promoted Notification Area" window and remove old icons.
+            RefreshTrayArea(notificationAreaHandle);
+            systemTrayContainerHandle = IntPtr.Zero;
+            systemTrayHandle = IntPtr.Zero;
+            sysPagerHandle = IntPtr.Zero;
+            notificationAreaHandle = IntPtr.Zero;
+
+        }
+
+
+        private static void RefreshTrayArea(IntPtr windowHandle)
+        {
+            // Moves the mouse around within the window area of the supplied window
+            Utils.RECT rect;
+            Utils.GetClientRect(windowHandle, out rect);
+            for (var x = 0; x < rect.right; x += 5)
+                for (var y = 0; y < rect.bottom; y += 5)
+                    Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, (y << 16) + x);
+        }
 
     }
 

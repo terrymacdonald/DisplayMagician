@@ -349,7 +349,12 @@ namespace DisplayMagicianShared
         public const int WM_SETTINGCHANGE = 0x001a;
         public const int WM_MOUSEMOVE = 0x0200;
         public const int SPI_SETWORKAREA  = 0x002F;
+        public const int SHELLHOOK = 0xC028;
         public const int WM_USER_REFRESHTASKBAR = 0x05CA;
+        public const int WM_USER_440 = 0x05B8;
+        public const int WM_USER_92 = 0x045C;
+        public const int WM_USER_1 = 0x0401;
+        public const int WM_USER_100 = 0x0464;
         public const int wParam_SHELLTRAY = 0x00000006;
     }
 

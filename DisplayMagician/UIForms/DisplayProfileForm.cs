@@ -518,9 +518,13 @@ namespace DisplayMagician.UIForms
         protected override void WndProc(ref Message m)
         {
             const int WM_DISPLAYCHANGE = 0x007E;
+            const int WM_SETTINGCHANGE = 0x001A;
+            const int WM_DEVICECHANGE = 0x0219;
 
             switch (m.Msg)
             {
+                case WM_DEVICECHANGE:
+                case WM_SETTINGCHANGE:
                 case WM_DISPLAYCHANGE:
                     btn_view_current.PerformClick();
                     break;

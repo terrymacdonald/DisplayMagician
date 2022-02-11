@@ -289,6 +289,7 @@ namespace DisplayMagician.UIForms
             this.lbl_save_profile.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.lbl_save_profile.BackColor = System.Drawing.Color.Brown;
             this.lbl_save_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_save_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
             this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;

@@ -112,6 +112,9 @@ namespace DisplayMagicianShared.Windows
                             PopulateFieldsFromBinary();
 
                             SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: The taskbar for {DevicePath} is against the {Edge} edge, is positioned at ({Location.X},{Location.Y}) and is {Location.Width}x{Location.Height} in size.");
+
+                            // If we get here then we're done and don't need to continue with the rest of the code.
+                            return;
                         }
                         else
                         {
@@ -119,6 +122,14 @@ namespace DisplayMagicianShared.Windows
                         }
                     }
                 }
+                else
+                {
+                    SharedLogger.logger.Error($"TaskBarStuckRectangle/TaskBarStuckRectangle: A MMStuckRect entry was found, but the version of the field is wrong.");
+                }                
+            }
+            else
+            {
+                SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: A MMStuckRect entry was NOT found. We will try to find the object in the StuckRect registry key instead");
             }
 
             if (!foundDevicePath)
@@ -180,6 +191,23 @@ namespace DisplayMagicianShared.Windows
                             }
                         }
                     }
+                    else
+                    {
+                        SharedLogger.logger.Error($"TaskBarStuckRectangle/TaskBarStuckRectangle: A StuckRect entry was found, but the version of the field is wrong.");
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Error($"TaskBarStuckRectangle/TaskBarStuckRectangle: A StuckRect entry was NOT found. This means we're unable to get the taskbar location, an unable to return a sensible TaskBarStuckRectangle object.");
+                    throw new TaskBarStuckRectangleException("A StuckRect entry was NOT found. This means we're unable to get the taskbar location, an unable to return a sensible TaskBarStuckRectangle object.");
+                    //SharedLogger.logger.Error($"TaskBarStuckRectangle/TaskBarStuckRectangle: A StuckRect entry was NOT found. This means we're unable to get the taskbar location, so we'll return a default object instead.");
+                    /*Version = 3;
+                    DPI = 0;
+                    Edge = TaskBarEdge.Bottom;
+                    Location = Rectangle.Empty;
+                    MinSize = new Size(48,48); 
+                    Options = 0; 
+                    Rows = 1;*/
                 }
             }
         }
@@ -470,79 +498,7 @@ namespace DisplayMagicianShared.Windows
             return true;
         }
 
-        public static bool RepositionMainTaskBar(TaskBarEdge edge)
-        {
-            // Tell Windows to refresh the Main Screen Windows Taskbar
-            // Find the "Shell_TrayWnd" window 
-            IntPtr mainToolBarHWnd = Utils.FindWindow("Shell_TrayWnd", null);
-            // Send the "Shell_TrayWnd" window a WM_USER_REFRESHTASKBAR with a wParameter of 0006 and a lParamater of the position (e.g. 0000 for left, 0001 for top, 0002 for right and 0003 for bottom)
-            IntPtr taskBarPositionBuffer = new IntPtr((Int32)edge);
-            Utils.SendMessage(mainToolBarHWnd, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
-            return true;
-        }
-
-        public static bool RepositionSecondaryTaskBars()
-        {
-            // Tell Windows to refresh the Other Windows Taskbars if needed
-            IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
-            for (int i = 0; i < 100; i++)
-            {
-                // Find the next "Shell_SecondaryTrayWnd" window 
-                IntPtr nextTaskBarWindowHwnd = Utils.FindWindowEx((IntPtr)Utils.NULL, lastTaskBarWindowHwnd, "Shell_SecondaryTrayWnd", null);
-                if (nextTaskBarWindowHwnd == (IntPtr)Utils.NULL)
-                {
-                    // No more windows taskbars to notify
-                    break;
-                }
-                // Send the "Shell_TrayWnd" window a WM_SETTINGCHANGE with a wParameter of SPI_SETWORKAREA
-                Utils.SendMessage(lastTaskBarWindowHwnd, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
-                lastTaskBarWindowHwnd = nextTaskBarWindowHwnd;
-            }
-            return true;
-        }
-
-        public static void RefreshTrayArea()
-        {
-            // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "Notification Area" containing the visible notification area icons (windows 7 version)
-            IntPtr systemTrayContainerHandle = Utils.FindWindow("Shell_TrayWnd", null);
-            IntPtr systemTrayHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "TrayNotifyWnd", null);
-            IntPtr sysPagerHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "SysPager", null);
-            IntPtr notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "Notification Area");
-            // If the visible notification area icons (Windows 7 aren't found, then we're on a later version of windows, and we need to look for different window names
-            if (notificationAreaHandle == IntPtr.Zero)
-            {
-                // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "User Promoted Notification Area" containing the visible notification area icons (windows 10+ version)
-                notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "User Promoted Notification Area");
-                // Also attempt to find the NotifyIconOverflowWindow -> "Overflow Notification Area' window which is the hidden windoww that notification icons live when they are 
-                // too numberous or are hidden by the user.
-                IntPtr notifyIconOverflowWindowHandle = Utils.FindWindow("NotifyIconOverflowWindow", null);
-                IntPtr overflowNotificationAreaHandle = Utils.FindWindowEx(notifyIconOverflowWindowHandle, IntPtr.Zero, "ToolbarWindow32", "Overflow Notification Area");
-                // Fool the "Overflow Notification Area' window into thinking the mouse is moving over it
-                // which will force windows to refresh the "Overflow Notification Area' window and remove old icons.
-                RefreshTrayArea(overflowNotificationAreaHandle);
-                notifyIconOverflowWindowHandle = IntPtr.Zero;
-                overflowNotificationAreaHandle = IntPtr.Zero;
-            }
-            // Fool the "Notification Area" or "User Promoted Notification Area" window (depends on the version of windows) into thinking the mouse is moving over it
-            // which will force windows to refresh the "Notification Area" or "User Promoted Notification Area" window and remove old icons.
-            RefreshTrayArea(notificationAreaHandle);
-            systemTrayContainerHandle = IntPtr.Zero;
-            systemTrayHandle = IntPtr.Zero;
-            sysPagerHandle = IntPtr.Zero;
-            notificationAreaHandle = IntPtr.Zero;
-
-        }
-
-
-        private static void RefreshTrayArea(IntPtr windowHandle)
-        {
-            // Moves the mouse around within the window area of the supplied window
-            Utils.RECT rect;
-            Utils.GetClientRect(windowHandle, out rect);
-            for (var x = 0; x < rect.right; x += 5)
-                for (var y = 0; y < rect.bottom; y += 5)
-                    Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, (y << 16) + x);
-        }
+        
 
         /*public void DoMouseLeftClick(IntPtr handle, Point x)
         {
@@ -557,5 +513,16 @@ namespace DisplayMagicianShared.Windows
             //PostMessage(handle, (uint)Utils.WM_LBUTTONUP, 0, Utils.MakeLParam(x.X, x.Y));
         }
 */
+    }
+
+    [global::System.Serializable]
+    public class TaskBarStuckRectangleException : Exception
+    {
+        public TaskBarStuckRectangleException() { }
+        public TaskBarStuckRectangleException(string message) : base(message) { }
+        public TaskBarStuckRectangleException(string message, Exception inner) : base(message, inner) { }
+        protected TaskBarStuckRectangleException(
+            System.Runtime.Serialization.SerializationInfo info,
+            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 }

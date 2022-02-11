@@ -318,6 +318,7 @@ namespace DisplayMagicianShared.AMD
             // so that we won't break json.net when we save a default config
 
             myDefaultConfig.AdapterConfigs = new List<AMD_ADAPTER_CONFIG>();
+            myDefaultConfig.SlsConfig.IsSlsEnabled = false;
             myDefaultConfig.SlsConfig.SLSMapConfigs = new List<AMD_SLSMAP_CONFIG>();
             myDefaultConfig.SlsConfig.SLSEnabledDisplayTargets = new List<ADL_MODE>();
             myDefaultConfig.DisplayMaps = new List<ADL_DISPLAY_MAP>();
@@ -353,13 +354,7 @@ namespace DisplayMagicianShared.AMD
 
         private AMD_DISPLAY_CONFIG GetAMDDisplayConfig(bool allDisplays = false)
         {
-            AMD_DISPLAY_CONFIG myDisplayConfig = new AMD_DISPLAY_CONFIG();
-            myDisplayConfig.AdapterConfigs = new List<AMD_ADAPTER_CONFIG>();
-
-            // We set up the default for this display config as SLS disabled
-            // (We will change this later if it turns out we're using SLS)
-            myDisplayConfig.SlsConfig.IsSlsEnabled = false;
-            myDisplayConfig.SlsConfig.SLSEnabledDisplayTargets = new List<ADL_MODE>();
+            AMD_DISPLAY_CONFIG myDisplayConfig = CreateDefaultConfig();
 
             if (_initialised)
             {

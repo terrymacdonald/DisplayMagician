@@ -1922,11 +1922,12 @@ namespace DisplayMagician
                 // Shutdown the processes
                 ProcessUtils.StopProcess(startProgramsToStop);
 
-                // Refresh the system tray / notification tray area to clean out any applications we stopped
-                DisplayMagicianShared.Windows.TaskBarStuckRectangle.RefreshTrayArea();
+                // Refresh the system tray / notification tray area to clean out any applications we stopped               
+                DisplayMagicianShared.Windows.WinLibrary.RefreshTrayArea();
+
             }
 
-         
+
             // Change Audio Device back (if one specified)
             if (activeAudioDevices.Count > 0)
             {

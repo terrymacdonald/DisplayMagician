@@ -350,12 +350,19 @@ namespace DisplayMagicianShared
         {
             get
             {
-                if (_profileShortcutBitmap != null)
-                    return _profileShortcutBitmap;
+                if (ProfileRepository.ProfilesLoaded)
+                {
+                    if (_profileShortcutBitmap != null)
+                        return _profileShortcutBitmap;
+                    else
+                    {
+                        _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
+                        return _profileShortcutBitmap;
+                    }
+                }
                 else
                 {
-                    _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
-                    return _profileShortcutBitmap;
+                    return null;
                 }
             }
             set
@@ -1280,18 +1287,7 @@ namespace DisplayMagicianShared
                     screen.IsSpanned = false;
                     screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
-                    screen.ClonedCopies = 0;
-                    try
-                    {
-                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.DevicePath.Contains($"UID{targetId}")).Edge;
-                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Guess that it is at the bottom (90% correct)
-                        SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
-                        screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
-                    }
+                    screen.ClonedCopies = 0;                    
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
                         if (displaySource.Value.Contains(sourceId))
@@ -1356,6 +1352,39 @@ namespace DisplayMagicianShared
                             break;
                         }
                     }
+
+                    // Now we try to set the taskbar positions
+                    if (screen.IsPrimary)
+                    {
+                        // If the screen is the primary screen, then we check if we need to use the StuckRect 'Settings' reg keys
+                        // rather than the MMStuckRect reg keys
+                        try
+                        {
+                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tb => tb.DevicePath.Contains("Settings")).Edge;
+                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                        }
+                        catch (Exception ex)
+                        {
+                            // Guess that it is at the bottom (90% correct)
+                            SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
+                            screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
+                        }
+
+                    }
+                    else
+                    {
+                        try
+                        {
+                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.DevicePath.Contains($"UID{targetId}")).Edge;
+                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                        }
+                        catch (Exception ex)
+                        {
+                            // Guess that it is at the bottom (90% correct)
+                            SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                            screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
+                        }
+                    }                    
 
                     SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 

@@ -9,7 +9,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
-using DisplayMagicianShared.Windows;
 
 namespace DisplayMagician.UIForms
 {
@@ -117,7 +116,7 @@ namespace DisplayMagician.UIForms
 
                             if (tbsr.MainScreen)
                             {
-                                TaskBarStuckRectangle.RepositionMainTaskBar(taskbarForcedEdge);
+                                WinLibrary.RepositionMainTaskBar(taskbarForcedEdge);
                             }
 
                         }
@@ -132,7 +131,7 @@ namespace DisplayMagician.UIForms
                 {
                     SharedLogger.logger.Trace($"ProfileToolsForm/btn_apply_Click: No taskbar layout in display profile so skipping setting it!");
                 }
-                TaskBarStuckRectangle.RepositionSecondaryTaskBars();
+                WinLibrary.RepositionSecondaryTaskBars();
 
                 // Now set the option to completed.
                 DialogResult = DialogResult.OK;
