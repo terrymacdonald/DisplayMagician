@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace DisplayMagicianShared.Windows
 {
-    public class TaskBarStuckRectangle
+    public class TaskBarStuckRectangle : IEquatable<TaskBarStuckRectangle>, IComparable<TaskBarStuckRectangle>
     {        
 
         public enum TaskBarEdge : UInt32
@@ -118,7 +118,7 @@ namespace DisplayMagicianShared.Windows
                         }
                         else
                         {
-                            SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen.");
+                            SharedLogger.logger.Trace($"TaskBarStuckRectangle/TaskBarStuckRectangle: Unable to get the TaskBarStuckRectangle binary settings from {devicePath} screen from the MMSuckRect. Trying the main StruckRect instead.");
                         }
                     }
                 }
@@ -259,6 +259,21 @@ namespace DisplayMagicianShared.Windows
         public static bool operator ==(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(TaskBarStuckRectangle lhs, TaskBarStuckRectangle rhs) => !(lhs == rhs);
+
+        public int CompareTo(TaskBarStuckRectangle other)
+        {
+            int ourHashCode = GetHashCode();
+            int otherHashCode = other.GetHashCode();
+
+            if (ourHashCode > otherHashCode)
+                return 1;
+
+            if (ourHashCode < otherHashCode)
+                return -1;
+
+            else
+                return 0;
+        }
 
         static bool Xor(byte[] a, byte[] b)
 
@@ -498,7 +513,38 @@ namespace DisplayMagicianShared.Windows
             return true;
         }
 
-        
+        public static List<TaskBarStuckRectangle> GetAllTaskBarStuckRectangles()
+        {
+
+            // Now attempt to get the windows taskbar location for each display
+            // We use the information we already got from the display identifiers
+            SharedLogger.logger.Trace($"TaskBarStuckRectangles/GetAllTaskBarStuckRectangles: Attempting to get the Windows Taskbar layout.");
+            List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
+            foreach (var displayId in WinLibrary.GetLibrary().GetCurrentDisplayIdentifiers())
+            {
+                // e.g. "WINAPI|\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}|DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI|54074|4318|\\\\?\\DISPLAY#NVS10DE#5&2b46c695&0&UID185344#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}|NV Surround"
+                string[] winapiLine = displayId.Split('|');
+                string pattern = @"DISPLAY\#(.*)\#\{";
+                Match match = Regex.Match(winapiLine[5], pattern);
+                if (match.Success)
+                {
+                    string devicePath = match.Groups[1].Value;
+                    SharedLogger.logger.Trace($"TaskBarStuckRectangles/GetAllTaskBarStuckRectangles: Found devicePath {devicePath} from the display identifier {displayId}.");
+                    TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle(devicePath);
+                    taskBarStuckRectangles.Add(taskBarStuckRectangle);
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"TaskBarStuckRectangles/GetAllTaskBarStuckRectangles: We were unable to figure out the DevicePath for the '{displayId}' display identifier.");
+                }
+
+            }
+            // And we get the Main Screen taskbar too
+            TaskBarStuckRectangle mainTaskBarStuckRectangle = new TaskBarStuckRectangle("Settings");
+            taskBarStuckRectangles.Add(mainTaskBarStuckRectangle);
+            return taskBarStuckRectangles;
+        }
+
 
         /*public void DoMouseLeftClick(IntPtr handle, Point x)
         {
