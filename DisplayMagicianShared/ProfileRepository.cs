@@ -839,43 +839,7 @@ namespace DisplayMagicianShared
             // We do the actual change we were trying to do
             try
             {
-
-                // Now we try to patch in a Windows Taskbar Stuck Rects list into the json if there isnt one
-                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows Taskbar layout.");
-                // Create a default object (an empty list)
-                List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
-                for (int i = 0; i < root.Count; i++)
-                {
-                    JObject profile = (JObject)root[i];
-                    JArray WindowsTaskBarLayout = (JArray)profile.SelectToken("WindowsDisplayConfig.TaskBarLayout");
-                    if (WindowsTaskBarLayout == null)
-                    {
-                        JObject WindowsDisplayConfig = (JObject)profile.SelectToken("WindowsDisplayConfig"); 
-                        JArray newTaskBarLayout = JArray.FromObject(taskBarStuckRectangles);
-                        WindowsDisplayConfig.Add("TaskBarLayout",newTaskBarLayout);
-                        changedJson = true;
-                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows TaskBarLayout in profile {profile.SelectToken("Name")} (index {i}).");
-                    }
-                }
-
-                // Now we try to patch in a Windows Taskbar Settings list into the json if there isnt one
-                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows Taskbar settings.");
-                // Create a default object using whatever the taskbar settings are right now 
-                // (We're assuming the user keeps these settings standard)
-                TaskBarSettings taskBarSettings = TaskBarSettings.GetCurrent();
-                for (int i = 0; i < root.Count; i++)
-                {
-                    JObject profile = (JObject)root[i];
-                    JObject WindowsTaskBarSettings = (JObject)profile.SelectToken("WindowsDisplayConfig.TaskBarSettings");
-                    if (WindowsTaskBarSettings == null)
-                    {
-                        JObject WindowsDisplayConfig = (JObject)profile.SelectToken("WindowsDisplayConfig");
-                        JObject newTaskBarSettings = JObject.FromObject(taskBarSettings);
-                        WindowsDisplayConfig.Add("TaskBarSettings", newTaskBarSettings);
-                        changedJson = true;
-                        SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Patched missing Windows TaskBarSettings in profile {profile.SelectToken("Name")} (index {i}).");
-                    }
-                }
+                // Nothing to patch at the moment!                
             }
             catch (JsonReaderException ex)
             {

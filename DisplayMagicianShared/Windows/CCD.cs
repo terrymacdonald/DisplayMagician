@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace DisplayMagicianShared.Windows
 {
 
-    public enum WIN32STATUS : uint
+    public enum WIN32STATUS : UInt32
     {
         ERROR_SUCCESS = 0,
         ERROR_ACCESS_DENIED = 5,
@@ -19,24 +19,29 @@ namespace DisplayMagicianShared.Windows
         ERROR_BAD_CONFIGURATION = 1610,
     }
 
-    public enum DISPLAYCONFIG_DEVICE_INFO_TYPE : uint
+    public enum DISPLAYCONFIG_DEVICE_INFO_TYPE : UInt32
     {
         Zero = 0,
-        DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME = 1,
-        DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME = 2,
-        DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE = 3,
-        DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME = 4,
-        DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE = 5,
-        DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE = 6,
-        DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION = 7,
-        DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION = 8,
-        DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO = 9,
-        DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE = 10,
-        DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL = 11,
+        DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME = 1, // Specifies the source name of the display device. If the DisplayConfigGetDeviceInfo function is successful, DisplayConfigGetDeviceInfo returns the source name in the DISPLAYCONFIG_SOURCE_DEVICE_NAME structure.
+        DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME = 2, // Specifies information about the monitor. If the DisplayConfigGetDeviceInfo function is successful, DisplayConfigGetDeviceInfo returns info about the monitor in the DISPLAYCONFIG_TARGET_DEVICE_NAME structure.
+        DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE = 3, // Specifies information about the preferred mode of a monitor. If the DisplayConfigGetDeviceInfo function is successful, DisplayConfigGetDeviceInfo returns info about the preferred mode of a monitor in the DISPLAYCONFIG_TARGET_PREFERRED_MODE structure.
+        DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME = 4, // Specifies the graphics adapter name. If the DisplayConfigGetDeviceInfo function is successful, DisplayConfigGetDeviceInfo returns the adapter name in the DISPLAYCONFIG_ADAPTER_NAME structure.
+        DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE = 5, // Specifies how to set the monitor. If the DisplayConfigSetDeviceInfo function is successful, DisplayConfigSetDeviceInfo uses info in the DISPLAYCONFIG_SET_TARGET_PERSISTENCE structure to force the output in a boot-persistent manner.
+        DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE = 6, // Specifies how to set the base output technology for a given target ID. If the DisplayConfigGetDeviceInfo function is successful, DisplayConfigGetDeviceInfo returns base output technology info in the DISPLAYCONFIG_TARGET_BASE_TYPE structure.
+                                                            // Supported by WDDM 1.3 and later user-mode display drivers running on Windows 8.1 and later.
+        DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION = 7, // Specifies the state of virtual mode support. If the DisplayConfigGetDeviceInfo function is successful, DisplayConfigGetDeviceInfo returns virtual mode support information in the DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION structure. Supported starting in Windows 10.
+        DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION = 8, // Specifies how to set the state of virtual mode support. If the DisplayConfigSetDeviceInfo function is successful, DisplayConfigSetDeviceInfo uses info in the DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION structure to change the state of virtual mode support. Supported starting in Windows 10.
+        DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO = 9, // Specifies information about the state of the HDR Color for a display
+        DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE = 10, // Enables or disables the HDR Color for a display
+        DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL = 11, // Specifies the current SDR white level for an HDR monitor. If the DisplayConfigGetDeviceInfo function is successful, DisplayConfigGetDeviceInfo return SDR white level info in the DISPLAYCONFIG_SDR_WHITE_LEVEL structure.
+                                                            // Supported starting in Windows�10 Fall Creators Update (Version 1709).
+        DISPLAYCONFIG_DEVICE_INFO_GET_MONITOR_SPECIALIZATION = 12,
+        DISPLAYCONFIG_DEVICE_INFO_SET_MONITOR_SPECIALIZATION = 13,
+        DISPLAYCONFIG_DEVICE_INFO_FORCE_UINT32 = 0xFFFFFFFF // Only here to 
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_COLOR_ENCODING : uint
+    public enum DISPLAYCONFIG_COLOR_ENCODING : UInt32
     {
         DISPLAYCONFIG_COLOR_ENCODING_RGB = 0,
         DISPLAYCONFIG_COLOR_ENCODING_YCBCR444 = 1,
@@ -46,7 +51,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_SCALING : uint
+    public enum DISPLAYCONFIG_SCALING : UInt32
     {
         Zero = 0,
         DISPLAYCONFIG_SCALING_IDENTITY = 1,
@@ -59,7 +64,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_ROTATION : uint
+    public enum DISPLAYCONFIG_ROTATION : UInt32
     {
         Zero = 0,
         DISPLAYCONFIG_ROTATION_IDENTITY = 1,
@@ -70,7 +75,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY : uint
+    public enum DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY : UInt32
     {
         DISPLAYCONFIG_OUTPUT_TECHNOLOGY_OTHER = 4294967295, // - 1
         DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HD15 = 0,
@@ -95,7 +100,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_TOPOLOGY_ID : uint
+    public enum DISPLAYCONFIG_TOPOLOGY_ID : UInt32
     {
         Zero = 0x0,
         DISPLAYCONFIG_TOPOLOGY_INTERNAL = 0x00000001,
@@ -106,7 +111,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_PATH_FLAGS : uint
+    public enum DISPLAYCONFIG_PATH_FLAGS : UInt32
     {
         Zero = 0x0,
         DISPLAYCONFIG_PATH_ACTIVE = 0x00000001,
@@ -115,14 +120,14 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_SOURCE_FLAGS : uint
+    public enum DISPLAYCONFIG_SOURCE_FLAGS : UInt32
     {
         Zero = 0x0,
         DISPLAYCONFIG_SOURCE_IN_USE = 0x00000001,
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_TARGET_FLAGS : uint
+    public enum DISPLAYCONFIG_TARGET_FLAGS : UInt32
     {
         Zero = 0x0,
         DISPLAYCONFIG_TARGET_IN_USE = 0x00000001,
@@ -134,7 +139,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum QDC : uint
+    public enum QDC : UInt32
     {
         Zero = 0x0,
         // Get all paths
@@ -154,7 +159,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum SDC : uint
+    public enum SDC : UInt32
     {
         Zero = 0x0,
         SDC_TOPOLOGY_public = 0x00000001,
@@ -194,7 +199,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_SCANLINE_ORDERING : uint
+    public enum DISPLAYCONFIG_SCANLINE_ORDERING : UInt32
     {
         DISPLAYCONFIG_SCANLINE_ORDERING_UNSPECIFIED = 0,
         DISPLAYCONFIG_SCANLINE_ORDERING_PROGRESSIVE = 1,
@@ -205,7 +210,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_PIXELFORMAT : uint
+    public enum DISPLAYCONFIG_PIXELFORMAT : UInt32
     {
         Zero = 0x0,
         DISPLAYCONFIG_PIXELFORMAT_8BPP = 1,
@@ -217,7 +222,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum DISPLAYCONFIG_MODE_INFO_TYPE : uint
+    public enum DISPLAYCONFIG_MODE_INFO_TYPE : UInt32
     {
         Zero = 0x0,
         DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE = 1,
@@ -227,7 +232,7 @@ namespace DisplayMagicianShared.Windows
     }
 
     [Flags]
-    public enum D3D_VIDEO_SIGNAL_STANDARD : uint
+    public enum D3D_VIDEO_SIGNAL_STANDARD : UInt32
     {
         Uninitialized = 0,
         VesaDmt = 1,

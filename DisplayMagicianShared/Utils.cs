@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -8,26 +9,259 @@ using System.Threading.Tasks;
 
 namespace DisplayMagicianShared
 {
-    class Utils
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 4)]
+    public struct WINDOWPOS
     {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
+        public IntPtr hWnd;
+        public IntPtr hwndInsertAfter;
+        public int x;
+        public int y;
+        public int cx;
+        public int cy;
+        public SET_WINDOW_POSITION_FLAGS flags;
+
+        // Returns the WINDOWPOS structure pointed to by the lParam parameter
+        // of a WM_WINDOWPOSCHANGING or WM_WINDOWPOSCHANGED message.
+        public static WINDOWPOS FromMessage(IntPtr lParam)
         {
-            public int left;
-            public int top;
-            public int right;
-            public int bottom;
+            // Marshal the lParam parameter to an WINDOWPOS structure,
+            // and return the new structure
+            return (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
         }
 
-        [Flags]
-        public enum SendMessageTimeoutFlag : uint
+        // Replaces the original WINDOWPOS structure pointed to by the lParam
+        // parameter of a WM_WINDOWPOSCHANGING or WM_WINDOWPSCHANGING message
+        // with this one, so that the native window will be able to see any
+        // changes that we have made to its values.
+        public void UpdateMessage(IntPtr lParam)
         {
-            SMTO_NORMAL = 0x0,
-            SMTO_BLOCK = 0x1,
-            SMTO_ABORTIFHUNG = 0x2,
-            SMTO_NOTIMEOUTIFNOTHUNG = 0x8,
-            SMTO_ERRORONEXIT = 0x20
+            // Marshal this updated structure back to lParam so the native
+            // window can respond to our changes.
+            // The old structure that it points to should be deleted, too.
+            Marshal.StructureToPtr(this, lParam, true);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 4)]
+    public struct RECT
+    {
+        public Int32 left;
+        public Int32 top;
+        public Int32 right;
+        public Int32 bottom;
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 8)]
+    public struct APPBARDATA
+    {
+        public int cbSize;
+        public IntPtr hWnd;
+        public uint uCallbackMessage;
+        public ABEDGE uEdge;
+        public RECT rc;
+        public int lParam;
+    }
+
+
+
+    /// <summary>
+    /// The MONITORINFOEX structure contains information about a display monitor.
+    /// The GetMonitorInfo function stores information into a MONITORINFOEX structure or a MONITORINFO structure.
+    /// The MONITORINFOEX structure is a superset of the MONITORINFO structure. The MONITORINFOEX structure adds a string member to contain a name
+    /// for the display monitor.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
+    public struct MONITORINFOEX
+    {
+        /// <summary>
+        /// The size, in bytes, of the structure. Set this member to sizeof(MONITORINFOEX) (72) before calling the GetMonitorInfo function.
+        /// Doing so lets the function determine the type of structure you are passing to it.
+        /// </summary>
+        public UInt32 cbSize;
+
+        /// <summary>
+        /// A RECT structure that specifies the display monitor rectangle, expressed in virtual-screen coordinates.
+        /// Note that if the monitor is not the primary display monitor, some of the rectangle's coordinates may be negative values.
+        /// </summary>
+        public RECT rcMonitor;
+
+        /// <summary>
+        /// A RECT structure that specifies the work area rectangle of the display monitor that can be used by applications,
+        /// expressed in virtual-screen coordinates. Windows uses this rectangle to maximize an application on the monitor.
+        /// The rest of the area in rcMonitor contains system windows such as the task bar and side bars.
+        /// Note that if the monitor is not the primary display monitor, some of the rectangle's coordinates may be negative values.
+        /// </summary>
+        public RECT rcWork;
+
+        /// <summary>
+        /// The attributes of the display monitor.
+        ///
+        /// This member can be the following value:
+        ///   1 : MONITORINFOF_PRIMARY
+        /// </summary>
+        public UInt32 dwFlags;
+
+        /// <summary>
+        /// A string that specifies the device name of the monitor being used. Most applications have no use for a display monitor name,
+        /// and so can save some bytes by using a MONITORINFO structure.
+        /// </summary>
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = Utils.CCHDEVICENAME)]
+        public string szDevice;
+
+        /*public void Init()
+        {
+            this.cbSize = 40 + 2 * Utils.CCHDEVICENAME;
+            this.DeviceName = string.Empty;
+        }*/
+    }
+
+
+    /// <summary>
+    /// The MONITORINFO structure contains information about a display monitor.
+    /// The GetMonitorInfo function stores information into a MONITORINFOEX structure or a MONITORINFO structure.
+    /// The MONITORINFOEX structure is a superset of the MONITORINFO structure. The MONITORINFOEX structure adds a string member to contain a name
+    /// for the display monitor.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
+    public struct MONITORINFO
+    {
+        /// <summary>
+        /// The size, in bytes, of the structure. Set this member to sizeof(MONITORINFOEX) (72) before calling the GetMonitorInfo function.
+        /// Doing so lets the function determine the type of structure you are passing to it.
+        /// </summary>
+        public UInt32 cbSize;
+
+        /// <summary>
+        /// A RECT structure that specifies the display monitor rectangle, expressed in virtual-screen coordinates.
+        /// Note that if the monitor is not the primary display monitor, some of the rectangle's coordinates may be negative values.
+        /// </summary>
+        public RECT rcMonitor;
+
+        /// <summary>
+        /// A RECT structure that specifies the work area rectangle of the display monitor that can be used by applications,
+        /// expressed in virtual-screen coordinates. Windows uses this rectangle to maximize an application on the monitor.
+        /// The rest of the area in rcMonitor contains system windows such as the task bar and side bars.
+        /// Note that if the monitor is not the primary display monitor, some of the rectangle's coordinates may be negative values.
+        /// </summary>
+        public RECT rcWork;
+
+        /// <summary>
+        /// The attributes of the display monitor.
+        ///
+        /// This member can be the following value:
+        ///   1 : MONITORINFOF_PRIMARY
+        /// </summary>
+        public UInt32 dwFlags;
+
+        /*public void Init()
+        {
+            this.cbSize = 40 + 2 * Utils.CCHDEVICENAME;
+            this.DeviceName = string.Empty;
+        }*/
+    }
+
+
+    [Flags]
+    public enum SET_WINDOW_POSITION_FLAGS : UInt32
+    {
+        SWP_ASYNCWINDOWPOS = 0x4000,
+        SWP_DEFERERASE = 0x2000,
+        SWP_DRAWFRAME = 0x0020,
+        SWP_FRAMECHANGED = 0x0020,
+        SWP_HIDEWINDOW = 0x0080,
+        SWP_NOACTIVATE = 0x0010,
+        SWP_NOCOPYBITS = 0x0100,
+        SWP_NOMOVE = 0x0002,
+        SWP_NOOWNERZORDER = 0x0200,
+        SWP_NOREDRAW = 0x0008,
+        SWP_NOREPOSITION = 0x0200,
+        SWP_NOSENDCHANGING = 0x0400,
+        SWP_NOSIZE = 0x0001,
+        SWP_NOZORDER = 0x0004,
+        SWP_SHOWWINDOW = 0x0040,
+    }
+
+    public enum SET_WINDOW_POSITION_ZORDER : Int32
+    {
+        HWND_TOP = 0,
+        HWND_BOTTOM = 1,
+        HWND_TOPMOST = -1,
+        HWND_NOTOPMOST = -2,
+    }
+
+
+    [Flags]
+    public enum SendMessageTimeoutFlag : uint
+    {
+        SMTO_NORMAL = 0x0,
+        SMTO_BLOCK = 0x1,
+        SMTO_ABORTIFHUNG = 0x2,
+        SMTO_NOTIMEOUTIFNOTHUNG = 0x8,
+        SMTO_ERRORONEXIT = 0x20
+    }
+
+    public enum ABEDGE : UInt32
+    {
+        ABE_LEFT = 0x0,
+        ABE_TOP = 0x1,
+        ABE_RIGHT = 0x2,
+        ABE_BOTTOM = 0x3,
+    }
+
+    [Flags]
+    public enum MOUSEKEYS : UInt32
+    {
+        MK_LBUTTON = 0x1,
+        MK_RBUTTON = 0x2,
+        MK_SHIFT = 0x4,
+        MK_CONTROL = 0x8,
+        MK_MBUTTON = 0x10,
+        MK_XBUTTON1 = 0x20,
+        MK_XBUTTON2 = 0x40,
+    }
+
+
+    enum SYSCOMMAND : int
+    {
+        SC_SIZE = 0xF000,
+        SC_MOVE = 0xF010,
+        SC_MINIMIZE = 0xF020,
+        SC_MAXIMIZE = 0xF030,
+        SC_NEXTWINDOW = 0xF040,
+        SC_PREVWINDOW = 0xF050,
+        SC_CLOSE = 0xF060,
+        SC_VSCROLL = 0xF070,
+        SC_HSCROLL = 0xF080,
+        SC_MOUSEMENU = 0xF090,
+        SC_KEYMENU = 0xF100,
+        SC_ARRANGE = 0xF110,
+        SC_RESTORE = 0xF120,
+        SC_TASKLIST = 0xF130,
+        SC_SCREENSAVE = 0xF140,
+        SC_HOTKEY = 0xF150,
+        //#if(WINVER >= 0x0400) //Win95
+        SC_DEFAULT = 0xF160,
+        SC_MONITORPOWER = 0xF170,
+        SC_CONTEXTHELP = 0xF180,
+        SC_SEPARATOR = 0xF00F,
+        //#endif /* WINVER >= 0x0400 */
+
+        //#if(WINVER >= 0x0600) //Vista
+        SCF_ISSECURE = 0x00000001,
+        //#endif /* WINVER >= 0x0600 */
+
+        /*
+          * Obsolete names
+          */
+        SC_ICON = SC_MINIMIZE,
+        SC_ZOOM = SC_MAXIMIZE,
+    }
+
+
+    class Utils
+    {
+
 
         #region enum HChangeNotifyEventID
         /// <summary>
@@ -298,12 +532,33 @@ namespace DisplayMagicianShared
 
         [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern int SendMessage(IntPtr hWnd, uint wMsg, IntPtr wParam, IntPtr lParam);
-       
+
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, Int16 wParam, Int16 lParam);
+
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool PostMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
 
         [DllImport("shell32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern void SHChangeNotify(HChangeNotifyEventID wEventId,
@@ -311,12 +566,53 @@ namespace DisplayMagicianShared
                                    IntPtr dwItem1,
                                    IntPtr dwItem2);
 
+        [DllImport("shell32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int SHAppBarMessage(uint dwMessage, ref APPBARDATA pData);
+
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetWindowPos(IntPtr hWnd, SET_WINDOW_POSITION_ZORDER hWndInsertAfter, int x, int y, int cx, int cy, SET_WINDOW_POSITION_FLAGS uFlags);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern int ShowWindow(IntPtr hwnd, int command);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+
+        /// <summary>
+        ///     The MoveWindow function changes the position and dimensions of the specified window. For a top-level window, the
+        ///     position and dimensions are relative to the upper-left corner of the screen. For a child window, they are relative
+        ///     to the upper-left corner of the parent window's client area.
+        ///     <para>
+        ///     Go to https://msdn.microsoft.com/en-us/library/windows/desktop/ms633534%28v=vs.85%29.aspx for more
+        ///     information
+        ///     </para>
+        /// </summary>
+        /// <param name="hWnd">C++ ( hWnd [in]. Type: HWND )<br /> Handle to the window.</param>
+        /// <param name="X">C++ ( X [in]. Type: int )<br />Specifies the new position of the left side of the window.</param>
+        /// <param name="Y">C++ ( Y [in]. Type: int )<br /> Specifies the new position of the top of the window.</param>
+        /// <param name="nWidth">C++ ( nWidth [in]. Type: int )<br />Specifies the new width of the window.</param>
+        /// <param name="nHeight">C++ ( nHeight [in]. Type: int )<br />Specifies the new height of the window.</param>
+        /// <param name="bRepaint">
+        ///     C++ ( bRepaint [in]. Type: bool )<br />Specifies whether the window is to be repainted. If this
+        ///     parameter is TRUE, the window receives a message. If the parameter is FALSE, no repainting of any kind occurs. This
+        ///     applies to the client area, the nonclient area (including the title bar and scroll bars), and any part of the
+        ///     parent window uncovered as a result of moving a child window.
+        /// </param>
+        /// <returns>
+        ///     If the function succeeds, the return value is nonzero.<br /> If the function fails, the return value is zero.
+        ///     <br />To get extended error information, call GetLastError.
+        /// </returns>
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
 
         public static bool IsWindows11()
         {
@@ -328,9 +624,39 @@ namespace DisplayMagicianShared
             return currentBuild >= 22000;
         }
 
-        public static int MakeLParam(int p, int p_2) 
+        public static int MakeLParam(int p, int p_2)
         {
             return ((p_2 << 16) | (p & 0xFFFF));
+        }
+
+        internal delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+
+        public static List<MONITORINFOEX> EnumMonitors()
+        {
+            List<MONITORINFOEX> monitors = new List<MONITORINFOEX>();
+            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero,
+        delegate (IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData)
+        {
+            MONITORINFOEX mi = new MONITORINFOEX();
+            mi.cbSize = (uint)Marshal.SizeOf(mi);
+            bool success = GetMonitorInfo(hMonitor, ref mi);
+            if (success)
+            {
+                monitors.Add(mi);
+            }
+            return true;
+        }, IntPtr.Zero);
+            return monitors;
+        }
+
+        private static bool MonitorEnumCallBack(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData)
+        {
+            MONITORINFOEX mon_info = new MONITORINFOEX();
+            mon_info.cbSize = (UInt32)Marshal.SizeOf(typeof(MONITORINFOEX));
+            //mon_info.szDevice = new char[Utils.CCHDEVICENAME];
+            GetMonitorInfo(hMonitor, ref mon_info);
+            ///Monitor info is stored in 'mon_info'
+            return true;
         }
 
         /*public static bool RefreshNotificationTray()
@@ -344,13 +670,84 @@ namespace DisplayMagicianShared
             return true;
         }*/
 
+        public static Point PointFromLParam(IntPtr lParam)
+        {
+            return new Point((int)(lParam) & 0xFFFF, ((int)(lParam) >> 16) & 0xFFFF);
+        }
+
+        public static IntPtr LParamFromPoint(Point point)
+        {
+            return (IntPtr)((point.Y << 16) | (point.X & 0xFFFF));
+        }
+
+        public static IntPtr LParamFromPoint(int x, int y)
+        {
+            return (IntPtr)((y << 16) | (x & 0xFFFF));
+        }
+
+
         public const int NULL = 0;
         public const int HWND_BROADCAST = 0xffff;
+        public const int WM_ENTERSIZEMOVE = 0x0231;
+        public const int WM_EXITSIZEMOVE = 0x0232;
+        public const int WM_WINDOWPOSCHANGING = 0x0046;
+        public const int WM_WINDOWPOSCHANGED = 0x0047;
+        public const int WM_SYSCOMMAND = 0x112;
+        public const int WM_NOTIFY = 0xA005;
         public const int WM_SETTINGCHANGE = 0x001a;
+        public const int WM_THEMECHANGED = 0x031a;
         public const int WM_MOUSEMOVE = 0x0200;
-        public const int SPI_SETWORKAREA  = 0x002F;
+        public const int SPI_SETWORKAREA = 0x002F;
+        public const int SHELLHOOK = 0xC028;
         public const int WM_USER_REFRESHTASKBAR = 0x05CA;
+        public const int WM_USER_451 = 0x05C3;
+        public const int WM_USER_440 = 0x05B8;
+        public const int WM_USER_336 = 0x0550;
+        public const int WM_USER_92 = 0x045C;
+        public const int WM_USER_7 = 0x0407;
+        public const int WM_USER_1 = 0x0401;
+        public const int WM_USER_100 = 0x0464;
+        public const int WM_USER_13 = 0x040D;
         public const int wParam_SHELLTRAY = 0x00000006;
+
+        public const int ABM_NEW = 0x00000000;
+        public const int ABM_REMOVE = 0x00000001;
+        public const int ABM_QUERYPOS = 0x00000002;
+        public const int ABM_SETPOS = 0x00000003;
+        public const int ABM_GETSTATE = 0x00000004;
+        public const int ABM_GETTASKBARPOS = 0x00000005;
+        public const int ABM_ACTIVATE = 0x00000006; // lParam == TRUE/FALSE means activate/deactivate
+        public const int ABM_GETAUTOHIDEBAR = 0x00000007;
+        public const int ABM_SETAUTOHIDEBAR = 0x00000008; // this can fail at any time.  MUST check the result
+                                                          // lParam = TRUE/FALSE  Set/Unset
+                                                          // uEdge = what edge
+        public const int ABM_WINDOWPOSCHANGED = 0x0000009;
+        public const int ABM_SETSTATE = 0x0000000a;
+
+        // these are put in the wparam of callback messages
+        public const int ABN_STATECHANGE = 0x0000000;
+        public const int ABN_POSCHANGED = 0x0000001;
+        public const int ABN_FULLSCREENAPP = 0x0000002;
+        public const int ABN_WINDOWARRANGE = 0x0000003; // lParam == TRUE means hide
+
+        // flags for get state
+        public const int ABS_AUTOHIDE = 0x0000001;
+        public const int ABS_ALWAYSONTOP = 0x0000002;
+
+        public const int ABE_LEFT = 0;
+        public const int ABE_TOP = 1;
+        public const int ABE_RIGHT = 2;
+        public const int ABE_BOTTOM = 3;
+
+        public const int MONITOR_DEFAULTTONULL = 0;
+        public const int MONITOR_DEFAULTTOPRIMARY = 1;
+        public const int MONITOR_DEFAULTTONEAREST = 2;
+
+        // size of a device name string
+        public const int CCHDEVICENAME = 32;
+        public const uint MONITORINFOF_PRIMARY = 1;
+
+
     }
 
 

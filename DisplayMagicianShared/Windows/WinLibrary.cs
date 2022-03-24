@@ -9,6 +9,8 @@ using System.IO;
 using System.ComponentModel;
 using Microsoft.Win32;
 using System.Threading.Tasks;
+using static DisplayMagicianShared.Windows.TaskBarLayout;
+using System.Diagnostics;
 
 namespace DisplayMagicianShared.Windows
 {
@@ -38,6 +40,27 @@ namespace DisplayMagicianShared.Windows
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    public struct DISPLAY_SOURCE : IEquatable<DISPLAY_SOURCE>
+    {
+        public LUID AdapterId;
+        public UInt32 SourceId;
+        public UInt32 TargetId;
+        public string DevicePath;
+
+        public override bool Equals(object obj) => obj is DISPLAY_SOURCE other && this.Equals(other);
+        public bool Equals(DISPLAY_SOURCE other)
+        => true;
+        public override int GetHashCode()
+        {
+            return 300;
+        }
+
+        public static bool operator ==(DISPLAY_SOURCE lhs, DISPLAY_SOURCE rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(DISPLAY_SOURCE lhs, DISPLAY_SOURCE rhs) => !(lhs == rhs);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public struct WINDOWS_DISPLAY_CONFIG : IEquatable<WINDOWS_DISPLAY_CONFIG>
     {
         public Dictionary<ulong, string> DisplayAdapters;
@@ -45,13 +68,13 @@ namespace DisplayMagicianShared.Windows
         public DISPLAYCONFIG_MODE_INFO[] DisplayConfigModes;
         public List<ADVANCED_HDR_INFO_PER_PATH> DisplayHDRStates;
         public Dictionary<string, GDI_DISPLAY_SETTING> GdiDisplaySettings;
-        public List<TaskBarStuckRectangle> TaskBarLayout;
+        public Dictionary<string, TaskBarLayout> TaskBarLayout;
         public TaskBarSettings TaskBarSettings;
         public bool IsCloned;
         // Note: We purposely have left out the DisplaySources from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
         // generating the profile icon.
-        public Dictionary<string, List<uint>> DisplaySources;
+        public Dictionary<string, List<DISPLAY_SOURCE>> DisplaySources;
         public List<string> DisplayIdentifiers;
 
         public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
@@ -64,9 +87,12 @@ namespace DisplayMagicianShared.Windows
            // Additionally, we had to disable the DEviceKey from the equality testing within the GDI library itself as that waould also change after changing back from NVIDIA surround
            // This still allows us to detect when refresh rates change, which will allow DisplayMagician to detect profile differences.
            GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
-           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers) &&
-           TaskBarLayout.SequenceEqual(other.TaskBarLayout) &&
-           TaskBarSettings.Equals(other.TaskBarSettings);
+           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
+        // NOTE: I have disabled the TaskBar specific matching for now due to errors I cannot fix
+        // WinLibrary will still track the location of the taskbars, but won't actually set them as the setting of the taskbars doesnt work at the moment.
+        /*&&
+        TaskBarLayout.SequenceEqual(other.TaskBarLayout) &&
+        TaskBarSettings.Equals(other.TaskBarSettings);*/
 
         public override int GetHashCode()
         {
@@ -180,9 +206,9 @@ namespace DisplayMagicianShared.Windows
             myDefaultConfig.DisplayConfigPaths = new DISPLAYCONFIG_PATH_INFO[0];
             myDefaultConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
-            myDefaultConfig.DisplaySources = new Dictionary<string, List<uint>>();
+            myDefaultConfig.DisplaySources = new Dictionary<string, List<DISPLAY_SOURCE>>();
             myDefaultConfig.GdiDisplaySettings = new Dictionary<string, GDI_DISPLAY_SETTING>();
-            myDefaultConfig.TaskBarLayout = new List<TaskBarStuckRectangle>();
+            myDefaultConfig.TaskBarLayout = new Dictionary<string, TaskBarLayout>();
             myDefaultConfig.TaskBarSettings = new TaskBarSettings();
             myDefaultConfig.IsCloned = false;
 
@@ -292,6 +318,34 @@ namespace DisplayMagicianShared.Windows
                 }
             }
 
+            SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Going through the display sources list info to update the adapter id");
+            // Update the DisplaySources with the current adapter id
+            for (int i = 0; i < savedDisplayConfig.DisplaySources.Count; i++)
+            {
+                List<DISPLAY_SOURCE> dsList = savedDisplayConfig.DisplaySources.ElementAt(i).Value;
+                if (dsList.Count > 0)
+                {
+                    for (int j = 0; j < dsList.Count; j++)
+                    {
+                        DISPLAY_SOURCE ds = dsList[j];
+                        // Change the Display Source AdapterID
+                        if (adapterOldToNewMap.ContainsKey(ds.AdapterId.Value))
+                        {
+                            // We get here if there is a matching adapter
+                            newAdapterValue = adapterOldToNewMap[ds.AdapterId.Value];
+                            ds.AdapterId = AdapterValueToLUID(newAdapterValue);
+                        }
+                        else
+                        {
+                            // if there isn't a matching adapter, then we just pick the first current one and hope that works!
+                            // (it is highly likely to... its only if the user has multiple graphics cards with some weird config it may break)
+                            newAdapterValue = currentAdapterMap.First().Key;
+                            SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value} didn't have a current match in Display Sources! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
+                            ds.AdapterId = AdapterValueToLUID(newAdapterValue);
+                        }
+                    }
+                }
+            }
         }
 
         public bool UpdateActiveConfig()
@@ -320,6 +374,10 @@ namespace DisplayMagicianShared.Windows
 
         private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS | QDC.QDC_INCLUDE_HMD)
         {
+
+            // Prepare the empty windows display config
+            WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = CreateDefaultConfig();
+
             // Get the size of the largest Active Paths and Modes arrays
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Getting the size of the largest Active Paths and Modes arrays");
             int pathCount = 0;
@@ -368,12 +426,6 @@ namespace DisplayMagicianShared.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
-            // Prepare the empty windows display config
-            WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
-            windowsDisplayConfig.DisplayAdapters = new Dictionary<ulong, string>();
-            windowsDisplayConfig.DisplayHDRStates = new List<ADVANCED_HDR_INFO_PER_PATH>();
-            windowsDisplayConfig.DisplaySources = new Dictionary<string, List<uint>>();
-            windowsDisplayConfig.IsCloned = false;
 
             // First of all generate the current displayIdentifiers
             windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
@@ -393,6 +445,7 @@ namespace DisplayMagicianShared.Windows
 
             // Now cycle through the paths and grab the HDR state information
             // and map the adapter name to adapter id
+            // and populate the display source information
             List<uint> targetPathIdsToChange = new List<uint>();
             List<uint> targetModeIdsToChange = new List<uint>();
             List<uint> targetIdsFound = new List<uint>();
@@ -432,7 +485,11 @@ namespace DisplayMagicianShared.Windows
                     if (windowsDisplayConfig.DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
                     {
                         // We already have at least one display using this source, so we need to add the other cloned display to the existing list
-                        windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Add(paths[i].SourceInfo.Id);
+                        DISPLAY_SOURCE ds = new DISPLAY_SOURCE();
+                        ds.AdapterId = paths[i].SourceInfo.AdapterId;
+                        ds.SourceId = paths[i].SourceInfo.Id;
+                        ds.TargetId = paths[i].TargetInfo.Id;
+                        windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Add(ds);
                         isClonedPath = true;
                         isClonedProfile = true;
                         windowsDisplayConfig.IsCloned = true;
@@ -440,9 +497,13 @@ namespace DisplayMagicianShared.Windows
                     else
                     {
                         // This is the first display to use this source
-                        List<uint> sourceIds = new List<uint>();
-                        sourceIds.Add(paths[i].SourceInfo.Id);
-                        windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sourceIds);
+                        List<DISPLAY_SOURCE> sources = new List<DISPLAY_SOURCE>();
+                        DISPLAY_SOURCE ds = new DISPLAY_SOURCE();
+                        ds.AdapterId = paths[i].SourceInfo.AdapterId;
+                        ds.SourceId = paths[i].SourceInfo.Id;
+                        ds.TargetId = paths[i].TargetInfo.Id;
+                        sources.Add(ds);
+                        windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sources);
                     }
 
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found Display Source {sourceInfo.ViewGdiDeviceName} for source {paths[i].SourceInfo.Id}.");
@@ -618,33 +679,58 @@ namespace DisplayMagicianShared.Windows
                         modes[i].Id = targetIdMap[modes[i].Id];
                     }
                 }
+
+                // And then we need to go through the list of display sources and patch the 'cloned' displays with a real display ID so the display layout is right in cloned displays
+                for (int i = 0; i < windowsDisplayConfig.DisplaySources.Count; i++)
+                {
+                    string key = windowsDisplayConfig.DisplaySources.ElementAt(i).Key;
+                    DISPLAY_SOURCE[] dsList = windowsDisplayConfig.DisplaySources.ElementAt(i).Value.ToArray();
+                    for (int j = 0; j < dsList.Length; j++)
+                    {
+                        // We only change the ids that match in InfoType for target displays
+                        if (targetIdMap.ContainsKey(dsList[j].TargetId))
+                        {
+                            // Patch the cloned ids with a real working one!
+                            dsList[j].TargetId = targetIdMap[dsList[j].TargetId];
+
+                        }
+                    }
+                    windowsDisplayConfig.DisplaySources[key] = dsList.ToList();
+                }
             }
+
+            // Now we need to find the DevicePaths for the DisplaySources (as at this point the cloned display sources have been corrected)
+            for (int i = 0; i < windowsDisplayConfig.DisplaySources.Count; i++)
+            {
+                string key = windowsDisplayConfig.DisplaySources.ElementAt(i).Key;
+                DISPLAY_SOURCE[] dsList = windowsDisplayConfig.DisplaySources.ElementAt(i).Value.ToArray();
+                for (int j = 0; j < dsList.Length; j++)
+                {
+                    // get display target name
+                    var targetInfo = new DISPLAYCONFIG_TARGET_DEVICE_NAME();
+                    targetInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+                    targetInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_TARGET_DEVICE_NAME>();
+                    targetInfo.Header.AdapterId = dsList[j].AdapterId;
+                    targetInfo.Header.Id = dsList[j].TargetId;
+                    err = CCDImport.DisplayConfigGetDeviceInfo(ref targetInfo);
+                    if (err == WIN32STATUS.ERROR_SUCCESS)
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/GetSomeDisplayIdentifiers: Successfully got the target info from {dsList[j].TargetId}.");
+                        dsList[j].DevicePath = targetInfo.MonitorDevicePath;
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Warn($"WinLibrary/GetSomeDisplayIdentifiers: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to get the target info for display #{dsList[j].TargetId}");
+                    }
+                }
+                windowsDisplayConfig.DisplaySources[key] = dsList.ToList();
+            }
+
+
+            Dictionary<string, TaskBarLayout> taskBarStuckRectangles = new Dictionary<string, TaskBarLayout>();
 
             // Now attempt to get the windows taskbar location for each display
-            // We use the information we already got from the display identifiers
-            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar layout.");
-            List<TaskBarStuckRectangle> taskBarStuckRectangles = new List<TaskBarStuckRectangle>();
-            foreach (var displayId in windowsDisplayConfig.DisplayIdentifiers)
-            {
-                // e.g. "WINAPI|\\\\?\\PCI#VEN_10DE&DEV_2482&SUBSYS_408E1458&REV_A1#4&2283f625&0&0019#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}|DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI|54074|4318|\\\\?\\DISPLAY#NVS10DE#5&2b46c695&0&UID185344#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}|NV Surround"
-                string[] winapiLine = displayId.Split('|');
-                string pattern = @"DISPLAY\#(.*)\#\{";
-                Match match = Regex.Match(winapiLine[5], pattern);
-                if (match.Success)
-                {
-                    string devicePath = match.Groups[1].Value;
-                    TaskBarStuckRectangle taskBarStuckRectangle = new TaskBarStuckRectangle(devicePath);
-                    taskBarStuckRectangles.Add(taskBarStuckRectangle);
-                }
-                else
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: We were unable to figure out the DevicePath for the '{displayId}' display identifier.");
-                }
-
-            }
-            // And we get the Main Screen taskbar too
-            TaskBarStuckRectangle mainTaskBarStuckRectangle = new TaskBarStuckRectangle("Settings");
-            taskBarStuckRectangles.Add(mainTaskBarStuckRectangle);
+            taskBarStuckRectangles = TaskBarLayout.GetAllCurrentTaskBarLayouts(windowsDisplayConfig.DisplaySources);
 
             // Now we try to get the taskbar settings too
             SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
@@ -655,7 +741,6 @@ namespace DisplayMagicianShared.Windows
             windowsDisplayConfig.DisplayConfigModes = modes;
             windowsDisplayConfig.GdiDisplaySettings = GetGdiDisplaySettings();
             windowsDisplayConfig.TaskBarLayout = taskBarStuckRectangles;
-            //windowsDisplayConfig.OriginalTaskBarLayout = new List<TaskBarStuckRectangle>(taskBarStuckRectangles);
             windowsDisplayConfig.TaskBarSettings = taskBarSettings;
 
             return windowsDisplayConfig;
@@ -1380,36 +1465,65 @@ namespace DisplayMagicianShared.Windows
             }
 
 
+            // NOTE: I have disabled the TaskBar setting logic for now due to errors I cannot fix in this code.
+            // WinLibrary will still track the location of the taskbars, but won't actually set them as the setting of the taskbars doesnt work at the moment.           
+            // I hope to eventually fix this code, but I don't want to hold up a new DisplayMagician release while troubleshooting this.
+            /*
             // Now set the taskbar position for each screen
-            if (displayConfig.TaskBarLayout.Count > 0)
+            if (displayConfig.TaskBarLayout.Count > 0 && allWindowsDisplayConfig.TaskBarLayout.Count > 0)
             {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Setting the taskbar layout.");
-                foreach (TaskBarStuckRectangle tbsr in displayConfig.TaskBarLayout)
+                foreach (var tbrDictEntry in displayConfig.TaskBarLayout)
                 {
-                    if (tbsr.Version >= 2 && tbsr.Version <= 3)
+                    // Look up the monitor location of the current monitor and find the matching taskbar location in the taskbar settings
+                    if (allWindowsDisplayConfig.TaskBarLayout.ContainsKey(tbrDictEntry.Key))
                     {
-                        // Write the settings to registry
-                        tbsr.WriteToRegistry();
-
-                        if (tbsr.MainScreen)
+                        // check the current monitor taskbar location
+                        // if the current monitor location is the same as the monitor we want to set then
+                        TaskBarLayout currentLayout = displayConfig.TaskBarLayout[tbrDictEntry.Key];
+                        TaskBarLayout wantedLayout = allWindowsDisplayConfig.TaskBarLayout[tbrDictEntry.Key];
+                        if (currentLayout.Equals(wantedLayout))
                         {
-                            TaskBarStuckRectangle.RepositionMainTaskBar(tbsr.Edge);
+                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Display {tbrDictEntry.Key} ({tbrDictEntry.Value.RegKeyValue}) has the taskbar with the correct position, size and settings, so no need to move it");
                         }
-
+                        else
+                        {
+                            // if the current monitor taskbar location is not where we want it then
+                            // move the taskbar manually
+                            TaskBarLayout tbr = tbrDictEntry.Value;
+                            tbr.MoveTaskBar();
+                        }
                     }
                     else
                     {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Unable to set the {tbsr.DevicePath} TaskBarStuckRectangle registry settings as the version isn't v2 or v3!");
+                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Display {tbrDictEntry.Key} ({tbrDictEntry.Value.RegKeyValue}) is not currently in use, so cannot set any taskbars on it!");
                     }
                 }
 
-
-                // Tell Windows to refresh the Other Windows Taskbars if needed
-                IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
-                if (displayConfig.TaskBarLayout.Count > 1)
+                // This will actually move the taskbars by forcing Explorer to read from registry key
+                /*RestartManagerSession.RestartExplorer();
+                Process[] explorers = Process.GetProcessesByName("Explorer");
+                for (int i = 0; i < explorers.Length; i++)
                 {
-                    TaskBarStuckRectangle.RepositionSecondaryTaskBars();
+                    kill
                 }
+                // Enum all the monitors
+                //List<MONITORINFOEX> currentMonitors = Utils.EnumMonitors();
+                // Go through each monitor
+                //foreach (MONITORINFOEX mi in currentMonitors)
+                //{
+                // Look up the monitor location of the current monitor and find the matching taskbar location in the taskbar settings
+                //if (current)
+                // check the current monitor taskbar location
+                // if the current monitor location is the same as the monitor we want to set then
+                // if the current monitor taskbar location where we want it then
+                // move the taskbar manually
+                // Find the registry key for the monitor we are modifying
+                // save the taskbar position for the monitor in registry
+                // else
+                // log the fact that the monitor is in the right place so skipping moving it
+                // if we didn't find a taskbar location for this monitor
+                // log the fact that the taskbar location wasnt foound for this monitor
+                //}
 
             }
             else
@@ -1437,7 +1551,7 @@ namespace DisplayMagicianShared.Windows
             {
                 // The settings are the same, so we should skip applying them
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: The current taskbar settings are the same as the one's we want, so skipping setting them!");
-            }
+            }*/
 
             return true;
         }
@@ -1958,7 +2072,118 @@ namespace DisplayMagicianShared.Windows
             {
                 return false;
             }
-        }        
+        }
+
+
+
+        public static bool RepositionMainTaskBar(TaskBarEdge edge)
+        {
+            // Tell Windows to refresh the Main Screen Windows Taskbar
+            // Find the "Shell_TrayWnd" window 
+            IntPtr systemTrayContainerHandle = Utils.FindWindow("Shell_TrayWnd", null);
+            IntPtr startButtonHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "Start", null);
+            IntPtr systemTrayHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "TrayNotifyWnd", null);
+            IntPtr rebarWindowHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "ReBarWindow32", null);
+            IntPtr taskBarPositionBuffer = new IntPtr((Int32)edge);
+            IntPtr trayDesktopShowButtonHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "TrayShowDesktopButtonWClass", null);
+            IntPtr trayInputIndicatorHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "TrayInputIndicatorWClass", null);
+
+            // Send messages
+            // Send the "TrayNotifyWnd" window a WM_USER+13 (0x040D) message with a wParameter of 0x0 and a lParameter of the position (e.g. 0x0000 for left, 0x0001 for top, 0x0002 for right and 0x0003 for bottom)
+            Utils.SendMessage(systemTrayHandle, Utils.WM_USER_13, IntPtr.Zero, taskBarPositionBuffer);
+            Utils.SendMessage(systemTrayHandle, Utils.WM_USER_100, (IntPtr)0x3e, (IntPtr)0x21c);
+            Utils.SendMessage(systemTrayHandle, Utils.WM_THEMECHANGED, (IntPtr)0xffffffffffffffff, (IntPtr)0x000000008000001);
+            // Next, send the "TrayShowDesktopButtonWClass" window a WM_USER+13 (0x040D) message with a wParameter of 0x0 and a lParameter of the position (e.g. 0x0000 for left, 0x0001 for top, 0x0002 for right and 0x0003 for bottom)
+            Utils.SendMessage(trayDesktopShowButtonHandle, Utils.WM_USER_13, IntPtr.Zero, taskBarPositionBuffer);
+            Utils.SendMessage(startButtonHandle, Utils.WM_USER_440, (IntPtr)0x0, (IntPtr)0x0);
+            Utils.SendMessage(systemTrayHandle, Utils.WM_USER_1, (IntPtr)0x0, (IntPtr)0x0);
+            Utils.SendMessage(systemTrayContainerHandle, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+            Utils.PostMessage(systemTrayHandle, Utils.WM_SETTINGCHANGE, Utils.SPI_SETWORKAREA, Utils.NULL);
+            Utils.SendMessage(systemTrayContainerHandle, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+            Utils.SendMessage(rebarWindowHandle, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+            //Utils.SendMessage(trayInputIndicatorHandle, Utils.WM_USER_100, (IntPtr)0x3e, (IntPtr)0x21c);
+            //Utils.SendMessage(systemTrayHandle, Utils.WM_USER_1, (IntPtr)0x0, (IntPtr)0x0);
+            // Move all the taskbars to this location
+            //Utils.SendMessage(systemTrayContainerHandle, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
+            //Utils.SendMessage(systemTrayContainerHandle, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
+            return true;
+        }
+
+        public static bool RepositionAllTaskBars(TaskBarEdge edge)
+        {
+            // Tell Windows to refresh the Main Screen Windows Taskbar
+            // Find the "Shell_TrayWnd" window 
+            IntPtr mainToolBarHWnd = Utils.FindWindow("Shell_TrayWnd", null);
+            // Send the "Shell_TrayWnd" window a WM_USER_REFRESHTASKBAR with a wParameter of 0006 and a lParameter of the position (e.g. 0000 for left, 0001 for top, 0002 for right and 0003 for bottom)
+            IntPtr taskBarPositionBuffer = new IntPtr((Int32)edge);
+            Utils.SendMessage(mainToolBarHWnd, Utils.WM_USER_REFRESHTASKBAR, (IntPtr)Utils.wParam_SHELLTRAY, taskBarPositionBuffer);
+            return true;
+        }
+
+        public static bool RepositionSecondaryTaskBars()
+        {
+            // Tell Windows to refresh the Other Windows Taskbars if needed
+            IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
+            for (int i = 0; i < 100; i++)
+            {
+                // Find the next "Shell_SecondaryTrayWnd" window 
+                IntPtr nextTaskBarWindowHwnd = Utils.FindWindowEx((IntPtr)Utils.NULL, lastTaskBarWindowHwnd, "Shell_SecondaryTrayWnd", null);
+                if (nextTaskBarWindowHwnd == (IntPtr)Utils.NULL)
+                {
+                    // No more windows taskbars to notify
+                    break;
+                }
+                // Send the "Shell_TrayWnd" window a WM_SETTINGCHANGE with a wParameter of SPI_SETWORKAREA
+                Utils.SendMessage(lastTaskBarWindowHwnd, Utils.WM_SETTINGCHANGE, (IntPtr)Utils.SPI_SETWORKAREA, (IntPtr)Utils.NULL);
+                lastTaskBarWindowHwnd = nextTaskBarWindowHwnd;
+            }
+            return true;
+        }
+
+
+
+        public static void RefreshTrayArea()
+        {
+            // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "Notification Area" containing the visible notification area icons (windows 7 version)
+            IntPtr systemTrayContainerHandle = Utils.FindWindow("Shell_TrayWnd", null);
+            IntPtr systemTrayHandle = Utils.FindWindowEx(systemTrayContainerHandle, IntPtr.Zero, "TrayNotifyWnd", null);
+            IntPtr sysPagerHandle = Utils.FindWindowEx(systemTrayHandle, IntPtr.Zero, "SysPager", null);
+            IntPtr notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "Notification Area");
+            // If the visible notification area icons (Windows 7 aren't found, then we're on a later version of windows, and we need to look for different window names
+            if (notificationAreaHandle == IntPtr.Zero)
+            {
+                // Finds the Shell_TrayWnd -> TrayNotifyWnd -> SysPager -> "User Promoted Notification Area" containing the visible notification area icons (windows 10+ version)
+                notificationAreaHandle = Utils.FindWindowEx(sysPagerHandle, IntPtr.Zero, "ToolbarWindow32", "User Promoted Notification Area");
+                // Also attempt to find the NotifyIconOverflowWindow -> "Overflow Notification Area' window which is the hidden windoww that notification icons live when they are 
+                // too numberous or are hidden by the user.
+                IntPtr notifyIconOverflowWindowHandle = Utils.FindWindow("NotifyIconOverflowWindow", null);
+                IntPtr overflowNotificationAreaHandle = Utils.FindWindowEx(notifyIconOverflowWindowHandle, IntPtr.Zero, "ToolbarWindow32", "Overflow Notification Area");
+                // Fool the "Overflow Notification Area' window into thinking the mouse is moving over it
+                // which will force windows to refresh the "Overflow Notification Area' window and remove old icons.
+                RefreshTrayArea(overflowNotificationAreaHandle);
+                notifyIconOverflowWindowHandle = IntPtr.Zero;
+                overflowNotificationAreaHandle = IntPtr.Zero;
+            }
+            // Fool the "Notification Area" or "User Promoted Notification Area" window (depends on the version of windows) into thinking the mouse is moving over it
+            // which will force windows to refresh the "Notification Area" or "User Promoted Notification Area" window and remove old icons.
+            RefreshTrayArea(notificationAreaHandle);
+            systemTrayContainerHandle = IntPtr.Zero;
+            systemTrayHandle = IntPtr.Zero;
+            sysPagerHandle = IntPtr.Zero;
+            notificationAreaHandle = IntPtr.Zero;
+
+        }
+
+
+        private static void RefreshTrayArea(IntPtr windowHandle)
+        {
+            // Moves the mouse around within the window area of the supplied window
+            RECT rect;
+            Utils.GetClientRect(windowHandle, out rect);
+            for (var x = 0; x < rect.right; x += 5)
+                for (var y = 0; y < rect.bottom; y += 5)
+                    Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, (y << 16) + x);
+        }
 
     }
 

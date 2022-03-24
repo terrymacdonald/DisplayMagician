@@ -601,6 +601,12 @@ namespace DisplayMagician.Processes
             {
                 if (ex.ErrorCode == -2147467259)
                 {
+                    if (runAsAdministrator)
+                    {
+                        logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable} for a second time with administrative rights. Giving up.");
+                        return false;
+                    }
+
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
                     if (TryExecute(executable, arguments, out processCreated, true, priorityClass, maxWaitMs))
                     {
