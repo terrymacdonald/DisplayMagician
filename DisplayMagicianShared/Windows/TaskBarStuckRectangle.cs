@@ -134,4 +134,15 @@ namespace DisplayMagicianShared.Windows
             return true;
         }
     }
+
+    [global::System.Serializable]
+    public class TaskBarStuckRectangleException : Exception
+    {
+        public TaskBarStuckRectangleException() { }
+        public TaskBarStuckRectangleException(string message) : base(message) { }
+        public TaskBarStuckRectangleException(string message, Exception inner) : base(message, inner) { }
+        protected TaskBarStuckRectangleException(
+            System.Runtime.Serialization.SerializationInfo info,
+            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
 }

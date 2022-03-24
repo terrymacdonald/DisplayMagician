@@ -639,6 +639,10 @@ namespace DisplayMagicianShared
                 SharedLogger.logger.Trace($"ProfileRepository/UpdateActiveProfile: Paused updating display settings for {totalDelay} milliseconds.");
             }
 
+            // Force explorer to update the TaskBar settings just in case they were moved
+            //ShellHelper.TellShellToWriteSettings();
+            //WinLibrary.RefreshTaskBars();
+
             profile.CreateProfileFromCurrentDisplaySettings();
 
             if (_profilesLoaded && _allProfiles.Count > 0)

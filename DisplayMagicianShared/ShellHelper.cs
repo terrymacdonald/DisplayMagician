@@ -42,7 +42,7 @@ namespace DisplayMagicianShared
             return null;
         }
 
-        public static async Task IntrigueShellToWriteSettings()
+        public static async Task TellShellToWriteSettings()
         {
             try
             {

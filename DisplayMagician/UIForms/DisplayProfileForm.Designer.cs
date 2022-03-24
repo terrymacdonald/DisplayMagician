@@ -287,14 +287,15 @@ namespace DisplayMagician.UIForms
             // lbl_save_profile
             // 
             this.lbl_save_profile.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.lbl_save_profile.BackColor = System.Drawing.Color.Brown;
-            this.lbl_save_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lbl_save_profile.BackColor = System.Drawing.Color.Firebrick;
+            this.lbl_save_profile.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lbl_save_profile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.lbl_save_profile.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.lbl_save_profile.ForeColor = System.Drawing.Color.White;
             this.lbl_save_profile.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.lbl_save_profile.Location = new System.Drawing.Point(290, 63);
+            this.lbl_save_profile.Location = new System.Drawing.Point(24, 80);
             this.lbl_save_profile.Name = "lbl_save_profile";
-            this.lbl_save_profile.Size = new System.Drawing.Size(365, 157);
+            this.lbl_save_profile.Size = new System.Drawing.Size(625, 88);
             this.lbl_save_profile.TabIndex = 33;
             this.lbl_save_profile.Text = resources.GetString("lbl_save_profile.Text");
             this.lbl_save_profile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;

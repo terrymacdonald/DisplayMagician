@@ -171,6 +171,16 @@ namespace DisplayMagicianShared.AMD
         static AMDLibrary() { }
         public AMDLibrary()
         {
+            // Populate the list of ConnectionTypes we want to skip as they don't support querying
+            SkippedColorConnectionTypes = new List<ADL_DISPLAY_CONNECTION_TYPE> {
+                ADL_DISPLAY_CONNECTION_TYPE.Composite,
+                ADL_DISPLAY_CONNECTION_TYPE.DVI_D,
+                ADL_DISPLAY_CONNECTION_TYPE.DVI_I,
+                ADL_DISPLAY_CONNECTION_TYPE.RCA_3Component,
+                ADL_DISPLAY_CONNECTION_TYPE.SVideo,
+                ADL_DISPLAY_CONNECTION_TYPE.VGA
+            };
+
             _activeDisplayConfig = CreateDefaultConfig();
             try
             {
@@ -211,17 +221,7 @@ namespace DisplayMagicianShared.AMD
             {
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
-            }
-
-            // Populate the list of ConnectionTypes we want to skip as they don't support querying
-            SkippedColorConnectionTypes = new List<ADL_DISPLAY_CONNECTION_TYPE> {
-                ADL_DISPLAY_CONNECTION_TYPE.Composite,
-                ADL_DISPLAY_CONNECTION_TYPE.DVI_D,
-                ADL_DISPLAY_CONNECTION_TYPE.DVI_I,
-                ADL_DISPLAY_CONNECTION_TYPE.RCA_3Component,
-                ADL_DISPLAY_CONNECTION_TYPE.SVideo,
-                ADL_DISPLAY_CONNECTION_TYPE.VGA
-            };
+            }            
 
         }
 
@@ -318,6 +318,7 @@ namespace DisplayMagicianShared.AMD
             // so that we won't break json.net when we save a default config
 
             myDefaultConfig.AdapterConfigs = new List<AMD_ADAPTER_CONFIG>();
+            myDefaultConfig.SlsConfig.IsSlsEnabled = false;
             myDefaultConfig.SlsConfig.SLSMapConfigs = new List<AMD_SLSMAP_CONFIG>();
             myDefaultConfig.SlsConfig.SLSEnabledDisplayTargets = new List<ADL_MODE>();
             myDefaultConfig.DisplayMaps = new List<ADL_DISPLAY_MAP>();
@@ -353,13 +354,7 @@ namespace DisplayMagicianShared.AMD
 
         private AMD_DISPLAY_CONFIG GetAMDDisplayConfig(bool allDisplays = false)
         {
-            AMD_DISPLAY_CONFIG myDisplayConfig = new AMD_DISPLAY_CONFIG();
-            myDisplayConfig.AdapterConfigs = new List<AMD_ADAPTER_CONFIG>();
-
-            // We set up the default for this display config as SLS disabled
-            // (We will change this later if it turns out we're using SLS)
-            myDisplayConfig.SlsConfig.IsSlsEnabled = false;
-            myDisplayConfig.SlsConfig.SLSEnabledDisplayTargets = new List<ADL_MODE>();
+            AMD_DISPLAY_CONFIG myDisplayConfig = CreateDefaultConfig();
 
             if (_initialised)
             {
