@@ -3954,8 +3954,8 @@ namespace DisplayMagicianShared.NVIDIA
                 int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
                 IntPtr pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
                 IntPtr sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
-                IntPtr targetInfoPointer = Marshal.AllocHGlobal(onePathTargetMemSize * totalTargetInfoCount);
-                IntPtr advTargetPointer = Marshal.AllocHGlobal(oneAdvTargetMemSize * totalTargetInfoCount);
+                IntPtr targetInfoPointer = Marshal.AllocHGlobal(onePathTargetMemSize * totalTargetInfoCount * (int)PathInfoCount);
+                IntPtr advTargetPointer = Marshal.AllocHGlobal(oneAdvTargetMemSize * totalTargetInfoCount * (int)PathInfoCount);
                 // Also set another memory pointer to the same place so that we can do the memory copying item by item
                 // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
                 IntPtr currentPathInfoPointer = pathInfoPointer;
@@ -4071,10 +4071,10 @@ namespace DisplayMagicianShared.NVIDIA
                     Marshal.FreeCoTaskMem(targetInfoPointer);
                     Marshal.FreeCoTaskMem(advTargetPointer);
 
-                    Marshal.FreeCoTaskMem(currentPathInfoPointer);
-                    Marshal.FreeCoTaskMem(currentSourceModeInfoPointer);
-                    Marshal.FreeCoTaskMem(currentTargetInfoPointer);
-                    Marshal.FreeCoTaskMem(currentAdvTargetPointer);
+                    currentPathInfoPointer = IntPtr.Zero;
+                    currentSourceModeInfoPointer = IntPtr.Zero;
+                    currentTargetInfoPointer = IntPtr.Zero;
+                    currentAdvTargetPointer = IntPtr.Zero;
                 }
 
             }
@@ -4171,8 +4171,8 @@ namespace DisplayMagicianShared.NVIDIA
                     Marshal.FreeCoTaskMem(pathInfoPointer);
                     Marshal.FreeCoTaskMem(sourceModeInfoPointer);
 
-                    Marshal.FreeCoTaskMem(currentPathInfoPointer);
-                    Marshal.FreeCoTaskMem(currentSourceModeInfoPointer);
+                    currentPathInfoPointer = IntPtr.Zero;
+                    currentSourceModeInfoPointer = IntPtr.Zero;
 
                 }
 
