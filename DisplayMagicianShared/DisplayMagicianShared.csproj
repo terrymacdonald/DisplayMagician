@@ -83,7 +83,7 @@
     </Compile>
     <Compile Include="Utils.cs" />
     <Compile Include="Windows\TaskBarLayout.cs" />
-    <Compile Include="Windows\TaskBarStuckRectangle.cs" />
+    <Compile Include="Windows\TaskBarSettings.cs" />
     <Compile Include="UserControls\DisplayView.cs">
       <SubType>UserControl</SubType>
     </Compile>

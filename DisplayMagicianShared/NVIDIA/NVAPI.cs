@@ -4055,12 +4055,14 @@ namespace DisplayMagicianShared.NVIDIA
                                 // advance the buffer forwards to the next object
                                 currentPathInfoPointer = (IntPtr)((long)currentPathInfoPointer + Marshal.SizeOf(returnedPass2PathInfos[i]));
                             }
-                        }
+                        }                        
                     }
                     else
                     {
                         status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
                     }
+                    // Try and remove the memory used
+                    pass2PathInfos = null;
                 }
                 finally
                 {
@@ -4068,6 +4070,11 @@ namespace DisplayMagicianShared.NVIDIA
                     Marshal.FreeCoTaskMem(sourceModeInfoPointer);
                     Marshal.FreeCoTaskMem(targetInfoPointer);
                     Marshal.FreeCoTaskMem(advTargetPointer);
+
+                    Marshal.FreeCoTaskMem(currentPathInfoPointer);
+                    Marshal.FreeCoTaskMem(currentSourceModeInfoPointer);
+                    Marshal.FreeCoTaskMem(currentTargetInfoPointer);
+                    Marshal.FreeCoTaskMem(currentAdvTargetPointer);
                 }
 
             }
@@ -4150,17 +4157,23 @@ namespace DisplayMagicianShared.NVIDIA
                                 // advance the buffer forwards to the next object
                                 currentPathInfoPointer = (IntPtr)((long)currentPathInfoPointer + Marshal.SizeOf(returnedPass2PathInfos[i]));
                             }
-                        }
+                        }                        
                     }
                     else
                     {
                         status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
                     }
+                    // Try and remove the memory used
+                    pass2PathInfos = null;
                 }
                 finally
                 {
                     Marshal.FreeCoTaskMem(pathInfoPointer);
                     Marshal.FreeCoTaskMem(sourceModeInfoPointer);
+
+                    Marshal.FreeCoTaskMem(currentPathInfoPointer);
+                    Marshal.FreeCoTaskMem(currentSourceModeInfoPointer);
+
                 }
 
             }

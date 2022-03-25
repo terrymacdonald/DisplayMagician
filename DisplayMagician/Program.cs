@@ -297,21 +297,39 @@ namespace DisplayMagician {
             // Check if it's an upgrade from DisplayMagician v2.x to v2.2
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
-            
+
+            string dp23 = Path.Combine(AppProfilePath, "DisplayProfiles_2.3.json");
             string dp22 = Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json");
             string dp21 = Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json");
             string dp20 = Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json");
             string dp10 = Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json");
 
-            string targetdp = dp22;
+            // This is the latest displayprofile config file
+            string targetdp = dp23;
 
-            if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
+            if (File.Exists(dp22) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.2, so performing some upgrade steps.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.3, so performing some upgrade steps.");
 
                 // Copy the older files across to the new names, then the migrate JSON function
                 // within the ProfileRepository will take care of the rest
-                File.Copy(dp21, dp22);
+                File.Copy(dp22, targetdp);
+
+                // Warn the user about the fact we need them to recreate their Display Profiles again!
+                StartMessageForm myMessageWindow = new StartMessageForm();
+                myMessageWindow.MessageMode = "rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
+                myMessageWindow.ButtonText = "&Close";
+                myMessageWindow.ShowDialog();
+            }
+            else if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
+            {
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.3, so performing some upgrade steps.");
+
+                // Copy the older files across to the new names, then the migrate JSON function
+                // within the ProfileRepository will take care of the rest
+                File.Copy(dp21, targetdp);
 
                 // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
@@ -323,11 +341,11 @@ namespace DisplayMagician {
             }
             else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.2, so performing some upgrade steps.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.3, so performing some upgrade steps.");
 
                 // Copy the older files across to the new names, then the migrate JSON function
                 // within the ProfileRepository will take care of the rest
-                File.Copy(dp20, dp22);
+                File.Copy(dp20, targetdp);
 
                 // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
@@ -614,6 +632,71 @@ namespace DisplayMagician {
                 });
             });
 
+
+            // This is the CurrentProfile command
+            // This will output the current display profile if one matches, or 'Unknown'
+            app.Command(DisplayMagicianStartupAction.CurrentProfile.ToString(), (currentProfileCmd) =>
+            {
+                // Set the --trace or --debug options if supplied
+                if (trace.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+                else if (debug.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+
+                // Set the --force-video-library option if supplied
+                if (forcedVideoLibrary.HasValue())
+                {
+                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
+                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("AMD"))
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
+                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("Windows"))
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
+                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                    }
+                    else
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
+                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    }
+                }
+                else
+                {
+                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
+                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                }
+                //description and help text of the command.
+                currentProfileCmd.Description = "Use this command to output the name of the display profile currently in use. It will return 'UNKNOWN' if the display profile doesn't match any saved display profiles";
+
+                currentProfileCmd.OnExecute(() =>
+                {
+                    logger.Debug($"CurrentProfile commandline command was invoked!");
+                    CurrentProfile();
+                    DeRegisterDisplayMagicianWithWindows();
+                    return 0;
+                });
+            });
+
             app.OnExecute(() =>
             {
                 // Set the --trace or --debug options if supplied
@@ -870,6 +953,35 @@ namespace DisplayMagician {
             }
 
         }
+
+        public static void CurrentProfile()
+        {
+            logger.Trace($"Program/CurrentProfile: Finding the current profile in use");
+
+            // Close the splash screen
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
+            // Lookup the profile
+            ProfileItem currentProfile;
+            string profileName = "UNKNOWN";
+            try
+            {
+                currentProfile = ProfileRepository.GetActiveProfile();
+                if (currentProfile is ProfileItem)
+                {
+                    profileName = currentProfile.Name;
+                }                
+            }
+            catch (Exception ex)
+            {
+                
+            }
+
+            Console.WriteLine($"CurrentProfile Display Profile: {profileName}");
+            logger.Trace($"Program/RunProfile: Current display profile in use is called {profileName}. Informing the user of this fact.");
+        }
+
 
         public static void RunProfile(string profileName)
         {

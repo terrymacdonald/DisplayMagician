@@ -4,6 +4,7 @@ using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.UIForms;
 using DisplayMagicianShared;
+using DisplayMagicianShared.Windows;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -1923,7 +1924,7 @@ namespace DisplayMagician
                 ProcessUtils.StopProcess(startProgramsToStop);
 
                 // Refresh the system tray / notification tray area to clean out any applications we stopped
-                DisplayMagicianShared.Windows.TaskBarStuckRectangle.RefreshTrayArea();
+                WinLibrary.RefreshTrayArea();
             }
 
          
