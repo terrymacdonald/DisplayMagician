@@ -3948,23 +3948,38 @@ namespace DisplayMagicianShared.NVIDIA
                     totalTargetInfoCount += (int)PathInfos[x].TargetInfoCount;
                 }
 
+                // Get the size of the each object
                 int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
                 int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2));
-                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
-                IntPtr pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
-                IntPtr sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
-                IntPtr targetInfoPointer = Marshal.AllocHGlobal(onePathTargetMemSize * totalTargetInfoCount * (int)PathInfoCount);
-                IntPtr advTargetPointer = Marshal.AllocHGlobal(oneAdvTargetMemSize * totalTargetInfoCount * (int)PathInfoCount);
-                // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                IntPtr currentPathInfoPointer = pathInfoPointer;
-                IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
-                IntPtr currentTargetInfoPointer = targetInfoPointer;
-                IntPtr currentAdvTargetPointer = advTargetPointer;
+                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
+                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+
+                // Figure out the size of the memory we need to allocate
+                int allPathInfoMemSize = onePathInfoMemSize * (int)PathInfoCount;
+                int allSourceModeMemSize = oneSourceModeMemSize * (int)PathInfoCount;
+                int allPathTargetMemSize = onePathTargetMemSize * totalTargetInfoCount;
+                int allAdvTargetMemSize = oneAdvTargetMemSize * totalTargetInfoCount;
+                int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize;
+
+                IntPtr memPointer = IntPtr.Zero;
 
                 try
                 {
+                    // Allocate the memory we need
+                    memPointer = Marshal.AllocHGlobal(allObjectsMemSize);
+
+                    // Figure out the address of the arrays we will use
+                    IntPtr pathInfoPointer = memPointer;
+                    IntPtr sourceModeInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize);
+                    IntPtr targetInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize);
+                    IntPtr advTargetPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize);
+                    // Figure out each memory pointer so that we can do the memory copying item by item
+                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                    IntPtr currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
+                    IntPtr currentSourceModeInfoPointer = new IntPtr(sourceModeInfoPointer.ToInt64());
+                    IntPtr currentTargetInfoPointer = new IntPtr(targetInfoPointer.ToInt64());
+                    IntPtr currentAdvTargetPointer = new IntPtr(advTargetPointer.ToInt64());
+
                     // Go through the array and copy things from managed code to unmanaged code
                     for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                     {
@@ -3980,8 +3995,8 @@ namespace DisplayMagicianShared.NVIDIA
                         //for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
                         for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
                         {
-                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
-                            advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER;
+                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL();
+                            advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER;
                             Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
                             targetInforArray[y].Details = currentAdvTargetPointer;
                             Marshal.StructureToPtr(targetInforArray[y], currentTargetInfoPointer, true);
@@ -4012,7 +4027,11 @@ namespace DisplayMagicianShared.NVIDIA
                             // If everything worked, then copy the data back from the unmanaged array into the managed array
                             // So that we can use it in C# land
                             // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                            currentPathInfoPointer = pathInfoPointer;
+                            currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
+                            currentSourceModeInfoPointer = new IntPtr(sourceModeInfoPointer.ToInt64());
+                            currentTargetInfoPointer = new IntPtr(targetInfoPointer.ToInt64());
+                            currentAdvTargetPointer = new IntPtr(advTargetPointer.ToInt64());
+
                             // Create a managed array to store the received information within
                             PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
                             NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] returnedPass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
@@ -4066,15 +4085,11 @@ namespace DisplayMagicianShared.NVIDIA
                 }
                 finally
                 {
-                    Marshal.FreeCoTaskMem(pathInfoPointer);
-                    Marshal.FreeCoTaskMem(sourceModeInfoPointer);
-                    Marshal.FreeCoTaskMem(targetInfoPointer);
-                    Marshal.FreeCoTaskMem(advTargetPointer);
-
-                    currentPathInfoPointer = IntPtr.Zero;
-                    currentSourceModeInfoPointer = IntPtr.Zero;
-                    currentTargetInfoPointer = IntPtr.Zero;
-                    currentAdvTargetPointer = IntPtr.Zero;
+                    if (memPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeCoTaskMem(memPointer);
+                    }
+                    
                 }
 
             }
@@ -4089,15 +4104,19 @@ namespace DisplayMagicianShared.NVIDIA
 
                 int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
                 int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-                IntPtr pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
-                IntPtr sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
-                // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                IntPtr currentPathInfoPointer = pathInfoPointer;
-                IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
+
+                IntPtr pathInfoPointer = IntPtr.Zero;
+                IntPtr sourceModeInfoPointer = IntPtr.Zero;
 
                 try
                 {
+                    pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
+                    sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
+                    // Also set another memory pointer to the same place so that we can do the memory copying item by item
+                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                    IntPtr currentPathInfoPointer = pathInfoPointer;
+                    IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
+
                     // Go through the array and copy things from managed code to unmanaged code
                     for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                     {
@@ -4168,11 +4187,16 @@ namespace DisplayMagicianShared.NVIDIA
                 }
                 finally
                 {
-                    Marshal.FreeCoTaskMem(pathInfoPointer);
-                    Marshal.FreeCoTaskMem(sourceModeInfoPointer);
+                    if (pathInfoPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeCoTaskMem(pathInfoPointer);
+                    }
 
-                    currentPathInfoPointer = IntPtr.Zero;
-                    currentSourceModeInfoPointer = IntPtr.Zero;
+                    if (sourceModeInfoPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeCoTaskMem(sourceModeInfoPointer);
+                    }
+                        
 
                 }
 
