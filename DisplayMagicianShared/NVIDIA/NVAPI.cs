@@ -3952,7 +3952,7 @@ namespace DisplayMagicianShared.NVIDIA
                 int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
                 int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
                 int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
-                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
 
                 // Figure out the size of the memory we need to allocate
                 int allPathInfoMemSize = onePathInfoMemSize * (int)PathInfoCount;
@@ -3995,10 +3995,10 @@ namespace DisplayMagicianShared.NVIDIA
                         //for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
                         for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
                         {
-                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL();
+                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
                             advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER;
                             Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
-                            targetInforArray[y].Details = currentAdvTargetPointer;
+                            //targetInforArray[y].Details = advInfo;
                             Marshal.StructureToPtr(targetInforArray[y], currentTargetInfoPointer, true);
                             currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
                             currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize);
@@ -4056,19 +4056,17 @@ namespace DisplayMagicianShared.NVIDIA
                                 currentTargetInfoPointer = returnedPass2PathInfos[i].TargetInfo;
                                 for (Int32 y = 0; y < (Int32)PathInfos[i].TargetInfoCount; y++)
                                 {
-                                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL targetInfo;
-                                    NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 targetInfoDetails;
+                                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo;
 
                                     // And turn the memory pointer to NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 into an actual object and populate the object.
-                                    targetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentTargetInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
+                                    targetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)Marshal.PtrToStructure(currentTargetInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2));
                                     PathInfos[i].TargetInfo[y].DisplayId = targetInfo.DisplayId;
                                     PathInfos[i].TargetInfo[y].WindowsCCDTargetId = targetInfo.WindowsCCDTargetId;
-
-                                    // Next we need to get access to the details object.
+                                    PathInfos[i].TargetInfo[y].Details = targetInfo.Details;
+                                    /*// Next we need to get access to the details object.
                                     targetInfoDetails = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)Marshal.PtrToStructure(targetInfo.Details, typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
-                                    PathInfos[i].TargetInfo[y].Details = targetInfoDetails;
+                                    PathInfos[i].TargetInfo[y].Details = targetInfoDetails;*/
                                     currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
-
                                 }
 
                                 // advance the buffer forwards to the next object
