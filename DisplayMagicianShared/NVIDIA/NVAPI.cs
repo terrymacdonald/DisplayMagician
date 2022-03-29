@@ -4154,6 +4154,7 @@ namespace DisplayMagicianShared.NVIDIA
                                     PathInfos[i].TargetInfo[y].DisplayId = returnedTargetInfo.DisplayId;
                                     PathInfos[i].TargetInfo[y].WindowsCCDTargetId = returnedTargetInfo.WindowsCCDTargetId;
 
+
                                     currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
                                 }
 
@@ -4356,7 +4357,9 @@ namespace DisplayMagicianShared.NVIDIA
             int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
             int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
             int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
-            int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
+            int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+            int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING_INTERNAL));
+            int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA_INTERNAL));
 
             IntPtr pathInfoPointer = Marshal.AllocCoTaskMem(onePathInfoMemSize * (int)pathInfoCount);
             IntPtr sourceModeInfoPointer = Marshal.AllocCoTaskMem(oneSourceModeMemSize * (int)pathInfoCount);
@@ -4380,12 +4383,36 @@ namespace DisplayMagicianShared.NVIDIA
                 {
 
                     NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
+
+                    advInfo.Timing.Extra.Flags = pathInfos[x].TargetInfo[y].Details.Timing.Extra.Flags;
+                    advInfo.Timing.Extra.FrequencyInMillihertz = pathInfos[x].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz;
+                    advInfo.Timing.Extra.HorizontalAspect = pathInfos[x].TargetInfo[y].Details.Timing.Extra.HorizontalAspect;
+                    advInfo.Timing.Extra.HorizontalPixelRepetition = pathInfos[x].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition;
+                    advInfo.Timing.Extra.Name = pathInfos[x].TargetInfo[y].Details.Timing.Extra.Name;
+                    advInfo.Timing.Extra.RefreshRate = pathInfos[x].TargetInfo[y].Details.Timing.Extra.RefreshRate;
+                    advInfo.Timing.Extra.TimingStandard = pathInfos[x].TargetInfo[y].Details.Timing.Extra.TimingStandard;
+                    advInfo.Timing.Extra.VerticalAspect = pathInfos[x].TargetInfo[y].Details.Timing.Extra.VerticalAspect;
+
+                    advInfo.Timing.HBorder = pathInfos[x].TargetInfo[y].Details.Timing.HBorder;
+                    advInfo.Timing.HFrontPorch = pathInfos[x].TargetInfo[y].Details.Timing.HFrontPorch;
+                    advInfo.Timing.HSyncPol = pathInfos[x].TargetInfo[y].Details.Timing.HSyncPol;
+                    advInfo.Timing.HSyncWidth = pathInfos[x].TargetInfo[y].Details.Timing.HSyncWidth;
+                    advInfo.Timing.HTotal = pathInfos[x].TargetInfo[y].Details.Timing.HTotal;
+                    advInfo.Timing.HVisible = pathInfos[x].TargetInfo[y].Details.Timing.HVisible;
+                    advInfo.Timing.Pclk = pathInfos[x].TargetInfo[y].Details.Timing.Pclk;
+                    advInfo.Timing.ScanMode = pathInfos[x].TargetInfo[y].Details.Timing.ScanMode;
+                    advInfo.Timing.VBorder = pathInfos[x].TargetInfo[y].Details.Timing.VBorder;
+                    advInfo.Timing.VFrontPorch = pathInfos[x].TargetInfo[y].Details.Timing.VFrontPorch;
+                    advInfo.Timing.VSyncPol = pathInfos[x].TargetInfo[y].Details.Timing.VSyncPol;
+                    advInfo.Timing.VSyncWidth = pathInfos[x].TargetInfo[y].Details.Timing.VSyncWidth;
+                    advInfo.Timing.VTotal = pathInfos[x].TargetInfo[y].Details.Timing.VTotal;
+                    advInfo.Timing.VVisible = pathInfos[x].TargetInfo[y].Details.Timing.VVisible;
+
                     advInfo.ConnectorType = pathInfos[x].TargetInfo[y].Details.ConnectorType;
                     advInfo.Flags = pathInfos[x].TargetInfo[y].Details.Flags;
                     advInfo.RefreshRateInMillihertz = pathInfos[x].TargetInfo[y].Details.RefreshRateInMillihertz;
                     advInfo.Rotation = pathInfos[x].TargetInfo[y].Details.Rotation;
                     advInfo.Scaling = pathInfos[x].TargetInfo[y].Details.Scaling;
-                    advInfo.Timing = (NV_TIMING)pathInfos[x].TargetInfo[y].Details.Timing.Clone();
                     advInfo.TimingOverride = pathInfos[x].TargetInfo[y].Details.TimingOverride;
                     advInfo.TvFormat = pathInfos[x].TargetInfo[y].Details.TvFormat;
                     //advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER;
@@ -4401,6 +4428,7 @@ namespace DisplayMagicianShared.NVIDIA
                     // Prepare the pointers for the next objects
                     currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
                     currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize);
+                    currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize);
                 }
 
 
@@ -4439,14 +4467,14 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(pathInfoPointer);
-            Marshal.FreeCoTaskMem(sourceModeInfoPointer);
-            Marshal.FreeCoTaskMem(targetInfoPointer);
-            Marshal.FreeCoTaskMem(advTargetPointer);
-            //Marshal.FreeCoTaskMem(timingPointer);
-            //Marshal.FreeCoTaskMem(timingExtraPointer);
-            //Marshal.FreeCoTaskMem(positionPointer);
-            //Marshal.FreeCoTaskMem(resolutionPointer);
+            Marshal.FreeHGlobal(pathInfoPointer);
+            Marshal.FreeHGlobal(sourceModeInfoPointer);
+            Marshal.FreeHGlobal(targetInfoPointer);
+            Marshal.FreeHGlobal(advTargetPointer);
+            //Marshal.FreeHGlobal(timingPointer);
+            //Marshal.FreeHGlobal(timingExtraPointer);
+            //Marshal.FreeHGlobal(positionPointer);
+            //Marshal.FreeHGlobal(resolutionPointer);
 
             return status;
         }
@@ -4604,7 +4632,7 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(displaySettingsBuffer);
+            Marshal.FreeHGlobal(displaySettingsBuffer);
 
             return status;
         }
@@ -4709,7 +4737,7 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(gridTopologiesBuffer);
+            Marshal.FreeHGlobal(gridTopologiesBuffer);
 
             return status;
         }
@@ -4828,8 +4856,8 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(gridTopologiesBuffer);
-            Marshal.FreeCoTaskMem(topoStatusesBuffer);
+            Marshal.FreeHGlobal(gridTopologiesBuffer);
+            Marshal.FreeHGlobal(topoStatusesBuffer);
 
             return status;
         }
@@ -4880,7 +4908,7 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(gridTopologiesBuffer);
+            Marshal.FreeHGlobal(gridTopologiesBuffer);
 
             return status;
         }
@@ -5244,7 +5272,7 @@ namespace DisplayMagicianShared.NVIDIA
                     }
                 }
                 // Destroy the unmanaged array so we don't have a memory leak
-                Marshal.FreeCoTaskMem(displayIdBuffer);
+                Marshal.FreeHGlobal(displayIdBuffer);
 
             }
             else
