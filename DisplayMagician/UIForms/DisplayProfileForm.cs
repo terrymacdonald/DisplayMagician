@@ -762,6 +762,6 @@ namespace DisplayMagician.UIForms
             string targetURL = @"https://github.com/sponsors/terrymacdonald";
             System.Diagnostics.Process.Start(targetURL);
         }
-        
+
     }
 }

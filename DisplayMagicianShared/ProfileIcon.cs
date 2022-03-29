@@ -5,7 +5,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.IconLib;
 using System.Drawing.Imaging;
 using System.Linq;
-using DisplayMagicianShared.Windows;
 
 namespace DisplayMagicianShared
 {
@@ -324,16 +323,16 @@ namespace DisplayMagicianShared
                 //int startButtonSize = 2 * startButtonSpacer;
                 switch (screen.TaskBarEdge)
                 {
-                    case TaskBarLayout.TaskBarEdge.Left:
+                    case Windows.TaskBarLayout.TaskBarEdge.Left:
                         taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case TaskBarLayout.TaskBarEdge.Top:
+                    case Windows.TaskBarLayout.TaskBarEdge.Top:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
                         break;
-                    case TaskBarLayout.TaskBarEdge.Right:
+                    case Windows.TaskBarLayout.TaskBarEdge.Right:
                         taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case TaskBarLayout.TaskBarEdge.Bottom:
+                    case Windows.TaskBarLayout.TaskBarEdge.Bottom:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
                         break;
                     default:
