@@ -1367,57 +1367,6 @@ namespace DisplayMagicianShared.NVIDIA
                 // Get the display identifiers                
                 myDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
 
-                // Go through and find the list of displayIDs
-                // ignore the ones that were found
-                // if one was not found, then
-                // go through the modes
-                // patch the target
-                if (myDisplayConfig.IsCloned)
-                {
-                    List<UInt32> clonedIdsWeKnow = new List<uint>();
-                    List<UInt32> missingIdsWeWant = new List<uint>();
-                    // Find all displays in the displayconfig
-                    foreach (var displayConfig in myDisplayConfig.DisplayConfigs)
-                    {
-                        foreach (var targetInfo in displayConfig.TargetInfo)
-                        {
-                            if (foundDisplayIds.Contains(targetInfo.DisplayId))
-                            {
-                                // We have this foundId
-                                clonedIdsWeKnow.Add(targetInfo.DisplayId);
-                            }
-                        }
-                    }
-
-                    // Now go through and figure out which foundDisplayId we're missing
-                    foreach (var foundDisplayId in foundDisplayIds)
-                    {
-                        if (!clonedIdsWeKnow.Contains(foundDisplayId))
-                        {
-                            // We found a cloned display id \o/
-                            missingIdsWeWant.Add(foundDisplayId);
-                        }
-                    }
-
-                    int clonedIdOffset = 0;
-                    // Now we go through the list of missing cloned id's and we fill them in
-                    for (int x = 0; x < myDisplayConfig.DisplayConfigs.Count; x++)
-                    {
-                        // We go through all the displayconfigs, but we want to only change the cloned displays (those with > 1 targetInfo)
-                        if (myDisplayConfig.DisplayConfigs[x].TargetInfoCount > 1)
-                        {
-                            // We only want to change the cloned displays, so we start at index 1 (the clones themselves)
-                            for (int y = 1; y < myDisplayConfig.DisplayConfigs[x].TargetInfoCount; y++)
-                            {
-                                // We want to assign the cloned display the display ID from the missing display
-                                myDisplayConfig.DisplayConfigs[x].TargetInfo[y].DisplayId = missingIdsWeWant[clonedIdOffset++];
-                                // We also want to clone the Details struct from the base display (the first display) and replicate them on the clone
-                                // This copies the process used within the DisplayCOnfiguration C++ Sample released by NVIDIA
-                                myDisplayConfig.DisplayConfigs[x].TargetInfo[y].Details = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)myDisplayConfig.DisplayConfigs[0].TargetInfo[0].Details.Clone();
-                            }
-                        }
-                    }
-                }
 
             }
             else

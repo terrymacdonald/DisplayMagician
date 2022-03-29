@@ -1093,7 +1093,7 @@ namespace DisplayMagicianShared.NVIDIA
         public UInt32 Pclk;             //!< pixel clock in 10 kHz
 
         //other timing related extras - points to a NV_TIMING_EXTRA_INTERNAL
-        public IntPtr Extra;
+        public NV_TIMING_EXTRA_INTERNAL Extra;
 
     }
 
@@ -1372,10 +1372,10 @@ namespace DisplayMagicianShared.NVIDIA
 
         // Backend (raster) timing standard
         public NV_TIMING_OVERRIDE TimingOverride;     //!< Ignored if timingOverride == NV_TIMING_OVERRIDE_CURRENT
-        public IntPtr Timing;             // Points to a NV_TIMING_INTERNAL object
-                                          //!< Scan out timing, valid only if timingOverride == NV_TIMING_OVERRIDE_CUST
-                                          //!< The value NV_TIMING::NV_TIMINGEXT::rrx1k is obtained from the EDID. The driver may
-                                          //!< tweak this value for HDTV, stereo, etc., before reporting it to the OS.
+        public NV_TIMING_INTERNAL Timing;             // Points to a NV_TIMING_INTERNAL object
+                                                      //!< Scan out timing, valid only if timingOverride == NV_TIMING_OVERRIDE_CUST
+                                                      //!< The value NV_TIMING::NV_TIMINGEXT::rrx1k is obtained from the EDID. The driver may
+                                                      //!< tweak this value for HDTV, stereo, etc., before reporting it to the OS.
 
     }
 
@@ -3948,23 +3948,48 @@ namespace DisplayMagicianShared.NVIDIA
                     totalTargetInfoCount += (int)PathInfos[x].TargetInfoCount;
                 }
 
+                // Get the size of the each object
                 int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
                 int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2));
-                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
-                IntPtr pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
-                IntPtr sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
-                IntPtr targetInfoPointer = Marshal.AllocHGlobal(onePathTargetMemSize * totalTargetInfoCount);
-                IntPtr advTargetPointer = Marshal.AllocHGlobal(oneAdvTargetMemSize * totalTargetInfoCount);
-                // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                IntPtr currentPathInfoPointer = pathInfoPointer;
-                IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
-                IntPtr currentTargetInfoPointer = targetInfoPointer;
-                IntPtr currentAdvTargetPointer = advTargetPointer;
+                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
+                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+                int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING_INTERNAL));
+                int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA_INTERNAL));
+
+                // Figure out the size of the memory we need to allocate
+                int allPathInfoMemSize = onePathInfoMemSize * (int)PathInfoCount;
+                int allSourceModeMemSize = oneSourceModeMemSize * (int)PathInfoCount;
+                int allPathTargetMemSize = onePathTargetMemSize * totalTargetInfoCount;
+                int allAdvTargetMemSize = (oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize) * totalTargetInfoCount;
+                //int allTimingMemSize = oneTimingMemSize * totalTargetInfoCount;
+                //int allTimingExtraMemSize = oneTimingExtraMemSize * totalTargetInfoCount;
+                //int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize + allTimingExtraMemSize;
+                int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize;
+
+                IntPtr memPointer = IntPtr.Zero;
 
                 try
                 {
+                    // Allocate the memory we need
+                    memPointer = Marshal.AllocHGlobal(allObjectsMemSize * 2);
+
+                    // Figure out the address of the arrays we will use
+                    IntPtr pathInfoPointer = memPointer;
+                    IntPtr sourceModeInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize);
+                    IntPtr targetInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize);
+                    IntPtr advTargetPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize);
+                    //IntPtr timingPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize);
+                    //IntPtr timingExtraPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize);
+
+                    // Figure out each memory pointer so that we can do the memory copying item by item
+                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                    IntPtr currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
+                    IntPtr currentSourceModeInfoPointer = new IntPtr(sourceModeInfoPointer.ToInt64());
+                    IntPtr currentTargetInfoPointer = new IntPtr(targetInfoPointer.ToInt64());
+                    IntPtr currentAdvTargetPointer = new IntPtr(advTargetPointer.ToInt64());
+                    //IntPtr currentTimingPointer = new IntPtr(timingPointer.ToInt64());
+                    //IntPtr currentTimingExtraPointer = new IntPtr(timingExtraPointer.ToInt64());
+
                     // Go through the array and copy things from managed code to unmanaged code
                     for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                     {
@@ -3980,19 +4005,34 @@ namespace DisplayMagicianShared.NVIDIA
                         //for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
                         for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
                         {
-                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
+                            // Create the timingExtra object ready to use shortly
+                            //NV_TIMING_EXTRA_INTERNAL timingExtra = new NV_TIMING_EXTRA_INTERNAL();
+                            //Marshal.StructureToPtr(timingExtra, currentTimingExtraPointer, true);
+
+                            // Create the timing object, and connect it to the timingExtra object we created earlier
+                            //NV_TIMING_INTERNAL timing = new NV_TIMING_INTERNAL();
+                            //timing.Extra = new IntPtr(currentTimingExtraPointer.ToInt64());
+                            //Marshal.StructureToPtr(timing, currentTimingPointer, true);
+
+                            // Create the Advanced Details object, and connect it to the timing object we ust created
+                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL();
                             advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER;
+                            //advInfo.Timing = new IntPtr(currentTimingPointer.ToInt64());
                             Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
-                            targetInforArray[y].Details = currentAdvTargetPointer;
+
+                            // Now connect the Advanced details we created to the details in the TargetInfo array item
+                            targetInforArray[y].Details = new IntPtr(currentAdvTargetPointer.ToInt64());
                             Marshal.StructureToPtr(targetInforArray[y], currentTargetInfoPointer, true);
                             currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
-                            currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize);
+                            currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize);
+                            //currentTimingPointer = new IntPtr(currentTimingPointer.ToInt64() + oneTimingMemSize);
+                            //currentTimingExtraPointer = new IntPtr(currentTimingExtraPointer.ToInt64() + oneTimingExtraMemSize);
                         }
 
                         // Create a source mode info object and copy it over
                         NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)PathInfos[x].SourceModeInfo.Clone();
                         Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
-                        pass2PathInfos[x].SourceModeInfo = currentSourceModeInfoPointer;
+                        pass2PathInfos[x].SourceModeInfo = new IntPtr(currentSourceModeInfoPointer.ToInt64());
 
                         // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
                         Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
@@ -4012,7 +4052,8 @@ namespace DisplayMagicianShared.NVIDIA
                             // If everything worked, then copy the data back from the unmanaged array into the managed array
                             // So that we can use it in C# land
                             // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                            currentPathInfoPointer = pathInfoPointer;
+                            currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
+
                             // Create a managed array to store the received information within
                             PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
                             NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] returnedPass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
@@ -4037,19 +4078,83 @@ namespace DisplayMagicianShared.NVIDIA
                                 currentTargetInfoPointer = returnedPass2PathInfos[i].TargetInfo;
                                 for (Int32 y = 0; y < (Int32)PathInfos[i].TargetInfoCount; y++)
                                 {
-                                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL targetInfo;
-                                    NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 targetInfoDetails;
 
-                                    // And turn the memory pointer to NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 into an actual object and populate the object.
-                                    targetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentTargetInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
-                                    PathInfos[i].TargetInfo[y].DisplayId = targetInfo.DisplayId;
-                                    PathInfos[i].TargetInfo[y].WindowsCCDTargetId = targetInfo.WindowsCCDTargetId;
-
+                                    // And turn the memory pointer to NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL into an actual object and populate the our wanted object
+                                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL returnedTargetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentTargetInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
                                     // Next we need to get access to the details object.
-                                    targetInfoDetails = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)Marshal.PtrToStructure(targetInfo.Details, typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
-                                    PathInfos[i].TargetInfo[y].Details = targetInfoDetails;
-                                    currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
+                                    NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL returnedAdvTarget = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL)Marshal.PtrToStructure(returnedTargetInfo.Details, typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+                                    // Next we need to get access to the timing object.
+                                    //NV_TIMING_INTERNAL returnedTiming = (NV_TIMING_INTERNAL)Marshal.PtrToStructure(returnedAdvTarget.Timing, typeof(NV_TIMING_INTERNAL));
+                                    // Next we need to get access to the timing extra object.
+                                    //NV_TIMING_EXTRA_INTERNAL returnedTimingExtra = (NV_TIMING_EXTRA_INTERNAL)Marshal.PtrToStructure(returnedTiming.Extra, typeof(NV_TIMING_EXTRA_INTERNAL));
 
+                                    // Now we start copying the info into the object we want to return
+                                    // We'll start with filling in the Timing Extra info we want to return
+                                    /*PathInfos[i].TargetInfo[y].Details.Timing.Extra.Flags = returnedTimingExtra.Flags;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz = returnedTimingExtra.FrequencyInMillihertz;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalAspect = returnedTimingExtra.HorizontalAspect;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition = returnedTimingExtra.HorizontalPixelRepetition;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Name = returnedTimingExtra.Name;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.RefreshRate = returnedTimingExtra.RefreshRate;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.TimingStandard = returnedTimingExtra.TimingStandard;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.VerticalAspect = returnedTimingExtra.VerticalAspect;*/
+
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Flags = returnedAdvTarget.Timing.Extra.Flags;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz = returnedAdvTarget.Timing.Extra.FrequencyInMillihertz;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalAspect = returnedAdvTarget.Timing.Extra.HorizontalAspect;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition = returnedAdvTarget.Timing.Extra.HorizontalPixelRepetition;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Name = returnedAdvTarget.Timing.Extra.Name;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.RefreshRate = returnedAdvTarget.Timing.Extra.RefreshRate;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.TimingStandard = returnedAdvTarget.Timing.Extra.TimingStandard;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.VerticalAspect = returnedAdvTarget.Timing.Extra.VerticalAspect;
+
+
+                                    // Next, we'll fill in the Timing info we want to return
+                                    /*PathInfos[i].TargetInfo[y].Details.Timing.HBorder = returnedTiming.HBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HFrontPorch = returnedTiming.HFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncPol = returnedTiming.HSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncWidth = returnedTiming.HSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HTotal = returnedTiming.HTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HVisible = returnedTiming.HVisible;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Pclk = returnedTiming.Pclk;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.ScanMode = returnedTiming.ScanMode;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VBorder = returnedTiming.VBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VFrontPorch = returnedTiming.VFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncPol = returnedTiming.VSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncWidth = returnedTiming.VSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VTotal = returnedTiming.VTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VVisible = returnedTiming.VVisible;*/
+
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HBorder = returnedAdvTarget.Timing.HBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HFrontPorch = returnedAdvTarget.Timing.HFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncPol = returnedAdvTarget.Timing.HSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncWidth = returnedAdvTarget.Timing.HSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HTotal = returnedAdvTarget.Timing.HTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HVisible = returnedAdvTarget.Timing.HVisible;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Pclk = returnedAdvTarget.Timing.Pclk;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.ScanMode = returnedAdvTarget.Timing.ScanMode;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VBorder = returnedAdvTarget.Timing.VBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VFrontPorch = returnedAdvTarget.Timing.VFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncPol = returnedAdvTarget.Timing.VSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncWidth = returnedAdvTarget.Timing.VSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VTotal = returnedAdvTarget.Timing.VTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VVisible = returnedAdvTarget.Timing.VVisible;
+
+                                    // Next, we'll deal with the advanced details
+                                    PathInfos[i].TargetInfo[y].Details.ConnectorType = returnedAdvTarget.ConnectorType;
+                                    PathInfos[i].TargetInfo[y].Details.Flags = returnedAdvTarget.Flags;
+                                    PathInfos[i].TargetInfo[y].Details.RefreshRateInMillihertz = returnedAdvTarget.RefreshRateInMillihertz;
+                                    PathInfos[i].TargetInfo[y].Details.Rotation = returnedAdvTarget.Rotation;
+                                    PathInfos[i].TargetInfo[y].Details.Scaling = returnedAdvTarget.Scaling;
+                                    PathInfos[i].TargetInfo[y].Details.TimingOverride = returnedAdvTarget.TimingOverride;
+                                    PathInfos[i].TargetInfo[y].Details.TvFormat = returnedAdvTarget.TvFormat;
+                                    PathInfos[i].TargetInfo[y].Details.Version = returnedAdvTarget.Version;
+
+                                    // We'll finish with the TargetInfo
+                                    PathInfos[i].TargetInfo[y].DisplayId = returnedTargetInfo.DisplayId;
+                                    PathInfos[i].TargetInfo[y].WindowsCCDTargetId = returnedTargetInfo.WindowsCCDTargetId;
+
+                                    currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
                                 }
 
                                 // advance the buffer forwards to the next object
@@ -4061,13 +4166,16 @@ namespace DisplayMagicianShared.NVIDIA
                     {
                         status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
                     }
+                    // Try and remove the memory used
+                    pass2PathInfos = null;
                 }
                 finally
                 {
-                    Marshal.FreeCoTaskMem(pathInfoPointer);
-                    Marshal.FreeCoTaskMem(sourceModeInfoPointer);
-                    Marshal.FreeCoTaskMem(targetInfoPointer);
-                    Marshal.FreeCoTaskMem(advTargetPointer);
+                    if (memPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(memPointer);
+                    }
+
                 }
 
             }
@@ -4082,15 +4190,19 @@ namespace DisplayMagicianShared.NVIDIA
 
                 int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
                 int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-                IntPtr pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
-                IntPtr sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
-                // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                IntPtr currentPathInfoPointer = pathInfoPointer;
-                IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
+
+                IntPtr pathInfoPointer = IntPtr.Zero;
+                IntPtr sourceModeInfoPointer = IntPtr.Zero;
 
                 try
                 {
+                    pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
+                    sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
+                    // Also set another memory pointer to the same place so that we can do the memory copying item by item
+                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                    IntPtr currentPathInfoPointer = pathInfoPointer;
+                    IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
+
                     // Go through the array and copy things from managed code to unmanaged code
                     for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                     {
@@ -4156,11 +4268,22 @@ namespace DisplayMagicianShared.NVIDIA
                     {
                         status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
                     }
+                    // Try and remove the memory used
+                    pass2PathInfos = null;
                 }
                 finally
                 {
-                    Marshal.FreeCoTaskMem(pathInfoPointer);
-                    Marshal.FreeCoTaskMem(sourceModeInfoPointer);
+                    if (pathInfoPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(pathInfoPointer);
+                    }
+
+                    if (sourceModeInfoPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(sourceModeInfoPointer);
+                    }
+
+
                 }
 
             }

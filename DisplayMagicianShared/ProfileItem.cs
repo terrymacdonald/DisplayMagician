@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows;
 using System.Windows.Forms;
 using DisplayMagicianShared.Resources;
 using Newtonsoft.Json;
@@ -40,7 +41,7 @@ namespace DisplayMagicianShared
         public List<SpannedScreenPosition> SpannedScreens;
         public int SpannedColumns;
         public int SpannedRows;
-        public TaskBarStuckRectangle.TaskBarEdge TaskBarEdge;
+        public TaskBarLayout.TaskBarEdge TaskBarEdge;
     }
 
     public struct SpannedScreenPosition
@@ -937,28 +938,19 @@ namespace DisplayMagicianShared
                             // Set some basics about the screen
                             try
                             {
-                                string displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
-                                string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
-                                List<uint> sourceIndexes = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
-                                for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
+                                UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
+                                List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                                foreach (var displaySource in displaySources)
                                 {
-                                    // Skip this if its not a source info config type
-                                    if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
-                                    {
-                                        continue;
-                                    }
+                                    
+                                    screen.Name = displayId.ToString();
 
-                                    // If the source index matches the index of the source info object we're looking at, then process it!
-                                    if (sourceIndexes.Contains(_windowsDisplayConfig.DisplayConfigModes[x].Id))
-                                    {
-                                        screen.Name = displayId.ToString();
-
-                                        screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
-                                        screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
-                                        screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
-                                        screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
-                                        break;
-                                    }
+                                    screen.ScreenX = displaySource.SourceModeInfo.Position.X;
+                                    screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
+                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                    break;
+                                    
                                 }
                             }
                             catch (KeyNotFoundException ex)
@@ -996,27 +988,18 @@ namespace DisplayMagicianShared
                             try
                             {
                                 string displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
-                                string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[displayId];
-                                List<uint> sourceIndexes = _windowsDisplayConfig.DisplaySources[windowsDisplayName];
-                                for (int x = 0; x < _windowsDisplayConfig.DisplayConfigModes.Length; x++)
+                                List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                                foreach (var displaySource in displaySources)
                                 {
-                                    // Skip this if its not a source info config type
-                                    if (_windowsDisplayConfig.DisplayConfigModes[x].InfoType != DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE)
-                                    {
-                                        continue;
-                                    }
 
-                                    // If the source index matches the index of the source info object we're looking at, then process it!
-                                    if (sourceIndexes.Contains(_windowsDisplayConfig.DisplayConfigModes[x].Id))
-                                    {
-                                        screen.Name = displayId.ToString();
+                                    screen.Name = displayId.ToString();
 
-                                        screen.ScreenX = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.X;
-                                        screen.ScreenY = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Position.Y;
-                                        screen.ScreenWidth = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Width;
-                                        screen.ScreenHeight = (int)_windowsDisplayConfig.DisplayConfigModes[x].SourceMode.Height;
-                                        break;
-                                    }
+                                    screen.ScreenX = displaySource.SourceModeInfo.Position.X;
+                                    screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
+                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                    break;
+
                                 }
                             }
                             catch (KeyNotFoundException ex)
@@ -1049,7 +1032,7 @@ namespace DisplayMagicianShared
                         }
 
                         // Force the taskbar edge to the bottom as it is an NVIDIA surround screen
-                        screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
+                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
 
 
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
@@ -1162,20 +1145,23 @@ namespace DisplayMagicianShared
                     screen.ClonedCopies = 0;
                     try
                     {
-                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.DevicePath.Contains($"UID{targetId}")).Edge;
+                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
                         SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                     }
                     catch (Exception ex)
                     {
                         // Guess that it is at the bottom (90% correct)
                         SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
-                        screen.TaskBarEdge = TaskBarStuckRectangle.TaskBarEdge.Bottom;
+                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                     }
 
+                    // Find out if this source is cloned
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
-                        if (displaySource.Value.Contains(sourceId))
+                        // All of the items in the Value array are the same source, so we can just check the first one in the array!
+                        if (displaySource.Value[0].SourceId == sourceId)
                         {
+                            // If there is more than one item in the array, then it's a cloned source!
                             if (displaySource.Value.Count > 1)
                             {
                                 // We have a cloned display
@@ -1287,11 +1273,26 @@ namespace DisplayMagicianShared
                     screen.IsSpanned = false;
                     screen.Colour = normalScreenColor; // this is the default unless overridden by the primary screen
                     screen.IsClone = false;
-                    screen.ClonedCopies = 0;                    
+                    screen.ClonedCopies = 0;
+                    try
+                    {
+                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Guess that it is at the bottom (90% correct)
+                        SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                    }
+
+                    // Find out if this source is cloned
                     foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
                     {
-                        if (displaySource.Value.Contains(sourceId))
+                        // All of the items in the Value array are the same source, so we can just check the first one in the array!
+                        if (displaySource.Value[0].SourceId == sourceId)
                         {
+                            // If there is more than one item in the array, then it's a cloned source!
                             if (displaySource.Value.Count > 1)
                             {
                                 // We have a cloned display

@@ -762,17 +762,6 @@ namespace DisplayMagician.UIForms
             string targetURL = @"https://github.com/sponsors/terrymacdonald";
             System.Diagnostics.Process.Start(targetURL);
         }
-
-        private void btn_tools_Click(object sender, EventArgs e)
-        {
-            ProfileToolsForm profileToolsForm = new ProfileToolsForm();
-            profileToolsForm.CurrentProfile = _selectedProfile;
-            profileToolsForm.ShowDialog(this);
-            if (profileToolsForm.DialogResult == DialogResult.OK)
-            {
-                // If we change something, then we refresh the current profile
-                btn_view_current.PerformClick();
-            }
-        }
+        
     }
 }

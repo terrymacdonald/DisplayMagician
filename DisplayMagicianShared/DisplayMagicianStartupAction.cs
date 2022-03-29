@@ -5,6 +5,7 @@
         RunShortcut,
         ChangeProfile,
         CreateProfile,
+        CurrentProfile,
         StartUpNormally
     }
 }

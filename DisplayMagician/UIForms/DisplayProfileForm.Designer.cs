@@ -59,7 +59,6 @@ namespace DisplayMagician.UIForms
             this.dv_profile = new DisplayMagicianShared.UserControls.DisplayView();
             this.p_upper = new System.Windows.Forms.Panel();
             this.btn_donate = new System.Windows.Forms.Button();
-            this.btn_tools = new System.Windows.Forms.Button();
             this.btn_help = new System.Windows.Forms.Button();
             this.btn_profile_settings = new System.Windows.Forms.Button();
             this.pbLogo = new System.Windows.Forms.PictureBox();
@@ -376,7 +375,6 @@ namespace DisplayMagician.UIForms
             this.p_upper.BackColor = System.Drawing.Color.DimGray;
             this.p_upper.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("p_upper.BackgroundImage")));
             this.p_upper.Controls.Add(this.btn_donate);
-            this.p_upper.Controls.Add(this.btn_tools);
             this.p_upper.Controls.Add(this.btn_help);
             this.p_upper.Controls.Add(this.txt_profile_save_name);
             this.p_upper.Controls.Add(this.lbl_save_profile);
@@ -411,23 +409,6 @@ namespace DisplayMagician.UIForms
             this.btn_donate.Text = "D&onate";
             this.btn_donate.UseVisualStyleBackColor = false;
             this.btn_donate.Click += new System.EventHandler(this.btn_donate_Click);
-            // 
-            // btn_tools
-            // 
-            this.btn_tools.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_tools.BackColor = System.Drawing.Color.Black;
-            this.btn_tools.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_tools.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_tools.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_tools.ForeColor = System.Drawing.Color.White;
-            this.btn_tools.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.btn_tools.Location = new System.Drawing.Point(655, 63);
-            this.btn_tools.Name = "btn_tools";
-            this.btn_tools.Size = new System.Drawing.Size(111, 23);
-            this.btn_tools.TabIndex = 41;
-            this.btn_tools.Text = "Profile Too&ls";
-            this.btn_tools.UseVisualStyleBackColor = false;
-            this.btn_tools.Click += new System.EventHandler(this.btn_tools_Click);
             // 
             // btn_help
             // 
@@ -562,7 +543,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_help;
         private System.Windows.Forms.ToolStripMenuItem deleteProfileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveProfileToDesktopToolStripMenuItem;
-        private System.Windows.Forms.Button btn_tools;
         private System.Windows.Forms.Button btn_donate;
     }
 }

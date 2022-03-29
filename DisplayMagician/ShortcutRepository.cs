@@ -4,6 +4,7 @@ using DisplayMagician.GameLibraries;
 using DisplayMagician.Processes;
 using DisplayMagician.UIForms;
 using DisplayMagicianShared;
+using DisplayMagicianShared.Windows;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
