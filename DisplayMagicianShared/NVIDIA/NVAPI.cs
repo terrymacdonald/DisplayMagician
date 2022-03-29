@@ -3951,10 +3951,10 @@ namespace DisplayMagicianShared.NVIDIA
                 // Get the size of the each object
                 int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
                 int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
-                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
-                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
-                int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING_INTERNAL));
-                int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA_INTERNAL));
+                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2));
+                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
+                int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING));
+                int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA));
 
                 // Figure out the size of the memory we need to allocate
                 int allPathInfoMemSize = onePathInfoMemSize * (int)PathInfoCount;
@@ -4010,17 +4010,17 @@ namespace DisplayMagicianShared.NVIDIA
 
                             // Create the timing object, and connect it to the timingExtra object we created earlier
                             NV_TIMING_INTERNAL timing = new NV_TIMING_INTERNAL();
-                            timing.Extra = currentTimingExtraPointer;
+                            timing.Extra = new IntPtr(currentTimingExtraPointer.ToInt64());
                             Marshal.StructureToPtr(timing, currentTimingPointer, true);
 
                             // Create the Advanced Details object, and connect it to the timing object we ust created
                             NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL();
                             advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER;
-                            advInfo.Timing = currentTimingPointer;
+                            advInfo.Timing = new IntPtr(currentTimingPointer.ToInt64());
                             Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
 
                             // Now connect the Advanced details we created to the details in the TargetInfo array item
-                            targetInforArray[y].Details = currentAdvTargetPointer;
+                            targetInforArray[y].Details = new IntPtr(currentAdvTargetPointer.ToInt64());
                             Marshal.StructureToPtr(targetInforArray[y], currentTargetInfoPointer, true);
                             currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
                             currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize);
@@ -4031,7 +4031,7 @@ namespace DisplayMagicianShared.NVIDIA
                         // Create a source mode info object and copy it over
                         NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)PathInfos[x].SourceModeInfo.Clone();
                         Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
-                        pass2PathInfos[x].SourceModeInfo = currentSourceModeInfoPointer;
+                        pass2PathInfos[x].SourceModeInfo = new IntPtr(currentSourceModeInfoPointer.ToInt64());
 
                         // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
                         Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
