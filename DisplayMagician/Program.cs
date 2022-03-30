@@ -64,7 +64,6 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
-
             // Create the remote server if we're first instance, or
             // If we're a subsequent instance, pass the command line parameters to the first instance and then 
             bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
@@ -967,6 +966,7 @@ namespace DisplayMagician {
             string profileName = "UNKNOWN";
             try
             {
+                ProfileRepository.UpdateActiveProfile();
                 currentProfile = ProfileRepository.GetActiveProfile();
                 if (currentProfile is ProfileItem)
                 {
@@ -975,7 +975,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
-                
+                logger.Error(ex, $"Program/CurrentProfile: Exception while trying to get the name of the DisplayMagician profile currently in use.");
             }
 
             Console.WriteLine($"CurrentProfile Display Profile: {profileName}");
