@@ -4499,7 +4499,7 @@ namespace DisplayMagicianShared.NVIDIA
                 }
 
             }
-            
+
             return status;
         }
 

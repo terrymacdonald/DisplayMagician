@@ -227,7 +227,7 @@ namespace DisplayMagicianShared.NVIDIA
             {
                 // If this fires, then the DLL isn't available, so we need don't try to do anything else
                 SharedLogger.logger.Info(ex, $"NVIDIALibrary/NVIDIALibrary: Exception trying to load the NVIDIA NVAPI DLL. This generally means you don't have the NVIDIA driver installed.");
-            }            
+            }
 
         }
 
