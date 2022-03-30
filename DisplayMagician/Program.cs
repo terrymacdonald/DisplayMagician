@@ -68,11 +68,13 @@ namespace DisplayMagician {
             // If we're a subsequent instance, pass the command line parameters to the first instance and then 
             bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
             if (isFirstInstance)
-            {
+            {                
                 Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
             }
             else
             {
+                
+                // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
                 Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
                 if (System.Windows.Forms.Application.MessageLoop)
                 {
@@ -84,6 +86,7 @@ namespace DisplayMagician {
                     // Console app
                     Environment.Exit(1);
                 }
+                                
             }
 
             // If we get here, then we're the first instance!
