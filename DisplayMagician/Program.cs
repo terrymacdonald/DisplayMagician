@@ -57,6 +57,12 @@ namespace DisplayMagician {
         private static SharedLogger sharedLogger;
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
+        private static bool _bypassSingleInstanceMode = false;
+
+        private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
+        {
+            "CurrentProfile",
+        };
 
         /// <summary>
         ///     The main entry point for the application.
@@ -64,30 +70,44 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
-            // Create the remote server if we're first instance, or
-            // If we're a subsequent instance, pass the command line parameters to the first instance and then 
-            bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
-            if (isFirstInstance)
-            {                
-                Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
-            }
-            else
+            // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
+            // then skip the single instance mode tests. This is important for commands used in powershell
+            if (args.Length > 0 && _commandsThatBypassSingleInstanceMode.Contains(args[0]))
             {
-                
-                // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
-                Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
-                if (System.Windows.Forms.Application.MessageLoop)
+                _bypassSingleInstanceMode = true;
+            }
+
+
+            // If we're not bypassing single instance mode, then we need to check if we're the single instance, and if we're the second instance then
+            // we need to pass the command to the single instance and shutdown.
+            if (!_bypassSingleInstanceMode)
+            {
+                // Create the remote server if we're first instance, or
+                // If we're a subsequent instance, pass the command line parameters to the first instance and then 
+                bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
+                if (isFirstInstance)
                 {
-                    // WinForms have loaded
-                    Application.Exit();
+                    Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
                 }
                 else
                 {
-                    // Console app
-                    Environment.Exit(1);
+
+                    // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
+                    Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
+                    if (System.Windows.Forms.Application.MessageLoop)
+                    {
+                        // WinForms have loaded
+                        Application.Exit();
+                    }
+                    else
+                    {
+                        // Console app
+                        Environment.Exit(1);
+                    }
+
                 }
-                                
             }
+            
 
             // If we get here, then we're the first instance!
             RegisterDisplayMagicianWithWindows();
