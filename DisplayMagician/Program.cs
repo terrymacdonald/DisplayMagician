@@ -59,6 +59,18 @@ namespace DisplayMagician {
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
 
+        public enum ERRORLEVEL: int
+        {
+            OK = 0, // Errorlevel returned when everything has worked as it should
+            CANCELED_BY_USER = 1,  // Errorlevel returned when an action was cancelled by a user           
+            PROFILE_UNKNOWN = 50, // Errorlevel used in CurrentProfile to return the fact the current display profile is not a saved profile, and so is unknown.
+            ERROR_EXCEPTION = 100,  // Errorlevel returned when an excption of some kind has occurred.
+            ERROR_CANNOT_FIND_SHORTCUT = 101,  // Errorlevel returned when RunShortcut command is used, and it cannot find the shortcut to run
+            ERROR_CANNOT_FIND_PROFILE = 102,  // Errorlevel returned when RunProfile command is used, and it cannot find the profile to apply
+            ERROR_APPLYING_PROFILE = 103,  // Errorlevel returned when RunProfile command is used, and it cannot apply the profile for some reason
+            ERROR_UNKNOWN_COMMAND = 104, // Errorlevel returned when DisplayMagician is given an unregonised command
+        };
+
         private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
         {
             "CurrentProfile",
@@ -507,9 +519,9 @@ namespace DisplayMagician {
                     // Load the games in background onexecute
                     GameLibrary.LoadGamesInBackground();
 
-                    RunShortcut(argumentShortcut.Value);
+                    ERRORLEVEL errLevel = RunShortcut(argumentShortcut.Value);
                     DeRegisterDisplayMagicianWithWindows();
-                    return 0;
+                    return (int)errLevel;
                 });
             });
 
@@ -577,15 +589,15 @@ namespace DisplayMagician {
 
                     try
                     {
-                        RunProfile(argumentProfile.Value);
+                        ERRORLEVEL errLevel = RunProfile(argumentProfile.Value);
                         DeRegisterDisplayMagicianWithWindows();
-                        return 0;
+                        return (int)errLevel;
                     }
                     catch (Exception ex)
                     {
                         logger.Error(ex, $"Program/Main exception running ApplyProfile(profileToUse)");
                         DeRegisterDisplayMagicianWithWindows();
-                        return 1;
+                        return (int)ERRORLEVEL.ERROR_EXCEPTION;
                     }
                 });
             });
@@ -648,9 +660,9 @@ namespace DisplayMagician {
                 {
                     logger.Debug($"CreateProfile commandline command was invoked!");
                     Console.WriteLine("Starting up and creating a new Display Profile...");
-                    CreateProfile();
+                    ERRORLEVEL errLevel = CreateProfile();
                     DeRegisterDisplayMagicianWithWindows();
-                    return 0;
+                    return (int)errLevel;
                 });
             });
 
@@ -713,9 +725,9 @@ namespace DisplayMagician {
                 currentProfileCmd.OnExecute(() =>
                 {
                     logger.Debug($"CurrentProfile commandline command was invoked!");
-                    CurrentProfile();
+                    ERRORLEVEL errLevel = CurrentProfile();
                     DeRegisterDisplayMagicianWithWindows();
-                    return 0;
+                    return (int)errLevel;
                 });
             });
 
@@ -795,9 +807,9 @@ namespace DisplayMagician {
                 logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
                 GameLibrary.LoadGamesInBackground();
 
-                StartUpApplication();
+                ERRORLEVEL errLevel = StartUpApplication();
                 DeRegisterDisplayMagicianWithWindows();
-                return 0;
+                return (int)errLevel;
             });
 
             
@@ -821,6 +833,7 @@ namespace DisplayMagician {
             {
                 logger.Error(ex, $"Program/Main exception parsing the Commands passed to the program");
                 Console.WriteLine("Didn't recognise the supplied commandline options: {0}", ex.Message);
+                return (int)ERRORLEVEL.ERROR_UNKNOWN_COMMAND;
             }
             catch (Exception ex)
             {
@@ -846,13 +859,14 @@ namespace DisplayMagician {
             Program.AppCancellationTokenSource.Dispose();
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
-            return 0;
+            return (int)ERRORLEVEL.OK;
         }       
 
-        public static void CreateProfile()
+        public static ERRORLEVEL CreateProfile()
         {
             logger.Debug($"Program/CreateProfile: Starting");
 
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
             try
             {
                 // Close the splash screen
@@ -872,13 +886,17 @@ namespace DisplayMagician {
                     Language.Fatal_Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+                errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }
 
+            return errLevel;
         }
 
-        private static void StartUpApplication()
+        private static ERRORLEVEL StartUpApplication()
         {
             logger.Debug($"Program/StartUpApplication: Starting");
+
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
 
             try
             {
@@ -932,8 +950,11 @@ namespace DisplayMagician {
                     Language.Fatal_Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+
+                errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }
-            
+
+            return errLevel;
         }
 
         private static void MainForm_LoadCompleted(object sender, EventArgs e)
@@ -946,10 +967,11 @@ namespace DisplayMagician {
         }
        
         // ReSharper disable once CyclomaticComplexity
-        public static void RunShortcut(string shortcutUUID)
+        public static ERRORLEVEL RunShortcut(string shortcutUUID)
         {
             logger.Debug($"Program/RunShortcut: Running shortcut {shortcutUUID}");
 
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
             ShortcutItem shortcutToRun = null;
 
             // Close the splash screen
@@ -972,11 +994,14 @@ namespace DisplayMagician {
             else
             {
                 throw new Exception(Language.Cannot_find_shortcut_in_library);
+                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
             }
+
+            return errLevel;
 
         }
 
-        public static void CurrentProfile()
+        public static ERRORLEVEL CurrentProfile()
         {
             logger.Trace($"Program/CurrentProfile: Finding the current profile in use");
 
@@ -987,6 +1012,7 @@ namespace DisplayMagician {
             // Lookup the profile
             ProfileItem currentProfile;
             string profileName = "UNKNOWN";
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
             try
             {
                 ProfileRepository.UpdateActiveProfile();
@@ -999,26 +1025,46 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 logger.Error(ex, $"Program/CurrentProfile: Exception while trying to get the name of the DisplayMagician profile currently in use.");
+                errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }
 
-            Console.WriteLine($"CurrentProfile Display Profile: {profileName}");
+            Console.WriteLine($"Display Profile in use: {profileName}");
             logger.Trace($"Program/RunProfile: Current display profile in use is called {profileName}. Informing the user of this fact.");
+
+            return errLevel;
         }
 
 
-        public static void RunProfile(string profileName)
+        public static ERRORLEVEL RunProfile(string profileName)
         {
             logger.Trace($"Program/RunProfile: Running profile {profileName}");
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
 
             // Close the splash screen
             if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
-            // Lookup the profile
-            ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
-            logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
-           
-            Program.ApplyProfileTask(profileToUse);
+
+            if (ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).Any())
+            {
+                logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
+
+                // Get the profile
+                ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
+                
+                ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
+                if (result == ApplyProfileResult.Cancelled)
+                    errLevel = ERRORLEVEL.CANCELED_BY_USER;
+                else if (result == ApplyProfileResult.Error)
+                    errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
+            }
+            else 
+            { 
+                logger.Error($"Program/RunProfile: We tried looking for a profile called {profileName} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
+                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
+            }
+
+            return errLevel;
         }
 
 
