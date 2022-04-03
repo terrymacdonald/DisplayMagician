@@ -797,13 +797,14 @@ namespace DisplayMagician.UIForms
         {
             // Check the name is valid to save
             if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text))
-            {
+            {logger.Error($"ShortcutForm/CanEnableSaveButton: The application doesn't have an executable listed the shortcut");
                 return false;
             }
 
             // Check the profile is set and that it's still valid
             if (!(_profileToUse is ProfileItem))
             {
+                logger.Error($"ShortcutForm/CanEnableSaveButton: The shortcut doesn't have a profile assigned to it!");
                 return false;
             }
 
@@ -812,22 +813,26 @@ namespace DisplayMagician.UIForms
             {
                 if (cb_args_executable.Checked && String.IsNullOrWhiteSpace(txt_args_executable.Text))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The application doesn't have an executable listed");
                     return false;
 
                 }
 
                 if (!File.Exists(txt_executable.Text))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The application executable {txt_executable.Text} doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
                     return false;
                 }
 
                 if (rb_wait_alternative_executable.Checked && String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The user asked to wait for an alternative application executable, but failed to provide one!");
                     return false;
                 }
 
                 if (rb_wait_alternative_executable.Checked && !File.Exists(txt_alternative_executable.Text))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The alternative application executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
                     return false;
                 }
 
@@ -837,11 +842,13 @@ namespace DisplayMagician.UIForms
 
                 if (cb_args_game.Checked && String.IsNullOrWhiteSpace(txt_args_game.Text))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The user wanted to pass arguments to the game executable, but failed to provide any!");
                     return false;
                 }
 
                 if (_gameId.Equals("0"))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The game ID provided is 0, and this is invalid. We cannot run the game.");
                     return false;
                 }
 
@@ -857,23 +864,39 @@ namespace DisplayMagician.UIForms
                 }
                 if (!gameStillInstalled)
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The {_gameLauncher} game with ID {_gameId} isn't installed at present, so can't be used!");
                     return false;
                 }
 
                 if (cb_wait_alternative_game.Checked && String.IsNullOrWhiteSpace(txt_alternative_game.Text))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The user asked to wait for an alternative game executable, but failed to provide one!");                    
                     return false;
                 }
 
                 if (cb_wait_alternative_game.Checked && !File.Exists(txt_alternative_game.Text))
                 {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The alternative game executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_game.Text}' is still there, and that the file has the correct permissions.");
                     return false;
                 }
 
             }
 
+            // Look for any start programs without an exe
+            List<StartProgram> startProgramsToStartWithoutExe = _shortcutToEdit.StartPrograms.Where(program => program.Executable == null).ToList();
+            if (startProgramsToStartWithoutExe.Count > 0)
+            {
+                foreach (StartProgram myStartProgram in startProgramsToStartWithoutExe)
+                {
+                    logger.Error($"ShortcutForm/CanEnableSaveButton: The start program at position #{myStartProgram.Priority} doesn't have an executable listed");
+                }                    
+                return false;
+            }
+
+            // Check the stop program has an exe in there
             if (cb_run_cmd_afterwards.Checked && String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text))
             {
+                logger.Error($"ShortcutForm/CanEnableSaveButton: The run command afterwards command is selected, yet doesn't have an executable listed");
                 return false;
             }
 
@@ -1437,7 +1460,7 @@ namespace DisplayMagician.UIForms
                         {
                             logger.Warn($"ShortcutForm/ShortcutForm_Load: Start program #{myStartProgram.Priority} is empty, so skipping.");
                             continue;
-                        }
+                        }                        
 
                         StartProgramControl startProgramControl = new StartProgramControl(myStartProgram, spOrder);
                         startProgramControl.Dock = DockStyle.None;
@@ -3060,7 +3083,9 @@ namespace DisplayMagician.UIForms
         {
             // Create a new startProgram with sensible defaults
             StartProgram newStartProgram = new StartProgram() {
-                CloseOnFinish = true
+                CloseOnFinish = true,
+                Executable = "",
+                Arguments = "",
             };
             StartProgramControl newStartProgramControl = new StartProgramControl(newStartProgram, flp_start_programs.Controls.Count);
             newStartProgramControl.Dock = DockStyle.None;

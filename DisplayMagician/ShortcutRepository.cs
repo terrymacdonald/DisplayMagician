@@ -955,7 +955,8 @@ namespace DisplayMagician
                     // If required, check whether a process is started already
                     if (processToStart.DontStartIfAlreadyRunning)
                     {
-                        logger.Info($"ShortcutRepository/RunShortcut: Checking if process {processToStart.Executable} is already running");
+                        logger.Trace($"ShortcutRepository/RunShortcut: User wants us to only start {processToStart.Executable} if there are no other instances already running");
+                        logger.Trace($"ShortcutRepository/RunShortcut: Checking if process {processToStart.Executable} is already running");
                         Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
                         if (alreadyRunningProcesses.Length > 0)
                         {
@@ -1005,7 +1006,24 @@ namespace DisplayMagician
                                     logger.Debug($"ShortcutRepository/RunShortcut: No need to stop {p.StartInfo.FileName} after the main game or executable is closed, so we'll just leave it running");
                                 }
                             }
-                        }                        
+                        }
+                        else
+                        {
+                            // Find out if there are already other similarly named processes running
+                            Process[] alreadyRunningProcesses = System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processToStart.Executable));
+                            if (alreadyRunningProcesses.Length == 0)
+                            {
+                                logger.Warn($"ShortcutRepository/RunShortcut: Couldn't start {processToStart.Executable}, and there were no other instances of it previously running either. It is possible that the program requires user interaction, or that there is a problem with it. Please try running '{processToStart.Executable}' yourself to see if it actually works.");
+                            }
+                            else if (alreadyRunningProcesses.Length == 1)
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: There is already one other instance of {processToStart.Executable} running, and the additional instance we tried to start didn't start. It is likely that the application we tried to start is a 'single instance' application, meaning that any additional {processToStart.Executable} we try to start will simply pass their command line parameters to the single instance and then will shut themselves down. This is expected behaviour for these types of executables.");
+                            }
+                            else
+                            {
+                                logger.Info($"ShortcutRepository/RunShortcut: There are already {alreadyRunningProcesses.Length} instances of {processToStart.Executable} already running, and the latest instance we tried to start didn't start.");
+                            }
+                        }
                     }
                     catch (Win32Exception ex)
                     {
@@ -1924,7 +1942,7 @@ namespace DisplayMagician
                 ProcessUtils.StopProcess(startProgramsToStop);
 
                 // Refresh the system tray / notification tray area to clean out any applications we stopped               
-                DisplayMagicianShared.Windows.WinLibrary.RefreshTrayArea();
+                WinLibrary.RefreshTrayArea();
 
             }
 
