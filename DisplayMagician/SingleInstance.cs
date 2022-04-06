@@ -95,7 +95,14 @@ namespace DisplayMagician
             }
             else
             {
-                logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments at all. THat's not supposed to happen.");
+                logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments at all so bringing the topmost window to the foreground.");
+                foreach (Form aForm in Application.OpenForms)
+                {
+                    if (aForm.TopMost)
+                    {
+                        aForm.Activate();
+                    }
+                }
             }
         }           
 
