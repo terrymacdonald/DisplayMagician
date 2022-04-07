@@ -81,6 +81,10 @@ namespace DisplayMagician.UIForms
                 logger.Error($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
             }
 
+            // Bring the window back to the front
+            Visible = true;
+            Activate();
+
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
             {

@@ -561,6 +561,7 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppLogPath,"DisplayMagician2.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician3.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician4.log"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json"),

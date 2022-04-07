@@ -504,6 +504,9 @@ namespace DisplayMagician.UIForms
             btn_cancel.Visible = false;
             btn_cancel.Enabled = false;
 
+            // Bring the window back to the front
+            Visible = true;
+            Activate();
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
