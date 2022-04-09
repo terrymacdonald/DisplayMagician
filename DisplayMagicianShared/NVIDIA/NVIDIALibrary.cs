@@ -534,19 +534,20 @@ namespace DisplayMagicianShared.NVIDIA
                             }
                             else
                             {
-                                SharedLogger.logger.Error($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is NOT VALID and cannot be used.");
-                            }
-                            if (mosaicTopoDetail.TopologyMissingGPU)
-                            {
-                                SharedLogger.logger.Error($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is MISSING THE GPU it was created with.");
-                            }
-                            if (mosaicTopoDetail.TopologyMissingDisplay)
-                            {
-                                SharedLogger.logger.Error($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is MISSING ONE OR MORE DISPLAYS it was created with.");
-                            }
-                            if (mosaicTopoDetail.TopologyMixedDisplayTypes)
-                            {
-                                SharedLogger.logger.Error($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is USING MIXED DISPLAY TYPES and NVIDIA don't support that at present.");
+                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is NOT VALID and cannot be used.");
+                                if (mosaicTopoDetail.TopologyMissingGPU)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is MISSING THE GPU it was created with.");
+                                }
+                                if (mosaicTopoDetail.TopologyMissingDisplay)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is MISSING ONE OR MORE DISPLAYS it was created with.");
+                                }
+                                if (mosaicTopoDetail.TopologyMixedDisplayTypes)
+                                {
+                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: The returned Mosaic Topology Group #{m} is USING MIXED DISPLAY TYPES and NVIDIA don't support that at present.");
+                                }
+
                             }
                         }
                     }
