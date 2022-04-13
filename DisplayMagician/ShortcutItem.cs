@@ -153,8 +153,8 @@ namespace DisplayMagician
         private bool _autoName = true;
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
-        private List<StartProgram> _startPrograms;
-        private List<StopProgram> _stopPrograms;
+        private List<StartProgram> _startPrograms = new List<StartProgram> ();
+        private List<StopProgram> _stopPrograms = new List<StopProgram>();
         private Bitmap _shortcutBitmap, _originalBitmap;
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant

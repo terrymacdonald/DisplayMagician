@@ -883,15 +883,18 @@ namespace DisplayMagician.UIForms
             }
 
             // Look for any start programs without an exe
-            List<StartProgram> startProgramsToStartWithoutExe = _shortcutToEdit.StartPrograms.Where(program => program.Executable == null).ToList();
-            if (startProgramsToStartWithoutExe.Count > 0)
+            if (_shortcutToEdit.StartPrograms.Count > 0)
             {
-                foreach (StartProgram myStartProgram in startProgramsToStartWithoutExe)
+                List<StartProgram> startProgramsToStartWithoutExe = _shortcutToEdit.StartPrograms.Where(program => program.Executable == null).ToList();
+                if (startProgramsToStartWithoutExe.Count > 0)
                 {
-                    logger.Error($"ShortcutForm/CanEnableSaveButton: The start program at position #{myStartProgram.Priority} doesn't have an executable listed");
-                }                    
-                return false;
-            }
+                    foreach (StartProgram myStartProgram in startProgramsToStartWithoutExe)
+                    {
+                        logger.Error($"ShortcutForm/CanEnableSaveButton: The start program at position #{myStartProgram.Priority} doesn't have an executable listed");
+                    }
+                    return false;
+                }
+            }            
 
             // Check the stop program has an exe in there
             if (cb_run_cmd_afterwards.Checked && String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text))
@@ -923,9 +926,9 @@ namespace DisplayMagician.UIForms
                     else if (rb_switch_display_temp.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
                 }
-                else if (rb_launcher.Checked && ilv_games.SelectedItems.Count > 0)
+                else if (rb_launcher.Checked && ilv_games.SelectedItems.Count > 0 && _selectedGame != null)
                 {
-                    txt_shortcut_save_name.Text = $"{txt_game_name.Text} ({_profileToUse.Name})";
+                    txt_shortcut_save_name.Text = $"{_selectedGame.Name} ({_profileToUse.Name})";                    
                 }
                 else if (rb_standalone.Checked && txt_executable.Text.Length > 0)
                 {
@@ -956,6 +959,7 @@ namespace DisplayMagician.UIForms
             //_loadedProfiles = new List<ProfileItem>();
             _profileToUse = null;
             _gameLauncher = "";
+            
             //_gameToUse;
             // _executableToUse;
             _displayPermanence = ShortcutPermanence.Temporary;
@@ -982,6 +986,7 @@ namespace DisplayMagician.UIForms
             captureDevices = null;
             selectedCaptureDevice = null;
             _hotkey = Keys.None;
+
 
             // Prepare the Game process priority combo box
             cbx_game_priority.DataSource = new ComboItem[] {
@@ -1166,7 +1171,7 @@ namespace DisplayMagician.UIForms
 
             // Wipe the start programs flp
             flp_start_programs.Controls.Clear();
-
+            
             // Wipe the pictureboxes if they're in use
             if (pb_exe_icon.Image != null)
             {
@@ -1296,6 +1301,8 @@ namespace DisplayMagician.UIForms
                     }
 
                 }
+
+                _profileToUse = chosenProfile;
 
                 // *** 2. Choose Audio Tab ***
                 // Populate all the Audio devices in the audio devices list.
@@ -1930,7 +1937,7 @@ namespace DisplayMagician.UIForms
             {
                 // Not sure if I need this
                 //ilv_games.ClearSelection();
-
+                
                 // We need to show the current profile
                 // that we're running now (only if that's been saved)
                 if (ProfileRepository.ProfileCount > 0)
@@ -1955,6 +1962,7 @@ namespace DisplayMagician.UIForms
                         }
 
                     }
+                    _profileToUse = chosenProfile;
 
                 }
 
@@ -2078,6 +2086,7 @@ namespace DisplayMagician.UIForms
                     _shortcutToEdit.AvailableImages = _selectedGame.AvailableGameBitmaps;
                     _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
                     _shortcutToEdit.SelectedImage = _selectedImage;
+                    txt_game_name.Text = _selectedGame.Name;
                     pb_game_icon.Image = _selectedImage.Image;
                     btn_choose_game_icon.Enabled = true;
                 }
@@ -3120,14 +3129,30 @@ namespace DisplayMagician.UIForms
                     _shortcutToEdit.AvailableImages = game.AvailableGameBitmaps;
                     _selectedImage = ImageUtils.GetMeLargestAvailableBitmap(_availableImages);
                     _shortcutToEdit.SelectedImage = _selectedImage;
+                    txt_game_name.Text = game.Name;
                     pb_game_icon.Image = _selectedImage.Image;
                     btn_choose_game_icon.Enabled = true;
                     break;
                 }
             }
 
-            SuggestShortcutName();
-            EnableSaveButtonIfValid();
+            try
+            {
+                SuggestShortcutName();
+            }
+            catch(Exception ex)
+            {
+
+            }
+
+            try
+            {
+                EnableSaveButtonIfValid();
+            }
+            catch (Exception ex)
+            {
+
+            }            
         }
 
 
