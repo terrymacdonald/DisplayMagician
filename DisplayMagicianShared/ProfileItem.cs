@@ -1103,6 +1103,10 @@ namespace DisplayMagicianShared
                                         }
                                     }
 
+                                    // Figure out the taskbar location for this screen
+                                    string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
+                                    screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
+
                                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (1) Added a non NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                                     _screens.Add(screen);
@@ -1172,6 +1176,10 @@ namespace DisplayMagicianShared
                                     screen.Colour = primaryScreenColor;
                                 }
                             }
+
+                            // Figure out the taskbar location for this screen
+                            string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
+                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
 
                             SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
