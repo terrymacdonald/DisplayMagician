@@ -1073,9 +1073,10 @@ namespace DisplayMagicianShared
                             List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                             foreach (var displaySource in displaySources)
                             {
-                                
+                                int targetInfoIndex = 0;
+
                                 foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
-                                {
+                                {                                   
                                     ScreenPosition screen = new ScreenPosition();
                                     screen.Library = "NVIDIA";
 
@@ -1104,12 +1105,34 @@ namespace DisplayMagicianShared
                                     }
 
                                     // Figure out the taskbar location for this screen
-                                    string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
-                                    screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
+                                    if (_nvidiaDisplayConfig.DisplayNames.ContainsKey(targetInfo.DisplayId.ToString()))
+                                    {
+                                        string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
+                                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
+                                    }
+
+                                    // Find out if we're a cloned screen
+                                    if (_nvidiaDisplayConfig.IsCloned && displaySource.TargetInfoCount > 1)
+                                    {
+                                        if (targetInfoIndex == 0)
+                                        {
+                                            // Show that this is a clone, and show the screen
+                                            screen.IsClone = true;
+                                            screen.ClonedCopies = (int)displaySource.TargetInfoCount;
+                                        }
+                                        else
+                                        {
+                                            // Skip showing the clones, as we have no idea where they are!
+                                            continue;
+                                        }
+
+                                    }
 
                                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (1) Added a non NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                                     _screens.Add(screen);
+                                    targetInfoIndex++;
+
                                 }
 
                             }
@@ -1147,7 +1170,7 @@ namespace DisplayMagicianShared
                     List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                     foreach (var displaySource in displaySources)
                     {
-
+                        int targetInfoIndex = 0;
                         foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
                         {
                             ScreenPosition screen = new ScreenPosition();
@@ -1178,12 +1201,33 @@ namespace DisplayMagicianShared
                             }
 
                             // Figure out the taskbar location for this screen
-                            string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
-                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
+                            if (_nvidiaDisplayConfig.DisplayNames.ContainsKey(targetInfo.DisplayId.ToString()))
+                            {
+                                string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
+                                screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
+                            }
+
+                            // Find out if we're a cloned screen
+                            if (_nvidiaDisplayConfig.IsCloned && displaySource.TargetInfoCount > 1)
+                            {
+                                if (targetInfoIndex == 0)
+                                {
+                                    // Show that this is a clone, and show the screen
+                                    screen.IsClone = true;
+                                    screen.ClonedCopies = (int)displaySource.TargetInfoCount;
+                                }
+                                else
+                                {
+                                    // Skip showing the clones, as we have no idea where they are!
+                                    continue;
+                                }
+                                    
+                            }
 
                             SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                             _screens.Add(screen);
+                            targetInfoIndex++;
                         }
 
                     }
