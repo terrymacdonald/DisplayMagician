@@ -853,290 +853,114 @@ namespace DisplayMagicianShared
             }
 
             // Now we need to check for Spanned screens (Surround)
-            if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridCount > 0)
+            if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled && _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount > 0)
             {
                 for (int i = 0; i < _nvidiaDisplayConfig.MosaicConfig.MosaicGridCount; i++)
                 {
-                    if (_nvidiaDisplayConfig.MosaicConfig.IsMosaicEnabled)
+
+                    ScreenPosition screen = new ScreenPosition();
+                    screen.Library = "NVIDIA";
+                    if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount > 1)
                     {
-                        ScreenPosition screen = new ScreenPosition();
-                        screen.Library = "NVIDIA";
-                        if (_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount > 1)
+                        // It's a spanned screen!
+                        // Set some basics about the screen                        
+                        screen.SpannedScreens = new List<SpannedScreenPosition>();
+                        screen.Name = "NVIDIA Surround/Mosaic";
+                        screen.IsSpanned = true;
+                        screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
+                        screen.SpannedColumns = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
+                        screen.Colour = spannedScreenColor;
+
+                        // This is a combined surround/mosaic screen
+                        // We need to build the size of the screen to match it later so we check the MosaicViewports
+                        uint minX = 0;
+                        uint minY = 0;
+                        uint maxX = 0;
+                        uint maxY = 0;
+                        uint overallX = 0;
+                        uint overallY = 0;
+                        int overallWidth = 0;
+                        int overallHeight = 0;
+                        for (int j = 0; j < _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount; j++)
                         {
-                            // It's a spanned screen!
-                            // Set some basics about the screen                        
-                            screen.SpannedScreens = new List<SpannedScreenPosition>();
-                            screen.Name = "NVIDIA Surround/Mosaic";
-                            screen.IsSpanned = true;
-                            screen.SpannedRows = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Rows;
-                            screen.SpannedColumns = (int)_nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Columns;
-                            screen.Colour = spannedScreenColor;
+                            SpannedScreenPosition spannedScreen = new SpannedScreenPosition();
+                            spannedScreen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[j].DisplayId.ToString();
+                            spannedScreen.Colour = spannedScreenColor;
 
-                            // This is a combined surround/mosaic screen
-                            // We need to build the size of the screen to match it later so we check the MosaicViewports
-                            uint minX = 0;
-                            uint minY = 0;
-                            uint maxX = 0;
-                            uint maxY = 0;
-                            uint overallX = 0;
-                            uint overallY = 0;
-                            int overallWidth = 0;
-                            int overallHeight = 0;
-                            for (int j = 0; j < _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].DisplayCount; j++)
+                            // Calculate screen size
+                            NV_RECT viewRect = _nvidiaDisplayConfig.MosaicConfig.MosaicViewports[i][j];
+                            if (viewRect.Left < minX)
                             {
-                                SpannedScreenPosition spannedScreen = new SpannedScreenPosition();
-                                spannedScreen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[j].DisplayId.ToString();
-                                spannedScreen.Colour = spannedScreenColor;
+                                minX = viewRect.Left;
+                            }
+                            if (viewRect.Top < minY)
+                            {
+                                minY = viewRect.Top;
+                            }
+                            if (viewRect.Right > maxX)
+                            {
+                                maxX = viewRect.Right;
+                            }
+                            if (viewRect.Bottom > maxY)
+                            {
+                                maxY = viewRect.Bottom;
+                            }
+                            uint width = viewRect.Right - viewRect.Left + 1;
+                            uint height = viewRect.Bottom - viewRect.Top + 1;
+                            spannedScreen.ScreenX = (int)viewRect.Left;
+                            spannedScreen.ScreenY = (int)viewRect.Top;
+                            spannedScreen.ScreenWidth = (int)width;
+                            spannedScreen.ScreenHeight = (int)height;
 
-                                // Calculate screen size
-                                NV_RECT viewRect = _nvidiaDisplayConfig.MosaicConfig.MosaicViewports[i][j];
-                                if (viewRect.Left < minX)
-                                {
-                                    minX = viewRect.Left;
-                                }
-                                if (viewRect.Top < minY)
-                                {
-                                    minY = viewRect.Top;
-                                }
-                                if (viewRect.Right > maxX)
-                                {
-                                    maxX = viewRect.Right;
-                                }
-                                if (viewRect.Bottom > maxY)
-                                {
-                                    maxY = viewRect.Bottom;
-                                }
-                                uint width = viewRect.Right - viewRect.Left + 1;
-                                uint height = viewRect.Bottom - viewRect.Top + 1;
-                                spannedScreen.ScreenX = (int)viewRect.Left;
-                                spannedScreen.ScreenY = (int)viewRect.Top;
-                                spannedScreen.ScreenWidth = (int)width;
-                                spannedScreen.ScreenHeight = (int)height;
-
-                                // Figure out the overall figures for the screen
-                                if (viewRect.Left < overallX)
-                                {
-                                    overallX = viewRect.Left;
-                                }
-                                if (viewRect.Top < overallY)
-                                {
-                                    overallY = viewRect.Top;
-                                }
-
-                                overallWidth = (int)maxX - (int)minX + 1;
-                                overallHeight = (int)maxY - (int)minY + 1;
-
-                                spannedScreen.Row = i + 1;
-                                spannedScreen.Column = j + 1;
-
-                                // Add the spanned screen to the screen
-                                screen.SpannedScreens.Add(spannedScreen);
-
+                            // Figure out the overall figures for the screen
+                            if (viewRect.Left < overallX)
+                            {
+                                overallX = viewRect.Left;
+                            }
+                            if (viewRect.Top < overallY)
+                            {
+                                overallY = viewRect.Top;
                             }
 
-                            // Need to look for the Windows layout details now we know the size of this display
-                            // Set some basics about the screen
-                            try
-                            {
-                                UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                                List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
-                                bool breakOuterLoop = false;
-                                foreach (var displaySource in displaySources)
-                                {
-                                    foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
-                                    {
-                                        if (targetInfo.DisplayId == displayId)
-                                        {
-                                            screen.Name = displayId.ToString();
-                                            screen.ScreenX = displaySource.SourceModeInfo.Position.X;
-                                            screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                            breakOuterLoop = true;
-                                            break;
-                                        }
-                                    }
-                                    
-                                    if (breakOuterLoop)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                            catch (KeyNotFoundException ex)
-                            {
-                                // Thrown if the Windows display doesn't match the NVIDIA display.
-                                // Typically happens during configuration of a new Mosaic mode.
-                                // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
-                                // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
-                                // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
-                                continue;
-                            }
-                            catch (Exception ex)
-                            {
-                                // Some other exception has occurred and we need to report it.
-                                //screen.Name = targetId.ToString();
-                                //screen.DisplayConnector = displayMode.DisplayConnector;
-                                screen.ScreenX = (int)overallX;
-                                screen.ScreenY = (int)overallY;
-                                screen.ScreenWidth = (int)overallWidth;
-                                screen.ScreenHeight = (int)overallHeight;
-                            }
+                            overallWidth = (int)maxX - (int)minX + 1;
+                            overallHeight = (int)maxY - (int)minY + 1;
 
-                        }
-                        else
-                        {
-                            // It's a standalone screen
-                            screen.SpannedScreens = new List<SpannedScreenPosition>();
-                            screen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
-                            screen.IsSpanned = false;
-                            screen.SpannedRows = 1;
-                            screen.SpannedColumns = 1;
-                            screen.Colour = normalScreenColor;
+                            spannedScreen.Row = i + 1;
+                            spannedScreen.Column = j + 1;
 
-                            try
-                            {
-                                UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
-                                List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
-                                bool breakOuterLoop = false;
-                                foreach (var displaySource in displaySources)
-                                {
-                                    foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
-                                    {
-                                        if (targetInfo.DisplayId == displayId)
-                                        {
-                                            screen.Name = displayId.ToString();
-                                            screen.ScreenX = displaySource.SourceModeInfo.Position.X;
-                                            screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                            screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                            screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-                                            breakOuterLoop = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (breakOuterLoop)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                            catch (KeyNotFoundException ex)
-                            {
-                                // Thrown if the Windows display doesn't match the NVIDIA display.
-                                // Typically happens during configuration of a new Mosaic mode.
-                                // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
-                                // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
-                                // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
-                                continue;
-                            }
-                            catch (Exception ex)
-                            {
-                                // Some other exception has occurred and we need to report it.
-                                SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Unable to get the non-mosaic screen size from the Windows Display Config");
-                            }
+                            // Add the spanned screen to the screen
+                            screen.SpannedScreens.Add(spannedScreen);
 
                         }
 
-                        // If we're at the 0,0 coordinate then we're the primary monitor
-                        if (screen.ScreenX == 0 && screen.ScreenY == 0)
-                        {
-                            // Record we're primary screen
-                            screen.IsPrimary = true;
-                            // Change the colour to be the primary colour, but only if it isn't a surround screen
-                            if (screen.Colour != spannedScreenColor)
-                            {
-                                screen.Colour = primaryScreenColor;
-                            }
-                        }
-
-                        // Force the taskbar edge to the bottom as it is an NVIDIA surround screen
-                        screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
-
-
-                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
-
-                        _screens.Add(screen);
-                    }
-                    else
-                    {
-                        // If mosaic isn't enabled then we fall back to the windows display config
-                        /*_screens = GetWindowsScreenPositions();
-                        for (int s = 0; s < _screens.Count; s++)
-                        {
-                            ScreenPosition sp = _screens.ElementAt(s);
-                            sp.Library = "NVIDIA";
-                        }*/                        
-
+                        // Need to look for the Windows layout details now we know the size of this display
+                        // Set some basics about the screen
                         try
                         {
+                            UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
                             List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                            bool breakOuterLoop = false;
                             foreach (var displaySource in displaySources)
                             {
-                                int targetInfoIndex = 0;
-
                                 foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
-                                {                                   
-                                    ScreenPosition screen = new ScreenPosition();
-                                    screen.Library = "NVIDIA";
-
-                                    // It's a normal screen
-                                    screen.SpannedScreens = new List<SpannedScreenPosition>();
-                                    screen.Name = targetInfo.DisplayId.ToString();
-                                    screen.IsSpanned = false;
-                                    screen.SpannedRows = 1;
-                                    screen.SpannedColumns = 1;
-                                    screen.Colour = normalScreenColor;
-                                    screen.ScreenX = displaySource.SourceModeInfo.Position.X;
-                                    screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
-                                    screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
-                                    screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
-
-                                    // If we're at the 0,0 coordinate then we're the primary monitor
-                                    if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                                {
+                                    if (targetInfo.DisplayId == displayId)
                                     {
-                                        // Record we're primary screen
-                                        screen.IsPrimary = true;
-                                        // Change the colour to be the primary colour, but only if it isn't a surround screen
-                                        if (screen.Colour != spannedScreenColor)
-                                        {
-                                            screen.Colour = primaryScreenColor;
-                                        }
+                                        screen.Name = displayId.ToString();
+                                        screen.ScreenX = displaySource.SourceModeInfo.Position.X;
+                                        screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        breakOuterLoop = true;
+                                        break;
                                     }
-
-                                    // Figure out the taskbar location for this screen
-                                    if (_nvidiaDisplayConfig.DisplayNames.ContainsKey(targetInfo.DisplayId.ToString()))
-                                    {
-                                        string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
-                                        screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
-                                    }
-
-                                    // Find out if we're a cloned screen
-                                    if (_nvidiaDisplayConfig.IsCloned && displaySource.TargetInfoCount > 1)
-                                    {
-                                        if (targetInfoIndex == 0)
-                                        {
-                                            // Show that this is a clone, and show the screen
-                                            screen.IsClone = true;
-                                            screen.ClonedCopies = (int)displaySource.TargetInfoCount;
-                                        }
-                                        else
-                                        {
-                                            // Skip showing the clones, as we have no idea where they are!
-                                            continue;
-                                        }
-
-                                    }
-
-                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (1) Added a non NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
-
-                                    _screens.Add(screen);
-                                    targetInfoIndex++;
-
                                 }
 
+                                if (breakOuterLoop)
+                                {
+                                    break;
+                                }
                             }
-                            
                         }
                         catch (KeyNotFoundException ex)
                         {
@@ -1150,21 +974,94 @@ namespace DisplayMagicianShared
                         catch (Exception ex)
                         {
                             // Some other exception has occurred and we need to report it.
-                            SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Unable to get the non-mosaic screen size from the Windows Display Config");
+                            //screen.Name = targetId.ToString();
+                            //screen.DisplayConnector = displayMode.DisplayConnector;
+                            screen.ScreenX = (int)overallX;
+                            screen.ScreenY = (int)overallY;
+                            screen.ScreenWidth = (int)overallWidth;
+                            screen.ScreenHeight = (int)overallHeight;
+                        }
+
+                    }
+                    else
+                    {
+                        // It's a standalone screen
+                        screen.SpannedScreens = new List<SpannedScreenPosition>();
+                        screen.Name = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId.ToString();
+                        screen.IsSpanned = false;
+                        screen.SpannedRows = 1;
+                        screen.SpannedColumns = 1;
+                        screen.Colour = normalScreenColor;
+
+                        try
+                        {
+                            UInt32 displayId = _nvidiaDisplayConfig.MosaicConfig.MosaicGridTopos[i].Displays[0].DisplayId;
+                            List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
+                            bool breakOuterLoop = false;
+                            foreach (var displaySource in displaySources)
+                            {
+                                foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
+                                {
+                                    if (targetInfo.DisplayId == displayId)
+                                    {
+                                        screen.Name = displayId.ToString();
+                                        screen.ScreenX = displaySource.SourceModeInfo.Position.X;
+                                        screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
+                                        screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
+                                        screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                                        breakOuterLoop = true;
+                                        break;
+                                    }
+                                }
+
+                                if (breakOuterLoop)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        catch (KeyNotFoundException ex)
+                        {
+                            // Thrown if the Windows display doesn't match the NVIDIA display.
+                            // Typically happens during configuration of a new Mosaic mode.
+                            // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
+                            // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
+                            // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
+                            continue;
+                        }
+                        catch (Exception ex)
+                        {
+                            // Some other exception has occurred and we need to report it.
+                            SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Unable to get the non-mosaic screen size for a secondary screen to a surround screen.");
+                        }
+
+                    }
+
+                    // If we're at the 0,0 coordinate then we're the primary monitor
+                    if (screen.ScreenX == 0 && screen.ScreenY == 0)
+                    {
+                        // Record we're primary screen
+                        screen.IsPrimary = true;
+                        // Change the colour to be the primary colour, but only if it isn't a surround screen
+                        if (screen.Colour != spannedScreenColor)
+                        {
+                            screen.Colour = primaryScreenColor;
                         }
                     }
+
+                    // Force the taskbar edge to the bottom as it is an NVIDIA surround screen
+                    screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+
+
+                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+
+                    _screens.Add(screen);
+                
                 }
             }
             else
             {
-                // If mosaic isn't enabled then we fall back to the windows display config
-                /*_screens = GetWindowsScreenPositions();
-                for (int s = 0; s < _screens.Count; s++)
-                {
-                    ScreenPosition sp = _screens.ElementAt(s);
-                    sp.Library = "NVIDIA";
-                }*/                
-
+                // If mosaic isn't enabled then we use the NVIDIA DisplayConfig structure to find the details
                 try
                 {
                     List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
@@ -1175,6 +1072,23 @@ namespace DisplayMagicianShared
                         {
                             ScreenPosition screen = new ScreenPosition();
                             screen.Library = "NVIDIA";
+
+                            // Find out if we're a cloned screen
+                            if (_nvidiaDisplayConfig.IsCloned && displaySource.TargetInfoCount > 1)
+                            {
+                                if (targetInfoIndex == 0)
+                                {
+                                    // Show that this window has clones, and show how many there are.
+                                    screen.IsClone = true;
+                                    screen.ClonedCopies = (int)displaySource.TargetInfoCount;
+                                }
+                                else
+                                {
+                                    // Skip getting layout details from the clones themselves, as we have no idea where they are!
+                                    continue;
+                                }
+
+                            }
 
                             // It's a normal screen
                             screen.SpannedScreens = new List<SpannedScreenPosition>();
@@ -1187,6 +1101,14 @@ namespace DisplayMagicianShared
                             screen.ScreenY = displaySource.SourceModeInfo.Position.Y;
                             screen.ScreenWidth = (int)displaySource.SourceModeInfo.Resolution.Width;
                             screen.ScreenHeight = (int)displaySource.SourceModeInfo.Resolution.Height;
+                            if (screen.ScreenWidth == 0)
+                            {
+                                SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen width is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                            }
+                            if (screen.ScreenHeight == 0)
+                            {
+                                SharedLogger.logger.Error($"ProfileItem/GetNVIDIAScreenPositions: The screen height is 0 and it shouldn't be! Skipping this display id #{targetInfo.DisplayId.ToString()}.");
+                            }
 
                             // If we're at the 0,0 coordinate then we're the primary monitor
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
@@ -1207,23 +1129,6 @@ namespace DisplayMagicianShared
                                 screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
                             }
 
-                            // Find out if we're a cloned screen
-                            if (_nvidiaDisplayConfig.IsCloned && displaySource.TargetInfoCount > 1)
-                            {
-                                if (targetInfoIndex == 0)
-                                {
-                                    // Show that this is a clone, and show the screen
-                                    screen.IsClone = true;
-                                    screen.ClonedCopies = (int)displaySource.TargetInfoCount;
-                                }
-                                else
-                                {
-                                    // Skip showing the clones, as we have no idea where they are!
-                                    continue;
-                                }
-                                    
-                            }
-
                             SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                             _screens.Add(screen);
@@ -1232,19 +1137,10 @@ namespace DisplayMagicianShared
 
                     }
                 }
-                catch (KeyNotFoundException ex)
-                {
-                    // Thrown if the Windows display doesn't match the NVIDIA display.
-                    // Typically happens during configuration of a new Mosaic mode.
-                    // If we hit this issue, then we just want to skip over it, as we can update it later when the user pushes the button.
-                    // This only happens due to the auto detection stuff functionality we have built in to try and update as quickly as we can.
-                    // So its something that we can safely ignore if we hit this exception as it is part of the expect behaviour
-                    
-                }
                 catch (Exception ex)
                 {
                     // Some other exception has occurred and we need to report it.
-                    SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Unable to get the non-mosaic screen size from the Windows Display Config");
+                    SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: (#2) Mosaic isn't enabled, but unable to get the screen details. ");
                 }
             }
 
