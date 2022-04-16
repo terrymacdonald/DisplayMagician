@@ -357,7 +357,7 @@ namespace DisplayMagicianShared
                         return _profileShortcutBitmap;
                     else
                     {
-                        _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
+                        _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap(256, 256);
                         return _profileShortcutBitmap;
                     }
                 }

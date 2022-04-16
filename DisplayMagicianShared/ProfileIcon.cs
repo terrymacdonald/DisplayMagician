@@ -113,14 +113,10 @@ namespace DisplayMagicianShared
             return bitmap;
         }
 
-        public Bitmap ToTightestBitmap(int width = 256, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
+        public Bitmap ToTightestBitmap(int width = 256, int height = 256, PixelFormat format = PixelFormat.Format32bppArgb)
         {
             var viewSize = CalculateViewSize(_profile.Screens, 0, 0);
-            double viewSizeRatio = viewSize.Width / viewSize.Height;
-
-            if (height == 0)
-                height = Convert.ToInt32((double)width / viewSizeRatio);
-
+            
             var bitmap = new Bitmap(width, height, format);
             bitmap.MakeTransparent();
 

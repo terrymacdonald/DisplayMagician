@@ -417,8 +417,24 @@ namespace DisplayMagician.UIForms
                 // Check we're not already saving this profile
                 string previouslySavedProfileName;
                 if (ProfileRepository.ContainsCurrentProfile(out previouslySavedProfileName))
-                { 
+                {
                     MessageBox.Show($"Sorry, this display profile was already saved as '{previouslySavedProfileName}'.", "Profile already saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Check the config actual results in an image (might be a logic error that we missed)
+                if (_selectedProfile.ProfileBitmap.Width == 0 || _selectedProfile.ProfileBitmap.Height == 0)
+                {
+                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: Display Layout image rendering error (ProfileBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
+                    MessageBox.Show("Display Layout image rendering error (ProfileBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Check the config actual results in an image (might be a logic error that we missed)
+                if (_selectedProfile.ProfileTightestBitmap.Width == 0 || _selectedProfile.ProfileTightestBitmap.Height == 0)
+                {
+                    logger.Warn($"DisplayProfileForm/btn_save_as_Click: Display Layout image rendering error (ProfileTightestBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose");
+                    MessageBox.Show("Display Layout image rendering error (ProfileTightestBitmap)! We won't be able to save this profile. Please log a new issue at https://github.com/terrymacdonald/DisplayMagician/issues/new/choose", "Display rendering error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
