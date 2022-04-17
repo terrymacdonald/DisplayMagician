@@ -664,6 +664,15 @@ namespace DisplayMagicianShared
             {
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
+
+                // Add in an extra dealy to let Windows catchup, but only if NVIDIA Surround is on.
+                // The delay is only needed when going from a surround profile to a non-surround profile.
+                /*bool extraDelayNeeded = false;
+                if (ProfileRepository.CurrentProfile.NVIDIADisplayConfig.MosaicConfig.IsMosaicEnabled)
+                {
+                    extraDelayNeeded = true;
+                }*/
+
                 if (nvidiaLibrary.IsInstalled)
                 {
                     if (!winLibrary.IsActiveConfig(_windowsDisplayConfig) || !nvidiaLibrary.IsActiveConfig(_nvidiaDisplayConfig))
@@ -677,8 +686,14 @@ namespace DisplayMagicianShared
                             {
                                 SharedLogger.logger.Trace($"ProfileItem/SetActive: The NVIDIA display settings within profile {Name} were successfully applied.");
 
-                                /*SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the NVIDIA display change take place before setting the Windows CCD display settings");
-                                System.Threading.Thread.Sleep(500);*/
+                                SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 0.5 seconds to let the NVIDIA display change take place before setting the Windows CCD display settings");
+                                System.Threading.Thread.Sleep(500);
+
+                                /*if (extraDelayNeeded)
+                                {
+                                    SharedLogger.logger.Trace($"ProfileItem/SetActive: Waiting 1.5 seconds longer to let the NVIDIA display change take place so wWindow can catchup...");
+                                    System.Threading.Thread.Sleep(1500);
+                                }*/
 
                                 // Lets update the screens so Windows knows whats happening
                                 // NVIDIA makes such large changes to the available screens in windows, we need to do this.
@@ -1064,12 +1079,17 @@ namespace DisplayMagicianShared
                 // If mosaic isn't enabled then we use the NVIDIA DisplayConfig structure to find the details
                 try
                 {
+                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Mosaic isn't enabled so using the DisplayConfig based screen details.");
                     List<NV_DISPLAYCONFIG_PATH_INFO_V2> displaySources = _nvidiaDisplayConfig.DisplayConfigs;
                     foreach (var displaySource in displaySources)
                     {
                         int targetInfoIndex = 0;
+                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing screen source index #{targetInfoIndex}.");
+
                         foreach (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 targetInfo in displaySource.TargetInfo)
                         {
+                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Processing target screen ID:{targetInfo.DisplayId}.");
+
                             ScreenPosition screen = new ScreenPosition();
                             screen.Library = "NVIDIA";
 
@@ -1079,15 +1099,21 @@ namespace DisplayMagicianShared
                                 if (targetInfoIndex == 0)
                                 {
                                     // Show that this window has clones, and show how many there are.
+                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is the source of a cloned group.");
                                     screen.IsClone = true;
                                     screen.ClonedCopies = (int)displaySource.TargetInfoCount;
                                 }
                                 else
                                 {
                                     // Skip getting layout details from the clones themselves, as we have no idea where they are!
+                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is part of a cloned group (but we don'tt need to show it so skipping).");
                                     continue;
                                 }
 
+                            }
+                            else 
+                            {
+                                SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: The screen ID:{targetInfo.DisplayId} is NOT part of a cloned group.");
                             }
 
                             // It's a normal screen
@@ -1113,6 +1139,7 @@ namespace DisplayMagicianShared
                             // If we're at the 0,0 coordinate then we're the primary monitor
                             if (screen.ScreenX == 0 && screen.ScreenY == 0)
                             {
+                                SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: NVIDIA Screen {screen.Name} is the primary monitor.");
                                 // Record we're primary screen
                                 screen.IsPrimary = true;
                                 // Change the colour to be the primary colour, but only if it isn't a surround screen
@@ -1121,15 +1148,33 @@ namespace DisplayMagicianShared
                                     screen.Colour = primaryScreenColor;
                                 }
                             }
-
-                            // Figure out the taskbar location for this screen
-                            if (_nvidiaDisplayConfig.DisplayNames.ContainsKey(targetInfo.DisplayId.ToString()))
+                            
+                            try
                             {
-                                string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
-                                screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout[windowsDisplayName].Edge;
+                                if (_nvidiaDisplayConfig.DisplayNames.ContainsKey(targetInfo.DisplayId.ToString()))
+                                {
+                                    string windowsDisplayName = _nvidiaDisplayConfig.DisplayNames[targetInfo.DisplayId.ToString()];
+                                    UInt32 windowsUID = _windowsDisplayConfig.DisplaySources[windowsDisplayName].First().TargetId;
+                                    // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
+                                    // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
+                                    // the taskbar locations in memory (it takes up to 15 seconds!). NOthing I can do, except put this protection in place :( .
+                                    screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{windowsUID }")).Value.Edge;
+                                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetInfo.DisplayId} is on the {screen.TaskBarEdge } of the screen.");
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Warn($"ProfileItem/GetNVIDIAScreenPositions: Couldn't get the position of the taskbar on display {targetInfo.DisplayId} so assuming its at the bottom.");
+                                    screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                // Guess that it is at the bottom (90% correct)
+                                SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetInfo.DisplayId}");
+                                screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                             }
 
-                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
+                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (2) Added a non-surround NVIDIA Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                             _screens.Add(screen);
                             targetInfoIndex++;
@@ -1140,7 +1185,7 @@ namespace DisplayMagicianShared
                 catch (Exception ex)
                 {
                     // Some other exception has occurred and we need to report it.
-                    SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: (#2) Mosaic isn't enabled, but unable to get the screen details. ");
+                    SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception while trying to get the screen details. (#2) Mosaic isn't enabled, but unable to get the screen details. ");
                 }
             }
 
@@ -1200,6 +1245,9 @@ namespace DisplayMagicianShared
                             screen.Colour = primaryScreenColor;
                         }
                     }
+
+                    // Set the taskbar location for this screen at the bottom
+                    screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
 
                     SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new AMD Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 

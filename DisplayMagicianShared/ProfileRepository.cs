@@ -1180,7 +1180,6 @@ namespace DisplayMagicianShared
                 // Display the TimeSpan time and result.
                 SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: Display change attempt took {ts.Minutes}:{ts.Seconds}.{ts.Milliseconds} and {result}.");
             }
-            return ApplyProfileResult.Successful;
         }
 
         public static bool SetVideoCardMode(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)

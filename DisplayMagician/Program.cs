@@ -981,7 +981,7 @@ namespace DisplayMagician {
             }
             else
             {
-                throw new Exception(Language.Cannot_find_shortcut_in_library);
+                logger.Error($"Program/RunShortcut: Cannot find the shortcut with UUID {shortcutUUID}");
                 errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
             }
 
