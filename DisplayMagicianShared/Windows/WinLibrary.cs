@@ -327,6 +327,7 @@ namespace DisplayMagicianShared.Windows
                         // Change the Mode AdapterID
                         if (adapterOldToNewMap.ContainsKey(savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value))
                         {
+                            SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: adapterOldToNewMap contains adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} so using the new adapter ID of {newAdapterValue} instead.");
                             // We get here if there is a matching adapter
                             newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value];
                             hdrInfo.AdapterId = AdapterValueToLUID(newAdapterValue);
