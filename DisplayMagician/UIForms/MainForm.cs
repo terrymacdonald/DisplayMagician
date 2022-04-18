@@ -618,7 +618,7 @@ namespace DisplayMagician.UIForms
                 ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (chosenShortcut is ShortcutItem)
                     //ShortcutRepository.RunShortcut(chosenShortcut);
-                    Program.RunShortcutTask(chosenShortcut);
+                    Program.RunShortcutTask(chosenShortcut, notifyIcon);
             }
         }
 
