@@ -3030,7 +3030,7 @@ namespace DisplayMagician.UIForms
                 string shortcutUUID = e.Name;
                 ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (chosenShortcut is ShortcutItem)
-                    Program.RunShortcutTask(chosenShortcut,Program.AppMainForm.notifyIcon);
+                    Program.RunShortcutTask(chosenShortcut);
             }
         }
 

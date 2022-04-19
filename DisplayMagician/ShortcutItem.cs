@@ -1197,16 +1197,20 @@ namespace DisplayMagician
                     worstError = ShortcutValidity.Error;
             }
             // Is the profile still valid right now? i.e. are all the screens available?
-            if (ProfileToUse != null && !ProfileToUse.IsPossible)
+            if (ProfileToUse != null)
             {
-                logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
-                ShortcutError error = new ShortcutError();
-                error.Name = "InvalidProfile";
-                error.Validity = ShortcutValidity.Warning;
-                error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
-                _shortcutErrors.Add(error);
-                if (worstError != ShortcutValidity.Error)
-                    worstError = ShortcutValidity.Warning;
+                ProfileToUse.RefreshPossbility();
+                if (!ProfileToUse.IsPossible)
+                {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "InvalidProfile";
+                    error.Validity = ShortcutValidity.Warning;
+                    error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Warning;
+                }                
             }
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Application))

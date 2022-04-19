@@ -696,7 +696,7 @@ namespace DisplayMagician
         }
 
 
-        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, CancellationToken cancelToken, NotifyIcon notifyIcon = null)
+        public static RunShortcutResult RunShortcut(ShortcutItem shortcutToUse, CancellationToken cancelToken)
         {
             logger.Debug($"ShortcutRepository/RunShortcut: Running the shortcut {shortcutToUse.Name}.");
 
@@ -1051,20 +1051,20 @@ namespace DisplayMagician
 
             // Add a status notification icon in the status area
             // but only if we are going to wait for a process to finish
-            string oldNotifyText = "";
-            ContextMenuStrip oldContextMenuStrip = null;
+            // string oldNotifyText = "";
+            // ContextMenuStrip oldContextMenuStrip = null;
 
  
             // If we're starting from a desktop shortcut or desktop background menu, then there isn't an already existing MainForm.
             // We need to start one, so that we're able to update the NotifyIcon.
-            bool temporaryMainForm = false;
+            /*bool temporaryMainForm = false;
             if (myMainForm == null)
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: We need to create a temporary system tray icon as we're running from a shortcut");
                 temporaryMainForm = true;                
                 myMainForm = new MainForm();
                 Program.AppMainForm = myMainForm;
-            }
+            }*/
 
             // Now start the main game/exe, and wait if we have to
             if (shortcutToUse.Category.Equals(ShortcutCategory.Application))
@@ -2107,10 +2107,10 @@ namespace DisplayMagician
 
             // If we're running DisplayMagician from a Desktop Shortcut and then shutting down again, then it will quit, leaving behind a desktop icon
             // We need to remove that Desktopicon to tidy up in that case.
-            if (temporaryMainForm)
+            /*if (temporaryMainForm)
             {
                 myMainForm.Dispose();
-            }
+            }*/
             
             return RunShortcutResult.Successful;
 

@@ -414,7 +414,10 @@ namespace DisplayMagician {
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
             }
-                       
+
+            // Set up the AppMainForm variable that we need to use later
+            AppMainForm = new MainForm();
+            AppMainForm.Load += MainForm_LoadCompleted;
 
             logger.Debug($"Setting up commandline processing configuration");
             var app = new CommandLineApplication
@@ -925,8 +928,6 @@ namespace DisplayMagician {
                 ShowMessages();
 
                 // Run the program with normal startup
-                AppMainForm = new MainForm();
-                AppMainForm.Load += MainForm_LoadCompleted;
                 Application.Run(AppMainForm);                
 
             }
@@ -975,6 +976,7 @@ namespace DisplayMagician {
                 shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (shortcutToRun is ShortcutItem)
                 {
+                    shortcutToRun.RefreshValidity();
                     //ShortcutRepository.RunShortcut(shortcutToRun);
                     Program.RunShortcutTask(shortcutToRun);
                 }
@@ -1067,7 +1069,7 @@ namespace DisplayMagician {
         }
 
         //public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
-        public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
             if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
@@ -1102,7 +1104,7 @@ namespace DisplayMagician {
                 // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
                 //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon));
 
-                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
+                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token), AppCancellationTokenSource.Token);
                 //taskToRun.RunSynchronously();
                 while (!taskToRun.IsCompleted)
                 {

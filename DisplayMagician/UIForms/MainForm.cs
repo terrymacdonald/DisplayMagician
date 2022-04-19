@@ -475,7 +475,7 @@ namespace DisplayMagician.UIForms
                 // Run the shortcut if it's still there
                 if (shortcutToRun != null)
                     //ShortcutRepository.RunShortcut(shortcutToRun, notifyIcon);
-                    Program.RunShortcutTask(shortcutToRun, notifyIcon);
+                    Program.RunShortcutTask(shortcutToRun);
 
                 // Also refresh the right-click menu (if we have a main form loaded)
                 if (Program.AppMainForm is Form)
@@ -618,7 +618,7 @@ namespace DisplayMagician.UIForms
                 ShortcutItem chosenShortcut = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (chosenShortcut is ShortcutItem)
                     //ShortcutRepository.RunShortcut(chosenShortcut);
-                    Program.RunShortcutTask(chosenShortcut, notifyIcon);
+                    Program.RunShortcutTask(chosenShortcut);
             }
         }
 
