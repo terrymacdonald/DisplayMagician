@@ -1067,7 +1067,6 @@ namespace DisplayMagicianShared
                     // Force the taskbar edge to the bottom as it is an NVIDIA surround screen
                     screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
 
-
                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Added a new NVIDIA Spanned Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                     _screens.Add(screen);
@@ -1158,7 +1157,8 @@ namespace DisplayMagicianShared
                                     // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
                                     // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
                                     // the taskbar locations in memory (it takes up to 15 seconds!). NOthing I can do, except put this protection in place :( .
-                                    screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{windowsUID }")).Value.Edge;
+                                    KeyValuePair<string, TaskBarLayout> matchingDisplayEntry = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{windowsUID }"));
+                                    screen.TaskBarEdge = matchingDisplayEntry.Value.Edge;
                                     SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetInfo.DisplayId} is on the {screen.TaskBarEdge } of the screen.");
                                 }
                                 else
@@ -1187,6 +1187,35 @@ namespace DisplayMagicianShared
                     // Some other exception has occurred and we need to report it.
                     SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception while trying to get the screen details. (#2) Mosaic isn't enabled, but unable to get the screen details. ");
                 }
+
+            }
+
+            // Now we also need to try and find if there are any other displays connected that don't use an NVIDIA card
+            try
+            {
+                // Get the list of Windows screens
+                List<ScreenPosition> windowsScreens = GetWindowsScreenPositions();
+
+                // Now look through the list of Windows Screens to see if there are any we haven't already go from NVIDIA.
+                // If there are new ones, then add them to the list we're returning
+                foreach (ScreenPosition windowsScreen in windowsScreens)
+                {
+                    // Check if we already have this screen information via NVIDIA driver
+                    if (_screens.Any(scr => scr.ScreenX == windowsScreen.ScreenX && scr.ScreenY == windowsScreen.ScreenY && scr.ScreenWidth == windowsScreen.ScreenWidth && scr.ScreenHeight == windowsScreen.ScreenHeight)){
+                        // If the WindowsScreen is already recorded via NVIDIA, then we just ignore it and skip it.
+                        continue;
+                    }
+
+                    // If we get here then it's a screen that we don't have via NVIDIA, so we need to add it
+                    _screens.Add(windowsScreen);
+                    SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: (3) Added a Windows Screen {windowsScreen.Name} ({windowsScreen.ScreenWidth}x{windowsScreen.ScreenHeight}) at position {windowsScreen.ScreenX},{windowsScreen.ScreenY}.");
+
+                }
+            }
+            catch (Exception ex)
+            {
+                // Some other exception has occurred and we need to report it.
+                SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception while trying to find any additional windows screens that the NVIDIA driver didn't tell us about.");
             }
 
 
@@ -1332,39 +1361,70 @@ namespace DisplayMagicianShared
                         continue;
                     }
 
-
-                    foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
+                    if (_windowsDisplayConfig.DisplayHDRStates.Count > 0)
                     {
-                        // Find the matching HDR information
-                        if (hdrInfo.Id == targetId)
+                        foreach (ADVANCED_HDR_INFO_PER_PATH hdrInfo in _windowsDisplayConfig.DisplayHDRStates)
                         {
-                            // HDR information
-                            if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
+                            // Find the matching HDR information
+                            if (hdrInfo.Id == targetId)
                             {
-                                screen.HDRSupported = true;
-                                if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
+                                // HDR information
+                                if (hdrInfo.AdvancedColorInfo.AdvancedColorSupported)
                                 {
-                                    screen.HDREnabled = true;
+                                    screen.HDRSupported = true;
+                                    if (hdrInfo.AdvancedColorInfo.AdvancedColorEnabled)
+                                    {
+                                        screen.HDREnabled = true;
+                                    }
+                                    else
+                                    {
+                                        screen.HDREnabled = false;
+                                    }
+
                                 }
                                 else
                                 {
+                                    screen.HDRSupported = false;
                                     screen.HDREnabled = false;
                                 }
-
+                                break;
                             }
-                            else
-                            {
-                                screen.HDRSupported = false;
-                                screen.HDREnabled = false;
-                            }
-                            break;
                         }
+
                     }
 
                     SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
                     _screens.Add(screen);
                 }
+            }
+
+            // Now we also need to try and find if there are any other displays connected that don't use an AMD card
+            try
+            {
+                // Get the list of Windows screens
+                List<ScreenPosition> windowsScreens = GetWindowsScreenPositions();
+
+                // Now look through the list of Windows Screens to see if there are any we haven't already go from AMD.
+                // If there are new ones, then add them to the list we're returning
+                foreach (ScreenPosition windowsScreen in windowsScreens)
+                {
+                    // Check if we already have this screen information via AMD driver
+                    if (_screens.Any(scr => scr.ScreenX == windowsScreen.ScreenX && scr.ScreenY == windowsScreen.ScreenY && scr.ScreenWidth == windowsScreen.ScreenWidth && scr.ScreenHeight == windowsScreen.ScreenHeight)){
+                        // If the WindowsScreen is already recorded via AMD, then we just ignore it and skip it.
+                        continue;
+                    }
+
+                    // If we get here then it's a screen that we don't have via AMD, so we need to add it
+                    _screens.Add(windowsScreen);
+                    SharedLogger.logger.Trace($"ProfileItem/GetAMDScreenPositions: (3) Added a Windows Screen {windowsScreen.Name} ({windowsScreen.ScreenWidth}x{windowsScreen.ScreenHeight}) at position {windowsScreen.ScreenX},{windowsScreen.ScreenY}.");
+
+                }
+            }
+            catch (Exception ex)
+            {
+                // Some other exception has occurred and we need to report it.
+                SharedLogger.logger.Error(ex, $"ProfileItem/GetAMDScreenPositions: Exception while trying to find any additional windows screens that the AMD driver didn't tell us about.");
             }
 
             return _screens;
@@ -1407,12 +1467,12 @@ namespace DisplayMagicianShared
                     try
                     {
                         screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                        SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                        SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                     }
                     catch (Exception ex)
                     {
                         // Guess that it is at the bottom (90% correct)
-                        SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                         screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                     }
 
@@ -1492,12 +1552,12 @@ namespace DisplayMagicianShared
                         try
                         {
                             screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tb => tb.Value.RegKeyValue.Contains("Settings")).Value.Edge;
-                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                            SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                         }
                         catch (Exception ex)
                         {
                             // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
+                            SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
                             screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         }
 
@@ -1507,12 +1567,12 @@ namespace DisplayMagicianShared
                         try
                         {
                             screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                            SharedLogger.logger.Trace($"ProfileItem/GetNVIDIAScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                            SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                         }
                         catch (Exception ex)
                         {
                             // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                            SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                             screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         }
                     }                    
