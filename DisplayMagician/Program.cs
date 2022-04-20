@@ -263,7 +263,7 @@ namespace DisplayMagician {
             sharedLogger = new SharedLogger(logger);
 
             // Start the Log file
-            logger.Info($"Starting {Application.ProductName} v{Application.ProductVersion}");
+            logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
 
             // Create the other DM Dir if it doesn't exist so that it's avilable for all 
             // parts of the program to use
@@ -275,7 +275,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Icon Folder {AppLogPath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Icon Folder {AppLogPath}");
                 }
             }
             if (!Directory.Exists(AppProfilePath))
@@ -286,7 +286,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Profile Folder {AppProfilePath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Profile Folder {AppProfilePath}");
                 }
             }
             if (!Directory.Exists(AppShortcutPath))
@@ -297,7 +297,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
                 }
             }
             if (!Directory.Exists(AppWallpaperPath))
@@ -308,7 +308,7 @@ namespace DisplayMagician {
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
                 }
             }
 
@@ -414,12 +414,8 @@ namespace DisplayMagician {
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
             }
-
-            // Set up the AppMainForm variable that we need to use later
-            AppMainForm = new MainForm();
-            AppMainForm.Load += MainForm_LoadCompleted;
-
-            logger.Debug($"Setting up commandline processing configuration");
+            
+            logger.Debug($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {
                 AllowArgumentSeparator = true,
@@ -453,14 +449,14 @@ namespace DisplayMagician {
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -472,30 +468,30 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
@@ -505,10 +501,18 @@ namespace DisplayMagician {
 
                 runShortcutCmd.OnExecute(() =>
                 {
-                    logger.Debug($"RunShortcut commandline command was invoked!");
+                    logger.Debug($"Program/Main: RunShortcut commandline command was invoked!");
+
+                    // Set up the AppMainForm variable that we need to use later
+                    AppMainForm = new MainForm();
+                    AppMainForm.Load += MainForm_LoadCompleted;
 
                     // Load the games in background onexecute
                     GameLibrary.LoadGamesInBackground();
+
+                    // Close the splash screen
+                    if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                     ERRORLEVEL errLevel = RunShortcut(argumentShortcut.Value);
                     DeRegisterDisplayMagicianWithWindows();
@@ -523,14 +527,14 @@ namespace DisplayMagician {
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -542,30 +546,30 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
 
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
@@ -576,7 +580,15 @@ namespace DisplayMagician {
 
                 runProfileCmd.OnExecute(() =>
                 {
-                    logger.Debug($"ChangeProfile commandline command was invoked!");
+                    logger.Debug($"Program/Main: ChangeProfile commandline command was invoked!");
+
+                    // Set up the AppMainForm variable that we need to use later
+                    AppMainForm = new MainForm();
+                    AppMainForm.Load += MainForm_LoadCompleted;
+
+                    // Close the splash screen
+                    if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                     try
                     {
@@ -600,14 +612,14 @@ namespace DisplayMagician {
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -619,37 +631,37 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
                 //description and help text of the command.
                 createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
 
                 createProfileCmd.OnExecute(() =>
                 {
-                    logger.Debug($"CreateProfile commandline command was invoked!");
+                    logger.Debug($"Program/Main: CreateProfile commandline command was invoked!");
                     Console.WriteLine("Starting up and creating a new Display Profile...");
                     ERRORLEVEL errLevel = CreateProfile();
                     DeRegisterDisplayMagicianWithWindows();
@@ -666,14 +678,14 @@ namespace DisplayMagician {
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -685,37 +697,37 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
                 //description and help text of the command.
                 currentProfileCmd.Description = "Use this command to output the name of the display profile currently in use. It will return 'UNKNOWN' if the display profile doesn't match any saved display profiles";
 
                 currentProfileCmd.OnExecute(() =>
                 {
-                    logger.Debug($"CurrentProfile commandline command was invoked!");
+                    logger.Debug($"Program/Main: CurrentProfile commandline command was invoked!");
                     ERRORLEVEL errLevel = CurrentProfile();
                     DeRegisterDisplayMagicianWithWindows();
                     return (int)errLevel;
@@ -728,14 +740,14 @@ namespace DisplayMagician {
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -747,33 +759,33 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
 
-                logger.Debug($"No commandline command was invoked, so starting up normally");
+                logger.Debug($"Program/Main: No commandline command was invoked, so starting up normally");
                 // Add a workaround to handle the weird way that Windows tell us that DisplayMagician 
                 // was started from a Notification Toast when closed (Windows 10)
                 // Due to the way that CommandLineUtils library works we need to handle this as
@@ -784,20 +796,24 @@ namespace DisplayMagician {
                     {
                         if (myArg.Equals("-ToastActivated"))
                         {
-                            logger.Debug($"We were started by the user clicking on a Windows Toast");
+                            logger.Debug($"Program/Main: We were started by the user clicking on a Windows Toast");
                             Program.AppToastActivated = true;
                             break;
                         }
 
                     }
                 }
-                logger.Info("Starting Normally...");
+                logger.Info("Program/Main: Starting Normally...");
+
+                // Set up the AppMainForm variable that we need to use later
+                AppMainForm = new MainForm();
+                AppMainForm.Load += MainForm_LoadCompletedAndOpenApp;
 
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
-                logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
+                logger.Debug($"Program/Main: Try to load all the Games in the background to avoid locking the UI");
                 GameLibrary.LoadGamesInBackground();
-
+                
                 ERRORLEVEL errLevel = StartUpApplication();
                 DeRegisterDisplayMagicianWithWindows();
                 return (int)errLevel;
@@ -838,12 +854,16 @@ namespace DisplayMagician {
 
             logger.Debug($"Beginning to shutdown");
 
-            logger.Debug($"Clearing all previous windows toast notifications as they aren't needed any longer");
+            // Close the splash screen if it's still open (happens with some errors)
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
+            logger.Debug($"Program/Main: Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
 
             // Shutdown NLog
-            logger.Debug($"Stopping logging processes");
+            logger.Debug($"Program/Main: Stopping logging processes");
             NLog.LogManager.Shutdown();
 
             // Dispose of the CancellationTokenSource
@@ -950,11 +970,17 @@ namespace DisplayMagician {
         {
             if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+        }
+
+        private static void MainForm_LoadCompletedAndOpenApp(object sender, EventArgs e)
+        {
+            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
             AppMainForm.TopMost = true;
             AppMainForm.Activate();
             AppMainForm.TopMost = false;
         }
-       
+
         // ReSharper disable once CyclomaticComplexity
         public static ERRORLEVEL RunShortcut(string shortcutUUID)
         {

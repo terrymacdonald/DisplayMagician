@@ -1195,7 +1195,7 @@ namespace DisplayMagicianShared
             try
             {
                 // Get the list of Windows screens
-                List<ScreenPosition> windowsScreens = GetWindowsScreenPositions();
+                List<ScreenPosition> windowsScreens = FindAllWindowsScreens();
 
                 // Now look through the list of Windows Screens to see if there are any we haven't already go from NVIDIA.
                 // If there are new ones, then add them to the list we're returning
@@ -1404,7 +1404,7 @@ namespace DisplayMagicianShared
             try
             {
                 // Get the list of Windows screens
-                List<ScreenPosition> windowsScreens = GetWindowsScreenPositions();
+                List<ScreenPosition> windowsScreens = FindAllWindowsScreens();
 
                 // Now look through the list of Windows Screens to see if there are any we haven't already go from AMD.
                 // If there are new ones, then add them to the list we're returning
@@ -1433,19 +1433,25 @@ namespace DisplayMagicianShared
 
         private List<ScreenPosition> GetWindowsScreenPositions()
         {
+            _screens = FindAllWindowsScreens();
+            return _screens;
+        }
+
+        private List<ScreenPosition> FindAllWindowsScreens()
+        {
             // Set up some colours
             Color primaryScreenColor = Color.FromArgb(0, 174, 241); // represents Primary screen blue
             Color normalScreenColor = Color.FromArgb(155, 155, 155); // represents normal screen colour (gray)
 
             // Now we create the screens structure from the AMD profile information
-            _screens = new List<ScreenPosition>();
+            List<ScreenPosition> windowsScreens = new List<ScreenPosition>();
 
             int pathCount = _windowsDisplayConfig.DisplayConfigPaths.Length;
             // First of all we need to figure out how many display paths we have.
             if (pathCount < 1)
             {
                 // Return an empty screen if we have no Display Config Paths to use!
-                return _screens;
+                return windowsScreens;
             }
 
             foreach (var path in _windowsDisplayConfig.DisplayConfigPaths)
@@ -1576,15 +1582,15 @@ namespace DisplayMagicianShared
                             SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                             screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         }
-                    }                    
+                    }
 
                     SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Added a new Screen {screen.Name} ({screen.ScreenWidth}x{screen.ScreenHeight}) at position {screen.ScreenX},{screen.ScreenY}.");
 
-                    _screens.Add(screen);
+                    windowsScreens.Add(screen);
                 }
             }
 
-            return _screens;
+            return windowsScreens;
         }
 
 
