@@ -104,6 +104,27 @@ namespace DisplayMagicianShared.NVIDIA
     }*/
 
     [StructLayout(LayoutKind.Sequential)]
+    public struct NVIDIA_DRS_CONFIG : IEquatable<NVIDIA_DRS_CONFIG>
+    {
+        public bool HasDRSSettings;
+        public NVDRS_PROFILE_V1 ProfileInfo;
+        public List<NVDRS_SETTING_V1> DriverSettings;
+        public override bool Equals(object obj) => obj is NVIDIA_DRS_CONFIG other && this.Equals(other);
+        public bool Equals(NVIDIA_DRS_CONFIG other)
+        => HasDRSSettings == other.HasDRSSettings &&
+            ProfileInfo == other.ProfileInfo &&
+            DriverSettings.SequenceEqual(other.DriverSettings);
+
+        public override int GetHashCode()
+        {
+            return (HasDRSSettings, ProfileInfo, DriverSettings).GetHashCode();
+        }
+        public static bool operator ==(NVIDIA_DRS_CONFIG lhs, NVIDIA_DRS_CONFIG rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVIDIA_DRS_CONFIG lhs, NVIDIA_DRS_CONFIG rhs) => !(lhs == rhs);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public struct NVIDIA_PER_ADAPTER_CONFIG : IEquatable<NVIDIA_PER_ADAPTER_CONFIG>
     {
         public bool IsQuadro;
@@ -136,6 +157,7 @@ namespace DisplayMagicianShared.NVIDIA
         public NVIDIA_MOSAIC_CONFIG MosaicConfig;
         public Dictionary<UInt32, NVIDIA_PER_ADAPTER_CONFIG> PhysicalAdapters;
         public List<NV_DISPLAYCONFIG_PATH_INFO_V2> DisplayConfigs;
+        public List<NVIDIA_DRS_CONFIG> DRSSettings;
         // Note: We purposely have left out the DisplayNames from the Equals as it's order keeps changing after each reboot and after each profile swap
         // and it is informational only and doesn't contribute to the configuration (it's used for generating the Screens structure, and therefore for
         // generating the profile icon.
@@ -149,12 +171,13 @@ namespace DisplayMagicianShared.NVIDIA
             PhysicalAdapters.SequenceEqual(other.PhysicalAdapters) &&
             MosaicConfig.Equals(other.MosaicConfig) &&
             DisplayConfigs.SequenceEqual(other.DisplayConfigs) &&
+            DRSSettings.SequenceEqual(other.DRSSettings) &&
             DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
 
 
         public override int GetHashCode()
         {
-            return (IsCloned, MosaicConfig, PhysicalAdapters, DisplayConfigs, DisplayIdentifiers, DisplayNames).GetHashCode();
+            return (IsCloned, MosaicConfig, PhysicalAdapters, DisplayConfigs, DisplayIdentifiers, DRSSettings).GetHashCode();
         }
         public static bool operator ==(NVIDIA_DISPLAY_CONFIG lhs, NVIDIA_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -308,6 +331,7 @@ namespace DisplayMagicianShared.NVIDIA
             myDefaultConfig.MosaicConfig.MosaicViewports = new List<NV_RECT[]>();
             myDefaultConfig.PhysicalAdapters = new Dictionary<UInt32, NVIDIA_PER_ADAPTER_CONFIG>();
             myDefaultConfig.DisplayConfigs = new List<NV_DISPLAYCONFIG_PATH_INFO_V2>();
+            myDefaultConfig.DRSSettings = new List<NVIDIA_DRS_CONFIG>();
             myDefaultConfig.DisplayNames = new Dictionary<string, string>();
             myDefaultConfig.DisplayIdentifiers = new List<string>();
             myDefaultConfig.IsCloned = false;
@@ -1003,7 +1027,7 @@ namespace DisplayMagicianShared.NVIDIA
 
 
                         // Time to get the color settings, HDR capabilities and settings for each display
-                        bool isNvHdrEnabled = false;
+                        //bool isNvHdrEnabled = false;
                         for (int displayIndex = 0; displayIndex < displayCount; displayIndex++)
                         {
                             if (allDisplays)
@@ -1173,7 +1197,7 @@ namespace DisplayMagicianShared.NVIDIA
                                     SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: NvAPI_Disp_HdrColorControl returned OK. HDR mode is set to {hdrColorData.HdrMode.ToString("G")}.");
                                     if (hdrColorData.HdrMode != NV_HDR_MODE.OFF)
                                     {
-                                        isNvHdrEnabled = true;
+                                        //isNvHdrEnabled = true;
                                         myDisplay.HasNvHdrEnabled = true;
                                     }
                                     myDisplay.HdrColorData = hdrColorData;

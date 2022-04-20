@@ -685,6 +685,22 @@ namespace DisplayMagicianShared.NVIDIA
         NV_DESKTOP_COLOR_DEPTH_MAX_VALUE = NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR, // must be set to highest enum value
     }
 
+    public enum NVDRS_SETTING_TYPE
+    {
+        NVDRS_DWORD_TYPE = 0x0,
+        NVDRS_BINARY_TYPE = 0x1,
+        NVDRS_STRING_TYPE = 0x2,
+        NVDRS_WSTRING_TYPE = 0x3,
+    }
+
+    public enum NVDRS_SETTING_LOCATION
+    {
+        NVDRS_CURRENT_PROFILE_LOCATION = 0x0,
+        NVDRS_GLOBAL_PROFILE_LOCATION = 0x1,
+        NVDRS_BASE_PROFILE_LOCATION = 0x2,
+        NVDRS_DEFAULT_PROFILE_LOCATION = 0x3,
+    }
+
     [Flags]
     public enum NV_HDR_CAPABILITIES_V2_FLAGS : UInt32
     {
@@ -748,6 +764,15 @@ namespace DisplayMagicianShared.NVIDIA
 
         //! Do not return an error if no configuration will work with all of the grids.
         ALLOW_INVALID = 0x8,
+    }
+
+    [Flags]
+    public enum NVDRS_GPU_SUPPORT : UInt32
+    {
+        NONE = 0x0,
+        GEFORCE = 0x1,
+        QUADRO = 0x2,
+        NVS = 0x4,
     }
 
     // ==================================
@@ -856,6 +881,81 @@ namespace DisplayMagicianShared.NVIDIA
             return other;
         }
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NVDRS_PROFILE_V1 : IEquatable<NVDRS_PROFILE_V1>, ICloneable // Note: Version 3 of NV_EDID_V3 structure
+    {
+        public UInt32 Version;        //!< Structure version
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
+        public string ProfileName;    // EDID_Data[NV_EDID_DATA_SIZE];
+        public NVDRS_GPU_SUPPORT GpuSupport;
+        public UInt32 IsPredefined;
+        public UInt32 NumofApps;
+        public UInt32 NumofSettings;
+
+        public override bool Equals(object obj) => obj is NVDRS_PROFILE_V1 other && this.Equals(other);
+
+        public bool Equals(NVDRS_PROFILE_V1 other)
+        => Version == other.Version &&
+           ProfileName == other.ProfileName &&
+           GpuSupport == other.GpuSupport &&
+           IsPredefined == other.IsPredefined &&
+           NumofApps == other.NumofApps &&
+           NumofSettings == other.NumofSettings;
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, ProfileName, GpuSupport, IsPredefined, NumofApps, NumofSettings).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_PROFILE_V1 lhs, NVDRS_PROFILE_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_PROFILE_V1 lhs, NVDRS_PROFILE_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_PROFILE_V1 other = (NVDRS_PROFILE_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NVDRS_SETTING_V1 : IEquatable<NVDRS_SETTING_V1>, ICloneable // Note: Version 1 of NVDRS_SETTING_V1 structure
+    {
+        public UInt32 Version;        //!< Structure version
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
+        public string SettingName;    // EDID_Data[NV_EDID_DATA_SIZE];
+        public UInt32 SettingId;
+        public NVDRS_SETTING_TYPE SettingType;
+        public NVDRS_SETTING_LOCATION SettingLocation;
+        public UInt32 IsCurrentPredefined;
+        public UInt32 IsPredefinedValid;
+
+        public override bool Equals(object obj) => obj is NVDRS_SETTING_V1 other && this.Equals(other);
+
+        public bool Equals(NVDRS_SETTING_V1 other)
+        => Version == other.Version &&
+           SettingName == other.SettingName &&
+           SettingId == other.SettingId &&
+           SettingType == other.SettingType &&
+           SettingLocation == other.SettingLocation &&
+           IsCurrentPredefined == other.IsCurrentPredefined &&
+           IsPredefinedValid == other.IsPredefinedValid;
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, SettingName, SettingId, SettingType, SettingLocation, IsCurrentPredefined, IsPredefinedValid).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_SETTING_V1 lhs, NVDRS_SETTING_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_SETTING_V1 lhs, NVDRS_SETTING_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_SETTING_V1 other = (NVDRS_SETTING_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct NV_LOGICAL_GPU_DATA_V1 : IEquatable<NV_LOGICAL_GPU_DATA_V1>, ICloneable // Note: Version 1 of NV_BOARD_INFO_V1 structure

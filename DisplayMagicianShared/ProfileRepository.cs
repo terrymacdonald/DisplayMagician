@@ -747,18 +747,19 @@ namespace DisplayMagicianShared
                         // If there is a error in the JSON format
                         if (ex.HResult == -2146233088)
                         {
-                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                         }
                         else
                         {
                             SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFileName} but JsonConvert threw an exception.");
                         }
+                        MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
                     catch (Exception ex) 
                     { 
                         SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFileName} but the JsonConvert threw an exception.");
+                        MessageBox.Show($"The Display Profiles file {_profileStorageJsonFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
 
                     // If we have any JSON.net errors, then we need to records them in the logs
