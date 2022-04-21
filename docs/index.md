@@ -30,6 +30,7 @@ Please read through the README for features (current and planned) and issues you
 
 Feel free to report missing features or bugs using the project [issue tracker](https://github.com/terrymacdonald/DisplayMagician/issues).
 
+
 ## Current features
 
 DisplayMagician lets you set up the following information for each game or application:
@@ -49,7 +50,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
-* Supports USB display devices and works with SuperDisplay (Android Tablets as a display)
+* Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display)
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
 
 ## Planned features
@@ -138,7 +139,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ## Credits
 Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the names of these amazing people:
 
+Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the names of these amazing people:
+
 * Sean at SimCraft (Thank you so much for your generous donation!)
+* Fifowole (Thank you for your donation)
+* Brett Horton (Thank you for your donation)
+* Patrickdiezi  (Thank you for your donation)
+* NoDepth (For your bug report)
+* Chris5gd (For your bug report)
+* JabberJon (Thank you for your donation)
+* Sikhalv (Thank you for your donation)
+* Friedobaer (Thank you for your donation)
+* PanthaRhei (Thank you for your donation)
+* Matthex (Great help testing multiple display adapter bugs and 7 different screens! And for your donation!)
 * NudeNull (Thank you for your sponsorship)
 * 20vmki (Thank you for your sponsorship)
 * Lazerwolf22 (Thank you for your sponsorship)
