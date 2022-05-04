@@ -53,7 +53,7 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings StartOnBootUp set to false");
             }
 
-            // setup minimise on start
+            // setup minimise DM to system tray when it runs
             if (Program.AppProgramSettings.MinimiseOnStart == true)
             {
                 cb_minimise_notification_area.Checked = true;
@@ -75,6 +75,30 @@ namespace DisplayMagician.UIForms
             {
                 cb_show_splashscreen.Checked = false;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowSplashScreen set to false");
+            }
+
+            // show the minimise reminder message when starting or closing the window 
+            if (Program.AppProgramSettings.ShowMinimiseMessageInActionCenter == true)
+            {
+                cb_show_minimise_action.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowMinimiseMessageInActionCenter set to true");
+            }
+            else
+            {
+                cb_show_minimise_action.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowMinimiseMessageInActionCenter set to false");
+            }
+
+            // show the status messages in Action Center. Turning this off turns off all messages in Action Center
+            if (Program.AppProgramSettings.ShowStatusMessageInActionCenter == true)
+            {
+                cb_show_status_action.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowStatusMessageInActionCenter set to true");
+            }
+            else
+            {
+                cb_show_status_action.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowStatusMessageInActionCenter set to false");
             }
 
             // start upgrade settings 
@@ -251,6 +275,21 @@ namespace DisplayMagician.UIForms
             else
                 Program.AppProgramSettings.ShowSplashScreen = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowSplashScreen as {Program.AppProgramSettings.ShowSplashScreen}");
+
+            // save show ShowMinimiseMessageInActionCenter 
+            if (cb_show_minimise_action.Checked)
+                Program.AppProgramSettings.ShowMinimiseMessageInActionCenter = true;
+            else
+                Program.AppProgramSettings.ShowMinimiseMessageInActionCenter = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowMinimiseMessageInActionCenter as {Program.AppProgramSettings.ShowMinimiseMessageInActionCenter}");
+
+            // save show ShowStatusMessageInActionCenter 
+            if (cb_show_status_action.Checked)
+                Program.AppProgramSettings.ShowStatusMessageInActionCenter = true;
+            else
+                Program.AppProgramSettings.ShowStatusMessageInActionCenter = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowStatusMessageInActionCenter as {Program.AppProgramSettings.ShowStatusMessageInActionCenter}");
+
 
             // save install desktop context menu setting
             if (_installedDesktopContextMenu)
@@ -566,7 +605,8 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.0.json")
+                            Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.4.json")
                         };
                         foreach (string filename in listOfFiles)
                         {
@@ -652,5 +692,6 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
+
     }
 }

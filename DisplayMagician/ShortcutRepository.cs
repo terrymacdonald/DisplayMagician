@@ -723,7 +723,11 @@ namespace DisplayMagician
                 return RunShortcutResult.Error;
             }
 
-            MainForm myMainForm = Program.AppMainForm;            
+            MainForm myMainForm = Program.AppMainForm;
+            ToastContentBuilder tcBuilder = new ToastContentBuilder();
+            ToastContent toastContent = tcBuilder.Content;
+            var doc = new Windows.Data.Xml.Dom.XmlDocument();
+            var toast = new ToastNotification(doc);
 
             // Remember the profile we are on now
             bool needToChangeProfiles = false;
@@ -1095,30 +1099,33 @@ namespace DisplayMagician
                     processToMonitorName = shortcutToUse.DifferentExecutableToMonitor;
                 }
 
-                logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the executable {shortcutToUse.ExecutableNameAndPath} to close.");
-                // Now we want to tell the user we're running an application!
-                // Construct the Windows toast content
-                ToastContentBuilder tcBuilder = new ToastContentBuilder()
-                    .AddText($"Running {shortcutToUse.ExecutableNameAndPath}", hintMaxLines: 1)
-                    .AddText($"Waiting for all {processToMonitorName } processes to exit...")
-                    .AddButton(new ToastButton()
-                        .SetContent("Cancel")
-                        .AddArgument("action", "stopWaiting")
-                        .SetBackgroundActivation())
-                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                    .SetToastDuration(ToastDuration.Short);
-                ToastContent toastContent = tcBuilder.Content;
-                // Make sure to use Windows.Data.Xml.Dom
-                var doc = new Windows.Data.Xml.Dom.XmlDocument();
-                doc.LoadXml(toastContent.GetContent());
-                // And create the toast notification
-                var toast = new ToastNotification(doc);
-                toast.SuppressPopup = false;
-                // Remove any other Notifications from us
-                ToastNotificationManagerCompat.History.Clear();
-                // And then show this notification
-                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-
+                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                {
+                    logger.Debug($"ShortcutRepository/RunShortcut: Creating the Windows Toast to notify the user we're going to wait for the executable {shortcutToUse.ExecutableNameAndPath} to close.");
+                    // Now we want to tell the user we're running an application!
+                    // Construct the Windows toast content
+                    tcBuilder = new ToastContentBuilder()
+                        .AddText($"Running {shortcutToUse.ExecutableNameAndPath}", hintMaxLines: 1)
+                        .AddText($"Waiting for all {processToMonitorName } processes to exit...")
+                        .AddButton(new ToastButton()
+                            .SetContent("Cancel")
+                            .AddArgument("action", "stopWaiting")
+                            .SetBackgroundActivation())
+                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                        .SetToastDuration(ToastDuration.Short);
+                    toastContent = tcBuilder.Content;
+                    // Make sure to use Windows.Data.Xml.Dom
+                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                    doc.LoadXml(toastContent.GetContent());
+                    // And create the toast notification
+                    toast = new ToastNotification(doc);
+                    toast.SuppressPopup = false;
+                    // Remove any other Notifications from us
+                    ToastNotificationManagerCompat.History.Clear();
+                    // And then show this notification
+                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                }
+                
 
                 logger.Info($"ShortcutRepository/RunShortcut: Starting the main executable that we wanted to run, and that we're going to monitor and watch");
                 // Start the main executable
@@ -1204,42 +1211,48 @@ namespace DisplayMagician
                         Thread.Sleep(1000);
                     }
                 }
-               
-                if (cancelToken.IsCancellationRequested)
+
+                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                 {
-                    // The monitoring was stopped by the user
-                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
-                    // Construct the toast content
-                    tcBuilder = new ToastContentBuilder()
-                        .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
-                        .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")                    
-                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                        .SetToastDuration(ToastDuration.Short);
-                }
-                else
-                {
-                    // The program was closed normally
-                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} has closed.");
-                    // Tell the user that the application has closed
-                    // Construct the toast content
-                    tcBuilder = new ToastContentBuilder()
-                        .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
-                        .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
-                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                        .SetToastDuration(ToastDuration.Short);
-                }
-                toastContent = tcBuilder.Content;
-                // Make sure to use Windows.Data.Xml.Dom
-                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                doc.LoadXml(toastContent.GetContent());
-                // And create the toast notification
-                toast = new ToastNotification(doc);
-                // Remove any other Notifications from us
-                ToastNotificationManagerCompat.History.Clear();
-                // And then show it
-                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    if (cancelToken.IsCancellationRequested)
+                    {
+
+                        // The monitoring was stopped by the user
+                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} monitoring was stopped by the user.");
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddText($"{shortcutToUse.ExecutableNameAndPath} monitoring cancelled", hintMaxLines: 1)
+                            .AddText($"Monitoring of {processToMonitorName} processes were stopped by the user.")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                            .SetToastDuration(ToastDuration.Short);
+                    }
 
 
+                    else
+                    {
+                        // The program was closed normally
+                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the executable {shortcutToUse.ExecutableNameAndPath} has closed.");
+                        // Tell the user that the application has closed
+                        // Construct the toast content
+                        tcBuilder = new ToastContentBuilder()
+                            .AddText($"{shortcutToUse.ExecutableNameAndPath} was closed", hintMaxLines: 1)
+                            .AddText($"All {processToMonitorName} processes were shutdown and changes were reverted.")
+                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                            .SetToastDuration(ToastDuration.Short);
+
+                    }
+                    toastContent = tcBuilder.Content;
+                    // Make sure to use Windows.Data.Xml.Dom
+                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                    doc.LoadXml(toastContent.GetContent());
+                    // And create the toast notification
+                    toast = new ToastNotification(doc);
+                    // Remove any other Notifications from us
+                    ToastNotificationManagerCompat.History.Clear();
+                    // And then show it
+                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                }
             }
             else if (shortcutToUse.Category.Equals(ShortcutCategory.Game))
             {
@@ -1305,23 +1318,27 @@ namespace DisplayMagician
                         myMainForm.UpdateNotifyIconText($"DisplayMagician: Starting {gameLibraryToUse.GameLibraryName}...");
                     }
 
-                    // Now we want to tell the user we're start a game
-                    // Construct the Windows toast content
-                    ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                    if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                    {
+                        // Now we want to tell the user we're start a game
+                        // Construct the Windows toast content
+                        tcBuilder = new ToastContentBuilder()
                         .AddText($"Starting {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
                         .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to start (and update if needed)...")
                         .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                         .SetToastDuration(ToastDuration.Short);
-                    ToastContent toastContent = tcBuilder.Content;
-                    // Make sure to use Windows.Data.Xml.Dom
-                    var doc = new Windows.Data.Xml.Dom.XmlDocument();
-                    doc.LoadXml(toastContent.GetContent());
-                    // And create the toast notification
-                    var toast = new ToastNotification(doc);
-                    // Remove any other Notifications from us
-                    ToastNotificationManagerCompat.History.Clear();
-                    // And then show this notification
-                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        toastContent = tcBuilder.Content;
+                        // Make sure to use Windows.Data.Xml.Dom
+                        doc = new Windows.Data.Xml.Dom.XmlDocument();
+                        doc.LoadXml(toastContent.GetContent());
+                        // And create the toast notification
+                        toast = new ToastNotification(doc);
+                        // Remove any other Notifications from us
+                        ToastNotificationManagerCompat.History.Clear();
+                        // And then show this notification
+                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    }
+                        
 
                     // Start the game!
                     // NOTE: We now have to try and find the processes, as the game library will start to run the game itself, and we have no idea what process it is
@@ -1366,24 +1383,27 @@ namespace DisplayMagician
                     {
                         logger.Info($"ShortcutRepository/RunShortcut: GameLibrary {gameLibraryToUse.GameLibraryName} has started updating itself.");
 
-                        // Now we want to tell the user we're updating the game library
-                        // Construct the Windows toast content
-                        tcBuilder = new ToastContentBuilder()
+                        if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                        {
+                            // Now we want to tell the user we're updating the game library
+                            // Construct the Windows toast content
+                            tcBuilder = new ToastContentBuilder()
                             .AddToastActivationInfo($"notify=updatingGameLibrary", ToastActivationType.Foreground)
                             .AddText($"Updating {gameLibraryToUse.GameLibraryName}", hintMaxLines: 1)
                             .AddText($"Waiting for {gameLibraryToUse.GameLibraryName} Game Library to update itself...")
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
-                        //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
-                        toastContent = tcBuilder.Content;
-                        // Make sure to use Windows.Data.Xml.Dom
-                        doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        // And create the toast notification
-                        toast = new ToastNotification(doc);
-                        // Remove any other Notifications from us
-                        ToastNotificationManagerCompat.History.Clear();
-                        // And then show this notification
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            //.AddButton("Stop", ToastActivationType.Background, "notify=runningGame&action=stop");
+                            toastContent = tcBuilder.Content;
+                            // Make sure to use Windows.Data.Xml.Dom
+                            doc = new Windows.Data.Xml.Dom.XmlDocument();
+                            doc.LoadXml(toastContent.GetContent());
+                            // And create the toast notification
+                            toast = new ToastNotification(doc);
+                            // Remove any other Notifications from us
+                            ToastNotificationManagerCompat.History.Clear();
+                            // And then show this notification
+                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        }                            
 
                         // Wait for up to 5 minutes for GameLibrary to update
                         for (int secs = 0; secs <= 5000; secs += 500)
@@ -1416,23 +1436,27 @@ namespace DisplayMagician
                     if (gameToRun.IsUpdating)
                     {
                         logger.Info($"ShortcutRepository/RunShortcut: Game {gameToRun.Name} is being updated so we'll wait up to 15 mins until it's finished.");
-                        // Now we want to tell the user we're updating the game
-                        // Construct the Windows toast content
-                        tcBuilder = new ToastContentBuilder()
+                        if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                        {
+                            // Now we want to tell the user we're updating the game
+                            // Construct the Windows toast content
+                            tcBuilder = new ToastContentBuilder()
                             .AddText($"Updating {gameToRun.Name}", hintMaxLines: 1)
                             .AddText($"Waiting for {gameToRun.Name} Game to update...")
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                             .SetToastDuration(ToastDuration.Short);
-                        toastContent = tcBuilder.Content;
-                        // Make sure to use Windows.Data.Xml.Dom
-                        doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        // And create the toast notification
-                        toast = new ToastNotification(doc);
-                        // Remove any other Notifications from us
-                        ToastNotificationManagerCompat.History.Clear();
-                        // And then show this notification
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            toastContent = tcBuilder.Content;
+                            // Make sure to use Windows.Data.Xml.Dom
+                            doc = new Windows.Data.Xml.Dom.XmlDocument();
+                            doc.LoadXml(toastContent.GetContent());
+                            // And create the toast notification
+                            toast = new ToastNotification(doc);
+                            // Remove any other Notifications from us
+                            ToastNotificationManagerCompat.History.Clear();
+                            // And then show this notification
+                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        }
+                            
                         // Wait for up to 15 minutes for the Game to update
                         for (int secs = 0; secs <= 15000; secs += 500)
                         {
@@ -1544,33 +1568,40 @@ namespace DisplayMagician
                             {
                                 logger.Error($"ShortcutRepository/RunShortcut: The Game {gameToRun.Name} didn't start for some reason (or the game uses a starter exe that launches the game itself)! so reverting changes back if needed...");
                                 logger.Warn($"ShortcutRepository/RunShortcut: We were monitoring {gameToRun.ExePath}. You may need to manually add an alternative game executable to monitor - please run the game manually and check if another executable in {Path.GetDirectoryName(gameToRun.ExePath)} is run, and then monitor that instead.");
-                                // Now we want to tell the user we couldn't start the game!
-                                // Construct the Windows toast content
-                                tcBuilder = new ToastContentBuilder()
+                                
+                                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                                {
+                                    // Now we want to tell the user we couldn't start the game!
+                                    // Construct the Windows toast content
+                                    tcBuilder = new ToastContentBuilder()
                                     .AddText($"Could not detect {shortcutToUse.GameName} starting", hintMaxLines: 1)
                                     .AddText($"Could not detect {shortcutToUse.GameName} Game starting, so reverting changes back if needed. You may need to monitor a different game executable.")
                                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                     .SetToastDuration(ToastDuration.Short);
-                                toastContent = tcBuilder.Content;
-                                // Make sure to use Windows.Data.Xml.Dom
-                                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                doc.LoadXml(toastContent.GetContent());
-                                // And create the toast notification
-                                toast = new ToastNotification(doc);
-                                // Remove any other Notifications from us
-                                ToastNotificationManagerCompat.History.Clear();
-                                // And then show this notification
-                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                    toastContent = tcBuilder.Content;
+                                    // Make sure to use Windows.Data.Xml.Dom
+                                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                                    doc.LoadXml(toastContent.GetContent());
+                                    // And create the toast notification
+                                    toast = new ToastNotification(doc);
+                                    // Remove any other Notifications from us
+                                    ToastNotificationManagerCompat.History.Clear();
+                                    // And then show this notification
+                                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                }
+                                    
 
                             } 
                             else
                             {
                                 // The game has started correctly so we continue to monitor it!
 
-                                // Tell the user
-                                // Now we want to tell the user we're running a game!
-                                // Construct the Windows toast content
-                                tcBuilder = new ToastContentBuilder()
+                                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                                {
+                                    // Tell the user
+                                    // Now we want to tell the user we're running a game!
+                                    // Construct the Windows toast content
+                                    tcBuilder = new ToastContentBuilder()
                                     .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
                                     .AddText($"Waiting for the {gameToRun.ProcessName} game process to exit as {altGameProcessToMonitor} alternative game executable wasn't found...")
                                     .AddButton(new ToastButton()
@@ -1579,16 +1610,17 @@ namespace DisplayMagician
                                         .SetBackgroundActivation())
                                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                     .SetToastDuration(ToastDuration.Short);
-                                toastContent = tcBuilder.Content;
-                                // Make sure to use Windows.Data.Xml.Dom
-                                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                doc.LoadXml(toastContent.GetContent());
-                                // And create the toast notification
-                                toast = new ToastNotification(doc);
-                                // Remove any other Notifications from us
-                                ToastNotificationManagerCompat.History.Clear();
-                                // And then show this notification
-                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                    toastContent = tcBuilder.Content;
+                                    // Make sure to use Windows.Data.Xml.Dom
+                                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                                    doc.LoadXml(toastContent.GetContent());
+                                    // And create the toast notification
+                                    toast = new ToastNotification(doc);
+                                    // Remove any other Notifications from us
+                                    ToastNotificationManagerCompat.History.Clear();
+                                    // And then show this notification
+                                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                }                                    
 
                                 // This is the main waiting thread!
                                 // Wait for the game to exit
@@ -1614,41 +1646,44 @@ namespace DisplayMagician
                                     Thread.Sleep(1000);
                                 }
 
-                                if (cancelToken.IsCancellationRequested)
+                                if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                                 {
-                                    // The monitoring was stopped by the user
-                                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
-                                    // Construct the toast content
-                                    tcBuilder = new ToastContentBuilder()
-                                        .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
-                                        .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
-                                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                        .SetToastDuration(ToastDuration.Short);
-                                }
-                                else
-                                {
-                                    // The program was closed normally
-                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
-                                    // Tell the user that the Game has closed
-                                    // Construct the toast content
-                                    tcBuilder = new ToastContentBuilder()
-                                        .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
-                                        .AddText($"{shortcutToUse.GameName} game was exited.")
-                                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                        .SetToastDuration(ToastDuration.Short);
-                                }
+                                    if (cancelToken.IsCancellationRequested)
+                                    {
+                                        // The monitoring was stopped by the user
+                                        logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
+                                        // Construct the toast content
+                                        tcBuilder = new ToastContentBuilder()
+                                            .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
+                                            .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
+                                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                            .SetToastDuration(ToastDuration.Short);
+                                    }
+                                    else
+                                    {
+                                        // The program was closed normally
+                                        logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
+                                        // Tell the user that the Game has closed
+                                        // Construct the toast content
+                                        tcBuilder = new ToastContentBuilder()
+                                            .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                                            .AddText($"{shortcutToUse.GameName} game was exited.")
+                                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                            .SetToastDuration(ToastDuration.Short);
+                                    }
 
-                                toastContent = tcBuilder.Content;
-                                // Make sure to use Windows.Data.Xml.Dom
-                                doc = new Windows.Data.Xml.Dom.XmlDocument();
-                                doc.LoadXml(toastContent.GetContent());
-                                // And create the toast notification
-                                toast = new ToastNotification(doc);
-                                // Remove any other Notifications from us
-                                ToastNotificationManagerCompat.History.Clear();
-                                // And then show it
-                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-
+                                    toastContent = tcBuilder.Content;
+                                    // Make sure to use Windows.Data.Xml.Dom
+                                    doc = new Windows.Data.Xml.Dom.XmlDocument();
+                                    doc.LoadXml(toastContent.GetContent());
+                                    // And create the toast notification
+                                    toast = new ToastNotification(doc);
+                                    // Remove any other Notifications from us
+                                    ToastNotificationManagerCompat.History.Clear();
+                                    // And then show it
+                                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                }
+                                    
                             }                            
                         }
                         else
@@ -1657,9 +1692,11 @@ namespace DisplayMagician
                             logger.Debug($"ShortcutRepository/RunShortcut: Waiting for alternative game proocess {altGameProcessToMonitor} to exit.");
                             logger.Debug($"ShortcutRepository/RunShortcut: {processesToMonitor.Count} Alternative Game Executable '{altGameProcessToMonitor}' processes are still running");
 
-                            // Now we want to tell the user we're monitoring the alternative executables!
-                            // Construct the Windows toast content
-                            tcBuilder = new ToastContentBuilder()
+                            if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                            {
+                                // Now we want to tell the user we're monitoring the alternative executables!
+                                // Construct the Windows toast content
+                                tcBuilder = new ToastContentBuilder()
                                 .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
                                 .AddText($"Waiting for the {altGameProcessToMonitor} alternative game process to exit...")
                                 .AddButton(new ToastButton()
@@ -1668,16 +1705,17 @@ namespace DisplayMagician
                                     .SetBackgroundActivation())
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                                 .SetToastDuration(ToastDuration.Short);
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show this notification
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                toastContent = tcBuilder.Content;
+                                // Make sure to use Windows.Data.Xml.Dom
+                                doc = new Windows.Data.Xml.Dom.XmlDocument();
+                                doc.LoadXml(toastContent.GetContent());
+                                // And create the toast notification
+                                toast = new ToastNotification(doc);
+                                // Remove any other Notifications from us
+                                ToastNotificationManagerCompat.History.Clear();
+                                // And then show this notification
+                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            }                                
 
                             while (true)
                             {
@@ -1705,49 +1743,55 @@ namespace DisplayMagician
                                 Thread.Sleep(1000);
                             }
 
-                            if (cancelToken.IsCancellationRequested)
+                            if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                             {
-                                // The monitoring was stopped by the user
-                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the Alternative Game Executable {altGameProcessToMonitor} monitoring was stopped by the user.");
-                                // Construct the toast content
-                                tcBuilder = new ToastContentBuilder()
-                                    .AddText($"{altGameProcessToMonitor} monitoring cancelled", hintMaxLines: 1)
-                                    .AddText($"Monitoring of {altGameProcessToMonitor} alternative game executable was stopped by the user.")
-                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                    .SetToastDuration(ToastDuration.Short);
+                                if (cancelToken.IsCancellationRequested)
+                                {
+                                    // The monitoring was stopped by the user
+                                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the Alternative Game Executable {altGameProcessToMonitor} monitoring was stopped by the user.");
+                                    // Construct the toast content
+                                    tcBuilder = new ToastContentBuilder()
+                                        .AddText($"{altGameProcessToMonitor} monitoring cancelled", hintMaxLines: 1)
+                                        .AddText($"Monitoring of {altGameProcessToMonitor} alternative game executable was stopped by the user.")
+                                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                        .SetToastDuration(ToastDuration.Short);
+                                }
+                                else
+                                {
+                                    // The program was closed normally
+                                    logger.Debug($"ShortcutRepository/RunShortcut: Alternative Game Executable {altGameProcessToMonitor} has exited.");
+                                    // Tell the user that the Alt Game Executable has closed
+                                    // Construct the toast content
+                                    tcBuilder = new ToastContentBuilder()
+                                        .AddText($"{altGameProcessToMonitor} was closed", hintMaxLines: 1)
+                                        .AddText($"{altGameProcessToMonitor} alternative game executable was exited.")
+                                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                        .SetToastDuration(ToastDuration.Short);
+                                }
+
+                                toastContent = tcBuilder.Content;
+                                // Make sure to use Windows.Data.Xml.Dom
+                                doc = new Windows.Data.Xml.Dom.XmlDocument();
+                                doc.LoadXml(toastContent.GetContent());
+                                // And create the toast notification
+                                toast = new ToastNotification(doc);
+                                // Remove any other Notifications from us
+                                ToastNotificationManagerCompat.History.Clear();
+                                // And then show it
+                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
                             }
-                            else
-                            {
-                                // The program was closed normally
-                                logger.Debug($"ShortcutRepository/RunShortcut: Alternative Game Executable {altGameProcessToMonitor} has exited.");
-                                // Tell the user that the Alt Game Executable has closed
-                                // Construct the toast content
-                                tcBuilder = new ToastContentBuilder()
-                                    .AddText($"{altGameProcessToMonitor} was closed", hintMaxLines: 1)
-                                    .AddText($"{altGameProcessToMonitor} alternative game executable was exited.")
-                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                    .SetToastDuration(ToastDuration.Short);
-                            }
-                            
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show it
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                
                         }                        
                     }
                     else
                     {
                         // we are monitoring the game thats actually running (the most common scenario)
 
-                        // Now we want to tell the user we're running a game!
-                        // Construct the Windows toast content
-                        tcBuilder = new ToastContentBuilder()
+                        if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                        {
+                            // Now we want to tell the user we're running a game!
+                            // Construct the Windows toast content
+                            tcBuilder = new ToastContentBuilder()
                             .AddText($"Running {shortcutToUse.GameName}", hintMaxLines: 1)
                             .AddText($"Waiting for the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} to exit...")
                             .AddButton(new ToastButton()
@@ -1756,17 +1800,17 @@ namespace DisplayMagician
                                 .SetBackgroundActivation())
                             .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                             .SetToastDuration(ToastDuration.Short);
-                        toastContent = tcBuilder.Content;
-                        // Make sure to use Windows.Data.Xml.Dom
-                        doc = new Windows.Data.Xml.Dom.XmlDocument();
-                        doc.LoadXml(toastContent.GetContent());
-                        // And create the toast notification
-                        toast = new ToastNotification(doc);
-                        // Remove any other Notifications from us
-                        ToastNotificationManagerCompat.History.Clear();
-                        // And then show this notification
-                        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
-
+                            toastContent = tcBuilder.Content;
+                            // Make sure to use Windows.Data.Xml.Dom
+                            doc = new Windows.Data.Xml.Dom.XmlDocument();
+                            doc.LoadXml(toastContent.GetContent());
+                            // And create the toast notification
+                            toast = new ToastNotification(doc);
+                            // Remove any other Notifications from us
+                            ToastNotificationManagerCompat.History.Clear();
+                            // And then show this notification
+                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                        }                            
 
                         // Now we know the game library app is running then 
                         // we wait until the game has started running (*allows for updates to occur)
@@ -1808,23 +1852,27 @@ namespace DisplayMagician
                         {
                             logger.Error($"ShortcutRepository/RunShortcut: The Game {gameToRun.Name} didn't start for some reason (or the game uses a starter exe that launches the game itself)! so reverting changes back if needed...");
                             logger.Warn($"ShortcutRepository/RunShortcut: We were monitoring {gameToRun.ExePath}. You may need to manually add an alternative game executable to monitor - please run the game manually and check if another executable in {Path.GetDirectoryName(gameToRun.ExePath)} is run, and then monitor that instead.");
-                            // Now we want to tell the user we couldn't start the game!
-                            // Construct the Windows toast content
-                            tcBuilder = new ToastContentBuilder()
+
+                            if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
+                            {
+                                // Now we want to tell the user we couldn't start the game!
+                                // Construct the Windows toast content
+                                tcBuilder = new ToastContentBuilder()
                                 .AddText($"Could not detect {shortcutToUse.GameName} starting", hintMaxLines: 1)
                                 .AddText($"Could not detect {shortcutToUse.GameName} Game starting, so reverting changes back if needed. You may need to monitor a different game executable.")
                                 .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, false)
                                 .SetToastDuration(ToastDuration.Short);
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show this notification
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                toastContent = tcBuilder.Content;
+                                // Make sure to use Windows.Data.Xml.Dom
+                                doc = new Windows.Data.Xml.Dom.XmlDocument();
+                                doc.LoadXml(toastContent.GetContent());
+                                // And create the toast notification
+                                toast = new ToastNotification(doc);
+                                // Remove any other Notifications from us
+                                ToastNotificationManagerCompat.History.Clear();
+                                // And then show this notification
+                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            }                                
 
                         } 
                         else
@@ -1853,41 +1901,44 @@ namespace DisplayMagician
                                 Thread.Sleep(1000);
                             }
 
-                            if (cancelToken.IsCancellationRequested)
+                            if (Program.AppProgramSettings.ShowStatusMessageInActionCenter)
                             {
-                                // The monitoring was stopped by the user
-                                logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
-                                // Construct the toast content
-                                tcBuilder = new ToastContentBuilder()
-                                    .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
-                                    .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
-                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                    .SetToastDuration(ToastDuration.Short);
-                            }
-                            else
-                            {
-                                // The program was closed normally
-                                logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
-                                // Tell the user that the Game has closed
-                                // Construct the toast content
-                                tcBuilder = new ToastContentBuilder()
-                                    .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
-                                    .AddText($"{shortcutToUse.GameName} game was exited.")
-                                    .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                                    .SetToastDuration(ToastDuration.Short);
-                            }
+                                if (cancelToken.IsCancellationRequested)
+                                {
+                                    // The monitoring was stopped by the user
+                                    logger.Debug($"ShortcutRepository/RunShortcut: Creating a Windows Toast to notify the user that the {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} monitoring was stopped by the user.");
+                                    // Construct the toast content
+                                    tcBuilder = new ToastContentBuilder()
+                                        .AddText($"{gameToRun.Name} Game monitoring cancelled", hintMaxLines: 1)
+                                        .AddText($"Monitoring of {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} was stopped by the user.")
+                                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                        .SetToastDuration(ToastDuration.Short);
+                                }
+                                else
+                                {
+                                    // The program was closed normally
+                                    logger.Debug($"ShortcutRepository/RunShortcut: {gameLibraryToUse.GameLibraryName} Game {gameToRun.Name} has exited.");
+                                    // Tell the user that the Game has closed
+                                    // Construct the toast content
+                                    tcBuilder = new ToastContentBuilder()
+                                        .AddText($"{shortcutToUse.GameName} was closed", hintMaxLines: 1)
+                                        .AddText($"{shortcutToUse.GameName} game was exited.")
+                                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
+                                        .SetToastDuration(ToastDuration.Short);
+                                }
 
-                            
-                            toastContent = tcBuilder.Content;
-                            // Make sure to use Windows.Data.Xml.Dom
-                            doc = new Windows.Data.Xml.Dom.XmlDocument();
-                            doc.LoadXml(toastContent.GetContent());
-                            // And create the toast notification
-                            toast = new ToastNotification(doc);
-                            // Remove any other Notifications from us
-                            ToastNotificationManagerCompat.History.Clear();
-                            // And then show it
-                            ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                                toastContent = tcBuilder.Content;
+                                // Make sure to use Windows.Data.Xml.Dom
+                                doc = new Windows.Data.Xml.Dom.XmlDocument();
+                                doc.LoadXml(toastContent.GetContent());
+                                // And create the toast notification
+                                toast = new ToastNotification(doc);
+                                // Remove any other Notifications from us
+                                ToastNotificationManagerCompat.History.Clear();
+                                // And then show it
+                                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                            }
+                                
                         }                                                
 
                     }
@@ -1899,12 +1950,12 @@ namespace DisplayMagician
             }
 
             // Only replace the notification if we're minimised
-            if (Program.AppProgramSettings.MinimiseOnStart)
+            if (Program.AppProgramSettings.MinimiseOnStart && Program.AppProgramSettings.ShowStatusMessageInActionCenter)
             {
                 logger.Debug($"ShortcutRepository/RunShortcut: We're minimised, so we also need to update the Windows notification content");
                 // Remind the user that DisplayMagician is running the in background
                 // Construct the toast content
-                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                tcBuilder = new ToastContentBuilder()
                     .AddText("DisplayMagician is minimised...", hintMaxLines: 1)
                     .AddText("DisplayMagician will wait in the background until you need it.")
                     .AddButton(new ToastButton()
@@ -1917,13 +1968,13 @@ namespace DisplayMagician
                         .SetBackgroundActivation())
                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                     .SetToastDuration(ToastDuration.Short);
-                ToastContent toastContent = tcBuilder.Content;
+                toastContent = tcBuilder.Content;
                 // Make sure to use Windows.Data.Xml.Dom
-                var doc = new Windows.Data.Xml.Dom.XmlDocument();
+                doc = new Windows.Data.Xml.Dom.XmlDocument();
                 doc.LoadXml(toastContent.GetContent());
 
                 // And create the toast notification
-                var toast = new ToastNotification(doc)
+                toast = new ToastNotification(doc)
                 {
                     SuppressPopup = true
                 };

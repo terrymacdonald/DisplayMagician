@@ -15,14 +15,16 @@ namespace DisplayMagician
         // Common items to the class
         private static bool _programSettingsLoaded = false;
         // Other constants that are useful
-        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.0.json");
+        public static string programSettingsStorageJsonFileName = Path.Combine(Program.AppDataPath, $"Settings_2.4.json");
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
         #region Instance Variables
-        private bool _startOnBootUp = false;
-        private bool _minimiseOnStart = false;
+        private bool _startOnBootUp = true;
+        private bool _minimiseOnStart = true;
         private bool _showSplashScreen = true;
+        private bool _showMinimiseMessageInActionCenter = true;
+        private bool _showStatusMessageInActionCenter = true;
         private bool _upgradeToPrereleases = false;
         private bool _installedDesktopContextMenu = true;
         private int _lastMessageIdRead = 0;
@@ -60,6 +62,40 @@ namespace DisplayMagician
             set
             {
                 _showSplashScreen = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
+        }
+
+        public bool ShowMinimiseMessageInActionCenter
+        {
+            get
+            {
+                return _showMinimiseMessageInActionCenter;
+            }
+            set
+            {
+                _showMinimiseMessageInActionCenter = value;
+
+                // Because a value has changed, we need to save the setting 
+                // to remember it for later.
+                if (_programSettingsLoaded)
+                    SaveSettings();
+            }
+        }
+
+        public bool ShowStatusMessageInActionCenter
+        {
+            get
+            {
+                return _showStatusMessageInActionCenter;
+            }
+            set
+            {
+                _showStatusMessageInActionCenter = value;
 
                 // Because a value has changed, we need to save the setting 
                 // to remember it for later.

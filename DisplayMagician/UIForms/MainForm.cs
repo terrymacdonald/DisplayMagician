@@ -139,9 +139,11 @@ namespace DisplayMagician.UIForms
                 // Change the exit_button text to say 'Close'
                 btn_exit.Text = "&Close";
 
-                // Remind the user that DisplayMagician is running the in background
-                // Construct the toast content
-                ToastContentBuilder tcBuilder = new ToastContentBuilder()
+                if (Program.AppProgramSettings.ShowMinimiseMessageInActionCenter)
+                {
+                    // Remind the user that DisplayMagician is running the in background
+                    // Construct the toast content
+                    ToastContentBuilder tcBuilder = new ToastContentBuilder()
                     .AddText("DisplayMagician is minimised...", hintMaxLines: 1)
                     .AddText("DisplayMagician will wait in the background until you need it.")
                     .AddButton(new ToastButton()
@@ -154,19 +156,20 @@ namespace DisplayMagician.UIForms
                         .SetBackgroundActivation())
                     .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
                     .SetToastDuration(ToastDuration.Short);
-                ToastContent toastContent = tcBuilder.Content;
-                // Make sure to use Windows.Data.Xml.Dom
-                var doc = new Windows.Data.Xml.Dom.XmlDocument();
-                doc.LoadXml(toastContent.GetContent());
+                    ToastContent toastContent = tcBuilder.Content;
+                    // Make sure to use Windows.Data.Xml.Dom
+                    var doc = new Windows.Data.Xml.Dom.XmlDocument();
+                    doc.LoadXml(toastContent.GetContent());
 
-                // And create the toast notification
-                var toast = new ToastNotification(doc);
+                    // And create the toast notification
+                    var toast = new ToastNotification(doc);
 
-                // Remove any other Notifications from us
-                ToastNotificationManagerCompat.History.Clear();
+                    // Remove any other Notifications from us
+                    ToastNotificationManagerCompat.History.Clear();
 
-                // And then show it
-                ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                    // And then show it
+                    ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                }                    
 
             }
             else
@@ -245,7 +248,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_exit_Click(object sender, EventArgs e)
         {
-            if (cb_minimise_notification_area.Checked)
+            if (cb_minimise_notification_area.Checked && Program.AppProgramSettings.ShowMinimiseMessageInActionCenter)
             {
                 // Tell the user that 
                 // Construct the toast content
