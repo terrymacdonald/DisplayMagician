@@ -112,6 +112,14 @@ namespace DisplayMagician.UIForms
             int currentIlvIndex = ilv_saved_profiles.SelectedItems[0].Index;
             ilv_saved_profiles.Items.RemoveAt(currentIlvIndex);
 
+            // Remove the hotkey if it is enabled for this profile
+            if (_selectedProfile.Hotkey != Keys.None)
+            {
+                // Remove the Hotkey if it needs to be removed
+                HotkeyManager.Current.Remove(_selectedProfile.UUID);
+            }
+
+
             // Remove the Profile
             ProfileRepository.RemoveProfile(_selectedProfile);
             _selectedProfile = null;

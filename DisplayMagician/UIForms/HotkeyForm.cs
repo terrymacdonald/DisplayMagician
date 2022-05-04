@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-//using WK.Libraries.HotkeyListenerNS;
 using NHotkey.WindowsForms;
 
 namespace DisplayMagician.UIForms
@@ -287,5 +286,6 @@ namespace DisplayMagician.UIForms
             txt_hotkey.Focus();
             txt_hotkey.DeselectAll();
         }
+
     }
 }
