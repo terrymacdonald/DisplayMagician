@@ -97,7 +97,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DesktopNotificationActivator.cs" />
+    <Compile Include="GameLibraries\XboxGame.cs" />
     <Compile Include="GameLibraries\GOGGame.cs" />
+    <Compile Include="GameLibraries\XboxLibrary.cs" />
     <Compile Include="GameLibraries\GOGLibrary.cs" />
     <Compile Include="GameLibraries\Game.cs" />
     <Compile Include="GameLibraries\GameLibrary.cs" />
@@ -121,6 +123,7 @@
     <Compile Include="IconFromFile.cs" />
     <Compile Include="IconUtils.cs" />
     <Compile Include="ImageUtils.cs" />
+    <Compile Include="InstalledProgram.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Processes\ImpersonationHelper.cs" />
     <Compile Include="MessageItem.cs" />
@@ -142,6 +145,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="MsResources.cs" />
     <Compile Include="ShortcutItem.cs" />
     <Compile Include="ShortcutManager.cs" />
     <Compile Include="ShortcutRepository.cs" />
@@ -211,6 +215,7 @@
     <Compile Include="UIForms\StartProgramControl.Designer.cs">
       <DependentUpon>StartProgramControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="UninstallProgram.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Validators.cs" />
     <Compile Include="Resources\Language.Designer.cs">

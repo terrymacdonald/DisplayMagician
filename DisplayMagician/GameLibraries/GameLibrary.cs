@@ -235,6 +235,29 @@ namespace DisplayMagician.GameLibraries
 
             });
 
+            // Now lets prepare loading all the Xbox games we have installed
+            Action loadXboxGamesAction = new Action(() =>
+            {
+                // Check if GOG is installed
+                GameLibrary xboxLibrary = XboxLibrary.GetLibrary();
+                if (xboxLibrary.IsGameLibraryInstalled)
+                {
+                    // Load Origin library games
+                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Xbox Games");
+                    if (!xboxLibrary.LoadInstalledGames())
+                    {
+                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Xbox Games!");
+                    }
+                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Xbox Games (found {xboxLibrary.InstalledGameCount})");
+                }
+                else
+                {
+                    logger.Info($"Program/LoadGamesInBackground: Xbox not installed.");
+                    Console.WriteLine("Xbox not installed.");
+                }
+
+            });
+
             // Store all the actions in a array so we can wait on them later
             List<Action> loadGamesActions = new List<Action>();
             loadGamesActions.Add(loadSteamGamesAction);
@@ -242,6 +265,7 @@ namespace DisplayMagician.GameLibraries
             loadGamesActions.Add(loadOriginGamesAction);
             loadGamesActions.Add(loadEpicGamesAction);
             loadGamesActions.Add(loadGogGamesAction);
+            loadGamesActions.Add(loadXboxGamesAction);
 
             try
             {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Text.RegularExpressions;
 
 namespace DisplayMagician.GameLibraries
 {
@@ -46,7 +47,8 @@ namespace DisplayMagician.GameLibraries
         {
             return true;
         }
-        
+
+       
         #endregion
     }
 }
