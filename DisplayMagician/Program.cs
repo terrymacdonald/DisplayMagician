@@ -1134,7 +1134,7 @@ namespace DisplayMagician {
                 //taskToRun.RunSynchronously();
                 while (!taskToRun.IsCompleted)
                 {
-                    Task.Delay(1000);
+                    Thread.Sleep(1000);
                     Application.DoEvents();
                     if (Program.AppCancellationTokenSource.Token.IsCancellationRequested)
                     {
