@@ -35,9 +35,16 @@ namespace DisplayMagician.UIForms
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
             lbl_version.Text = string.Format(lbl_version.Text, Assembly.GetExecutingAssembly().GetName().Version);
+
+            // Refresh all possible profiles and shortcuts
+            ProfileRepository.IsPossibleRefresh();
+            ShortcutRepository.IsValidRefresh();
+
+            // Update the system tray menus
             notifyIcon.Visible = true;
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             RefreshNotifyIconMenus();
+
 
             try
             {
@@ -201,7 +208,7 @@ namespace DisplayMagician.UIForms
                 notifyIcon.Text = $"DisplayMagician ({shortProfileName })";
                 Application.DoEvents();
             }
-            
+
             // If we've been handed a Form of some kind, then open it straight away
             if (formToOpen is DisplayProfileForm)
             {
@@ -330,10 +337,7 @@ namespace DisplayMagician.UIForms
         }
 
         private void MainForm_Load(object sender, EventArgs e)
-        {            
-            // Update the Notify Icon menu
-            RefreshNotifyIconMenus();
-
+        {                        
             EnableShortcutButtonIfProfiles();
 
             logger.Trace($"MainForm/MainForm_Load: Main Window has loaded.");
