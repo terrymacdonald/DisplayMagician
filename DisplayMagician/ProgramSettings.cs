@@ -45,11 +45,6 @@ namespace DisplayMagician
             set
             {
                 _startOnBootUp = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -62,11 +57,6 @@ namespace DisplayMagician
             set
             {
                 _showSplashScreen = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -79,11 +69,6 @@ namespace DisplayMagician
             set
             {
                 _showMinimiseMessageInActionCenter = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -95,12 +80,7 @@ namespace DisplayMagician
             }
             set
             {
-                _showStatusMessageInActionCenter = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
+                _showStatusMessageInActionCenter = value;               
             }
         }
 
@@ -113,11 +93,6 @@ namespace DisplayMagician
             set
             {
                 _upgradeToPrereleases = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -129,11 +104,6 @@ namespace DisplayMagician
             set 
             {
                 _minimiseOnStart = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             } 
         }
 
@@ -146,11 +116,6 @@ namespace DisplayMagician
             set
             {
                 _installedDesktopContextMenu = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -163,11 +128,6 @@ namespace DisplayMagician
             set
             {
                 _lastMessageIdRead = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -180,11 +140,6 @@ namespace DisplayMagician
             set
             {
                 _messagesToMonitor = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -222,11 +177,6 @@ namespace DisplayMagician
                         break;
 
                 }
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                    SaveSettings();
             }
         }
 
@@ -239,13 +189,6 @@ namespace DisplayMagician
             set
             {
                 _hotkeyMainWindow = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                {
-                    SaveSettings();
-                }
             }
         }
 
@@ -258,13 +201,6 @@ namespace DisplayMagician
             set
             {
                 _hotkeyDisplayProfileWindow = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                {
-                    SaveSettings();
-                }
             }
         }
 
@@ -277,13 +213,6 @@ namespace DisplayMagician
             set
             {
                 _hotkeyShortcutLibraryWindow = value;
-
-                // Because a value has changed, we need to save the setting 
-                // to remember it for later.
-                if (_programSettingsLoaded)
-                {
-                    SaveSettings();
-                }
             }
         }
 
@@ -297,6 +226,7 @@ namespace DisplayMagician
             // loglevel settings so we know what level to configure the logger to write!
             // This means we have to only use console.write in this function....
             ProgramSettings programSettings = null;
+            _programSettingsLoaded = false;
 
             if (File.Exists(programSettingsStorageJsonFileName))
             {

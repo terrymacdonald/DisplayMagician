@@ -178,19 +178,27 @@ namespace DisplayMagician {
             // NOTE: This had to be moved up from the later state
             // Copy the old Settings file to the new v2 name
             bool upgradedSettingsFile = false;
-            string oldSettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
-            string newSettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
+            string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
+            string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
+            string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             try
             {
-                if (File.Exists(oldSettingsFile) && !File.Exists(newSettingsFile))
+                if (File.Exists(oldv2SettingsFile) && !File.Exists(targetSettingsFile))
                 {
-                    File.Copy(oldSettingsFile, newSettingsFile, true);
+                    File.Copy(oldv2SettingsFile, targetSettingsFile, true);
+                    File.Move(oldv2SettingsFile, $"{oldv2SettingsFile}.old");
+                    upgradedSettingsFile = true;
+                }
+                else if (File.Exists(oldv1SettingsFile) && !File.Exists(targetSettingsFile))
+                {
+                    File.Copy(oldv1SettingsFile, targetSettingsFile, true);
+                    File.Move(oldv1SettingsFile, $"{oldv1SettingsFile}.old");
                     upgradedSettingsFile = true;
                 }
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Program/Main: Exception upgrading v1 settings file {oldSettingsFile} to v2 settings file {ProgramSettings.programSettingsStorageJsonFileName}.");
+                logger.Error(ex, $"Program/Main: Exception upgrading old settings file to v2.4 settings file {ProgramSettings.programSettingsStorageJsonFileName}.");
             }
 
             // Load the program settings
@@ -339,11 +347,14 @@ namespace DisplayMagician {
             string dp10 = Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json");
 
             // This is the latest displayprofile config file
-            string targetdp = dp23;
+            string targetdp = ProfileRepository.ProfileStorageFileName;
 
+            // Now always try to get the oldest one
             if (File.Exists(dp22) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
                 logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.3, so informing the user.");
+
+                File.Move(dp22, $"{dp22}.old");
 
                 // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
@@ -357,6 +368,8 @@ namespace DisplayMagician {
             {
                 logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.3, so informing the user.");
 
+                File.Move(dp21, $"{dp21}.old");
+
                 // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
                 myMessageWindow.MessageMode = "rtf";
@@ -368,6 +381,8 @@ namespace DisplayMagician {
             else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
                 logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.3, so informing the user.");
+
+                File.Move(dp20, $"{dp20}.old");
 
                 // Warn the user about the fact we need them to recreate their Display Profiles again!
                 StartMessageForm myMessageWindow = new StartMessageForm();
@@ -381,30 +396,16 @@ namespace DisplayMagician {
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
             // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.2.json doesn't
-            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
+            else if (File.Exists(dp10) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
                 logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.2, so performing some upgrade steps.");
                 // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
                 if (upgradedSettingsFile)
                 {
-                    logger.Info($"Program/Main: Upgraded v1.0 settings file {oldSettingsFile} to v2.2 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
-                }                
-
-                // Copy the old Game Shortcuts file to the new v2 name
-                string oldShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
-                string newShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
-                try
-                {                    
-                    if (File.Exists(oldShortcutsFile) && !File.Exists(newShortcutsFile))
-                    {
-                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldShortcutsFile} to v2 shortcut file {newShortcutsFile }.");
-                        File.Copy(oldShortcutsFile, newShortcutsFile);
-                    }
-                }    
-                catch(Exception ex)
-                {
-                    logger.Error(ex, $"Program/Main: Exception upgrading v1.0 shortcut file {oldShortcutsFile} to v2.2 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
+                    logger.Info($"Program/Main: Upgraded old settings file to settings file {targetSettingsFile} earlier in loading process (before logging service was available).");
                 }
+
+                File.Move(dp10, $"{dp10}.old");
 
                 // Warn the user about the fact we need a new DisplayProfiles_2.0.json
                 StartMessageForm myMessageWindow = new StartMessageForm();
@@ -414,7 +415,32 @@ namespace DisplayMagician {
                 myMessageWindow.ButtonText = "&Close";
                 myMessageWindow.ShowDialog();
             }
-            
+
+            // Also upgrade the Shortcuts file if it's needed
+            string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
+            string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
+            string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
+            try
+            {
+                if (File.Exists(oldv2ShortcutsFile) && !File.Exists(targetShortcutsFile))
+                {
+                    logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv2ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                    File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
+                    File.Move(oldv2ShortcutsFile, $"{oldv2ShortcutsFile}.old");
+                }
+                else if (File.Exists(oldv1ShortcutsFile) && !File.Exists(targetShortcutsFile))
+                {
+                    logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv1ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                    File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
+                    File.Move(oldv1ShortcutsFile, $"{oldv1ShortcutsFile}.old");
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to v2.2 shortcut file {targetShortcutsFile}.");
+            }
+
             logger.Debug($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {
@@ -511,7 +537,7 @@ namespace DisplayMagician {
                     GameLibrary.LoadGamesInBackground();
 
                     // Close the splash screen
-                    if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                    if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                         AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                     ERRORLEVEL errLevel = RunShortcut(argumentShortcut.Value);
@@ -587,7 +613,7 @@ namespace DisplayMagician {
                     AppMainForm.Load += MainForm_LoadCompleted;
 
                     // Close the splash screen
-                    if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                    if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                         AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                     try
@@ -855,7 +881,7 @@ namespace DisplayMagician {
             logger.Debug($"Beginning to shutdown");
 
             // Close the splash screen if it's still open (happens with some errors)
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             logger.Debug($"Program/Main: Clearing all previous windows toast notifications as they aren't needed any longer");
@@ -881,7 +907,7 @@ namespace DisplayMagician {
             try
             {
                 // Close the splash screen
-                if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                     AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                 // Run the program with directly showing CreateProfile form
@@ -968,13 +994,13 @@ namespace DisplayMagician {
 
         private static void MainForm_LoadCompleted(object sender, EventArgs e)
         {
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
         }
 
         private static void MainForm_LoadCompletedAndOpenApp(object sender, EventArgs e)
         {
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
             AppMainForm.TopMost = true;
             AppMainForm.Activate();
@@ -990,7 +1016,7 @@ namespace DisplayMagician {
             ShortcutItem shortcutToRun = null;
 
             // Close the splash screen
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             // Match the ShortcutName to the actual shortcut listed in the shortcut library
@@ -1022,7 +1048,7 @@ namespace DisplayMagician {
             logger.Trace($"Program/CurrentProfile: Finding the current profile in use");
 
             // Close the splash screen
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             // Lookup the profile
@@ -1057,7 +1083,7 @@ namespace DisplayMagician {
             ERRORLEVEL errLevel = ERRORLEVEL.OK;
 
             // Close the splash screen
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
 
@@ -1291,16 +1317,14 @@ namespace DisplayMagician {
                 logger.Error(ex, $"Program/ShowMessages: Exception while trying to load the messages index from {indexUrl}.");
                 return;
             }
-
-            ProgramSettings programSettings = ProgramSettings.LoadSettings();
-
+           
             foreach (MessageItem message in messageIndex)
             {
                 // Skip if we've already shown it
-                if (message.Id <= programSettings.LastMessageIdRead)
+                if (message.Id <= AppProgramSettings.LastMessageIdRead)
                 {
                     // Unless it's one coming up that we're monitoring
-                    if (!programSettings.MessagesToMonitor.Contains(message.Id))
+                    if (!AppProgramSettings.MessagesToMonitor.Contains(message.Id))
                     {
                         continue;
                     }
@@ -1354,10 +1378,10 @@ namespace DisplayMagician {
                     if (!(DateTime.Now >= startTime))
                     {
                         logger.Debug($"Program/ShowMessages: Message start date for \"{message.HeadingText}\" (#{message.Id}) not yet reached so not ready to show message.");
-                        if (!programSettings.MessagesToMonitor.Contains(message.Id))
+                        if (!AppProgramSettings.MessagesToMonitor.Contains(message.Id))
                         {
-                            programSettings.MessagesToMonitor.Add(message.Id);
-                            programSettings.SaveSettings();
+                            AppProgramSettings.MessagesToMonitor.Add(message.Id);
+                            AppProgramSettings.SaveSettings();
                         }
                         continue;
                     }
@@ -1386,16 +1410,16 @@ namespace DisplayMagician {
                 myMessageWindow.ButtonText = message.ButtonText;
                 myMessageWindow.ShowDialog();
                 // If this the list of messages is still trying to monitor this message, then remove it if we've shown it to the user.
-                if (programSettings.MessagesToMonitor.Contains(message.Id))
+                if (AppProgramSettings.MessagesToMonitor.Contains(message.Id))
                 {
-                    programSettings.MessagesToMonitor.Remove(message.Id);
-                    programSettings.SaveSettings();
+                    AppProgramSettings.MessagesToMonitor.Remove(message.Id);
+                    AppProgramSettings.SaveSettings();
                 }
 
                 // Update the latest message id to keep track of where we're up to
-                if (message.Id > programSettings.LastMessageIdRead)
+                if (message.Id > AppProgramSettings.LastMessageIdRead)
                 {
-                    programSettings.LastMessageIdRead = message.Id;
+                    AppProgramSettings.LastMessageIdRead = message.Id;
                 }
                 
             }

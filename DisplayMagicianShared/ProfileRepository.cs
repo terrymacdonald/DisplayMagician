@@ -704,6 +704,8 @@ namespace DisplayMagicianShared
         {
             SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFileName} into the Profile Repository");
 
+            _profilesLoaded = false;
+
             if (File.Exists(_profileStorageJsonFileName))
             {
                 string json = "";

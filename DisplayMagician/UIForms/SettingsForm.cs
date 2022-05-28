@@ -355,6 +355,9 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.UpgradeToPreReleases = false;
                 logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from upgrading to pre-release versions of software");
             }
+
+            // Save ProgramSettings
+            Program.AppProgramSettings.SaveSettings();
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -595,18 +598,34 @@ namespace DisplayMagician.UIForms
                                                                                               
                         // Get the list of files we want to look for to zip (they may or may not exist)
                         List<string> listOfFiles = new List<string> {
+                            // Try to copy the logs if they exist                           
                             Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician1.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician2.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician3.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician4.log"),
+                            // Also try to copy the new configs if they exist
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_1.0.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.4.json")
+                            Path.Combine(Program.AppDataPath,"Settings_2.4.json"),
+                            // Also try to copy the old configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_1.0.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.0.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.4.json.old")
                         };
                         foreach (string filename in listOfFiles)
                         {

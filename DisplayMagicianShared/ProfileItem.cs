@@ -567,7 +567,7 @@ namespace DisplayMagicianShared
 
 
                     WshShell shell = new WshShell();
-                    IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
+                    IWshShortcut shortcut = shell.CreateShortcut(shortcutFileName) as IWshShortcut;
 
                     shortcut.TargetPath = Application.ExecutablePath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
