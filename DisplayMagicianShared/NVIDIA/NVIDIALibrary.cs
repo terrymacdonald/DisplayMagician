@@ -347,6 +347,7 @@ namespace DisplayMagicianShared.NVIDIA
             try
             {
                 _activeDisplayConfig = GetActiveConfig();
+                _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
             }
             catch (Exception ex)
             {
