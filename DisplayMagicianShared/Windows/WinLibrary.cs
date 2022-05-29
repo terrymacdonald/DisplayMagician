@@ -46,13 +46,17 @@ namespace DisplayMagicianShared.Windows
         public UInt32 SourceId;
         public UInt32 TargetId;
         public string DevicePath;
+        //The value we want to set. The value should be relative to the recommended DPI scaling value of source.
+        // eg. if scaleRel == 1, and recommended value is 175% => we are trying to set 200% scaling for the source
+        public UInt32 SourceDpiScalingRel;
 
         public override bool Equals(object obj) => obj is DISPLAY_SOURCE other && this.Equals(other);
         public bool Equals(DISPLAY_SOURCE other)
         => true;
         public override int GetHashCode()
         {
-            return 300;
+            //return 300;
+            return (AdapterId, SourceId, TargetId, DevicePath, SourceDpiScalingRel).GetHashCode();
         }
 
         public static bool operator ==(DISPLAY_SOURCE lhs, DISPLAY_SOURCE rhs) => lhs.Equals(rhs);
@@ -91,12 +95,14 @@ namespace DisplayMagicianShared.Windows
         // NOTE: I have disabled the TaskBar specific matching for now due to errors I cannot fix
         // WinLibrary will still track the location of the taskbars, but won't actually set them as the setting of the taskbars doesnt work at the moment.
         /*&&
-        TaskBarLayout.SequenceEqual(other.TaskBarLayout) &&
+        TaskBarLayout.Values.SequenceEqual(other.TaskBarLayout.Values) &&
         TaskBarSettings.Equals(other.TaskBarSettings);*/
 
         public override int GetHashCode()
         {
-            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarSettings).GetHashCode();
+            // Temporarily disabled this to make sure that the hashcode generation matched the equality tests.
+            //return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers, TaskBarLayout, TaskBarSettings).GetHashCode();
+            return (DisplayConfigPaths, DisplayConfigModes, DisplayHDRStates, IsCloned, DisplayIdentifiers).GetHashCode();
         }
         public static bool operator ==(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -285,7 +291,7 @@ namespace DisplayMagicianShared.Windows
             {
                 SharedLogger.logger.Error(ex, "WinLibrary/PatchAdapterIDs: Exception while going through the display config paths to update the adapter id");
             }
-            
+
 
             try
             {
@@ -315,7 +321,7 @@ namespace DisplayMagicianShared.Windows
             {
                 SharedLogger.logger.Error(ex, "WinLibrary/PatchAdapterIDs: Exception while going through the display config modes to update the adapter id");
             }
-            
+
 
             try
             {
@@ -350,7 +356,7 @@ namespace DisplayMagicianShared.Windows
                             hdrInfo.SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                         }
                     }
-                }    
+                }
                 else
                 {
                     SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: There are no Display HDR states to update. Skipping.");
@@ -360,7 +366,7 @@ namespace DisplayMagicianShared.Windows
             {
                 SharedLogger.logger.Error(ex, "WinLibrary/PatchAdapterIDs: Exception while going through the display config HDR info to update the adapter id");
             }
-            
+
 
             try
             {
@@ -398,7 +404,7 @@ namespace DisplayMagicianShared.Windows
             {
                 SharedLogger.logger.Error(ex, "WinLibrary/PatchAdapterIDs: Exception while going through the display sources list info to update the adapter id");
             }
-            
+
         }
 
         public bool UpdateActiveConfig()
@@ -525,6 +531,26 @@ namespace DisplayMagicianShared.Windows
 
                 // Track if this display is a cloned path
                 bool isClonedPath = false;
+
+                // Get the Windows Scaling DPI per display
+                UInt32 sourceDpiScalingRel = 0;
+                DISPLAYCONFIG_SOURCE_DPI_SCALE_GET displayScalingInfo = new DISPLAYCONFIG_SOURCE_DPI_SCALE_GET();
+                displayScalingInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_DPI_SCALE;
+                displayScalingInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SOURCE_DPI_SCALE_GET>(); ;
+                displayScalingInfo.Header.AdapterId = paths[i].SourceInfo.AdapterId;
+                displayScalingInfo.Header.Id = paths[i].SourceInfo.Id;
+                err = CCDImport.DisplayConfigGetDeviceInfo(ref displayScalingInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found DPI value for source {paths[i].SourceInfo.Id} is {CCDImport.DPI_VALUES[displayScalingInfo.CurrrentScaleRel]}%.");
+                    sourceDpiScalingRel = displayScalingInfo.CurrrentScaleRel;
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/GetWindowsDisplayConfig: WARNING - Unabled to get advanced color settings for display {paths[i].TargetInfo.Id}.");
+                }
+
+
                 // get display source name
                 var sourceInfo = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
                 sourceInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
@@ -534,6 +560,7 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref sourceInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
+
                     //gotSourceDeviceName = true;
                     // Store it for later
                     if (windowsDisplayConfig.DisplaySources.ContainsKey(sourceInfo.ViewGdiDeviceName))
@@ -543,6 +570,7 @@ namespace DisplayMagicianShared.Windows
                         ds.AdapterId = paths[i].SourceInfo.AdapterId;
                         ds.SourceId = paths[i].SourceInfo.Id;
                         ds.TargetId = paths[i].TargetInfo.Id;
+                        ds.SourceDpiScalingRel = sourceDpiScalingRel;
                         windowsDisplayConfig.DisplaySources[sourceInfo.ViewGdiDeviceName].Add(ds);
                         isClonedPath = true;
                         isClonedProfile = true;
@@ -556,6 +584,7 @@ namespace DisplayMagicianShared.Windows
                         ds.AdapterId = paths[i].SourceInfo.AdapterId;
                         ds.SourceId = paths[i].SourceInfo.Id;
                         ds.TargetId = paths[i].TargetInfo.Id;
+                        ds.SourceDpiScalingRel = sourceDpiScalingRel;
                         sources.Add(ds);
                         windowsDisplayConfig.DisplaySources.Add(sourceInfo.ViewGdiDeviceName, sources);
                     }
@@ -606,6 +635,7 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: We already have the adapter name {windowsDisplayConfig.DisplayAdapters[paths[i].TargetInfo.AdapterId.Value]} for adapter {paths[i].TargetInfo.AdapterId.Value} so skipping storing it.");
                     //gotAdapterName = true;
                 }
+
 
                 // Get advanced color info
                 SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get advanced color info for display {paths[i].TargetInfo.Id}.");
@@ -1388,8 +1418,31 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
 
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting 0.1 second to let the display change take place before adjusting the Windows CCD HDR settings");
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting 0.1 second to let the display change take place before adjusting the Windows CCD Source DPI scaling settings");
             System.Threading.Thread.Sleep(100);
+
+            SharedLogger.logger.Trace($"WinLibrary/SetWindowsDisplayConfig: Attempting to set Windows DPI Scaling setting for display sources.");
+            foreach (var displaySourceEntry in displayConfig.DisplaySources)
+            {
+                // We only need to set the source on the first display source
+                // Set the Windows Scaling DPI per source
+                DISPLAYCONFIG_SOURCE_DPI_SCALE_SET displayScalingInfo = new DISPLAYCONFIG_SOURCE_DPI_SCALE_SET();
+                displayScalingInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_SET_DPI_SCALE;
+                displayScalingInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SOURCE_DPI_SCALE_SET>(); ;
+                displayScalingInfo.Header.AdapterId = displaySourceEntry.Value[0].AdapterId;
+                displayScalingInfo.Header.Id = displaySourceEntry.Value[0].SourceId;
+                displayScalingInfo.ScaleRel = displaySourceEntry.Value[0].SourceDpiScalingRel;
+                err = CCDImport.DisplayConfigSetDeviceInfo(ref displayScalingInfo);
+                if (err == WIN32STATUS.ERROR_SUCCESS)
+                {
+                    SharedLogger.logger.Trace($"WinLibrary/SetWindowsDisplayConfig: Setting DPI value for source {displaySourceEntry.Value[0].SourceId} to {CCDImport.DPI_VALUES[displayScalingInfo.ScaleRel]}%.");
+                }
+                else
+                {
+                    SharedLogger.logger.Warn($"WinLibrary/SetWindowsDisplayConfig: WARNING - Unable to set DPI value for source {displaySourceEntry.Value[0].SourceId} to {CCDImport.DPI_VALUES[displayScalingInfo.ScaleRel]}%.");
+                }
+            }
+
 
             // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting
             // This code will only turn on the HDR setting.
