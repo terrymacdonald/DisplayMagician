@@ -167,6 +167,7 @@ namespace DisplayMagicianShared.AMD
         private IntPtr _adlContextHandle = IntPtr.Zero;
         private AMD_DISPLAY_CONFIG _activeDisplayConfig;
         public List<ADL_DISPLAY_CONNECTION_TYPE> SkippedColorConnectionTypes;
+        public List<string> _allConnectedDisplayIdentifiers;
 
         static AMDLibrary() { }
         public AMDLibrary()
@@ -205,6 +206,7 @@ namespace DisplayMagicianShared.AMD
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: AMD ADL2 library was initialised successfully");
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Running UpdateActiveConfig to ensure there is a config to use later");
                         _activeDisplayConfig = GetActiveConfig();
+                        _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
                     }
                     else
                     {
@@ -1604,11 +1606,8 @@ namespace DisplayMagicianShared.AMD
             // We want to check the AMD profile can be used now
             SharedLogger.logger.Trace($"AMDLibrary/IsPossibleConfig: Testing whether the AMD display configuration is possible to be used now");
 
-            // Check the currently available displays (include the ones not active)
-            List<string> currentAllIds = GetAllConnectedDisplayIdentifiers();
-
             // Check that we have all the displayConfig DisplayIdentifiers we need available now
-            if (displayConfig.DisplayIdentifiers.All(value => currentAllIds.Contains(value)))
+            if (displayConfig.DisplayIdentifiers.All(value => _allConnectedDisplayIdentifiers.Contains(value)))
             {
                 SharedLogger.logger.Trace($"AMDLibrary/IsPossibleConfig: Success! The AMD display configuration is possible to be used now");
                 return true;
@@ -1631,7 +1630,9 @@ namespace DisplayMagicianShared.AMD
         {
             SharedLogger.logger.Trace($"AMDLibrary/GetAllConnectedDisplayIdentifiers: Getting all the display identifiers that can possibly be used");
             bool allDisplays = true;
-            return GetSomeDisplayIdentifiers(allDisplays);
+            _allConnectedDisplayIdentifiers = GetSomeDisplayIdentifiers(allDisplays);
+
+            return _allConnectedDisplayIdentifiers;
         }
 
         private List<string> GetSomeDisplayIdentifiers(bool allDisplays = false)
