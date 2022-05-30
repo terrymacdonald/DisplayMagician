@@ -186,6 +186,14 @@ namespace DisplayMagicianShared.NVIDIA
         EXCLUDE_MST = 0x10, //!< Excludes devices that are part of the multi stream topology.
     }
 
+    public enum NVDRS_SETTING_TYPE : UInt32
+    {
+        NVDRS_DWORD_TYPE = 0,
+        NVDRS_BINARY_TYPE = 1,
+        NVDRS_STRING_TYPE = 2,
+        NVDRS_WSTRING_TYPE = 3,
+    }
+
     public enum NV_STATIC_METADATA_DESCRIPTOR_ID : UInt32
     {
         NV_STATIC_METADATA_TYPE_1 = 0                   //!< Tells the type of structure used to define the Static Metadata Descriptor block.
@@ -685,21 +693,15 @@ namespace DisplayMagicianShared.NVIDIA
         NV_DESKTOP_COLOR_DEPTH_MAX_VALUE = NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR, // must be set to highest enum value
     }
 
-    public enum NVDRS_SETTING_TYPE
-    {
-        NVDRS_DWORD_TYPE = 0x0,
-        NVDRS_BINARY_TYPE = 0x1,
-        NVDRS_STRING_TYPE = 0x2,
-        NVDRS_WSTRING_TYPE = 0x3,
-    }
 
-    public enum NVDRS_SETTING_LOCATION
+    public enum NVDRS_SETTING_LOCATION : UInt32
     {
         NVDRS_CURRENT_PROFILE_LOCATION = 0x0,
         NVDRS_GLOBAL_PROFILE_LOCATION = 0x1,
         NVDRS_BASE_PROFILE_LOCATION = 0x2,
         NVDRS_DEFAULT_PROFILE_LOCATION = 0x3,
     }
+
 
     [Flags]
     public enum NV_HDR_CAPABILITIES_V2_FLAGS : UInt32
@@ -778,6 +780,59 @@ namespace DisplayMagicianShared.NVIDIA
     // ==================================
     // STRUCTS
     // ==================================
+
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NvDRSSessionHandle : IEquatable<NvDRSSessionHandle>, ICloneable
+    {
+        public IntPtr Ptr;
+
+        public override bool Equals(object obj) => obj is NvDRSSessionHandle other && this.Equals(other);
+
+        public bool Equals(NvDRSSessionHandle other)
+        => Ptr == other.Ptr;
+
+        public override Int32 GetHashCode()
+        {
+            return (Ptr).GetHashCode();
+        }
+
+        public static bool operator ==(NvDRSSessionHandle lhs, NvDRSSessionHandle rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NvDRSSessionHandle lhs, NvDRSSessionHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NvDRSSessionHandle other = (NvDRSSessionHandle)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NvDRSProfileHandle : IEquatable<NvDRSProfileHandle>, ICloneable
+    {
+        public IntPtr Ptr;
+
+        public override bool Equals(object obj) => obj is NvDRSProfileHandle other && this.Equals(other);
+
+        public bool Equals(NvDRSProfileHandle other)
+        => Ptr == other.Ptr;
+
+        public override Int32 GetHashCode()
+        {
+            return (Ptr).GetHashCode();
+        }
+
+        public static bool operator ==(NvDRSProfileHandle lhs, NvDRSProfileHandle rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NvDRSProfileHandle lhs, NvDRSProfileHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NvDRSProfileHandle other = (NvDRSProfileHandle)MemberwiseClone();
+            return other;
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct DisplayHandle : IEquatable<DisplayHandle>, ICloneable
@@ -882,7 +937,7 @@ namespace DisplayMagicianShared.NVIDIA
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
     public struct NVDRS_PROFILE_V1 : IEquatable<NVDRS_PROFILE_V1>, ICloneable // Note: Version 3 of NV_EDID_V3 structure
     {
         public UInt32 Version;        //!< Structure version
@@ -918,32 +973,367 @@ namespace DisplayMagicianShared.NVIDIA
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
     public struct NVDRS_SETTING_V1 : IEquatable<NVDRS_SETTING_V1>, ICloneable // Note: Version 1 of NVDRS_SETTING_V1 structure
     {
-        public UInt32 Version;        //!< Structure version
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
-        public string SettingName;    // EDID_Data[NV_EDID_DATA_SIZE];
-        public UInt32 SettingId;
-        public NVDRS_SETTING_TYPE SettingType;
-        public NVDRS_SETTING_LOCATION SettingLocation;
-        public UInt32 IsCurrentPredefined;
-        public UInt32 IsPredefinedValid;
+        public UInt32 InternalVersion;
+        public UnicodeString InternalSettingName;
+        public UInt32 InternalSettingId;
+        public NVDRS_SETTING_TYPE InternalSettingType;
+        public NVDRS_SETTING_LOCATION InternalSettingLocation;
+        public UInt32 InternalIsCurrentPredefined;
+        public UInt32 InternalIsPredefinedValid;
+        public NVDRS_SETTING_VALUE InternalPredefinedValue;
+        public NVDRS_SETTING_VALUE InternalCurrentValue;
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="DRSSettingV1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="settingType">The type of the setting's value</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, NVDRS_SETTING_TYPE settingType, object value)
+        {
+            InternalVersion = NVImport.NVDRS_SETTING_V1_VER;
+            InternalSettingId = id;
+            InternalIsPredefinedValid = (UInt32)0;
+            InternalSettingName = new UnicodeString("");
+            InternalSettingId = 0;
+            InternalSettingType = settingType;
+            InternalSettingLocation = NVDRS_SETTING_LOCATION.NVDRS_BASE_PROFILE_LOCATION;
+            InternalIsCurrentPredefined = 0;
+            InternalIsPredefinedValid = 0;
+            InternalPredefinedValue = new NVDRS_SETTING_VALUE();
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(0);
+
+            CurrentValue = value;
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, string value) : this(id, NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE, value)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, uint value) : this(id, NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE, value)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, byte[] value) : this(id, NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE, value)
+        {
+        }
+
+        /// <summary>
+        ///     Gets the name of the setting
+        /// </summary>
+        public string Name
+        {
+            get => InternalSettingName.Value;
+        }
+
+        /// <summary>
+        ///     Gets the identification number of the setting
+        /// </summary>
+        public UInt32 SettingId
+        {
+            get => InternalSettingId;
+            private set => InternalSettingId = value;
+        }
+
+        /// <summary>
+        ///     Gets the setting's value type
+        /// </summary>
+        public NVDRS_SETTING_TYPE SettingType
+        {
+            get => InternalSettingType;
+            private set => InternalSettingType = value;
+        }
+
+        /// <summary>
+        ///     Gets the setting location
+        /// </summary>
+        public NVDRS_SETTING_LOCATION SettingLocation
+        {
+            get => InternalSettingLocation;
+        }
+
+        /// <summary>
+        ///     Gets a boolean value indicating if the current value is the predefined value
+        /// </summary>
+        public bool IsCurrentPredefined
+        {
+            get => InternalIsCurrentPredefined > 0;
+            internal set => InternalIsCurrentPredefined = value ? 1u : 0u;
+        }
+
+        /// <summary>
+        ///     Gets a boolean value indicating if the predefined value is available and valid
+        /// </summary>
+        public bool IsPredefinedValid
+        {
+            get => InternalIsPredefinedValid > 0;
+            internal set => InternalIsPredefinedValid = value ? 1u : 0u;
+        }
+
+        /// <summary>
+        ///     Returns the predefined value as an integer
+        /// </summary>
+        /// <returns>An integer representing the predefined value</returns>
+        public uint GetPredefinedValueAsInteger()
+        {
+            return InternalPredefinedValue.AsInteger();
+        }
+
+        /// <summary>
+        ///     Returns the predefined value as an array of bytes
+        /// </summary>
+        /// <returns>An byte array representing the predefined value</returns>
+        public byte[] GetPredefinedValueAsBinary()
+        {
+            return InternalPredefinedValue.AsBinary();
+        }
+
+        /// <summary>
+        ///     Returns the predefined value as an unicode string
+        /// </summary>
+        /// <returns>An unicode string representing the predefined value</returns>
+        public string GetPredefinedValueAsUnicodeString()
+        {
+            return InternalPredefinedValue.AsUnicodeString();
+        }
+
+        /// <summary>
+        ///     Gets the setting's predefined value
+        /// </summary>
+        public object PredefinedValue
+        {
+            get
+            {
+                if (!IsPredefinedValid)
+                {
+                    return 0;
+                }
+
+                switch (InternalSettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+
+                        return GetPredefinedValueAsInteger();
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+
+                        return GetPredefinedValueAsBinary();
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+
+                        return GetPredefinedValueAsUnicodeString();
+                    default:
+
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Returns the current value as an integer
+        /// </summary>
+        /// <returns>An integer representing the current value</returns>
+        public uint GetCurrentValueAsInteger()
+        {
+            return InternalCurrentValue.AsInteger();
+        }
+
+        /// <summary>
+        ///     Returns the current value as an array of bytes
+        /// </summary>
+        /// <returns>An byte array representing the current value</returns>
+        public byte[] GetCurrentValueAsBinary()
+        {
+            return InternalCurrentValue.AsBinary();
+        }
+
+        /// <summary>
+        ///     Returns the current value as an unicode string
+        /// </summary>
+        /// <returns>An unicode string representing the current value</returns>
+        public string GetCurrentValueAsUnicodeString()
+        {
+            return InternalCurrentValue.AsUnicodeString();
+        }
+
+        /// <summary>
+        ///     Sets the passed value as the current value
+        /// </summary>
+        /// <param name="value">The new value for the setting</param>
+        public void SetCurrentValueAsInteger(uint value)
+        {
+            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
+            }
+
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
+            IsCurrentPredefined = IsPredefinedValid && (uint)CurrentValue == (uint)PredefinedValue;
+        }
+
+        /// <summary>
+        ///     Sets the passed value as the current value
+        /// </summary>
+        /// <param name="value">The new value for the setting</param>
+        public void SetCurrentValueAsBinary(byte[] value)
+        {
+            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
+            }
+
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
+            IsCurrentPredefined =
+                IsPredefinedValid &&
+                ((byte[])CurrentValue)?.SequenceEqual((byte[])PredefinedValue ?? new byte[0]) == true;
+        }
+
+        /// <summary>
+        ///     Sets the passed value as the current value
+        /// </summary>
+        /// <param name="value">The new value for the setting</param>
+        public void SetCurrentValueAsUnicodeString(string value)
+        {
+            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
+            }
+
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
+            IsCurrentPredefined =
+                IsPredefinedValid &&
+                string.Equals(
+                    (string)CurrentValue,
+                    (string)PredefinedValue,
+                    StringComparison.InvariantCulture
+                );
+        }
+
+        /// <summary>
+        ///     Gets or sets the setting's current value
+        /// </summary>
+        public object CurrentValue
+        {
+            get
+            {
+                switch (InternalSettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+
+                        return GetCurrentValueAsInteger();
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+
+                        return GetCurrentValueAsBinary();
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+
+                        return GetCurrentValueAsUnicodeString();
+                    default:
+
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+            internal set
+            {
+                if (value is int intValue)
+                {
+                    SetCurrentValueAsInteger((uint)intValue);
+                }
+                else if (value is uint unsignedIntValue)
+                {
+                    SetCurrentValueAsInteger(unsignedIntValue);
+                }
+                else if (value is short shortValue)
+                {
+                    SetCurrentValueAsInteger((uint)shortValue);
+                }
+                else if (value is ushort unsignedShortValue)
+                {
+                    SetCurrentValueAsInteger(unsignedShortValue);
+                }
+                else if (value is long longValue)
+                {
+                    SetCurrentValueAsInteger((uint)longValue);
+                }
+                else if (value is ulong unsignedLongValue)
+                {
+                    SetCurrentValueAsInteger((uint)unsignedLongValue);
+                }
+                else if (value is byte byteValue)
+                {
+                    SetCurrentValueAsInteger(byteValue);
+                }
+                else if (value is string stringValue)
+                {
+                    SetCurrentValueAsUnicodeString(stringValue);
+                }
+                else if (value is byte[] binaryValue)
+                {
+                    SetCurrentValueAsBinary(binaryValue);
+                }
+                else
+                {
+                    throw new ArgumentException("Unacceptable argument type.", nameof(value));
+                }
+            }
+        }
 
         public override bool Equals(object obj) => obj is NVDRS_SETTING_V1 other && this.Equals(other);
 
         public bool Equals(NVDRS_SETTING_V1 other)
-        => Version == other.Version &&
-           SettingName == other.SettingName &&
-           SettingId == other.SettingId &&
-           SettingType == other.SettingType &&
-           SettingLocation == other.SettingLocation &&
-           IsCurrentPredefined == other.IsCurrentPredefined &&
-           IsPredefinedValid == other.IsPredefinedValid;
+        {
+            if (!(InternalVersion == other.InternalVersion &&
+            InternalSettingName.Equals(other.InternalSettingName) &&
+            InternalSettingId == other.InternalSettingId &&
+            InternalSettingType == other.InternalSettingType &&
+            InternalSettingLocation == other.InternalSettingLocation &&
+            InternalIsCurrentPredefined == other.InternalIsCurrentPredefined &&
+            InternalIsPredefinedValid == other.InternalIsPredefinedValid))
+            {
+                return false;
+            }
+            if (InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE &&
+                InternalCurrentValue.AsInteger() == other.InternalCurrentValue.AsInteger())
+            {
+                return true;
+            }
+            else if (InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE &&
+                InternalCurrentValue.AsBinary() == other.InternalCurrentValue.AsBinary())
+            {
+                return true;
+            }
+            else if ((InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE || InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE) &&
+                InternalCurrentValue.AsUnicodeString() == other.InternalCurrentValue.AsUnicodeString())
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
 
         public override Int32 GetHashCode()
         {
-            return (Version, SettingName, SettingId, SettingType, SettingLocation, IsCurrentPredefined, IsPredefinedValid).GetHashCode();
+            return (InternalVersion, InternalSettingName, InternalSettingId, InternalSettingType, InternalSettingLocation, InternalIsCurrentPredefined, InternalIsPredefinedValid, InternalCurrentValue).GetHashCode();
         }
         public static bool operator ==(NVDRS_SETTING_V1 lhs, NVDRS_SETTING_V1 rhs) => lhs.Equals(rhs);
 
@@ -956,6 +1346,313 @@ namespace DisplayMagicianShared.NVIDIA
         }
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
+    public struct NVDRS_BINARY_SETTING : IEquatable<NVDRS_BINARY_SETTING>, ICloneable
+    {
+        public UInt32 ValueLength;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
+        public string ValueData;
+
+        public override bool Equals(object obj) => obj is NVDRS_BINARY_SETTING other && this.Equals(other);
+
+        public bool Equals(NVDRS_BINARY_SETTING other)
+        => ValueLength == other.ValueLength &&
+           ValueData.SequenceEqual(other.ValueData);
+
+        public override Int32 GetHashCode()
+        {
+            return (ValueLength, ValueData).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_BINARY_SETTING lhs, NVDRS_BINARY_SETTING rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_BINARY_SETTING lhs, NVDRS_BINARY_SETTING rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_BINARY_SETTING other = (NVDRS_BINARY_SETTING)MemberwiseClone();
+            return other;
+        }
+    }
+
+
+    //NVDRS_SETTING_VALUE_UNION
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NVDRS_SETTING_VALUE : IEquatable<NVDRS_SETTING_VALUE>, ICloneable // Note: Version 1 of NVDRS_SETTINGS_VALUE structure
+    {
+        private const int UnicodeStringLength = UnicodeString.UnicodeStringLength;
+        private const int BinaryDataMax = 4096;
+
+        // Math.Max(BinaryDataMax + sizeof(uint), UnicodeStringLength * sizeof(ushort))
+        private const int FullStructureSize = 4100;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = FullStructureSize, ArraySubType = UnmanagedType.U1)]
+        public byte[] InternalBinaryValue;
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed unicode string as the value
+        /// </summary>
+        /// <param name="value">The unicode string value</param>
+        public NVDRS_SETTING_VALUE(string value)
+        {
+            if (value?.Length > UnicodeStringLength)
+            {
+                value = value.Substring(0, UnicodeStringLength);
+            }
+
+            InternalBinaryValue = new byte[FullStructureSize];
+
+            var stringBytes = Encoding.Unicode.GetBytes(value ?? string.Empty);
+            Array.Copy(stringBytes, 0, InternalBinaryValue, 0, Math.Min(stringBytes.Length, InternalBinaryValue.Length));
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed byte array as the value
+        /// </summary>
+        /// <param name="value">The byte array value</param>
+        public NVDRS_SETTING_VALUE(byte[] value)
+        {
+            InternalBinaryValue = new byte[FullStructureSize];
+
+            if (value?.Length > 0)
+            {
+                var arrayLength = Math.Min(value.Length, BinaryDataMax);
+                var arrayLengthBytes = BitConverter.GetBytes((uint)arrayLength);
+                Array.Copy(arrayLengthBytes, 0, InternalBinaryValue, 0, arrayLengthBytes.Length);
+                Array.Copy(value, 0, InternalBinaryValue, arrayLengthBytes.Length, arrayLength);
+            }
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed integer as the value
+        /// </summary>
+        /// <param name="value">The integer value</param>
+        public NVDRS_SETTING_VALUE(uint value)
+        {
+            InternalBinaryValue = new byte[FullStructureSize];
+            var arrayLengthBytes = BitConverter.GetBytes(value);
+            Array.Copy(arrayLengthBytes, 0, InternalBinaryValue, 0, arrayLengthBytes.Length);
+        }
+
+        /// <summary>
+        ///     Returns the value as an integer
+        /// </summary>
+        /// <returns>An integer representing the value</returns>
+        public uint AsInteger()
+        {
+            return BitConverter.ToUInt32(InternalBinaryValue, 0);
+        }
+
+        /// <summary>
+        ///     Returns the value as an array of bytes
+        /// </summary>
+        /// <returns>An array of bytes representing the value</returns>
+        public byte[] AsBinary()
+        {
+            return InternalBinaryValue.Skip(sizeof(uint)).Take((int)AsInteger()).ToArray();
+        }
+
+        /// <summary>
+        ///     Returns the value as an unicode string
+        /// </summary>
+        /// <returns>An unicode string representing the value</returns>
+        public string AsUnicodeString()
+        {
+            return Encoding.Unicode.GetString(InternalBinaryValue).TrimEnd('\0');
+        }
+
+        public override bool Equals(object obj) => obj is NVDRS_SETTING_VALUE other && this.Equals(other);
+
+        public bool Equals(NVDRS_SETTING_VALUE other)
+        => InternalBinaryValue == other.InternalBinaryValue;
+
+        public override Int32 GetHashCode()
+        {
+            return (InternalBinaryValue).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_SETTING_VALUE lhs, NVDRS_SETTING_VALUE rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_SETTING_VALUE lhs, NVDRS_SETTING_VALUE rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_SETTING_VALUE other = (NVDRS_SETTING_VALUE)MemberwiseClone();
+            return other;
+        }
+    }
+
+    //NVDRS_SETTING_VALUES
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NVDRS_SETTING_VALUES_V1 : IEquatable<NVDRS_SETTING_VALUES_V1>, ICloneable // Note: Version 1 of NVDRS_SETTING_VALUES_V1 structure
+    {
+        internal const int MaximumNumberOfValues = (int)NVImport.NVAPI_SETTING_MAX_VALUES;
+
+        public UInt32 Version;
+        public UInt32 NumberOfValues;
+        public NVDRS_SETTING_TYPE _SettingType;
+        public NVDRS_SETTING_VALUE InternalDefaultValue;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MaximumNumberOfValues)]
+        public NVDRS_SETTING_VALUE[] InternalValues;
+
+        /// <summary>
+        ///     Gets the setting's value type
+        /// </summary>
+        public NVDRS_SETTING_TYPE SettingType
+        {
+            get => _SettingType;
+        }
+
+        /// <summary>
+        ///     Gets a list of possible values for the setting
+        /// </summary>
+        public object[] Values
+        {
+            get
+            {
+                switch (_SettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+                        return ValuesAsInteger().Cast<object>().ToArray();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+                        return ValuesAsBinary().Cast<object>().ToArray();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+                        return ValuesAsUnicodeString().Cast<object>().ToArray();
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Gets the default value of the setting
+        /// </summary>
+        public object DefaultValue
+        {
+            get
+            {
+                switch (_SettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+                        return DefaultValueAsInteger();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+                        return DefaultValueAsBinary();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+                        return DefaultValueAsUnicodeString();
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Returns the default value as an integer
+        /// </summary>
+        /// <returns>An integer representing the default value</returns>
+        public uint DefaultValueAsInteger()
+        {
+            return InternalDefaultValue.AsInteger();
+        }
+
+        /// <summary>
+        ///     Returns the default value as a byte array
+        /// </summary>
+        /// <returns>An array of bytes representing the default value</returns>
+        public byte[] DefaultValueAsBinary()
+        {
+            return InternalDefaultValue.AsBinary();
+        }
+
+        /// <summary>
+        ///     Returns the default value as an unicode string
+        /// </summary>
+        /// <returns>A string representing the default value</returns>
+        public string DefaultValueAsUnicodeString()
+        {
+            return InternalDefaultValue.AsUnicodeString();
+        }
+
+        /// <summary>
+        ///     Returns the setting's possible values as an array of integers
+        /// </summary>
+        /// <returns>An array of integers representing the possible values</returns>
+        public uint[] ValuesAsInteger()
+        {
+            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsInteger()).ToArray();
+        }
+
+        /// <summary>
+        ///     Returns the setting's possible values as an array of byte arrays
+        /// </summary>
+        /// <returns>An array of byte arrays representing the possible values</returns>
+        public byte[][] ValuesAsBinary()
+        {
+            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsBinary()).ToArray();
+        }
+
+        /// <summary>
+        ///     Returns the setting's possible values as an array of unicode strings
+        /// </summary>
+        /// <returns>An array of unicode strings representing the possible values</returns>
+        public string[] ValuesAsUnicodeString()
+        {
+            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsUnicodeString()).ToArray();
+        }
+
+        public override bool Equals(object obj) => obj is NVDRS_SETTING_VALUES_V1 other && this.Equals(other);
+
+        public bool Equals(NVDRS_SETTING_VALUES_V1 other)
+        => Version == other.Version &&
+            NumberOfValues == other.NumberOfValues &&
+            _SettingType == other._SettingType &&
+            InternalDefaultValue == other.InternalDefaultValue &&
+            InternalValues == other.InternalValues;
+
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, NumberOfValues, _SettingType, InternalDefaultValue, InternalValues).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_SETTING_VALUES_V1 lhs, NVDRS_SETTING_VALUES_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_SETTING_VALUES_V1 lhs, NVDRS_SETTING_VALUES_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_SETTING_VALUES_V1 other = (NVDRS_SETTING_VALUES_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct UnicodeString
+    {
+        public const int UnicodeStringLength = 2048;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = UnicodeStringLength)]
+        public readonly string InternalValue;
+
+        public string Value
+        {
+            get => InternalValue;
+        }
+
+        public UnicodeString(string value)
+        {
+            InternalValue = value ?? string.Empty;
+        }
+
+        public override string ToString()
+        {
+            return Value;
+        }
+    }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct NV_LOGICAL_GPU_DATA_V1 : IEquatable<NV_LOGICAL_GPU_DATA_V1>, ICloneable // Note: Version 1 of NV_BOARD_INFO_V1 structure
@@ -2819,6 +3516,10 @@ namespace DisplayMagicianShared.NVIDIA
         public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL>(2);
         public static UInt32 NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL>(1);
 
+        public static UInt32 NVDRS_PROFILE_V1_VER = MAKE_NVAPI_VERSION<NVDRS_PROFILE_V1>(1);
+        public static UInt32 NVDRS_SETTING_V1_VER = MAKE_NVAPI_VERSION<NVDRS_SETTING_V1>(1);
+        //public static UInt32 NVDRS_SETTING_VALUES_V1_VER = MAKE_NVAPI_VERSION<NVDRS_SETTING_VALUES_V1>(1);
+
 
 
 
@@ -2994,6 +3695,27 @@ namespace DisplayMagicianShared.NVIDIA
                 // System
                 GetDelegate(NvId_SYS_GetGpuAndOutputIdFromDisplayId, out SYS_GetGpuAndOutputIdFromDisplayIdInternal);
 
+                // DRS
+                GetDelegate(NvId_DRS_SetProfileInfo, out DRS_SetProfileInfoInternal);
+                GetDelegate(NvId_DRS_SetSetting, out DRS_SetSettingInternal);
+                GetDelegate(NvId_DRS_GetCurrentGlobalProfile, out DRS_GetCurrentGlobalProfileInternal);
+                GetDelegate(NvId_DRS_EnumSettings, out DRS_EnumSettingsInternal);
+                GetDelegate(NvId_DRS_GetSetting, out DRS_GetSettingInternal);
+                GetDelegate(NvId_DRS_GetProfileInfo, out DRS_GetProfileInfoInternal);
+                GetDelegate(NvId_DRS_GetSettingIdFromName, out DRS_GetSettingIdFromNameInternal);
+                GetDelegate(NvId_DRS_EnumAvailableSettingIds, out DRS_EnumAvailableSettingIdsInternal);
+                GetDelegate(NvId_DRS_CreateSession, out DRS_CreateSessionInternal);
+                GetDelegate(NvId_DRS_GetSettingNameFromId, out DRS_GetSettingNameFromIdInternal);
+                GetDelegate(NvId_DRS_EnumAvailableSettingValues, out DRS_EnumAvailableSettingValuesInternal);
+                GetDelegate(NvId_DRS_EnumProfiles, out DRS_EnumProfilesInternal);
+                GetDelegate(NvId_DRS_SetCurrentGlobalProfile, out DRS_SetCurrentGlobalProfileInternal);
+                GetDelegate(NvId_DRS_DestroySession, out DRS_DestroySessionInternal);
+                GetDelegate(NvId_DRS_LoadSettings, out DRS_LoadSettingsInternal);
+                GetDelegate(NvId_DRS_SaveSettings, out DRS_SaveSettingsInternal);
+                GetDelegate(NvId_DRS_GetBaseProfile, out DRS_GetBaseProfileInternal);
+                GetDelegate(NvId_DRS_GetNumProfiles, out DRS_GetNumProfilesInternal);
+                GetDelegate(NvId_DRS_RestoreProfileDefaultSetting, out DRS_RestoreProfileDefaultSettingInternal);
+
                 // Set the availability
                 available = true;
             }
@@ -3114,420 +3836,430 @@ namespace DisplayMagicianShared.NVIDIA
 
         #region NvAPI Public Functions 
 
-        private const UInt32 NvId_GetErrorMessage = 0x6C2D048C;
-        private const UInt32 NvId_GetInterfaceVersionString = 0x1053FA5;
-        private const UInt32 NvId_GPU_GetEDID = 0x37D32E69;
-        private const UInt32 NvId_SetView = 0x957D7B6;
-        private const UInt32 NvId_SetViewEx = 0x6B89E68;
-        private const UInt32 NvId_GetDisplayDriverVersion = 0xF951A4D1;
-        private const UInt32 NvId_SYS_GetDriverAndBranchVersion = 0x2926AAAD;
-        private const UInt32 NvId_GPU_GetMemoryInfo = 0x7F9B368;
-        private const UInt32 NvId_OGL_ExpertModeSet = 0x3805EF7A;
-        private const UInt32 NvId_OGL_ExpertModeGet = 0x22ED9516;
-        private const UInt32 NvId_OGL_ExpertModeDefaultsSet = 0xB47A657E;
-        private const UInt32 NvId_OGL_ExpertModeDefaultsGet = 0xAE921F12;
-        private const UInt32 NvId_EnumPhysicalGPUs = 0xE5AC921F;
-        private const UInt32 NvId_EnumTCCPhysicalGPUs = 0xD9930B07;
-        private const UInt32 NvId_EnumLogicalGPUs = 0x48B3EA59;
-        private const UInt32 NvId_GetPhysicalGPUsFromDisplay = 0x34EF9506;
-        private const UInt32 NvId_GetPhysicalGPUFromUnAttachedDisplay = 0x5018ED61;
-        private const UInt32 NvId_GetLogicalGPUFromDisplay = 0xEE1370CF;
-        private const UInt32 NvId_GetLogicalGPUFromPhysicalGPU = 0xADD604D1;
-        private const UInt32 NvId_GetPhysicalGPUsFromLogicalGPU = 0xAEA3FA32;
-        private const UInt32 NvId_GPU_GetShaderSubPipeCount = 0xBE17923;
-        private const UInt32 NvId_GPU_GetGpuCoreCount = 0xC7026A87;
-        private const UInt32 NvId_GPU_GetAllOutputs = 0x7D554F8E;
-        private const UInt32 NvId_GPU_GetConnectedOutputs = 0x1730BFC9;
-        private const UInt32 NvId_GPU_GetConnectedSLIOutputs = 0x680DE09;
-        private const UInt32 NvId_GPU_GetConnectedDisplayIds = 0x78DBA2;
-        private const UInt32 NvId_GPU_GetAllDisplayIds = 0x785210A2;
-        private const UInt32 NvId_GPU_GetConnectedOutputsWithLidState = 0xCF8CAF39;
-        private const UInt32 NvId_GPU_GetConnectedSLIOutputsWithLidState = 0x96043CC7;
-        private const UInt32 NvId_GPU_GetSystemType = 0xBAAABFCC;
-        private const UInt32 NvId_GPU_GetActiveOutputs = 0xE3E89B6F;
-        private const UInt32 NvId_GPU_SetEDID = 0xE83D6456;
-        private const UInt32 NvId_GPU_GetOutputType = 0x40A505E4;
-        private const UInt32 NvId_GPU_ValidateOutputCombination = 0x34C9C2D4;
-        private const UInt32 NvId_GPU_GetFullName = 0xCEEE8E9F;
-        private const UInt32 NvId_GPU_GetPCIIdentifiers = 0x2DDFB66E;
-        private const UInt32 NvId_GPU_GetGPUType = 0xC33BAEB1;
-        private const UInt32 NvId_GPU_GetBusType = 0x1BB18724;
-        private const UInt32 NvId_GPU_GetBusId = 0x1BE0B8E5;
-        private const UInt32 NvId_GPU_GetBusSlotId = 0x2A0A350F;
-        private const UInt32 NvId_GPU_GetIRQ = 0xE4715417;
-        private const UInt32 NvId_GPU_GetVbiosRevision = 0xACC3DA0A;
-        private const UInt32 NvId_GPU_GetVbiosOEMRevision = 0x2D43FB31;
-        private const UInt32 NvId_GPU_GetVbiosVersionString = 0xA561FD7D;
-        private const UInt32 NvId_GPU_GetAGPAperture = 0x6E042794;
-        private const UInt32 NvId_GPU_GetCurrentAGPRate = 0xC74925A0;
-        private const UInt32 NvId_GPU_GetCurrentPCIEDownstreamWidth = 0xD048C3B1;
-        private const UInt32 NvId_GPU_GetPhysicalFrameBufferSize = 0x46FBEB03;
-        private const UInt32 NvId_GPU_GetVirtualFrameBufferSize = 0x5A04B644;
-        private const UInt32 NvId_GPU_GetQuadroStatus = 0xE332FA47;
-        private const UInt32 NvId_GPU_GetBoardInfo = 0x22D54523;
-        private const UInt32 NvId_GPU_GetArchInfo = 0xD8265D24;
-        private const UInt32 NvId_I2CRead = 0x2FDE12C5;
-        private const UInt32 NvId_I2CWrite = 0xE812EB07;
-        private const UInt32 NvId_GPU_WorkstationFeatureSetup = 0x6C1F3FE4;
-        private const UInt32 NvId_GPU_WorkstationFeatureQuery = 0x4537DF;
-        private const UInt32 NvId_GPU_GetHDCPSupportStatus = 0xF089EEF5;
-        private const UInt32 NvId_GPU_GetTachReading = 0x5F608315;
-        private const UInt32 NvId_GPU_GetECCStatusInfo = 0xCA1DDAF3;
-        private const UInt32 NvId_GPU_GetECCErrorInfo = 0xC71F85A6;
-        private const UInt32 NvId_GPU_ResetECCErrorInfo = 0xC02EEC20;
-        private const UInt32 NvId_GPU_GetECCConfigurationInfo = 0x77A796F3;
-        private const UInt32 NvId_GPU_SetECCConfiguration = 0x1CF639D9;
-        private const UInt32 NvId_GPU_QueryWorkstationFeatureSupport = 0x80B1ABB9;
-        private const UInt32 NvId_GPU_SetScanoutIntensity = 0xA57457A4;
-        private const UInt32 NvId_GPU_GetScanoutIntensityState = 0xE81CE836;
-        private const UInt32 NvId_GPU_SetScanoutWarping = 0xB34BAB4F;
-        private const UInt32 NvId_GPU_GetScanoutWarpingState = 0x6F5435AF;
-        private const UInt32 NvId_GPU_SetScanoutCompositionParameter = 0xF898247D;
-        private const UInt32 NvId_GPU_GetScanoutCompositionParameter = 0x58FE51E6;
-        private const UInt32 NvId_GPU_GetScanoutConfiguration = 0x6A9F5B63;
-        private const UInt32 NvId_GPU_GetScanoutConfigurationEx = 0xE2E1E6F0;
-        private const UInt32 NvId_GPU_GetAdapterIdFromPhysicalGpu = 0xFF07FDE;
-        private const UInt32 NvId_GPU_GetVirtualizationInfo = 0x44E022A9;
-        private const UInt32 NvId_GPU_GetLogicalGpuInfo = 0x842B066E;
-        private const UInt32 NvId_GPU_GetLicensableFeatures = 0x3FC596AA;
-        private const UInt32 NvId_GPU_GetVRReadyData = 0x81D629C5;
-        private const UInt32 NvId_GPU_GetPerfDecreaseInfo = 0x7F7F4600;
-        private const UInt32 NvId_GPU_GetPstatesInfoEx = 0x843C0256;
-        private const UInt32 NvId_GPU_GetPstates20 = 0x6FF81213;
-        private const UInt32 NvId_GPU_GetCurrentPstate = 0x927DA4F6;
-        private const UInt32 NvId_GPU_GetDynamicPstatesInfoEx = 0x60DED2ED;
-        private const UInt32 NvId_GPU_GetThermalSettings = 0xE3640A56;
-        private const UInt32 NvId_GPU_GetAllClockFrequencies = 0xDCB616C3;
-        private const UInt32 NvId_GPU_QueryIlluminationSupport = 0xA629DA31;
-        private const UInt32 NvId_GPU_GetIllumination = 0x9A1B9365;
-        private const UInt32 NvId_GPU_SetIllumination = 0x254A187;
-        private const UInt32 NvId_GPU_ClientIllumDevicesGetInfo = 0xD4100E58;
-        private const UInt32 NvId_GPU_ClientIllumDevicesGetControl = 0x73C01D58;
-        private const UInt32 NvId_GPU_ClientIllumDevicesSetControl = 0x57024C62;
-        private const UInt32 NvId_GPU_ClientIllumZonesGetInfo = 0x4B81241B;
-        private const UInt32 NvId_GPU_ClientIllumZonesGetControl = 0x3DBF5764;
-        private const UInt32 NvId_GPU_ClientIllumZonesSetControl = 0x197D065E;
-        private const UInt32 NvId_Event_RegisterCallback = 0xE6DBEA69;
-        private const UInt32 NvId_Event_UnregisterCallback = 0xDE1F9B45;
-        private const UInt32 NvId_EnumNvidiaDisplayHandle = 0x9ABDD40D;
-        private const UInt32 NvId_EnumNvidiaUnAttachedDisplayHandle = 0x20DE9260;
-        private const UInt32 NvId_CreateDisplayFromUnAttachedDisplay = 0x63F9799E;
-        private const UInt32 NvId_GetAssociatedNvidiaDisplayHandle = 0x35C29134;
-        private const UInt32 NvId_DISP_GetAssociatedUnAttachedNvidiaDisplayHandle = 0xA70503B2;
-        private const UInt32 NvId_GetAssociatedNvidiaDisplayName = 0x22A78B05;
-        private const UInt32 NvId_GetUnAttachedAssociatedDisplayName = 0x4888D790;
-        private const UInt32 NvId_EnableHWCursor = 0x2863148D;
-        private const UInt32 NvId_DisableHWCursor = 0xAB163097;
-        private const UInt32 NvId_GetVBlankCounter = 0x67B5DB55;
-        private const UInt32 NvId_SetRefreshRateOverride = 0x3092AC32;
-        private const UInt32 NvId_GetAssociatedDisplayOutputId = 0xD995937E;
-        private const UInt32 NvId_GetDisplayPortInfo = 0xC64FF367;
-        private const UInt32 NvId_SetDisplayPort = 0xFA13E65A;
-        private const UInt32 NvId_GetHDMISupportInfo = 0x6AE16EC3;
-        private const UInt32 NvId_Disp_InfoFrameControl = 0x6067AF3F;
-        private const UInt32 NvId_Disp_ColorControl = 0x92F9D80D;
-        private const UInt32 NvId_Disp_GetHdrCapabilities = 0x84F2A8DF;
-        private const UInt32 NvId_Disp_HdrColorControl = 0x351DA224;
-        private const UInt32 NvId_DISP_GetTiming = 0x175167E9;
-        private const UInt32 NvId_DISP_GetMonitorCapabilities = 0x3B05C7E1;
-        private const UInt32 NvId_DISP_GetMonitorColorCapabilities = 0x6AE4CFB5;
-        private const UInt32 NvId_DISP_EnumCustomDisplay = 0xA2072D59;
-        private const UInt32 NvId_DISP_TryCustomDisplay = 0x1F7DB630;
-        private const UInt32 NvId_DISP_DeleteCustomDisplay = 0x552E5B9B;
-        private const UInt32 NvId_DISP_SaveCustomDisplay = 0x49882876;
-        private const UInt32 NvId_DISP_RevertCustomDisplayTrial = 0xCBBD40F0;
-        private const UInt32 NvId_GetView = 0xD6B99D89;
-        private const UInt32 NvId_GetViewEx = 0xDBBC0AF4;
-        private const UInt32 NvId_GetSupportedViews = 0x66FB7FC0;
-        private const UInt32 NvId_DISP_GetDisplayIdByDisplayName = 0xAE457190;
-        private const UInt32 NvId_DISP_GetGDIPrimaryDisplayId = 0x1E9D8A31;
-        private const UInt32 NvId_DISP_GetDisplayConfig = 0x11ABCCF8;
-        private const UInt32 NvId_DISP_SetDisplayConfig = 0x5D8CF8DE;
-        private const UInt32 NvId_DISP_GetAdaptiveSyncData = 0xB73D1EE9;
-        private const UInt32 NvId_DISP_SetAdaptiveSyncData = 0x3EEBBA1D;
-        private const UInt32 NvId_DISP_SetPreferredStereoDisplay = 0xC9D0E25F;
-        private const UInt32 NvId_DISP_GetPreferredStereoDisplay = 0x1F6B4666;
-        private const UInt32 NvId_Mosaic_GetSupportedTopoInfo = 0xFDB63C81;
-        private const UInt32 NvId_Mosaic_GetTopoGroup = 0xCB89381D;
-        private const UInt32 NvId_Mosaic_GetOverlapLimits = 0x989685F0;
-        private const UInt32 NvId_Mosaic_SetCurrentTopo = 0x9B542831;
-        private const UInt32 NvId_Mosaic_GetCurrentTopo = 0xEC32944E;
-        private const UInt32 NvId_Mosaic_EnableCurrentTopo = 0x5F1AA66C;
-        private const UInt32 NvId_Mosaic_GetDisplayViewportsByResolution = 0xDC6DC8D3;
-        private const UInt32 NvId_Mosaic_SetDisplayGrids = 0x4D959A89;
-        private const UInt32 NvId_Mosaic_ValidateDisplayGrids = 0xCF43903D;
-        private const UInt32 NvId_Mosaic_EnumDisplayModes = 0x78DB97D7;
-        private const UInt32 NvId_Mosaic_EnumDisplayGrids = 0xDF2887AF;
-        private const UInt32 NvId_GetSupportedMosaicTopologies = 0x410B5C25;
-        private const UInt32 NvId_GetCurrentMosaicTopology = 0xF60852BD;
-        private const UInt32 NvId_SetCurrentMosaicTopology = 0xD54B8989;
-        private const UInt32 NvId_EnableCurrentMosaicTopology = 0x74073CC9;
-        private const UInt32 NvId_GSync_EnumSyncDevices = 0xD9639601;
-        private const UInt32 NvId_GSync_QueryCapabilities = 0x44A3F1D1;
-        private const UInt32 NvId_GSync_GetTopology = 0x4562BC38;
-        private const UInt32 NvId_GSync_SetSyncStateSettings = 0x60ACDFDD;
-        private const UInt32 NvId_GSync_GetControlParameters = 0x16DE1C6A;
-        private const UInt32 NvId_GSync_SetControlParameters = 0x8BBFF88B;
-        private const UInt32 NvId_GSync_AdjustSyncDelay = 0x2D11FF51;
-        private const UInt32 NvId_GSync_GetSyncStatus = 0xF1F5B434;
-        private const UInt32 NvId_GSync_GetStatusParameters = 0x70D404EC;
-        private const UInt32 NvId_D3D_GetCurrentSLIState = 0x4B708B54;
-        private const UInt32 NvId_D3D9_RegisterResource = 0xA064BDFC;
-        private const UInt32 NvId_D3D9_UnregisterResource = 0xBB2B17AA;
-        private const UInt32 NvId_D3D9_AliasSurfaceAsTexture = 0xE5CEAE41;
-        private const UInt32 NvId_D3D9_StretchRectEx = 0x22DE03AA;
-        private const UInt32 NvId_D3D9_ClearRT = 0x332D3942;
-        private const UInt32 NvId_D3D_GetObjectHandleForResource = 0xFCEAC864;
-        private const UInt32 NvId_D3D_SetResourceHInt32 = 0x6C0ED98C;
-        private const UInt32 NvId_D3D_BeginResourceRendering = 0x91123D6A;
-        private const UInt32 NvId_D3D_EndResourceRendering = 0x37E7191C;
-        private const UInt32 NvId_D3D9_GetSurfaceHandle = 0xF2DD3F2;
-        private const UInt32 NvId_D3D9_VideoSetStereoInfo = 0xB852F4DB;
-        private const UInt32 NvId_D3D10_SetDepthBoundsTest = 0x4EADF5D2;
-        private const UInt32 NvId_D3D11_CreateDevice = 0x6A16D3A0;
-        private const UInt32 NvId_D3D11_CreateDeviceAndSwapChain = 0xBB939EE5;
-        private const UInt32 NvId_D3D11_SetDepthBoundsTest = 0x7AAF7A04;
-        private const UInt32 NvId_D3D11_IsNvShaderExtnOpCodeSupported = 0x5F68DA40;
-        private const UInt32 NvId_D3D11_SetNvShaderExtnSlot = 0x8E90BB9F;
-        private const UInt32 NvId_D3D12_SetNvShaderExtnSlotSpace = 0xAC2DFEB5;
-        private const UInt32 NvId_D3D12_SetNvShaderExtnSlotSpaceLocalThread = 0x43D867C0;
-        private const UInt32 NvId_D3D11_SetNvShaderExtnSlotLocalThread = 0xE6482A0;
-        private const UInt32 NvId_D3D11_BeginUAVOverlapEx = 0xBA08208A;
-        private const UInt32 NvId_D3D11_BeginUAVOverlap = 0x65B93CA8;
-        private const UInt32 NvId_D3D11_EndUAVOverlap = 0x2216A357;
-        private const UInt32 NvId_D3D11_GetResourceHandle = 0x9D52986;
-        private const UInt32 NvId_D3D_SetFPSIndicatorState = 0xA776E8DB;
-        private const UInt32 NvId_D3D9_Present = 0x5650BEB;
-        private const UInt32 NvId_D3D9_QueryFrameCount = 0x9083E53A;
-        private const UInt32 NvId_D3D9_ResetFrameCount = 0xFA6A0675;
-        private const UInt32 NvId_D3D9_QueryMaxSwapGroup = 0x5995410D;
-        private const UInt32 NvId_D3D9_QuerySwapGroup = 0xEBA4D232;
-        private const UInt32 NvId_D3D9_JoinSwapGroup = 0x7D44BB54;
-        private const UInt32 NvId_D3D9_BindSwapBarrier = 0x9C39C246;
-        private const UInt32 NvId_D3D1x_Present = 0x3B845A1;
-        private const UInt32 NvId_D3D1x_QueryFrameCount = 0x9152E055;
-        private const UInt32 NvId_D3D1x_ResetFrameCount = 0xFBBB031A;
-        private const UInt32 NvId_D3D1x_QueryMaxSwapGroup = 0x9BB9D68F;
-        private const UInt32 NvId_D3D1x_QuerySwapGroup = 0x407F67AA;
-        private const UInt32 NvId_D3D1x_JoinSwapGroup = 0x14610CD7;
-        private const UInt32 NvId_D3D1x_BindSwapBarrier = 0x9DE8C729;
-        private const UInt32 NvId_D3D12_QueryPresentBarrierSupport = 0xA15FAEF7;
-        private const UInt32 NvId_D3D12_CreatePresentBarrierClient = 0x4D815DE9;
-        private const UInt32 NvId_D3D12_RegisterPresentBarrierResources = 0xD53C9EF0;
-        private const UInt32 NvId_DestroyPresentBarrierClient = 0x3C5C351B;
-        private const UInt32 NvId_JoinPresentBarrier = 0x17F6BF82;
-        private const UInt32 NvId_LeavePresentBarrier = 0xC3EC5A7F;
-        private const UInt32 NvId_QueryPresentBarrierFrameStatistics = 0x61B844A1;
-        private const UInt32 NvId_D3D11_CreateRasterizerState = 0xDB8D28AF;
-        private const UInt32 NvId_D3D_ConfigureAnsel = 0x341C6C7F;
-        private const UInt32 NvId_D3D11_CreateTiledTexture2DArray = 0x7886981A;
-        private const UInt32 NvId_D3D11_CheckFeatureSupport = 0x106A487E;
-        private const UInt32 NvId_D3D11_CreateImplicitMSAATexture2D = 0xB8F79632;
-        private const UInt32 NvId_D3D12_CreateCommittedImplicitMSAATexture2D = 0x24C6A07B;
-        private const UInt32 NvId_D3D11_ResolveSubresourceRegion = 0xE6BFEDD6;
-        private const UInt32 NvId_D3D12_ResolveSubresourceRegion = 0xC24A15BF;
-        private const UInt32 NvId_D3D11_TiledTexture2DArrayGetDesc = 0xF1A2B9D5;
-        private const UInt32 NvId_D3D11_UpdateTileMappings = 0x9A06EA07;
-        private const UInt32 NvId_D3D11_CopyTileMappings = 0xC09EE6BC;
-        private const UInt32 NvId_D3D11_TiledResourceBarrier = 0xD6839099;
-        private const UInt32 NvId_D3D11_AliasMSAATexture2DAsNonMSAA = 0xF1C54FC9;
-        private const UInt32 NvId_D3D11_CreateGeometryShaderEx_2 = 0x99ED5C1C;
-        private const UInt32 NvId_D3D11_CreateVertexShaderEx = 0xBEAA0B2;
-        private const UInt32 NvId_D3D11_CreateHullShaderEx = 0xB53CAB00;
-        private const UInt32 NvId_D3D11_CreateDomainShaderEx = 0xA0D7180D;
-        private const UInt32 NvId_D3D11_CreatePixelShaderEx_2 = 0x4162822B;
-        private const UInt32 NvId_D3D11_CreateFastGeometryShaderExplicit = 0x71AB7C9C;
-        private const UInt32 NvId_D3D11_CreateFastGeometryShader = 0x525D43BE;
-        private const UInt32 NvId_D3D11_DecompressView = 0x3A94E822;
-        private const UInt32 NvId_D3D12_CreateGraphicsPipelineState = 0x2FC28856;
-        private const UInt32 NvId_D3D12_CreateComputePipelineState = 0x2762DEAC;
-        private const UInt32 NvId_D3D12_SetDepthBoundsTestValues = 0xB9333FE9;
-        private const UInt32 NvId_D3D12_CreateReservedResource = 0x2C85F101;
-        private const UInt32 NvId_D3D12_CreateHeap = 0x5CB397CF;
-        private const UInt32 NvId_D3D12_CreateHeap2 = 0x924BE9D6;
-        private const UInt32 NvId_D3D12_QueryCpuVisibleVidmem = 0x26322BC3;
-        private const UInt32 NvId_D3D12_ReservedResourceGetDesc = 0x9AA2AABB;
-        private const UInt32 NvId_D3D12_UpdateTileMappings = 0xC6017A7D;
-        private const UInt32 NvId_D3D12_CopyTileMappings = 0x47F78194;
-        private const UInt32 NvId_D3D12_ResourceAliasingBarrier = 0xB942BAB7;
-        private const UInt32 NvId_D3D12_CaptureUAVInfo = 0x6E5EA9DB;
-        private const UInt32 NvId_D3D11_GetResourceGPUVirtualAddressEx = 0xAF6D14DA;
-        private const UInt32 NvId_D3D11_EnumerateMetaCommands = 0xC7453BA8;
-        private const UInt32 NvId_D3D11_CreateMetaCommand = 0xF505FBA0;
-        private const UInt32 NvId_D3D11_InitializeMetaCommand = 0xAEC629E9;
-        private const UInt32 NvId_D3D11_ExecuteMetaCommand = 0x82236C47;
-        private const UInt32 NvId_D3D12_EnumerateMetaCommands = 0xCD9141D8;
-        private const UInt32 NvId_D3D12_CreateMetaCommand = 0xEB29634B;
-        private const UInt32 NvId_D3D12_InitializeMetaCommand = 0xA4125399;
-        private const UInt32 NvId_D3D12_ExecuteMetaCommand = 0xDE24FC3D;
-        private const UInt32 NvId_D3D12_CreateCommittedResource = 0x27E98AE;
-        private const UInt32 NvId_D3D12_GetCopyableFootprInt32s = 0xF6305EB5;
-        private const UInt32 NvId_D3D12_CopyTextureRegion = 0x82B91B25;
-        private const UInt32 NvId_D3D12_IsNvShaderExtnOpCodeSupported = 0x3DFACEC8;
-        private const UInt32 NvId_D3D_IsGSyncCapable = 0x9C1EED78;
-        private const UInt32 NvId_D3D_IsGSyncActive = 0xE942B0FF;
-        private const UInt32 NvId_D3D1x_DisableShaderDiskCache = 0xD0CBCA7D;
-        private const UInt32 NvId_D3D11_MultiGPU_GetCaps = 0xD2D25687;
-        private const UInt32 NvId_D3D11_MultiGPU_Init = 0x17BE49E;
-        private const UInt32 NvId_D3D11_CreateMultiGPUDevice = 0xBDB20007;
-        private const UInt32 NvId_D3D_QuerySinglePassStereoSupport = 0x6F5F0A6D;
-        private const UInt32 NvId_D3D_SetSinglePassStereoMode = 0xA39E6E6E;
-        private const UInt32 NvId_D3D12_QuerySinglePassStereoSupport = 0x3B03791B;
-        private const UInt32 NvId_D3D12_SetSinglePassStereoMode = 0x83556D87;
-        private const UInt32 NvId_D3D_QueryMultiViewSupport = 0xB6E0A41C;
-        private const UInt32 NvId_D3D_SetMultiViewMode = 0x8285C8DA;
-        private const UInt32 NvId_D3D_QueryModifiedWSupport = 0xCBF9F4F5;
-        private const UInt32 NvId_D3D_SetModifiedWMode = 0x6EA4BF4;
-        private const UInt32 NvId_D3D12_QueryModifiedWSupport = 0x51235248;
-        private const UInt32 NvId_D3D12_SetModifiedWMode = 0xE1FDABA7;
-        private const UInt32 NvId_D3D_CreateLateLatchObject = 0x2DB27D09;
-        private const UInt32 NvId_D3D_QueryLateLatchSupport = 0x8CECA0EC;
-        private const UInt32 NvId_D3D_RegisterDevice = 0x8C02C4D0;
-        private const UInt32 NvId_D3D11_MultiDrawInstancedIndirect = 0xD4E26BBF;
-        private const UInt32 NvId_D3D11_MultiDrawIndexedInstancedIndirect = 0x59E890F9;
-        private const UInt32 NvId_D3D_ImplicitSLIControl = 0x2AEDE111;
-        private const UInt32 NvId_D3D12_UseDriverHeapPriorities = 0xF0D978A8;
-        private const UInt32 NvId_D3D12_Mosaic_GetCompanionAllocations = 0xA46022C7;
-        private const UInt32 NvId_D3D12_Mosaic_GetViewportAndGpuPartitions = 0xB092B818;
-        private const UInt32 NvId_D3D1x_GetGraphicsCapabilities = 0x52B1499A;
-        private const UInt32 NvId_D3D12_GetGraphicsCapabilities = 0x1E87354;
-        private const UInt32 NvId_D3D11_RSSetExclusiveScissorRects = 0xAE4D73EF;
-        private const UInt32 NvId_D3D11_RSSetViewportsPixelShadingRates = 0x34F7938F;
-        private const UInt32 NvId_D3D11_CreateShadingRateResourceView = 0x99CA2DFF;
-        private const UInt32 NvId_D3D11_RSSetShadingRateResourceView = 0x1B0C2F83;
-        private const UInt32 NvId_D3D11_RSGetPixelShadingRateSampleOrder = 0x92442A1;
-        private const UInt32 NvId_D3D11_RSSetPixelShadingRateSampleOrder = 0xA942373A;
-        private const UInt32 NvId_D3D_InitializeVRSHelper = 0x4780D70B;
-        private const UInt32 NvId_D3D_InitializeNvGazeHandler = 0x5B3B7479;
-        private const UInt32 NvId_D3D_InitializeSMPAssist = 0x42763D0C;
-        private const UInt32 NvId_D3D_QuerySMPAssistSupport = 0xC57921DE;
-        private const UInt32 NvId_D3D_GetSleepStatus = 0xAEF96CA1;
-        private const UInt32 NvId_D3D_SetSleepMode = 0xAC1CA9E0;
-        private const UInt32 NvId_D3D_Sleep = 0x852CD1D2;
-        private const UInt32 NvId_D3D_GetLatency = 0x1A587F9C;
-        private const UInt32 NvId_D3D_SetLatencyMarker = 0xD9984C05;
-        private const UInt32 NvId_D3D12_CreateCubinComputeShader = 0x2A2C79E8;
-        private const UInt32 NvId_D3D12_CreateCubinComputeShaderEx = 0x3151211B;
-        private const UInt32 NvId_D3D12_CreateCubinComputeShaderWithName = 0x1DC7261F;
-        private const UInt32 NvId_D3D12_LaunchCubinShader = 0x5C52BB86;
-        private const UInt32 NvId_D3D12_DestroyCubinComputeShader = 0x7FB785BA;
-        private const UInt32 NvId_D3D12_GetCudaTextureObject = 0x80403FC9;
-        private const UInt32 NvId_D3D12_GetCudaSurfaceObject = 0x48F5B2EE;
-        private const UInt32 NvId_D3D12_IsFatbinPTXSupported = 0x70C07832;
-        private const UInt32 NvId_D3D11_CreateCubinComputeShader = 0xED98181;
-        private const UInt32 NvId_D3D11_CreateCubinComputeShaderEx = 0x32C2A0F6;
-        private const UInt32 NvId_D3D11_CreateCubinComputeShaderWithName = 0xB672BE19;
-        private const UInt32 NvId_D3D11_LaunchCubinShader = 0x427E236D;
-        private const UInt32 NvId_D3D11_DestroyCubinComputeShader = 0x1682C86;
-        private const UInt32 NvId_D3D11_IsFatbinPTXSupported = 0x6086BD93;
-        private const UInt32 NvId_D3D11_CreateUnorderedAccessView = 0x74A497A1;
-        private const UInt32 NvId_D3D11_CreateShaderResourceView = 0x65CB431E;
-        private const UInt32 NvId_D3D11_CreateSamplerState = 0x89ECA416;
-        private const UInt32 NvId_D3D11_GetCudaTextureObject = 0x9006FA68;
-        private const UInt32 NvId_D3D11_GetResourceGPUVirtualAddress = 0x1819B423;
-        private const UInt32 NvId_VIO_GetCapabilities = 0x1DC91303;
-        private const UInt32 NvId_VIO_Open = 0x44EE4841;
-        private const UInt32 NvId_VIO_Close = 0xD01BD237;
-        private const UInt32 NvId_VIO_Status = 0xE6CE4F1;
-        private const UInt32 NvId_VIO_SyncFormatDetect = 0x118D48A3;
-        private const UInt32 NvId_VIO_GetConfig = 0xD34A789B;
-        private const UInt32 NvId_VIO_SetConfig = 0xE4EEC07;
-        private const UInt32 NvId_VIO_SetCSC = 0xA1EC8D74;
-        private const UInt32 NvId_VIO_GetCSC = 0x7B0D72A3;
-        private const UInt32 NvId_VIO_SetGamma = 0x964BF452;
-        private const UInt32 NvId_VIO_GetGamma = 0x51D53D06;
-        private const UInt32 NvId_VIO_SetSyncDelay = 0x2697A8D1;
-        private const UInt32 NvId_VIO_GetSyncDelay = 0x462214A9;
-        private const UInt32 NvId_VIO_GetPCIInfo = 0xB981D935;
-        private const UInt32 NvId_VIO_IsRunning = 0x96BD040E;
-        private const UInt32 NvId_VIO_Start = 0xCDE8E1A3;
-        private const UInt32 NvId_VIO_Stop = 0x6BA2A5D6;
-        private const UInt32 NvId_VIO_IsFrameLockModeCompatible = 0x7BF0A94D;
-        private const UInt32 NvId_VIO_EnumDevices = 0xFD7C5557;
-        private const UInt32 NvId_VIO_QueryTopology = 0x869534E2;
-        private const UInt32 NvId_VIO_EnumSignalFormats = 0xEAD72FE4;
-        private const UInt32 NvId_VIO_EnumDataFormats = 0x221FA8E8;
-        private const UInt32 NvId_Stereo_CreateConfigurationProfileRegistryKey = 0xBE7692EC;
-        private const UInt32 NvId_Stereo_DeleteConfigurationProfileRegistryKey = 0xF117B834;
-        private const UInt32 NvId_Stereo_SetConfigurationProfileValue = 0x24409F48;
-        private const UInt32 NvId_Stereo_DeleteConfigurationProfileValue = 0x49BCEECF;
-        private const UInt32 NvId_Stereo_Enable = 0x239C4545;
-        private const UInt32 NvId_Stereo_Disable = 0x2EC50C2B;
-        private const UInt32 NvId_Stereo_IsEnabled = 0x348FF8E1;
-        private const UInt32 NvId_Stereo_GetStereoSupport = 0x296C434D;
-        private const UInt32 NvId_Stereo_CreateHandleFromIUnknown = 0xAC7E37F4;
-        private const UInt32 NvId_Stereo_DestroyHandle = 0x3A153134;
-        private const UInt32 NvId_Stereo_Activate = 0xF6A1AD68;
-        private const UInt32 NvId_Stereo_Deactivate = 0x2D68DE96;
-        private const UInt32 NvId_Stereo_IsActivated = 0x1FB0BC30;
-        private const UInt32 NvId_Stereo_GetSeparation = 0x451F2134;
-        private const UInt32 NvId_Stereo_SetSeparation = 0x5C069FA3;
-        private const UInt32 NvId_Stereo_DecreaseSeparation = 0xDA044458;
-        private const UInt32 NvId_Stereo_IncreaseSeparation = 0xC9A8ECEC;
-        private const UInt32 NvId_Stereo_GetConvergence = 0x4AB00934;
-        private const UInt32 NvId_Stereo_SetConvergence = 0x3DD6B54B;
-        private const UInt32 NvId_Stereo_DecreaseConvergence = 0x4C87E317;
-        private const UInt32 NvId_Stereo_IncreaseConvergence = 0xA17DAABE;
-        private const UInt32 NvId_Stereo_GetFrustumAdjustMode = 0xE6839B43;
-        private const UInt32 NvId_Stereo_SetFrustumAdjustMode = 0x7BE27FA2;
-        private const UInt32 NvId_Stereo_CaptureJpegImage = 0x932CB140;
-        private const UInt32 NvId_Stereo_InitActivation = 0xC7177702;
-        private const UInt32 NvId_Stereo_Trigger_Activation = 0xD6C6CD2;
-        private const UInt32 NvId_Stereo_CapturePngImage = 0x8B7E99B5;
-        private const UInt32 NvId_Stereo_ReverseStereoBlitControl = 0x3CD58F89;
-        private const UInt32 NvId_Stereo_SetNotificationMessage = 0x6B9B409E;
-        private const UInt32 NvId_Stereo_SetActiveEye = 0x96EEA9F8;
-        private const UInt32 NvId_Stereo_SetDriverMode = 0x5E8F0BEC;
-        private const UInt32 NvId_Stereo_GetEyeSeparation = 0xCE653127;
-        private const UInt32 NvId_Stereo_IsWindowedModeSupported = 0x40C8ED5E;
-        private const UInt32 NvId_Stereo_SetSurfaceCreationMode = 0xF5DCFCBA;
-        private const UInt32 NvId_Stereo_GetSurfaceCreationMode = 0x36F1C736;
-        private const UInt32 NvId_Stereo_Debug_WasLastDrawStereoized = 0xED4416C5;
-        private const UInt32 NvId_Stereo_SetDefaultProfile = 0x44F0ECD1;
-        private const UInt32 NvId_Stereo_GetDefaultProfile = 0x624E21C2;
-        private const UInt32 NvId_D3D1x_CreateSwapChain = 0x1BC21B66;
-        private const UInt32 NvId_D3D9_CreateSwapChain = 0x1A131E09;
-        private const UInt32 NvId_DRS_CreateSession = 0x694D52E;
-        private const UInt32 NvId_DRS_DestroySession = 0xDAD9CFF8;
-        private const UInt32 NvId_DRS_LoadSettings = 0x375DBD6B;
-        private const UInt32 NvId_DRS_SaveSettings = 0xFCBC7E14;
-        private const UInt32 NvId_DRS_LoadSettingsFromFile = 0xD3EDE889;
-        private const UInt32 NvId_DRS_SaveSettingsToFile = 0x2BE25DF8;
-        private const UInt32 NvId_DRS_CreateProfile = 0xCC176068;
-        private const UInt32 NvId_DRS_DeleteProfile = 0x17093206;
-        private const UInt32 NvId_DRS_SetCurrentGlobalProfile = 0x1C89C5DF;
-        private const UInt32 NvId_DRS_GetCurrentGlobalProfile = 0x617BFF9F;
-        private const UInt32 NvId_DRS_GetProfileInfo = 0x61CD6FD6;
-        private const UInt32 NvId_DRS_SetProfileInfo = 0x16ABD3A9;
-        private const UInt32 NvId_DRS_FindProfileByName = 0x7E4A9A0B;
-        private const UInt32 NvId_DRS_EnumProfiles = 0xBC371EE0;
-        private const UInt32 NvId_DRS_GetNumProfiles = 0x1DAE4FBC;
-        private const UInt32 NvId_DRS_CreateApplication = 0x4347A9DE;
-        private const UInt32 NvId_DRS_DeleteApplicationEx = 0xC5EA85A1;
-        private const UInt32 NvId_DRS_DeleteApplication = 0x2C694BC6;
-        private const UInt32 NvId_DRS_GetApplicationInfo = 0xED1F8C69;
-        private const UInt32 NvId_DRS_EnumApplications = 0x7FA2173A;
-        private const UInt32 NvId_DRS_FindApplicationByName = 0xEEE566B2;
-        private const UInt32 NvId_DRS_SetSetting = 0x577DD202;
-        private const UInt32 NvId_DRS_GetSetting = 0x73BF8338;
-        private const UInt32 NvId_DRS_EnumSettings = 0xAE3039DA;
-        private const UInt32 NvId_DRS_EnumAvailableSettingIds = 0xF020614A;
-        private const UInt32 NvId_DRS_EnumAvailableSettingValues = 0x2EC39F90;
-        private const UInt32 NvId_DRS_GetSettingIdFromName = 0xCB7309CD;
-        private const UInt32 NvId_DRS_GetSettingNameFromId = 0xD61CBE6E;
-        private const UInt32 NvId_DRS_DeleteProfileSetting = 0xE4A26362;
-        private const UInt32 NvId_DRS_RestoreAllDefaults = 0x5927B094;
-        private const UInt32 NvId_DRS_RestoreProfileDefault = 0xFA5F6134;
-        private const UInt32 NvId_DRS_RestoreProfileDefaultSetting = 0x53F0381E;
-        private const UInt32 NvId_DRS_GetBaseProfile = 0xDA8466A0;
-        private const UInt32 NvId_SYS_GetChipSetInfo = 0x53DABBCA;
-        private const UInt32 NvId_SYS_GetLidAndDockInfo = 0xCDA14D8A;
-        private const UInt32 NvId_SYS_GetDisplayIdFromGpuAndOutputId = 0x8F2BAB4;
-        private const UInt32 NvId_SYS_GetGpuAndOutputIdFromDisplayId = 0x112BA1A5;
-        private const UInt32 NvId_SYS_GetPhysicalGpuFromDisplayId = 0x9EA74659;
-        private const UInt32 NvId_SYS_GetDisplayDriverInfo = 0x721FACEB;
-        private const UInt32 NvId_GPU_ClientRegisterForUtilizationSampleUpdates = 0xADEEAF67;
-        private const UInt32 NvId_Unload = 0xD7C61344;
+        private const uint NvId_GetErrorMessage = 0x6C2D048C;
+        private const uint NvId_GetInterfaceVersionString = 0x1053FA5;
+        private const uint NvId_GPU_GetEDID = 0x37D32E69;
+        private const uint NvId_SetView = 0x957D7B6;
+        private const uint NvId_SetViewEx = 0x6B89E68;
+        private const uint NvId_GetDisplayDriverVersion = 0xF951A4D1;
+        private const uint NvId_SYS_GetDriverAndBranchVersion = 0x2926AAAD;
+        private const uint NvId_GPU_GetMemoryInfo = 0x7F9B368;
+        private const uint NvId_OGL_ExpertModeSet = 0x3805EF7A;
+        private const uint NvId_OGL_ExpertModeGet = 0x22ED9516;
+        private const uint NvId_OGL_ExpertModeDefaultsSet = 0xB47A657E;
+        private const uint NvId_OGL_ExpertModeDefaultsGet = 0xAE921F12;
+        private const uint NvId_EnumPhysicalGPUs = 0xE5AC921F;
+        private const uint NvId_EnumTCCPhysicalGPUs = 0xD9930B07;
+        private const uint NvId_EnumLogicalGPUs = 0x48B3EA59;
+        private const uint NvId_GetPhysicalGPUsFromDisplay = 0x34EF9506;
+        private const uint NvId_GetPhysicalGPUFromUnAttachedDisplay = 0x5018ED61;
+        private const uint NvId_GetLogicalGPUFromDisplay = 0xEE1370CF;
+        private const uint NvId_GetLogicalGPUFromPhysicalGPU = 0xADD604D1;
+        private const uint NvId_GetPhysicalGPUsFromLogicalGPU = 0xAEA3FA32;
+        private const uint NvId_GetPhysicalGPUFromGPUID = 0x5380AD1A;
+        private const uint NvId_GetGPUIDfromPhysicalGPU = 0x6533EA3E;
+        private const uint NvId_GPU_GetShaderSubPipeCount = 0xBE17923;
+        private const uint NvId_GPU_GetGpuCoreCount = 0xC7026A87;
+        private const uint NvId_GPU_GetAllOutputs = 0x7D554F8E;
+        private const uint NvId_GPU_GetConnectedOutputs = 0x1730BFC9;
+        private const uint NvId_GPU_GetConnectedSLIOutputs = 0x680DE09;
+        private const uint NvId_GPU_GetConnectedDisplayIds = 0x78DBA2;
+        private const uint NvId_GPU_GetAllDisplayIds = 0x785210A2;
+        private const uint NvId_GPU_GetConnectedOutputsWithLidState = 0xCF8CAF39;
+        private const uint NvId_GPU_GetConnectedSLIOutputsWithLidState = 0x96043CC7;
+        private const uint NvId_GPU_GetSystemType = 0xBAAABFCC;
+        private const uint NvId_GPU_GetActiveOutputs = 0xE3E89B6F;
+        private const uint NvId_GPU_SetEDID = 0xE83D6456;
+        private const uint NvId_GPU_GetOutputType = 0x40A505E4;
+        private const uint NvId_GPU_ValidateOutputCombination = 0x34C9C2D4;
+        private const uint NvId_GPU_GetFullName = 0xCEEE8E9F;
+        private const uint NvId_GPU_GetPCIIdentifiers = 0x2DDFB66E;
+        private const uint NvId_GPU_GetGPUType = 0xC33BAEB1;
+        private const uint NvId_GPU_GetBusType = 0x1BB18724;
+        private const uint NvId_GPU_GetBusId = 0x1BE0B8E5;
+        private const uint NvId_GPU_GetBusSlotId = 0x2A0A350F;
+        private const uint NvId_GPU_GetIRQ = 0xE4715417;
+        private const uint NvId_GPU_GetVbiosRevision = 0xACC3DA0A;
+        private const uint NvId_GPU_GetVbiosOEMRevision = 0x2D43FB31;
+        private const uint NvId_GPU_GetVbiosVersionString = 0xA561FD7D;
+        private const uint NvId_GPU_GetAGPAperture = 0x6E042794;
+        private const uint NvId_GPU_GetCurrentAGPRate = 0xC74925A0;
+        private const uint NvId_GPU_GetCurrentPCIEDownstreamWidth = 0xD048C3B1;
+        private const uint NvId_GPU_GetPhysicalFrameBufferSize = 0x46FBEB03;
+        private const uint NvId_GPU_GetVirtualFrameBufferSize = 0x5A04B644;
+        private const uint NvId_GPU_GetQuadroStatus = 0xE332FA47;
+        private const uint NvId_GPU_GetBoardInfo = 0x22D54523;
+        private const uint NvId_GPU_GetArchInfo = 0xD8265D24;
+        private const uint NvId_I2CRead = 0x2FDE12C5;
+        private const uint NvId_I2CWrite = 0xE812EB07;
+        private const uint NvId_GPU_WorkstationFeatureSetup = 0x6C1F3FE4;
+        private const uint NvId_GPU_WorkstationFeatureQuery = 0x4537DF;
+        private const uint NvId_GPU_GetHDCPSupportStatus = 0xF089EEF5;
+        private const uint NvId_GPU_CudaEnumComputeCapableGpus = 0x5786CC6E;
+        private const uint NvId_GPU_GetTachReading = 0x5F608315;
+        private const uint NvId_GPU_GetECCStatusInfo = 0xCA1DDAF3;
+        private const uint NvId_GPU_GetECCErrorInfo = 0xC71F85A6;
+        private const uint NvId_GPU_ResetECCErrorInfo = 0xC02EEC20;
+        private const uint NvId_GPU_GetECCConfigurationInfo = 0x77A796F3;
+        private const uint NvId_GPU_SetECCConfiguration = 0x1CF639D9;
+        private const uint NvId_GPU_QueryWorkstationFeatureSupport = 0x80B1ABB9;
+        private const uint NvId_GPU_SetScanoutIntensity = 0xA57457A4;
+        private const uint NvId_GPU_GetScanoutIntensityState = 0xE81CE836;
+        private const uint NvId_GPU_SetScanoutWarping = 0xB34BAB4F;
+        private const uint NvId_GPU_GetScanoutWarpingState = 0x6F5435AF;
+        private const uint NvId_GPU_SetScanoutCompositionParameter = 0xF898247D;
+        private const uint NvId_GPU_GetScanoutCompositionParameter = 0x58FE51E6;
+        private const uint NvId_GPU_GetScanoutConfiguration = 0x6A9F5B63;
+        private const uint NvId_GPU_GetScanoutConfigurationEx = 0xE2E1E6F0;
+        private const uint NvId_GPU_GetAdapterIdFromPhysicalGpu = 0xFF07FDE;
+        private const uint NvId_GPU_GetVirtualizationInfo = 0x44E022A9;
+        private const uint NvId_GPU_GetLogicalGpuInfo = 0x842B066E;
+        private const uint NvId_GPU_GetLicensableFeatures = 0x3FC596AA;
+        private const uint NvId_GPU_GetVRReadyData = 0x81D629C5;
+        private const uint NvId_GPU_GetPerfDecreaseInfo = 0x7F7F4600;
+        private const uint NvId_GPU_GetPstatesInfoEx = 0x843C0256;
+        private const uint NvId_GPU_GetPstates20 = 0x6FF81213;
+        private const uint NvId_GPU_GetCurrentPstate = 0x927DA4F6;
+        private const uint NvId_GPU_GetDynamicPstatesInfoEx = 0x60DED2ED;
+        private const uint NvId_GPU_GetThermalSettings = 0xE3640A56;
+        private const uint NvId_GPU_GetAllClockFrequencies = 0xDCB616C3;
+        private const uint NvId_GPU_QueryIlluminationSupport = 0xA629DA31;
+        private const uint NvId_GPU_GetIllumination = 0x9A1B9365;
+        private const uint NvId_GPU_SetIllumination = 0x254A187;
+        private const uint NvId_GPU_ClientIllumDevicesGetInfo = 0xD4100E58;
+        private const uint NvId_GPU_ClientIllumDevicesGetControl = 0x73C01D58;
+        private const uint NvId_GPU_ClientIllumDevicesSetControl = 0x57024C62;
+        private const uint NvId_GPU_ClientIllumZonesGetInfo = 0x4B81241B;
+        private const uint NvId_GPU_ClientIllumZonesGetControl = 0x3DBF5764;
+        private const uint NvId_GPU_ClientIllumZonesSetControl = 0x197D065E;
+        private const uint NvId_Event_RegisterCallback = 0xE6DBEA69;
+        private const uint NvId_Event_UnregisterCallback = 0xDE1F9B45;
+        private const uint NvId_EnumNvidiaDisplayHandle = 0x9ABDD40D;
+        private const uint NvId_EnumNvidiaUnAttachedDisplayHandle = 0x20DE9260;
+        private const uint NvId_CreateDisplayFromUnAttachedDisplay = 0x63F9799E;
+        private const uint NvId_GetAssociatedNvidiaDisplayHandle = 0x35C29134;
+        private const uint NvId_DISP_GetAssociatedUnAttachedNvidiaDisplayHandle = 0xA70503B2;
+        private const uint NvId_GetAssociatedNvidiaDisplayName = 0x22A78B05;
+        private const uint NvId_GetUnAttachedAssociatedDisplayName = 0x4888D790;
+        private const uint NvId_EnableHWCursor = 0x2863148D;
+        private const uint NvId_DisableHWCursor = 0xAB163097;
+        private const uint NvId_GetVBlankCounter = 0x67B5DB55;
+        private const uint NvId_SetRefreshRateOverride = 0x3092AC32;
+        private const uint NvId_GetAssociatedDisplayOutputId = 0xD995937E;
+        private const uint NvId_GetDisplayPortInfo = 0xC64FF367;
+        private const uint NvId_SetDisplayPort = 0xFA13E65A;
+        private const uint NvId_GetHDMISupportInfo = 0x6AE16EC3;
+        private const uint NvId_Disp_InfoFrameControl = 0x6067AF3F;
+        private const uint NvId_Disp_ColorControl = 0x92F9D80D;
+        private const uint NvId_Disp_GetHdrCapabilities = 0x84F2A8DF;
+        private const uint NvId_Disp_HdrColorControl = 0x351DA224;
+        private const uint NvId_DISP_GetTiming = 0x175167E9;
+        private const uint NvId_DISP_GetMonitorCapabilities = 0x3B05C7E1;
+        private const uint NvId_DISP_GetMonitorColorCapabilities = 0x6AE4CFB5;
+        private const uint NvId_DISP_EnumCustomDisplay = 0xA2072D59;
+        private const uint NvId_DISP_TryCustomDisplay = 0x1F7DB630;
+        private const uint NvId_DISP_DeleteCustomDisplay = 0x552E5B9B;
+        private const uint NvId_DISP_SaveCustomDisplay = 0x49882876;
+        private const uint NvId_DISP_RevertCustomDisplayTrial = 0xCBBD40F0;
+        private const uint NvId_GetView = 0xD6B99D89;
+        private const uint NvId_GetViewEx = 0xDBBC0AF4;
+        private const uint NvId_GetSupportedViews = 0x66FB7FC0;
+        private const uint NvId_DISP_GetDisplayIdByDisplayName = 0xAE457190;
+        private const uint NvId_DISP_GetGDIPrimaryDisplayId = 0x1E9D8A31;
+        private const uint NvId_DISP_GetDisplayConfig = 0x11ABCCF8;
+        private const uint NvId_DISP_SetDisplayConfig = 0x5D8CF8DE;
+        private const uint NvId_DISP_GetAdaptiveSyncData = 0xB73D1EE9;
+        private const uint NvId_DISP_SetAdaptiveSyncData = 0x3EEBBA1D;
+        private const uint NvId_DISP_GetVirtualRefreshRateData = 0x8C00429A;
+        private const uint NvId_DISP_SetVirtualRefreshRateData = 0x5ABBE6A3;
+        private const uint NvId_DISP_SetPreferredStereoDisplay = 0xC9D0E25F;
+        private const uint NvId_DISP_GetPreferredStereoDisplay = 0x1F6B4666;
+        private const uint NvId_DISP_GetNvManagedDedicatedDisplays = 0xDBDF0CB2;
+        private const uint NvId_DISP_AcquireDedicatedDisplay = 0x47C917BA;
+        private const uint NvId_DISP_ReleaseDedicatedDisplay = 0x1247825F;
+        private const uint NvId_Mosaic_GetSupportedTopoInfo = 0xFDB63C81;
+        private const uint NvId_Mosaic_GetTopoGroup = 0xCB89381D;
+        private const uint NvId_Mosaic_GetOverlapLimits = 0x989685F0;
+        private const uint NvId_Mosaic_SetCurrentTopo = 0x9B542831;
+        private const uint NvId_Mosaic_GetCurrentTopo = 0xEC32944E;
+        private const uint NvId_Mosaic_EnableCurrentTopo = 0x5F1AA66C;
+        private const uint NvId_Mosaic_GetDisplayViewportsByResolution = 0xDC6DC8D3;
+        private const uint NvId_Mosaic_SetDisplayGrids = 0x4D959A89;
+        private const uint NvId_Mosaic_ValidateDisplayGrids = 0xCF43903D;
+        private const uint NvId_Mosaic_EnumDisplayModes = 0x78DB97D7;
+        private const uint NvId_Mosaic_EnumDisplayGrids = 0xDF2887AF;
+        private const uint NvId_GetSupportedMosaicTopologies = 0x410B5C25;
+        private const uint NvId_GetCurrentMosaicTopology = 0xF60852BD;
+        private const uint NvId_SetCurrentMosaicTopology = 0xD54B8989;
+        private const uint NvId_EnableCurrentMosaicTopology = 0x74073CC9;
+        private const uint NvId_GSync_EnumSyncDevices = 0xD9639601;
+        private const uint NvId_GSync_QueryCapabilities = 0x44A3F1D1;
+        private const uint NvId_GSync_GetTopology = 0x4562BC38;
+        private const uint NvId_GSync_SetSyncStateSettings = 0x60ACDFDD;
+        private const uint NvId_GSync_GetControlParameters = 0x16DE1C6A;
+        private const uint NvId_GSync_SetControlParameters = 0x8BBFF88B;
+        private const uint NvId_GSync_AdjustSyncDelay = 0x2D11FF51;
+        private const uint NvId_GSync_GetSyncStatus = 0xF1F5B434;
+        private const uint NvId_GSync_GetStatusParameters = 0x70D404EC;
+        private const uint NvId_D3D_GetCurrentSLIState = 0x4B708B54;
+        private const uint NvId_D3D9_RegisterResource = 0xA064BDFC;
+        private const uint NvId_D3D9_UnregisterResource = 0xBB2B17AA;
+        private const uint NvId_D3D9_AliasSurfaceAsTexture = 0xE5CEAE41;
+        private const uint NvId_D3D9_StretchRectEx = 0x22DE03AA;
+        private const uint NvId_D3D9_ClearRT = 0x332D3942;
+        private const uint NvId_D3D_GetObjectHandleForResource = 0xFCEAC864;
+        private const uint NvId_D3D_SetResourceHint = 0x6C0ED98C;
+        private const uint NvId_D3D_BeginResourceRendering = 0x91123D6A;
+        private const uint NvId_D3D_EndResourceRendering = 0x37E7191C;
+        private const uint NvId_D3D9_GetSurfaceHandle = 0xF2DD3F2;
+        private const uint NvId_D3D9_VideoSetStereoInfo = 0xB852F4DB;
+        private const uint NvId_D3D10_SetDepthBoundsTest = 0x4EADF5D2;
+        private const uint NvId_D3D11_CreateDevice = 0x6A16D3A0;
+        private const uint NvId_D3D11_CreateDeviceAndSwapChain = 0xBB939EE5;
+        private const uint NvId_D3D11_SetDepthBoundsTest = 0x7AAF7A04;
+        private const uint NvId_D3D11_IsNvShaderExtnOpCodeSupported = 0x5F68DA40;
+        private const uint NvId_D3D11_SetNvShaderExtnSlot = 0x8E90BB9F;
+        private const uint NvId_D3D12_SetNvShaderExtnSlotSpace = 0xAC2DFEB5;
+        private const uint NvId_D3D12_SetNvShaderExtnSlotSpaceLocalThread = 0x43D867C0;
+        private const uint NvId_D3D11_SetNvShaderExtnSlotLocalThread = 0xE6482A0;
+        private const uint NvId_D3D11_BeginUAVOverlapEx = 0xBA08208A;
+        private const uint NvId_D3D11_BeginUAVOverlap = 0x65B93CA8;
+        private const uint NvId_D3D11_EndUAVOverlap = 0x2216A357;
+        private const uint NvId_D3D11_GetResourceHandle = 0x9D52986;
+        private const uint NvId_D3D_SetFPSIndicatorState = 0xA776E8DB;
+        private const uint NvId_D3D9_Present = 0x5650BEB;
+        private const uint NvId_D3D9_QueryFrameCount = 0x9083E53A;
+        private const uint NvId_D3D9_ResetFrameCount = 0xFA6A0675;
+        private const uint NvId_D3D9_QueryMaxSwapGroup = 0x5995410D;
+        private const uint NvId_D3D9_QuerySwapGroup = 0xEBA4D232;
+        private const uint NvId_D3D9_JoinSwapGroup = 0x7D44BB54;
+        private const uint NvId_D3D9_BindSwapBarrier = 0x9C39C246;
+        private const uint NvId_D3D1x_Present = 0x3B845A1;
+        private const uint NvId_D3D1x_QueryFrameCount = 0x9152E055;
+        private const uint NvId_D3D1x_ResetFrameCount = 0xFBBB031A;
+        private const uint NvId_D3D1x_QueryMaxSwapGroup = 0x9BB9D68F;
+        private const uint NvId_D3D1x_QuerySwapGroup = 0x407F67AA;
+        private const uint NvId_D3D1x_JoinSwapGroup = 0x14610CD7;
+        private const uint NvId_D3D1x_BindSwapBarrier = 0x9DE8C729;
+        private const uint NvId_D3D12_QueryPresentBarrierSupport = 0xA15FAEF7;
+        private const uint NvId_D3D12_CreatePresentBarrierClient = 0x4D815DE9;
+        private const uint NvId_D3D12_RegisterPresentBarrierResources = 0xD53C9EF0;
+        private const uint NvId_DestroyPresentBarrierClient = 0x3C5C351B;
+        private const uint NvId_JoinPresentBarrier = 0x17F6BF82;
+        private const uint NvId_LeavePresentBarrier = 0xC3EC5A7F;
+        private const uint NvId_QueryPresentBarrierFrameStatistics = 0x61B844A1;
+        private const uint NvId_D3D12_CreateDDisplayPresentBarrierClient = 0xB5A21987;
+        private const uint NvId_D3D11_CreateRasterizerState = 0xDB8D28AF;
+        private const uint NvId_D3D_ConfigureAnsel = 0x341C6C7F;
+        private const uint NvId_D3D11_CreateTiledTexture2DArray = 0x7886981A;
+        private const uint NvId_D3D11_CheckFeatureSupport = 0x106A487E;
+        private const uint NvId_D3D11_CreateImplicitMSAATexture2D = 0xB8F79632;
+        private const uint NvId_D3D12_CreateCommittedImplicitMSAATexture2D = 0x24C6A07B;
+        private const uint NvId_D3D11_ResolveSubresourceRegion = 0xE6BFEDD6;
+        private const uint NvId_D3D12_ResolveSubresourceRegion = 0xC24A15BF;
+        private const uint NvId_D3D11_TiledTexture2DArrayGetDesc = 0xF1A2B9D5;
+        private const uint NvId_D3D11_UpdateTileMappings = 0x9A06EA07;
+        private const uint NvId_D3D11_CopyTileMappings = 0xC09EE6BC;
+        private const uint NvId_D3D11_TiledResourceBarrier = 0xD6839099;
+        private const uint NvId_D3D11_AliasMSAATexture2DAsNonMSAA = 0xF1C54FC9;
+        private const uint NvId_D3D11_CreateGeometryShaderEx_2 = 0x99ED5C1C;
+        private const uint NvId_D3D11_CreateVertexShaderEx = 0xBEAA0B2;
+        private const uint NvId_D3D11_CreateHullShaderEx = 0xB53CAB00;
+        private const uint NvId_D3D11_CreateDomainShaderEx = 0xA0D7180D;
+        private const uint NvId_D3D11_CreatePixelShaderEx_2 = 0x4162822B;
+        private const uint NvId_D3D11_CreateFastGeometryShaderExplicit = 0x71AB7C9C;
+        private const uint NvId_D3D11_CreateFastGeometryShader = 0x525D43BE;
+        private const uint NvId_D3D11_DecompressView = 0x3A94E822;
+        private const uint NvId_D3D12_CreateGraphicsPipelineState = 0x2FC28856;
+        private const uint NvId_D3D12_CreateComputePipelineState = 0x2762DEAC;
+        private const uint NvId_D3D12_SetDepthBoundsTestValues = 0xB9333FE9;
+        private const uint NvId_D3D12_CreateReservedResource = 0x2C85F101;
+        private const uint NvId_D3D12_CreateHeap = 0x5CB397CF;
+        private const uint NvId_D3D12_CreateHeap2 = 0x924BE9D6;
+        private const uint NvId_D3D12_QueryCpuVisibleVidmem = 0x26322BC3;
+        private const uint NvId_D3D12_ReservedResourceGetDesc = 0x9AA2AABB;
+        private const uint NvId_D3D12_UpdateTileMappings = 0xC6017A7D;
+        private const uint NvId_D3D12_CopyTileMappings = 0x47F78194;
+        private const uint NvId_D3D12_ResourceAliasingBarrier = 0xB942BAB7;
+        private const uint NvId_D3D12_CaptureUAVInfo = 0x6E5EA9DB;
+        private const uint NvId_D3D11_GetResourceGPUVirtualAddressEx = 0xAF6D14DA;
+        private const uint NvId_D3D11_EnumerateMetaCommands = 0xC7453BA8;
+        private const uint NvId_D3D11_CreateMetaCommand = 0xF505FBA0;
+        private const uint NvId_D3D11_InitializeMetaCommand = 0xAEC629E9;
+        private const uint NvId_D3D11_ExecuteMetaCommand = 0x82236C47;
+        private const uint NvId_D3D12_EnumerateMetaCommands = 0xCD9141D8;
+        private const uint NvId_D3D12_CreateMetaCommand = 0xEB29634B;
+        private const uint NvId_D3D12_InitializeMetaCommand = 0xA4125399;
+        private const uint NvId_D3D12_ExecuteMetaCommand = 0xDE24FC3D;
+        private const uint NvId_D3D12_CreateCommittedResource = 0x27E98AE;
+        private const uint NvId_D3D12_GetCopyableFootprints = 0xF6305EB5;
+        private const uint NvId_D3D12_CopyTextureRegion = 0x82B91B25;
+        private const uint NvId_D3D12_IsNvShaderExtnOpCodeSupported = 0x3DFACEC8;
+        private const uint NvId_D3D12_GetOptimalThreadCountForMesh = 0xB43995CB;
+        private const uint NvId_D3D_IsGSyncCapable = 0x9C1EED78;
+        private const uint NvId_D3D_IsGSyncActive = 0xE942B0FF;
+        private const uint NvId_D3D1x_DisableShaderDiskCache = 0xD0CBCA7D;
+        private const uint NvId_D3D11_MultiGPU_GetCaps = 0xD2D25687;
+        private const uint NvId_D3D11_MultiGPU_Init = 0x17BE49E;
+        private const uint NvId_D3D11_CreateMultiGPUDevice = 0xBDB20007;
+        private const uint NvId_D3D_QuerySinglePassStereoSupport = 0x6F5F0A6D;
+        private const uint NvId_D3D_SetSinglePassStereoMode = 0xA39E6E6E;
+        private const uint NvId_D3D12_QuerySinglePassStereoSupport = 0x3B03791B;
+        private const uint NvId_D3D12_SetSinglePassStereoMode = 0x83556D87;
+        private const uint NvId_D3D_QueryMultiViewSupport = 0xB6E0A41C;
+        private const uint NvId_D3D_SetMultiViewMode = 0x8285C8DA;
+        private const uint NvId_D3D_QueryModifiedWSupport = 0xCBF9F4F5;
+        private const uint NvId_D3D_SetModifiedWMode = 0x6EA4BF4;
+        private const uint NvId_D3D12_QueryModifiedWSupport = 0x51235248;
+        private const uint NvId_D3D12_SetModifiedWMode = 0xE1FDABA7;
+        private const uint NvId_D3D_CreateLateLatchObject = 0x2DB27D09;
+        private const uint NvId_D3D_QueryLateLatchSupport = 0x8CECA0EC;
+        private const uint NvId_D3D_RegisterDevice = 0x8C02C4D0;
+        private const uint NvId_D3D11_MultiDrawInstancedIndirect = 0xD4E26BBF;
+        private const uint NvId_D3D11_MultiDrawIndexedInstancedIndirect = 0x59E890F9;
+        private const uint NvId_D3D_ImplicitSLIControl = 0x2AEDE111;
+        private const uint NvId_D3D12_UseDriverHeapPriorities = 0xF0D978A8;
+        private const uint NvId_D3D12_Mosaic_GetCompanionAllocations = 0xA46022C7;
+        private const uint NvId_D3D12_Mosaic_GetViewportAndGpuPartitions = 0xB092B818;
+        private const uint NvId_D3D1x_GetGraphicsCapabilities = 0x52B1499A;
+        private const uint NvId_D3D12_GetGraphicsCapabilities = 0x1E87354;
+        private const uint NvId_D3D11_RSSetExclusiveScissorRects = 0xAE4D73EF;
+        private const uint NvId_D3D11_RSSetViewportsPixelShadingRates = 0x34F7938F;
+        private const uint NvId_D3D11_CreateShadingRateResourceView = 0x99CA2DFF;
+        private const uint NvId_D3D11_RSSetShadingRateResourceView = 0x1B0C2F83;
+        private const uint NvId_D3D11_RSGetPixelShadingRateSampleOrder = 0x92442A1;
+        private const uint NvId_D3D11_RSSetPixelShadingRateSampleOrder = 0xA942373A;
+        private const uint NvId_D3D_InitializeVRSHelper = 0x4780D70B;
+        private const uint NvId_D3D_InitializeNvGazeHandler = 0x5B3B7479;
+        private const uint NvId_D3D_InitializeSMPAssist = 0x42763D0C;
+        private const uint NvId_D3D_QuerySMPAssistSupport = 0xC57921DE;
+        private const uint NvId_D3D_GetSleepStatus = 0xAEF96CA1;
+        private const uint NvId_D3D_SetSleepMode = 0xAC1CA9E0;
+        private const uint NvId_D3D_Sleep = 0x852CD1D2;
+        private const uint NvId_D3D_GetLatency = 0x1A587F9C;
+        private const uint NvId_D3D_SetLatencyMarker = 0xD9984C05;
+        private const uint NvId_D3D12_CreateCubinComputeShader = 0x2A2C79E8;
+        private const uint NvId_D3D12_CreateCubinComputeShaderEx = 0x3151211B;
+        private const uint NvId_D3D12_CreateCubinComputeShaderWithName = 0x1DC7261F;
+        private const uint NvId_D3D12_LaunchCubinShader = 0x5C52BB86;
+        private const uint NvId_D3D12_DestroyCubinComputeShader = 0x7FB785BA;
+        private const uint NvId_D3D12_GetCudaTextureObject = 0x80403FC9;
+        private const uint NvId_D3D12_GetCudaSurfaceObject = 0x48F5B2EE;
+        private const uint NvId_D3D12_IsFatbinPTXSupported = 0x70C07832;
+        private const uint NvId_D3D11_CreateCubinComputeShader = 0xED98181;
+        private const uint NvId_D3D11_CreateCubinComputeShaderEx = 0x32C2A0F6;
+        private const uint NvId_D3D11_CreateCubinComputeShaderWithName = 0xB672BE19;
+        private const uint NvId_D3D11_LaunchCubinShader = 0x427E236D;
+        private const uint NvId_D3D11_DestroyCubinComputeShader = 0x1682C86;
+        private const uint NvId_D3D11_IsFatbinPTXSupported = 0x6086BD93;
+        private const uint NvId_D3D11_CreateUnorderedAccessView = 0x74A497A1;
+        private const uint NvId_D3D11_CreateShaderResourceView = 0x65CB431E;
+        private const uint NvId_D3D11_CreateSamplerState = 0x89ECA416;
+        private const uint NvId_D3D11_GetCudaTextureObject = 0x9006FA68;
+        private const uint NvId_D3D11_GetResourceGPUVirtualAddress = 0x1819B423;
+        private const uint NvId_VIO_GetCapabilities = 0x1DC91303;
+        private const uint NvId_VIO_Open = 0x44EE4841;
+        private const uint NvId_VIO_Close = 0xD01BD237;
+        private const uint NvId_VIO_Status = 0xE6CE4F1;
+        private const uint NvId_VIO_SyncFormatDetect = 0x118D48A3;
+        private const uint NvId_VIO_GetConfig = 0xD34A789B;
+        private const uint NvId_VIO_SetConfig = 0xE4EEC07;
+        private const uint NvId_VIO_SetCSC = 0xA1EC8D74;
+        private const uint NvId_VIO_GetCSC = 0x7B0D72A3;
+        private const uint NvId_VIO_SetGamma = 0x964BF452;
+        private const uint NvId_VIO_GetGamma = 0x51D53D06;
+        private const uint NvId_VIO_SetSyncDelay = 0x2697A8D1;
+        private const uint NvId_VIO_GetSyncDelay = 0x462214A9;
+        private const uint NvId_VIO_GetPCIInfo = 0xB981D935;
+        private const uint NvId_VIO_IsRunning = 0x96BD040E;
+        private const uint NvId_VIO_Start = 0xCDE8E1A3;
+        private const uint NvId_VIO_Stop = 0x6BA2A5D6;
+        private const uint NvId_VIO_IsFrameLockModeCompatible = 0x7BF0A94D;
+        private const uint NvId_VIO_EnumDevices = 0xFD7C5557;
+        private const uint NvId_VIO_QueryTopology = 0x869534E2;
+        private const uint NvId_VIO_EnumSignalFormats = 0xEAD72FE4;
+        private const uint NvId_VIO_EnumDataFormats = 0x221FA8E8;
+        private const uint NvId_Stereo_CreateConfigurationProfileRegistryKey = 0xBE7692EC;
+        private const uint NvId_Stereo_DeleteConfigurationProfileRegistryKey = 0xF117B834;
+        private const uint NvId_Stereo_SetConfigurationProfileValue = 0x24409F48;
+        private const uint NvId_Stereo_DeleteConfigurationProfileValue = 0x49BCEECF;
+        private const uint NvId_Stereo_Enable = 0x239C4545;
+        private const uint NvId_Stereo_Disable = 0x2EC50C2B;
+        private const uint NvId_Stereo_IsEnabled = 0x348FF8E1;
+        private const uint NvId_Stereo_GetStereoSupport = 0x296C434D;
+        private const uint NvId_Stereo_CreateHandleFromIUnknown = 0xAC7E37F4;
+        private const uint NvId_Stereo_DestroyHandle = 0x3A153134;
+        private const uint NvId_Stereo_Activate = 0xF6A1AD68;
+        private const uint NvId_Stereo_Deactivate = 0x2D68DE96;
+        private const uint NvId_Stereo_IsActivated = 0x1FB0BC30;
+        private const uint NvId_Stereo_GetSeparation = 0x451F2134;
+        private const uint NvId_Stereo_SetSeparation = 0x5C069FA3;
+        private const uint NvId_Stereo_DecreaseSeparation = 0xDA044458;
+        private const uint NvId_Stereo_IncreaseSeparation = 0xC9A8ECEC;
+        private const uint NvId_Stereo_GetConvergence = 0x4AB00934;
+        private const uint NvId_Stereo_SetConvergence = 0x3DD6B54B;
+        private const uint NvId_Stereo_DecreaseConvergence = 0x4C87E317;
+        private const uint NvId_Stereo_IncreaseConvergence = 0xA17DAABE;
+        private const uint NvId_Stereo_GetFrustumAdjustMode = 0xE6839B43;
+        private const uint NvId_Stereo_SetFrustumAdjustMode = 0x7BE27FA2;
+        private const uint NvId_Stereo_CaptureJpegImage = 0x932CB140;
+        private const uint NvId_Stereo_InitActivation = 0xC7177702;
+        private const uint NvId_Stereo_Trigger_Activation = 0xD6C6CD2;
+        private const uint NvId_Stereo_CapturePngImage = 0x8B7E99B5;
+        private const uint NvId_Stereo_ReverseStereoBlitControl = 0x3CD58F89;
+        private const uint NvId_Stereo_SetNotificationMessage = 0x6B9B409E;
+        private const uint NvId_Stereo_SetActiveEye = 0x96EEA9F8;
+        private const uint NvId_Stereo_SetDriverMode = 0x5E8F0BEC;
+        private const uint NvId_Stereo_GetEyeSeparation = 0xCE653127;
+        private const uint NvId_Stereo_IsWindowedModeSupported = 0x40C8ED5E;
+        private const uint NvId_Stereo_SetSurfaceCreationMode = 0xF5DCFCBA;
+        private const uint NvId_Stereo_GetSurfaceCreationMode = 0x36F1C736;
+        private const uint NvId_Stereo_Debug_WasLastDrawStereoized = 0xED4416C5;
+        private const uint NvId_Stereo_SetDefaultProfile = 0x44F0ECD1;
+        private const uint NvId_Stereo_GetDefaultProfile = 0x624E21C2;
+        private const uint NvId_D3D1x_CreateSwapChain = 0x1BC21B66;
+        private const uint NvId_D3D9_CreateSwapChain = 0x1A131E09;
+        private const uint NvId_DRS_CreateSession = 0x694D52E;
+        private const uint NvId_DRS_DestroySession = 0xDAD9CFF8;
+        private const uint NvId_DRS_LoadSettings = 0x375DBD6B;
+        private const uint NvId_DRS_SaveSettings = 0xFCBC7E14;
+        private const uint NvId_DRS_LoadSettingsFromFile = 0xD3EDE889;
+        private const uint NvId_DRS_SaveSettingsToFile = 0x2BE25DF8;
+        private const uint NvId_DRS_CreateProfile = 0xCC176068;
+        private const uint NvId_DRS_DeleteProfile = 0x17093206;
+        private const uint NvId_DRS_SetCurrentGlobalProfile = 0x1C89C5DF;
+        private const uint NvId_DRS_GetCurrentGlobalProfile = 0x617BFF9F;
+        private const uint NvId_DRS_GetProfileInfo = 0x61CD6FD6;
+        private const uint NvId_DRS_SetProfileInfo = 0x16ABD3A9;
+        private const uint NvId_DRS_FindProfileByName = 0x7E4A9A0B;
+        private const uint NvId_DRS_EnumProfiles = 0xBC371EE0;
+        private const uint NvId_DRS_GetNumProfiles = 0x1DAE4FBC;
+        private const uint NvId_DRS_CreateApplication = 0x4347A9DE;
+        private const uint NvId_DRS_DeleteApplicationEx = 0xC5EA85A1;
+        private const uint NvId_DRS_DeleteApplication = 0x2C694BC6;
+        private const uint NvId_DRS_GetApplicationInfo = 0xED1F8C69;
+        private const uint NvId_DRS_EnumApplications = 0x7FA2173A;
+        private const uint NvId_DRS_FindApplicationByName = 0xEEE566B2;
+        private const uint NvId_DRS_SetSetting = 0x577DD202;
+        private const uint NvId_DRS_GetSetting = 0x73BF8338;
+        private const uint NvId_DRS_EnumSettings = 0xAE3039DA;
+        private const uint NvId_DRS_EnumAvailableSettingIds = 0xF020614A;
+        private const uint NvId_DRS_EnumAvailableSettingValues = 0x2EC39F90;
+        private const uint NvId_DRS_GetSettingIdFromName = 0xCB7309CD;
+        private const uint NvId_DRS_GetSettingNameFromId = 0xD61CBE6E;
+        private const uint NvId_DRS_DeleteProfileSetting = 0xE4A26362;
+        private const uint NvId_DRS_RestoreAllDefaults = 0x5927B094;
+        private const uint NvId_DRS_RestoreProfileDefault = 0xFA5F6134;
+        private const uint NvId_DRS_RestoreProfileDefaultSetting = 0x53F0381E;
+        private const uint NvId_DRS_GetBaseProfile = 0xDA8466A0;
+        private const uint NvId_SYS_GetChipSetInfo = 0x53DABBCA;
+        private const uint NvId_SYS_GetLidAndDockInfo = 0xCDA14D8A;
+        private const uint NvId_SYS_GetDisplayIdFromGpuAndOutputId = 0x8F2BAB4;
+        private const uint NvId_SYS_GetGpuAndOutputIdFromDisplayId = 0x112BA1A5;
+        private const uint NvId_SYS_GetPhysicalGpuFromDisplayId = 0x9EA74659;
+        private const uint NvId_SYS_GetDisplayDriverInfo = 0x721FACEB;
+        private const uint NvId_GPU_ClientRegisterForUtilizationSampleUpdates = 0xADEEAF67;
+        private const uint NvId_Unload = 0xD7C61344;
 
         #endregion
 
@@ -3652,7 +4384,6 @@ namespace DisplayMagicianShared.NVIDIA
         private const UInt32 NvId_GetDriverModel = 0x25EEB2C4;
         private const UInt32 NvId_GetDVCInfo = 0x4085DE45;
         private const UInt32 NvId_GetDVCInfoEx = 0x0E45002D;
-        private const UInt32 NvId_GetGPUIDfromPhysicalGPU = 0x6533EA3E;
         private const UInt32 NvId_GetHDCPLinkParameters = 0x0B3BB0772;
         private const UInt32 NvId_GetHUEInfo = 0x95B64341;
         private const UInt32 NvId_GetHybridMode = 0x0E23B68C1;
@@ -3663,7 +4394,6 @@ namespace DisplayMagicianShared.NVIDIA
         private const UInt32 NvId_GetInvalidGpuTopologies = 0x15658BE6;
         private const UInt32 NvId_GetLoadedMicrocodePrograms = 0x919B3136;
         private const UInt32 NvId_GetPhysicalGPUFromDisplay = 0x1890E8DA;
-        private const UInt32 NvId_GetPhysicalGPUFromGPUID = 0x5380AD1A;
         private const UInt32 NvId_GetPVExtName = 0x2F5B08E0;
         private const UInt32 NvId_GetPVExtProfile = 0x1B1B9A16;
         private const UInt32 NvId_GetScalingCaps = 0x8E875CF9;
@@ -3689,7 +4419,6 @@ namespace DisplayMagicianShared.NVIDIA
         private const UInt32 NvId_GPU_ClientPowerPoliciesSetStatus = 0x0AD95F5ED;
         private const UInt32 NvId_GPU_ClientPowerTopologyGetInfo = 0x0A4DFD3F2;
         private const UInt32 NvId_GPU_ClientPowerTopologyGetStatus = 0x0EDCF624E;
-        private const UInt32 NvId_GPU_CudaEnumComputeCapableGpus = 0x5786CC6E;
         private const UInt32 NvId_GPU_EnableDynamicPstates = 0x0FA579A0F;
         private const UInt32 NvId_GPU_EnableOverclockedPstates = 0x0B23B70EE;
         private const UInt32 NvId_GPU_Get_DisplayPort_DongleInfo = 0x76A70E8D;
@@ -5715,7 +6444,7 @@ namespace DisplayMagicianShared.NVIDIA
         {
             NVAPI_STATUS status;
 
-            if (GPU_GetEDIDInternal != null)
+            if (GetLogicalGPUFromPhysicalGPUInternal != null)
             {
                 status = GetLogicalGPUFromPhysicalGPUInternal(physicalGPUHandle, out LogicalGpuHandle lgpu);
                 logicalGPUHandle = lgpu;
@@ -5728,6 +6457,580 @@ namespace DisplayMagicianShared.NVIDIA
 
             return status;
         }
+
+        //NVAPI_INTERFACE NvAPI_DRS_CreateSession (NvDRSSessionHandle* phSession)	
+        private delegate NVAPI_STATUS DRS_CreateSessionDelegate(
+            [Out] out NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_CreateSessionDelegate DRS_CreateSessionInternal;
+        /// <summary>
+        /// This API allocates memory and initializes the session.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_CreateSession(out NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_CreateSessionInternal != null)
+            {
+                status = DRS_CreateSessionInternal(out NvDRSSessionHandle drsSession);
+                drsSessionHandle = drsSession;
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSessionHandle = new NvDRSSessionHandle();
+            }
+
+            return status;
+        }
+
+
+        //NVAPI_INTERFACE NvAPI_DRS_DestroySession (NvDRSSessionHandle* phSession)	
+        private delegate NVAPI_STATUS DRS_DestroySessionDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_DestroySessionDelegate DRS_DestroySessionInternal;
+        /// <summary>
+        /// This API frees the allocation: cleanup of NvDrsSession.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_DestroySession(NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_DestroySessionInternal != null)
+            {
+                status = DRS_DestroySessionInternal(drsSessionHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_DRS_LoadSettings(NvDRSSessionHandle hSession);
+        private delegate NVAPI_STATUS DRS_LoadSettingsDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_LoadSettingsDelegate DRS_LoadSettingsInternal;
+        /// <summary>
+        /// This API loads and parses the settings data.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_LoadSettings(NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_LoadSettingsInternal != null)
+            {
+                status = DRS_LoadSettingsInternal(drsSessionHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_DRS_SaveSettings(NvDRSSessionHandle hSession);
+        private delegate NVAPI_STATUS DRS_SaveSettingsDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_SaveSettingsDelegate DRS_SaveSettingsInternal;
+        /// <summary>
+        /// This API saves the settings data to the system.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SaveSettings(NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SaveSettingsInternal != null)
+            {
+                status = DRS_SaveSettingsInternal(drsSessionHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle* phProfile )
+        private delegate NVAPI_STATUS DRS_GetBaseProfileDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [Out] out NvDRSProfileHandle drsProfileHandle);
+        private static readonly DRS_GetBaseProfileDelegate DRS_GetBaseProfileInternal;
+        /// <summary>
+        /// This API returns the handle to the current global profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetBaseProfile(NvDRSSessionHandle drsSessionHandle, out NvDRSProfileHandle drsProfileHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetBaseProfileInternal != null)
+            {
+                status = DRS_GetBaseProfileInternal(drsSessionHandle, out drsProfileHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileHandle = new NvDRSProfileHandle();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle* phProfile )
+        private delegate NVAPI_STATUS DRS_GetCurrentGlobalProfileDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [Out] out NvDRSProfileHandle drsProfileHandle);
+        private static readonly DRS_GetCurrentGlobalProfileDelegate DRS_GetCurrentGlobalProfileInternal;
+        /// <summary>
+        /// This API returns the handle to the current global profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle drsSessionHandle, out NvDRSProfileHandle drsProfileHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetCurrentGlobalProfileInternal != null)
+            {
+                status = DRS_GetCurrentGlobalProfileInternal(drsSessionHandle, out drsProfileHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileHandle = new NvDRSProfileHandle();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_SetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvAPI_UnicodeString wszGlobalProfileName)		
+        private delegate NVAPI_STATUS DRS_SetCurrentGlobalProfileDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] string drsProfileName);
+        private static readonly DRS_SetCurrentGlobalProfileDelegate DRS_SetCurrentGlobalProfileInternal;
+        /// <summary>
+        /// This API returns the handle to the current global profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileName"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SetCurrentGlobalProfile(NvDRSSessionHandle drsSessionHandle, string drsProfileName)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SetCurrentGlobalProfileInternal != null)
+            {
+                status = DRS_SetCurrentGlobalProfileInternal(drsSessionHandle, drsProfileName);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetProfileInfo(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_PROFILE* pProfileInfo )
+        private delegate NVAPI_STATUS DRS_GetProfileInfoDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In][Out] ref NVDRS_PROFILE_V1 drsProfileInfo);
+        private static readonly DRS_GetProfileInfoDelegate DRS_GetProfileInfoInternal;
+        /// <summary>
+        /// This API gets information about the given profile. User needs to specify the name of the Profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsProfileInfo"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetProfileInfo(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, ref NVDRS_PROFILE_V1 drsProfileInfo)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetProfileInfoInternal != null)
+            {
+                drsProfileInfo.Version = NVImport.NVDRS_PROFILE_V1_VER;
+                status = DRS_GetProfileInfoInternal(drsSessionHandle, drsProfileHandle, ref drsProfileInfo);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileInfo = new NVDRS_PROFILE_V1();
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_SetProfileInfo(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_PROFILE* pProfileInfo )
+        private delegate NVAPI_STATUS DRS_SetProfileInfoDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] NVDRS_PROFILE_V1 drsProfileInfo);
+        private static readonly DRS_SetProfileInfoDelegate DRS_SetProfileInfoInternal;
+        /// <summary>
+        /// This API gets information about the given profile. User needs to specify the name of the Profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsProfileInfo"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SetProfileInfo(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, NVDRS_PROFILE_V1 drsProfileInfo)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SetProfileInfoInternal != null)
+            {
+                status = DRS_SetProfileInfoInternal(drsSessionHandle, drsProfileHandle, drsProfileInfo);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumProfiles(NvDRSSessionHandle hSession, NvU32 index, NvDRSProfileHandle* phProfile)
+        private delegate NVAPI_STATUS DRS_EnumProfilesDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] UInt32 drsIndex,
+            [Out] out NvDRSProfileHandle drsProfileHandle);
+        private static readonly DRS_EnumProfilesDelegate DRS_EnumProfilesInternal;
+        /// <summary>
+        /// This API enumerates through all the profiles in the session.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsIndex"></param>
+        /// <param name="drsProfileInfo"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumProfiles(NvDRSSessionHandle drsSessionHandle, UInt32 drsIndex, out NvDRSProfileHandle drsProfileHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumProfilesInternal != null)
+            {
+                status = DRS_EnumProfilesInternal(drsSessionHandle, drsIndex, out drsProfileHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileHandle = new NvDRSProfileHandle();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetNumProfiles(NvDRSSessionHandle hSession, NvU32 *numProfiles);
+        private delegate NVAPI_STATUS DRS_GetNumProfilesDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [Out] out UInt32 drsNumProfiles);
+        private static readonly DRS_GetNumProfilesDelegate DRS_GetNumProfilesInternal;
+        /// <summary>
+        /// This API obtains the number of profiles in the current session object.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsNumProfiles"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetNumProfiles(NvDRSSessionHandle drsSessionHandle, out UInt32 drsNumProfiles)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetNumProfilesInternal != null)
+            {
+                status = DRS_GetNumProfilesInternal(drsSessionHandle, out drsNumProfiles);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsNumProfiles = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_SetSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_SETTING* pSetting)
+        private delegate NVAPI_STATUS DRS_SetSettingDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] NVDRS_SETTING_V1 drsSetting);
+        private static readonly DRS_SetSettingDelegate DRS_SetSettingInternal;
+        /// <summary>
+        /// This API adds/modifies a setting to a profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsSetting"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SetSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, NVDRS_SETTING_V1 drsSetting)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SetSettingInternal != null)
+            {
+                status = DRS_SetSettingInternal(drsSessionHandle, drsProfileHandle, drsSetting);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSetting = new NVDRS_SETTING_V1();
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 settingId, NVDRS_SETTING* pSetting)
+        private delegate NVAPI_STATUS DRS_GetSettingDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] UInt32 drsSettingId,
+            [Out] out NVDRS_SETTING_V1 drsSetting);
+        private static readonly DRS_GetSettingDelegate DRS_GetSettingInternal;
+        /// <summary>
+        /// This API gets information about the given setting.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsSetting"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsSettingId, out NVDRS_SETTING_V1 drsSetting)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetSettingInternal != null)
+            {
+                status = DRS_GetSettingInternal(drsSessionHandle, drsProfileHandle, drsSettingId, out drsSetting);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSetting = new NVDRS_SETTING_V1();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumSettings(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 startIndex, NvU32* settingsCount, NVDRS_SETTING* pSetting)
+        private delegate NVAPI_STATUS DRS_EnumSettingsDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] UInt32 drsStartIndex,
+            [In][Out] ref UInt32 drsSettingCount,
+            [In][Out] NVDRS_SETTING_V1[] drsSettings);
+        private static readonly DRS_EnumSettingsDelegate DRS_EnumSettingsInternal;
+        /// <summary>
+        /// This API enumerates all the settings of a given profile from startIndex to the maximum length.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsStartIndex"></param>
+        /// <param name="drsSettingCount"></param>
+        /// <param name="drsSettings"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumSettings(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsStartIndex, ref UInt32 drsSettingCount, ref NVDRS_SETTING_V1[] drsSettings)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumSettingsInternal != null)
+            {
+                if (drsSettingCount == 0)
+                {
+                    drsSettingCount = NVImport.NVAPI_SETTING_MAX_VALUES;
+                }
+                NVDRS_SETTING_V1[] drsSettingsInternal = new NVDRS_SETTING_V1[drsSettingCount];
+                for (int i = 0; i < drsSettingCount; i++)
+                {
+                    drsSettingsInternal[i].InternalVersion = NVImport.NVDRS_SETTING_V1_VER;
+
+                }
+                status = DRS_EnumSettingsInternal(drsSessionHandle, drsProfileHandle, drsStartIndex, ref drsSettingCount, drsSettingsInternal);
+                drsSettings = new NVDRS_SETTING_V1[drsSettingCount];
+                Array.Copy(drsSettingsInternal, drsSettings, drsSettingCount);
+                /*for (int i = 0; i < drsSettingCount; i++)
+                {
+                    drsSettings[i] = drsSettingsInternal[i].Clone();
+                }*/
+
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettings = new NVDRS_SETTING_V1[0];
+                drsSettingCount = 0;
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumAvailableSettingIds(NvU32* pSettingIds, NvU32* pMaxCount)
+        private delegate NVAPI_STATUS DRS_EnumAvailableSettingIdsDelegate(
+            [In][Out][MarshalAs(UnmanagedType.SysUInt, SizeConst = (int)Int32.MaxValue)] UInt32[] drsSettingsIds,
+            [In][Out] ref UInt32 drsSettingCount);
+        private static readonly DRS_EnumAvailableSettingIdsDelegate DRS_EnumAvailableSettingIdsInternal;
+        /// <summary>
+        /// This API enumerates all the Ids of all the settings recognized by NVAPI.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingsIds"></param>
+        /// <param name="drsSettingCount"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumAvailableSettingIds(ref UInt32[] drsSettingsIds, ref UInt32 drsSettingCount)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumAvailableSettingIdsInternal != null)
+            {
+                UInt32 drsSettingCountInternal = Int32.MaxValue;
+                UInt32[] drsSettingIdsInternal = new UInt32[drsSettingCountInternal];
+                status = DRS_EnumAvailableSettingIdsInternal(drsSettingIdsInternal, ref drsSettingCountInternal);
+                drsSettingCount = drsSettingCountInternal;
+                drsSettingsIds = new UInt32[drsSettingCount];
+                Array.Copy(drsSettingIdsInternal, drsSettingsIds, drsSettingCount);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingsIds = new UInt32[0];
+                drsSettingCount = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumAvailableSettingValues(NvU32 settingId, NvU32* pMaxNumValues, NVDRS_SETTING_VALUES* pSettingValues)
+        private delegate NVAPI_STATUS DRS_EnumAvailableSettingValuesDelegate(
+            [In] UInt32 drsSettingId,
+            [In, Out] ref UInt32 drsMaxNumValues,
+            [In][Out] NVDRS_SETTING_VALUES_V1[] drsSettingsValues);
+        private static readonly DRS_EnumAvailableSettingValuesDelegate DRS_EnumAvailableSettingValuesInternal;
+        /// <summary>
+        /// This API enumerates all available setting values for a given setting.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingId"></param>
+        /// <param name="drsMaxNumValues"></param>
+        /// <param name="drsSettingsValues"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumAvailableSettingValues(UInt32 drsSettingId, ref UInt32 drsMaxNumValues, ref NVDRS_SETTING_VALUES_V1[] drsSettingsValues)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumAvailableSettingValuesInternal != null)
+            {
+                status = DRS_EnumAvailableSettingValuesInternal(drsSettingId, ref drsMaxNumValues, drsSettingsValues);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingsValues = new NVDRS_SETTING_VALUES_V1[0];
+                drsMaxNumValues = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetSettingIdFromName(NvAPI_UnicodeString settingName, NvU32* pSettingId)
+        private delegate NVAPI_STATUS DRS_GetSettingIdFromNameDelegate(
+            [In] string drsSettingName,
+            [Out] out UInt32 drsSettingId);
+        private static readonly DRS_GetSettingIdFromNameDelegate DRS_GetSettingIdFromNameInternal;
+        /// <summary>
+        /// This API gets the binary ID of a setting given the setting name.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingName"></param>
+        /// <param name="drsSettingId"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetSettingIdFromName(string drsSettingName, out UInt32 drsSettingId)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetSettingIdFromNameInternal != null)
+            {
+                status = DRS_GetSettingIdFromNameInternal(drsSettingName, out drsSettingId);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingId = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetSettingNameFromId(NvU32 settingId, NvAPI_UnicodeString* pSettingName)
+        private delegate NVAPI_STATUS DRS_GetSettingNameFromIdDelegate(
+            [In] UInt32 drsSettingId,
+            [Out] out string drsSettingName);
+        private static readonly DRS_GetSettingNameFromIdDelegate DRS_GetSettingNameFromIdInternal;
+        /// <summary>
+        /// This API gets the setting name given the binary ID.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingId"></param>
+        /// <param name="drsSettingName"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetSettingNameFromId(UInt32 drsSettingId, out string drsSettingName)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetSettingNameFromIdInternal != null)
+            {
+                status = DRS_GetSettingNameFromIdInternal(drsSettingId, out drsSettingName);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingName = "";
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_RestoreProfileDefaultSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 settingId);
+        private delegate NVAPI_STATUS DRS_RestoreProfileDefaultSettingDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] UInt32 drsSettingId);
+        private static readonly DRS_RestoreProfileDefaultSettingDelegate DRS_RestoreProfileDefaultSettingInternal;
+        /// <summary>
+        /// This API gets information about the given setting.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_RestoreProfileDefaultSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsSettingId)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_RestoreProfileDefaultSettingInternal != null)
+            {
+                status = DRS_RestoreProfileDefaultSettingInternal(drsSessionHandle, drsProfileHandle, drsSettingId);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_CreateProfile(NvDRSSessionHandle hSession, NVDRS_PROFILE* pProfileInfo, NvDRSProfileHandle* phProfile)
+
+        // NVAPI_INTERFACE NvAPI_DRS_DeleteProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile)
 
     }
 }

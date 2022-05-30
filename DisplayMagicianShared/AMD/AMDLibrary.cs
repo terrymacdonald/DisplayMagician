@@ -223,7 +223,7 @@ namespace DisplayMagicianShared.AMD
             {
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
-            }            
+            }
 
         }
 
@@ -937,7 +937,7 @@ namespace DisplayMagicianShared.AMD
                     }
 
                     myDisplayConfig.HdrConfigs = new Dictionary<int, AMD_HDR_CONFIG>();
-                    
+
                     // Now we need to get all the displays connected to this adapter so that we can get their HDR state
                     foreach (var displayTarget in displayTargetArray)
                     {
@@ -946,7 +946,7 @@ namespace DisplayMagicianShared.AMD
                         ADL_DISPLAY_CONNECTION_TYPE displayConnector;
                         try
                         {
-                            displayConnector = displayInfoArray.First(d => d.DisplayID == displayTarget.DisplayID).DisplayConnector;                            
+                            displayConnector = displayInfoArray.First(d => d.DisplayID == displayTarget.DisplayID).DisplayConnector;
                         }
                         catch (Exception ex)
                         {

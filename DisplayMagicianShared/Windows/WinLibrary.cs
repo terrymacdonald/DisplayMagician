@@ -52,11 +52,15 @@ namespace DisplayMagicianShared.Windows
 
         public override bool Equals(object obj) => obj is DISPLAY_SOURCE other && this.Equals(other);
         public bool Equals(DISPLAY_SOURCE other)
-        => true;
+        => SourceId.Equals(other.SourceId) &&
+           TargetId.Equals(other.TargetId) &&
+            DevicePath.Equals(other.DevicePath) &&
+            SourceDpiScalingRel.Equals(other.SourceDpiScalingRel);
+        //=> true;
         public override int GetHashCode()
         {
             //return 300;
-            return (AdapterId, SourceId, TargetId, DevicePath, SourceDpiScalingRel).GetHashCode();
+            return (SourceId, TargetId, DevicePath, SourceDpiScalingRel).GetHashCode();
         }
 
         public static bool operator ==(DISPLAY_SOURCE lhs, DISPLAY_SOURCE rhs) => lhs.Equals(rhs);
@@ -83,7 +87,8 @@ namespace DisplayMagicianShared.Windows
 
         public override bool Equals(object obj) => obj is WINDOWS_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(WINDOWS_DISPLAY_CONFIG other)
-        => IsCloned == other.IsCloned &&
+        {
+            if (!(IsCloned == other.IsCloned &&
            DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
            DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
            DisplayHDRStates.SequenceEqual(other.DisplayHDRStates) &&
@@ -91,7 +96,24 @@ namespace DisplayMagicianShared.Windows
            // Additionally, we had to disable the DEviceKey from the equality testing within the GDI library itself as that waould also change after changing back from NVIDIA surround
            // This still allows us to detect when refresh rates change, which will allow DisplayMagician to detect profile differences.
            GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
-           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
+           DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers)))
+            {
+                return false;
+            }
+
+            // Now we need to go through the values to make sure they are the same, but ignore the keys (as they change after each reboot!)
+            for (int i = 0; i < DisplaySources.Count; i++)
+            {
+                if (!DisplaySources.ElementAt(i).Value.SequenceEqual(other.DisplaySources.ElementAt(i).Value))
+                {
+                    return false;
+                }
+            }
+            return true;
+
+
+        }
+
         // NOTE: I have disabled the TaskBar specific matching for now due to errors I cannot fix
         // WinLibrary will still track the location of the taskbars, but won't actually set them as the setting of the taskbars doesnt work at the moment.
         /*&&
