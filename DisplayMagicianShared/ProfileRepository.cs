@@ -846,7 +846,32 @@ namespace DisplayMagicianShared
             // We do the actual change we were trying to do
             try
             {
-                // Nothing to patch at the moment!                
+                // Add in a default Windows DPI information we need
+                // This adds a 'SourceDpiScalingRel' with a default of 100% (integer 0) into each DisplaySources entry
+                // but only if the existing entry is a 'null'. This only occurs when the SourceDpiScalingRel is unset.
+                // This migration will add the default 100% scaling so that the ProfileRepository Load function works as intended.
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows DPI settings.");
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+
+                    //JObject WindowsTaskBarSettings = (JObject)profile.SelectToken("WindowsDisplayConfig.TaskBarSettings");                    
+                    var dsList = profile["WindowsDisplayConfig"]["DisplaySources"].Children();
+                    IList<DISPLAY_SOURCE> displaySources = new List<DISPLAY_SOURCE>();
+                    foreach (var dsListItem in dsList)
+                    {
+                        var displaySourceArray = dsListItem.Values().ToArray();
+                        for (int j=0; j<displaySourceArray.Length; j++)
+                        {
+                            if (displaySourceArray[j]["SourceDpiScalingRel"] == null)
+                            {
+                                displaySourceArray[j]["SourceDpiScalingRel"] = 0;
+                                changedJson = true;
+                            }
+                        }                        
+                    }
+
+                }
             }
             catch (JsonReaderException ex)
             {
