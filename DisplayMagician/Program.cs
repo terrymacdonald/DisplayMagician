@@ -830,16 +830,16 @@ namespace DisplayMagician {
                     }
                 }
                 logger.Info("Program/Main: Starting Normally...");
+               
+                // Try to load all the games in parallel to this process
+                //Task.Run(() => LoadGamesInBackground());
+                logger.Debug($"Program/Main: Try to load all the Games in the background to avoid locking the UI");
+                GameLibrary.LoadGamesInBackground();
 
                 // Set up the AppMainForm variable that we need to use later
                 AppMainForm = new MainForm();
                 AppMainForm.Load += MainForm_LoadCompletedAndOpenApp;
 
-                // Try to load all the games in parallel to this process
-                //Task.Run(() => LoadGamesInBackground());
-                logger.Debug($"Program/Main: Try to load all the Games in the background to avoid locking the UI");
-                GameLibrary.LoadGamesInBackground();
-                
                 ERRORLEVEL errLevel = StartUpApplication();
                 DeRegisterDisplayMagicianWithWindows();
                 return (int)errLevel;
