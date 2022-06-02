@@ -741,7 +741,14 @@ namespace DisplayMagicianShared
                                 args.ErrorContext.Handled = true;
                             },
                         };                       
-                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);                       
+                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                        // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
+                        foreach (ProfileItem profile in _allProfiles)
+                        {
+                            WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
+                            WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                        }
 
                     }
                     catch (JsonReaderException ex)

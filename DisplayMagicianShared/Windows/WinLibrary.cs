@@ -245,7 +245,7 @@ namespace DisplayMagicianShared.Windows
             return myDefaultConfig;
         }
 
-        private void PatchAdapterIDs(ref WINDOWS_DISPLAY_CONFIG savedDisplayConfig)
+        public void PatchWindowsDisplayConfig(ref WINDOWS_DISPLAY_CONFIG savedDisplayConfig)
         {
 
             Dictionary<ulong, ulong> adapterOldToNewMap = new Dictionary<ulong, ulong>();
@@ -281,6 +281,34 @@ namespace DisplayMagicianShared.Windows
             }
 
             ulong newAdapterValue = 0;
+            ulong oldAdapterValue = 0;
+
+            try
+            {
+                // Update the DisplayAdapters with the current adapter id
+                SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Going through the display adatpers to update the adapter id");
+                ulong[] currentKeys = savedDisplayConfig.DisplayAdapters.Keys.ToArray();
+                var currentLength = savedDisplayConfig.DisplayAdapters.Count;
+                for (int i = 0; i < currentLength; i++)
+                {
+                    oldAdapterValue = currentKeys[i];
+                    // Change the Dictionary Key AdapterIDs
+                    if (adapterOldToNewMap.ContainsKey(oldAdapterValue))
+                    {
+                        // We get here if there is a matching adapter
+                        newAdapterValue = adapterOldToNewMap[oldAdapterValue];
+                        // Add a new dictionary key with the old value
+                        savedDisplayConfig.DisplayAdapters.Add(newAdapterValue, savedDisplayConfig.DisplayAdapters[oldAdapterValue]);
+                        // Remove the old dictionary key
+                        savedDisplayConfig.DisplayAdapters.Remove(oldAdapterValue);
+                        SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Updated DisplayAdapter from adapter {oldAdapterValue} to adapter {newAdapterValue} instead.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.logger.Error(ex, "WinLibrary/PatchAdapterIDs: Exception while going through the display adapters update the adapter ids");
+            }
 
             try
             {
@@ -327,7 +355,7 @@ namespace DisplayMagicianShared.Windows
                         // We get here if there is a matching adapter
                         newAdapterValue = adapterOldToNewMap[savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value];
                         savedDisplayConfig.DisplayConfigModes[i].AdapterId = AdapterValueToLUID(newAdapterValue);
-                        SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Updated DisplayConfig Mode #{i} from adapter {savedDisplayConfig.DisplayConfigPaths[i].SourceInfo.AdapterId.Value} to adapter {newAdapterValue} instead.");
+                        SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Updated DisplayConfig Mode #{i} from adapter {savedDisplayConfig.DisplayConfigModes[i].AdapterId.Value} to adapter {newAdapterValue} instead.");
                     }
                     else
                     {
@@ -377,6 +405,7 @@ namespace DisplayMagicianShared.Windows
                             hdrInfo.AdvancedColorInfo.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                             hdrInfo.SDRWhiteLevel.Header.AdapterId = AdapterValueToLUID(newAdapterValue);
                         }
+                        savedDisplayConfig.DisplayHDRStates[i] = hdrInfo;
                     }
                 }
                 else
@@ -418,6 +447,7 @@ namespace DisplayMagicianShared.Windows
                                 SharedLogger.logger.Warn($"WinLibrary/PatchAdapterIDs: Uh Oh. Adapter {savedDisplayConfig.DisplayHDRStates[i].AdapterId.Value} didn't have a current match in Display Sources! It's possible the adapter was swapped or disabled. Attempting to use adapter {newAdapterValue} instead.");
                                 ds.AdapterId = AdapterValueToLUID(newAdapterValue);
                             }
+                            dsList[j] = ds;
                         }
                     }
                 }
@@ -1326,7 +1356,7 @@ namespace DisplayMagicianShared.Windows
 
             // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
             SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
-            PatchAdapterIDs(ref displayConfig);
+            PatchWindowsDisplayConfig(ref displayConfig);
 
             uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
             uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
@@ -1723,7 +1753,7 @@ namespace DisplayMagicianShared.Windows
 
             // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
             SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Attemptong to patch the saved display configuration's adapter IDs so that it will still work (these change at each boot)");
-            PatchAdapterIDs(ref displayConfig);
+            PatchWindowsDisplayConfig(ref displayConfig);
 
             SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Testing whether the display configuration is valid ");
             // Test whether a specified display configuration is supported on the computer                    
