@@ -866,10 +866,11 @@ namespace DisplayMagicianShared.Windows
             Dictionary<string, TaskBarLayout> taskBarStuckRectangles = new Dictionary<string, TaskBarLayout>();
 
             // Now attempt to get the windows taskbar location for each display
+            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar Layouts.");
             taskBarStuckRectangles = TaskBarLayout.GetAllCurrentTaskBarLayouts(windowsDisplayConfig.DisplaySources);
 
             // Now we try to get the taskbar settings too
-            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar settings.");
+            SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Attempting to get the Windows Taskbar Settings.");
             TaskBarSettings taskBarSettings = TaskBarSettings.GetCurrent();
 
             // Store the active paths and modes in our display config object
