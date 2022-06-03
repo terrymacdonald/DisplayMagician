@@ -605,6 +605,7 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppLogPath,"DisplayMagician3.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician4.log"),
                             // Also try to copy the new configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
@@ -614,6 +615,7 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json"),
                             Path.Combine(Program.AppDataPath,"Settings_1.0.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.3.json"),
                             Path.Combine(Program.AppDataPath,"Settings_2.4.json"),
                             // Also try to copy the old configs if they exist
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json.old"),
@@ -625,6 +627,7 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_1.0.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.0.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.4.json.old")
                         };
                         foreach (string filename in listOfFiles)

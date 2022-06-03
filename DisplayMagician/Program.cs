@@ -180,10 +180,17 @@ namespace DisplayMagician {
             bool upgradedSettingsFile = false;
             string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
             string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
+            string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
             string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             try
             {
-                if (File.Exists(oldv2SettingsFile) && !File.Exists(targetSettingsFile))
+                if (File.Exists(oldv23SettingsFile) && !File.Exists(targetSettingsFile))
+                {
+                    File.Copy(oldv23SettingsFile, targetSettingsFile, true);
+                    File.Move(oldv23SettingsFile, $"{oldv23SettingsFile}.old");
+                    upgradedSettingsFile = true;
+                }
+                else if (File.Exists(oldv2SettingsFile) && !File.Exists(targetSettingsFile))
                 {
                     File.Copy(oldv2SettingsFile, targetSettingsFile, true);
                     File.Move(oldv2SettingsFile, $"{oldv2SettingsFile}.old");
@@ -340,6 +347,7 @@ namespace DisplayMagician {
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
 
+            //string dp24 = Path.Combine(AppProfilePath, "DisplayProfiles_2.4.json");
             string dp23 = Path.Combine(AppProfilePath, "DisplayProfiles_2.3.json");
             string dp22 = Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json");
             string dp21 = Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json");
@@ -349,10 +357,24 @@ namespace DisplayMagician {
             // This is the latest displayprofile config file
             string targetdp = ProfileRepository.ProfileStorageFileName;
 
-            // Now always try to get the oldest one
-            if (File.Exists(dp22) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
+            // Now always try to get the latest one
+            if (File.Exists(dp23) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.3, so informing the user.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.3 to DisplayMagician v2.4, so informing the user.");
+
+                File.Move(dp23, $"{dp23}.old");
+
+                // Warn the user about the fact we need them to recreate their Display Profiles again!
+                StartMessageForm myMessageWindow = new StartMessageForm();
+                myMessageWindow.MessageMode = "rtf";
+                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
+                myMessageWindow.ButtonText = "&Close";
+                myMessageWindow.ShowDialog();
+            }
+            else if (File.Exists(dp22) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
+            {
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.2 to DisplayMagician v2.4, so informing the user.");
 
                 File.Move(dp22, $"{dp22}.old");
 
@@ -366,7 +388,7 @@ namespace DisplayMagician {
             }
             else if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.3, so informing the user.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.4, so informing the user.");
 
                 File.Move(dp21, $"{dp21}.old");
 
@@ -380,7 +402,7 @@ namespace DisplayMagician {
             }
             else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.3, so informing the user.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.4, so informing the user.");
 
                 File.Move(dp20, $"{dp20}.old");
 
@@ -398,7 +420,7 @@ namespace DisplayMagician {
             // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.2.json doesn't
             else if (File.Exists(dp10) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.2, so performing some upgrade steps.");
+                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.4, so performing some upgrade steps.");
                 // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
                 if (upgradedSettingsFile)
                 {
