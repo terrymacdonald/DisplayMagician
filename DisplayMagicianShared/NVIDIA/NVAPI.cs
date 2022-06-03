@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -2258,12 +2259,25 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_INFO_V2 other && this.Equals(other);
 
         public bool Equals(NV_DISPLAYCONFIG_PATH_INFO_V2 other)
-        => Version == other.Version &&
-           SourceId == other.SourceId &&
-           TargetInfoCount == other.TargetInfoCount &&
-           TargetInfo.SequenceEqual(other.TargetInfo) &&
-           SourceModeInfo.Equals(other.SourceModeInfo) &&
-           Flags == other.Flags;
+        {
+            if (!(Version == other.Version &&
+            SourceId == other.SourceId &&
+            TargetInfoCount == other.TargetInfoCount &&
+            SourceModeInfo.Equals(other.SourceModeInfo) &&
+            Flags == other.Flags))
+            {
+                return false;
+            }
+
+            // Now we need to go through the HDR states comparing vaues, as the order changes if there is a cloned display
+            if (!NVImport.EqualButDifferentOrder<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>(TargetInfo, other.TargetInfo))
+            {
+                return false;
+            }
+
+            return true;
+
+        }
 
         public override Int32 GetHashCode()
         {
@@ -7031,6 +7045,53 @@ namespace DisplayMagicianShared.NVIDIA
         // NVAPI_INTERFACE NvAPI_DRS_CreateProfile(NvDRSSessionHandle hSession, NVDRS_PROFILE* pProfileInfo, NvDRSProfileHandle* phProfile)
 
         // NVAPI_INTERFACE NvAPI_DRS_DeleteProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile)
+
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        {
+
+            if (list1.Count != list2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the list1, checking that all it's items are in list2
+            foreach (T item1 in list1)
+            {
+                bool foundIt = false;
+                foreach (T item2 in list2)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the list2, checking that all it's items are in list1
+            foreach (T item2 in list2)
+            {
+                bool foundIt = false;
+                foreach (T item1 in list1)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
     }
 }

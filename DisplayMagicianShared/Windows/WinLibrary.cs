@@ -52,15 +52,15 @@ namespace DisplayMagicianShared.Windows
 
         public override bool Equals(object obj) => obj is DISPLAY_SOURCE other && this.Equals(other);
         public bool Equals(DISPLAY_SOURCE other)
-        => SourceId.Equals(other.SourceId) &&
-           TargetId.Equals(other.TargetId) &&
+        =>  //SourceId.Equals(other.SourceId) &&  // Source ID needs to be ignored in this case, as windows moves the source ids around :(
+            TargetId.Equals(other.TargetId) &&
             DevicePath.Equals(other.DevicePath) &&
             SourceDpiScalingRel.Equals(other.SourceDpiScalingRel);
         //=> true;
         public override int GetHashCode()
         {
-            //return 300;
-            return (SourceId, TargetId, DevicePath, SourceDpiScalingRel).GetHashCode();
+            //return (SourceId, TargetId, DevicePath, SourceDpiScalingRel).GetHashCode(); // Source ID needs to be ignored in this case, as windows moves the source ids around :(
+            return (TargetId, DevicePath, SourceDpiScalingRel).GetHashCode();
         }
 
         public static bool operator ==(DISPLAY_SOURCE lhs, DISPLAY_SOURCE rhs) => lhs.Equals(rhs);
@@ -91,12 +91,17 @@ namespace DisplayMagicianShared.Windows
             if (!(IsCloned == other.IsCloned &&
            DisplayConfigPaths.SequenceEqual(other.DisplayConfigPaths) &&
            DisplayConfigModes.SequenceEqual(other.DisplayConfigModes) &&
-           DisplayHDRStates.SequenceEqual(other.DisplayHDRStates) &&
            // The dictionary keys sometimes change after returning from NVIDIA Surround, so we need to only focus on comparing the values of the GDISettings.
            // Additionally, we had to disable the DEviceKey from the equality testing within the GDI library itself as that waould also change after changing back from NVIDIA surround
            // This still allows us to detect when refresh rates change, which will allow DisplayMagician to detect profile differences.
            GdiDisplaySettings.Values.SequenceEqual(other.GdiDisplaySettings.Values) &&
            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers)))
+            {
+                return false;
+            }
+
+            // Now we need to go through the HDR states comparing vaues, as the order changes if there is a cloned display
+            if (!WinLibrary.EqualButDifferentOrder<ADVANCED_HDR_INFO_PER_PATH>(DisplayHDRStates, other.DisplayHDRStates))
             {
                 return false;
             }
@@ -2359,6 +2364,53 @@ namespace DisplayMagicianShared.Windows
             for (var x = 0; x < rect.right; x += 5)
                 for (var y = 0; y < rect.bottom; y += 5)
                     Utils.SendMessage(windowHandle, Utils.WM_MOUSEMOVE, 0, (y << 16) + x);
+        }
+
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        {
+
+            if (list1.Count != list2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the list1, checking that all it's items are in list2
+            foreach (T item1 in list1)
+            {
+                bool foundIt = false;
+                foreach (T item2 in list2)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the list2, checking that all it's items are in list1
+            foreach (T item2 in list2)
+            {
+                bool foundIt = false;
+                foreach (T item1 in list1)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
     }

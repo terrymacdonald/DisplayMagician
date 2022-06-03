@@ -170,14 +170,25 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool Equals(object obj) => obj is NVIDIA_DISPLAY_CONFIG other && this.Equals(other);
 
         public bool Equals(NVIDIA_DISPLAY_CONFIG other)
-           => IsCloned == other.IsCloned &&
+        {
+            if (!(IsCloned == other.IsCloned &&
             IsOptimus == other.IsOptimus &&
             PhysicalAdapters.SequenceEqual(other.PhysicalAdapters) &&
             MosaicConfig.Equals(other.MosaicConfig) &&
-            DisplayConfigs.SequenceEqual(other.DisplayConfigs) &&
             DRSSettings.SequenceEqual(other.DRSSettings) &&
-            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers);
+            DisplayIdentifiers.SequenceEqual(other.DisplayIdentifiers)))
+            {
+                return false;
+            }
 
+            // Now we need to go through the display configscomparing values, as the order changes if there is a cloned display
+            if (!NVIDIALibrary.EqualButDifferentOrder<NV_DISPLAYCONFIG_PATH_INFO_V2>(DisplayConfigs, other.DisplayConfigs))
+            {
+                return false;
+            }
+
+            return true;
+        }
 
         public override int GetHashCode()
         {
@@ -4305,6 +4316,53 @@ namespace DisplayMagicianShared.NVIDIA
             {
                 return false;
             }
+        }
+
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        {
+
+            if (list1.Count != list2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the list1, checking that all it's items are in list2
+            foreach (T item1 in list1)
+            {
+                bool foundIt = false;
+                foreach (T item2 in list2)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the list2, checking that all it's items are in list1
+            foreach (T item2 in list2)
+            {
+                bool foundIt = false;
+                foreach (T item1 in list1)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 
