@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 
@@ -30,12 +31,28 @@ namespace DisplayMagician
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
         private string _logLevel = NLog.LogLevel.Info.ToString();
+        private string _displayMagicianVersion = null;
         private Keys _hotkeyMainWindow = Keys.None;
         private Keys _hotkeyDisplayProfileWindow = Keys.None;
         private Keys _hotkeyShortcutLibraryWindow = Keys.None;
         #endregion
 
         #region Class Properties
+        public string DisplayMagicianVersion
+        {
+            get 
+            {
+                if (_displayMagicianVersion == null)
+                {
+                    return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                }
+                return _displayMagicianVersion;
+            }
+            set
+            {
+                _displayMagicianVersion = value;
+            }
+        }
         public bool StartOnBootUp
         {
             get
@@ -255,6 +272,10 @@ namespace DisplayMagician
                     {
                         Console.WriteLine($"ProgramSettings/LoadSettings: Tried to parse the JSON file {programSettingsStorageJsonFileName} but the JsonConvert threw an exception. {ex}");
                     }
+
+                    if (programSettings.DisplayMagicianVersion == null) {
+                        programSettings.DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                    }
                 }
             }
             else
@@ -276,6 +297,9 @@ namespace DisplayMagician
         {
 
             logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {programSettingsStorageJsonFileName}.");
+
+            // Force the PreviousDisplayMagicianVersion to this version just before we save the settings.
+            DisplayMagicianVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             try
             {
