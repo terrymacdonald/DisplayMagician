@@ -567,7 +567,7 @@ namespace DisplayMagicianShared
 
 
                     WshShell shell = new WshShell();
-                    IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
+                    IWshShortcut shortcut = shell.CreateShortcut(shortcutFileName) as IWshShortcut;
 
                     shortcut.TargetPath = Application.ExecutablePath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
@@ -1171,7 +1171,7 @@ namespace DisplayMagicianShared
                             catch (Exception ex)
                             {
                                 // Guess that it is at the bottom (90% correct)
-                                SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetInfo.DisplayId}");
+                                SharedLogger.logger.Warn(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetInfo.DisplayId}");
                                 screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                             }
 
@@ -1311,7 +1311,7 @@ namespace DisplayMagicianShared
                     catch (Exception ex)
                     {
                         // Guess that it is at the bottom (90% correct)
-                        SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        SharedLogger.logger.Warn(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                         screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                     }
 
@@ -1564,7 +1564,7 @@ namespace DisplayMagicianShared
                         catch (Exception ex)
                         {
                             // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
+                            SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
                             screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         }
 
@@ -1579,7 +1579,7 @@ namespace DisplayMagicianShared
                         catch (Exception ex)
                         {
                             // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                            SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                             screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         }
                     }

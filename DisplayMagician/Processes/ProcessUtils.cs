@@ -530,7 +530,8 @@ namespace DisplayMagician.Processes
                         UseShellExecute = true,
                         Verb = "Runas",
                         CreateNoWindow = false,
-                        RedirectStandardOutput = false
+                        RedirectStandardOutput = false,
+                        WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
                 else
@@ -539,7 +540,8 @@ namespace DisplayMagician.Processes
                     {
                         UseShellExecute = false,
                         CreateNoWindow = false,
-                        RedirectStandardOutput = false
+                        RedirectStandardOutput = false,
+                        WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
                 
@@ -552,7 +554,8 @@ namespace DisplayMagician.Processes
                     UseShellExecute = true,
                     Verb = "Open",
                     CreateNoWindow = false,
-                    RedirectStandardOutput = false
+                    RedirectStandardOutput = false,
+                    WorkingDirectory = Path.GetDirectoryName(executable)
                 };
             }
 

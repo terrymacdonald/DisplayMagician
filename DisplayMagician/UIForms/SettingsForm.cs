@@ -53,7 +53,7 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings StartOnBootUp set to false");
             }
 
-            // setup minimise on start
+            // setup minimise DM to system tray when it runs
             if (Program.AppProgramSettings.MinimiseOnStart == true)
             {
                 cb_minimise_notification_area.Checked = true;
@@ -75,6 +75,30 @@ namespace DisplayMagician.UIForms
             {
                 cb_show_splashscreen.Checked = false;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowSplashScreen set to false");
+            }
+
+            // show the minimise reminder message when starting or closing the window 
+            if (Program.AppProgramSettings.ShowMinimiseMessageInActionCenter == true)
+            {
+                cb_show_minimise_action.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowMinimiseMessageInActionCenter set to true");
+            }
+            else
+            {
+                cb_show_minimise_action.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowMinimiseMessageInActionCenter set to false");
+            }
+
+            // show the status messages in Action Center. Turning this off turns off all messages in Action Center
+            if (Program.AppProgramSettings.ShowStatusMessageInActionCenter == true)
+            {
+                cb_show_status_action.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowStatusMessageInActionCenter set to true");
+            }
+            else
+            {
+                cb_show_status_action.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings ShowStatusMessageInActionCenter set to false");
             }
 
             // start upgrade settings 
@@ -252,6 +276,21 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.ShowSplashScreen = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowSplashScreen as {Program.AppProgramSettings.ShowSplashScreen}");
 
+            // save show ShowMinimiseMessageInActionCenter 
+            if (cb_show_minimise_action.Checked)
+                Program.AppProgramSettings.ShowMinimiseMessageInActionCenter = true;
+            else
+                Program.AppProgramSettings.ShowMinimiseMessageInActionCenter = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowMinimiseMessageInActionCenter as {Program.AppProgramSettings.ShowMinimiseMessageInActionCenter}");
+
+            // save show ShowStatusMessageInActionCenter 
+            if (cb_show_status_action.Checked)
+                Program.AppProgramSettings.ShowStatusMessageInActionCenter = true;
+            else
+                Program.AppProgramSettings.ShowStatusMessageInActionCenter = false;
+            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowStatusMessageInActionCenter as {Program.AppProgramSettings.ShowStatusMessageInActionCenter}");
+
+
             // save install desktop context menu setting
             if (_installedDesktopContextMenu)
                 Program.AppProgramSettings.InstalledDesktopContextMenu = true;
@@ -316,6 +355,9 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.UpgradeToPreReleases = false;
                 logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from upgrading to pre-release versions of software");
             }
+
+            // Save ProgramSettings
+            Program.AppProgramSettings.SaveSettings();
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -556,17 +598,37 @@ namespace DisplayMagician.UIForms
                                                                                               
                         // Get the list of files we want to look for to zip (they may or may not exist)
                         List<string> listOfFiles = new List<string> {
+                            // Try to copy the logs if they exist                           
                             Path.Combine(Program.AppLogPath,"DisplayMagician.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician1.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician2.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician3.log"),
                             Path.Combine(Program.AppLogPath,"DisplayMagician4.log"),
+                            // Also try to copy the new configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
                             Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json"),
                             Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.0.json")
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_1.0.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.3.json"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.4.json"),
+                            // Also try to copy the old configs if they exist
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json.old"),
+                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json.old"),
+                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_1.0.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.0.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
+                            Path.Combine(Program.AppDataPath,"Settings_2.4.json.old")
                         };
                         foreach (string filename in listOfFiles)
                         {
@@ -652,5 +714,6 @@ namespace DisplayMagician.UIForms
                 }
             }
         }
+
     }
 }

@@ -67,7 +67,7 @@ namespace DisplayMagicianShared
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.3.json");
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.4.json");
         
 
 
@@ -704,6 +704,8 @@ namespace DisplayMagicianShared
         {
             SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFileName} into the Profile Repository");
 
+            _profilesLoaded = false;
+
             if (File.Exists(_profileStorageJsonFileName))
             {
                 string json = "";
@@ -739,7 +741,14 @@ namespace DisplayMagicianShared
                                 args.ErrorContext.Handled = true;
                             },
                         };                       
-                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);                       
+                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                        // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
+                        foreach (ProfileItem profile in _allProfiles)
+                        {
+                            WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
+                            WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                        }
 
                     }
                     catch (JsonReaderException ex)
@@ -844,7 +853,32 @@ namespace DisplayMagicianShared
             // We do the actual change we were trying to do
             try
             {
-                // Nothing to patch at the moment!                
+                // Add in a default Windows DPI information we need
+                // This adds a 'SourceDpiScalingRel' with a default of 100% (integer 0) into each DisplaySources entry
+                // but only if the existing entry is a 'null'. This only occurs when the SourceDpiScalingRel is unset.
+                // This migration will add the default 100% scaling so that the ProfileRepository Load function works as intended.
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows DPI settings.");
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+
+                    //JObject WindowsTaskBarSettings = (JObject)profile.SelectToken("WindowsDisplayConfig.TaskBarSettings");                    
+                    var dsList = profile["WindowsDisplayConfig"]["DisplaySources"].Children();
+                    IList<DISPLAY_SOURCE> displaySources = new List<DISPLAY_SOURCE>();
+                    foreach (var dsListItem in dsList)
+                    {
+                        var displaySourceArray = dsListItem.Values().ToArray();
+                        for (int j=0; j<displaySourceArray.Length; j++)
+                        {
+                            if (displaySourceArray[j]["SourceDpiScalingRel"] == null)
+                            {
+                                displaySourceArray[j]["SourceDpiScalingRel"] = 0;
+                                changedJson = true;
+                            }
+                        }                        
+                    }
+
+                }
             }
             catch (JsonReaderException ex)
             {
