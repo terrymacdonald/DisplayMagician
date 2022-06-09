@@ -302,10 +302,15 @@ namespace DisplayMagicianShared.Windows
                     {
                         // We get here if there is a matching adapter
                         newAdapterValue = adapterOldToNewMap[oldAdapterValue];
-                        // Add a new dictionary key with the old value
-                        savedDisplayConfig.DisplayAdapters.Add(newAdapterValue, savedDisplayConfig.DisplayAdapters[oldAdapterValue]);
-                        // Remove the old dictionary key
-                        savedDisplayConfig.DisplayAdapters.Remove(oldAdapterValue);
+
+                        // Skip if we've already replaced something!
+                        if (!savedDisplayConfig.DisplayAdapters.ContainsKey(newAdapterValue))
+                        {
+                            // Add a new dictionary key with the old value
+                            savedDisplayConfig.DisplayAdapters.Add(newAdapterValue, savedDisplayConfig.DisplayAdapters[oldAdapterValue]);
+                            // Remove the old dictionary key
+                            savedDisplayConfig.DisplayAdapters.Remove(oldAdapterValue);
+                        }                        
                         SharedLogger.logger.Trace($"WinLibrary/PatchAdapterIDs: Updated DisplayAdapter from adapter {oldAdapterValue} to adapter {newAdapterValue} instead.");
                     }
                 }
