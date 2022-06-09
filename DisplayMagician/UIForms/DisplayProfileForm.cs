@@ -81,9 +81,16 @@ namespace DisplayMagician.UIForms
                 logger.Error($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
             }
 
+            // Center the MainAppForm
+            Program.AppMainForm.Top = (Screen.PrimaryScreen.Bounds.Height - Program.AppMainForm.Height) / 2;
+            Program.AppMainForm.Left = (Screen.PrimaryScreen.Bounds.Width - Program.AppMainForm.Width) / 2;
+            Program.AppMainForm.Activate();
+
             // Bring the window back to the front
             Visible = true;
+            CenterToParent();
             Activate();
+            BringToFront();
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)

@@ -5758,6 +5758,8 @@ namespace DisplayMagicianShared.NVIDIA
             // Go through the array and copy things from managed code to unmanaged code
             for (Int32 x = 0; x < (Int32)GridCount; x++)
             {
+                GridTopologies[x].Version = NVImport.NV_MOSAIC_GRID_TOPO_V2_VER;
+
                 // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
                 Marshal.StructureToPtr(GridTopologies[x], currentGridTopologiesBuffer, false);
                 // advance the buffer forwards to the next object
