@@ -356,6 +356,7 @@ namespace DisplayMagicianShared
             {
                 SaveProfiles();
                 IsPossibleRefresh();
+                UpdateActiveProfile();
                 return true;
             }
             else if (numRemoved == 0)
@@ -438,6 +439,7 @@ namespace DisplayMagicianShared
             {
                 SaveProfiles();
                 IsPossibleRefresh();
+                UpdateActiveProfile();
                 return true;
             }
             else if (numRemoved == 0)
@@ -519,6 +521,7 @@ namespace DisplayMagicianShared
             {
                 SaveProfiles();
                 IsPossibleRefresh();
+                UpdateActiveProfile();
                 return true;
             }
             else if (numRemoved == 0)

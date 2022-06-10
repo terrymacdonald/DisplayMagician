@@ -727,7 +727,7 @@ namespace DisplayMagicianShared.Windows
                     }
                     else
                     {
-                        SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Skipping grabbing Taskbar position from a cloned display {monitorInfo.szDevice}");
+                        SharedLogger.logger.Trace($"TaskBarLayout/GetAllCurrentTaskBarPositions: Skipping grabbing Taskbar position from a cloned display {monitorInfo.szDevice}");
                     }
 
                     // Prep the next taskbar window so we continue through them
