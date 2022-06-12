@@ -123,7 +123,7 @@ namespace DisplayMagicianShared.Windows
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Exception while trying to open RegKey {address}. Unable to get the TaskBarStuckRectangle binary settings. Screen details may not be available yet in registry.");
+                        SharedLogger.logger.Trace(ex, $"TaskBarLayout/ReadFromRegistry: Exception while trying to open RegKey {address}. Unable to get the TaskBarStuckRectangle binary settings. Screen details may not be available yet in registry.");
                     }
                 }
                 else
@@ -196,7 +196,7 @@ namespace DisplayMagicianShared.Windows
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Trace($"TaskBarLayout/ReadFromRegistry: Exception2 while trying to open RegKey {address}. Unable to get the TaskBarStuckRectangle binary settings. Screen details may not be available yet in registry.");
+                        SharedLogger.logger.Trace(ex, $"TaskBarLayout/ReadFromRegistry: Exception2 while trying to open RegKey {address}. Unable to get the TaskBarStuckRectangle binary settings. Screen details may not be available yet in registry.");
                         return false;
                     }
 
@@ -615,6 +615,7 @@ namespace DisplayMagicianShared.Windows
 
             // Then go through the secondary windows and get the position of them
             // Tell Windows to refresh the Other Windows Taskbars if needed
+            int clonedCount = 0;
             try
             {
                 IntPtr lastTaskBarWindowHwnd = (IntPtr)Utils.NULL;
@@ -677,6 +678,11 @@ namespace DisplayMagicianShared.Windows
                         {
                             // Invalid state
                             SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar position was not on a horizontal edge of a monitor!");
+                            SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Forcing Taskbar position to be at the bottom");
+                            tbWidth = monWidth;
+                            tbHeight = monHeight - wrkHeight;
+                            tbsr.TaskBarLocation = new System.Drawing.Rectangle(monitorInfo.rcMonitor.left, monitorInfo.rcWork.bottom, tbWidth, tbHeight);
+                            tbsr.Edge = TaskBarEdge.Bottom;
                         }
 
                     }
@@ -703,12 +709,22 @@ namespace DisplayMagicianShared.Windows
                         {
                             // Invalid state
                             SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar position was not on a vertical edge of a monitor!");
+                            SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Forcing Taskbar position to be at the bottom");
+                            tbWidth = monWidth;
+                            tbHeight = monHeight - wrkHeight;
+                            tbsr.TaskBarLocation = new System.Drawing.Rectangle(monitorInfo.rcMonitor.left, monitorInfo.rcWork.bottom, tbWidth, tbHeight);
+                            tbsr.Edge = TaskBarEdge.Bottom;
                         }
                     }
                     else
                     {
                         // Invalid state
                         SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Taskbar position was not fully along one of the monitor edges!");
+                        SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Forcing Taskbar position to be at the bottom");
+                        tbWidth = monWidth;
+                        tbHeight = monHeight - wrkHeight;
+                        tbsr.TaskBarLocation = new System.Drawing.Rectangle(monitorInfo.rcMonitor.left, monitorInfo.rcWork.bottom, tbWidth, tbHeight);
+                        tbsr.Edge = TaskBarEdge.Bottom;
                     }
 
                     tbsr.MonitorLocation = new System.Drawing.Rectangle(monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top, monWidth, monHeight);
@@ -718,7 +734,8 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Trace($"TaskBarLayout/GetAllCurrentTaskBarPositions: Secondary taskbar coordinates are {tbsr.TaskBarLocation.X},{tbsr.TaskBarLocation.Y} and it is {tbsr.TaskBarLocation.Width}x{tbsr.TaskBarLocation.Height}");
                     SharedLogger.logger.Trace($"TaskBarLayout/GetAllCurrentTaskBarPositions: Secondary taskbar is {tbsr.Edge.ToString("G")}");
 
-                    // Now as a LAST step we update the Binary field just before we apply it to make sure that the correct binary settings are stored
+                    // Now as a LAST step we update the Binary field to make sure that the correct binary settings are stored
+                    // This means the correct location should be returned even if the registry isn't updated as we're patching the registry object before we store it.
                     tbsr.PopulateBinaryFromFields();
 
                     if (!taskBarStuckRectangles.ContainsKey(monitorInfo.szDevice))
@@ -727,7 +744,8 @@ namespace DisplayMagicianShared.Windows
                     }
                     else
                     {
-                        SharedLogger.logger.Trace($"TaskBarLayout/GetAllCurrentTaskBarPositions: Skipping grabbing Taskbar position from a cloned display {monitorInfo.szDevice}");
+                        SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: Skipping grabbing Taskbar position from a cloned display {monitorInfo.szDevice}");
+                        clonedCount++;
                     }
 
                     // Prep the next taskbar window so we continue through them
@@ -737,6 +755,29 @@ namespace DisplayMagicianShared.Windows
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"TaskBarLayout/GetAllCurrentTaskBarPositions: Exception while trying to get a secondary taskbar position");
+            }
+
+            // Check if the display reg keys shown match the display sources
+            foreach (var tbrKey in taskBarStuckRectangles.Keys)
+            {
+                if (tbrKey.Equals("Settings"))
+                {
+                    continue;
+                }
+                // If there isn't a match then we have a problem.
+                if (!displaySources.ContainsKey(tbrKey))
+                {
+                    SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: We have an error because Display Sources array doesn't include the {tbrKey} taskbar data. This means we have a mismatch somewhere.");
+                    retryNeeded = true;
+                }
+            }
+
+            // Check if the length of the display sources equals the taskbar locations we're tracking
+            // Note: taskBarStuckRectangles includes the 'Settings' main screen which is one extra screen that windows stores for the primary screen. We need to remove this from the count as it is extra.
+            if (displaySources.Count != taskBarStuckRectangles.Keys.Count - 1)
+            {
+                SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: We have an error because Display Sources array length doesn't match the taskBarStuckRectangles array length. This means we have a mismatch somewhere.");
+                retryNeeded = true;
             }
 
             retryNeeded = false;
