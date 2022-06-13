@@ -12,6 +12,7 @@ using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
+using System.Net.NetworkInformation;
 using System.Drawing;
 using System.Runtime.Serialization;
 using NLog.Config;
@@ -21,6 +22,7 @@ using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Win32;
 using DisplayMagician.Processes;
+using NETWORKLIST;
 
 namespace DisplayMagician {
 
@@ -1450,6 +1452,26 @@ namespace DisplayMagician {
 
         public static void CheckForUpdates()
         {
+            // First of all, check to see if there is any way to get to the internet on this computer.
+            // If not, then why bother!
+            try
+            {              
+
+                INetworkListManager networkListManager = new NetworkListManager();
+                //dynamic networkListManager = Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("{DCB00C01-570F-4A9B-8D69-199FDBA5723B}")));
+                bool isConnected = networkListManager.IsConnectedToInternet;
+                if (!isConnected)
+                {
+                    logger.Warn($"Program/CheckForUpdates: No internet detected. Skipping the auto update.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn($"Program/CheckForUpdates: Exception while trying to get all the network interfaces to make sure we have internet connectivity. Attempting to auto update anyway.");
+            }
+
+
             //Run the AutoUpdater to see if there are any updates available.
             //FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(Application.ExecutablePath);
             //AutoUpdater.InstalledVersion = new Version(fvi.FileVersion);
