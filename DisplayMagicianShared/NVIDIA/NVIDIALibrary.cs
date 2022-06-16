@@ -470,7 +470,7 @@ namespace DisplayMagicianShared.NVIDIA
                 }
 
                 // Get current Supported Mosaic Topology info (check whether Mosaic is on)
-                NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 mosaicSupportedTopoInfo = new NV_MOSAIC_SUPPORTED_TOPO_INFO_V2();
+                /*NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 mosaicSupportedTopoInfo = new NV_MOSAIC_SUPPORTED_TOPO_INFO_V2();
                 NVStatus = NVImport.NvAPI_Mosaic_GetSupportedTopoInfo(ref mosaicSupportedTopoInfo, NV_MOSAIC_TOPO_TYPE.ALL);
                 if (NVStatus == NVAPI_STATUS.NVAPI_OK)
                 {
@@ -513,7 +513,7 @@ namespace DisplayMagicianShared.NVIDIA
                 else
                 {
                     SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: There are no valid Mosaic Topologies available with this display layout.");
-                }
+                }*/
 
                 // Get current Mosaic Topology settings in brief (check whether Mosaic is on)
                 NV_MOSAIC_TOPO_BRIEF mosaicTopoBrief = new NV_MOSAIC_TOPO_BRIEF();

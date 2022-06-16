@@ -81,6 +81,12 @@ namespace DisplayMagician.UIForms
                 logger.Error($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
             }
 
+            // Recenter the Window
+            RecenterWindow();
+        }
+
+        private void RecenterWindow()
+        {
             // Center the MainAppForm
             Program.AppMainForm.Top = (Screen.PrimaryScreen.Bounds.Height - Program.AppMainForm.Height) / 2;
             Program.AppMainForm.Left = (Screen.PrimaryScreen.Bounds.Width - Program.AppMainForm.Width) / 2;
@@ -545,14 +551,16 @@ namespace DisplayMagician.UIForms
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
+            // Recenter the Window
+            RecenterWindow();
         }
 
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode.Equals(Keys.Enter))
             {
-                MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
+                //MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                btn_save.PerformClick();                
             }
         }
 
