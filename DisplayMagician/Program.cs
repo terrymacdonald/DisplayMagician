@@ -249,7 +249,8 @@ namespace DisplayMagician {
             var logfile = new NLog.Targets.FileTarget("logfile")
             {
                 FileName = AppLogFilename,
-                DeleteOldFileOnStartup = true
+                DeleteOldFileOnStartup = true,
+                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message:withexception=true}"
             };
 
             // Create a logging rule to use the log file target
@@ -1196,7 +1197,7 @@ namespace DisplayMagician {
             }
             catch (OperationCanceledException ex)
             {
-                logger.Trace($"Program/RunShortcutTask: User cancelled the running the shortcut {shortcutToUse.Name}.");
+                logger.Trace(ex, $"Program/RunShortcutTask: User cancelled the running the shortcut {shortcutToUse.Name}.");
             }
             catch (Exception ex)
             {
@@ -1248,7 +1249,7 @@ namespace DisplayMagician {
             }   
             catch (OperationCanceledException ex)
             {
-                logger.Trace($"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
+                logger.Trace(ex, $"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
             }
             catch( Exception ex)
             {
@@ -1468,7 +1469,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
-                logger.Warn($"Program/CheckForUpdates: Exception while trying to get all the network interfaces to make sure we have internet connectivity. Attempting to auto update anyway.");
+                logger.Warn(ex, $"Program/CheckForUpdates: Exception while trying to get all the network interfaces to make sure we have internet connectivity. Attempting to auto update anyway.");
             }
 
 
@@ -1729,6 +1730,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
+                logger.Warn(ex, $"Program/IsInstalledVersion: DisplayMagician InstallDir isn't in registry! This DisplayMagician isn't installed.");
                 return false;
             }
         }

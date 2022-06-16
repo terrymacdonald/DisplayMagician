@@ -771,15 +771,7 @@ namespace DisplayMagicianShared.Windows
                     retryNeeded = true;
                 }
             }
-
-            // Check if the length of the display sources equals the taskbar locations we're tracking
-            // Note: taskBarStuckRectangles includes the 'Settings' main screen which is one extra screen that windows stores for the primary screen. We need to remove this from the count as it is extra.
-            if (displaySources.Count != taskBarStuckRectangles.Keys.Count - 1)
-            {
-                SharedLogger.logger.Error($"TaskBarLayout/GetAllCurrentTaskBarPositions: We have an error because Display Sources array length doesn't match the taskBarStuckRectangles array length. This means we have a mismatch somewhere.");
-                retryNeeded = true;
-            }
-
+          
             retryNeeded = false;
             return taskBarStuckRectangles;
         }

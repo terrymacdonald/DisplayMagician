@@ -178,7 +178,8 @@ namespace DisplayMagician.GameLibraries
                     else
                         return false;
                 }                
-                catch (Exception ex) { 
+                catch (Exception ex) {
+                    logger.Warn(ex, $"GogLibrary/IsRunning: Exception while trying to get the GOG Library processes with names: {_gogProcessList.ToString()}");
                     return false; 
                 }
             }

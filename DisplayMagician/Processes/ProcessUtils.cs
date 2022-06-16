@@ -175,17 +175,17 @@ namespace DisplayMagician.Processes
             }
             catch (ArgumentException ex)
             {
-                logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
                 return true;
             }
             catch (InvalidOperationException ex)
             {
-                logger.Warn($"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
+                logger.Warn(ex, $"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
                 return true;
             }
             catch (Exception ex)
             {
-                logger.Trace($"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
                 return true;
             }
         }

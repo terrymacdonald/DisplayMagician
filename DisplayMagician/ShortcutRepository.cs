@@ -1183,7 +1183,7 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Error($"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
                         foundSomethingToMonitor = false;
                     }
                 }
@@ -2097,7 +2097,6 @@ namespace DisplayMagician
             {
                 // At the moment we only allow one stop program
                 StopProgram stopProg = shortcutToUse.StopPrograms[0];
-                uint processID = 0;
                 try
                 {
                     // Only start if not disabled

@@ -594,6 +594,8 @@ namespace DisplayMagician.UIForms
                             File.Delete(zipFilePath);
                         }
 
+                        NLog.LogManager.SuspendLogging();
+
                         ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
                                                                                               
                         // Get the list of files we want to look for to zip (they may or may not exist)
@@ -630,6 +632,7 @@ namespace DisplayMagician.UIForms
                             Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
                             Path.Combine(Program.AppDataPath,"Settings_2.4.json.old")
                         };
+
                         foreach (string filename in listOfFiles)
                         {
                             try
@@ -661,6 +664,9 @@ namespace DisplayMagician.UIForms
                         }
 
                         archive.Dispose();
+
+                        NLog.LogManager.ResumeLogging();
+
                         SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Finished creating support zip file at {zipFilePath}.");
                         MessageBox.Show($"Created DisplayMagician Support ZIP file {zipFilePath}. You can now attach this file to your GitHub issue.");
                     }

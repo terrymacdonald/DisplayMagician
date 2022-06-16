@@ -193,6 +193,7 @@ namespace DisplayMagician.GameLibraries
                 }
                 catch (Exception ex)
                 {
+                    logger.Warn(ex, $"SteamLibrary/IsRunning: Exception while trying to get the steam library processes matching process names: {_steamProcessList.ToString()}.");
                     return false;
                 }
             }

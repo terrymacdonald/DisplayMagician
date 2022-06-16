@@ -1473,6 +1473,9 @@ namespace DisplayMagicianShared
                     screen.ClonedCopies = 0;
                     try
                     {
+                        // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
+                        // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
+                        // the taskbar locations in memory (it takes up to 15 seconds!). Nothing I can do, except put this protection in place :( .
                         screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
                         SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                     }

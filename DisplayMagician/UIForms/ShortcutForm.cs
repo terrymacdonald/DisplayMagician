@@ -3142,7 +3142,7 @@ namespace DisplayMagician.UIForms
             }
             catch(Exception ex)
             {
-
+                logger.Warn(ex, $"ShortcutForm/ilv_games_ItemClick: Exception while attempting to suggest shortcut name.");
             }
 
             try
@@ -3151,7 +3151,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-
+                logger.Warn(ex, $"ShortcutForm/ilv_games_ItemClick: Exception while figuring out if the save button shoud be enabled.");
             }            
         }
 
