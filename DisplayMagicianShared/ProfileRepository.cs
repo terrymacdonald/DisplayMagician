@@ -61,6 +61,7 @@ namespace DisplayMagicianShared
         private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
         private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
         private static bool _pauseReadsUntilChangeCompleted = false;
+        private static bool _userChangingProfiles = false;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
@@ -222,6 +223,18 @@ namespace DisplayMagicianShared
             set
             {
                 _profilesLoaded = value;
+            }
+        }
+
+        public static bool UserChangingProfiles
+        {
+            get
+            {
+                return _userChangingProfiles;
+            }
+            set
+            {
+                _userChangingProfiles = value;
             }
         }
 
@@ -1298,6 +1311,8 @@ namespace DisplayMagicianShared
                 // We stop the stop watch
                 stopWatch.Stop();
                 _pauseReadsUntilChangeCompleted = false;
+                // Pause for a bit to let things settle
+                Thread.Sleep(500);
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
                 string result = "failed";
@@ -1374,7 +1389,7 @@ namespace DisplayMagicianShared
                 }
             }
 
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA && !(nvidiaLibrary is NVIDIALibrary))
             {
                 // Initialise the the NVIDIA NvAPI Library
                 try
@@ -1388,7 +1403,7 @@ namespace DisplayMagicianShared
                     return false;
                 }
             }
-            else if (_currentVideoMode == VIDEO_MODE.AMD)
+            else if (_currentVideoMode == VIDEO_MODE.AMD && !(amdLibrary is AMDLibrary))
             {
                 // Initialise the the AMD ADL Library
                 try

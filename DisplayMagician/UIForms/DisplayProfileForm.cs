@@ -59,7 +59,8 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            
+            ProfileRepository.UserChangingProfiles = true;
+
             // Apply the Profile
             //if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             ApplyProfileResult result = Program.ApplyProfileTask(_selectedProfile);
@@ -83,6 +84,8 @@ namespace DisplayMagician.UIForms
 
             // Recenter the Window
             RecenterWindow();
+
+            ProfileRepository.UserChangingProfiles = false;
         }
 
         private void RecenterWindow()
@@ -543,6 +546,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_view_current_Click(object sender, EventArgs e)
         {
+            ProfileRepository.UserChangingProfiles = true;
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
             // Reload the profiles in case we swapped to another program to change it
@@ -553,6 +557,7 @@ namespace DisplayMagician.UIForms
             RefreshDisplayProfileUI();
             // Recenter the Window
             RecenterWindow();
+            ProfileRepository.UserChangingProfiles = false;
         }
 
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
@@ -593,7 +598,10 @@ namespace DisplayMagician.UIForms
 
                 case WM_DISPLAYCHANGE:
                     logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
-                    btn_view_current.PerformClick();
+                    if (!ProfileRepository.UserChangingProfiles)
+                    {
+                        btn_view_current.PerformClick();
+                    }                    
                     break;
 
                     // This auto taskbar detection logic just doesn't work at the moment
