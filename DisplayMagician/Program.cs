@@ -180,29 +180,41 @@ namespace DisplayMagician {
             // NOTE: This had to be moved up from the later state
             // Copy the old Settings file to the new v2 name
             bool upgradedSettingsFile = false;
-            string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
-            string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
-            string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
             string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             try
-            {
-                if (File.Exists(oldv23SettingsFile) && !File.Exists(targetSettingsFile))
+            {               
+                if (!File.Exists(targetSettingsFile))
                 {
-                    File.Copy(oldv23SettingsFile, targetSettingsFile, true);
-                    File.Move(oldv23SettingsFile, $"{oldv23SettingsFile}.old");
-                    upgradedSettingsFile = true;
+                    string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
+                    string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
+                    string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
+
+                    if (File.Exists(oldv23SettingsFile))
+                    {
+                        File.Copy(oldv23SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+                    }
+                    else if (File.Exists(oldv2SettingsFile))
+                    {
+                        File.Copy(oldv2SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+                    }
+                    else if (File.Exists(oldv1SettingsFile))
+                    {
+                        File.Copy(oldv1SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+                    }                    
                 }
-                else if (File.Exists(oldv2SettingsFile) && !File.Exists(targetSettingsFile))
+
+                // Now we rename all the currently listed Settings files as they aren't needed any longer.
+                // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
+                if (RenameOldFileVersions(AppDataPath, "Settings_*.json", targetSettingsFile))
                 {
-                    File.Copy(oldv2SettingsFile, targetSettingsFile, true);
-                    File.Move(oldv2SettingsFile, $"{oldv2SettingsFile}.old");
-                    upgradedSettingsFile = true;
+                    logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
                 }
-                else if (File.Exists(oldv1SettingsFile) && !File.Exists(targetSettingsFile))
+                else
                 {
-                    File.Copy(oldv1SettingsFile, targetSettingsFile, true);
-                    File.Move(oldv1SettingsFile, $"{oldv1SettingsFile}.old");
-                    upgradedSettingsFile = true;
+                    logger.Error($"Program/Main: Error while renaming old Shortcut files.");
                 }
             }
             catch (Exception ex)
@@ -370,25 +382,17 @@ namespace DisplayMagician {
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
             logger.Trace($"Program/Main: Attempting to upgrade earlier DisplayMagician Display Profile files if required");
-
-            //string dp24 = Path.Combine(AppProfilePath, "DisplayProfiles_2.4.json");
-            string dp23 = Path.Combine(AppProfilePath, "DisplayProfiles_2.3.json");
-            string dp22 = Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json");
-            string dp21 = Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json");
-            string dp20 = Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json");
-            string dp10 = Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json");
-
+           
             // This is the latest displayprofile config file
             string targetdp = ProfileRepository.ProfileStorageFileName;
 
             try
             {
-                // Now always try to get the latest one
-                if (File.Exists(dp23) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
+                // Only run this code if there isn't a current Display Profile file.
+                // If this happens then it is an error!
+                if (!File.Exists(targetdp))
                 {
-                    logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.3 to DisplayMagician v2.4, so informing the user.");
-
-                    File.Move(dp23, $"{dp23}.old");
+                    logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
 
                     // Warn the user about the fact we need them to recreate their Display Profiles again!
                     StartMessageForm myMessageWindow = new StartMessageForm();
@@ -396,71 +400,22 @@ namespace DisplayMagician {
                     myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
                     myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
                     myMessageWindow.ButtonText = "&Close";
-                    myMessageWindow.ShowDialog();
-                }
-                else if (File.Exists(dp22) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
-                {
-                    logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.2 to DisplayMagician v2.4, so informing the user.");
-
-                    File.Move(dp22, $"{dp22}.old");
-
-                    // Warn the user about the fact we need them to recreate their Display Profiles again!
-                    StartMessageForm myMessageWindow = new StartMessageForm();
-                    myMessageWindow.MessageMode = "rtf";
-                    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                    myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                    myMessageWindow.ButtonText = "&Close";
-                    myMessageWindow.ShowDialog();
-                }
-                else if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
-                {
-                    logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.4, so informing the user.");
-
-                    File.Move(dp21, $"{dp21}.old");
-
-                    // Warn the user about the fact we need them to recreate their Display Profiles again!
-                    StartMessageForm myMessageWindow = new StartMessageForm();
-                    myMessageWindow.MessageMode = "rtf";
-                    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                    myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                    myMessageWindow.ButtonText = "&Close";
-                    myMessageWindow.ShowDialog();
-                }
-                else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
-                {
-                    logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.4, so informing the user.");
-
-                    File.Move(dp20, $"{dp20}.old");
-
-                    // Warn the user about the fact we need them to recreate their Display Profiles again!
-                    StartMessageForm myMessageWindow = new StartMessageForm();
-                    myMessageWindow.MessageMode = "rtf";
-                    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                    myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                    myMessageWindow.ButtonText = "&Close";
-                    myMessageWindow.ShowDialog();
-                }
-                // Check if it's an upgrade from DisplayMagician v1 to v2
-                // and if it is then copy the old configs to the new filenames and
-                // explain to the user what they need to do.
-                // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.2.json doesn't
-                else if (File.Exists(dp10) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
-                {
-                    logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.4, so performing some upgrade steps.");                   
-
-                    File.Move(dp10, $"{dp10}.old");
-
-                    // Warn the user about the fact we need a new DisplayProfiles_2.0.json
-                    StartMessageForm myMessageWindow = new StartMessageForm();
-                    myMessageWindow.MessageMode = "rtf";
-                    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                    myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                    myMessageWindow.ButtonText = "&Close";
-                    myMessageWindow.ShowDialog();
+                    myMessageWindow.ShowDialog();                    
                 }
                 else
                 {
                     logger.Trace($"Program/Main: DisplayMagician Display Profile files do not require upgrading so skipping");
+                }
+
+                // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
+                // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
+                if (RenameOldFileVersions(AppProfilePath, "DisplayProfiles_*.json", targetdp))
+                {
+                    logger.Trace($"Program/Main: Old DisplayMagician Display Profile files were successfully renamed");
+                }
+                else
+                {
+                    logger.Error($"Program/Main: Error while renaming old Display Profiles files.");
                 }
             }
             catch (Exception ex)
@@ -475,32 +430,46 @@ namespace DisplayMagician {
             }
 
             // Also upgrade the Shortcuts file if it's needed
-            string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
-            string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
             string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
             try
             {
-                if (File.Exists(oldv2ShortcutsFile) && !File.Exists(targetShortcutsFile))
+                if (!File.Exists(targetShortcutsFile))
                 {
-                    logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv2ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
-                    File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
-                    File.Move(oldv2ShortcutsFile, $"{oldv2ShortcutsFile}.old");
-                }
-                else if (File.Exists(oldv1ShortcutsFile) && !File.Exists(targetShortcutsFile))
-                {
-                    logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv1ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
-                    File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
-                    File.Move(oldv1ShortcutsFile, $"{oldv1ShortcutsFile}.old");
+                    string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
+                    string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
+
+                    if (File.Exists(oldv2ShortcutsFile))
+                    {
+                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv2ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
+                    }
+                    else if (File.Exists(oldv1ShortcutsFile))
+                    {
+                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv1ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
+                    }
+                    
                 }
                 else
                 {
                     logger.Trace($"Program/Main: DisplayMagician Shortcut files do not require upgrading so skipping");
                 }
 
+                // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
+                // NOTE: This is outside the File Exists above to fix all the partially renamed files performed in previous upgrades
+                if (RenameOldFileVersions(AppShortcutPath, "Shortcuts_*.json", targetShortcutsFile))
+                {
+                    logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                }
+                else
+                {
+                    logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                }
+
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to v2.2 shortcut file {targetShortcutsFile}.");
+                logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to latest shortcut file {targetShortcutsFile}.");
             }
 
             logger.Trace($"Program/Main: Setting up commandline processing configuration");
@@ -1205,6 +1174,67 @@ namespace DisplayMagician {
 
             return true;
         }
+
+        public static bool RenameOldFileVersions(string path, string searchPattern, string skipFilename)
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    logger.Error($"Program/RenameOldFileVersions: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
+
+                string[] filesToRename;
+
+                if (String.IsNullOrWhiteSpace(searchPattern)) 
+                {
+                    filesToRename = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesToRename = Directory.GetFiles(path, searchPattern);
+                }
+                
+                if (filesToRename.Length > 0)
+                {
+                    logger.Trace($"Program/RenameOldFileVersions: Found {filesToRename.Length} files matching the '{searchPattern}' pattern in {path}");
+                    foreach (var filename in filesToRename)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            logger.Trace($"Program/RenameOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {skipFilename} file.");
+                            continue;
+                        }
+
+                        try
+                        {
+                            logger.Trace($"Program/RenameOldFileVersions: Attempting to rename {filename} to {filename}.old");
+                            File.Move(filename, $"{filename}.old");
+                        }
+                        catch (Exception ex2)
+                        {
+                            logger.Error(ex2,$"Program/RenameOldFileVersions: Exception while trying to rename {filename} to {filename}.old. Skipping this rename.");
+                        }
+                    }
+                }
+                else
+                {
+                    logger.Trace($"Program/RenameOldFileVersions: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/RenameOldFileVersions: Exception while trying to RenameOldFileVersions. Unable to rename the files.");
+                return false;
+            }
+        }
+
+
+
 
         //public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
         public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)
