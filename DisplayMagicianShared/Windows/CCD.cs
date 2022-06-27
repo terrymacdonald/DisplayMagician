@@ -1105,7 +1105,7 @@ namespace DisplayMagicianShared.Windows
         // Set some useful constants
         public const SDC SDC_CCD_TEST_IF_VALID = (SDC.SDC_VALIDATE | SDC.SDC_USE_SUPPLIED_DISPLAY_CONFIG);
         public const uint DISPLAYCONFIG_PATH_MODE_IDX_INVALID = 0xffffffff;
-        public static readonly UInt32[] DPI_VALUES = { 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500 };
+        //public static readonly UInt32[] DPI_VALUES = { 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500 };
 
 
         // GetDisplayConfigBufferSizes
