@@ -4,10 +4,13 @@ using System.Linq;
 using System.Windows.Forms;
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
+using DisplayMagicianShared.Windows;
 using Manina.Windows.Forms;
 using System.Drawing;
 using NHotkey.WindowsForms;
 using NHotkey;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace DisplayMagician.UIForms
 {
@@ -20,6 +23,9 @@ namespace DisplayMagician.UIForms
         private static ProfileItem _profileToLoad = null;
         private ProfileAdaptor _profileAdaptor = new ProfileAdaptor();
         //public static Dictionary<string, bool> profileValidity = new Dictionary<string, bool>();
+        public Task _monitorTaskBarRegKeysForChangesTask = null;
+        //public bool  _monitorTaskBarRegKeysForChanges = false;
+        //private readonly object _monitorTaskBarRegKeysForChangesLock = new object();
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -566,9 +572,30 @@ namespace DisplayMagician.UIForms
         protected override void WndProc(ref Message m)
         {
             const int WM_DISPLAYCHANGE = 0x007E;
+            const int WM_SETTINGCHANGE = 0x001A;
+            const int WM_DEVICECHANGE = 0x0219;
+
+            const int DBT_DEVICEARRIVAL = 0x8000;
+            const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
 
             switch (m.Msg)
             {
+
+                case WM_DEVICECHANGE:
+                    switch ((int)m.WParam)
+                    {
+                        case DBT_DEVICEARRIVAL:
+                            logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been added. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
+                            btn_view_current.PerformClick();
+                            break;
+
+                        case DBT_DEVICEREMOVECOMPLETE:
+                            logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us a device has been removed. We need to check if this was a USB display. Updating the current view by running btn_view_current.");
+                            btn_view_current.PerformClick();
+                            break;
+                    }
+                    break;
+
                 case WM_DISPLAYCHANGE:
                     logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
                     if (!ProfileRepository.UserChangingProfiles)
