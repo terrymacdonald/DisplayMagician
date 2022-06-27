@@ -125,24 +125,24 @@ namespace DisplayMagician
         private ShortcutCategory _category = ShortcutCategory.Game;
         private string _differentExecutableToMonitor;
         private string _executableNameAndPath = "";
-        private string _executableArguments;
+        private string _executableArguments = "";
         private bool _executableArgumentsRequired = false;
         private bool _runExeAsAdministrator = false;
         private bool _processNameToMonitorUsesExecutable = true;
         private ProcessPriority _processPriority = ProcessPriority.Normal;
-        private string _gameAppId;
-        private string _gameName;
+        private string _gameAppId = "";
+        private string _gameName = "";
         private SupportedGameLibraryType _gameLibrary = SupportedGameLibraryType.Unknown;
         private int _startTimeout = 20;
-        private string _gameArguments;
-        private bool _gameArgumentsRequired;
-        private string _differentGameExeToMonitor;
+        private string _gameArguments = "";
+        private bool _gameArgumentsRequired = false;
+        private string _differentGameExeToMonitor = "";
         private bool _monitorDifferentGameExe = false;
-        private string _audioDevice;
-        private bool _changeAudioDevice;
+        private string _audioDevice = "";
+        private bool _changeAudioDevice = false;
         private bool _setAudioVolume = false;
         private decimal _audioVolume = -1;
-        private string _captureDevice;
+        private string _captureDevice = "";
         private bool _changeCaptureDevice;
         private bool _setCaptureVolume = false;
         private decimal _captureVolume = -1;
@@ -153,8 +153,8 @@ namespace DisplayMagician
         private bool _autoName = true;
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
-        private List<StartProgram> _startPrograms;
-        private List<StopProgram> _stopPrograms;
+        private List<StartProgram> _startPrograms = new List<StartProgram> ();
+        private List<StopProgram> _stopPrograms = new List<StopProgram>();
         private Bitmap _shortcutBitmap, _originalBitmap;
         [JsonIgnore]
 #pragma warning disable CS3008 // Identifier is not CLS-compliant
@@ -938,7 +938,7 @@ namespace DisplayMagician
             // We create the Bitmaps for the game
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
-            _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             // Empty out the unused shortcut data
             _executableNameAndPath = "";
@@ -1017,7 +1017,7 @@ namespace DisplayMagician
             // We create the Bitmaps for the executable
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
-            _shortcutBitmap = ImageUtils.ToBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
 
             // Empty out the unused shortcut data
             _gameAppId = "";
@@ -1197,16 +1197,20 @@ namespace DisplayMagician
                     worstError = ShortcutValidity.Error;
             }
             // Is the profile still valid right now? i.e. are all the screens available?
-            if (ProfileToUse != null && !ProfileToUse.IsPossible)
+            if (ProfileToUse != null)
             {
-                logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
-                ShortcutError error = new ShortcutError();
-                error.Name = "InvalidProfile";
-                error.Validity = ShortcutValidity.Warning;
-                error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
-                _shortcutErrors.Add(error);
-                if (worstError != ShortcutValidity.Error)
-                    worstError = ShortcutValidity.Warning;
+                ProfileToUse.RefreshPossbility();
+                if (!ProfileToUse.IsPossible)
+                {
+                    logger.Warn($"ShortcutItem/RefreshValidity: The profile {ProfileToUse} isn't possible to use right now!");
+                    ShortcutError error = new ShortcutError();
+                    error.Name = "InvalidProfile";
+                    error.Validity = ShortcutValidity.Warning;
+                    error.Message = $"The profile '{ProfileToUse.Name}' is not valid right now and cannot be used.";
+                    _shortcutErrors.Add(error);
+                    if (worstError != ShortcutValidity.Error)
+                        worstError = ShortcutValidity.Warning;
+                }                
             }
             // Is the main application still installed?
             if (Category.Equals(ShortcutCategory.Application))

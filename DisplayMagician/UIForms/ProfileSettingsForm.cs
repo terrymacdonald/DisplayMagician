@@ -216,7 +216,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-
+                SharedLogger.logger.Warn(ex, $"ProfileSettingsForm/btn_clear_Click: Exception while deleting wallpaper bitmap file {Profile.WallpaperBitmapFilename}");
             }
 
             // Empty the file name in the Profile

@@ -36,6 +36,12 @@ namespace DisplayMagicianShared
             var minY = 0;
             var maxY = 0;
 
+            // If there aren't any screens provided then return a blank rectangle
+            if (screens.Count == 0)
+            {
+                return new RectangleF(0, 0, 0, 0);
+            }
+
             foreach (var screen in screens)
             {
                 //var res = GetLargestResolution(screens);
@@ -49,11 +55,18 @@ namespace DisplayMagicianShared
             {
                 minX -= outsidePaddingSides;
                 maxX += outsidePaddingSides;
+            }
+
+            if (outsidePaddingTopBottom != 0)
+            {
                 minY -= outsidePaddingTopBottom;
                 maxY += outsidePaddingTopBottom;
             }
 
-            var size = new SizeF(Math.Abs(minX) + maxX, Math.Abs(minY) + maxY);
+            var width = Math.Abs(maxX - minX);
+            var height = Math.Abs(maxY - minY);
+
+            var size = new SizeF(width, height);
             var rect = new RectangleF(new PointF(minX, minY), size);
 
             return rect;
@@ -107,34 +120,59 @@ namespace DisplayMagicianShared
             using (var g = Graphics.FromImage(bitmap))
             {
                 g.SmoothingMode = SmoothingMode.HighQuality;
-                DrawView(g, width, height);
+                DrawDisplayLayout(g, width, height);
             }
 
             return bitmap;
         }
 
-        public Bitmap ToTightestBitmap(int width = 256, int height = 0, PixelFormat format = PixelFormat.Format32bppArgb)
+        public Bitmap ToTightestBitmap(PixelFormat format = PixelFormat.Format32bppArgb)
         {
+            if (_profile.Screens.Count == 0)
+            {
+                return new Bitmap(0, 0);
+            }
+
             var viewSize = CalculateViewSize(_profile.Screens, 0, 0);
-            double viewSizeRatio = viewSize.Width / viewSize.Height;
 
-            if (height == 0)
-                height = Convert.ToInt32((double)width / viewSizeRatio);
+            var bitmap = new Bitmap((int)viewSize.Width, (int)viewSize.Height, format);
+            bitmap.MakeTransparent();
 
+            using (var g = Graphics.FromImage(bitmap))
+            {
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                DrawDisplayLayout(g, (int)viewSize.Width, (int)viewSize.Height, false);
+            }
+
+            return bitmap;
+        }
+
+        public Bitmap ToTightestBitmap(int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
+        {
+            if (_profile.Screens.Count == 0)
+            {
+                return new Bitmap(0, 0);
+            }
+            
             var bitmap = new Bitmap(width, height, format);
             bitmap.MakeTransparent();
 
             using (var g = Graphics.FromImage(bitmap))
             {
                 g.SmoothingMode = SmoothingMode.HighQuality;
-                DrawView(g, width, height);
+                DrawDisplayLayout(g, width, height, false);                
             }
 
             return bitmap;
         }
 
-        public Bitmap ToBitmapOverlay(Bitmap bitmap)
+        /*public Bitmap ToBitmapOverlay(Bitmap bitmap)
         {
+            if (_profile.Screens.Count == 0)
+            {
+                return new Bitmap(0, 0);
+            }
+
             var viewSize = CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
             var width = bitmap.Width * 0.7f;
             var height = width / viewSize.Width * viewSize.Height;
@@ -143,11 +181,11 @@ namespace DisplayMagicianShared
             {
                 g.SmoothingMode = SmoothingMode.HighQuality;
                 g.TranslateTransform(bitmap.Width - width, bitmap.Height - height * 1.1f);
-                DrawView(g, width, height);
+                DrawDisplayLayout(g, width, height);
             }
 
             return bitmap;
-        }
+        }*/
 
         public MultiIcon ToIcon()
         {
@@ -178,7 +216,7 @@ namespace DisplayMagicianShared
             return multiIcon;
         }
 
-        public MultiIcon ToIconOverlay(string iconAddress)
+        /*public MultiIcon ToIconOverlay(string iconAddress)
         {
             var multiIcon = new MultiIcon();
             var icon = multiIcon.Add("Icon1");
@@ -236,48 +274,58 @@ namespace DisplayMagicianShared
             multiIcon.SelectedIndex = 0;
 
             return multiIcon;
-        }
+        }*/
 
 
-        private void DrawView(Graphics g, float width, float height)
+        private void DrawDisplayLayout(Graphics g, float maxWidth, float maxHeight, bool drawStand = true)
         {
+            // If we don't have any screens, then we can't draw them!
+            if (_profile.Screens.Count == 0)
+            {
+                return;
+            }
+
             // Figure out the sizes we need based on the total size of the screens
-            var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
-            var standPadding = height * 0.005f;
-            height -= standPadding * 8;
-            var factor = Math.Min((width - 2 * standPadding - 1) / viewSize.Width,
-                (height - 2 * standPadding - 1) / viewSize.Height);
+            var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);            
+
+            var standPadding = maxHeight * 0.005f;
+            maxHeight -= standPadding * 8;
+            var factor = Math.Min((maxWidth - 2 * standPadding - 1) / viewSize.Width,
+                (maxHeight - 2 * standPadding - 1) / viewSize.Height);
             g.ScaleTransform(factor, factor);
 
             // Make space for the stand
-            var xOffset = ((width - 1) / factor - viewSize.Width) / 2f;
-            var yOffset = ((height - 1) / factor - viewSize.Height) / 2f;
+            var xOffset = ((maxWidth - 1) / factor - viewSize.Width) / 2f;
+            var yOffset = ((maxHeight - 1) / factor - viewSize.Height) / 2f;
             g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
 
             // How wide the Bezel is on the screen graphics
             int screenBezel = 60;
             //int screenWordBuffer = 30;
 
-            // Draw the stand
-            if (standPadding * 6 >= 1)
+            // Draw the stand if needed
+            if (drawStand)
             {
-                using (
-                    var boundRect =
-                        RoundedRect(
-                            new RectangleF(viewSize.Width * 0.375f + viewSize.X,
-                                viewSize.Height + standPadding / factor,
-                                viewSize.Width / 4, standPadding * 7 / factor), 2 * standPadding / factor))
+                if (standPadding * 6 >= 1)
                 {
-                    g.FillPath(new SolidBrush(Color.FromArgb(250, 50, 50, 50)), boundRect);
-                    g.DrawPath(new Pen(Color.FromArgb(50, 255, 255, 255), 2 / factor), boundRect);
+                    using (
+                        var boundRect =
+                            RoundedRect(
+                                new RectangleF(viewSize.Width * 0.375f + viewSize.X,
+                                    viewSize.Height + standPadding / factor,
+                                    viewSize.Width / 4, standPadding * 7 / factor), 2 * standPadding / factor))
+                    {
+                        g.FillPath(new SolidBrush(Color.FromArgb(250, 50, 50, 50)), boundRect);
+                        g.DrawPath(new Pen(Color.FromArgb(50, 255, 255, 255), 2 / factor), boundRect);
+                    }
                 }
-            }
-            else
-            {
-                g.FillRectangle(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), viewSize);
-                g.DrawRectangle(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), viewSize.X, viewSize.Y,
-                    viewSize.Width, viewSize.Height);
-            }
+                else
+                {
+                    g.FillRectangle(new SolidBrush(Color.FromArgb(200, 255, 255, 255)), viewSize);
+                    g.DrawRectangle(new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor), viewSize.X, viewSize.Y,
+                        viewSize.Width, viewSize.Height);
+                }
+            }            
 
             // Now go through and draw the screens
             foreach (ScreenPosition screen in _profile.Screens)
@@ -323,16 +371,16 @@ namespace DisplayMagicianShared
                 //int startButtonSize = 2 * startButtonSpacer;
                 switch (screen.TaskBarEdge)
                 {
-                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Left:
+                    case Windows.TaskBarLayout.TaskBarEdge.Left:
                         taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Top:
+                    case Windows.TaskBarLayout.TaskBarEdge.Top:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
                         break;
-                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Right:
+                    case Windows.TaskBarLayout.TaskBarEdge.Right:
                         taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
                         break;
-                    case Windows.TaskBarStuckRectangle.TaskBarEdge.Bottom:
+                    case Windows.TaskBarLayout.TaskBarEdge.Bottom:
                         taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
                         break;
                     default:

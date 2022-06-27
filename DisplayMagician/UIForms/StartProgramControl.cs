@@ -32,6 +32,27 @@ namespace DisplayMagician.UIForms
         public StartProgramControl()
         {
             InitializeComponent();
+
+            // Patch any null start programs (old error that needs repairing)
+            // This code will save the file as it should be saved!
+            if (myStartProgram.Arguments == null)
+            {
+                myStartProgram.Arguments = "";
+            }
+
+            // Prepare the start program process priority combo box
+            cbx_start_program_priority.DataSource = new ComboItem[] {
+                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
+                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
+                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
+                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
+                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
+                };
+            cbx_start_program_priority.ValueMember = "Value";
+            cbx_start_program_priority.DisplayMember = "Text";
+            cbx_start_program_priority.SelectedItem = "Normal";
+            cbx_start_program_priority.Enabled = true;
+
         }
 
         public StartProgramControl(StartProgram startProgram)
@@ -40,6 +61,28 @@ namespace DisplayMagician.UIForms
 
             // Update the text with the start program info
             myStartProgram = startProgram;
+
+            // Patch any null start programs (old error that needs repairing)
+            // This code will save the file as it should be saved!
+            if (myStartProgram.Arguments == null)
+            {
+                myStartProgram.Arguments = "";
+            }
+
+            // Prepare the start program process priority combo box
+            cbx_start_program_priority.DataSource = new ComboItem[] {
+                    new ComboItem{ Value = ProcessPriority.High, Text = "High" },
+                    new ComboItem{ Value = ProcessPriority.AboveNormal, Text = "Above Normal" },
+                    new ComboItem{ Value = ProcessPriority.Normal, Text = "Normal" },
+                    new ComboItem{ Value = ProcessPriority.BelowNormal, Text = "Below Normal" },
+                    new ComboItem{ Value = ProcessPriority.Idle, Text = "Idle" },
+                };
+            cbx_start_program_priority.ValueMember = "Value";
+            cbx_start_program_priority.DisplayMember = "Text";
+            cbx_start_program_priority.SelectedItem = "Normal";
+            cbx_start_program_priority.Enabled = true;
+
+
             UpdateUI();
         }
 
@@ -50,6 +93,13 @@ namespace DisplayMagician.UIForms
             // Update the text with the start program info
             myStartProgram = startProgram;
             myStartProgram.Priority = startProgramOrder;
+
+            // Patch any null start programs (old error that needs repairing)
+            // This code will save the file as it should be saved!
+            if (myStartProgram.Arguments == null)
+            {
+                myStartProgram.Arguments = "";
+            }
 
             // Prepare the start program process priority combo box
             cbx_start_program_priority.DataSource = new ComboItem[] {

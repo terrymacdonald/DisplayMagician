@@ -12,6 +12,7 @@ using DisplayMagicianShared;
 using DisplayMagician.UIForms;
 using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
+using System.Net.NetworkInformation;
 using System.Drawing;
 using System.Runtime.Serialization;
 using NLog.Config;
@@ -21,6 +22,7 @@ using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Win32;
 using DisplayMagician.Processes;
+using NETWORKLIST;
 
 namespace DisplayMagician {
 
@@ -57,6 +59,24 @@ namespace DisplayMagician {
         private static SharedLogger sharedLogger;
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
+        private static bool _bypassSingleInstanceMode = false;
+
+        public enum ERRORLEVEL: int
+        {
+            OK = 0, // Errorlevel returned when everything has worked as it should
+            CANCELED_BY_USER = 1,  // Errorlevel returned when an action was cancelled by a user           
+            PROFILE_UNKNOWN = 50, // Errorlevel used in CurrentProfile to return the fact the current display profile is not a saved profile, and so is unknown.
+            ERROR_EXCEPTION = 100,  // Errorlevel returned when an excption of some kind has occurred.
+            ERROR_CANNOT_FIND_SHORTCUT = 101,  // Errorlevel returned when RunShortcut command is used, and it cannot find the shortcut to run
+            ERROR_CANNOT_FIND_PROFILE = 102,  // Errorlevel returned when RunProfile command is used, and it cannot find the profile to apply
+            ERROR_APPLYING_PROFILE = 103,  // Errorlevel returned when RunProfile command is used, and it cannot apply the profile for some reason
+            ERROR_UNKNOWN_COMMAND = 104, // Errorlevel returned when DisplayMagician is given an unregonised command
+        };
+
+        private static List<string> _commandsThatBypassSingleInstanceMode = new List<string>
+        {
+            "CurrentProfile",
+        };
 
         /// <summary>
         ///     The main entry point for the application.
@@ -64,28 +84,44 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
-
-            // Create the remote server if we're first instance, or
-            // If we're a subsequent instance, pass the command line parameters to the first instance and then 
-            bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
-            if (isFirstInstance)
+            // If the command supplied on the commmand line is a command that bypasses singleinstance mode,
+            // then skip the single instance mode tests. This is important for commands used in powershell
+            if (args.Length > 0 && _commandsThatBypassSingleInstanceMode.Contains(args[0]))
             {
-                Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
+                _bypassSingleInstanceMode = true;
             }
-            else
+
+
+            // If we're not bypassing single instance mode, then we need to check if we're the single instance, and if we're the second instance then
+            // we need to pass the command to the single instance and shutdown.
+            if (!_bypassSingleInstanceMode)
             {
-                Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
-                if (System.Windows.Forms.Application.MessageLoop)
+                // Create the remote server if we're first instance, or
+                // If we're a subsequent instance, pass the command line parameters to the first instance and then 
+                bool isFirstInstance = SingleInstance.LaunchOrReturn(args);
+                if (isFirstInstance)
                 {
-                    // WinForms have loaded
-                    Application.Exit();
+                    Console.WriteLine($"Program/Main: This is the first DisplayMagician to start, so will be the one to actually perform the actions.");
                 }
                 else
                 {
-                    // Console app
-                    Environment.Exit(1);
+
+                    // if we're the second instance of DisplayMagician, then lets close down as the first instance will continue with what we wanted to do.
+                    Console.WriteLine($"Program/Main: There is already another DisplayMagician running, so we'll use that one to actually perform the actions. Closing this instance of Displaymagician.");
+                    if (System.Windows.Forms.Application.MessageLoop)
+                    {
+                        // WinForms have loaded
+                        Application.Exit();
+                    }
+                    else
+                    {
+                        // Console app
+                        Environment.Exit(1);
+                    }
+
                 }
             }
+            
 
             // If we get here, then we're the first instance!
             RegisterDisplayMagicianWithWindows();
@@ -144,19 +180,46 @@ namespace DisplayMagician {
             // NOTE: This had to be moved up from the later state
             // Copy the old Settings file to the new v2 name
             bool upgradedSettingsFile = false;
-            string oldSettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
-            string newSettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
+            string targetSettingsFile = ProgramSettings.programSettingsStorageJsonFileName;
             try
-            {
-                if (File.Exists(oldSettingsFile) && !File.Exists(newSettingsFile))
+            {               
+                if (!File.Exists(targetSettingsFile))
                 {
-                    File.Copy(oldSettingsFile, newSettingsFile, true);
-                    upgradedSettingsFile = true;
+                    string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
+                    string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
+                    string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
+
+                    if (File.Exists(oldv23SettingsFile))
+                    {
+                        File.Copy(oldv23SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+                    }
+                    else if (File.Exists(oldv2SettingsFile))
+                    {
+                        File.Copy(oldv2SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+                    }
+                    else if (File.Exists(oldv1SettingsFile))
+                    {
+                        File.Copy(oldv1SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+                    }                    
+                }
+
+                // Now we rename all the currently listed Settings files as they aren't needed any longer.
+                // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
+                if (RenameOldFileVersions(AppDataPath, "Settings_*.json", targetSettingsFile))
+                {
+                    logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                }
+                else
+                {
+                    logger.Error($"Program/Main: Error while renaming old Shortcut files.");
                 }
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Program/Main: Exception upgrading v1 settings file {oldSettingsFile} to v2 settings file {ProgramSettings.programSettingsStorageJsonFileName}.");
+                logger.Error(ex, $"Program/Main: Exception upgrading old settings file to v2.4 settings file {ProgramSettings.programSettingsStorageJsonFileName}.");
             }
 
             // Load the program settings
@@ -164,7 +227,7 @@ namespace DisplayMagician {
             
 
             // Rules for mapping loggers to targets          
-            /*NLog.LogLevel logLevel = null;
+            NLog.LogLevel logLevel = null;
             switch (AppProgramSettings.LogLevel)
             {
                 case "Trace":
@@ -185,20 +248,21 @@ namespace DisplayMagician {
                 default:
                     logLevel = NLog.LogLevel.Info;
                     break;
-            }*/
+            }
             // TODO - remove this temporary action to force Trace level logging
             // I've set this as it was too onerous continuously teaching people how to turn on TRACE logging
             // While there are a large number of big changes taking place with DisplayMagician, this will minimise
             // the backwards and forwards it takes to get the right level of log information for me to troubleshoot.
-            NLog.LogLevel logLevel = NLog.LogLevel.Trace;
-            AppProgramSettings.LogLevel = "Trace";
+            //NLog.LogLevel logLevel = NLog.LogLevel.Trace;
+            //AppProgramSettings.LogLevel = "Trace";
 
 
             // Create the log file target
             var logfile = new NLog.Targets.FileTarget("logfile")
             {
                 FileName = AppLogFilename,
-                DeleteOldFileOnStartup = true
+                DeleteOldFileOnStartup = true,
+                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message:withexception=true}"
             };
 
             // Create a logging rule to use the log file target
@@ -229,7 +293,7 @@ namespace DisplayMagician {
             sharedLogger = new SharedLogger(logger);
 
             // Start the Log file
-            logger.Info($"Starting {Application.ProductName} v{Application.ProductVersion}");
+            logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
 
             // Create the other DM Dir if it doesn't exist so that it's avilable for all 
             // parts of the program to use
@@ -238,44 +302,64 @@ namespace DisplayMagician {
                 try
                 {
                     Directory.CreateDirectory(AppIconPath);
+                    logger.Trace($"Program/Main: Created the Application Icon Folder {AppIconPath}");
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Icon Folder {AppLogPath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Icon Folder {AppIconPath}");
                 }
+            }
+            else
+            {
+                logger.Trace($"Program/Main: Application Icon Folder {AppIconPath} already exists so skipping creating it");
             }
             if (!Directory.Exists(AppProfilePath))
             {
                 try
                 {
                     Directory.CreateDirectory(AppProfilePath);
+                    logger.Trace($"Program/Main: Created the Application Profile Folder {AppProfilePath}");
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Profile Folder {AppProfilePath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Profile Folder {AppProfilePath}");
                 }
+            }
+            else
+            {
+                logger.Trace($"Program/Main: Application Profile Folder {AppProfilePath} already exists so skipping creating it");
             }
             if (!Directory.Exists(AppShortcutPath))
             {
                 try
                 {
                     Directory.CreateDirectory(AppShortcutPath);
+                    logger.Trace($"Program/Main: Created the Application Shortcut Folder {AppShortcutPath}");
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
                 }
+            }
+            else
+            {
+                logger.Trace($"Program/Main: Application Shortcut Folder {AppShortcutPath} already exists so skipping creating it");
             }
             if (!Directory.Exists(AppWallpaperPath))
             {
                 try
                 {
                     Directory.CreateDirectory(AppWallpaperPath);
+                    logger.Trace($"Program/Main: Created the Application Wallpaper Folder {AppWallpaperPath}");
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"Program/StartUpNormally exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
+                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
                 }
+            }
+            else
+            {
+                logger.Trace($"Program/Main: Application Wallpaper Folder {AppWallpaperPath} already exists so skipping creating it");
             }
 
             // Write the Application Name
@@ -287,7 +371,7 @@ namespace DisplayMagician {
             Console.WriteLine("=");
             Console.WriteLine($"Copyright © Terry MacDonald 2020-{DateTime.Today.Year}");
             Console.WriteLine(@"Derived from Helios Display Management - Copyright © Soroush Falahati 2017-2020");
-
+            logger.Trace($"Program/Main: Setting visual styles and rendering mode");
 
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
@@ -297,86 +381,98 @@ namespace DisplayMagician {
             // Check if it's an upgrade from DisplayMagician v2.x to v2.2
             // and if it is then copy the old configs to the new filenames and
             // explain to the user what they need to do.
-            
-            string dp22 = Path.Combine(AppProfilePath, "DisplayProfiles_2.2.json");
-            string dp21 = Path.Combine(AppProfilePath, "DisplayProfiles_2.1.json");
-            string dp20 = Path.Combine(AppProfilePath, "DisplayProfiles_2.0.json");
-            string dp10 = Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json");
+            logger.Trace($"Program/Main: Attempting to upgrade earlier DisplayMagician Display Profile files if required");
+           
+            // This is the latest displayprofile config file
+            string targetdp = ProfileRepository.ProfileStorageFileName;
 
-            string targetdp = dp22;
-
-            if (File.Exists(dp21) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
+            try
             {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.1 to DisplayMagician v2.2, so performing some upgrade steps.");
-
-                // Copy the older files across to the new names, then the migrate JSON function
-                // within the ProfileRepository will take care of the rest
-                File.Copy(dp21, dp22);
-
-                // Warn the user about the fact we need them to recreate their Display Profiles again!
-                StartMessageForm myMessageWindow = new StartMessageForm();
-                myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                myMessageWindow.ButtonText = "&Close";
-                myMessageWindow.ShowDialog();
-            }
-            else if (File.Exists(dp20) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
-            {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v2.0 to DisplayMagician v2.2, so performing some upgrade steps.");
-
-                // Copy the older files across to the new names, then the migrate JSON function
-                // within the ProfileRepository will take care of the rest
-                File.Copy(dp20, dp22);
-
-                // Warn the user about the fact we need them to recreate their Display Profiles again!
-                StartMessageForm myMessageWindow = new StartMessageForm();
-                myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                myMessageWindow.ButtonText = "&Close";
-                myMessageWindow.ShowDialog();
-            }
-            // Check if it's an upgrade from DisplayMagician v1 to v2
-            // and if it is then copy the old configs to the new filenames and
-            // explain to the user what they need to do.
-            // e.g. DisplayProfiles_1.0.json exists, but DisplayProfiles_2.2.json doesn't
-            else if (File.Exists(Path.Combine(AppProfilePath, "DisplayProfiles_1.0.json")) && !File.Exists(Path.Combine(AppProfilePath, targetdp)))
-            {
-                logger.Info($"Program/Main: This is an upgrade from DisplayMagician v1.0 to DisplayMagician v2.2, so performing some upgrade steps.");
-                // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
-                if (upgradedSettingsFile)
+                // Only run this code if there isn't a current Display Profile file.
+                // If this happens then it is an error!
+                if (!File.Exists(targetdp))
                 {
-                    logger.Info($"Program/Main: Upgraded v1.0 settings file {oldSettingsFile} to v2.2 settings file {newSettingsFile} earlier in loading process (before logging service was available).");
-                }                
+                    logger.Info($"Program/Main: This is an upgrade from an earlier DisplayMagician Display Profile format to the current DisplayMagician Display Profile format, so it requires the user manual recreate the display profiles.");
 
-                // Copy the old Game Shortcuts file to the new v2 name
-                string oldShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
-                string newShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
-                try
-                {                    
-                    if (File.Exists(oldShortcutsFile) && !File.Exists(newShortcutsFile))
-                    {
-                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldShortcutsFile} to v2 shortcut file {newShortcutsFile }.");
-                        File.Copy(oldShortcutsFile, newShortcutsFile);
-                    }
-                }    
-                catch(Exception ex)
+                    // Warn the user about the fact we need them to recreate their Display Profiles again!
+                    StartMessageForm myMessageWindow = new StartMessageForm();
+                    myMessageWindow.MessageMode = "rtf";
+                    myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
+                    myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
+                    myMessageWindow.ButtonText = "&Close";
+                    myMessageWindow.ShowDialog();                    
+                }
+                else
                 {
-                    logger.Error(ex, $"Program/Main: Exception upgrading v1.0 shortcut file {oldShortcutsFile} to v2.2 shortcut file {ShortcutRepository.ShortcutStorageFileName}.");
+                    logger.Trace($"Program/Main: DisplayMagician Display Profile files do not require upgrading so skipping");
                 }
 
-                // Warn the user about the fact we need a new DisplayProfiles_2.0.json
-                StartMessageForm myMessageWindow = new StartMessageForm();
-                myMessageWindow.MessageMode = "rtf";
-                myMessageWindow.URL = "https://displaymagician.littlebitbig.com/messages/DisplayMagicianRecreateProfiles.rtf";
-                myMessageWindow.HeadingText = "You need to recreate your Display Profiles";
-                myMessageWindow.ButtonText = "&Close";
-                myMessageWindow.ShowDialog();
+                // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
+                // NOTE: This is outside the File Exidsts above to fix all the partially renamed files performed in previous upgrades
+                if (RenameOldFileVersions(AppProfilePath, "DisplayProfiles_*.json", targetdp))
+                {
+                    logger.Trace($"Program/Main: Old DisplayMagician Display Profile files were successfully renamed");
+                }
+                else
+                {
+                    logger.Error($"Program/Main: Error while renaming old Display Profiles files.");
+                }
             }
-                       
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/Main: Exception upgrading old Display Profile files to v2.2 shortcut file {targetdp}.");
+            }
 
-            logger.Debug($"Setting up commandline processing configuration");
+            // Note whether we copied the old Settings file to the new v2 name earlier (before the logging was enabled)
+            if (upgradedSettingsFile)
+            {
+                logger.Info($"Program/Main: Upgraded old settings file to settings file {targetSettingsFile} earlier in loading process (before logging service was available).");
+            }
+
+            // Also upgrade the Shortcuts file if it's needed
+            string targetShortcutsFile = ShortcutRepository.ShortcutStorageFileName;
+            try
+            {
+                if (!File.Exists(targetShortcutsFile))
+                {
+                    string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
+                    string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
+
+                    if (File.Exists(oldv2ShortcutsFile))
+                    {
+                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv2ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
+                    }
+                    else if (File.Exists(oldv1ShortcutsFile))
+                    {
+                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv1ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
+                    }
+                    
+                }
+                else
+                {
+                    logger.Trace($"Program/Main: DisplayMagician Shortcut files do not require upgrading so skipping");
+                }
+
+                // Now we rename all the currently listed Display Profile files as they aren't needed any longer.
+                // NOTE: This is outside the File Exists above to fix all the partially renamed files performed in previous upgrades
+                if (RenameOldFileVersions(AppShortcutPath, "Shortcuts_*.json", targetShortcutsFile))
+                {
+                    logger.Trace($"Program/Main: Old DisplayMagician Shortcut files were successfully renamed");
+                }
+                else
+                {
+                    logger.Error($"Program/Main: Error while renaming old Shortcut files.");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/Main: Exception upgrading old shortcut file to latest shortcut file {targetShortcutsFile}.");
+            }
+
+            logger.Trace($"Program/Main: Setting up commandline processing configuration");
             var app = new CommandLineApplication
             {
                 AllowArgumentSeparator = true,
@@ -400,24 +496,28 @@ namespace DisplayMagician {
             CommandOption trace = app.Option("--trace", "Generate a DisplayMagician.log trace-level log file", CommandOptionType.NoValue);
             CommandOption forcedVideoLibrary = app.Option("--force-video-library", "Bypass the normal video detection logic to force a particular video library (AMD, NVIDIA, Windows)", CommandOptionType.SingleValue);
 
+            logger.Trace($"Program/Main: Preparing the RunShortcut command...");
+
             // This is the RunShortcut command
             app.Command(DisplayMagicianStartupAction.RunShortcut.ToString(), (runShortcutCmd) =>
             {
+                logger.Trace($"Program/Main: Processing the {runShortcutCmd} command...");
+
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
-                
+
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -429,30 +529,30 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
                 var argumentShortcut = runShortcutCmd.Argument("\"SHORTCUT_UUID\"", "(required) The UUID of the shortcut to run from those stored in the shortcut library.").IsRequired();
                 argumentShortcut.Validators.Add(new ShortcutMustExistValidator());
@@ -462,32 +562,44 @@ namespace DisplayMagician {
 
                 runShortcutCmd.OnExecute(() =>
                 {
-                    logger.Debug($"RunShortcut commandline command was invoked!");
+                    logger.Debug($"Program/Main: RunShortcut commandline command was invoked!");
+
+                    // Set up the AppMainForm variable that we need to use later
+                    AppMainForm = new MainForm();
+                    AppMainForm.Load += MainForm_LoadCompleted;
 
                     // Load the games in background onexecute
                     GameLibrary.LoadGamesInBackground();
 
-                    RunShortcut(argumentShortcut.Value);
+                    // Close the splash screen
+                    if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
+                    ERRORLEVEL errLevel = RunShortcut(argumentShortcut.Value);
                     DeRegisterDisplayMagicianWithWindows();
-                    return 0;
+                    return (int)errLevel;
                 });
             });
+
+            logger.Trace($"Program/Main: Preparing the ChangeProfile command...");
 
             // This is the ChangeProfile command
             app.Command(DisplayMagicianStartupAction.ChangeProfile.ToString(), (runProfileCmd) =>
             {
+                logger.Trace($"Program/Main: Processing the {runProfileCmd} command...");
+
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -499,30 +611,30 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
 
                 var argumentProfile = runProfileCmd.Argument("\"Profile_UUID\"", "(required) The UUID of the profile to run from those stored in the profile file.").IsRequired();
@@ -533,38 +645,50 @@ namespace DisplayMagician {
 
                 runProfileCmd.OnExecute(() =>
                 {
-                    logger.Debug($"ChangeProfile commandline command was invoked!");
+                    logger.Debug($"Program/Main: ChangeProfile commandline command was invoked!");
+
+                    // Set up the AppMainForm variable that we need to use later
+                    AppMainForm = new MainForm();
+                    AppMainForm.Load += MainForm_LoadCompleted;
+
+                    // Close the splash screen
+                    if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                        AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                     try
                     {
-                        RunProfile(argumentProfile.Value);
+                        ERRORLEVEL errLevel = RunProfile(argumentProfile.Value);
                         DeRegisterDisplayMagicianWithWindows();
-                        return 0;
+                        return (int)errLevel;
                     }
                     catch (Exception ex)
                     {
                         logger.Error(ex, $"Program/Main exception running ApplyProfile(profileToUse)");
                         DeRegisterDisplayMagicianWithWindows();
-                        return 1;
+                        return (int)ERRORLEVEL.ERROR_EXCEPTION;
                     }
                 });
             });
 
+            logger.Trace($"Program/Main: Preparing the CreateProfile command...");
+
             // This is the CreateProfile command
             app.Command(DisplayMagicianStartupAction.CreateProfile.ToString(), (createProfileCmd) =>
             {
+                logger.Trace($"Program/Main: Processing the {createProfileCmd} command...");
+
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -576,58 +700,64 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                 }
                 //description and help text of the command.
                 createProfileCmd.Description = "Use this command to go directly to the create display profile screen.";
 
                 createProfileCmd.OnExecute(() =>
                 {
-                    logger.Debug($"CreateProfile commandline command was invoked!");
+                    logger.Debug($"Program/Main: CreateProfile commandline command was invoked!");
                     Console.WriteLine("Starting up and creating a new Display Profile...");
-                    CreateProfile();
+                    ERRORLEVEL errLevel = CreateProfile();
                     DeRegisterDisplayMagicianWithWindows();
-                    return 0;
+                    return (int)errLevel;
                 });
             });
 
-            app.OnExecute(() =>
+
+            logger.Trace($"Program/Main: Preparing the CurrentProfile command...");
+            // This is the CurrentProfile command
+            // This will output the current display profile if one matches, or 'Unknown'
+            app.Command(DisplayMagicianStartupAction.CurrentProfile.ToString(), (currentProfileCmd) =>
             {
+                logger.Trace($"Program/Main: Processing the {currentProfileCmd} command...");
+
                 // Set the --trace or --debug options if supplied
                 if (trace.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
-                    logger.Info($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
                 else if (debug.HasValue())
                 {
                     Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
-                    logger.Info($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
                     loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
                     NLog.LogManager.ReconfigExistingLoggers();
                 }
@@ -639,33 +769,99 @@ namespace DisplayMagician {
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
                         Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
-                        logger.Info($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("AMD"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
                         Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
-                        logger.Info($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
                     }
                     else if (forcedVideoLibrary.Value().Equals("Windows"))
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
                         Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
-                        logger.Info($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
                     }
                     else
                     {
                         ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                        logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
                     }
                 }
                 else
                 {
                     ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
-                    logger.Info($"Leaving DisplayMagician to detect the best Video Library to use.");
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
+                }
+                //description and help text of the command.
+                currentProfileCmd.Description = "Use this command to output the name of the display profile currently in use. It will return 'UNKNOWN' if the display profile doesn't match any saved display profiles";
+
+                currentProfileCmd.OnExecute(() =>
+                {
+                    logger.Debug($"Program/Main: CurrentProfile commandline command was invoked!");
+                    ERRORLEVEL errLevel = CurrentProfile();
+                    DeRegisterDisplayMagicianWithWindows();
+                    return (int)errLevel;
+                });
+            });
+
+            logger.Trace($"Program/Main: Preparing the default command...");
+
+            app.OnExecute(() =>
+            {
+                logger.Trace($"Program/Main: Starting the app normally as there was no command supplied...");
+
+                // Set the --trace or --debug options if supplied
+                if (trace.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to TRACE level as --trace was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
+                }
+                else if (debug.HasValue())
+                {
+                    Console.WriteLine($"Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    logger.Info($"Program/Main: Changing logging level to DEBUG level as --debug was provided on the commandline.");
+                    loggingRule.SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
+                    NLog.LogManager.ReconfigExistingLoggers();
                 }
 
-                logger.Debug($"No commandline command was invoked, so starting up normally");
+                // Set the --force-video-library option if supplied
+                if (forcedVideoLibrary.HasValue())
+                {
+                    if (forcedVideoLibrary.Value().Equals("NVIDIA"))
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.NVIDIA);
+                        Console.WriteLine($"Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing NVIDIA Video Library as '--force-video-library NVIDIA' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("AMD"))
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.AMD);
+                        Console.WriteLine($"Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing AMD Video Library as '--force-video-library AMD' was provided on the commandline.");
+                    }
+                    else if (forcedVideoLibrary.Value().Equals("Windows"))
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.WINDOWS);
+                        Console.WriteLine($"Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                        logger.Info($"Program/Main: Forcing Windows CCD Video Library as '--force-video-library Windows' was provided on the commandline.");
+                    }
+                    else
+                    {
+                        ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
+                        logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
+                    }
+                }
+                else
+                {
+                    ProfileRepository.InitialiseRepository(FORCED_VIDEO_MODE.DETECT);
+                    logger.Info($"Program/Main: Leaving DisplayMagician to detect the best Video Library to use.");
+                }
+
+                logger.Debug($"Program/Main: No commandline command was invoked, so starting up normally");
                 // Add a workaround to handle the weird way that Windows tell us that DisplayMagician 
                 // was started from a Notification Toast when closed (Windows 10)
                 // Due to the way that CommandLineUtils library works we need to handle this as
@@ -676,26 +872,31 @@ namespace DisplayMagician {
                     {
                         if (myArg.Equals("-ToastActivated"))
                         {
-                            logger.Debug($"We were started by the user clicking on a Windows Toast");
+                            logger.Debug($"Program/Main: We were started by the user clicking on a Windows Toast");
                             Program.AppToastActivated = true;
                             break;
                         }
 
                     }
                 }
-                logger.Info("Starting Normally...");
-
+                logger.Info("Program/Main: Starting Normally...");
+               
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
-                logger.Debug($"Try to load all the Games in the background to avoid locking the UI");
+                logger.Debug($"Program/Main: Try to load all the Games in the background to avoid locking the UI");
                 GameLibrary.LoadGamesInBackground();
 
-                StartUpApplication();
+                // Set up the AppMainForm variable that we need to use later
+                AppMainForm = new MainForm();
+                AppMainForm.Load += MainForm_LoadCompletedAndOpenApp;
+
+                ERRORLEVEL errLevel = StartUpApplication();
                 DeRegisterDisplayMagicianWithWindows();
-                return 0;
+                return (int)errLevel;
             });
 
-            
+            logger.Trace($"Program/Main: Showing the splashscreen if requested");
+
             if (AppProgramSettings.ShowSplashScreen)
             {
                 //Show Splash Form
@@ -708,14 +909,15 @@ namespace DisplayMagician {
 
             try
             {
-                logger.Debug($"Starting commandline processing");
+                logger.Debug($"Invoking commandline processing");
                 // This begins the actual execution of the application
                 app.Execute(args);
             }
             catch (CommandParsingException ex)
             {
-                logger.Error(ex, $"Program/Main exception parsing the Commands passed to the program");
-                Console.WriteLine("Didn't recognise the supplied commandline options: {0}", ex.Message);
+                logger.Error(ex, $"Program/Main exception parsing the Commands passed to the program: ");
+                Console.WriteLine($"Didn't recognise the supplied commandline options: - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return (int)ERRORLEVEL.ERROR_UNKNOWN_COMMAND;
             }
             catch (Exception ex)
             {
@@ -723,35 +925,44 @@ namespace DisplayMagician {
                 // You'll always want to catch this exception, otherwise it will generate a messy and confusing error for the end user.
                 // the message will usually be something like:
                 // "Unrecognized command or argument '<invalid-command>'"
-                logger.Error(ex, $"Program/Main general exception during app.Execute(args)");
+                logger.Error(ex, $"Program/Main general exception during app.Execute(args): ");
                 Console.WriteLine($"Program/Main exception: Unable to execute application - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
-            logger.Debug($"Beginning to shutdown");
+            logger.Debug($"Beginning to shutdown as the app command has finished executing.");
 
-            logger.Debug($"Clearing all previous windows toast notifications as they aren't needed any longer");
+            // Close the splash screen if it's still open (happens with some errors)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            {
+                logger.Trace($"Closing the SplashScreen as it may still be open");
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+            }
+                
+
+            logger.Trace($"Program/Main: Clearing all previous windows toast notifications as they aren't needed any longer");
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
 
             // Shutdown NLog
-            logger.Debug($"Stopping logging processes");
+            logger.Trace($"Program/Main: Stopping logging processes");
             NLog.LogManager.Shutdown();
 
             // Dispose of the CancellationTokenSource
             Program.AppCancellationTokenSource.Dispose();
 
             // Exit with a 0 Errorlevel to indicate everything worked fine!
-            return 0;
+            return (int)ERRORLEVEL.OK;
         }       
 
-        public static void CreateProfile()
+        public static ERRORLEVEL CreateProfile()
         {
             logger.Debug($"Program/CreateProfile: Starting");
 
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
             try
             {
                 // Close the splash screen
-                if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                     AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
                 // Run the program with directly showing CreateProfile form
@@ -767,13 +978,17 @@ namespace DisplayMagician {
                     Language.Fatal_Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+                errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }
 
+            return errLevel;
         }
 
-        private static void StartUpApplication()
+        private static ERRORLEVEL StartUpApplication()
         {
             logger.Debug($"Program/StartUpApplication: Starting");
+
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
 
             try
             {
@@ -814,8 +1029,6 @@ namespace DisplayMagician {
                 ShowMessages();
 
                 // Run the program with normal startup
-                AppMainForm = new MainForm();
-                AppMainForm.Load += MainForm_LoadCompleted;
                 Application.Run(AppMainForm);                
 
             }
@@ -827,28 +1040,38 @@ namespace DisplayMagician {
                     Language.Fatal_Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+
+                errLevel = ERRORLEVEL.ERROR_EXCEPTION;
             }
-            
+
+            return errLevel;
         }
 
         private static void MainForm_LoadCompleted(object sender, EventArgs e)
         {
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+        }
+
+        private static void MainForm_LoadCompletedAndOpenApp(object sender, EventArgs e)
+        {
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
             AppMainForm.TopMost = true;
             AppMainForm.Activate();
             AppMainForm.TopMost = false;
         }
-       
+
         // ReSharper disable once CyclomaticComplexity
-        public static void RunShortcut(string shortcutUUID)
+        public static ERRORLEVEL RunShortcut(string shortcutUUID)
         {
             logger.Debug($"Program/RunShortcut: Running shortcut {shortcutUUID}");
 
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
             ShortcutItem shortcutToRun = null;
 
             // Close the splash screen
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             // Match the ShortcutName to the actual shortcut listed in the shortcut library
@@ -860,30 +1083,85 @@ namespace DisplayMagician {
                 shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
                 if (shortcutToRun is ShortcutItem)
                 {
+                    shortcutToRun.RefreshValidity();
                     //ShortcutRepository.RunShortcut(shortcutToRun);
                     Program.RunShortcutTask(shortcutToRun);
                 }
             }
             else
             {
-                throw new Exception(Language.Cannot_find_shortcut_in_library);
+                logger.Error($"Program/RunShortcut: Cannot find the shortcut with UUID {shortcutUUID}");
+                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
             }
+
+            return errLevel;
 
         }
 
-        public static void RunProfile(string profileName)
+        public static ERRORLEVEL CurrentProfile()
         {
-            logger.Trace($"Program/RunProfile: Running profile {profileName}");
+            logger.Trace($"Program/CurrentProfile: Finding the current profile in use");
 
             // Close the splash screen
-            if (ProgramSettings.LoadSettings().ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
             // Lookup the profile
-            ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
-            logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
-           
-            Program.ApplyProfileTask(profileToUse);
+            ProfileItem currentProfile;
+            string profileName = "UNKNOWN";
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
+            try
+            {
+                ProfileRepository.UpdateActiveProfile();
+                currentProfile = ProfileRepository.GetActiveProfile();
+                if (currentProfile is ProfileItem)
+                {
+                    profileName = currentProfile.Name;
+                }                
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/CurrentProfile: Exception while trying to get the name of the DisplayMagician profile currently in use.");
+                errLevel = ERRORLEVEL.ERROR_EXCEPTION;
+            }
+
+            Console.WriteLine($"Display Profile in use: {profileName}");
+            logger.Trace($"Program/RunProfile: Current display profile in use is called {profileName}. Informing the user of this fact.");
+
+            return errLevel;
+        }
+
+
+        public static ERRORLEVEL RunProfile(string profileName)
+        {
+            logger.Trace($"Program/RunProfile: Running profile {profileName}");
+            ERRORLEVEL errLevel = ERRORLEVEL.OK;
+
+            // Close the splash screen
+            if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
+                AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
+
+
+            if (ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).Any())
+            {
+                logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
+
+                // Get the profile
+                ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
+                
+                ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
+                if (result == ApplyProfileResult.Cancelled)
+                    errLevel = ERRORLEVEL.CANCELED_BY_USER;
+                else if (result == ApplyProfileResult.Error)
+                    errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
+            }
+            else 
+            { 
+                logger.Error($"Program/RunProfile: We tried looking for a profile called {profileName} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
+                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
+            }
+
+            return errLevel;
         }
 
 
@@ -897,8 +1175,69 @@ namespace DisplayMagician {
             return true;
         }
 
+        public static bool RenameOldFileVersions(string path, string searchPattern, string skipFilename)
+        {
+            try
+            {
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    logger.Error($"Program/RenameOldFileVersions: We were passed an empty path, so returning an empty list of matching files.");
+                    return false;
+                }
+
+                string[] filesToRename;
+
+                if (String.IsNullOrWhiteSpace(searchPattern)) 
+                {
+                    filesToRename = Directory.GetFiles(path);
+                }
+                else
+                {
+                    filesToRename = Directory.GetFiles(path, searchPattern);
+                }
+                
+                if (filesToRename.Length > 0)
+                {
+                    logger.Trace($"Program/RenameOldFileVersions: Found {filesToRename.Length} files matching the '{searchPattern}' pattern in {path}");
+                    foreach (var filename in filesToRename)
+                    {
+                        // If this is the file we should skip, then let's skip it
+                        if (filename.Equals(skipFilename, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            logger.Trace($"Program/RenameOldFileVersions: Skipping renaming {filename} to {filename}.old as we want to keep the {skipFilename} file.");
+                            continue;
+                        }
+
+                        try
+                        {
+                            logger.Trace($"Program/RenameOldFileVersions: Attempting to rename {filename} to {filename}.old");
+                            File.Move(filename, $"{filename}.old");
+                        }
+                        catch (Exception ex2)
+                        {
+                            logger.Error(ex2,$"Program/RenameOldFileVersions: Exception while trying to rename {filename} to {filename}.old. Skipping this rename.");
+                        }
+                    }
+                }
+                else
+                {
+                    logger.Trace($"Program/RenameOldFileVersions: We tried looking for all files that matched the pattern '{searchPattern}' in path {path} and couldn't find any. skipping processing.");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Program/RenameOldFileVersions: Exception while trying to RenameOldFileVersions. Unable to rename the files.");
+                return false;
+            }
+        }
+
+
+
+
         //public async static Task<RunShortcutResult> RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
-        public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse, NotifyIcon notifyIcon = null)
+        public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)
         {
             //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
             if (Program.AppBackgroundTaskSemaphoreSlim.CurrentCount == 0)
@@ -933,11 +1272,11 @@ namespace DisplayMagician {
                 // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
                 //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon));
 
-                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
+                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token), AppCancellationTokenSource.Token);
                 //taskToRun.RunSynchronously();
                 while (!taskToRun.IsCompleted)
                 {
-                    Task.Delay(1000);
+                    Thread.Sleep(1000);
                     Application.DoEvents();
                     if (Program.AppCancellationTokenSource.Token.IsCancellationRequested)
                     {
@@ -949,7 +1288,7 @@ namespace DisplayMagician {
             }
             catch (OperationCanceledException ex)
             {
-                logger.Trace($"Program/RunShortcutTask: User cancelled the running the shortcut {shortcutToUse.Name}.");
+                logger.Trace(ex, $"Program/RunShortcutTask: User cancelled the running the shortcut {shortcutToUse.Name}.");
             }
             catch (Exception ex)
             {
@@ -1001,7 +1340,7 @@ namespace DisplayMagician {
             }   
             catch (OperationCanceledException ex)
             {
-                logger.Trace($"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
+                logger.Trace(ex, $"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
             }
             catch( Exception ex)
             {
@@ -1094,16 +1433,14 @@ namespace DisplayMagician {
                 logger.Error(ex, $"Program/ShowMessages: Exception while trying to load the messages index from {indexUrl}.");
                 return;
             }
-
-            ProgramSettings programSettings = ProgramSettings.LoadSettings();
-
+           
             foreach (MessageItem message in messageIndex)
             {
                 // Skip if we've already shown it
-                if (message.Id <= programSettings.LastMessageIdRead)
+                if (message.Id <= AppProgramSettings.LastMessageIdRead)
                 {
                     // Unless it's one coming up that we're monitoring
-                    if (!programSettings.MessagesToMonitor.Contains(message.Id))
+                    if (!AppProgramSettings.MessagesToMonitor.Contains(message.Id))
                     {
                         continue;
                     }
@@ -1157,10 +1494,10 @@ namespace DisplayMagician {
                     if (!(DateTime.Now >= startTime))
                     {
                         logger.Debug($"Program/ShowMessages: Message start date for \"{message.HeadingText}\" (#{message.Id}) not yet reached so not ready to show message.");
-                        if (!programSettings.MessagesToMonitor.Contains(message.Id))
+                        if (!AppProgramSettings.MessagesToMonitor.Contains(message.Id))
                         {
-                            programSettings.MessagesToMonitor.Add(message.Id);
-                            programSettings.SaveSettings();
+                            AppProgramSettings.MessagesToMonitor.Add(message.Id);
+                            AppProgramSettings.SaveSettings();
                         }
                         continue;
                     }
@@ -1189,16 +1526,16 @@ namespace DisplayMagician {
                 myMessageWindow.ButtonText = message.ButtonText;
                 myMessageWindow.ShowDialog();
                 // If this the list of messages is still trying to monitor this message, then remove it if we've shown it to the user.
-                if (programSettings.MessagesToMonitor.Contains(message.Id))
+                if (AppProgramSettings.MessagesToMonitor.Contains(message.Id))
                 {
-                    programSettings.MessagesToMonitor.Remove(message.Id);
-                    programSettings.SaveSettings();
+                    AppProgramSettings.MessagesToMonitor.Remove(message.Id);
+                    AppProgramSettings.SaveSettings();
                 }
 
                 // Update the latest message id to keep track of where we're up to
-                if (message.Id > programSettings.LastMessageIdRead)
+                if (message.Id > AppProgramSettings.LastMessageIdRead)
                 {
-                    programSettings.LastMessageIdRead = message.Id;
+                    AppProgramSettings.LastMessageIdRead = message.Id;
                 }
                 
             }
@@ -1207,6 +1544,26 @@ namespace DisplayMagician {
 
         public static void CheckForUpdates()
         {
+            // First of all, check to see if there is any way to get to the internet on this computer.
+            // If not, then why bother!
+            try
+            {              
+
+                INetworkListManager networkListManager = new NetworkListManager();
+                //dynamic networkListManager = Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("{DCB00C01-570F-4A9B-8D69-199FDBA5723B}")));
+                bool isConnected = networkListManager.IsConnectedToInternet;
+                if (!isConnected)
+                {
+                    logger.Warn($"Program/CheckForUpdates: No internet detected. Skipping the auto update.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, $"Program/CheckForUpdates: Exception while trying to get all the network interfaces to make sure we have internet connectivity. Attempting to auto update anyway.");
+            }
+
+
             //Run the AutoUpdater to see if there are any updates available.
             //FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(Application.ExecutablePath);
             //AutoUpdater.InstalledVersion = new Version(fvi.FileVersion);
@@ -1464,6 +1821,7 @@ namespace DisplayMagician {
             }
             catch (Exception ex)
             {
+                logger.Warn(ex, $"Program/IsInstalledVersion: DisplayMagician InstallDir isn't in registry! This DisplayMagician isn't installed.");
                 return false;
             }
         }

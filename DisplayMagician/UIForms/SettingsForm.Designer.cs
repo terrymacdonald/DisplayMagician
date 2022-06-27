@@ -31,6 +31,10 @@ namespace DisplayMagician.UIForms
         {
             this.btn_back = new System.Windows.Forms.Button();
             this.gb_general = new System.Windows.Forms.GroupBox();
+            this.cb_show_status_action = new System.Windows.Forms.CheckBox();
+            this.cb_show_minimise_action = new System.Windows.Forms.CheckBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.btn_context_menu = new System.Windows.Forms.Button();
             this.cb_show_splashscreen = new System.Windows.Forms.CheckBox();
             this.cb_start_on_boot = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -54,8 +58,6 @@ namespace DisplayMagician.UIForms
             this.gb_support = new System.Windows.Forms.GroupBox();
             this.btn_create_support_package = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
-            this.btn_context_menu = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
             this.gb_general.SuspendLayout();
             this.gb_hotkeys.SuspendLayout();
             this.gb_upgrades.SuspendLayout();
@@ -70,7 +72,7 @@ namespace DisplayMagician.UIForms
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(1034, 517);
+            this.btn_back.Location = new System.Drawing.Point(1034, 584);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 9;
@@ -80,6 +82,8 @@ namespace DisplayMagician.UIForms
             // 
             // gb_general
             // 
+            this.gb_general.Controls.Add(this.cb_show_status_action);
+            this.gb_general.Controls.Add(this.cb_show_minimise_action);
             this.gb_general.Controls.Add(this.label4);
             this.gb_general.Controls.Add(this.btn_context_menu);
             this.gb_general.Controls.Add(this.cb_show_splashscreen);
@@ -91,10 +95,65 @@ namespace DisplayMagician.UIForms
             this.gb_general.ForeColor = System.Drawing.Color.White;
             this.gb_general.Location = new System.Drawing.Point(27, 21);
             this.gb_general.Name = "gb_general";
-            this.gb_general.Size = new System.Drawing.Size(525, 239);
+            this.gb_general.Size = new System.Drawing.Size(525, 391);
             this.gb_general.TabIndex = 11;
             this.gb_general.TabStop = false;
             this.gb_general.Text = "General Settings";
+            // 
+            // cb_show_status_action
+            // 
+            this.cb_show_status_action.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cb_show_status_action.AutoSize = true;
+            this.cb_show_status_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.cb_show_status_action.ForeColor = System.Drawing.Color.White;
+            this.cb_show_status_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.cb_show_status_action.Location = new System.Drawing.Point(28, 184);
+            this.cb_show_status_action.Name = "cb_show_status_action";
+            this.cb_show_status_action.Size = new System.Drawing.Size(366, 20);
+            this.cb_show_status_action.TabIndex = 46;
+            this.cb_show_status_action.Text = "Show status change messages in Windows Action Center";
+            this.cb_show_status_action.UseVisualStyleBackColor = true;
+            // 
+            // cb_show_minimise_action
+            // 
+            this.cb_show_minimise_action.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cb_show_minimise_action.AutoSize = true;
+            this.cb_show_minimise_action.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.cb_show_minimise_action.ForeColor = System.Drawing.Color.White;
+            this.cb_show_minimise_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.cb_show_minimise_action.Location = new System.Drawing.Point(28, 148);
+            this.cb_show_minimise_action.Name = "cb_show_minimise_action";
+            this.cb_show_minimise_action.Size = new System.Drawing.Size(487, 20);
+            this.cb_show_minimise_action.TabIndex = 45;
+            this.cb_show_minimise_action.Text = "Show reminder in Windows Action Center when DisplayMagician  is minimised";
+            this.cb_show_minimise_action.UseVisualStyleBackColor = true;
+            // 
+            // label4
+            // 
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.Location = new System.Drawing.Point(241, 335);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(277, 41);
+            this.label4.TabIndex = 44;
+            this.label4.Text = "Adds or remove the Desktop Background Context Menu. IMPORTANT: Windows Explorer w" +
+    "ill be restarted.";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btn_context_menu
+            // 
+            this.btn_context_menu.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_context_menu.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
+            this.btn_context_menu.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
+            this.btn_context_menu.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_context_menu.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_context_menu.ForeColor = System.Drawing.Color.White;
+            this.btn_context_menu.Location = new System.Drawing.Point(28, 340);
+            this.btn_context_menu.Name = "btn_context_menu";
+            this.btn_context_menu.Size = new System.Drawing.Size(208, 33);
+            this.btn_context_menu.TabIndex = 43;
+            this.btn_context_menu.Text = "Uninstall Desktop Context Menu";
+            this.btn_context_menu.UseVisualStyleBackColor = true;
+            this.btn_context_menu.Click += new System.EventHandler(this.btn_context_menu_Click);
             // 
             // cb_show_splashscreen
             // 
@@ -129,7 +188,7 @@ namespace DisplayMagician.UIForms
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Transparent;
-            this.label1.Location = new System.Drawing.Point(26, 152);
+            this.label1.Location = new System.Drawing.Point(26, 225);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(137, 16);
             this.label1.TabIndex = 13;
@@ -139,7 +198,7 @@ namespace DisplayMagician.UIForms
             // 
             this.cmb_loglevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmb_loglevel.FormattingEnabled = true;
-            this.cmb_loglevel.Location = new System.Drawing.Point(169, 149);
+            this.cmb_loglevel.Location = new System.Drawing.Point(169, 222);
             this.cmb_loglevel.Name = "cmb_loglevel";
             this.cmb_loglevel.Size = new System.Drawing.Size(333, 24);
             this.cmb_loglevel.TabIndex = 12;
@@ -316,7 +375,7 @@ namespace DisplayMagician.UIForms
             this.gb_upgrades.Controls.Add(this.cb_upgrade_prerelease);
             this.gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_upgrades.ForeColor = System.Drawing.Color.White;
-            this.gb_upgrades.Location = new System.Drawing.Point(27, 292);
+            this.gb_upgrades.Location = new System.Drawing.Point(584, 435);
             this.gb_upgrades.Name = "gb_upgrades";
             this.gb_upgrades.Size = new System.Drawing.Size(525, 120);
             this.gb_upgrades.TabIndex = 13;
@@ -354,9 +413,9 @@ namespace DisplayMagician.UIForms
             this.gb_support.Controls.Add(this.label3);
             this.gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_support.ForeColor = System.Drawing.Color.White;
-            this.gb_support.Location = new System.Drawing.Point(27, 442);
+            this.gb_support.Location = new System.Drawing.Point(27, 436);
             this.gb_support.Name = "gb_support";
-            this.gb_support.Size = new System.Drawing.Size(525, 98);
+            this.gb_support.Size = new System.Drawing.Size(525, 119);
             this.gb_support.TabIndex = 16;
             this.gb_support.TabStop = false;
             this.gb_support.Text = "Support Settings";
@@ -369,7 +428,7 @@ namespace DisplayMagician.UIForms
             this.btn_create_support_package.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_create_support_package.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_create_support_package.ForeColor = System.Drawing.Color.White;
-            this.btn_create_support_package.Location = new System.Drawing.Point(169, 21);
+            this.btn_create_support_package.Location = new System.Drawing.Point(169, 27);
             this.btn_create_support_package.Name = "btn_create_support_package";
             this.btn_create_support_package.Size = new System.Drawing.Size(183, 33);
             this.btn_create_support_package.TabIndex = 48;
@@ -380,7 +439,7 @@ namespace DisplayMagician.UIForms
             // label3
             // 
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(74, 57);
+            this.label3.Location = new System.Drawing.Point(74, 66);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(378, 32);
             this.label3.TabIndex = 15;
@@ -388,39 +447,12 @@ namespace DisplayMagician.UIForms
     "this file to GitHub when you have a problem you need me to fix";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // btn_context_menu
-            // 
-            this.btn_context_menu.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_context_menu.FlatAppearance.MouseDownBackColor = System.Drawing.Color.IndianRed;
-            this.btn_context_menu.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
-            this.btn_context_menu.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_context_menu.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_context_menu.ForeColor = System.Drawing.Color.White;
-            this.btn_context_menu.Location = new System.Drawing.Point(28, 188);
-            this.btn_context_menu.Name = "btn_context_menu";
-            this.btn_context_menu.Size = new System.Drawing.Size(208, 33);
-            this.btn_context_menu.TabIndex = 43;
-            this.btn_context_menu.Text = "Uninstall Desktop Context Menu";
-            this.btn_context_menu.UseVisualStyleBackColor = true;
-            this.btn_context_menu.Click += new System.EventHandler(this.btn_context_menu_Click);
-            // 
-            // label4
-            // 
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(237, 189);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(277, 32);
-            this.label4.TabIndex = 44;
-            this.label4.Text = "Adds or remove the Desktop Background Context Menu. IMPORTANT: Windows Explorer w" +
-    "ill be restarted.";
-            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
             // SettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(1142, 564);
+            this.ClientSize = new System.Drawing.Size(1142, 631);
             this.Controls.Add(this.gb_support);
             this.Controls.Add(this.gb_upgrades);
             this.Controls.Add(this.gb_hotkeys);
@@ -476,5 +508,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_show_splashscreen;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button btn_context_menu;
+        private System.Windows.Forms.CheckBox cb_show_status_action;
+        private System.Windows.Forms.CheckBox cb_show_minimise_action;
     }
 }

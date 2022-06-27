@@ -175,17 +175,17 @@ namespace DisplayMagician.Processes
             }
             catch (ArgumentException ex)
             {
-                logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
                 return true;
             }
             catch (InvalidOperationException ex)
             {
-                logger.Warn($"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
+                logger.Warn(ex, $"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
                 return true;
             }
             catch (Exception ex)
             {
-                logger.Trace($"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
                 return true;
             }
         }
@@ -530,7 +530,8 @@ namespace DisplayMagician.Processes
                         UseShellExecute = true,
                         Verb = "Runas",
                         CreateNoWindow = false,
-                        RedirectStandardOutput = false
+                        RedirectStandardOutput = false,
+                        WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
                 else
@@ -539,7 +540,8 @@ namespace DisplayMagician.Processes
                     {
                         UseShellExecute = false,
                         CreateNoWindow = false,
-                        RedirectStandardOutput = false
+                        RedirectStandardOutput = false,
+                        WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
                 
@@ -552,7 +554,8 @@ namespace DisplayMagician.Processes
                     UseShellExecute = true,
                     Verb = "Open",
                     CreateNoWindow = false,
-                    RedirectStandardOutput = false
+                    RedirectStandardOutput = false,
+                    WorkingDirectory = Path.GetDirectoryName(executable)
                 };
             }
 
@@ -601,6 +604,12 @@ namespace DisplayMagician.Processes
             {
                 if (ex.ErrorCode == -2147467259)
                 {
+                    if (runAsAdministrator)
+                    {
+                        logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable} for a second time with administrative rights. Giving up.");
+                        return false;
+                    }
+
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
                     if (TryExecute(executable, arguments, out processCreated, true, priorityClass, maxWaitMs))
                     {

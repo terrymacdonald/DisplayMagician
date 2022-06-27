@@ -80,6 +80,10 @@ namespace DisplayMagician
                         logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the CreateProfile command: '{args[1]} {args[2]}'");
                         Program.CreateProfile();
                         break;
+                    case "CurrentProfile":
+                        logger.Trace($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided the CurrentProfile command: '{args[1]} {args[2]}'");
+                        Program.CurrentProfile();
+                        break;
                     default:
                         logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance provided an unsupported command: '{args[1]}'");
                         break;
@@ -91,7 +95,14 @@ namespace DisplayMagician
             }
             else
             {
-                logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments at all. THat's not supposed to happen.");
+                logger.Warn($"SingleInstance/executeAnActionCallback: Other DisplayMagician instance didn't provide any commandline arguments at all so bringing the topmost window to the foreground.");
+                foreach (Form aForm in Application.OpenForms)
+                {
+                    if (aForm.TopMost)
+                    {
+                        aForm.Activate();
+                    }
+                }
             }
         }           
 
@@ -215,11 +226,13 @@ namespace DisplayMagician
             }
             catch (PlatformNotSupportedException ex)
             {
-                Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Cannot create a named pipe server. This NamedPipeServerStream function does not support this platform.");
+                //Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Cannot create a named pipe server. This NamedPipeServerStream function does not support this platform.");
+                logger.Warn(ex, $"SingleInstance/NamedPipeServerCreateServer: Cannot create a named pipe server. This NamedPipeServerStream function does not support this platform.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Exception - Source: {ex.Source} {ex.TargetSite} - {ex.Message} - {ex.StackTrace}");
+                logger.Warn(ex, $"SingleInstance/NamedPipeServerCreateServer: Exception - Source: {ex.Source} {ex.TargetSite} - {ex.Message} - {ex.StackTrace}");
             }
             // Begin async wait for connections
             _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);

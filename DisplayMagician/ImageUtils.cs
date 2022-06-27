@@ -407,7 +407,8 @@ namespace DisplayMagician
             return string.Equals(image164, image264);
         }
 
-        public static Bitmap ToBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
+
+        public static Bitmap MakeBitmapOverlay(Bitmap originalBitmap, Bitmap overlayBitmap, int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
         {
             if (originalBitmap == null)
             {
@@ -468,6 +469,8 @@ namespace DisplayMagician
                     Size overlayBitmapNewSize = ResizeDrawing.MakeSmaller(overlayBitmapMaxSize, 70);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Resize the overlay bitmap to fit in the bottom right corner of the new combined bitmap. Size is now {overlayBitmapNewSize.Width}px x {overlayBitmapNewSize.Height}px");
                     Point overlayBitmapNewLocation = ResizeDrawing.AlignBottomRight(overlayBitmapNewSize, targetSize);
+                    // Now we need to adjust that slightly up and in a bit
+                    overlayBitmapNewLocation.Offset(0, -5);
                     logger.Trace($"ShortcutItem/ToBitmapOverlay: Drawing the overlay bitmap into the new combined bitmap at position {overlayBitmapNewLocation.X},{overlayBitmapNewLocation.Y}.");
                     g.DrawImage(overlayBitmap, overlayBitmapNewLocation.X, overlayBitmapNewLocation.Y, overlayBitmapNewSize.Width, overlayBitmapNewSize.Height);
 
@@ -482,6 +485,7 @@ namespace DisplayMagician
 
         }
 
+/*
 #pragma warning disable CS3002 // Return type is not CLS-compliant
         public static MultiIcon ToIconOverlay(Bitmap originalBitmap, Bitmap overlayBitmap)
 #pragma warning restore CS3002 // Return type is not CLS-compliant
@@ -534,7 +538,7 @@ namespace DisplayMagician
                 logger.Warn(ex, $"ShortcutItem/ToIconOverlay: Exeception occurred while trying to convert the Shortcut Bitmap to an Icon Overlay to store in the shortcut cache directory. Returning null");
                 return null;
             }
-        }
+        }*/
 
         [DllImport("Shell32", CharSet = CharSet.Auto)]
         private static  extern int ExtractIconEx(string lpszFile, int nIconIndex, IntPtr[] phIconLarge, IntPtr[] phIconSmall, int nIcons);

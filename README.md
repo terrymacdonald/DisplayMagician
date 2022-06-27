@@ -50,7 +50,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
-* Supports USB display devices and works with SuperDisplay (Android Tablets as a display)
+* Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display)
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
 
 ## Planned features

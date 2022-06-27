@@ -193,6 +193,7 @@ namespace DisplayMagician.GameLibraries
                 }
                 catch (Exception ex)
                 {
+                    logger.Warn(ex, $"SteamLibrary/IsRunning: Exception while trying to get the steam library processes matching process names: {_steamProcessList.ToString()}.");
                     return false;
                 }
             }
@@ -705,86 +706,105 @@ namespace DisplayMagician.GameLibraries
                 {
                     // Work out the path to the appmanifests for this steamLibrary
                     string steamLibraryAppManifestPath = Path.Combine(steamLibraryPath, @"steamapps");
-                    // Get the names of the App Manifests for the games installed in this SteamLibrary
-                    string[] steamLibraryAppManifestFilenames = Directory.GetFiles(steamLibraryAppManifestPath, "appmanifest_*.acf");
-                    // Go through each app and extract it's details
-                    foreach (string steamLibraryAppManifestFilename in steamLibraryAppManifestFilenames)
+                    try
                     {
-                        logger.Trace($"SteamLibrary/LoadInstalledGames: Found {steamLibraryAppManifestFilename} app manifest within steam library {steamLibraryPath}");
-                        // Read in the contents of the file
-                        string steamLibraryAppManifestText = File.ReadAllText(steamLibraryAppManifestFilename);
-                        // Grab the appid from the file
-                        Regex appidRegex = new Regex(@"""appid""\s+""(\d+)""", RegexOptions.IgnoreCase);
-                        Match appidMatches = appidRegex.Match(steamLibraryAppManifestText);
-                        if (appidMatches.Success)
+                        // Get the names of the App Manifests for the games installed in this SteamLibrary
+                        string[] steamLibraryAppManifestFilenames = Directory.GetFiles(steamLibraryAppManifestPath, "appmanifest_*.acf");
+                        // Go through each app and extract it's details
+                        foreach (string steamLibraryAppManifestFilename in steamLibraryAppManifestFilenames)
                         {
-                            if (!String.IsNullOrWhiteSpace(appidMatches.Groups[1].Value))
+                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found {steamLibraryAppManifestFilename} app manifest within steam library {steamLibraryPath}");
+                            // Read in the contents of the file
+                            string steamLibraryAppManifestText = File.ReadAllText(steamLibraryAppManifestFilename);
+                            // Grab the appid from the file
+                            Regex appidRegex = new Regex(@"""appid""\s+""(\d+)""", RegexOptions.IgnoreCase);
+                            Match appidMatches = appidRegex.Match(steamLibraryAppManifestText);
+                            if (appidMatches.Success)
                             {
-                                string steamGameId = appidMatches.Groups[1].Value;
-                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam Game ID {steamGameId} within {steamLibraryAppManifestFilename} steam app manifest within steam library {steamLibraryPath}");
-                                // Check if this game is one that was installed
-                                if (steamAppInfo.ContainsKey(steamGameId))
+                                if (!String.IsNullOrWhiteSpace(appidMatches.Groups[1].Value))
                                 {
-                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Steam Game ID {steamGameId} is installed within steam library {steamLibraryPath}!");
-                                    // This game is an installed game! so we start to populate it with data!
-                                    string steamGameExe = "";
-
-                                    string steamGameName = steamAppInfo[steamGameId].GameName;
-
-                                    // Construct the full path to the game dir from the appInfo and libraryAppManifest data
-                                    string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
-
-                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-
-                                    // And finally we try to populate the 'where', to see what gets run
-                                    // And so we can extract the process name
-                                    if (steamAppInfo[steamGameId].GameExes.Count > 0)
+                                    string steamGameId = appidMatches.Groups[1].Value;
+                                    logger.Trace($"SteamLibrary/LoadInstalledGames: Found Steam Game ID {steamGameId} within {steamLibraryAppManifestFilename} steam app manifest within steam library {steamLibraryPath}");
+                                    // Check if this game is one that was installed
+                                    if (steamAppInfo.ContainsKey(steamGameId))
                                     {
-                                        foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
+                                        logger.Trace($"SteamLibrary/LoadInstalledGames: Steam Game ID {steamGameId} is installed within steam library {steamLibraryPath}!");
+                                        // This game is an installed game! so we start to populate it with data!
+                                        string steamGameExe = "";
+
+                                        string steamGameName = steamAppInfo[steamGameId].GameName;
+
+                                        // Construct the full path to the game dir from the appInfo and libraryAppManifest data
+                                        string steamGameInstallDir = Path.Combine(steamLibraryPath, @"steamapps", @"common", steamAppInfo[steamGameId].GameInstallDir);
+
+                                        logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+
+                                        // And finally we try to populate the 'where', to see what gets run
+                                        // And so we can extract the process name
+                                        if (steamAppInfo[steamGameId].GameExes.Count > 0)
                                         {
-                                            steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
-                                            logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-                                            // If the game executable exists, then we can proceed
-                                            if (File.Exists(steamGameExe))
+                                            foreach (string gameExe in steamAppInfo[steamGameId].GameExes)
                                             {
-                                                logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-                                                break;
+                                                steamGameExe = Path.Combine(steamGameInstallDir, gameExe);
+                                                logger.Trace($"SteamLibrary/LoadInstalledGames: Looking for Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                                // If the game executable exists, then we can proceed
+                                                if (File.Exists(steamGameExe))
+                                                {
+                                                    logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Exe {steamGameExe} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                                    break;
+                                                }
                                             }
+
                                         }
 
-                                    }
+                                        // Next, we need to get the Icons we want to use, and make sure it's the latest one.
+                                        string steamGameIconPath = "";
+                                        // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
+                                        if (File.Exists(steamAppInfo[steamGameId].GameIconPath) && steamAppInfo[steamGameId].GameIconPath.EndsWith(".ico"))
+                                        {
+                                            steamGameIconPath = steamAppInfo[steamGameId].GameIconPath;
+                                            logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Icon Path {steamGameIconPath} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
 
-                                    // Next, we need to get the Icons we want to use, and make sure it's the latest one.
-                                    string steamGameIconPath = "";
-                                    // First of all, we attempt to use the Icon that Steam has cached, if it's available, as that will be updated to the latest
-                                    if (File.Exists(steamAppInfo[steamGameId].GameIconPath) && steamAppInfo[steamGameId].GameIconPath.EndsWith(".ico"))
-                                    {
-                                        steamGameIconPath = steamAppInfo[steamGameId].GameIconPath;
-                                        logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Icon Path {steamGameIconPath} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                        }
+                                        // If there isn't an icon for us to use, then we need to extract one from the Game Executables
+                                        else if (!String.IsNullOrEmpty(steamGameExe))
+                                        {
+                                            steamGameIconPath = steamGameExe;
+                                            logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Icon Path {steamGameIconPath} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
+                                        }
+                                        // The absolute worst case means we don't have an icon to use. SO we use the Steam one.
+                                        else
+                                        {
+                                            // And we have to make do with a Steam Icon
+                                            logger.Debug($"SteamLibrary/LoadInstalledGames: Couldn't find Steam Game Icon Path {steamGameIconPath} for Steam Game ID {steamGameId} so using default Steam Icon");
+                                            steamGameIconPath = _steamPath;
+                                        }
 
+                                        // And we add the Game to the list of games we have!
+                                        SteamGame gameToAdd = new SteamGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath);
+                                        _allSteamGames.Add(gameToAdd);
+                                        logger.Debug($"SteamLibrary/LoadInstalledGames: Adding Steam Game with game id {steamGameId}, name {steamGameName}, game exe {steamGameExe} and icon path {steamGameIconPath}");
                                     }
-                                    // If there isn't an icon for us to use, then we need to extract one from the Game Executables
-                                    else if (!String.IsNullOrEmpty(steamGameExe))
-                                    {
-                                        steamGameIconPath = steamGameExe;
-                                        logger.Debug($"SteamLibrary/LoadInstalledGames: Found Steam Game Icon Path {steamGameIconPath} for Steam Game ID {steamGameId} at {steamGameInstallDir }");
-                                    }
-                                    // The absolute worst case means we don't have an icon to use. SO we use the Steam one.
-                                    else
-                                    {
-                                        // And we have to make do with a Steam Icon
-                                        logger.Debug($"SteamLibrary/LoadInstalledGames: Couldn't find Steam Game Icon Path {steamGameIconPath} for Steam Game ID {steamGameId} so using default Steam Icon");
-                                        steamGameIconPath = _steamPath;
-                                    }
-
-                                    // And we add the Game to the list of games we have!
-                                    SteamGame gameToAdd = new SteamGame(steamGameId, steamGameName, steamGameExe, steamGameIconPath);
-                                    _allSteamGames.Add(gameToAdd);
-                                    logger.Debug($"SteamLibrary/LoadInstalledGames: Adding Steam Game with game id {steamGameId}, name {steamGameName}, game exe {steamGameExe} and icon path {steamGameIconPath}");
                                 }
                             }
                         }
-                    }                    
+                    }
+                    catch (DirectoryNotFoundException ex)
+                    {
+                        logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: Exception: Steam Library {steamLibraryPath} doesn't contain 'steamapps' subfolder . This is most likely because the Steam Library doesn't have any games installed in it.");
+                    }
+                    catch (PathTooLongException ex)
+                    {
+                        logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: Exception: Steam Library {steamLibraryPath} is too long for Windows to access. Please make the path shorter by moving the directory.");
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: Exception: We don't have permission to access Steam Library {steamLibraryPath}. Please check you are able to access {steamLibraryPath} in Windows Explorer.");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: Exception: General exception while trying to scan Steam Library {steamLibraryPath} for games.");
+                    }
                 }
                 logger.Info($"SteamLibrary/LoadInstalledGames: Found {_allSteamGames.Count} installed Steam games");
             }

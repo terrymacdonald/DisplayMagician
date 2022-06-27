@@ -2,6 +2,7 @@
 using DisplayMagician.Resources;
 using DisplayMagicianShared;
 using Manina.Windows.Forms;
+using NHotkey.WindowsForms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -395,6 +396,13 @@ namespace DisplayMagician.UIForms
             int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
             ilv_saved_shortcuts.Items.RemoveAt(currentIlvIndex);
 
+            // Remove the hotkey if it is enabled for this shortcut
+            if (_selectedShortcut.Hotkey != Keys.None)
+            {
+                // Remove the Hotkey if it needs to be removed
+                HotkeyManager.Current.Remove(_selectedShortcut.UUID);
+            }
+
             // Remove the shortcut
             ShortcutRepository.RemoveShortcut(_selectedShortcut);
             _selectedShortcut = null;
@@ -470,18 +478,18 @@ namespace DisplayMagician.UIForms
                 {
 
                     // Get the MainForm so we can access the NotifyIcon on it.
-                    MainForm mainForm = (MainForm)this.Owner;
+                    //MainForm mainForm = (MainForm)this.Owner;                    
 
                     // Run the shortcut
                     //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut, mainForm.notifyIcon);
+                    result = Program.RunShortcutTask(_selectedShortcut);
 
                 }
                 else
                 {
                     // Run the shortcut
                     //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut, Program.AppMainForm.notifyIcon);
+                    result = Program.RunShortcutTask(_selectedShortcut);
                 }
             }
             catch (OperationCanceledException ex)
@@ -504,6 +512,9 @@ namespace DisplayMagician.UIForms
             btn_cancel.Visible = false;
             btn_cancel.Enabled = false;
 
+            // Bring the window back to the front
+            Visible = true;
+            Activate();
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)

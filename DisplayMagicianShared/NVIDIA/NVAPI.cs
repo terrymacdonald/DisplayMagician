@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -184,6 +185,14 @@ namespace DisplayMagicianShared.NVIDIA
         LIDSTATE = 0x4, //!< Get devices such that to reflect the Lid State
         FAKE = 0x8, //!< Get devices that includes the fake connected monitors
         EXCLUDE_MST = 0x10, //!< Excludes devices that are part of the multi stream topology.
+    }
+
+    public enum NVDRS_SETTING_TYPE : UInt32
+    {
+        NVDRS_DWORD_TYPE = 0,
+        NVDRS_BINARY_TYPE = 1,
+        NVDRS_STRING_TYPE = 2,
+        NVDRS_WSTRING_TYPE = 3,
     }
 
     public enum NV_STATIC_METADATA_DESCRIPTOR_ID : UInt32
@@ -685,6 +694,16 @@ namespace DisplayMagicianShared.NVIDIA
         NV_DESKTOP_COLOR_DEPTH_MAX_VALUE = NV_DESKTOP_COLOR_DEPTH_16BPC_FLOAT_HDR, // must be set to highest enum value
     }
 
+
+    public enum NVDRS_SETTING_LOCATION : UInt32
+    {
+        NVDRS_CURRENT_PROFILE_LOCATION = 0x0,
+        NVDRS_GLOBAL_PROFILE_LOCATION = 0x1,
+        NVDRS_BASE_PROFILE_LOCATION = 0x2,
+        NVDRS_DEFAULT_PROFILE_LOCATION = 0x3,
+    }
+
+
     [Flags]
     public enum NV_HDR_CAPABILITIES_V2_FLAGS : UInt32
     {
@@ -750,12 +769,74 @@ namespace DisplayMagicianShared.NVIDIA
         ALLOW_INVALID = 0x8,
     }
 
+    [Flags]
+    public enum NVDRS_GPU_SUPPORT : UInt32
+    {
+        NONE = 0x0,
+        GEFORCE = 0x1,
+        QUADRO = 0x2,
+        NVS = 0x4,
+    }
+
     // ==================================
     // STRUCTS
     // ==================================
 
+
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct DisplayHandle : IEquatable<DisplayHandle>
+    public struct NvDRSSessionHandle : IEquatable<NvDRSSessionHandle>, ICloneable
+    {
+        public IntPtr Ptr;
+
+        public override bool Equals(object obj) => obj is NvDRSSessionHandle other && this.Equals(other);
+
+        public bool Equals(NvDRSSessionHandle other)
+        => Ptr == other.Ptr;
+
+        public override Int32 GetHashCode()
+        {
+            return (Ptr).GetHashCode();
+        }
+
+        public static bool operator ==(NvDRSSessionHandle lhs, NvDRSSessionHandle rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NvDRSSessionHandle lhs, NvDRSSessionHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NvDRSSessionHandle other = (NvDRSSessionHandle)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NvDRSProfileHandle : IEquatable<NvDRSProfileHandle>, ICloneable
+    {
+        public IntPtr Ptr;
+
+        public override bool Equals(object obj) => obj is NvDRSProfileHandle other && this.Equals(other);
+
+        public bool Equals(NvDRSProfileHandle other)
+        => Ptr == other.Ptr;
+
+        public override Int32 GetHashCode()
+        {
+            return (Ptr).GetHashCode();
+        }
+
+        public static bool operator ==(NvDRSProfileHandle lhs, NvDRSProfileHandle rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NvDRSProfileHandle lhs, NvDRSProfileHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NvDRSProfileHandle other = (NvDRSProfileHandle)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct DisplayHandle : IEquatable<DisplayHandle>, ICloneable
     {
         public IntPtr Ptr;
 
@@ -772,10 +853,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(DisplayHandle lhs, DisplayHandle rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(DisplayHandle lhs, DisplayHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            DisplayHandle other = (DisplayHandle)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UnAttachedDisplayHandle : IEquatable<UnAttachedDisplayHandle>
+    public struct UnAttachedDisplayHandle : IEquatable<UnAttachedDisplayHandle>, ICloneable
     {
         public IntPtr Ptr;
 
@@ -792,10 +879,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(UnAttachedDisplayHandle lhs, UnAttachedDisplayHandle rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(UnAttachedDisplayHandle lhs, UnAttachedDisplayHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            UnAttachedDisplayHandle other = (UnAttachedDisplayHandle)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct PhysicalGpuHandle : IEquatable<PhysicalGpuHandle>
+    public struct PhysicalGpuHandle : IEquatable<PhysicalGpuHandle>, ICloneable
     {
         public IntPtr Ptr;
 
@@ -811,11 +904,17 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(PhysicalGpuHandle lhs, PhysicalGpuHandle rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(PhysicalGpuHandle lhs, PhysicalGpuHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            PhysicalGpuHandle other = (PhysicalGpuHandle)MemberwiseClone();
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct LogicalGpuHandle : IEquatable<LogicalGpuHandle>
+    public struct LogicalGpuHandle : IEquatable<LogicalGpuHandle>, ICloneable
     {
         public IntPtr Ptr;
 
@@ -831,10 +930,765 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(LogicalGpuHandle lhs, LogicalGpuHandle rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(LogicalGpuHandle lhs, LogicalGpuHandle rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            LogicalGpuHandle other = (LogicalGpuHandle)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
+    public struct NVDRS_PROFILE_V1 : IEquatable<NVDRS_PROFILE_V1>, ICloneable // Note: Version 3 of NV_EDID_V3 structure
+    {
+        public UInt32 Version;        //!< Structure version
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
+        public string ProfileName;    // EDID_Data[NV_EDID_DATA_SIZE];
+        public NVDRS_GPU_SUPPORT GpuSupport;
+        public UInt32 IsPredefined;
+        public UInt32 NumofApps;
+        public UInt32 NumofSettings;
+
+        public override bool Equals(object obj) => obj is NVDRS_PROFILE_V1 other && this.Equals(other);
+
+        public bool Equals(NVDRS_PROFILE_V1 other)
+        => Version == other.Version &&
+           ProfileName == other.ProfileName &&
+           GpuSupport == other.GpuSupport &&
+           IsPredefined == other.IsPredefined &&
+           NumofApps == other.NumofApps &&
+           NumofSettings == other.NumofSettings;
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, ProfileName, GpuSupport, IsPredefined, NumofApps, NumofSettings).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_PROFILE_V1 lhs, NVDRS_PROFILE_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_PROFILE_V1 lhs, NVDRS_PROFILE_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_PROFILE_V1 other = (NVDRS_PROFILE_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
+    public struct NVDRS_SETTING_V1 : IEquatable<NVDRS_SETTING_V1>, ICloneable // Note: Version 1 of NVDRS_SETTING_V1 structure
+    {
+        public UInt32 InternalVersion;
+        public UnicodeString InternalSettingName;
+        public UInt32 InternalSettingId;
+        public NVDRS_SETTING_TYPE InternalSettingType;
+        public NVDRS_SETTING_LOCATION InternalSettingLocation;
+        public UInt32 InternalIsCurrentPredefined;
+        public UInt32 InternalIsPredefinedValid;
+        public NVDRS_SETTING_VALUE InternalPredefinedValue;
+        public NVDRS_SETTING_VALUE InternalCurrentValue;
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="DRSSettingV1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="settingType">The type of the setting's value</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, NVDRS_SETTING_TYPE settingType, object value)
+        {
+            InternalVersion = NVImport.NVDRS_SETTING_V1_VER;
+            InternalSettingId = id;
+            InternalIsPredefinedValid = (UInt32)0;
+            InternalSettingName = new UnicodeString("");
+            InternalSettingId = 0;
+            InternalSettingType = settingType;
+            InternalSettingLocation = NVDRS_SETTING_LOCATION.NVDRS_BASE_PROFILE_LOCATION;
+            InternalIsCurrentPredefined = 0;
+            InternalIsPredefinedValid = 0;
+            InternalPredefinedValue = new NVDRS_SETTING_VALUE();
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(0);
+
+            CurrentValue = value;
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, string value) : this(id, NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE, value)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, uint value) : this(id, NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE, value)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_V1" /> containing the passed value.
+        /// </summary>
+        /// <param name="id">The setting identification number.</param>
+        /// <param name="value">The setting's value</param>
+        public NVDRS_SETTING_V1(uint id, byte[] value) : this(id, NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE, value)
+        {
+        }
+
+        /// <summary>
+        ///     Gets the name of the setting
+        /// </summary>
+        public string Name
+        {
+            get => InternalSettingName.Value;
+        }
+
+        /// <summary>
+        ///     Gets the identification number of the setting
+        /// </summary>
+        public UInt32 SettingId
+        {
+            get => InternalSettingId;
+            private set => InternalSettingId = value;
+        }
+
+        /// <summary>
+        ///     Gets the setting's value type
+        /// </summary>
+        public NVDRS_SETTING_TYPE SettingType
+        {
+            get => InternalSettingType;
+            private set => InternalSettingType = value;
+        }
+
+        /// <summary>
+        ///     Gets the setting location
+        /// </summary>
+        public NVDRS_SETTING_LOCATION SettingLocation
+        {
+            get => InternalSettingLocation;
+        }
+
+        /// <summary>
+        ///     Gets a boolean value indicating if the current value is the predefined value
+        /// </summary>
+        public bool IsCurrentPredefined
+        {
+            get => InternalIsCurrentPredefined > 0;
+            internal set => InternalIsCurrentPredefined = value ? 1u : 0u;
+        }
+
+        /// <summary>
+        ///     Gets a boolean value indicating if the predefined value is available and valid
+        /// </summary>
+        public bool IsPredefinedValid
+        {
+            get => InternalIsPredefinedValid > 0;
+            internal set => InternalIsPredefinedValid = value ? 1u : 0u;
+        }
+
+        /// <summary>
+        ///     Returns the predefined value as an integer
+        /// </summary>
+        /// <returns>An integer representing the predefined value</returns>
+        public uint GetPredefinedValueAsInteger()
+        {
+            return InternalPredefinedValue.AsInteger();
+        }
+
+        /// <summary>
+        ///     Returns the predefined value as an array of bytes
+        /// </summary>
+        /// <returns>An byte array representing the predefined value</returns>
+        public byte[] GetPredefinedValueAsBinary()
+        {
+            return InternalPredefinedValue.AsBinary();
+        }
+
+        /// <summary>
+        ///     Returns the predefined value as an unicode string
+        /// </summary>
+        /// <returns>An unicode string representing the predefined value</returns>
+        public string GetPredefinedValueAsUnicodeString()
+        {
+            return InternalPredefinedValue.AsUnicodeString();
+        }
+
+        /// <summary>
+        ///     Gets the setting's predefined value
+        /// </summary>
+        public object PredefinedValue
+        {
+            get
+            {
+                if (!IsPredefinedValid)
+                {
+                    return 0;
+                }
+
+                switch (InternalSettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+
+                        return GetPredefinedValueAsInteger();
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+
+                        return GetPredefinedValueAsBinary();
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+
+                        return GetPredefinedValueAsUnicodeString();
+                    default:
+
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Returns the current value as an integer
+        /// </summary>
+        /// <returns>An integer representing the current value</returns>
+        public uint GetCurrentValueAsInteger()
+        {
+            return InternalCurrentValue.AsInteger();
+        }
+
+        /// <summary>
+        ///     Returns the current value as an array of bytes
+        /// </summary>
+        /// <returns>An byte array representing the current value</returns>
+        public byte[] GetCurrentValueAsBinary()
+        {
+            return InternalCurrentValue.AsBinary();
+        }
+
+        /// <summary>
+        ///     Returns the current value as an unicode string
+        /// </summary>
+        /// <returns>An unicode string representing the current value</returns>
+        public string GetCurrentValueAsUnicodeString()
+        {
+            return InternalCurrentValue.AsUnicodeString();
+        }
+
+        /// <summary>
+        ///     Sets the passed value as the current value
+        /// </summary>
+        /// <param name="value">The new value for the setting</param>
+        public void SetCurrentValueAsInteger(uint value)
+        {
+            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
+            }
+
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
+            IsCurrentPredefined = IsPredefinedValid && (uint)CurrentValue == (uint)PredefinedValue;
+        }
+
+        /// <summary>
+        ///     Sets the passed value as the current value
+        /// </summary>
+        /// <param name="value">The new value for the setting</param>
+        public void SetCurrentValueAsBinary(byte[] value)
+        {
+            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
+            }
+
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
+            IsCurrentPredefined =
+                IsPredefinedValid &&
+                ((byte[])CurrentValue)?.SequenceEqual((byte[])PredefinedValue ?? new byte[0]) == true;
+        }
+
+        /// <summary>
+        ///     Sets the passed value as the current value
+        /// </summary>
+        /// <param name="value">The new value for the setting</param>
+        public void SetCurrentValueAsUnicodeString(string value)
+        {
+            if (SettingType != NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Passed argument is invalid for this setting.");
+            }
+
+            InternalCurrentValue = new NVDRS_SETTING_VALUE(value);
+            IsCurrentPredefined =
+                IsPredefinedValid &&
+                string.Equals(
+                    (string)CurrentValue,
+                    (string)PredefinedValue,
+                    StringComparison.InvariantCulture
+                );
+        }
+
+        /// <summary>
+        ///     Gets or sets the setting's current value
+        /// </summary>
+        public object CurrentValue
+        {
+            get
+            {
+                switch (InternalSettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+
+                        return GetCurrentValueAsInteger();
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+
+                        return GetCurrentValueAsBinary();
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+
+                        return GetCurrentValueAsUnicodeString();
+                    default:
+
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+            internal set
+            {
+                if (value is int intValue)
+                {
+                    SetCurrentValueAsInteger((uint)intValue);
+                }
+                else if (value is uint unsignedIntValue)
+                {
+                    SetCurrentValueAsInteger(unsignedIntValue);
+                }
+                else if (value is short shortValue)
+                {
+                    SetCurrentValueAsInteger((uint)shortValue);
+                }
+                else if (value is ushort unsignedShortValue)
+                {
+                    SetCurrentValueAsInteger(unsignedShortValue);
+                }
+                else if (value is long longValue)
+                {
+                    SetCurrentValueAsInteger((uint)longValue);
+                }
+                else if (value is ulong unsignedLongValue)
+                {
+                    SetCurrentValueAsInteger((uint)unsignedLongValue);
+                }
+                else if (value is byte byteValue)
+                {
+                    SetCurrentValueAsInteger(byteValue);
+                }
+                else if (value is string stringValue)
+                {
+                    SetCurrentValueAsUnicodeString(stringValue);
+                }
+                else if (value is byte[] binaryValue)
+                {
+                    SetCurrentValueAsBinary(binaryValue);
+                }
+                else
+                {
+                    throw new ArgumentException("Unacceptable argument type.", nameof(value));
+                }
+            }
+        }
+
+        public override bool Equals(object obj) => obj is NVDRS_SETTING_V1 other && this.Equals(other);
+
+        public bool Equals(NVDRS_SETTING_V1 other)
+        {
+            if (!(InternalVersion == other.InternalVersion &&
+            InternalSettingName.Equals(other.InternalSettingName) &&
+            InternalSettingId == other.InternalSettingId &&
+            InternalSettingType == other.InternalSettingType &&
+            InternalSettingLocation == other.InternalSettingLocation &&
+            InternalIsCurrentPredefined == other.InternalIsCurrentPredefined &&
+            InternalIsPredefinedValid == other.InternalIsPredefinedValid))
+            {
+                return false;
+            }
+            if (InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE &&
+                InternalCurrentValue.AsInteger() == other.InternalCurrentValue.AsInteger())
+            {
+                return true;
+            }
+            else if (InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE &&
+                InternalCurrentValue.AsBinary() == other.InternalCurrentValue.AsBinary())
+            {
+                return true;
+            }
+            else if ((InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE || InternalSettingType == NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE) &&
+                InternalCurrentValue.AsUnicodeString() == other.InternalCurrentValue.AsUnicodeString())
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
+        public override Int32 GetHashCode()
+        {
+            return (InternalVersion, InternalSettingName, InternalSettingId, InternalSettingType, InternalSettingLocation, InternalIsCurrentPredefined, InternalIsPredefinedValid, InternalCurrentValue).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_SETTING_V1 lhs, NVDRS_SETTING_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_SETTING_V1 lhs, NVDRS_SETTING_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_SETTING_V1 other = (NVDRS_SETTING_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
+    public struct NVDRS_BINARY_SETTING : IEquatable<NVDRS_BINARY_SETTING>, ICloneable
+    {
+        public UInt32 ValueLength;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (Int32)NVImport.NVAPI_UNICODE_STRING_MAX)]
+        public string ValueData;
+
+        public override bool Equals(object obj) => obj is NVDRS_BINARY_SETTING other && this.Equals(other);
+
+        public bool Equals(NVDRS_BINARY_SETTING other)
+        => ValueLength == other.ValueLength &&
+           ValueData.SequenceEqual(other.ValueData);
+
+        public override Int32 GetHashCode()
+        {
+            return (ValueLength, ValueData).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_BINARY_SETTING lhs, NVDRS_BINARY_SETTING rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_BINARY_SETTING lhs, NVDRS_BINARY_SETTING rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_BINARY_SETTING other = (NVDRS_BINARY_SETTING)MemberwiseClone();
+            return other;
+        }
+    }
+
+
+    //NVDRS_SETTING_VALUE_UNION
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NVDRS_SETTING_VALUE : IEquatable<NVDRS_SETTING_VALUE>, ICloneable // Note: Version 1 of NVDRS_SETTINGS_VALUE structure
+    {
+        private const int UnicodeStringLength = UnicodeString.UnicodeStringLength;
+        private const int BinaryDataMax = 4096;
+
+        // Math.Max(BinaryDataMax + sizeof(uint), UnicodeStringLength * sizeof(ushort))
+        private const int FullStructureSize = 4100;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = FullStructureSize, ArraySubType = UnmanagedType.U1)]
+        public byte[] InternalBinaryValue;
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed unicode string as the value
+        /// </summary>
+        /// <param name="value">The unicode string value</param>
+        public NVDRS_SETTING_VALUE(string value)
+        {
+            if (value?.Length > UnicodeStringLength)
+            {
+                value = value.Substring(0, UnicodeStringLength);
+            }
+
+            InternalBinaryValue = new byte[FullStructureSize];
+
+            var stringBytes = Encoding.Unicode.GetBytes(value ?? string.Empty);
+            Array.Copy(stringBytes, 0, InternalBinaryValue, 0, Math.Min(stringBytes.Length, InternalBinaryValue.Length));
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed byte array as the value
+        /// </summary>
+        /// <param name="value">The byte array value</param>
+        public NVDRS_SETTING_VALUE(byte[] value)
+        {
+            InternalBinaryValue = new byte[FullStructureSize];
+
+            if (value?.Length > 0)
+            {
+                var arrayLength = Math.Min(value.Length, BinaryDataMax);
+                var arrayLengthBytes = BitConverter.GetBytes((uint)arrayLength);
+                Array.Copy(arrayLengthBytes, 0, InternalBinaryValue, 0, arrayLengthBytes.Length);
+                Array.Copy(value, 0, InternalBinaryValue, arrayLengthBytes.Length, arrayLength);
+            }
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="NVDRS_SETTING_VALUE" /> containing the passed integer as the value
+        /// </summary>
+        /// <param name="value">The integer value</param>
+        public NVDRS_SETTING_VALUE(uint value)
+        {
+            InternalBinaryValue = new byte[FullStructureSize];
+            var arrayLengthBytes = BitConverter.GetBytes(value);
+            Array.Copy(arrayLengthBytes, 0, InternalBinaryValue, 0, arrayLengthBytes.Length);
+        }
+
+        /// <summary>
+        ///     Returns the value as an integer
+        /// </summary>
+        /// <returns>An integer representing the value</returns>
+        public uint AsInteger()
+        {
+            return BitConverter.ToUInt32(InternalBinaryValue, 0);
+        }
+
+        /// <summary>
+        ///     Returns the value as an array of bytes
+        /// </summary>
+        /// <returns>An array of bytes representing the value</returns>
+        public byte[] AsBinary()
+        {
+            return InternalBinaryValue.Skip(sizeof(uint)).Take((int)AsInteger()).ToArray();
+        }
+
+        /// <summary>
+        ///     Returns the value as an unicode string
+        /// </summary>
+        /// <returns>An unicode string representing the value</returns>
+        public string AsUnicodeString()
+        {
+            return Encoding.Unicode.GetString(InternalBinaryValue).TrimEnd('\0');
+        }
+
+        public override bool Equals(object obj) => obj is NVDRS_SETTING_VALUE other && this.Equals(other);
+
+        public bool Equals(NVDRS_SETTING_VALUE other)
+        => InternalBinaryValue == other.InternalBinaryValue;
+
+        public override Int32 GetHashCode()
+        {
+            return (InternalBinaryValue).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_SETTING_VALUE lhs, NVDRS_SETTING_VALUE rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_SETTING_VALUE lhs, NVDRS_SETTING_VALUE rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_SETTING_VALUE other = (NVDRS_SETTING_VALUE)MemberwiseClone();
+            return other;
+        }
+    }
+
+    //NVDRS_SETTING_VALUES
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NVDRS_SETTING_VALUES_V1 : IEquatable<NVDRS_SETTING_VALUES_V1>, ICloneable // Note: Version 1 of NVDRS_SETTING_VALUES_V1 structure
+    {
+        internal const int MaximumNumberOfValues = (int)NVImport.NVAPI_SETTING_MAX_VALUES;
+
+        public UInt32 Version;
+        public UInt32 NumberOfValues;
+        public NVDRS_SETTING_TYPE _SettingType;
+        public NVDRS_SETTING_VALUE InternalDefaultValue;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MaximumNumberOfValues)]
+        public NVDRS_SETTING_VALUE[] InternalValues;
+
+        /// <summary>
+        ///     Gets the setting's value type
+        /// </summary>
+        public NVDRS_SETTING_TYPE SettingType
+        {
+            get => _SettingType;
+        }
+
+        /// <summary>
+        ///     Gets a list of possible values for the setting
+        /// </summary>
+        public object[] Values
+        {
+            get
+            {
+                switch (_SettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+                        return ValuesAsInteger().Cast<object>().ToArray();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+                        return ValuesAsBinary().Cast<object>().ToArray();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+                        return ValuesAsUnicodeString().Cast<object>().ToArray();
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Gets the default value of the setting
+        /// </summary>
+        public object DefaultValue
+        {
+            get
+            {
+                switch (_SettingType)
+                {
+                    case NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE:
+                        return DefaultValueAsInteger();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE:
+                        return DefaultValueAsBinary();
+
+                    case NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE:
+                    case NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE:
+                        return DefaultValueAsUnicodeString();
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(SettingType));
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Returns the default value as an integer
+        /// </summary>
+        /// <returns>An integer representing the default value</returns>
+        public uint DefaultValueAsInteger()
+        {
+            return InternalDefaultValue.AsInteger();
+        }
+
+        /// <summary>
+        ///     Returns the default value as a byte array
+        /// </summary>
+        /// <returns>An array of bytes representing the default value</returns>
+        public byte[] DefaultValueAsBinary()
+        {
+            return InternalDefaultValue.AsBinary();
+        }
+
+        /// <summary>
+        ///     Returns the default value as an unicode string
+        /// </summary>
+        /// <returns>A string representing the default value</returns>
+        public string DefaultValueAsUnicodeString()
+        {
+            return InternalDefaultValue.AsUnicodeString();
+        }
+
+        /// <summary>
+        ///     Returns the setting's possible values as an array of integers
+        /// </summary>
+        /// <returns>An array of integers representing the possible values</returns>
+        public uint[] ValuesAsInteger()
+        {
+            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsInteger()).ToArray();
+        }
+
+        /// <summary>
+        ///     Returns the setting's possible values as an array of byte arrays
+        /// </summary>
+        /// <returns>An array of byte arrays representing the possible values</returns>
+        public byte[][] ValuesAsBinary()
+        {
+            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsBinary()).ToArray();
+        }
+
+        /// <summary>
+        ///     Returns the setting's possible values as an array of unicode strings
+        /// </summary>
+        /// <returns>An array of unicode strings representing the possible values</returns>
+        public string[] ValuesAsUnicodeString()
+        {
+            return InternalValues.Take((int)NumberOfValues).Select(value => value.AsUnicodeString()).ToArray();
+        }
+
+        public override bool Equals(object obj) => obj is NVDRS_SETTING_VALUES_V1 other && this.Equals(other);
+
+        public bool Equals(NVDRS_SETTING_VALUES_V1 other)
+        => Version == other.Version &&
+            NumberOfValues == other.NumberOfValues &&
+            _SettingType == other._SettingType &&
+            InternalDefaultValue == other.InternalDefaultValue &&
+            InternalValues == other.InternalValues;
+
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, NumberOfValues, _SettingType, InternalDefaultValue, InternalValues).GetHashCode();
+        }
+        public static bool operator ==(NVDRS_SETTING_VALUES_V1 lhs, NVDRS_SETTING_VALUES_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NVDRS_SETTING_VALUES_V1 lhs, NVDRS_SETTING_VALUES_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NVDRS_SETTING_VALUES_V1 other = (NVDRS_SETTING_VALUES_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct UnicodeString
+    {
+        public const int UnicodeStringLength = 2048;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = UnicodeStringLength)]
+        public readonly string InternalValue;
+
+        public string Value
+        {
+            get => InternalValue;
+        }
+
+        public UnicodeString(string value)
+        {
+            InternalValue = value ?? string.Empty;
+        }
+
+        public override string ToString()
+        {
+            return Value;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_BOARD_INFO_V1 : IEquatable<NV_BOARD_INFO_V1> // Note: Version 1 of NV_BOARD_INFO_V1 structure
+    public struct NV_LOGICAL_GPU_DATA_V1 : IEquatable<NV_LOGICAL_GPU_DATA_V1>, ICloneable // Note: Version 1 of NV_BOARD_INFO_V1 structure
+    {
+        public UInt32 Version;                   //!< structure version
+        public IntPtr OSAdapterId;
+        public UInt32 PhysicalGPUCount;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)NVImport.NVAPI_MAX_PHYSICAL_GPUS)]
+        public PhysicalGpuHandle[] PhysicalGPUHandles;
+        public UInt32 Reserved;
+
+        public override bool Equals(object obj) => obj is NV_LOGICAL_GPU_DATA_V1 other && this.Equals(other);
+
+        public bool Equals(NV_LOGICAL_GPU_DATA_V1 other)
+        => Version == other.Version &&
+           PhysicalGPUCount == other.PhysicalGPUCount &&
+           PhysicalGPUHandles.SequenceEqual(other.PhysicalGPUHandles);
+
+        public override Int32 GetHashCode()
+        {
+            return (Version, PhysicalGPUCount, PhysicalGPUHandles).GetHashCode();
+        }
+        public static bool operator ==(NV_LOGICAL_GPU_DATA_V1 lhs, NV_LOGICAL_GPU_DATA_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_LOGICAL_GPU_DATA_V1 lhs, NV_LOGICAL_GPU_DATA_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_LOGICAL_GPU_DATA_V1 other = (NV_LOGICAL_GPU_DATA_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_BOARD_INFO_V1 : IEquatable<NV_BOARD_INFO_V1>, ICloneable // Note: Version 1 of NV_BOARD_INFO_V1 structure
     {
         public UInt32 Version;                   //!< structure version
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
@@ -853,10 +1707,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_BOARD_INFO_V1 lhs, NV_BOARD_INFO_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_BOARD_INFO_V1 lhs, NV_BOARD_INFO_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_BOARD_INFO_V1 other = (NV_BOARD_INFO_V1)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_EDID_V3 : IEquatable<NV_EDID_V3> // Note: Version 3 of NV_EDID_V3 structure
+    public struct NV_EDID_V3 : IEquatable<NV_EDID_V3>, ICloneable // Note: Version 3 of NV_EDID_V3 structure
     {
         public UInt32 Version;        //!< Structure version
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (Int32)NVImport.NV_EDID_DATA_SIZE)]
@@ -885,11 +1744,17 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_EDID_V3 lhs, NV_EDID_V3 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_EDID_V3 lhs, NV_EDID_V3 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_EDID_V3 other = (NV_EDID_V3)MemberwiseClone();
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Ansi)]
-    public struct NV_TIMING_EXTRA : IEquatable<NV_TIMING_EXTRA>
+    public struct NV_TIMING_EXTRA : IEquatable<NV_TIMING_EXTRA>, ICloneable
     {
         public UInt32 Flags;          //!< Reserved for NVIDIA hardware-based enhancement, such as double-scan.
         public ushort RefreshRate;            //!< Logical refresh rate to present
@@ -921,10 +1786,32 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_TIMING_EXTRA lhs, NV_TIMING_EXTRA rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_TIMING_EXTRA lhs, NV_TIMING_EXTRA rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_TIMING_EXTRA other = (NV_TIMING_EXTRA)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Ansi)]
+    public struct NV_TIMING_EXTRA_INTERNAL
+    {
+        public UInt32 Flags;          //!< Reserved for NVIDIA hardware-based enhancement, such as double-scan.
+        public ushort RefreshRate;            //!< Logical refresh rate to present
+        public UInt32 FrequencyInMillihertz;         //!< Physical vertical refresh rate in 0.001Hz
+        public ushort VerticalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
+        public ushort HorizontalAspect;        //!< Display aspect ratio Hi(aspect):horizontal-aspect, Low(aspect):vertical-aspect
+        public ushort HorizontalPixelRepetition;           //!< Bit-wise pixel repetition factor: 0x1:no pixel repetition; 0x2:each pixel repeats twice horizontally,..
+        public UInt32 TimingStandard;        //!< Timing standard
+        //[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
+        public string Name;      //!< Timing name
+
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_TIMING : IEquatable<NV_TIMING>
+    public struct NV_TIMING : IEquatable<NV_TIMING>, ICloneable
     {
         // VESA scan out timing parameters:
         public ushort HVisible;         //!< horizontal visible
@@ -973,10 +1860,43 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_TIMING lhs, NV_TIMING rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_TIMING lhs, NV_TIMING rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_TIMING other = (NV_TIMING)MemberwiseClone();
+            other.Extra = (NV_TIMING_EXTRA)Extra.Clone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_RECT : IEquatable<NV_RECT>
+    public struct NV_TIMING_INTERNAL
+    {
+        // VESA scan out timing parameters:
+        public ushort HVisible;         //!< horizontal visible
+        public ushort HBorder;          //!< horizontal border
+        public ushort HFrontPorch;      //!< horizontal front porch
+        public ushort HSyncWidth;       //!< horizontal sync width
+        public ushort HTotal;           //!< horizontal total
+        public TIMING_HORIZONTAL_SYNC_POLARITY HSyncPol;         //!< horizontal sync polarity: 1-negative, 0-positive
+
+        public ushort VVisible;         //!< vertical visible
+        public ushort VBorder;          //!< vertical border
+        public ushort VFrontPorch;      //!< vertical front porch
+        public ushort VSyncWidth;       //!< vertical sync width
+        public ushort VTotal;           //!< vertical total
+        public TIMING_VERTICAL_SYNC_POLARITY VSyncPol;         //!< vertical sync polarity: 1-negative, 0-positive
+
+        public TIMING_SCAN_MODE ScanMode;       //!< 1-Int32erlaced, 0-progressive
+        public UInt32 Pclk;             //!< pixel clock in 10 kHz
+
+        //other timing related extras - points to a NV_TIMING_EXTRA_INTERNAL
+        public NV_TIMING_EXTRA_INTERNAL Extra;
+
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_RECT : IEquatable<NV_RECT>, ICloneable
     {
         public UInt32 Left;
         public UInt32 Top;
@@ -998,10 +1918,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_RECT lhs, NV_RECT rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_RECT lhs, NV_RECT rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_RECT other = (NV_RECT)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_LUID : IEquatable<NV_LUID>
+    public struct NV_LUID : IEquatable<NV_LUID>, ICloneable
     {
         public UInt32 LowPart;
         public UInt32 HighPart;
@@ -1019,11 +1945,17 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_LUID lhs, NV_LUID rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_LUID lhs, NV_LUID rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_LUID other = (NV_LUID)MemberwiseClone();
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_POSITION : IEquatable<NV_POSITION>
+    public struct NV_POSITION : IEquatable<NV_POSITION>, ICloneable
     {
         public Int32 X;
         public Int32 Y;
@@ -1041,11 +1973,23 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_POSITION lhs, NV_POSITION rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_POSITION lhs, NV_POSITION rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_POSITION_INTERNAL
+    {
+        public Int32 X;
+        public Int32 Y;
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_RESOLUTION : IEquatable<NV_RESOLUTION>
+    public struct NV_RESOLUTION : IEquatable<NV_RESOLUTION>, ICloneable
     {
         public UInt32 Width;
         public UInt32 Height;
@@ -1065,10 +2009,25 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_RESOLUTION lhs, NV_RESOLUTION rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_RESOLUTION lhs, NV_RESOLUTION rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_RESOLUTION other = (NV_RESOLUTION)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_VIEWPORTF : IEquatable<NV_VIEWPORTF>
+    public struct NV_RESOLUTION_INTERNAL
+    {
+        public UInt32 Width;
+        public UInt32 Height;
+        public UInt32 ColorDepth;
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_VIEWPORTF : IEquatable<NV_VIEWPORTF>, ICloneable
     {
         public float X;    //!<  x-coordinate of the viewport top-left point
         public float Y;    //!<  y-coordinate of the viewport top-left point
@@ -1104,10 +2063,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_VIEWPORTF lhs, NV_VIEWPORTF rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_VIEWPORTF lhs, NV_VIEWPORTF rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_VIEWPORTF other = (NV_VIEWPORTF)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO : IEquatable<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO> // Requires Version 1
+    public struct NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1>, ICloneable // Requires Version 1
     {
         public UInt32 Version;
 
@@ -1143,9 +2108,9 @@ namespace DisplayMagicianShared.NVIDIA
                                              //!< The value NV_TIMING::NV_TIMINGEXT::rrx1k is obtained from the EDID. The driver may
                                              //!< tweak this value for HDTV, stereo, etc., before reporting it to the OS.
 
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO other && this.Equals(other);
+        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 other && this.Equals(other);
 
-        public bool Equals(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO other)
+        public bool Equals(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 other)
         => Version == other.Version &&
            Rotation == other.Rotation &&
            Scaling == other.Scaling &&
@@ -1160,16 +2125,63 @@ namespace DisplayMagicianShared.NVIDIA
         {
             return (Version, Rotation, Scaling, RefreshRateInMillihertz, Flags, ConnectorType, TvFormat, TimingOverride, Timing).GetHashCode();
         }
-        public static bool operator ==(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO lhs, NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO rhs) => lhs.Equals(rhs);
+        public static bool operator ==(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 rhs) => lhs.Equals(rhs);
 
-        public static bool operator !=(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO lhs, NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO rhs) => !(lhs == rhs);
+        public static bool operator !=(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 other = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)MemberwiseClone();
+            other.Timing = (NV_TIMING)Timing.Clone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>
+    public struct NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL
+    {
+        public UInt32 Version;
+
+        // Rotation and Scaling
+        public NV_ROTATE Rotation;       //!< (IN) rotation setting.
+        public NV_SCALING Scaling;        //!< (IN) scaling setting.
+
+        // Refresh Rate
+        public UInt32 RefreshRateInMillihertz;  //!< (IN) Non-Int32erlaced Refresh Rate of the mode, multiplied by 1000, 0 = ignored
+                                                //!< This is the value which driver reports to the OS.
+                                                // Flags
+                                                //public UInt32 Int32erlaced:1;   //!< (IN) Interlaced mode flag, ignored if refreshRate == 0
+                                                //public UInt32 primary:1;      //!< (IN) Declares primary display in clone configuration. This is *NOT* GDI Primary.
+                                                //!< Only one target can be primary per source. If no primary is specified, the first
+                                                //!< target will automatically be primary.
+                                                //public UInt32 isPanAndScanTarget:1; //!< Whether on this target Pan and Scan is enabled or has to be enabled. Valid only
+                                                //!< when the target is part of clone topology.
+                                                //public UInt32 disableVirtualModeSupport:1;
+                                                //public UInt32 isPreferredUnscaledTarget:1;
+                                                //public UInt32 reserved:27;
+        public UInt32 Flags;
+        // TV format information
+        public NV_GPU_CONNECTOR_TYPE ConnectorType;      //!< Specify connector type. For TV only, ignored if tvFormat == NV_DISPLAY_TV_FORMAT_NONE
+        public NV_DISPLAY_TV_FORMAT TvFormat;       //!< (IN) to choose the last TV format set this value to NV_DISPLAY_TV_FORMAT_NONE
+                                                    //!< In case of NvAPI_DISP_GetDisplayConfig(), this field will indicate the currently applied TV format;
+                                                    //!< if no TV format is applied, this field will have NV_DISPLAY_TV_FORMAT_NONE value.
+                                                    //!< In case of NvAPI_DISP_SetDisplayConfig(), this field should only be set in case of TVs;
+                                                    //!< for other displays this field will be ignored and resolution & refresh rate specified in input will be used to apply the TV format.
+
+        // Backend (raster) timing standard
+        public NV_TIMING_OVERRIDE TimingOverride;     //!< Ignored if timingOverride == NV_TIMING_OVERRIDE_CURRENT
+        public NV_TIMING_INTERNAL Timing;             // Points to a NV_TIMING_INTERNAL object
+                                                      //!< Scan out timing, valid only if timingOverride == NV_TIMING_OVERRIDE_CUST
+                                                      //!< The value NV_TIMING::NV_TIMINGEXT::rrx1k is obtained from the EDID. The driver may
+                                                      //!< tweak this value for HDTV, stereo, etc., before reporting it to the OS.
+
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>, ICloneable
     {
         public UInt32 DisplayId;  //!< Display ID
-        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
+        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 Details;    //!< NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO - May be NULL if no advanced settings are required
         public UInt32 WindowsCCDTargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
 
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 other && this.Equals(other);
@@ -1186,13 +2198,21 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2 otherTargetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)MemberwiseClone();
+            otherTargetInfo.Details = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)Details.Clone();
+            return otherTargetInfo;
+        }
     }
 
+
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1>
+    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1>, ICloneable
     {
         public UInt32 DisplayId;  //!< Display ID
-        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
+        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 Details;    //!< May be NULL if no advanced settings are required
 
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other && this.Equals(other);
 
@@ -1207,18 +2227,25 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1 other = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V1)MemberwiseClone();
+            other.Details = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1)Details.Clone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V2> // Version is 2
+    public struct NV_DISPLAYCONFIG_PATH_INFO_V2 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V2>, ICloneable // Version is 2
     {
         public UInt32 Version;
         public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
 
         public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
         //[MarshalAs(UnmanagedType.ByValArray)]
-        public IntPtr TargetInfo;
-        public IntPtr SourceModeInfo;             //!< May be NULL if mode info is not important
+        public NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[] TargetInfo;
+        public NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 SourceModeInfo;             //!< May be NULL if mode info is not important
         //public IntPtr SourceModeInfo;             //!< May be NULL if mode info is not important
         //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
         //public UInt32 reserved : 31;              //!< Must be 0
@@ -1232,12 +2259,25 @@ namespace DisplayMagicianShared.NVIDIA
         public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_INFO_V2 other && this.Equals(other);
 
         public bool Equals(NV_DISPLAYCONFIG_PATH_INFO_V2 other)
-        => Version == other.Version &&
-           SourceId == other.SourceId &&
-           TargetInfoCount == other.TargetInfoCount &&
-           TargetInfo.Equals(other.TargetInfo) &&
-           SourceModeInfo.Equals(other.SourceModeInfo) &&
-           Flags == other.Flags;
+        {
+            if (!(Version == other.Version &&
+            SourceId == other.SourceId &&
+            TargetInfoCount == other.TargetInfoCount &&
+            SourceModeInfo.Equals(other.SourceModeInfo) &&
+            Flags == other.Flags))
+            {
+                return false;
+            }
+
+            // Now we need to go through the HDR states comparing vaues, as the order changes if there is a cloned display
+            if (!NVImport.EqualButDifferentOrder<NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2>(TargetInfo, other.TargetInfo))
+            {
+                return false;
+            }
+
+            return true;
+
+        }
 
         public override Int32 GetHashCode()
         {
@@ -1246,10 +2286,50 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_INFO_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_DISPLAYCONFIG_PATH_INFO_V2 lhs, NV_DISPLAYCONFIG_PATH_INFO_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_DISPLAYCONFIG_PATH_INFO_V2 other = (NV_DISPLAYCONFIG_PATH_INFO_V2)MemberwiseClone();
+            other.TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[TargetInfoCount];
+            for (int x = 0; x < (int)TargetInfoCount; x++)
+            {
+                other.TargetInfo[x] = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)TargetInfo[x].Clone();
+            }
+            other.SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)SourceModeInfo.Clone(); ;
+            return other;
+        }
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL // Version is 2 - This is for processing pass 2 only!
+    {
+        public UInt32 Version;
+        public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
+        public UInt32 TargetInfoCount;            //!< Number of elements in targetInfo array
+        public IntPtr TargetInfo;
+        public IntPtr SourceModeInfo;             //!< May be NULL if mode info is not important
+        //public UInt32 IsNonNVIDIAAdapter : 1;     //!< True for non-NVIDIA adapter.
+        //public UInt32 reserved : 31;              //!< Must be 0
+        public UInt32 Flags;
+        //!< Used by Non-NVIDIA adapter for pointer to OS Adapter of LUID
+        //!< type, type casted to void *.
+        public IntPtr OSAdapterID;
+
+        public bool IsNonNVIDIAAdapter => Flags.GetBit(0); //!< if bit is set then this path uses a non-nvidia adapter
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL
+    {
+        public UInt32 DisplayId;  //!< Display ID
+        public IntPtr Details;  // Points to an NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL object  
+                                //!< NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO - May be NULL if no advanced settings are required
+        public UInt32 WindowsCCDTargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
+
+    }
+
+
     [StructLayout(LayoutKind.Sequential)]
-    public struct NV_DISPLAYCONFIG_PATH_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V1> // Version is 1
+    public struct NV_DISPLAYCONFIG_PATH_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_PATH_INFO_V1>, ICloneable // Version is 1
     {
         public UInt32 Version;
         public UInt32 SourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
@@ -1269,7 +2349,7 @@ namespace DisplayMagicianShared.NVIDIA
         => Version == other.Version &&
            SourceId == other.SourceId &&
            TargetInfoCount == other.TargetInfoCount &&
-           TargetInfo.Equals(other.TargetInfo) &&
+           TargetInfo.SequenceEqual(other.TargetInfo) &&
            SourceModeInfo.Equals(other.SourceModeInfo);
 
         public override Int32 GetHashCode()
@@ -1279,11 +2359,22 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_DISPLAYCONFIG_PATH_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_INFO_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_DISPLAYCONFIG_PATH_INFO_V1 lhs, NV_DISPLAYCONFIG_PATH_INFO_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_DISPLAYCONFIG_PATH_INFO_V2 other = (NV_DISPLAYCONFIG_PATH_INFO_V2)MemberwiseClone();
+            other.TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[TargetInfoCount];
+            for (int x = 0; x < (int)TargetInfoCount; x++)
+            {
+                other.TargetInfo[x] = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)TargetInfo[x].Clone();
+            }
+            other.SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)SourceModeInfo.Clone(); ;
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1>
+    public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 : IEquatable<NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1>, ICloneable
     {
         public NV_RESOLUTION Resolution;
         public NV_FORMAT ColorFormat;                //!< Ignored at present, must be NV_FORMAT_UNKNOWN (0)
@@ -1301,44 +2392,42 @@ namespace DisplayMagicianShared.NVIDIA
         public bool Equals(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 other)
         => Resolution.Equals(other.Resolution) &&
            ColorFormat == other.ColorFormat &&
-           Position.Equals(other.Position);
+           Position.Equals(other.Position) &&
+           Flags == other.Flags;
 
         public override Int32 GetHashCode()
         {
-            return (Resolution, ColorFormat, Position).GetHashCode();
+            return (Resolution, ColorFormat, Position, Flags).GetHashCode();
         }
         public static bool operator ==(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 lhs, NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 lhs, NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 rhs) => !(lhs == rhs);
-    }
 
-
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_DISPLAYCONFIG_PATH_TARGET_INFO : IEquatable<NV_DISPLAYCONFIG_PATH_TARGET_INFO>
-    {
-        public UInt32 DisplayId;  //!< Display ID
-        public NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO Details;    //!< May be NULL if no advanced settings are required
-        public UInt32 TargetId;   //!< Windows CCD target ID. Must be present only for non-NVIDIA adapter, for NVIDIA adapter this parameter is ignored.
-
-        public override bool Equals(object obj) => obj is NV_DISPLAYCONFIG_PATH_TARGET_INFO other && this.Equals(other);
-
-        public bool Equals(NV_DISPLAYCONFIG_PATH_TARGET_INFO other)
-        => DisplayId == other.DisplayId &&
-           Details.Equals(other.Details) &&
-           TargetId == other.TargetId;
-
-        public override Int32 GetHashCode()
+        public object Clone()
         {
-            return (DisplayId, Details, TargetId).GetHashCode();
+            NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 other = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)MemberwiseClone();
+            other.Resolution = (NV_RESOLUTION)Resolution.Clone();
+            other.Position = (NV_POSITION)Position.Clone();
+            return other;
         }
-        public static bool operator ==(NV_DISPLAYCONFIG_PATH_TARGET_INFO lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO rhs) => lhs.Equals(rhs);
+    }
 
-        public static bool operator !=(NV_DISPLAYCONFIG_PATH_TARGET_INFO lhs, NV_DISPLAYCONFIG_PATH_TARGET_INFO rhs) => !(lhs == rhs);
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1_INTERNAL
+    {
+        public IntPtr Resolution;       // Points to a NV_RESOLUTION_INTERNAL object
+        public NV_FORMAT ColorFormat;                //!< Ignored at present, must be NV_FORMAT_UNKNOWN (0)
+        public IntPtr Position;                   // Points to a NV_POSITION_INTERNAL object
+                                                  //!< Is all positions are 0 or invalid, displays will be automatically
+                                                  //!< positioned from left to right with GDI Primary at 0,0, and all
+                                                  //!< other displays in the order of the path array.
+        public NV_DISPLAYCONFIG_SPANNING_ORIENTATION SpanningOrientation;        //!< Spanning is only supported on XP
+        public UInt32 Flags;
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_TOPO_BRIEF : IEquatable<NV_MOSAIC_TOPO_BRIEF> // Note: Version 1 of NV_MOSAIC_TOPO_BRIEF structure
+    public struct NV_MOSAIC_TOPO_BRIEF : IEquatable<NV_MOSAIC_TOPO_BRIEF>, ICloneable // Note: Version 1 of NV_MOSAIC_TOPO_BRIEF structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
         public NV_MOSAIC_TOPO Topo;     //!< The topology
@@ -1364,6 +2453,11 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_TOPO_BRIEF lhs, NV_MOSAIC_TOPO_BRIEF rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_TOPO_BRIEF lhs, NV_MOSAIC_TOPO_BRIEF rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_TOPO_BRIEF other = (NV_MOSAIC_TOPO_BRIEF)MemberwiseClone();
+            return other;
+        }
     }
 
     //
@@ -1384,7 +2478,7 @@ namespace DisplayMagicianShared.NVIDIA
     //! You can then look at the detailed values within the structure.  There are no
     //! entrypoInt32s which take this structure as input (effectively making it read-only).
     [StructLayout(LayoutKind.Sequential)]
-    public struct NV_MOSAIC_TOPO_GROUP : IEquatable<NV_MOSAIC_TOPO_GROUP> // Note: Version 1 of NV_MOSAIC_TOPO_GROUP structure
+    public struct NV_MOSAIC_TOPO_GROUP : IEquatable<NV_MOSAIC_TOPO_GROUP>, ICloneable // Note: Version 1 of NV_MOSAIC_TOPO_GROUP structure
     {
         public UInt32 Version;                        // Version of this structure - MUST BE SET TO 1
         public NV_MOSAIC_TOPO_BRIEF Brief;          //!< The brief details of this topo
@@ -1407,11 +2501,22 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_TOPO_GROUP lhs, NV_MOSAIC_TOPO_GROUP rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_TOPO_GROUP lhs, NV_MOSAIC_TOPO_GROUP rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_TOPO_GROUP other = (NV_MOSAIC_TOPO_GROUP)MemberwiseClone();
+            other.Brief = (NV_MOSAIC_TOPO_BRIEF)Brief.Clone();
+            other.Topos = new NV_MOSAIC_TOPO_DETAILS[Topos.Length];
+            for (int x = 0; x < (int)Topos.Length; x++)
+            {
+                other.Topos[x] = (NV_MOSAIC_TOPO_DETAILS)Topos[x].Clone();
+            }
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct NV_MOSAIC_TOPO_DETAILS : IEquatable<NV_MOSAIC_TOPO_DETAILS> // Note: Version 1 of NV_MOSAIC_TOPO_DETAILS structure
+    public struct NV_MOSAIC_TOPO_DETAILS : IEquatable<NV_MOSAIC_TOPO_DETAILS>, ICloneable // Note: Version 1 of NV_MOSAIC_TOPO_DETAILS structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 1 
         public LogicalGpuHandle LogicalGPUHandle;     //!< Logical GPU for this topology  
@@ -1478,10 +2583,31 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_TOPO_DETAILS lhs, NV_MOSAIC_TOPO_DETAILS rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_TOPO_DETAILS lhs, NV_MOSAIC_TOPO_DETAILS rhs) => !(lhs == rhs);
+
+        public object Clone()
+        {
+            NV_MOSAIC_TOPO_DETAILS other = (NV_MOSAIC_TOPO_DETAILS)MemberwiseClone();
+            other.LogicalGPUHandle = (LogicalGpuHandle)LogicalGPUHandle.Clone();
+            other.GPULayout1D = new NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[GPULayout1D.Length];
+            for (int x = 0; x < (int)GPULayout1D.Length; x++)
+            {
+                other.GPULayout1D[x] = (NV_MOSAIC_TOPO_GPU_LAYOUT_CELL)GPULayout1D[x].Clone();
+            }
+
+            other.GPULayout = new NV_MOSAIC_TOPO_GPU_LAYOUT_CELL[GPULayout.GetLength(0), GPULayout.GetLength(1)];
+            for (int x = 0; x < (int)GPULayout.GetLength(0); x++)
+            {
+                for (int y = 0; y < (int)GPULayout.GetLength(1); y++)
+                {
+                    other.GPULayout[x, y] = (NV_MOSAIC_TOPO_GPU_LAYOUT_CELL)GPULayout[x, y].Clone();
+                }
+            }
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_TOPO_GPU_LAYOUT_CELL : IEquatable<NV_MOSAIC_TOPO_GPU_LAYOUT_CELL>
+    public struct NV_MOSAIC_TOPO_GPU_LAYOUT_CELL : IEquatable<NV_MOSAIC_TOPO_GPU_LAYOUT_CELL>, ICloneable
     {
         public PhysicalGpuHandle PhysicalGPUHandle;     //!< Physical GPU to be used in the topology (0 if GPU missing) size is 8
         public UInt32 DisplayOutputId;            //!< Connected display target(0 if no display connected) size is 8
@@ -1503,10 +2629,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_TOPO_GPU_LAYOUT_CELL lhs, NV_MOSAIC_TOPO_GPU_LAYOUT_CELL rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_TOPO_GPU_LAYOUT_CELL lhs, NV_MOSAIC_TOPO_GPU_LAYOUT_CELL rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_TOPO_GPU_LAYOUT_CELL other = (NV_MOSAIC_TOPO_GPU_LAYOUT_CELL)MemberwiseClone();
+            other.PhysicalGPUHandle = (PhysicalGpuHandle)PhysicalGPUHandle.Clone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_SETTING_V1 : IEquatable<NV_MOSAIC_DISPLAY_SETTING_V1> // Note: Version 1 of NV_MOSAIC_DISPLAY_SETTING structure
+    public struct NV_MOSAIC_DISPLAY_SETTING_V1 : IEquatable<NV_MOSAIC_DISPLAY_SETTING_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_DISPLAY_SETTING structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
         public UInt32 Width;              //!< Per-display width
@@ -1530,10 +2662,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_DISPLAY_SETTING_V1 lhs, NV_MOSAIC_DISPLAY_SETTING_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_DISPLAY_SETTING_V1 lhs, NV_MOSAIC_DISPLAY_SETTING_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_DISPLAY_SETTING_V1 other = (NV_MOSAIC_DISPLAY_SETTING_V1)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_SETTING_V2 : IEquatable<NV_MOSAIC_DISPLAY_SETTING_V2> // Note: Version 2 of NV_MOSAIC_DISPLAY_SETTING structure
+    public struct NV_MOSAIC_DISPLAY_SETTING_V2 : IEquatable<NV_MOSAIC_DISPLAY_SETTING_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_DISPLAY_SETTING structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
         public UInt32 Width;              //!< Per-display width
@@ -1559,10 +2696,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_DISPLAY_SETTING_V2 lhs, NV_MOSAIC_DISPLAY_SETTING_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_DISPLAY_SETTING_V2 lhs, NV_MOSAIC_DISPLAY_SETTING_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_DISPLAY_SETTING_V2 other = (NV_MOSAIC_DISPLAY_SETTING_V2)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_V1 : IEquatable<NV_MOSAIC_GRID_TOPO_V1> // Note: Version 1 of NV_MOSAIC_GRID_TOPO structure
+    public struct NV_MOSAIC_GRID_TOPO_V1 : IEquatable<NV_MOSAIC_GRID_TOPO_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_GRID_TOPO structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
         public UInt32 Rows;              //!< Per-display width
@@ -1597,10 +2739,21 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_GRID_TOPO_V1 lhs, NV_MOSAIC_GRID_TOPO_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_GRID_TOPO_V1 lhs, NV_MOSAIC_GRID_TOPO_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_GRID_TOPO_V1 other = (NV_MOSAIC_GRID_TOPO_V1)MemberwiseClone();
+            other.DisplaySettings = (NV_MOSAIC_DISPLAY_SETTING_V1)DisplaySettings.Clone();
+            other.Displays = new NV_MOSAIC_GRID_TOPO_DISPLAY_V1[Displays.Length];
+            for (int x = 0; x < (int)Displays.Length; x++)
+            {
+                other.Displays[x] = (NV_MOSAIC_GRID_TOPO_DISPLAY_V1)Displays[x].Clone();
+            }
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_V2 : IEquatable<NV_MOSAIC_GRID_TOPO_V2> // Note: Version 2 of NV_MOSAIC_GRID_TOPO structure
+    public struct NV_MOSAIC_GRID_TOPO_V2 : IEquatable<NV_MOSAIC_GRID_TOPO_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_GRID_TOPO structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
         public UInt32 Rows;              //!< Per-display width
@@ -1636,10 +2789,21 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_GRID_TOPO_V2 lhs, NV_MOSAIC_GRID_TOPO_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_GRID_TOPO_V2 lhs, NV_MOSAIC_GRID_TOPO_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_GRID_TOPO_V2 other = (NV_MOSAIC_GRID_TOPO_V2)MemberwiseClone();
+            other.DisplaySettings = (NV_MOSAIC_DISPLAY_SETTING_V1)DisplaySettings.Clone();
+            other.Displays = new NV_MOSAIC_GRID_TOPO_DISPLAY_V2[Displays.Length];
+            for (int x = 0; x < (int)Displays.Length; x++)
+            {
+                other.Displays[x] = (NV_MOSAIC_GRID_TOPO_DISPLAY_V2)Displays[x].Clone();
+            }
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_DISPLAY_V1 : IEquatable<NV_MOSAIC_GRID_TOPO_DISPLAY_V1> // Note: Version 1 of NV_MOSAIC_GRID_TOPO_DISPLAY structure
+    public struct NV_MOSAIC_GRID_TOPO_DISPLAY_V1 : IEquatable<NV_MOSAIC_GRID_TOPO_DISPLAY_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_GRID_TOPO_DISPLAY structure
     {
         public UInt32 DisplayId;              //!< DisplayID of the display
         public Int32 OverlapX;             //!< (+overlap, -gap)
@@ -1662,10 +2826,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_GRID_TOPO_DISPLAY_V1 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_GRID_TOPO_DISPLAY_V1 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_GRID_TOPO_DISPLAY_V1 other = (NV_MOSAIC_GRID_TOPO_DISPLAY_V1)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_GRID_TOPO_DISPLAY_V2 : IEquatable<NV_MOSAIC_GRID_TOPO_DISPLAY_V2> // Note: Version 2 of NV_MOSAIC_GRID_TOPO_DISPLAY structure
+    public struct NV_MOSAIC_GRID_TOPO_DISPLAY_V2 : IEquatable<NV_MOSAIC_GRID_TOPO_DISPLAY_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_GRID_TOPO_DISPLAY structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
         public UInt32 DisplayId;              //!< DisplayID of the display
@@ -1692,11 +2861,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_GRID_TOPO_DISPLAY_V2 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_GRID_TOPO_DISPLAY_V2 lhs, NV_MOSAIC_GRID_TOPO_DISPLAY_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_GRID_TOPO_DISPLAY_V2 other = (NV_MOSAIC_GRID_TOPO_DISPLAY_V2)MemberwiseClone();
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 : IEquatable<NV_MOSAIC_SUPPORTED_TOPO_INFO_V1> // Note: Version 1 of NV_MOSAIC_SUPPORTED_TOPO_INFO structure
+    public struct NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 : IEquatable<NV_MOSAIC_SUPPORTED_TOPO_INFO_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_SUPPORTED_TOPO_INFO structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 1
         public UInt32 TopoBriefsCount;              //!< Number of topologies in below array
@@ -1722,10 +2896,25 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_SUPPORTED_TOPO_INFO_V1 other = (NV_MOSAIC_SUPPORTED_TOPO_INFO_V1)MemberwiseClone();
+            other.TopoBriefs = new NV_MOSAIC_TOPO_BRIEF[TopoBriefs.Length];
+            for (int x = 0; x < (int)TopoBriefs.Length; x++)
+            {
+                other.TopoBriefs[x] = (NV_MOSAIC_TOPO_BRIEF)TopoBriefs[x].Clone();
+            }
+            other.DisplaySettings = new NV_MOSAIC_DISPLAY_SETTING_V1[DisplaySettings.Length];
+            for (int x = 0; x < (int)DisplaySettings.Length; x++)
+            {
+                other.DisplaySettings[x] = (NV_MOSAIC_DISPLAY_SETTING_V1)DisplaySettings[x].Clone();
+            }
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 : IEquatable<NV_MOSAIC_SUPPORTED_TOPO_INFO_V2> // Note: Version 2 of NV_MOSAIC_SUPPORTED_TOPO_INFO structure
+    public struct NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 : IEquatable<NV_MOSAIC_SUPPORTED_TOPO_INFO_V2>, ICloneable // Note: Version 2 of NV_MOSAIC_SUPPORTED_TOPO_INFO structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
         public UInt32 TopoBriefsCount;              //!< Number of topologies in below array
@@ -1750,10 +2939,25 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 lhs, NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_SUPPORTED_TOPO_INFO_V2 other = (NV_MOSAIC_SUPPORTED_TOPO_INFO_V2)MemberwiseClone();
+            other.TopoBriefs = new NV_MOSAIC_TOPO_BRIEF[TopoBriefs.Length];
+            for (int x = 0; x < (int)TopoBriefs.Length; x++)
+            {
+                other.TopoBriefs[x] = (NV_MOSAIC_TOPO_BRIEF)TopoBriefs[x].Clone();
+            }
+            other.DisplaySettings = new NV_MOSAIC_DISPLAY_SETTING_V2[DisplaySettings.Length];
+            for (int x = 0; x < (int)DisplaySettings.Length; x++)
+            {
+                other.DisplaySettings[x] = (NV_MOSAIC_DISPLAY_SETTING_V2)DisplaySettings[x].Clone();
+            }
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_GPU_DISPLAYIDS_V2 : IEquatable<NV_GPU_DISPLAYIDS_V2> // Note: Version 2 of NV_GPU_DISPLAYIDS_V2 structure
+    public struct NV_GPU_DISPLAYIDS_V2 : IEquatable<NV_GPU_DISPLAYIDS_V2>, ICloneable // Note: Version 2 of NV_GPU_DISPLAYIDS_V2 structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 2 (NOTE R470 contains a bug, and sets this to 3!)
         public NV_MONITOR_CONN_TYPE ConnectorType;              //!< out: vga, tv, dvi, hdmi and dp.This is reserved for future use and clients should not rely on this information.Instead get the
@@ -1787,11 +2991,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_GPU_DISPLAYIDS_V2 lhs, NV_GPU_DISPLAYIDS_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_GPU_DISPLAYIDS_V2 lhs, NV_GPU_DISPLAYIDS_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_GPU_DISPLAYIDS_V2 other = (NV_GPU_DISPLAYIDS_V2)MemberwiseClone();
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 : IEquatable<NV_MOSAIC_DISPLAY_TOPO_STATUS_V1> // Note: Version 1 of NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 structure
+    public struct NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 : IEquatable<NV_MOSAIC_DISPLAY_TOPO_STATUS_V1>, ICloneable // Note: Version 1 of NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 structure
     {
         public UInt32 Version;
         public NV_MOSAIC_DISPLAYCAPS_PROBLEM_FLAGS ErrorFlags;            //!< (OUT) Any of the NV_MOSAIC_DISPLAYTOPO_ERROR_* flags.
@@ -1816,10 +3025,20 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_DISPLAY_TOPO_STATUS_V1 other = (NV_MOSAIC_DISPLAY_TOPO_STATUS_V1)MemberwiseClone();
+            other.Displays = new NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY[Displays.Length];
+            for (int x = 0; x < (int)Displays.Length; x++)
+            {
+                other.Displays[x] = (NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY)Displays[x].Clone();
+            }
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY : IEquatable<NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY>
+    public struct NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY : IEquatable<NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY>, ICloneable
     {
         public UInt32 DisplayId;             //!< (OUT) The DisplayID of this display.
         public NV_MOSAIC_DISPLAYCAPS_PROBLEM_FLAGS ErrorFlags;            //!< (OUT) Any of the NV_MOSAIC_DISPLAYCAPS_PROBLEM_* flags.
@@ -1842,11 +3061,16 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY lhs, NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY other = (NV_MOSAIC_DISPLAY_TOPO_STATUS_DISPLAY)MemberwiseClone();
+            return other;
+        }
     }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_CAPABILITIES_V2 : IEquatable<NV_HDR_CAPABILITIES_V2> // Note: Version 2 of NV_HDR_CAPABILITIES structure
+    public struct NV_HDR_CAPABILITIES_V2 : IEquatable<NV_HDR_CAPABILITIES_V2>, ICloneable // Note: Version 2 of NV_HDR_CAPABILITIES structure
     {
         public UInt32 Version;            // Version of this structure - MUST BE SET TO 2
         public NV_HDR_CAPABILITIES_V2_FLAGS SupportFlags;              //!< Various flags indicating HDR support 
@@ -1877,10 +3101,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_HDR_CAPABILITIES_V2 lhs, NV_HDR_CAPABILITIES_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_HDR_CAPABILITIES_V2 lhs, NV_HDR_CAPABILITIES_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_DV_STATIC_METADATA : IEquatable<NV_HDR_DV_STATIC_METADATA>
+    public struct NV_HDR_DV_STATIC_METADATA : IEquatable<NV_HDR_DV_STATIC_METADATA>, ICloneable
     {
         public UInt32 Flags;
         public UInt16 TargetMinLuminance;
@@ -1916,10 +3145,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_HDR_DV_STATIC_METADATA lhs, NV_HDR_DV_STATIC_METADATA rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_HDR_DV_STATIC_METADATA lhs, NV_HDR_DV_STATIC_METADATA rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_CAPABILITIES_DISPLAY_DATA : IEquatable<NV_HDR_CAPABILITIES_DISPLAY_DATA>
+    public struct NV_HDR_CAPABILITIES_DISPLAY_DATA : IEquatable<NV_HDR_CAPABILITIES_DISPLAY_DATA>, ICloneable
     {
         public UInt16 DisplayPrimaryX0;
         public UInt16 DisplayPrimaryY0;
@@ -1955,10 +3189,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_HDR_CAPABILITIES_DISPLAY_DATA lhs, NV_HDR_CAPABILITIES_DISPLAY_DATA rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_HDR_CAPABILITIES_DISPLAY_DATA lhs, NV_HDR_CAPABILITIES_DISPLAY_DATA rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_COLOR_DATA_V2 : IEquatable<NV_HDR_COLOR_DATA_V2>
+    public struct NV_HDR_COLOR_DATA_V2 : IEquatable<NV_HDR_COLOR_DATA_V2>, ICloneable
     {
         public UInt32 Version;                                 //!< Version of this structure
         public NV_HDR_CMD Cmd;                                     //!< Command get/set
@@ -1990,10 +3229,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_HDR_COLOR_DATA_V2 lhs, NV_HDR_COLOR_DATA_V2 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_HDR_COLOR_DATA_V2 lhs, NV_HDR_COLOR_DATA_V2 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_HDR_COLOR_DISPLAY_DATA : IEquatable<NV_HDR_COLOR_DISPLAY_DATA>
+    public struct NV_HDR_COLOR_DISPLAY_DATA : IEquatable<NV_HDR_COLOR_DISPLAY_DATA>, ICloneable
     {
         public UInt16 DisplayPrimaryX0;
         public UInt16 DisplayPrimaryY0;
@@ -2031,10 +3275,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_HDR_COLOR_DISPLAY_DATA lhs, NV_HDR_COLOR_DISPLAY_DATA rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_HDR_COLOR_DISPLAY_DATA lhs, NV_HDR_COLOR_DISPLAY_DATA rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_COLOR_DATA_V5 : IEquatable<NV_COLOR_DATA_V5>
+    public struct NV_COLOR_DATA_V5 : IEquatable<NV_COLOR_DATA_V5>, ICloneable
     {
         public UInt32 Version; //!< Version of this structure
         public UInt16 Size;    //!< Size of this structure
@@ -2065,10 +3314,15 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_COLOR_DATA_V5 lhs, NV_COLOR_DATA_V5 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct NV_CUSTOM_DISPLAY_V1 : IEquatable<NV_CUSTOM_DISPLAY_V1>
+    public struct NV_CUSTOM_DISPLAY_V1 : IEquatable<NV_CUSTOM_DISPLAY_V1>, ICloneable
     {
         public UInt32 Version; //!< Version of this structure
         public UInt32 Width; //!< Source surface(source mode) width
@@ -2104,6 +3358,86 @@ namespace DisplayMagicianShared.NVIDIA
         public static bool operator ==(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => lhs.Equals(rhs);
 
         public static bool operator !=(NV_CUSTOM_DISPLAY_V1 lhs, NV_CUSTOM_DISPLAY_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_POSITION other = (NV_POSITION)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_GET_ADAPTIVE_SYNC_DATA_V1 : IEquatable<NV_GET_ADAPTIVE_SYNC_DATA_V1>, ICloneable
+    {
+        public UInt32 Version; // Must be V1
+        public UInt32 MaxFrameInterval;             //!< maximum frame interval in micro seconds as set previously using NvAPI_DISP_SetAdaptiveSyncData function. If default values from EDID are used, this parameter returns 0.
+        public UInt32 Flags;
+        public UInt32 LastFlipRefreshCount;             //!< Number of times the last flip was shown on the screen
+        public UInt64 LastFlipTimeStamp;             //!< Timestamp for the lastest flip on the screen
+        public UInt32 ReservedEx1;
+        public UInt32 ReservedEx2;
+        public UInt32 ReservedEx3;
+        public UInt32 ReservedEx4;
+
+        public bool DisableAdaptiveSync => (Flags & 0x1) == 0x1; //!< Indicates if adaptive sync is disabled on the display.
+        public bool DisableFrameSplitting => (Flags & 0x1) == 0x1; //!< Indicates if frame splitting is disabled on the display.
+
+        public override bool Equals(object obj) => obj is NV_GET_ADAPTIVE_SYNC_DATA_V1 other && this.Equals(other);
+
+        public bool Equals(NV_GET_ADAPTIVE_SYNC_DATA_V1 other)
+        => MaxFrameInterval == other.MaxFrameInterval &&
+           Flags == other.Flags &&
+           LastFlipRefreshCount == other.LastFlipRefreshCount &&
+           LastFlipTimeStamp == other.LastFlipTimeStamp;
+
+        public override Int32 GetHashCode()
+        {
+            return (MaxFrameInterval, Flags, LastFlipRefreshCount, LastFlipTimeStamp).GetHashCode();
+        }
+        public static bool operator ==(NV_GET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_GET_ADAPTIVE_SYNC_DATA_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_GET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_GET_ADAPTIVE_SYNC_DATA_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_GET_ADAPTIVE_SYNC_DATA_V1 other = (NV_GET_ADAPTIVE_SYNC_DATA_V1)MemberwiseClone();
+            return other;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct NV_SET_ADAPTIVE_SYNC_DATA_V1 : IEquatable<NV_SET_ADAPTIVE_SYNC_DATA_V1>, ICloneable
+    {
+        public UInt32 Version; // Must be V1
+        public UInt32 MaxFrameInterval;             //!< maximum frame interval in micro seconds as set previously using NvAPI_DISP_SetAdaptiveSyncData function. If default values from EDID are used, this parameter returns 0.
+        public UInt32 Flags;
+        public UInt32 ReservedEx1;             //!< Number of times the last flip was shown on the screen
+        public UInt64 ReservedEx2;             //!< Timestamp for the lastest flip on the screen
+        public UInt32 ReservedEx3;
+        public UInt32 ReservedEx4;
+        public UInt32 ReservedEx5;
+        public UInt32 ReservedEx6;
+        public UInt32 ReservedEx7;
+
+        public bool DisableAdaptiveSync => (Flags & 0x1) == 0x1; //!< Indicates if adaptive sync is disabled on the display.
+        public bool DisableFrameSplitting => (Flags & 0x1) == 0x1; //!< Indicates if frame splitting is disabled on the display.
+
+        public override bool Equals(object obj) => obj is NV_SET_ADAPTIVE_SYNC_DATA_V1 other && this.Equals(other);
+
+        public bool Equals(NV_SET_ADAPTIVE_SYNC_DATA_V1 other)
+        => MaxFrameInterval == other.MaxFrameInterval &&
+            Flags == other.Flags;
+
+        public override Int32 GetHashCode()
+        {
+            return (MaxFrameInterval, Flags).GetHashCode();
+        }
+        public static bool operator ==(NV_SET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_SET_ADAPTIVE_SYNC_DATA_V1 rhs) => lhs.Equals(rhs);
+
+        public static bool operator !=(NV_SET_ADAPTIVE_SYNC_DATA_V1 lhs, NV_SET_ADAPTIVE_SYNC_DATA_V1 rhs) => !(lhs == rhs);
+        public object Clone()
+        {
+            NV_SET_ADAPTIVE_SYNC_DATA_V1 other = (NV_SET_ADAPTIVE_SYNC_DATA_V1)MemberwiseClone();
+            return other;
+        }
     }
 
     // ==================================
@@ -2187,7 +3521,20 @@ namespace DisplayMagicianShared.NVIDIA
         public static UInt32 NV_EDID_V3_VER = MAKE_NVAPI_VERSION<NV_EDID_V3>(3);
         public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V1>(1);
         public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V2_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V2>(2);
+        public static UInt32 NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1>(1);
         public static UInt32 NV_CUSTOM_DISPLAY_V1_VER = MAKE_NVAPI_VERSION<NV_CUSTOM_DISPLAY_V1>(1);
+        public static UInt32 NV_LOGICAL_GPU_DATA_V1_VER = MAKE_NVAPI_VERSION<NV_LOGICAL_GPU_DATA_V1>(1);
+        public static UInt32 NV_GET_ADAPTIVE_SYNC_DATA_V1_VER = MAKE_NVAPI_VERSION<NV_GET_ADAPTIVE_SYNC_DATA_V1>(1);
+        public static UInt32 NV_SET_ADAPTIVE_SYNC_DATA_V1_VER = MAKE_NVAPI_VERSION<NV_SET_ADAPTIVE_SYNC_DATA_V1>(1);
+
+        public static UInt32 NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL>(2);
+        public static UInt32 NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER = MAKE_NVAPI_VERSION<NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL>(1);
+
+        public static UInt32 NVDRS_PROFILE_V1_VER = MAKE_NVAPI_VERSION<NVDRS_PROFILE_V1>(1);
+        public static UInt32 NVDRS_SETTING_V1_VER = MAKE_NVAPI_VERSION<NVDRS_SETTING_V1>(1);
+        //public static UInt32 NVDRS_SETTING_VALUES_V1_VER = MAKE_NVAPI_VERSION<NVDRS_SETTING_VALUES_V1>(1);
+
+
 
 
         #region Internal Constant
@@ -2324,8 +3671,11 @@ namespace DisplayMagicianShared.NVIDIA
                 GetDelegate(NvId_Disp_ColorControl, out Disp_ColorControlInternal);
                 GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternal);
                 GetDelegate(NvId_DISP_GetDisplayConfig, out DISP_GetDisplayConfigInternalNull); // null version of the submission
+                GetDelegate(NvId_DISP_SetDisplayConfig, out DISP_SetDisplayConfigInternal);
                 GetDelegate(NvId_DISP_GetDisplayIdByDisplayName, out DISP_GetDisplayIdByDisplayNameInternal);
                 GetDelegate(NvId_DISP_EnumCustomDisplay, out Disp_EnumCustomDisplayInternal);
+                GetDelegate(NvId_DISP_GetAdaptiveSyncData, out DISP_GetAdaptiveSyncDataInternal);
+                GetDelegate(NvId_DISP_SetAdaptiveSyncData, out DISP_SetAdaptiveSyncDataInternal);
 
                 // GPUs
                 GetDelegate(NvId_EnumPhysicalGPUs, out EnumPhysicalGPUsInternal);
@@ -2337,6 +3687,9 @@ namespace DisplayMagicianShared.NVIDIA
                 GetDelegate(NvId_GPU_GetBusType, out GPU_GetBusTypeInternal);
                 GetDelegate(NvId_GPU_GetBusId, out GPU_GetBusIdInternal);
                 GetDelegate(NvId_GPU_GetEDID, out GPU_GetEDIDInternal);
+                GetDelegate(NvId_GPU_GetEDID, out GPU_GetEDIDInternal);
+                GetDelegate(NvId_GetLogicalGPUFromPhysicalGPU, out GetLogicalGPUFromPhysicalGPUInternal);
+                GetDelegate(NvId_GPU_GetLogicalGpuInfo, out GPU_GetLogicalGpuInfoInternal);
 
                 // Mosaic                
                 GetDelegate(NvId_Mosaic_EnableCurrentTopo, out Mosaic_EnableCurrentTopoInternal);
@@ -2355,6 +3708,27 @@ namespace DisplayMagicianShared.NVIDIA
 
                 // System
                 GetDelegate(NvId_SYS_GetGpuAndOutputIdFromDisplayId, out SYS_GetGpuAndOutputIdFromDisplayIdInternal);
+
+                // DRS
+                GetDelegate(NvId_DRS_SetProfileInfo, out DRS_SetProfileInfoInternal);
+                GetDelegate(NvId_DRS_SetSetting, out DRS_SetSettingInternal);
+                GetDelegate(NvId_DRS_GetCurrentGlobalProfile, out DRS_GetCurrentGlobalProfileInternal);
+                GetDelegate(NvId_DRS_EnumSettings, out DRS_EnumSettingsInternal);
+                GetDelegate(NvId_DRS_GetSetting, out DRS_GetSettingInternal);
+                GetDelegate(NvId_DRS_GetProfileInfo, out DRS_GetProfileInfoInternal);
+                GetDelegate(NvId_DRS_GetSettingIdFromName, out DRS_GetSettingIdFromNameInternal);
+                GetDelegate(NvId_DRS_EnumAvailableSettingIds, out DRS_EnumAvailableSettingIdsInternal);
+                GetDelegate(NvId_DRS_CreateSession, out DRS_CreateSessionInternal);
+                GetDelegate(NvId_DRS_GetSettingNameFromId, out DRS_GetSettingNameFromIdInternal);
+                GetDelegate(NvId_DRS_EnumAvailableSettingValues, out DRS_EnumAvailableSettingValuesInternal);
+                GetDelegate(NvId_DRS_EnumProfiles, out DRS_EnumProfilesInternal);
+                GetDelegate(NvId_DRS_SetCurrentGlobalProfile, out DRS_SetCurrentGlobalProfileInternal);
+                GetDelegate(NvId_DRS_DestroySession, out DRS_DestroySessionInternal);
+                GetDelegate(NvId_DRS_LoadSettings, out DRS_LoadSettingsInternal);
+                GetDelegate(NvId_DRS_SaveSettings, out DRS_SaveSettingsInternal);
+                GetDelegate(NvId_DRS_GetBaseProfile, out DRS_GetBaseProfileInternal);
+                GetDelegate(NvId_DRS_GetNumProfiles, out DRS_GetNumProfilesInternal);
+                GetDelegate(NvId_DRS_RestoreProfileDefaultSetting, out DRS_RestoreProfileDefaultSettingInternal);
 
                 // Set the availability
                 available = true;
@@ -2476,420 +3850,430 @@ namespace DisplayMagicianShared.NVIDIA
 
         #region NvAPI Public Functions 
 
-        private const UInt32 NvId_GetErrorMessage = 0x6C2D048C;
-        private const UInt32 NvId_GetInterfaceVersionString = 0x1053FA5;
-        private const UInt32 NvId_GPU_GetEDID = 0x37D32E69;
-        private const UInt32 NvId_SetView = 0x957D7B6;
-        private const UInt32 NvId_SetViewEx = 0x6B89E68;
-        private const UInt32 NvId_GetDisplayDriverVersion = 0xF951A4D1;
-        private const UInt32 NvId_SYS_GetDriverAndBranchVersion = 0x2926AAAD;
-        private const UInt32 NvId_GPU_GetMemoryInfo = 0x7F9B368;
-        private const UInt32 NvId_OGL_ExpertModeSet = 0x3805EF7A;
-        private const UInt32 NvId_OGL_ExpertModeGet = 0x22ED9516;
-        private const UInt32 NvId_OGL_ExpertModeDefaultsSet = 0xB47A657E;
-        private const UInt32 NvId_OGL_ExpertModeDefaultsGet = 0xAE921F12;
-        private const UInt32 NvId_EnumPhysicalGPUs = 0xE5AC921F;
-        private const UInt32 NvId_EnumTCCPhysicalGPUs = 0xD9930B07;
-        private const UInt32 NvId_EnumLogicalGPUs = 0x48B3EA59;
-        private const UInt32 NvId_GetPhysicalGPUsFromDisplay = 0x34EF9506;
-        private const UInt32 NvId_GetPhysicalGPUFromUnAttachedDisplay = 0x5018ED61;
-        private const UInt32 NvId_GetLogicalGPUFromDisplay = 0xEE1370CF;
-        private const UInt32 NvId_GetLogicalGPUFromPhysicalGPU = 0xADD604D1;
-        private const UInt32 NvId_GetPhysicalGPUsFromLogicalGPU = 0xAEA3FA32;
-        private const UInt32 NvId_GPU_GetShaderSubPipeCount = 0xBE17923;
-        private const UInt32 NvId_GPU_GetGpuCoreCount = 0xC7026A87;
-        private const UInt32 NvId_GPU_GetAllOutputs = 0x7D554F8E;
-        private const UInt32 NvId_GPU_GetConnectedOutputs = 0x1730BFC9;
-        private const UInt32 NvId_GPU_GetConnectedSLIOutputs = 0x680DE09;
-        private const UInt32 NvId_GPU_GetConnectedDisplayIds = 0x78DBA2;
-        private const UInt32 NvId_GPU_GetAllDisplayIds = 0x785210A2;
-        private const UInt32 NvId_GPU_GetConnectedOutputsWithLidState = 0xCF8CAF39;
-        private const UInt32 NvId_GPU_GetConnectedSLIOutputsWithLidState = 0x96043CC7;
-        private const UInt32 NvId_GPU_GetSystemType = 0xBAAABFCC;
-        private const UInt32 NvId_GPU_GetActiveOutputs = 0xE3E89B6F;
-        private const UInt32 NvId_GPU_SetEDID = 0xE83D6456;
-        private const UInt32 NvId_GPU_GetOutputType = 0x40A505E4;
-        private const UInt32 NvId_GPU_ValidateOutputCombination = 0x34C9C2D4;
-        private const UInt32 NvId_GPU_GetFullName = 0xCEEE8E9F;
-        private const UInt32 NvId_GPU_GetPCIIdentifiers = 0x2DDFB66E;
-        private const UInt32 NvId_GPU_GetGPUType = 0xC33BAEB1;
-        private const UInt32 NvId_GPU_GetBusType = 0x1BB18724;
-        private const UInt32 NvId_GPU_GetBusId = 0x1BE0B8E5;
-        private const UInt32 NvId_GPU_GetBusSlotId = 0x2A0A350F;
-        private const UInt32 NvId_GPU_GetIRQ = 0xE4715417;
-        private const UInt32 NvId_GPU_GetVbiosRevision = 0xACC3DA0A;
-        private const UInt32 NvId_GPU_GetVbiosOEMRevision = 0x2D43FB31;
-        private const UInt32 NvId_GPU_GetVbiosVersionString = 0xA561FD7D;
-        private const UInt32 NvId_GPU_GetAGPAperture = 0x6E042794;
-        private const UInt32 NvId_GPU_GetCurrentAGPRate = 0xC74925A0;
-        private const UInt32 NvId_GPU_GetCurrentPCIEDownstreamWidth = 0xD048C3B1;
-        private const UInt32 NvId_GPU_GetPhysicalFrameBufferSize = 0x46FBEB03;
-        private const UInt32 NvId_GPU_GetVirtualFrameBufferSize = 0x5A04B644;
-        private const UInt32 NvId_GPU_GetQuadroStatus = 0xE332FA47;
-        private const UInt32 NvId_GPU_GetBoardInfo = 0x22D54523;
-        private const UInt32 NvId_GPU_GetArchInfo = 0xD8265D24;
-        private const UInt32 NvId_I2CRead = 0x2FDE12C5;
-        private const UInt32 NvId_I2CWrite = 0xE812EB07;
-        private const UInt32 NvId_GPU_WorkstationFeatureSetup = 0x6C1F3FE4;
-        private const UInt32 NvId_GPU_WorkstationFeatureQuery = 0x4537DF;
-        private const UInt32 NvId_GPU_GetHDCPSupportStatus = 0xF089EEF5;
-        private const UInt32 NvId_GPU_GetTachReading = 0x5F608315;
-        private const UInt32 NvId_GPU_GetECCStatusInfo = 0xCA1DDAF3;
-        private const UInt32 NvId_GPU_GetECCErrorInfo = 0xC71F85A6;
-        private const UInt32 NvId_GPU_ResetECCErrorInfo = 0xC02EEC20;
-        private const UInt32 NvId_GPU_GetECCConfigurationInfo = 0x77A796F3;
-        private const UInt32 NvId_GPU_SetECCConfiguration = 0x1CF639D9;
-        private const UInt32 NvId_GPU_QueryWorkstationFeatureSupport = 0x80B1ABB9;
-        private const UInt32 NvId_GPU_SetScanoutIntensity = 0xA57457A4;
-        private const UInt32 NvId_GPU_GetScanoutIntensityState = 0xE81CE836;
-        private const UInt32 NvId_GPU_SetScanoutWarping = 0xB34BAB4F;
-        private const UInt32 NvId_GPU_GetScanoutWarpingState = 0x6F5435AF;
-        private const UInt32 NvId_GPU_SetScanoutCompositionParameter = 0xF898247D;
-        private const UInt32 NvId_GPU_GetScanoutCompositionParameter = 0x58FE51E6;
-        private const UInt32 NvId_GPU_GetScanoutConfiguration = 0x6A9F5B63;
-        private const UInt32 NvId_GPU_GetScanoutConfigurationEx = 0xE2E1E6F0;
-        private const UInt32 NvId_GPU_GetAdapterIdFromPhysicalGpu = 0xFF07FDE;
-        private const UInt32 NvId_GPU_GetVirtualizationInfo = 0x44E022A9;
-        private const UInt32 NvId_GPU_GetLogicalGpuInfo = 0x842B066E;
-        private const UInt32 NvId_GPU_GetLicensableFeatures = 0x3FC596AA;
-        private const UInt32 NvId_GPU_GetVRReadyData = 0x81D629C5;
-        private const UInt32 NvId_GPU_GetPerfDecreaseInfo = 0x7F7F4600;
-        private const UInt32 NvId_GPU_GetPstatesInfoEx = 0x843C0256;
-        private const UInt32 NvId_GPU_GetPstates20 = 0x6FF81213;
-        private const UInt32 NvId_GPU_GetCurrentPstate = 0x927DA4F6;
-        private const UInt32 NvId_GPU_GetDynamicPstatesInfoEx = 0x60DED2ED;
-        private const UInt32 NvId_GPU_GetThermalSettings = 0xE3640A56;
-        private const UInt32 NvId_GPU_GetAllClockFrequencies = 0xDCB616C3;
-        private const UInt32 NvId_GPU_QueryIlluminationSupport = 0xA629DA31;
-        private const UInt32 NvId_GPU_GetIllumination = 0x9A1B9365;
-        private const UInt32 NvId_GPU_SetIllumination = 0x254A187;
-        private const UInt32 NvId_GPU_ClientIllumDevicesGetInfo = 0xD4100E58;
-        private const UInt32 NvId_GPU_ClientIllumDevicesGetControl = 0x73C01D58;
-        private const UInt32 NvId_GPU_ClientIllumDevicesSetControl = 0x57024C62;
-        private const UInt32 NvId_GPU_ClientIllumZonesGetInfo = 0x4B81241B;
-        private const UInt32 NvId_GPU_ClientIllumZonesGetControl = 0x3DBF5764;
-        private const UInt32 NvId_GPU_ClientIllumZonesSetControl = 0x197D065E;
-        private const UInt32 NvId_Event_RegisterCallback = 0xE6DBEA69;
-        private const UInt32 NvId_Event_UnregisterCallback = 0xDE1F9B45;
-        private const UInt32 NvId_EnumNvidiaDisplayHandle = 0x9ABDD40D;
-        private const UInt32 NvId_EnumNvidiaUnAttachedDisplayHandle = 0x20DE9260;
-        private const UInt32 NvId_CreateDisplayFromUnAttachedDisplay = 0x63F9799E;
-        private const UInt32 NvId_GetAssociatedNvidiaDisplayHandle = 0x35C29134;
-        private const UInt32 NvId_DISP_GetAssociatedUnAttachedNvidiaDisplayHandle = 0xA70503B2;
-        private const UInt32 NvId_GetAssociatedNvidiaDisplayName = 0x22A78B05;
-        private const UInt32 NvId_GetUnAttachedAssociatedDisplayName = 0x4888D790;
-        private const UInt32 NvId_EnableHWCursor = 0x2863148D;
-        private const UInt32 NvId_DisableHWCursor = 0xAB163097;
-        private const UInt32 NvId_GetVBlankCounter = 0x67B5DB55;
-        private const UInt32 NvId_SetRefreshRateOverride = 0x3092AC32;
-        private const UInt32 NvId_GetAssociatedDisplayOutputId = 0xD995937E;
-        private const UInt32 NvId_GetDisplayPortInfo = 0xC64FF367;
-        private const UInt32 NvId_SetDisplayPort = 0xFA13E65A;
-        private const UInt32 NvId_GetHDMISupportInfo = 0x6AE16EC3;
-        private const UInt32 NvId_Disp_InfoFrameControl = 0x6067AF3F;
-        private const UInt32 NvId_Disp_ColorControl = 0x92F9D80D;
-        private const UInt32 NvId_Disp_GetHdrCapabilities = 0x84F2A8DF;
-        private const UInt32 NvId_Disp_HdrColorControl = 0x351DA224;
-        private const UInt32 NvId_DISP_GetTiming = 0x175167E9;
-        private const UInt32 NvId_DISP_GetMonitorCapabilities = 0x3B05C7E1;
-        private const UInt32 NvId_DISP_GetMonitorColorCapabilities = 0x6AE4CFB5;
-        private const UInt32 NvId_DISP_EnumCustomDisplay = 0xA2072D59;
-        private const UInt32 NvId_DISP_TryCustomDisplay = 0x1F7DB630;
-        private const UInt32 NvId_DISP_DeleteCustomDisplay = 0x552E5B9B;
-        private const UInt32 NvId_DISP_SaveCustomDisplay = 0x49882876;
-        private const UInt32 NvId_DISP_RevertCustomDisplayTrial = 0xCBBD40F0;
-        private const UInt32 NvId_GetView = 0xD6B99D89;
-        private const UInt32 NvId_GetViewEx = 0xDBBC0AF4;
-        private const UInt32 NvId_GetSupportedViews = 0x66FB7FC0;
-        private const UInt32 NvId_DISP_GetDisplayIdByDisplayName = 0xAE457190;
-        private const UInt32 NvId_DISP_GetGDIPrimaryDisplayId = 0x1E9D8A31;
-        private const UInt32 NvId_DISP_GetDisplayConfig = 0x11ABCCF8;
-        private const UInt32 NvId_DISP_SetDisplayConfig = 0x5D8CF8DE;
-        private const UInt32 NvId_DISP_GetAdaptiveSyncData = 0xB73D1EE9;
-        private const UInt32 NvId_DISP_SetAdaptiveSyncData = 0x3EEBBA1D;
-        private const UInt32 NvId_DISP_SetPreferredStereoDisplay = 0xC9D0E25F;
-        private const UInt32 NvId_DISP_GetPreferredStereoDisplay = 0x1F6B4666;
-        private const UInt32 NvId_Mosaic_GetSupportedTopoInfo = 0xFDB63C81;
-        private const UInt32 NvId_Mosaic_GetTopoGroup = 0xCB89381D;
-        private const UInt32 NvId_Mosaic_GetOverlapLimits = 0x989685F0;
-        private const UInt32 NvId_Mosaic_SetCurrentTopo = 0x9B542831;
-        private const UInt32 NvId_Mosaic_GetCurrentTopo = 0xEC32944E;
-        private const UInt32 NvId_Mosaic_EnableCurrentTopo = 0x5F1AA66C;
-        private const UInt32 NvId_Mosaic_GetDisplayViewportsByResolution = 0xDC6DC8D3;
-        private const UInt32 NvId_Mosaic_SetDisplayGrids = 0x4D959A89;
-        private const UInt32 NvId_Mosaic_ValidateDisplayGrids = 0xCF43903D;
-        private const UInt32 NvId_Mosaic_EnumDisplayModes = 0x78DB97D7;
-        private const UInt32 NvId_Mosaic_EnumDisplayGrids = 0xDF2887AF;
-        private const UInt32 NvId_GetSupportedMosaicTopologies = 0x410B5C25;
-        private const UInt32 NvId_GetCurrentMosaicTopology = 0xF60852BD;
-        private const UInt32 NvId_SetCurrentMosaicTopology = 0xD54B8989;
-        private const UInt32 NvId_EnableCurrentMosaicTopology = 0x74073CC9;
-        private const UInt32 NvId_GSync_EnumSyncDevices = 0xD9639601;
-        private const UInt32 NvId_GSync_QueryCapabilities = 0x44A3F1D1;
-        private const UInt32 NvId_GSync_GetTopology = 0x4562BC38;
-        private const UInt32 NvId_GSync_SetSyncStateSettings = 0x60ACDFDD;
-        private const UInt32 NvId_GSync_GetControlParameters = 0x16DE1C6A;
-        private const UInt32 NvId_GSync_SetControlParameters = 0x8BBFF88B;
-        private const UInt32 NvId_GSync_AdjustSyncDelay = 0x2D11FF51;
-        private const UInt32 NvId_GSync_GetSyncStatus = 0xF1F5B434;
-        private const UInt32 NvId_GSync_GetStatusParameters = 0x70D404EC;
-        private const UInt32 NvId_D3D_GetCurrentSLIState = 0x4B708B54;
-        private const UInt32 NvId_D3D9_RegisterResource = 0xA064BDFC;
-        private const UInt32 NvId_D3D9_UnregisterResource = 0xBB2B17AA;
-        private const UInt32 NvId_D3D9_AliasSurfaceAsTexture = 0xE5CEAE41;
-        private const UInt32 NvId_D3D9_StretchRectEx = 0x22DE03AA;
-        private const UInt32 NvId_D3D9_ClearRT = 0x332D3942;
-        private const UInt32 NvId_D3D_GetObjectHandleForResource = 0xFCEAC864;
-        private const UInt32 NvId_D3D_SetResourceHInt32 = 0x6C0ED98C;
-        private const UInt32 NvId_D3D_BeginResourceRendering = 0x91123D6A;
-        private const UInt32 NvId_D3D_EndResourceRendering = 0x37E7191C;
-        private const UInt32 NvId_D3D9_GetSurfaceHandle = 0xF2DD3F2;
-        private const UInt32 NvId_D3D9_VideoSetStereoInfo = 0xB852F4DB;
-        private const UInt32 NvId_D3D10_SetDepthBoundsTest = 0x4EADF5D2;
-        private const UInt32 NvId_D3D11_CreateDevice = 0x6A16D3A0;
-        private const UInt32 NvId_D3D11_CreateDeviceAndSwapChain = 0xBB939EE5;
-        private const UInt32 NvId_D3D11_SetDepthBoundsTest = 0x7AAF7A04;
-        private const UInt32 NvId_D3D11_IsNvShaderExtnOpCodeSupported = 0x5F68DA40;
-        private const UInt32 NvId_D3D11_SetNvShaderExtnSlot = 0x8E90BB9F;
-        private const UInt32 NvId_D3D12_SetNvShaderExtnSlotSpace = 0xAC2DFEB5;
-        private const UInt32 NvId_D3D12_SetNvShaderExtnSlotSpaceLocalThread = 0x43D867C0;
-        private const UInt32 NvId_D3D11_SetNvShaderExtnSlotLocalThread = 0xE6482A0;
-        private const UInt32 NvId_D3D11_BeginUAVOverlapEx = 0xBA08208A;
-        private const UInt32 NvId_D3D11_BeginUAVOverlap = 0x65B93CA8;
-        private const UInt32 NvId_D3D11_EndUAVOverlap = 0x2216A357;
-        private const UInt32 NvId_D3D11_GetResourceHandle = 0x9D52986;
-        private const UInt32 NvId_D3D_SetFPSIndicatorState = 0xA776E8DB;
-        private const UInt32 NvId_D3D9_Present = 0x5650BEB;
-        private const UInt32 NvId_D3D9_QueryFrameCount = 0x9083E53A;
-        private const UInt32 NvId_D3D9_ResetFrameCount = 0xFA6A0675;
-        private const UInt32 NvId_D3D9_QueryMaxSwapGroup = 0x5995410D;
-        private const UInt32 NvId_D3D9_QuerySwapGroup = 0xEBA4D232;
-        private const UInt32 NvId_D3D9_JoinSwapGroup = 0x7D44BB54;
-        private const UInt32 NvId_D3D9_BindSwapBarrier = 0x9C39C246;
-        private const UInt32 NvId_D3D1x_Present = 0x3B845A1;
-        private const UInt32 NvId_D3D1x_QueryFrameCount = 0x9152E055;
-        private const UInt32 NvId_D3D1x_ResetFrameCount = 0xFBBB031A;
-        private const UInt32 NvId_D3D1x_QueryMaxSwapGroup = 0x9BB9D68F;
-        private const UInt32 NvId_D3D1x_QuerySwapGroup = 0x407F67AA;
-        private const UInt32 NvId_D3D1x_JoinSwapGroup = 0x14610CD7;
-        private const UInt32 NvId_D3D1x_BindSwapBarrier = 0x9DE8C729;
-        private const UInt32 NvId_D3D12_QueryPresentBarrierSupport = 0xA15FAEF7;
-        private const UInt32 NvId_D3D12_CreatePresentBarrierClient = 0x4D815DE9;
-        private const UInt32 NvId_D3D12_RegisterPresentBarrierResources = 0xD53C9EF0;
-        private const UInt32 NvId_DestroyPresentBarrierClient = 0x3C5C351B;
-        private const UInt32 NvId_JoinPresentBarrier = 0x17F6BF82;
-        private const UInt32 NvId_LeavePresentBarrier = 0xC3EC5A7F;
-        private const UInt32 NvId_QueryPresentBarrierFrameStatistics = 0x61B844A1;
-        private const UInt32 NvId_D3D11_CreateRasterizerState = 0xDB8D28AF;
-        private const UInt32 NvId_D3D_ConfigureAnsel = 0x341C6C7F;
-        private const UInt32 NvId_D3D11_CreateTiledTexture2DArray = 0x7886981A;
-        private const UInt32 NvId_D3D11_CheckFeatureSupport = 0x106A487E;
-        private const UInt32 NvId_D3D11_CreateImplicitMSAATexture2D = 0xB8F79632;
-        private const UInt32 NvId_D3D12_CreateCommittedImplicitMSAATexture2D = 0x24C6A07B;
-        private const UInt32 NvId_D3D11_ResolveSubresourceRegion = 0xE6BFEDD6;
-        private const UInt32 NvId_D3D12_ResolveSubresourceRegion = 0xC24A15BF;
-        private const UInt32 NvId_D3D11_TiledTexture2DArrayGetDesc = 0xF1A2B9D5;
-        private const UInt32 NvId_D3D11_UpdateTileMappings = 0x9A06EA07;
-        private const UInt32 NvId_D3D11_CopyTileMappings = 0xC09EE6BC;
-        private const UInt32 NvId_D3D11_TiledResourceBarrier = 0xD6839099;
-        private const UInt32 NvId_D3D11_AliasMSAATexture2DAsNonMSAA = 0xF1C54FC9;
-        private const UInt32 NvId_D3D11_CreateGeometryShaderEx_2 = 0x99ED5C1C;
-        private const UInt32 NvId_D3D11_CreateVertexShaderEx = 0xBEAA0B2;
-        private const UInt32 NvId_D3D11_CreateHullShaderEx = 0xB53CAB00;
-        private const UInt32 NvId_D3D11_CreateDomainShaderEx = 0xA0D7180D;
-        private const UInt32 NvId_D3D11_CreatePixelShaderEx_2 = 0x4162822B;
-        private const UInt32 NvId_D3D11_CreateFastGeometryShaderExplicit = 0x71AB7C9C;
-        private const UInt32 NvId_D3D11_CreateFastGeometryShader = 0x525D43BE;
-        private const UInt32 NvId_D3D11_DecompressView = 0x3A94E822;
-        private const UInt32 NvId_D3D12_CreateGraphicsPipelineState = 0x2FC28856;
-        private const UInt32 NvId_D3D12_CreateComputePipelineState = 0x2762DEAC;
-        private const UInt32 NvId_D3D12_SetDepthBoundsTestValues = 0xB9333FE9;
-        private const UInt32 NvId_D3D12_CreateReservedResource = 0x2C85F101;
-        private const UInt32 NvId_D3D12_CreateHeap = 0x5CB397CF;
-        private const UInt32 NvId_D3D12_CreateHeap2 = 0x924BE9D6;
-        private const UInt32 NvId_D3D12_QueryCpuVisibleVidmem = 0x26322BC3;
-        private const UInt32 NvId_D3D12_ReservedResourceGetDesc = 0x9AA2AABB;
-        private const UInt32 NvId_D3D12_UpdateTileMappings = 0xC6017A7D;
-        private const UInt32 NvId_D3D12_CopyTileMappings = 0x47F78194;
-        private const UInt32 NvId_D3D12_ResourceAliasingBarrier = 0xB942BAB7;
-        private const UInt32 NvId_D3D12_CaptureUAVInfo = 0x6E5EA9DB;
-        private const UInt32 NvId_D3D11_GetResourceGPUVirtualAddressEx = 0xAF6D14DA;
-        private const UInt32 NvId_D3D11_EnumerateMetaCommands = 0xC7453BA8;
-        private const UInt32 NvId_D3D11_CreateMetaCommand = 0xF505FBA0;
-        private const UInt32 NvId_D3D11_InitializeMetaCommand = 0xAEC629E9;
-        private const UInt32 NvId_D3D11_ExecuteMetaCommand = 0x82236C47;
-        private const UInt32 NvId_D3D12_EnumerateMetaCommands = 0xCD9141D8;
-        private const UInt32 NvId_D3D12_CreateMetaCommand = 0xEB29634B;
-        private const UInt32 NvId_D3D12_InitializeMetaCommand = 0xA4125399;
-        private const UInt32 NvId_D3D12_ExecuteMetaCommand = 0xDE24FC3D;
-        private const UInt32 NvId_D3D12_CreateCommittedResource = 0x27E98AE;
-        private const UInt32 NvId_D3D12_GetCopyableFootprInt32s = 0xF6305EB5;
-        private const UInt32 NvId_D3D12_CopyTextureRegion = 0x82B91B25;
-        private const UInt32 NvId_D3D12_IsNvShaderExtnOpCodeSupported = 0x3DFACEC8;
-        private const UInt32 NvId_D3D_IsGSyncCapable = 0x9C1EED78;
-        private const UInt32 NvId_D3D_IsGSyncActive = 0xE942B0FF;
-        private const UInt32 NvId_D3D1x_DisableShaderDiskCache = 0xD0CBCA7D;
-        private const UInt32 NvId_D3D11_MultiGPU_GetCaps = 0xD2D25687;
-        private const UInt32 NvId_D3D11_MultiGPU_Init = 0x17BE49E;
-        private const UInt32 NvId_D3D11_CreateMultiGPUDevice = 0xBDB20007;
-        private const UInt32 NvId_D3D_QuerySinglePassStereoSupport = 0x6F5F0A6D;
-        private const UInt32 NvId_D3D_SetSinglePassStereoMode = 0xA39E6E6E;
-        private const UInt32 NvId_D3D12_QuerySinglePassStereoSupport = 0x3B03791B;
-        private const UInt32 NvId_D3D12_SetSinglePassStereoMode = 0x83556D87;
-        private const UInt32 NvId_D3D_QueryMultiViewSupport = 0xB6E0A41C;
-        private const UInt32 NvId_D3D_SetMultiViewMode = 0x8285C8DA;
-        private const UInt32 NvId_D3D_QueryModifiedWSupport = 0xCBF9F4F5;
-        private const UInt32 NvId_D3D_SetModifiedWMode = 0x6EA4BF4;
-        private const UInt32 NvId_D3D12_QueryModifiedWSupport = 0x51235248;
-        private const UInt32 NvId_D3D12_SetModifiedWMode = 0xE1FDABA7;
-        private const UInt32 NvId_D3D_CreateLateLatchObject = 0x2DB27D09;
-        private const UInt32 NvId_D3D_QueryLateLatchSupport = 0x8CECA0EC;
-        private const UInt32 NvId_D3D_RegisterDevice = 0x8C02C4D0;
-        private const UInt32 NvId_D3D11_MultiDrawInstancedIndirect = 0xD4E26BBF;
-        private const UInt32 NvId_D3D11_MultiDrawIndexedInstancedIndirect = 0x59E890F9;
-        private const UInt32 NvId_D3D_ImplicitSLIControl = 0x2AEDE111;
-        private const UInt32 NvId_D3D12_UseDriverHeapPriorities = 0xF0D978A8;
-        private const UInt32 NvId_D3D12_Mosaic_GetCompanionAllocations = 0xA46022C7;
-        private const UInt32 NvId_D3D12_Mosaic_GetViewportAndGpuPartitions = 0xB092B818;
-        private const UInt32 NvId_D3D1x_GetGraphicsCapabilities = 0x52B1499A;
-        private const UInt32 NvId_D3D12_GetGraphicsCapabilities = 0x1E87354;
-        private const UInt32 NvId_D3D11_RSSetExclusiveScissorRects = 0xAE4D73EF;
-        private const UInt32 NvId_D3D11_RSSetViewportsPixelShadingRates = 0x34F7938F;
-        private const UInt32 NvId_D3D11_CreateShadingRateResourceView = 0x99CA2DFF;
-        private const UInt32 NvId_D3D11_RSSetShadingRateResourceView = 0x1B0C2F83;
-        private const UInt32 NvId_D3D11_RSGetPixelShadingRateSampleOrder = 0x92442A1;
-        private const UInt32 NvId_D3D11_RSSetPixelShadingRateSampleOrder = 0xA942373A;
-        private const UInt32 NvId_D3D_InitializeVRSHelper = 0x4780D70B;
-        private const UInt32 NvId_D3D_InitializeNvGazeHandler = 0x5B3B7479;
-        private const UInt32 NvId_D3D_InitializeSMPAssist = 0x42763D0C;
-        private const UInt32 NvId_D3D_QuerySMPAssistSupport = 0xC57921DE;
-        private const UInt32 NvId_D3D_GetSleepStatus = 0xAEF96CA1;
-        private const UInt32 NvId_D3D_SetSleepMode = 0xAC1CA9E0;
-        private const UInt32 NvId_D3D_Sleep = 0x852CD1D2;
-        private const UInt32 NvId_D3D_GetLatency = 0x1A587F9C;
-        private const UInt32 NvId_D3D_SetLatencyMarker = 0xD9984C05;
-        private const UInt32 NvId_D3D12_CreateCubinComputeShader = 0x2A2C79E8;
-        private const UInt32 NvId_D3D12_CreateCubinComputeShaderEx = 0x3151211B;
-        private const UInt32 NvId_D3D12_CreateCubinComputeShaderWithName = 0x1DC7261F;
-        private const UInt32 NvId_D3D12_LaunchCubinShader = 0x5C52BB86;
-        private const UInt32 NvId_D3D12_DestroyCubinComputeShader = 0x7FB785BA;
-        private const UInt32 NvId_D3D12_GetCudaTextureObject = 0x80403FC9;
-        private const UInt32 NvId_D3D12_GetCudaSurfaceObject = 0x48F5B2EE;
-        private const UInt32 NvId_D3D12_IsFatbinPTXSupported = 0x70C07832;
-        private const UInt32 NvId_D3D11_CreateCubinComputeShader = 0xED98181;
-        private const UInt32 NvId_D3D11_CreateCubinComputeShaderEx = 0x32C2A0F6;
-        private const UInt32 NvId_D3D11_CreateCubinComputeShaderWithName = 0xB672BE19;
-        private const UInt32 NvId_D3D11_LaunchCubinShader = 0x427E236D;
-        private const UInt32 NvId_D3D11_DestroyCubinComputeShader = 0x1682C86;
-        private const UInt32 NvId_D3D11_IsFatbinPTXSupported = 0x6086BD93;
-        private const UInt32 NvId_D3D11_CreateUnorderedAccessView = 0x74A497A1;
-        private const UInt32 NvId_D3D11_CreateShaderResourceView = 0x65CB431E;
-        private const UInt32 NvId_D3D11_CreateSamplerState = 0x89ECA416;
-        private const UInt32 NvId_D3D11_GetCudaTextureObject = 0x9006FA68;
-        private const UInt32 NvId_D3D11_GetResourceGPUVirtualAddress = 0x1819B423;
-        private const UInt32 NvId_VIO_GetCapabilities = 0x1DC91303;
-        private const UInt32 NvId_VIO_Open = 0x44EE4841;
-        private const UInt32 NvId_VIO_Close = 0xD01BD237;
-        private const UInt32 NvId_VIO_Status = 0xE6CE4F1;
-        private const UInt32 NvId_VIO_SyncFormatDetect = 0x118D48A3;
-        private const UInt32 NvId_VIO_GetConfig = 0xD34A789B;
-        private const UInt32 NvId_VIO_SetConfig = 0xE4EEC07;
-        private const UInt32 NvId_VIO_SetCSC = 0xA1EC8D74;
-        private const UInt32 NvId_VIO_GetCSC = 0x7B0D72A3;
-        private const UInt32 NvId_VIO_SetGamma = 0x964BF452;
-        private const UInt32 NvId_VIO_GetGamma = 0x51D53D06;
-        private const UInt32 NvId_VIO_SetSyncDelay = 0x2697A8D1;
-        private const UInt32 NvId_VIO_GetSyncDelay = 0x462214A9;
-        private const UInt32 NvId_VIO_GetPCIInfo = 0xB981D935;
-        private const UInt32 NvId_VIO_IsRunning = 0x96BD040E;
-        private const UInt32 NvId_VIO_Start = 0xCDE8E1A3;
-        private const UInt32 NvId_VIO_Stop = 0x6BA2A5D6;
-        private const UInt32 NvId_VIO_IsFrameLockModeCompatible = 0x7BF0A94D;
-        private const UInt32 NvId_VIO_EnumDevices = 0xFD7C5557;
-        private const UInt32 NvId_VIO_QueryTopology = 0x869534E2;
-        private const UInt32 NvId_VIO_EnumSignalFormats = 0xEAD72FE4;
-        private const UInt32 NvId_VIO_EnumDataFormats = 0x221FA8E8;
-        private const UInt32 NvId_Stereo_CreateConfigurationProfileRegistryKey = 0xBE7692EC;
-        private const UInt32 NvId_Stereo_DeleteConfigurationProfileRegistryKey = 0xF117B834;
-        private const UInt32 NvId_Stereo_SetConfigurationProfileValue = 0x24409F48;
-        private const UInt32 NvId_Stereo_DeleteConfigurationProfileValue = 0x49BCEECF;
-        private const UInt32 NvId_Stereo_Enable = 0x239C4545;
-        private const UInt32 NvId_Stereo_Disable = 0x2EC50C2B;
-        private const UInt32 NvId_Stereo_IsEnabled = 0x348FF8E1;
-        private const UInt32 NvId_Stereo_GetStereoSupport = 0x296C434D;
-        private const UInt32 NvId_Stereo_CreateHandleFromIUnknown = 0xAC7E37F4;
-        private const UInt32 NvId_Stereo_DestroyHandle = 0x3A153134;
-        private const UInt32 NvId_Stereo_Activate = 0xF6A1AD68;
-        private const UInt32 NvId_Stereo_Deactivate = 0x2D68DE96;
-        private const UInt32 NvId_Stereo_IsActivated = 0x1FB0BC30;
-        private const UInt32 NvId_Stereo_GetSeparation = 0x451F2134;
-        private const UInt32 NvId_Stereo_SetSeparation = 0x5C069FA3;
-        private const UInt32 NvId_Stereo_DecreaseSeparation = 0xDA044458;
-        private const UInt32 NvId_Stereo_IncreaseSeparation = 0xC9A8ECEC;
-        private const UInt32 NvId_Stereo_GetConvergence = 0x4AB00934;
-        private const UInt32 NvId_Stereo_SetConvergence = 0x3DD6B54B;
-        private const UInt32 NvId_Stereo_DecreaseConvergence = 0x4C87E317;
-        private const UInt32 NvId_Stereo_IncreaseConvergence = 0xA17DAABE;
-        private const UInt32 NvId_Stereo_GetFrustumAdjustMode = 0xE6839B43;
-        private const UInt32 NvId_Stereo_SetFrustumAdjustMode = 0x7BE27FA2;
-        private const UInt32 NvId_Stereo_CaptureJpegImage = 0x932CB140;
-        private const UInt32 NvId_Stereo_InitActivation = 0xC7177702;
-        private const UInt32 NvId_Stereo_Trigger_Activation = 0xD6C6CD2;
-        private const UInt32 NvId_Stereo_CapturePngImage = 0x8B7E99B5;
-        private const UInt32 NvId_Stereo_ReverseStereoBlitControl = 0x3CD58F89;
-        private const UInt32 NvId_Stereo_SetNotificationMessage = 0x6B9B409E;
-        private const UInt32 NvId_Stereo_SetActiveEye = 0x96EEA9F8;
-        private const UInt32 NvId_Stereo_SetDriverMode = 0x5E8F0BEC;
-        private const UInt32 NvId_Stereo_GetEyeSeparation = 0xCE653127;
-        private const UInt32 NvId_Stereo_IsWindowedModeSupported = 0x40C8ED5E;
-        private const UInt32 NvId_Stereo_SetSurfaceCreationMode = 0xF5DCFCBA;
-        private const UInt32 NvId_Stereo_GetSurfaceCreationMode = 0x36F1C736;
-        private const UInt32 NvId_Stereo_Debug_WasLastDrawStereoized = 0xED4416C5;
-        private const UInt32 NvId_Stereo_SetDefaultProfile = 0x44F0ECD1;
-        private const UInt32 NvId_Stereo_GetDefaultProfile = 0x624E21C2;
-        private const UInt32 NvId_D3D1x_CreateSwapChain = 0x1BC21B66;
-        private const UInt32 NvId_D3D9_CreateSwapChain = 0x1A131E09;
-        private const UInt32 NvId_DRS_CreateSession = 0x694D52E;
-        private const UInt32 NvId_DRS_DestroySession = 0xDAD9CFF8;
-        private const UInt32 NvId_DRS_LoadSettings = 0x375DBD6B;
-        private const UInt32 NvId_DRS_SaveSettings = 0xFCBC7E14;
-        private const UInt32 NvId_DRS_LoadSettingsFromFile = 0xD3EDE889;
-        private const UInt32 NvId_DRS_SaveSettingsToFile = 0x2BE25DF8;
-        private const UInt32 NvId_DRS_CreateProfile = 0xCC176068;
-        private const UInt32 NvId_DRS_DeleteProfile = 0x17093206;
-        private const UInt32 NvId_DRS_SetCurrentGlobalProfile = 0x1C89C5DF;
-        private const UInt32 NvId_DRS_GetCurrentGlobalProfile = 0x617BFF9F;
-        private const UInt32 NvId_DRS_GetProfileInfo = 0x61CD6FD6;
-        private const UInt32 NvId_DRS_SetProfileInfo = 0x16ABD3A9;
-        private const UInt32 NvId_DRS_FindProfileByName = 0x7E4A9A0B;
-        private const UInt32 NvId_DRS_EnumProfiles = 0xBC371EE0;
-        private const UInt32 NvId_DRS_GetNumProfiles = 0x1DAE4FBC;
-        private const UInt32 NvId_DRS_CreateApplication = 0x4347A9DE;
-        private const UInt32 NvId_DRS_DeleteApplicationEx = 0xC5EA85A1;
-        private const UInt32 NvId_DRS_DeleteApplication = 0x2C694BC6;
-        private const UInt32 NvId_DRS_GetApplicationInfo = 0xED1F8C69;
-        private const UInt32 NvId_DRS_EnumApplications = 0x7FA2173A;
-        private const UInt32 NvId_DRS_FindApplicationByName = 0xEEE566B2;
-        private const UInt32 NvId_DRS_SetSetting = 0x577DD202;
-        private const UInt32 NvId_DRS_GetSetting = 0x73BF8338;
-        private const UInt32 NvId_DRS_EnumSettings = 0xAE3039DA;
-        private const UInt32 NvId_DRS_EnumAvailableSettingIds = 0xF020614A;
-        private const UInt32 NvId_DRS_EnumAvailableSettingValues = 0x2EC39F90;
-        private const UInt32 NvId_DRS_GetSettingIdFromName = 0xCB7309CD;
-        private const UInt32 NvId_DRS_GetSettingNameFromId = 0xD61CBE6E;
-        private const UInt32 NvId_DRS_DeleteProfileSetting = 0xE4A26362;
-        private const UInt32 NvId_DRS_RestoreAllDefaults = 0x5927B094;
-        private const UInt32 NvId_DRS_RestoreProfileDefault = 0xFA5F6134;
-        private const UInt32 NvId_DRS_RestoreProfileDefaultSetting = 0x53F0381E;
-        private const UInt32 NvId_DRS_GetBaseProfile = 0xDA8466A0;
-        private const UInt32 NvId_SYS_GetChipSetInfo = 0x53DABBCA;
-        private const UInt32 NvId_SYS_GetLidAndDockInfo = 0xCDA14D8A;
-        private const UInt32 NvId_SYS_GetDisplayIdFromGpuAndOutputId = 0x8F2BAB4;
-        private const UInt32 NvId_SYS_GetGpuAndOutputIdFromDisplayId = 0x112BA1A5;
-        private const UInt32 NvId_SYS_GetPhysicalGpuFromDisplayId = 0x9EA74659;
-        private const UInt32 NvId_SYS_GetDisplayDriverInfo = 0x721FACEB;
-        private const UInt32 NvId_GPU_ClientRegisterForUtilizationSampleUpdates = 0xADEEAF67;
-        private const UInt32 NvId_Unload = 0xD7C61344;
+        private const uint NvId_GetErrorMessage = 0x6C2D048C;
+        private const uint NvId_GetInterfaceVersionString = 0x1053FA5;
+        private const uint NvId_GPU_GetEDID = 0x37D32E69;
+        private const uint NvId_SetView = 0x957D7B6;
+        private const uint NvId_SetViewEx = 0x6B89E68;
+        private const uint NvId_GetDisplayDriverVersion = 0xF951A4D1;
+        private const uint NvId_SYS_GetDriverAndBranchVersion = 0x2926AAAD;
+        private const uint NvId_GPU_GetMemoryInfo = 0x7F9B368;
+        private const uint NvId_OGL_ExpertModeSet = 0x3805EF7A;
+        private const uint NvId_OGL_ExpertModeGet = 0x22ED9516;
+        private const uint NvId_OGL_ExpertModeDefaultsSet = 0xB47A657E;
+        private const uint NvId_OGL_ExpertModeDefaultsGet = 0xAE921F12;
+        private const uint NvId_EnumPhysicalGPUs = 0xE5AC921F;
+        private const uint NvId_EnumTCCPhysicalGPUs = 0xD9930B07;
+        private const uint NvId_EnumLogicalGPUs = 0x48B3EA59;
+        private const uint NvId_GetPhysicalGPUsFromDisplay = 0x34EF9506;
+        private const uint NvId_GetPhysicalGPUFromUnAttachedDisplay = 0x5018ED61;
+        private const uint NvId_GetLogicalGPUFromDisplay = 0xEE1370CF;
+        private const uint NvId_GetLogicalGPUFromPhysicalGPU = 0xADD604D1;
+        private const uint NvId_GetPhysicalGPUsFromLogicalGPU = 0xAEA3FA32;
+        private const uint NvId_GetPhysicalGPUFromGPUID = 0x5380AD1A;
+        private const uint NvId_GetGPUIDfromPhysicalGPU = 0x6533EA3E;
+        private const uint NvId_GPU_GetShaderSubPipeCount = 0xBE17923;
+        private const uint NvId_GPU_GetGpuCoreCount = 0xC7026A87;
+        private const uint NvId_GPU_GetAllOutputs = 0x7D554F8E;
+        private const uint NvId_GPU_GetConnectedOutputs = 0x1730BFC9;
+        private const uint NvId_GPU_GetConnectedSLIOutputs = 0x680DE09;
+        private const uint NvId_GPU_GetConnectedDisplayIds = 0x78DBA2;
+        private const uint NvId_GPU_GetAllDisplayIds = 0x785210A2;
+        private const uint NvId_GPU_GetConnectedOutputsWithLidState = 0xCF8CAF39;
+        private const uint NvId_GPU_GetConnectedSLIOutputsWithLidState = 0x96043CC7;
+        private const uint NvId_GPU_GetSystemType = 0xBAAABFCC;
+        private const uint NvId_GPU_GetActiveOutputs = 0xE3E89B6F;
+        private const uint NvId_GPU_SetEDID = 0xE83D6456;
+        private const uint NvId_GPU_GetOutputType = 0x40A505E4;
+        private const uint NvId_GPU_ValidateOutputCombination = 0x34C9C2D4;
+        private const uint NvId_GPU_GetFullName = 0xCEEE8E9F;
+        private const uint NvId_GPU_GetPCIIdentifiers = 0x2DDFB66E;
+        private const uint NvId_GPU_GetGPUType = 0xC33BAEB1;
+        private const uint NvId_GPU_GetBusType = 0x1BB18724;
+        private const uint NvId_GPU_GetBusId = 0x1BE0B8E5;
+        private const uint NvId_GPU_GetBusSlotId = 0x2A0A350F;
+        private const uint NvId_GPU_GetIRQ = 0xE4715417;
+        private const uint NvId_GPU_GetVbiosRevision = 0xACC3DA0A;
+        private const uint NvId_GPU_GetVbiosOEMRevision = 0x2D43FB31;
+        private const uint NvId_GPU_GetVbiosVersionString = 0xA561FD7D;
+        private const uint NvId_GPU_GetAGPAperture = 0x6E042794;
+        private const uint NvId_GPU_GetCurrentAGPRate = 0xC74925A0;
+        private const uint NvId_GPU_GetCurrentPCIEDownstreamWidth = 0xD048C3B1;
+        private const uint NvId_GPU_GetPhysicalFrameBufferSize = 0x46FBEB03;
+        private const uint NvId_GPU_GetVirtualFrameBufferSize = 0x5A04B644;
+        private const uint NvId_GPU_GetQuadroStatus = 0xE332FA47;
+        private const uint NvId_GPU_GetBoardInfo = 0x22D54523;
+        private const uint NvId_GPU_GetArchInfo = 0xD8265D24;
+        private const uint NvId_I2CRead = 0x2FDE12C5;
+        private const uint NvId_I2CWrite = 0xE812EB07;
+        private const uint NvId_GPU_WorkstationFeatureSetup = 0x6C1F3FE4;
+        private const uint NvId_GPU_WorkstationFeatureQuery = 0x4537DF;
+        private const uint NvId_GPU_GetHDCPSupportStatus = 0xF089EEF5;
+        private const uint NvId_GPU_CudaEnumComputeCapableGpus = 0x5786CC6E;
+        private const uint NvId_GPU_GetTachReading = 0x5F608315;
+        private const uint NvId_GPU_GetECCStatusInfo = 0xCA1DDAF3;
+        private const uint NvId_GPU_GetECCErrorInfo = 0xC71F85A6;
+        private const uint NvId_GPU_ResetECCErrorInfo = 0xC02EEC20;
+        private const uint NvId_GPU_GetECCConfigurationInfo = 0x77A796F3;
+        private const uint NvId_GPU_SetECCConfiguration = 0x1CF639D9;
+        private const uint NvId_GPU_QueryWorkstationFeatureSupport = 0x80B1ABB9;
+        private const uint NvId_GPU_SetScanoutIntensity = 0xA57457A4;
+        private const uint NvId_GPU_GetScanoutIntensityState = 0xE81CE836;
+        private const uint NvId_GPU_SetScanoutWarping = 0xB34BAB4F;
+        private const uint NvId_GPU_GetScanoutWarpingState = 0x6F5435AF;
+        private const uint NvId_GPU_SetScanoutCompositionParameter = 0xF898247D;
+        private const uint NvId_GPU_GetScanoutCompositionParameter = 0x58FE51E6;
+        private const uint NvId_GPU_GetScanoutConfiguration = 0x6A9F5B63;
+        private const uint NvId_GPU_GetScanoutConfigurationEx = 0xE2E1E6F0;
+        private const uint NvId_GPU_GetAdapterIdFromPhysicalGpu = 0xFF07FDE;
+        private const uint NvId_GPU_GetVirtualizationInfo = 0x44E022A9;
+        private const uint NvId_GPU_GetLogicalGpuInfo = 0x842B066E;
+        private const uint NvId_GPU_GetLicensableFeatures = 0x3FC596AA;
+        private const uint NvId_GPU_GetVRReadyData = 0x81D629C5;
+        private const uint NvId_GPU_GetPerfDecreaseInfo = 0x7F7F4600;
+        private const uint NvId_GPU_GetPstatesInfoEx = 0x843C0256;
+        private const uint NvId_GPU_GetPstates20 = 0x6FF81213;
+        private const uint NvId_GPU_GetCurrentPstate = 0x927DA4F6;
+        private const uint NvId_GPU_GetDynamicPstatesInfoEx = 0x60DED2ED;
+        private const uint NvId_GPU_GetThermalSettings = 0xE3640A56;
+        private const uint NvId_GPU_GetAllClockFrequencies = 0xDCB616C3;
+        private const uint NvId_GPU_QueryIlluminationSupport = 0xA629DA31;
+        private const uint NvId_GPU_GetIllumination = 0x9A1B9365;
+        private const uint NvId_GPU_SetIllumination = 0x254A187;
+        private const uint NvId_GPU_ClientIllumDevicesGetInfo = 0xD4100E58;
+        private const uint NvId_GPU_ClientIllumDevicesGetControl = 0x73C01D58;
+        private const uint NvId_GPU_ClientIllumDevicesSetControl = 0x57024C62;
+        private const uint NvId_GPU_ClientIllumZonesGetInfo = 0x4B81241B;
+        private const uint NvId_GPU_ClientIllumZonesGetControl = 0x3DBF5764;
+        private const uint NvId_GPU_ClientIllumZonesSetControl = 0x197D065E;
+        private const uint NvId_Event_RegisterCallback = 0xE6DBEA69;
+        private const uint NvId_Event_UnregisterCallback = 0xDE1F9B45;
+        private const uint NvId_EnumNvidiaDisplayHandle = 0x9ABDD40D;
+        private const uint NvId_EnumNvidiaUnAttachedDisplayHandle = 0x20DE9260;
+        private const uint NvId_CreateDisplayFromUnAttachedDisplay = 0x63F9799E;
+        private const uint NvId_GetAssociatedNvidiaDisplayHandle = 0x35C29134;
+        private const uint NvId_DISP_GetAssociatedUnAttachedNvidiaDisplayHandle = 0xA70503B2;
+        private const uint NvId_GetAssociatedNvidiaDisplayName = 0x22A78B05;
+        private const uint NvId_GetUnAttachedAssociatedDisplayName = 0x4888D790;
+        private const uint NvId_EnableHWCursor = 0x2863148D;
+        private const uint NvId_DisableHWCursor = 0xAB163097;
+        private const uint NvId_GetVBlankCounter = 0x67B5DB55;
+        private const uint NvId_SetRefreshRateOverride = 0x3092AC32;
+        private const uint NvId_GetAssociatedDisplayOutputId = 0xD995937E;
+        private const uint NvId_GetDisplayPortInfo = 0xC64FF367;
+        private const uint NvId_SetDisplayPort = 0xFA13E65A;
+        private const uint NvId_GetHDMISupportInfo = 0x6AE16EC3;
+        private const uint NvId_Disp_InfoFrameControl = 0x6067AF3F;
+        private const uint NvId_Disp_ColorControl = 0x92F9D80D;
+        private const uint NvId_Disp_GetHdrCapabilities = 0x84F2A8DF;
+        private const uint NvId_Disp_HdrColorControl = 0x351DA224;
+        private const uint NvId_DISP_GetTiming = 0x175167E9;
+        private const uint NvId_DISP_GetMonitorCapabilities = 0x3B05C7E1;
+        private const uint NvId_DISP_GetMonitorColorCapabilities = 0x6AE4CFB5;
+        private const uint NvId_DISP_EnumCustomDisplay = 0xA2072D59;
+        private const uint NvId_DISP_TryCustomDisplay = 0x1F7DB630;
+        private const uint NvId_DISP_DeleteCustomDisplay = 0x552E5B9B;
+        private const uint NvId_DISP_SaveCustomDisplay = 0x49882876;
+        private const uint NvId_DISP_RevertCustomDisplayTrial = 0xCBBD40F0;
+        private const uint NvId_GetView = 0xD6B99D89;
+        private const uint NvId_GetViewEx = 0xDBBC0AF4;
+        private const uint NvId_GetSupportedViews = 0x66FB7FC0;
+        private const uint NvId_DISP_GetDisplayIdByDisplayName = 0xAE457190;
+        private const uint NvId_DISP_GetGDIPrimaryDisplayId = 0x1E9D8A31;
+        private const uint NvId_DISP_GetDisplayConfig = 0x11ABCCF8;
+        private const uint NvId_DISP_SetDisplayConfig = 0x5D8CF8DE;
+        private const uint NvId_DISP_GetAdaptiveSyncData = 0xB73D1EE9;
+        private const uint NvId_DISP_SetAdaptiveSyncData = 0x3EEBBA1D;
+        private const uint NvId_DISP_GetVirtualRefreshRateData = 0x8C00429A;
+        private const uint NvId_DISP_SetVirtualRefreshRateData = 0x5ABBE6A3;
+        private const uint NvId_DISP_SetPreferredStereoDisplay = 0xC9D0E25F;
+        private const uint NvId_DISP_GetPreferredStereoDisplay = 0x1F6B4666;
+        private const uint NvId_DISP_GetNvManagedDedicatedDisplays = 0xDBDF0CB2;
+        private const uint NvId_DISP_AcquireDedicatedDisplay = 0x47C917BA;
+        private const uint NvId_DISP_ReleaseDedicatedDisplay = 0x1247825F;
+        private const uint NvId_Mosaic_GetSupportedTopoInfo = 0xFDB63C81;
+        private const uint NvId_Mosaic_GetTopoGroup = 0xCB89381D;
+        private const uint NvId_Mosaic_GetOverlapLimits = 0x989685F0;
+        private const uint NvId_Mosaic_SetCurrentTopo = 0x9B542831;
+        private const uint NvId_Mosaic_GetCurrentTopo = 0xEC32944E;
+        private const uint NvId_Mosaic_EnableCurrentTopo = 0x5F1AA66C;
+        private const uint NvId_Mosaic_GetDisplayViewportsByResolution = 0xDC6DC8D3;
+        private const uint NvId_Mosaic_SetDisplayGrids = 0x4D959A89;
+        private const uint NvId_Mosaic_ValidateDisplayGrids = 0xCF43903D;
+        private const uint NvId_Mosaic_EnumDisplayModes = 0x78DB97D7;
+        private const uint NvId_Mosaic_EnumDisplayGrids = 0xDF2887AF;
+        private const uint NvId_GetSupportedMosaicTopologies = 0x410B5C25;
+        private const uint NvId_GetCurrentMosaicTopology = 0xF60852BD;
+        private const uint NvId_SetCurrentMosaicTopology = 0xD54B8989;
+        private const uint NvId_EnableCurrentMosaicTopology = 0x74073CC9;
+        private const uint NvId_GSync_EnumSyncDevices = 0xD9639601;
+        private const uint NvId_GSync_QueryCapabilities = 0x44A3F1D1;
+        private const uint NvId_GSync_GetTopology = 0x4562BC38;
+        private const uint NvId_GSync_SetSyncStateSettings = 0x60ACDFDD;
+        private const uint NvId_GSync_GetControlParameters = 0x16DE1C6A;
+        private const uint NvId_GSync_SetControlParameters = 0x8BBFF88B;
+        private const uint NvId_GSync_AdjustSyncDelay = 0x2D11FF51;
+        private const uint NvId_GSync_GetSyncStatus = 0xF1F5B434;
+        private const uint NvId_GSync_GetStatusParameters = 0x70D404EC;
+        private const uint NvId_D3D_GetCurrentSLIState = 0x4B708B54;
+        private const uint NvId_D3D9_RegisterResource = 0xA064BDFC;
+        private const uint NvId_D3D9_UnregisterResource = 0xBB2B17AA;
+        private const uint NvId_D3D9_AliasSurfaceAsTexture = 0xE5CEAE41;
+        private const uint NvId_D3D9_StretchRectEx = 0x22DE03AA;
+        private const uint NvId_D3D9_ClearRT = 0x332D3942;
+        private const uint NvId_D3D_GetObjectHandleForResource = 0xFCEAC864;
+        private const uint NvId_D3D_SetResourceHint = 0x6C0ED98C;
+        private const uint NvId_D3D_BeginResourceRendering = 0x91123D6A;
+        private const uint NvId_D3D_EndResourceRendering = 0x37E7191C;
+        private const uint NvId_D3D9_GetSurfaceHandle = 0xF2DD3F2;
+        private const uint NvId_D3D9_VideoSetStereoInfo = 0xB852F4DB;
+        private const uint NvId_D3D10_SetDepthBoundsTest = 0x4EADF5D2;
+        private const uint NvId_D3D11_CreateDevice = 0x6A16D3A0;
+        private const uint NvId_D3D11_CreateDeviceAndSwapChain = 0xBB939EE5;
+        private const uint NvId_D3D11_SetDepthBoundsTest = 0x7AAF7A04;
+        private const uint NvId_D3D11_IsNvShaderExtnOpCodeSupported = 0x5F68DA40;
+        private const uint NvId_D3D11_SetNvShaderExtnSlot = 0x8E90BB9F;
+        private const uint NvId_D3D12_SetNvShaderExtnSlotSpace = 0xAC2DFEB5;
+        private const uint NvId_D3D12_SetNvShaderExtnSlotSpaceLocalThread = 0x43D867C0;
+        private const uint NvId_D3D11_SetNvShaderExtnSlotLocalThread = 0xE6482A0;
+        private const uint NvId_D3D11_BeginUAVOverlapEx = 0xBA08208A;
+        private const uint NvId_D3D11_BeginUAVOverlap = 0x65B93CA8;
+        private const uint NvId_D3D11_EndUAVOverlap = 0x2216A357;
+        private const uint NvId_D3D11_GetResourceHandle = 0x9D52986;
+        private const uint NvId_D3D_SetFPSIndicatorState = 0xA776E8DB;
+        private const uint NvId_D3D9_Present = 0x5650BEB;
+        private const uint NvId_D3D9_QueryFrameCount = 0x9083E53A;
+        private const uint NvId_D3D9_ResetFrameCount = 0xFA6A0675;
+        private const uint NvId_D3D9_QueryMaxSwapGroup = 0x5995410D;
+        private const uint NvId_D3D9_QuerySwapGroup = 0xEBA4D232;
+        private const uint NvId_D3D9_JoinSwapGroup = 0x7D44BB54;
+        private const uint NvId_D3D9_BindSwapBarrier = 0x9C39C246;
+        private const uint NvId_D3D1x_Present = 0x3B845A1;
+        private const uint NvId_D3D1x_QueryFrameCount = 0x9152E055;
+        private const uint NvId_D3D1x_ResetFrameCount = 0xFBBB031A;
+        private const uint NvId_D3D1x_QueryMaxSwapGroup = 0x9BB9D68F;
+        private const uint NvId_D3D1x_QuerySwapGroup = 0x407F67AA;
+        private const uint NvId_D3D1x_JoinSwapGroup = 0x14610CD7;
+        private const uint NvId_D3D1x_BindSwapBarrier = 0x9DE8C729;
+        private const uint NvId_D3D12_QueryPresentBarrierSupport = 0xA15FAEF7;
+        private const uint NvId_D3D12_CreatePresentBarrierClient = 0x4D815DE9;
+        private const uint NvId_D3D12_RegisterPresentBarrierResources = 0xD53C9EF0;
+        private const uint NvId_DestroyPresentBarrierClient = 0x3C5C351B;
+        private const uint NvId_JoinPresentBarrier = 0x17F6BF82;
+        private const uint NvId_LeavePresentBarrier = 0xC3EC5A7F;
+        private const uint NvId_QueryPresentBarrierFrameStatistics = 0x61B844A1;
+        private const uint NvId_D3D12_CreateDDisplayPresentBarrierClient = 0xB5A21987;
+        private const uint NvId_D3D11_CreateRasterizerState = 0xDB8D28AF;
+        private const uint NvId_D3D_ConfigureAnsel = 0x341C6C7F;
+        private const uint NvId_D3D11_CreateTiledTexture2DArray = 0x7886981A;
+        private const uint NvId_D3D11_CheckFeatureSupport = 0x106A487E;
+        private const uint NvId_D3D11_CreateImplicitMSAATexture2D = 0xB8F79632;
+        private const uint NvId_D3D12_CreateCommittedImplicitMSAATexture2D = 0x24C6A07B;
+        private const uint NvId_D3D11_ResolveSubresourceRegion = 0xE6BFEDD6;
+        private const uint NvId_D3D12_ResolveSubresourceRegion = 0xC24A15BF;
+        private const uint NvId_D3D11_TiledTexture2DArrayGetDesc = 0xF1A2B9D5;
+        private const uint NvId_D3D11_UpdateTileMappings = 0x9A06EA07;
+        private const uint NvId_D3D11_CopyTileMappings = 0xC09EE6BC;
+        private const uint NvId_D3D11_TiledResourceBarrier = 0xD6839099;
+        private const uint NvId_D3D11_AliasMSAATexture2DAsNonMSAA = 0xF1C54FC9;
+        private const uint NvId_D3D11_CreateGeometryShaderEx_2 = 0x99ED5C1C;
+        private const uint NvId_D3D11_CreateVertexShaderEx = 0xBEAA0B2;
+        private const uint NvId_D3D11_CreateHullShaderEx = 0xB53CAB00;
+        private const uint NvId_D3D11_CreateDomainShaderEx = 0xA0D7180D;
+        private const uint NvId_D3D11_CreatePixelShaderEx_2 = 0x4162822B;
+        private const uint NvId_D3D11_CreateFastGeometryShaderExplicit = 0x71AB7C9C;
+        private const uint NvId_D3D11_CreateFastGeometryShader = 0x525D43BE;
+        private const uint NvId_D3D11_DecompressView = 0x3A94E822;
+        private const uint NvId_D3D12_CreateGraphicsPipelineState = 0x2FC28856;
+        private const uint NvId_D3D12_CreateComputePipelineState = 0x2762DEAC;
+        private const uint NvId_D3D12_SetDepthBoundsTestValues = 0xB9333FE9;
+        private const uint NvId_D3D12_CreateReservedResource = 0x2C85F101;
+        private const uint NvId_D3D12_CreateHeap = 0x5CB397CF;
+        private const uint NvId_D3D12_CreateHeap2 = 0x924BE9D6;
+        private const uint NvId_D3D12_QueryCpuVisibleVidmem = 0x26322BC3;
+        private const uint NvId_D3D12_ReservedResourceGetDesc = 0x9AA2AABB;
+        private const uint NvId_D3D12_UpdateTileMappings = 0xC6017A7D;
+        private const uint NvId_D3D12_CopyTileMappings = 0x47F78194;
+        private const uint NvId_D3D12_ResourceAliasingBarrier = 0xB942BAB7;
+        private const uint NvId_D3D12_CaptureUAVInfo = 0x6E5EA9DB;
+        private const uint NvId_D3D11_GetResourceGPUVirtualAddressEx = 0xAF6D14DA;
+        private const uint NvId_D3D11_EnumerateMetaCommands = 0xC7453BA8;
+        private const uint NvId_D3D11_CreateMetaCommand = 0xF505FBA0;
+        private const uint NvId_D3D11_InitializeMetaCommand = 0xAEC629E9;
+        private const uint NvId_D3D11_ExecuteMetaCommand = 0x82236C47;
+        private const uint NvId_D3D12_EnumerateMetaCommands = 0xCD9141D8;
+        private const uint NvId_D3D12_CreateMetaCommand = 0xEB29634B;
+        private const uint NvId_D3D12_InitializeMetaCommand = 0xA4125399;
+        private const uint NvId_D3D12_ExecuteMetaCommand = 0xDE24FC3D;
+        private const uint NvId_D3D12_CreateCommittedResource = 0x27E98AE;
+        private const uint NvId_D3D12_GetCopyableFootprints = 0xF6305EB5;
+        private const uint NvId_D3D12_CopyTextureRegion = 0x82B91B25;
+        private const uint NvId_D3D12_IsNvShaderExtnOpCodeSupported = 0x3DFACEC8;
+        private const uint NvId_D3D12_GetOptimalThreadCountForMesh = 0xB43995CB;
+        private const uint NvId_D3D_IsGSyncCapable = 0x9C1EED78;
+        private const uint NvId_D3D_IsGSyncActive = 0xE942B0FF;
+        private const uint NvId_D3D1x_DisableShaderDiskCache = 0xD0CBCA7D;
+        private const uint NvId_D3D11_MultiGPU_GetCaps = 0xD2D25687;
+        private const uint NvId_D3D11_MultiGPU_Init = 0x17BE49E;
+        private const uint NvId_D3D11_CreateMultiGPUDevice = 0xBDB20007;
+        private const uint NvId_D3D_QuerySinglePassStereoSupport = 0x6F5F0A6D;
+        private const uint NvId_D3D_SetSinglePassStereoMode = 0xA39E6E6E;
+        private const uint NvId_D3D12_QuerySinglePassStereoSupport = 0x3B03791B;
+        private const uint NvId_D3D12_SetSinglePassStereoMode = 0x83556D87;
+        private const uint NvId_D3D_QueryMultiViewSupport = 0xB6E0A41C;
+        private const uint NvId_D3D_SetMultiViewMode = 0x8285C8DA;
+        private const uint NvId_D3D_QueryModifiedWSupport = 0xCBF9F4F5;
+        private const uint NvId_D3D_SetModifiedWMode = 0x6EA4BF4;
+        private const uint NvId_D3D12_QueryModifiedWSupport = 0x51235248;
+        private const uint NvId_D3D12_SetModifiedWMode = 0xE1FDABA7;
+        private const uint NvId_D3D_CreateLateLatchObject = 0x2DB27D09;
+        private const uint NvId_D3D_QueryLateLatchSupport = 0x8CECA0EC;
+        private const uint NvId_D3D_RegisterDevice = 0x8C02C4D0;
+        private const uint NvId_D3D11_MultiDrawInstancedIndirect = 0xD4E26BBF;
+        private const uint NvId_D3D11_MultiDrawIndexedInstancedIndirect = 0x59E890F9;
+        private const uint NvId_D3D_ImplicitSLIControl = 0x2AEDE111;
+        private const uint NvId_D3D12_UseDriverHeapPriorities = 0xF0D978A8;
+        private const uint NvId_D3D12_Mosaic_GetCompanionAllocations = 0xA46022C7;
+        private const uint NvId_D3D12_Mosaic_GetViewportAndGpuPartitions = 0xB092B818;
+        private const uint NvId_D3D1x_GetGraphicsCapabilities = 0x52B1499A;
+        private const uint NvId_D3D12_GetGraphicsCapabilities = 0x1E87354;
+        private const uint NvId_D3D11_RSSetExclusiveScissorRects = 0xAE4D73EF;
+        private const uint NvId_D3D11_RSSetViewportsPixelShadingRates = 0x34F7938F;
+        private const uint NvId_D3D11_CreateShadingRateResourceView = 0x99CA2DFF;
+        private const uint NvId_D3D11_RSSetShadingRateResourceView = 0x1B0C2F83;
+        private const uint NvId_D3D11_RSGetPixelShadingRateSampleOrder = 0x92442A1;
+        private const uint NvId_D3D11_RSSetPixelShadingRateSampleOrder = 0xA942373A;
+        private const uint NvId_D3D_InitializeVRSHelper = 0x4780D70B;
+        private const uint NvId_D3D_InitializeNvGazeHandler = 0x5B3B7479;
+        private const uint NvId_D3D_InitializeSMPAssist = 0x42763D0C;
+        private const uint NvId_D3D_QuerySMPAssistSupport = 0xC57921DE;
+        private const uint NvId_D3D_GetSleepStatus = 0xAEF96CA1;
+        private const uint NvId_D3D_SetSleepMode = 0xAC1CA9E0;
+        private const uint NvId_D3D_Sleep = 0x852CD1D2;
+        private const uint NvId_D3D_GetLatency = 0x1A587F9C;
+        private const uint NvId_D3D_SetLatencyMarker = 0xD9984C05;
+        private const uint NvId_D3D12_CreateCubinComputeShader = 0x2A2C79E8;
+        private const uint NvId_D3D12_CreateCubinComputeShaderEx = 0x3151211B;
+        private const uint NvId_D3D12_CreateCubinComputeShaderWithName = 0x1DC7261F;
+        private const uint NvId_D3D12_LaunchCubinShader = 0x5C52BB86;
+        private const uint NvId_D3D12_DestroyCubinComputeShader = 0x7FB785BA;
+        private const uint NvId_D3D12_GetCudaTextureObject = 0x80403FC9;
+        private const uint NvId_D3D12_GetCudaSurfaceObject = 0x48F5B2EE;
+        private const uint NvId_D3D12_IsFatbinPTXSupported = 0x70C07832;
+        private const uint NvId_D3D11_CreateCubinComputeShader = 0xED98181;
+        private const uint NvId_D3D11_CreateCubinComputeShaderEx = 0x32C2A0F6;
+        private const uint NvId_D3D11_CreateCubinComputeShaderWithName = 0xB672BE19;
+        private const uint NvId_D3D11_LaunchCubinShader = 0x427E236D;
+        private const uint NvId_D3D11_DestroyCubinComputeShader = 0x1682C86;
+        private const uint NvId_D3D11_IsFatbinPTXSupported = 0x6086BD93;
+        private const uint NvId_D3D11_CreateUnorderedAccessView = 0x74A497A1;
+        private const uint NvId_D3D11_CreateShaderResourceView = 0x65CB431E;
+        private const uint NvId_D3D11_CreateSamplerState = 0x89ECA416;
+        private const uint NvId_D3D11_GetCudaTextureObject = 0x9006FA68;
+        private const uint NvId_D3D11_GetResourceGPUVirtualAddress = 0x1819B423;
+        private const uint NvId_VIO_GetCapabilities = 0x1DC91303;
+        private const uint NvId_VIO_Open = 0x44EE4841;
+        private const uint NvId_VIO_Close = 0xD01BD237;
+        private const uint NvId_VIO_Status = 0xE6CE4F1;
+        private const uint NvId_VIO_SyncFormatDetect = 0x118D48A3;
+        private const uint NvId_VIO_GetConfig = 0xD34A789B;
+        private const uint NvId_VIO_SetConfig = 0xE4EEC07;
+        private const uint NvId_VIO_SetCSC = 0xA1EC8D74;
+        private const uint NvId_VIO_GetCSC = 0x7B0D72A3;
+        private const uint NvId_VIO_SetGamma = 0x964BF452;
+        private const uint NvId_VIO_GetGamma = 0x51D53D06;
+        private const uint NvId_VIO_SetSyncDelay = 0x2697A8D1;
+        private const uint NvId_VIO_GetSyncDelay = 0x462214A9;
+        private const uint NvId_VIO_GetPCIInfo = 0xB981D935;
+        private const uint NvId_VIO_IsRunning = 0x96BD040E;
+        private const uint NvId_VIO_Start = 0xCDE8E1A3;
+        private const uint NvId_VIO_Stop = 0x6BA2A5D6;
+        private const uint NvId_VIO_IsFrameLockModeCompatible = 0x7BF0A94D;
+        private const uint NvId_VIO_EnumDevices = 0xFD7C5557;
+        private const uint NvId_VIO_QueryTopology = 0x869534E2;
+        private const uint NvId_VIO_EnumSignalFormats = 0xEAD72FE4;
+        private const uint NvId_VIO_EnumDataFormats = 0x221FA8E8;
+        private const uint NvId_Stereo_CreateConfigurationProfileRegistryKey = 0xBE7692EC;
+        private const uint NvId_Stereo_DeleteConfigurationProfileRegistryKey = 0xF117B834;
+        private const uint NvId_Stereo_SetConfigurationProfileValue = 0x24409F48;
+        private const uint NvId_Stereo_DeleteConfigurationProfileValue = 0x49BCEECF;
+        private const uint NvId_Stereo_Enable = 0x239C4545;
+        private const uint NvId_Stereo_Disable = 0x2EC50C2B;
+        private const uint NvId_Stereo_IsEnabled = 0x348FF8E1;
+        private const uint NvId_Stereo_GetStereoSupport = 0x296C434D;
+        private const uint NvId_Stereo_CreateHandleFromIUnknown = 0xAC7E37F4;
+        private const uint NvId_Stereo_DestroyHandle = 0x3A153134;
+        private const uint NvId_Stereo_Activate = 0xF6A1AD68;
+        private const uint NvId_Stereo_Deactivate = 0x2D68DE96;
+        private const uint NvId_Stereo_IsActivated = 0x1FB0BC30;
+        private const uint NvId_Stereo_GetSeparation = 0x451F2134;
+        private const uint NvId_Stereo_SetSeparation = 0x5C069FA3;
+        private const uint NvId_Stereo_DecreaseSeparation = 0xDA044458;
+        private const uint NvId_Stereo_IncreaseSeparation = 0xC9A8ECEC;
+        private const uint NvId_Stereo_GetConvergence = 0x4AB00934;
+        private const uint NvId_Stereo_SetConvergence = 0x3DD6B54B;
+        private const uint NvId_Stereo_DecreaseConvergence = 0x4C87E317;
+        private const uint NvId_Stereo_IncreaseConvergence = 0xA17DAABE;
+        private const uint NvId_Stereo_GetFrustumAdjustMode = 0xE6839B43;
+        private const uint NvId_Stereo_SetFrustumAdjustMode = 0x7BE27FA2;
+        private const uint NvId_Stereo_CaptureJpegImage = 0x932CB140;
+        private const uint NvId_Stereo_InitActivation = 0xC7177702;
+        private const uint NvId_Stereo_Trigger_Activation = 0xD6C6CD2;
+        private const uint NvId_Stereo_CapturePngImage = 0x8B7E99B5;
+        private const uint NvId_Stereo_ReverseStereoBlitControl = 0x3CD58F89;
+        private const uint NvId_Stereo_SetNotificationMessage = 0x6B9B409E;
+        private const uint NvId_Stereo_SetActiveEye = 0x96EEA9F8;
+        private const uint NvId_Stereo_SetDriverMode = 0x5E8F0BEC;
+        private const uint NvId_Stereo_GetEyeSeparation = 0xCE653127;
+        private const uint NvId_Stereo_IsWindowedModeSupported = 0x40C8ED5E;
+        private const uint NvId_Stereo_SetSurfaceCreationMode = 0xF5DCFCBA;
+        private const uint NvId_Stereo_GetSurfaceCreationMode = 0x36F1C736;
+        private const uint NvId_Stereo_Debug_WasLastDrawStereoized = 0xED4416C5;
+        private const uint NvId_Stereo_SetDefaultProfile = 0x44F0ECD1;
+        private const uint NvId_Stereo_GetDefaultProfile = 0x624E21C2;
+        private const uint NvId_D3D1x_CreateSwapChain = 0x1BC21B66;
+        private const uint NvId_D3D9_CreateSwapChain = 0x1A131E09;
+        private const uint NvId_DRS_CreateSession = 0x694D52E;
+        private const uint NvId_DRS_DestroySession = 0xDAD9CFF8;
+        private const uint NvId_DRS_LoadSettings = 0x375DBD6B;
+        private const uint NvId_DRS_SaveSettings = 0xFCBC7E14;
+        private const uint NvId_DRS_LoadSettingsFromFile = 0xD3EDE889;
+        private const uint NvId_DRS_SaveSettingsToFile = 0x2BE25DF8;
+        private const uint NvId_DRS_CreateProfile = 0xCC176068;
+        private const uint NvId_DRS_DeleteProfile = 0x17093206;
+        private const uint NvId_DRS_SetCurrentGlobalProfile = 0x1C89C5DF;
+        private const uint NvId_DRS_GetCurrentGlobalProfile = 0x617BFF9F;
+        private const uint NvId_DRS_GetProfileInfo = 0x61CD6FD6;
+        private const uint NvId_DRS_SetProfileInfo = 0x16ABD3A9;
+        private const uint NvId_DRS_FindProfileByName = 0x7E4A9A0B;
+        private const uint NvId_DRS_EnumProfiles = 0xBC371EE0;
+        private const uint NvId_DRS_GetNumProfiles = 0x1DAE4FBC;
+        private const uint NvId_DRS_CreateApplication = 0x4347A9DE;
+        private const uint NvId_DRS_DeleteApplicationEx = 0xC5EA85A1;
+        private const uint NvId_DRS_DeleteApplication = 0x2C694BC6;
+        private const uint NvId_DRS_GetApplicationInfo = 0xED1F8C69;
+        private const uint NvId_DRS_EnumApplications = 0x7FA2173A;
+        private const uint NvId_DRS_FindApplicationByName = 0xEEE566B2;
+        private const uint NvId_DRS_SetSetting = 0x577DD202;
+        private const uint NvId_DRS_GetSetting = 0x73BF8338;
+        private const uint NvId_DRS_EnumSettings = 0xAE3039DA;
+        private const uint NvId_DRS_EnumAvailableSettingIds = 0xF020614A;
+        private const uint NvId_DRS_EnumAvailableSettingValues = 0x2EC39F90;
+        private const uint NvId_DRS_GetSettingIdFromName = 0xCB7309CD;
+        private const uint NvId_DRS_GetSettingNameFromId = 0xD61CBE6E;
+        private const uint NvId_DRS_DeleteProfileSetting = 0xE4A26362;
+        private const uint NvId_DRS_RestoreAllDefaults = 0x5927B094;
+        private const uint NvId_DRS_RestoreProfileDefault = 0xFA5F6134;
+        private const uint NvId_DRS_RestoreProfileDefaultSetting = 0x53F0381E;
+        private const uint NvId_DRS_GetBaseProfile = 0xDA8466A0;
+        private const uint NvId_SYS_GetChipSetInfo = 0x53DABBCA;
+        private const uint NvId_SYS_GetLidAndDockInfo = 0xCDA14D8A;
+        private const uint NvId_SYS_GetDisplayIdFromGpuAndOutputId = 0x8F2BAB4;
+        private const uint NvId_SYS_GetGpuAndOutputIdFromDisplayId = 0x112BA1A5;
+        private const uint NvId_SYS_GetPhysicalGpuFromDisplayId = 0x9EA74659;
+        private const uint NvId_SYS_GetDisplayDriverInfo = 0x721FACEB;
+        private const uint NvId_GPU_ClientRegisterForUtilizationSampleUpdates = 0xADEEAF67;
+        private const uint NvId_Unload = 0xD7C61344;
 
         #endregion
 
@@ -3014,7 +4398,6 @@ namespace DisplayMagicianShared.NVIDIA
         private const UInt32 NvId_GetDriverModel = 0x25EEB2C4;
         private const UInt32 NvId_GetDVCInfo = 0x4085DE45;
         private const UInt32 NvId_GetDVCInfoEx = 0x0E45002D;
-        private const UInt32 NvId_GetGPUIDfromPhysicalGPU = 0x6533EA3E;
         private const UInt32 NvId_GetHDCPLinkParameters = 0x0B3BB0772;
         private const UInt32 NvId_GetHUEInfo = 0x95B64341;
         private const UInt32 NvId_GetHybridMode = 0x0E23B68C1;
@@ -3025,7 +4408,6 @@ namespace DisplayMagicianShared.NVIDIA
         private const UInt32 NvId_GetInvalidGpuTopologies = 0x15658BE6;
         private const UInt32 NvId_GetLoadedMicrocodePrograms = 0x919B3136;
         private const UInt32 NvId_GetPhysicalGPUFromDisplay = 0x1890E8DA;
-        private const UInt32 NvId_GetPhysicalGPUFromGPUID = 0x5380AD1A;
         private const UInt32 NvId_GetPVExtName = 0x2F5B08E0;
         private const UInt32 NvId_GetPVExtProfile = 0x1B1B9A16;
         private const UInt32 NvId_GetScalingCaps = 0x8E875CF9;
@@ -3051,7 +4433,6 @@ namespace DisplayMagicianShared.NVIDIA
         private const UInt32 NvId_GPU_ClientPowerPoliciesSetStatus = 0x0AD95F5ED;
         private const UInt32 NvId_GPU_ClientPowerTopologyGetInfo = 0x0A4DFD3F2;
         private const UInt32 NvId_GPU_ClientPowerTopologyGetStatus = 0x0EDCF624E;
-        private const UInt32 NvId_GPU_CudaEnumComputeCapableGpus = 0x5786CC6E;
         private const UInt32 NvId_GPU_EnableDynamicPstates = 0x0FA579A0F;
         private const UInt32 NvId_GPU_EnableOverclockedPstates = 0x0B23B70EE;
         private const UInt32 NvId_GPU_Get_DisplayPort_DongleInfo = 0x76A70E8D;
@@ -3400,42 +4781,245 @@ namespace DisplayMagicianShared.NVIDIA
         /// <returns></returns>
         public static NVAPI_STATUS NvAPI_DISP_GetDisplayConfig(ref UInt32 PathInfoCount, ref NV_DISPLAYCONFIG_PATH_INFO_V2[] PathInfos, bool thirdPass = false)
         {
-            NVAPI_STATUS status;
-            IntPtr pathInfoBuffer = IntPtr.Zero;
-            IntPtr currentPathInfoBuffer = IntPtr.Zero;
+            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_OK;
             if (thirdPass)
             {
-                // Copy the supplied object for the third pass (when we have the pathInfoCount and the targetInfoCount for each pathInfo, but we want the details)
-                // Third Pass(Optional, only required if target information is required): Allocate memory for targetInfo with respect
-                //!                               to number of targetInfoCount(from Second Pass).
-                NV_DISPLAYCONFIG_PATH_INFO_V2[] passedPathInfo = PathInfos;
-                PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
-                // Go through the array and create the structure 
-                int overallTargetCount = 0;
+                NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] pass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
+                int totalTargetInfoCount = 0;
                 for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                 {
-                    // Copy the information passed in, into the buffer we want to pass
-
-                    PathInfos[x].SourceId = passedPathInfo[x].SourceId;
-                    PathInfos[x].TargetInfoCount = passedPathInfo[x].TargetInfoCount;
-                    PathInfos[x].TargetInfo = passedPathInfo[x].TargetInfo;
-                    PathInfos[x].SourceModeInfo = passedPathInfo[x].SourceModeInfo;
-                    overallTargetCount += (int)PathInfos[x].TargetInfoCount;
-                    PathInfos[x].Version = MAKE_NVAPI_VERSION(Marshal.SizeOf(passedPathInfo[x]), 1);
+                    totalTargetInfoCount += (int)PathInfos[x].TargetInfoCount;
                 }
-                // Initialize unmanged memory to hold the unmanaged array of structs
-                int memorySizeRequired = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2)) * (int)PathInfoCount;
-                pathInfoBuffer = Marshal.AllocCoTaskMem(memorySizeRequired);
-                // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                currentPathInfoBuffer = pathInfoBuffer;
-                // Go through the array and copy things from managed code to unmanaged code
-                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
+
+                // Get the size of the each object
+                int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
+                int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
+                int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
+                int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+                int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING_INTERNAL));
+                int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA_INTERNAL));
+
+                // Figure out the size of the memory we need to allocate
+                int allPathInfoMemSize = onePathInfoMemSize * (int)PathInfoCount;
+                int allSourceModeMemSize = oneSourceModeMemSize * (int)PathInfoCount;
+                int allPathTargetMemSize = onePathTargetMemSize * totalTargetInfoCount;
+                int allAdvTargetMemSize = (oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize) * totalTargetInfoCount;
+                //int allTimingMemSize = oneTimingMemSize * totalTargetInfoCount;
+                //int allTimingExtraMemSize = oneTimingExtraMemSize * totalTargetInfoCount;
+                //int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize + allTimingExtraMemSize;
+                int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize;
+
+                IntPtr memPointer = IntPtr.Zero;
+
+                try
                 {
-                    // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                    Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, false);
-                    // advance the buffer forwards to the next object
-                    currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[x]));
+                    // Allocate the memory we need
+                    memPointer = Marshal.AllocHGlobal(allObjectsMemSize * 2);
+
+                    // Figure out the address of the arrays we will use
+                    IntPtr pathInfoPointer = memPointer;
+                    IntPtr sourceModeInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize);
+                    IntPtr targetInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize);
+                    IntPtr advTargetPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize);
+                    //IntPtr timingPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize);
+                    //IntPtr timingExtraPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize);
+
+                    // Figure out each memory pointer so that we can do the memory copying item by item
+                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                    IntPtr currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
+                    IntPtr currentSourceModeInfoPointer = new IntPtr(sourceModeInfoPointer.ToInt64());
+                    IntPtr currentTargetInfoPointer = new IntPtr(targetInfoPointer.ToInt64());
+                    IntPtr currentAdvTargetPointer = new IntPtr(advTargetPointer.ToInt64());
+                    //IntPtr currentTimingPointer = new IntPtr(timingPointer.ToInt64());
+                    //IntPtr currentTimingExtraPointer = new IntPtr(timingExtraPointer.ToInt64());
+
+                    // Go through the array and copy things from managed code to unmanaged code
+                    for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
+                    {
+                        // Set up the fields in the path info
+                        pass2PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER;
+                        pass2PathInfos[x].TargetInfoCount = PathInfos[x].TargetInfoCount;
+                        pass2PathInfos[x].Flags = PathInfos[x].Flags;
+                        pass2PathInfos[x].OSAdapterID = PathInfos[x].OSAdapterID;
+                        pass2PathInfos[x].SourceId = PathInfos[x].SourceId;
+                        // Create a target info array and copy it over
+                        NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[] targetInforArray = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[PathInfos[x].TargetInfoCount];
+                        pass2PathInfos[x].TargetInfo = currentTargetInfoPointer;
+                        //for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
+                        for (Int32 y = 0; y < (Int32)PathInfos[x].TargetInfoCount; y++)
+                        {
+                            // Create the timingExtra object ready to use shortly
+                            //NV_TIMING_EXTRA_INTERNAL timingExtra = new NV_TIMING_EXTRA_INTERNAL();
+                            //Marshal.StructureToPtr(timingExtra, currentTimingExtraPointer, true);
+
+                            // Create the timing object, and connect it to the timingExtra object we created earlier
+                            //NV_TIMING_INTERNAL timing = new NV_TIMING_INTERNAL();
+                            //timing.Extra = new IntPtr(currentTimingExtraPointer.ToInt64());
+                            //Marshal.StructureToPtr(timing, currentTimingPointer, true);
+
+                            // Create the Advanced Details object, and connect it to the timing object we ust created
+                            NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL();
+                            advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER;
+                            //advInfo.Timing = new IntPtr(currentTimingPointer.ToInt64());
+                            Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
+
+                            // Now connect the Advanced details we created to the details in the TargetInfo array item
+                            targetInforArray[y].Details = new IntPtr(currentAdvTargetPointer.ToInt64());
+                            Marshal.StructureToPtr(targetInforArray[y], currentTargetInfoPointer, true);
+                            currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
+                            currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize);
+                            //currentTimingPointer = new IntPtr(currentTimingPointer.ToInt64() + oneTimingMemSize);
+                            //currentTimingExtraPointer = new IntPtr(currentTimingExtraPointer.ToInt64() + oneTimingExtraMemSize);
+                        }
+
+                        // Create a source mode info object and copy it over
+                        NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)PathInfos[x].SourceModeInfo.Clone();
+                        Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
+                        pass2PathInfos[x].SourceModeInfo = new IntPtr(currentSourceModeInfoPointer.ToInt64());
+
+                        // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
+                        Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
+
+                        // advance the buffer forwards to the next object for each object
+                        currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize);
+                        currentSourceModeInfoPointer = new IntPtr(currentSourceModeInfoPointer.ToInt64() + oneSourceModeMemSize);
+                    }
+
+                    if (DISP_GetDisplayConfigInternal != null)
+                    {
+                        // Use the unmanaged buffer in the unmanaged C call
+                        status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoPointer);
+
+                        if (status == NVAPI_STATUS.NVAPI_OK)
+                        {
+                            // If everything worked, then copy the data back from the unmanaged array into the managed array
+                            // So that we can use it in C# land
+                            // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
+                            currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
+
+                            // Create a managed array to store the received information within
+                            PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
+                            NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] returnedPass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
+                            // Go through the memory buffer item by item and copy the items into the managed array
+                            for (int i = 0; i < PathInfoCount; i++)
+                            {
+                                // fill the returned pass2 array slot structure with the data from the buffer
+                                // This lets us get the information and then copy it across to the one we want to return!
+                                returnedPass2PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentPathInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
+
+                                // Next copy the information across to the PathInfo we actually want to return
+                                PathInfos[i].SourceId = returnedPass2PathInfos[i].SourceId;
+                                PathInfos[i].Flags = returnedPass2PathInfos[i].Flags;
+                                PathInfos[i].OSAdapterID = returnedPass2PathInfos[i].OSAdapterID;
+                                PathInfos[i].TargetInfoCount = returnedPass2PathInfos[i].TargetInfoCount;
+                                PathInfos[i].TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[PathInfos[i].TargetInfoCount];
+                                PathInfos[i].Version = returnedPass2PathInfos[i].Version;
+
+                                // And turn the memory pointer to NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 into an actual object and populate the object.
+                                PathInfos[i].SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)Marshal.PtrToStructure(returnedPass2PathInfos[i].SourceModeInfo, typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
+
+                                currentTargetInfoPointer = returnedPass2PathInfos[i].TargetInfo;
+                                for (Int32 y = 0; y < (Int32)PathInfos[i].TargetInfoCount; y++)
+                                {
+
+                                    // And turn the memory pointer to NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL into an actual object and populate the our wanted object
+                                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL returnedTargetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentTargetInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
+                                    // Next we need to get access to the details object.
+                                    NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL returnedAdvTarget = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL)Marshal.PtrToStructure(returnedTargetInfo.Details, typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+                                    // Next we need to get access to the timing object.
+                                    //NV_TIMING_INTERNAL returnedTiming = (NV_TIMING_INTERNAL)Marshal.PtrToStructure(returnedAdvTarget.Timing, typeof(NV_TIMING_INTERNAL));
+                                    // Next we need to get access to the timing extra object.
+                                    //NV_TIMING_EXTRA_INTERNAL returnedTimingExtra = (NV_TIMING_EXTRA_INTERNAL)Marshal.PtrToStructure(returnedTiming.Extra, typeof(NV_TIMING_EXTRA_INTERNAL));
+
+                                    // Now we start copying the info into the object we want to return
+                                    // We'll start with filling in the Timing Extra info we want to return
+                                    /*PathInfos[i].TargetInfo[y].Details.Timing.Extra.Flags = returnedTimingExtra.Flags;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz = returnedTimingExtra.FrequencyInMillihertz;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalAspect = returnedTimingExtra.HorizontalAspect;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition = returnedTimingExtra.HorizontalPixelRepetition;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Name = returnedTimingExtra.Name;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.RefreshRate = returnedTimingExtra.RefreshRate;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.TimingStandard = returnedTimingExtra.TimingStandard;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.VerticalAspect = returnedTimingExtra.VerticalAspect;*/
+
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Flags = returnedAdvTarget.Timing.Extra.Flags;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz = returnedAdvTarget.Timing.Extra.FrequencyInMillihertz;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalAspect = returnedAdvTarget.Timing.Extra.HorizontalAspect;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition = returnedAdvTarget.Timing.Extra.HorizontalPixelRepetition;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.Name = returnedAdvTarget.Timing.Extra.Name;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.RefreshRate = returnedAdvTarget.Timing.Extra.RefreshRate;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.TimingStandard = returnedAdvTarget.Timing.Extra.TimingStandard;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Extra.VerticalAspect = returnedAdvTarget.Timing.Extra.VerticalAspect;
+
+
+                                    // Next, we'll fill in the Timing info we want to return
+                                    /*PathInfos[i].TargetInfo[y].Details.Timing.HBorder = returnedTiming.HBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HFrontPorch = returnedTiming.HFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncPol = returnedTiming.HSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncWidth = returnedTiming.HSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HTotal = returnedTiming.HTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HVisible = returnedTiming.HVisible;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Pclk = returnedTiming.Pclk;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.ScanMode = returnedTiming.ScanMode;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VBorder = returnedTiming.VBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VFrontPorch = returnedTiming.VFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncPol = returnedTiming.VSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncWidth = returnedTiming.VSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VTotal = returnedTiming.VTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VVisible = returnedTiming.VVisible;*/
+
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HBorder = returnedAdvTarget.Timing.HBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HFrontPorch = returnedAdvTarget.Timing.HFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncPol = returnedAdvTarget.Timing.HSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HSyncWidth = returnedAdvTarget.Timing.HSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HTotal = returnedAdvTarget.Timing.HTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.HVisible = returnedAdvTarget.Timing.HVisible;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.Pclk = returnedAdvTarget.Timing.Pclk;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.ScanMode = returnedAdvTarget.Timing.ScanMode;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VBorder = returnedAdvTarget.Timing.VBorder;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VFrontPorch = returnedAdvTarget.Timing.VFrontPorch;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncPol = returnedAdvTarget.Timing.VSyncPol;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VSyncWidth = returnedAdvTarget.Timing.VSyncWidth;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VTotal = returnedAdvTarget.Timing.VTotal;
+                                    PathInfos[i].TargetInfo[y].Details.Timing.VVisible = returnedAdvTarget.Timing.VVisible;
+
+                                    // Next, we'll deal with the advanced details
+                                    PathInfos[i].TargetInfo[y].Details.ConnectorType = returnedAdvTarget.ConnectorType;
+                                    PathInfos[i].TargetInfo[y].Details.Flags = returnedAdvTarget.Flags;
+                                    PathInfos[i].TargetInfo[y].Details.RefreshRateInMillihertz = returnedAdvTarget.RefreshRateInMillihertz;
+                                    PathInfos[i].TargetInfo[y].Details.Rotation = returnedAdvTarget.Rotation;
+                                    PathInfos[i].TargetInfo[y].Details.Scaling = returnedAdvTarget.Scaling;
+                                    PathInfos[i].TargetInfo[y].Details.TimingOverride = returnedAdvTarget.TimingOverride;
+                                    PathInfos[i].TargetInfo[y].Details.TvFormat = returnedAdvTarget.TvFormat;
+                                    PathInfos[i].TargetInfo[y].Details.Version = returnedAdvTarget.Version;
+
+                                    // We'll finish with the TargetInfo
+                                    PathInfos[i].TargetInfo[y].DisplayId = returnedTargetInfo.DisplayId;
+                                    PathInfos[i].TargetInfo[y].WindowsCCDTargetId = returnedTargetInfo.WindowsCCDTargetId;
+
+
+                                    currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
+                                }
+
+                                // advance the buffer forwards to the next object
+                                currentPathInfoPointer = (IntPtr)((long)currentPathInfoPointer + Marshal.SizeOf(returnedPass2PathInfos[i]));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                    }
+                    // Try and remove the memory used
+                    pass2PathInfos = null;
+                }
+                finally
+                {
+                    if (memPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(memPointer);
+                    }
+
                 }
 
             }
@@ -3446,80 +5030,107 @@ namespace DisplayMagicianShared.NVIDIA
                 //                               targetInfoCount. If sourceModeInfo is needed allocate memory or it can be initialized to NULL.
                 // Build a new blank object for the second pass (when we have the pathInfoCount, but want the targetInfoCount  for each pathInfo)
                 // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
-                PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
-                // Prepare the struct for second pass duties
-                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                {
-                    NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceMode = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
-                    IntPtr sourceModeBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)));
-                    Marshal.StructureToPtr(sourceMode, sourceModeBuffer, true);
-                    PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_VER;
-                    PathInfos[x].SourceModeInfo = sourceModeBuffer;
-                    /*PathInfos[x].SourceModeInfo.Resolution = new NV_RESOLUTION();
-                    PathInfos[x].SourceModeInfo.Position = new NV_POSITION();
-                    //PathInfos[x].SourceModeInfo = null;
-                    PathInfos[x].TargetInfoCount = 0;
-                    PathInfos[x].TargetInfo = IntPtr.Zero;
-                    //!< This field is reserved. There is ongoing debate if we need this field.
-                    //!< Identifies sourceIds used by Windows. If all sourceIds are 0,
-                    //!< these will be computed automatically.
-                    PathInfos[x].SourceId = 0;
-                    PathInfos[x].Flags = 0;
-                    PathInfos[x].OSAdapterID = new NV_LUID();
-                    //PathInfos[x].OSAdapterID = IntPtr.Zero;*/
-                }
-                // Initialize unmanged memory to hold the unmanaged array of structs
-                int sizeOfOneStruct = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
-                int sizeOfAllStructs = sizeOfOneStruct * (int)PathInfoCount;
-                //int sizeOfOneStruct = Marshal.SizeOf(PathInfos);
-                pathInfoBuffer = Marshal.AllocCoTaskMem(sizeOfAllStructs);
-                // Also set another memory pointer to the same place so that we can do the memory copying item by item
-                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
-                currentPathInfoBuffer = pathInfoBuffer;
-                // Go through the array and copy things from managed code to unmanaged code
-                for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
-                {
-                    // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
-                    Marshal.StructureToPtr(PathInfos[x], currentPathInfoBuffer, true);
-                    // advance the buffer forwards to the next object
-                    currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer.ToInt64() + Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2)));
-                }
-            }
+                NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] pass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
 
+                int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
+                int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
 
-            if (DISP_GetDisplayConfigInternal != null)
-            {
-                // Use the unmanaged buffer in the unmanaged C call
-                status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoBuffer);
+                IntPtr pathInfoPointer = IntPtr.Zero;
+                IntPtr sourceModeInfoPointer = IntPtr.Zero;
 
-                if (status == NVAPI_STATUS.NVAPI_OK)
+                try
                 {
-                    // If everything worked, then copy the data back from the unmanaged array into the managed array
-                    // So that we can use it in C# land
-                    // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
-                    currentPathInfoBuffer = pathInfoBuffer;
-                    // Create a managed array to store the received information within
-                    PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
-                    // Go through the memory buffer item by item and copy the items into the managed array
-                    for (int i = 0; i < PathInfoCount; i++)
+                    pathInfoPointer = Marshal.AllocHGlobal(onePathInfoMemSize * (int)PathInfoCount);
+                    sourceModeInfoPointer = Marshal.AllocHGlobal(oneSourceModeMemSize * (int)PathInfoCount);
+                    // Also set another memory pointer to the same place so that we can do the memory copying item by item
+                    // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                    IntPtr currentPathInfoPointer = pathInfoPointer;
+                    IntPtr currentSourceModeInfoPointer = sourceModeInfoPointer;
+
+                    // Go through the array and copy things from managed code to unmanaged code
+                    for (Int32 x = 0; x < (Int32)PathInfoCount; x++)
                     {
-                        // build a structure in the array slot
-                        PathInfos[i] = new NV_DISPLAYCONFIG_PATH_INFO_V2();
-                        // fill the array slot structure with the data from the buffer
-                        PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V2)Marshal.PtrToStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
-                        // destroy the bit of memory we no longer need
-                        Marshal.DestroyStructure(currentPathInfoBuffer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
-                        // advance the buffer forwards to the next object
-                        currentPathInfoBuffer = (IntPtr)((long)currentPathInfoBuffer + Marshal.SizeOf(PathInfos[i]));
-                    }
-                }
-            }
-            else
-            {
-                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
-            }
+                        // Set up the fields in the path info
+                        pass2PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER;
+                        pass2PathInfos[x].TargetInfoCount = 0;
+                        pass2PathInfos[x].TargetInfo = IntPtr.Zero;
 
-            Marshal.FreeCoTaskMem(pathInfoBuffer);
+                        // Create a source mode info object and copy it over
+                        NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
+                        Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
+                        pass2PathInfos[x].SourceModeInfo = currentSourceModeInfoPointer;
+
+                        // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
+                        Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
+
+                        // advance the buffer forwards to the next object for each object
+                        //currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize + oneSourceModeMemSize);
+                        currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize);
+                        currentSourceModeInfoPointer = new IntPtr(currentSourceModeInfoPointer.ToInt64() + oneSourceModeMemSize);
+                    }
+
+                    if (DISP_GetDisplayConfigInternal != null)
+                    {
+                        // Use the unmanaged buffer in the unmanaged C call
+                        status = DISP_GetDisplayConfigInternal(ref PathInfoCount, pathInfoPointer);
+
+                        if (status == NVAPI_STATUS.NVAPI_OK)
+                        {
+                            // If everything worked, then copy the data back from the unmanaged array into the managed array
+                            // So that we can use it in C# land
+                            // Reset the memory pointer we're using for tracking where we are back to the start of the unmanaged memory buffer
+                            currentPathInfoPointer = pathInfoPointer;
+                            // Create a managed array to store the received information within
+                            PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2[PathInfoCount];
+                            NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] returnedPass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[PathInfoCount];
+                            // Go through the memory buffer item by item and copy the items into the managed array
+                            for (int i = 0; i < PathInfoCount; i++)
+                            {
+                                // fill the returned pass2 array slot structure with the data from the buffer
+                                // This lets us get the information and then copy it across to the one we want to return!
+                                returnedPass2PathInfos[i] = (NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL)Marshal.PtrToStructure(currentPathInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
+
+                                // Next copy the information across to the PathInfo we actually want to return
+                                PathInfos[i].SourceId = returnedPass2PathInfos[i].SourceId;
+                                PathInfos[i].Flags = returnedPass2PathInfos[i].Flags;
+                                PathInfos[i].OSAdapterID = returnedPass2PathInfos[i].OSAdapterID;
+                                PathInfos[i].TargetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[0];
+                                PathInfos[i].TargetInfoCount = returnedPass2PathInfos[i].TargetInfoCount;
+                                PathInfos[i].Version = returnedPass2PathInfos[i].Version;
+
+                                // And turn the memory pointer to NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 into an actual object and populate the object.
+                                PathInfos[i].SourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1)Marshal.PtrToStructure(returnedPass2PathInfos[i].SourceModeInfo, typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
+
+                                // destroy the bit of memory we no longer need
+                                //Marshal.DestroyStructure(currentPathInfoPointer, typeof(NV_DISPLAYCONFIG_PATH_INFO_V2));
+                                // advance the buffer forwards to the next object
+                                currentPathInfoPointer = (IntPtr)((long)currentPathInfoPointer + Marshal.SizeOf(returnedPass2PathInfos[i]));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                    }
+                    // Try and remove the memory used
+                    pass2PathInfos = null;
+                }
+                finally
+                {
+                    if (pathInfoPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(pathInfoPointer);
+                    }
+
+                    if (sourceModeInfoPointer != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(sourceModeInfoPointer);
+                    }
+
+
+                }
+
+            }
 
             return status;
         }
@@ -3553,6 +5164,188 @@ namespace DisplayMagicianShared.NVIDIA
 
             return status;
         }
+
+        // ******** IMPORTANT! This code has an error when attempting to perform the third pass as required by NVAPI documentation *********
+        // ******** FOr this reason I have disabled the code as I don't actually need to get it going. ******** 
+        // NVAPI_INTERFACE NvAPI_DISP_SetDisplayConfig	(	__in NvU32 	pathInfoCount, __in_ecount(pathInfoCount) NV_DISPLAYCONFIG_PATH_INFO* pathInfo,__in NvU32 flags )	
+        private delegate NVAPI_STATUS DISP_SetDisplayConfigDelegate(
+            [In] UInt32 pathInfoCount,
+            [In] IntPtr pathInfoBuffer,
+            [In] NV_DISPLAYCONFIG_FLAGS flags);
+        private static readonly DISP_SetDisplayConfigDelegate DISP_SetDisplayConfigInternal;
+
+        /// <summary>
+        /// DESCRIPTION: This API lets caller apply a global display configuration across multiple GPUs.
+        ///     If all sourceIds are zero, then NvAPI will pick up sourceId's based on the following criteria :
+        ///     If user provides sourceModeInfo then we are trying to assign 0th sourceId always to GDIPrimary.This is needed since active windows always moves along with 0th sourceId.
+        ///     For rest of the paths, we are incrementally assigning the sourceId per adapter basis.
+        ///     If user doesn't provide sourceModeInfo then NVAPI just picks up some default sourceId's in incremental order. Note : NVAPI will not intelligently choose the sourceIDs for any configs that does not need a modeset.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// </summary>
+        /// <param name="pathInfoCount"></param>
+        /// <param name="pathInfos"></param>
+        /// <param name="flags"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DISP_SetDisplayConfig(UInt32 pathInfoCount, NV_DISPLAYCONFIG_PATH_INFO_V2[] pathInfos, NV_DISPLAYCONFIG_FLAGS flags)
+        {
+            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_OK;
+            NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[] pass2PathInfos = new NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL[pathInfoCount];
+
+            int totalTargetInfoCount = 0;
+            for (Int32 x = 0; x < (Int32)pathInfoCount; x++)
+            {
+                totalTargetInfoCount += (int)pathInfos[x].TargetInfoCount;
+            }
+
+            // Get the size of the each object
+            int onePathInfoMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL));
+            int oneSourceModeMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1));
+            int onePathTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL));
+            int oneAdvTargetMemSize = Marshal.SizeOf(typeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL));
+            int oneTimingMemSize = Marshal.SizeOf(typeof(NV_TIMING_INTERNAL));
+            int oneTimingExtraMemSize = Marshal.SizeOf(typeof(NV_TIMING_EXTRA_INTERNAL));
+
+            // Figure out the size of the memory we need to allocate
+            int allPathInfoMemSize = onePathInfoMemSize * (int)pathInfoCount;
+            int allSourceModeMemSize = oneSourceModeMemSize * (int)pathInfoCount;
+            int allPathTargetMemSize = onePathTargetMemSize * totalTargetInfoCount;
+            int allAdvTargetMemSize = (oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize) * totalTargetInfoCount;
+            //int allTimingMemSize = oneTimingMemSize * totalTargetInfoCount;
+            //int allTimingExtraMemSize = oneTimingExtraMemSize * totalTargetInfoCount;
+            //int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize + allTimingExtraMemSize;
+            int allObjectsMemSize = allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize;
+
+            IntPtr memPointer = IntPtr.Zero;
+
+            try
+            {
+
+                // Allocate the memory we need
+                memPointer = Marshal.AllocHGlobal(allObjectsMemSize * 2);
+
+                // Figure out the address of the arrays we will use
+                IntPtr pathInfoPointer = memPointer;
+                IntPtr sourceModeInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize);
+                IntPtr targetInfoPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize);
+                IntPtr advTargetPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize);
+                //IntPtr timingPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize);
+                //IntPtr timingExtraPointer = new IntPtr(memPointer.ToInt64() + allPathInfoMemSize + allSourceModeMemSize + allPathTargetMemSize + allAdvTargetMemSize + allTimingMemSize);
+
+                // Figure out each memory pointer so that we can do the memory copying item by item
+                // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
+                IntPtr currentPathInfoPointer = new IntPtr(pathInfoPointer.ToInt64());
+                IntPtr currentSourceModeInfoPointer = new IntPtr(sourceModeInfoPointer.ToInt64());
+                IntPtr currentTargetInfoPointer = new IntPtr(targetInfoPointer.ToInt64());
+                IntPtr currentAdvTargetPointer = new IntPtr(advTargetPointer.ToInt64());
+                //IntPtr currentTimingPointer = new IntPtr(timingPointer.ToInt64());
+                //IntPtr currentTimingExtraPointer = new IntPtr(timingExtraPointer.ToInt64());
+
+                // Go through the array and copy things from managed code to unmanaged code
+                for (Int32 x = 0; x < (Int32)pathInfoCount; x++)
+                {
+                    // Create a target info array and copy it over
+                    NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[] targetInfoArray = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2_INTERNAL[pathInfos[x].TargetInfoCount];
+                    pass2PathInfos[x].TargetInfo = currentTargetInfoPointer;
+                    for (Int32 y = 0; y < (Int32)pathInfos[x].TargetInfoCount; y++)
+                    {
+
+                        NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1 advInfo = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
+
+                        advInfo.Timing.Extra.Flags = pathInfos[x].TargetInfo[y].Details.Timing.Extra.Flags;
+                        advInfo.Timing.Extra.FrequencyInMillihertz = pathInfos[x].TargetInfo[y].Details.Timing.Extra.FrequencyInMillihertz;
+                        advInfo.Timing.Extra.HorizontalAspect = pathInfos[x].TargetInfo[y].Details.Timing.Extra.HorizontalAspect;
+                        advInfo.Timing.Extra.HorizontalPixelRepetition = pathInfos[x].TargetInfo[y].Details.Timing.Extra.HorizontalPixelRepetition;
+                        advInfo.Timing.Extra.Name = pathInfos[x].TargetInfo[y].Details.Timing.Extra.Name;
+                        advInfo.Timing.Extra.RefreshRate = pathInfos[x].TargetInfo[y].Details.Timing.Extra.RefreshRate;
+                        advInfo.Timing.Extra.TimingStandard = pathInfos[x].TargetInfo[y].Details.Timing.Extra.TimingStandard;
+                        advInfo.Timing.Extra.VerticalAspect = pathInfos[x].TargetInfo[y].Details.Timing.Extra.VerticalAspect;
+
+                        advInfo.Timing.HBorder = pathInfos[x].TargetInfo[y].Details.Timing.HBorder;
+                        advInfo.Timing.HFrontPorch = pathInfos[x].TargetInfo[y].Details.Timing.HFrontPorch;
+                        advInfo.Timing.HSyncPol = pathInfos[x].TargetInfo[y].Details.Timing.HSyncPol;
+                        advInfo.Timing.HSyncWidth = pathInfos[x].TargetInfo[y].Details.Timing.HSyncWidth;
+                        advInfo.Timing.HTotal = pathInfos[x].TargetInfo[y].Details.Timing.HTotal;
+                        advInfo.Timing.HVisible = pathInfos[x].TargetInfo[y].Details.Timing.HVisible;
+                        advInfo.Timing.Pclk = pathInfos[x].TargetInfo[y].Details.Timing.Pclk;
+                        advInfo.Timing.ScanMode = pathInfos[x].TargetInfo[y].Details.Timing.ScanMode;
+                        advInfo.Timing.VBorder = pathInfos[x].TargetInfo[y].Details.Timing.VBorder;
+                        advInfo.Timing.VFrontPorch = pathInfos[x].TargetInfo[y].Details.Timing.VFrontPorch;
+                        advInfo.Timing.VSyncPol = pathInfos[x].TargetInfo[y].Details.Timing.VSyncPol;
+                        advInfo.Timing.VSyncWidth = pathInfos[x].TargetInfo[y].Details.Timing.VSyncWidth;
+                        advInfo.Timing.VTotal = pathInfos[x].TargetInfo[y].Details.Timing.VTotal;
+                        advInfo.Timing.VVisible = pathInfos[x].TargetInfo[y].Details.Timing.VVisible;
+
+                        advInfo.ConnectorType = pathInfos[x].TargetInfo[y].Details.ConnectorType;
+                        advInfo.Flags = pathInfos[x].TargetInfo[y].Details.Flags;
+                        advInfo.RefreshRateInMillihertz = pathInfos[x].TargetInfo[y].Details.RefreshRateInMillihertz;
+                        advInfo.Rotation = pathInfos[x].TargetInfo[y].Details.Rotation;
+                        advInfo.Scaling = pathInfos[x].TargetInfo[y].Details.Scaling;
+                        advInfo.TimingOverride = pathInfos[x].TargetInfo[y].Details.TimingOverride;
+                        advInfo.TvFormat = pathInfos[x].TargetInfo[y].Details.TvFormat;
+                        //advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_INTERNAL_VER;
+                        advInfo.Version = NVImport.NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1_VER;
+                        Marshal.StructureToPtr(advInfo, currentAdvTargetPointer, true);
+
+                        // Fill in this target info array item
+                        targetInfoArray[y].Details = currentAdvTargetPointer;
+                        targetInfoArray[y].DisplayId = pathInfos[x].TargetInfo[y].DisplayId;
+                        targetInfoArray[y].WindowsCCDTargetId = pathInfos[x].TargetInfo[y].WindowsCCDTargetId;
+                        Marshal.StructureToPtr(targetInfoArray[y], currentTargetInfoPointer, true);
+
+                        // Prepare the pointers for the next objects
+                        currentTargetInfoPointer = new IntPtr(currentTargetInfoPointer.ToInt64() + onePathTargetMemSize);
+                        currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize);
+                        currentAdvTargetPointer = new IntPtr(currentAdvTargetPointer.ToInt64() + oneAdvTargetMemSize + oneTimingMemSize + oneTimingExtraMemSize);
+                    }
+
+
+                    // Create a source mode info object and copy it over
+                    NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 sourceModeInfo = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
+                    sourceModeInfo.ColorFormat = pathInfos[x].SourceModeInfo.ColorFormat;
+                    sourceModeInfo.Flags = pathInfos[x].SourceModeInfo.Flags;
+                    sourceModeInfo.Position = (NV_POSITION)pathInfos[x].SourceModeInfo.Position.Clone();
+                    sourceModeInfo.Resolution = (NV_RESOLUTION)pathInfos[x].SourceModeInfo.Resolution.Clone();
+                    sourceModeInfo.SpanningOrientation = pathInfos[x].SourceModeInfo.SpanningOrientation;
+                    Marshal.StructureToPtr(sourceModeInfo, currentSourceModeInfoPointer, true);
+
+                    // Set up the fields in the path info
+                    pass2PathInfos[x].Version = NVImport.NV_DISPLAYCONFIG_PATH_INFO_V2_INTERNAL_VER;
+                    pass2PathInfos[x].TargetInfoCount = pathInfos[x].TargetInfoCount;
+                    pass2PathInfos[x].Flags = pathInfos[x].Flags;
+                    pass2PathInfos[x].OSAdapterID = pathInfos[x].OSAdapterID;
+                    pass2PathInfos[x].SourceId = pathInfos[x].SourceId;
+                    pass2PathInfos[x].SourceModeInfo = currentSourceModeInfoPointer;
+
+                    // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
+                    Marshal.StructureToPtr(pass2PathInfos[x], currentPathInfoPointer, true);
+
+                    // advance the buffer forwards to the next object for each object
+                    currentPathInfoPointer = new IntPtr(currentPathInfoPointer.ToInt64() + onePathInfoMemSize);
+                    currentSourceModeInfoPointer = new IntPtr(currentSourceModeInfoPointer.ToInt64() + oneSourceModeMemSize);
+                }
+
+                if (DISP_SetDisplayConfigInternal != null)
+                {
+                    // Use the unmanaged buffer in the unmanaged C call
+                    status = DISP_SetDisplayConfigInternal(pathInfoCount, pathInfoPointer, 0);
+                }
+                else
+                {
+                    status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                }
+            }
+            finally
+            {
+                if (memPointer != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(memPointer);
+                }
+
+            }
+
+            return status;
+        }
+
 
 
         // NVAPI_INTERFACE NvAPI_DISP_GetDisplayIdByDisplayName(const char *displayName, NvU32* displayId);
@@ -3657,7 +5450,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
             displaySettings = new NV_MOSAIC_DISPLAY_SETTING_V2[displayCount];
             // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr displaySettingsBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_MOSAIC_DISPLAY_SETTING_V2)) * (int)displayCount);
+            IntPtr displaySettingsBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_DISPLAY_SETTING_V2)) * (int)displayCount);
             // Also set another memory pointer to the same place so that we can do the memory copying item by item
             // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
             IntPtr currentDisplaySettingsBuffer = displaySettingsBuffer;
@@ -3706,7 +5499,7 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(displaySettingsBuffer);
+            Marshal.FreeHGlobal(displaySettingsBuffer);
 
             return status;
         }
@@ -3761,7 +5554,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
             GridTopologies = new NV_MOSAIC_GRID_TOPO_V2[GridCount];
             // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr gridTopologiesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)GridCount);
+            IntPtr gridTopologiesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)GridCount);
             // Also set another memory pointer to the same place so that we can do the memory copying item by item
             // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
             IntPtr currentGridTopologiesBuffer = gridTopologiesBuffer;
@@ -3811,7 +5604,7 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(gridTopologiesBuffer);
+            Marshal.FreeHGlobal(gridTopologiesBuffer);
 
             return status;
         }
@@ -3867,7 +5660,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Warning! - This function still has some errors with it. It errors with an NVAPI_INCOMPATIBLE_STRUCT_VERSION error. Still needs troubleshooting.
             NVAPI_STATUS status;
             // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr gridTopologiesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)gridCount);
+            IntPtr gridTopologiesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)gridCount);
             // Also set another memory pointer to the same place so that we can do the memory copying item by item
             // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
             IntPtr currentGridTopologiesBuffer = gridTopologiesBuffer;
@@ -3882,7 +5675,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
             topoStatuses = new NV_MOSAIC_DISPLAY_TOPO_STATUS_V1[gridCount];
             // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr topoStatusesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1)) * (int)gridCount);
+            IntPtr topoStatusesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_DISPLAY_TOPO_STATUS_V1)) * (int)gridCount);
             // Also set another memory pointer to the same place so that we can do the memory copying item by item
             // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
             IntPtr currentTopoStatusesBuffer = topoStatusesBuffer;
@@ -3930,8 +5723,8 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(gridTopologiesBuffer);
-            Marshal.FreeCoTaskMem(topoStatusesBuffer);
+            Marshal.FreeHGlobal(gridTopologiesBuffer);
+            Marshal.FreeHGlobal(topoStatusesBuffer);
 
             return status;
         }
@@ -3958,13 +5751,15 @@ namespace DisplayMagicianShared.NVIDIA
             NVAPI_STATUS status;
 
             // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr gridTopologiesBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)GridCount);
+            IntPtr gridTopologiesBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_MOSAIC_GRID_TOPO_V2)) * (int)GridCount);
             // Also set another memory pointer to the same place so that we can do the memory copying item by item
             // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
             IntPtr currentGridTopologiesBuffer = gridTopologiesBuffer;
             // Go through the array and copy things from managed code to unmanaged code
             for (Int32 x = 0; x < (Int32)GridCount; x++)
             {
+                GridTopologies[x].Version = NVImport.NV_MOSAIC_GRID_TOPO_V2_VER;
+
                 // Marshal a single gridtopology into unmanaged code ready for sending to the unmanaged NVAPI function
                 Marshal.StructureToPtr(GridTopologies[x], currentGridTopologiesBuffer, false);
                 // advance the buffer forwards to the next object
@@ -3982,7 +5777,7 @@ namespace DisplayMagicianShared.NVIDIA
                 status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
             }
 
-            Marshal.FreeCoTaskMem(gridTopologiesBuffer);
+            Marshal.FreeHGlobal(gridTopologiesBuffer);
 
             return status;
         }
@@ -4215,6 +6010,47 @@ namespace DisplayMagicianShared.NVIDIA
             return status;
         }
 
+        //NVAPI_INTERFACE 	NvAPI_DISP_GetAdaptiveSyncData (__in NvU32 displayId, __inout NV_GET_ADAPTIVE_SYNC_DATA *pAdaptiveSyncData)
+        private delegate NVAPI_STATUS DISP_GetAdaptiveSyncDataDelegate(
+            [In] UInt32 displayId,
+            [In, Out] ref NV_GET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData);
+        private static readonly DISP_GetAdaptiveSyncDataDelegate DISP_GetAdaptiveSyncDataInternal;
+        /// <summary>
+        ///  This function is used to get data for the Adaptive Sync Display.
+        /// </summary>
+        /// <param name="displayId"></param>
+        /// <param name="adaptiveSyncData"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DISP_GetAdaptiveSyncData(UInt32 displayId, ref NV_GET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData)
+        {
+            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_ERROR;
+            if (DISP_GetAdaptiveSyncDataInternal != null) { status = DISP_GetAdaptiveSyncDataInternal(displayId, ref adaptiveSyncData); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE 	NvAPI_DISP_SetAdaptiveSyncData (__in NvU32 displayId, __in NV_SET_ADAPTIVE_SYNC_DATA *pAdaptiveSyncData)
+        private delegate NVAPI_STATUS DISP_SetAdaptiveSyncDataDelegate(
+            [In] UInt32 displayId,
+            [In] ref NV_SET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData);
+        private static readonly DISP_SetAdaptiveSyncDataDelegate DISP_SetAdaptiveSyncDataInternal;
+        /// <summary>
+        ///  This function is used to set data for Adaptive Sync Display.
+        /// </summary>
+        /// <param name="displayId"></param>
+        /// <param name="adaptiveSyncData"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DISP_SetAdaptiveSyncData(UInt32 displayId, ref NV_SET_ADAPTIVE_SYNC_DATA_V1 adaptiveSyncData)
+        {
+            NVAPI_STATUS status = NVAPI_STATUS.NVAPI_ERROR;
+            if (DISP_SetAdaptiveSyncDataInternal != null) { status = DISP_SetAdaptiveSyncDataInternal(displayId, ref adaptiveSyncData); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
+
+
         //NVAPI_INTERFACE NvAPI_DISP_GetGDIPrimaryDisplayId(NvU32* displayId);
         private delegate NVAPI_STATUS DISP_GetGDIPrimaryDisplayIdDelegate(
             [Out] out UInt32 displayId);
@@ -4264,7 +6100,7 @@ namespace DisplayMagicianShared.NVIDIA
             // Build a managed structure for us to use as a data source for another object that the unmanaged NVAPI C library can use
             displayIds = new NV_GPU_DISPLAYIDS_V2[displayCount];
             // Initialize unmanged memory to hold the unmanaged array of structs
-            IntPtr displayIdBuffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(NV_GPU_DISPLAYIDS_V2)) * (int)displayCount);
+            IntPtr displayIdBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NV_GPU_DISPLAYIDS_V2)) * (int)displayCount);
             // Also set another memory pointer to the same place so that we can do the memory copying item by item
             // as we have to do it ourselves (there isn't an easy to use Marshal equivalent)
             IntPtr currentDisplayIdBuffer = displayIdBuffer;
@@ -4305,7 +6141,7 @@ namespace DisplayMagicianShared.NVIDIA
                     }
                 }
                 // Destroy the unmanaged array so we don't have a memory leak
-                Marshal.FreeCoTaskMem(displayIdBuffer);
+                Marshal.FreeHGlobal(displayIdBuffer);
 
             }
             else
@@ -4582,5 +6418,682 @@ namespace DisplayMagicianShared.NVIDIA
 
             return status;
         }
+
+        //NVAPI_INTERFACE NvAPI_GPU_GetLogicalGpuInfo(__in NvLogicalGpuHandle hLogicalGpu, __inout NV_LOGICAL_GPU_DATA * pLogicalGpuData)
+        private delegate NVAPI_STATUS GPU_GetLogicalGpuInfoDelegate(
+            [In] LogicalGpuHandle gpuHandle,
+            [In][Out] ref NV_LOGICAL_GPU_DATA_V1 logicalGPUData);
+        private static readonly GPU_GetLogicalGpuInfoDelegate GPU_GetLogicalGpuInfoInternal;
+        /// <summary>
+        /// This function is used to query Logical GPU information.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="gpuHandle"></param>
+        /// <param name="logicalGPUData"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_GPU_GetLogicalGpuInfo(LogicalGpuHandle gpuHandle, ref NV_LOGICAL_GPU_DATA_V1 logicalGPUData)
+        {
+            NVAPI_STATUS status;
+
+            logicalGPUData = new NV_LOGICAL_GPU_DATA_V1();
+            logicalGPUData.Version = NVImport.NV_LOGICAL_GPU_DATA_V1_VER;
+            logicalGPUData.OSAdapterId = IntPtr.Zero;
+            logicalGPUData.PhysicalGPUHandles = new PhysicalGpuHandle[(int)NVImport.NVAPI_MAX_PHYSICAL_GPUS];
+
+            if (GPU_GetEDIDInternal != null) { status = GPU_GetLogicalGpuInfoInternal(gpuHandle, ref logicalGPUData); }
+            else { status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND; }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_GetLogicalGPUFromPhysicalGPU(NvPhysicalGpuHandle hPhysicalGPU, NvLogicalGpuHandle* pLogicalGPU)
+        private delegate NVAPI_STATUS GetLogicalGPUFromPhysicalGPUDelegate(
+            [In] PhysicalGpuHandle physicalGPUHandle,
+            [Out] out LogicalGpuHandle logicalGPUHandle);
+        private static readonly GetLogicalGPUFromPhysicalGPUDelegate GetLogicalGPUFromPhysicalGPUInternal;
+        /// <summary>
+        /// This function is used to query Logical GPU information.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="physicalGPUHandle"></param>
+        /// <param name="logicalGPUHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_GetLogicalGPUFromPhysicalGPU(PhysicalGpuHandle physicalGPUHandle, out LogicalGpuHandle logicalGPUHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (GetLogicalGPUFromPhysicalGPUInternal != null)
+            {
+                status = GetLogicalGPUFromPhysicalGPUInternal(physicalGPUHandle, out LogicalGpuHandle lgpu);
+                logicalGPUHandle = lgpu;
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                logicalGPUHandle = new LogicalGpuHandle();
+            }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_DRS_CreateSession (NvDRSSessionHandle* phSession)	
+        private delegate NVAPI_STATUS DRS_CreateSessionDelegate(
+            [Out] out NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_CreateSessionDelegate DRS_CreateSessionInternal;
+        /// <summary>
+        /// This API allocates memory and initializes the session.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_CreateSession(out NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_CreateSessionInternal != null)
+            {
+                status = DRS_CreateSessionInternal(out NvDRSSessionHandle drsSession);
+                drsSessionHandle = drsSession;
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSessionHandle = new NvDRSSessionHandle();
+            }
+
+            return status;
+        }
+
+
+        //NVAPI_INTERFACE NvAPI_DRS_DestroySession (NvDRSSessionHandle* phSession)	
+        private delegate NVAPI_STATUS DRS_DestroySessionDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_DestroySessionDelegate DRS_DestroySessionInternal;
+        /// <summary>
+        /// This API frees the allocation: cleanup of NvDrsSession.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_DestroySession(NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_DestroySessionInternal != null)
+            {
+                status = DRS_DestroySessionInternal(drsSessionHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_DRS_LoadSettings(NvDRSSessionHandle hSession);
+        private delegate NVAPI_STATUS DRS_LoadSettingsDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_LoadSettingsDelegate DRS_LoadSettingsInternal;
+        /// <summary>
+        /// This API loads and parses the settings data.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_LoadSettings(NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_LoadSettingsInternal != null)
+            {
+                status = DRS_LoadSettingsInternal(drsSessionHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        //NVAPI_INTERFACE NvAPI_DRS_SaveSettings(NvDRSSessionHandle hSession);
+        private delegate NVAPI_STATUS DRS_SaveSettingsDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle);
+        private static readonly DRS_SaveSettingsDelegate DRS_SaveSettingsInternal;
+        /// <summary>
+        /// This API saves the settings data to the system.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SaveSettings(NvDRSSessionHandle drsSessionHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SaveSettingsInternal != null)
+            {
+                status = DRS_SaveSettingsInternal(drsSessionHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle* phProfile )
+        private delegate NVAPI_STATUS DRS_GetBaseProfileDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [Out] out NvDRSProfileHandle drsProfileHandle);
+        private static readonly DRS_GetBaseProfileDelegate DRS_GetBaseProfileInternal;
+        /// <summary>
+        /// This API returns the handle to the current global profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetBaseProfile(NvDRSSessionHandle drsSessionHandle, out NvDRSProfileHandle drsProfileHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetBaseProfileInternal != null)
+            {
+                status = DRS_GetBaseProfileInternal(drsSessionHandle, out drsProfileHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileHandle = new NvDRSProfileHandle();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle* phProfile )
+        private delegate NVAPI_STATUS DRS_GetCurrentGlobalProfileDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [Out] out NvDRSProfileHandle drsProfileHandle);
+        private static readonly DRS_GetCurrentGlobalProfileDelegate DRS_GetCurrentGlobalProfileInternal;
+        /// <summary>
+        /// This API returns the handle to the current global profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetCurrentGlobalProfile(NvDRSSessionHandle drsSessionHandle, out NvDRSProfileHandle drsProfileHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetCurrentGlobalProfileInternal != null)
+            {
+                status = DRS_GetCurrentGlobalProfileInternal(drsSessionHandle, out drsProfileHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileHandle = new NvDRSProfileHandle();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_SetCurrentGlobalProfile(NvDRSSessionHandle hSession, NvAPI_UnicodeString wszGlobalProfileName)		
+        private delegate NVAPI_STATUS DRS_SetCurrentGlobalProfileDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] string drsProfileName);
+        private static readonly DRS_SetCurrentGlobalProfileDelegate DRS_SetCurrentGlobalProfileInternal;
+        /// <summary>
+        /// This API returns the handle to the current global profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileName"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SetCurrentGlobalProfile(NvDRSSessionHandle drsSessionHandle, string drsProfileName)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SetCurrentGlobalProfileInternal != null)
+            {
+                status = DRS_SetCurrentGlobalProfileInternal(drsSessionHandle, drsProfileName);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetProfileInfo(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_PROFILE* pProfileInfo )
+        private delegate NVAPI_STATUS DRS_GetProfileInfoDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In][Out] ref NVDRS_PROFILE_V1 drsProfileInfo);
+        private static readonly DRS_GetProfileInfoDelegate DRS_GetProfileInfoInternal;
+        /// <summary>
+        /// This API gets information about the given profile. User needs to specify the name of the Profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsProfileInfo"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetProfileInfo(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, ref NVDRS_PROFILE_V1 drsProfileInfo)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetProfileInfoInternal != null)
+            {
+                drsProfileInfo.Version = NVImport.NVDRS_PROFILE_V1_VER;
+                status = DRS_GetProfileInfoInternal(drsSessionHandle, drsProfileHandle, ref drsProfileInfo);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileInfo = new NVDRS_PROFILE_V1();
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_SetProfileInfo(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_PROFILE* pProfileInfo )
+        private delegate NVAPI_STATUS DRS_SetProfileInfoDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] NVDRS_PROFILE_V1 drsProfileInfo);
+        private static readonly DRS_SetProfileInfoDelegate DRS_SetProfileInfoInternal;
+        /// <summary>
+        /// This API gets information about the given profile. User needs to specify the name of the Profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsProfileInfo"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SetProfileInfo(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, NVDRS_PROFILE_V1 drsProfileInfo)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SetProfileInfoInternal != null)
+            {
+                status = DRS_SetProfileInfoInternal(drsSessionHandle, drsProfileHandle, drsProfileInfo);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumProfiles(NvDRSSessionHandle hSession, NvU32 index, NvDRSProfileHandle* phProfile)
+        private delegate NVAPI_STATUS DRS_EnumProfilesDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] UInt32 drsIndex,
+            [Out] out NvDRSProfileHandle drsProfileHandle);
+        private static readonly DRS_EnumProfilesDelegate DRS_EnumProfilesInternal;
+        /// <summary>
+        /// This API enumerates through all the profiles in the session.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsIndex"></param>
+        /// <param name="drsProfileInfo"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumProfiles(NvDRSSessionHandle drsSessionHandle, UInt32 drsIndex, out NvDRSProfileHandle drsProfileHandle)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumProfilesInternal != null)
+            {
+                status = DRS_EnumProfilesInternal(drsSessionHandle, drsIndex, out drsProfileHandle);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsProfileHandle = new NvDRSProfileHandle();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetNumProfiles(NvDRSSessionHandle hSession, NvU32 *numProfiles);
+        private delegate NVAPI_STATUS DRS_GetNumProfilesDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [Out] out UInt32 drsNumProfiles);
+        private static readonly DRS_GetNumProfilesDelegate DRS_GetNumProfilesInternal;
+        /// <summary>
+        /// This API obtains the number of profiles in the current session object.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsNumProfiles"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetNumProfiles(NvDRSSessionHandle drsSessionHandle, out UInt32 drsNumProfiles)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetNumProfilesInternal != null)
+            {
+                status = DRS_GetNumProfilesInternal(drsSessionHandle, out drsNumProfiles);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsNumProfiles = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_SetSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NVDRS_SETTING* pSetting)
+        private delegate NVAPI_STATUS DRS_SetSettingDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] NVDRS_SETTING_V1 drsSetting);
+        private static readonly DRS_SetSettingDelegate DRS_SetSettingInternal;
+        /// <summary>
+        /// This API adds/modifies a setting to a profile.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsSetting"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_SetSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, NVDRS_SETTING_V1 drsSetting)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_SetSettingInternal != null)
+            {
+                status = DRS_SetSettingInternal(drsSessionHandle, drsProfileHandle, drsSetting);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSetting = new NVDRS_SETTING_V1();
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 settingId, NVDRS_SETTING* pSetting)
+        private delegate NVAPI_STATUS DRS_GetSettingDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] UInt32 drsSettingId,
+            [Out] out NVDRS_SETTING_V1 drsSetting);
+        private static readonly DRS_GetSettingDelegate DRS_GetSettingInternal;
+        /// <summary>
+        /// This API gets information about the given setting.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsSetting"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsSettingId, out NVDRS_SETTING_V1 drsSetting)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetSettingInternal != null)
+            {
+                status = DRS_GetSettingInternal(drsSessionHandle, drsProfileHandle, drsSettingId, out drsSetting);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSetting = new NVDRS_SETTING_V1();
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumSettings(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 startIndex, NvU32* settingsCount, NVDRS_SETTING* pSetting)
+        private delegate NVAPI_STATUS DRS_EnumSettingsDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] UInt32 drsStartIndex,
+            [In][Out] ref UInt32 drsSettingCount,
+            [In][Out] NVDRS_SETTING_V1[] drsSettings);
+        private static readonly DRS_EnumSettingsDelegate DRS_EnumSettingsInternal;
+        /// <summary>
+        /// This API enumerates all the settings of a given profile from startIndex to the maximum length.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <param name="drsStartIndex"></param>
+        /// <param name="drsSettingCount"></param>
+        /// <param name="drsSettings"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumSettings(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsStartIndex, ref UInt32 drsSettingCount, ref NVDRS_SETTING_V1[] drsSettings)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumSettingsInternal != null)
+            {
+                if (drsSettingCount == 0)
+                {
+                    drsSettingCount = NVImport.NVAPI_SETTING_MAX_VALUES;
+                }
+                NVDRS_SETTING_V1[] drsSettingsInternal = new NVDRS_SETTING_V1[drsSettingCount];
+                for (int i = 0; i < drsSettingCount; i++)
+                {
+                    drsSettingsInternal[i].InternalVersion = NVImport.NVDRS_SETTING_V1_VER;
+
+                }
+                status = DRS_EnumSettingsInternal(drsSessionHandle, drsProfileHandle, drsStartIndex, ref drsSettingCount, drsSettingsInternal);
+                drsSettings = new NVDRS_SETTING_V1[drsSettingCount];
+                Array.Copy(drsSettingsInternal, drsSettings, drsSettingCount);
+                /*for (int i = 0; i < drsSettingCount; i++)
+                {
+                    drsSettings[i] = drsSettingsInternal[i].Clone();
+                }*/
+
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettings = new NVDRS_SETTING_V1[0];
+                drsSettingCount = 0;
+            }
+
+            return status;
+        }
+
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumAvailableSettingIds(NvU32* pSettingIds, NvU32* pMaxCount)
+        private delegate NVAPI_STATUS DRS_EnumAvailableSettingIdsDelegate(
+            [In][Out][MarshalAs(UnmanagedType.SysUInt, SizeConst = (int)Int32.MaxValue)] UInt32[] drsSettingsIds,
+            [In][Out] ref UInt32 drsSettingCount);
+        private static readonly DRS_EnumAvailableSettingIdsDelegate DRS_EnumAvailableSettingIdsInternal;
+        /// <summary>
+        /// This API enumerates all the Ids of all the settings recognized by NVAPI.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingsIds"></param>
+        /// <param name="drsSettingCount"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumAvailableSettingIds(ref UInt32[] drsSettingsIds, ref UInt32 drsSettingCount)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumAvailableSettingIdsInternal != null)
+            {
+                UInt32 drsSettingCountInternal = Int32.MaxValue;
+                UInt32[] drsSettingIdsInternal = new UInt32[drsSettingCountInternal];
+                status = DRS_EnumAvailableSettingIdsInternal(drsSettingIdsInternal, ref drsSettingCountInternal);
+                drsSettingCount = drsSettingCountInternal;
+                drsSettingsIds = new UInt32[drsSettingCount];
+                Array.Copy(drsSettingIdsInternal, drsSettingsIds, drsSettingCount);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingsIds = new UInt32[0];
+                drsSettingCount = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_EnumAvailableSettingValues(NvU32 settingId, NvU32* pMaxNumValues, NVDRS_SETTING_VALUES* pSettingValues)
+        private delegate NVAPI_STATUS DRS_EnumAvailableSettingValuesDelegate(
+            [In] UInt32 drsSettingId,
+            [In, Out] ref UInt32 drsMaxNumValues,
+            [In][Out] NVDRS_SETTING_VALUES_V1[] drsSettingsValues);
+        private static readonly DRS_EnumAvailableSettingValuesDelegate DRS_EnumAvailableSettingValuesInternal;
+        /// <summary>
+        /// This API enumerates all available setting values for a given setting.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingId"></param>
+        /// <param name="drsMaxNumValues"></param>
+        /// <param name="drsSettingsValues"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_EnumAvailableSettingValues(UInt32 drsSettingId, ref UInt32 drsMaxNumValues, ref NVDRS_SETTING_VALUES_V1[] drsSettingsValues)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_EnumAvailableSettingValuesInternal != null)
+            {
+                status = DRS_EnumAvailableSettingValuesInternal(drsSettingId, ref drsMaxNumValues, drsSettingsValues);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingsValues = new NVDRS_SETTING_VALUES_V1[0];
+                drsMaxNumValues = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetSettingIdFromName(NvAPI_UnicodeString settingName, NvU32* pSettingId)
+        private delegate NVAPI_STATUS DRS_GetSettingIdFromNameDelegate(
+            [In] string drsSettingName,
+            [Out] out UInt32 drsSettingId);
+        private static readonly DRS_GetSettingIdFromNameDelegate DRS_GetSettingIdFromNameInternal;
+        /// <summary>
+        /// This API gets the binary ID of a setting given the setting name.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingName"></param>
+        /// <param name="drsSettingId"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetSettingIdFromName(string drsSettingName, out UInt32 drsSettingId)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetSettingIdFromNameInternal != null)
+            {
+                status = DRS_GetSettingIdFromNameInternal(drsSettingName, out drsSettingId);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingId = 0;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_GetSettingNameFromId(NvU32 settingId, NvAPI_UnicodeString* pSettingName)
+        private delegate NVAPI_STATUS DRS_GetSettingNameFromIdDelegate(
+            [In] UInt32 drsSettingId,
+            [Out] out string drsSettingName);
+        private static readonly DRS_GetSettingNameFromIdDelegate DRS_GetSettingNameFromIdInternal;
+        /// <summary>
+        /// This API gets the setting name given the binary ID.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSettingId"></param>
+        /// <param name="drsSettingName"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_GetSettingNameFromId(UInt32 drsSettingId, out string drsSettingName)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_GetSettingNameFromIdInternal != null)
+            {
+                status = DRS_GetSettingNameFromIdInternal(drsSettingId, out drsSettingName);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+                drsSettingName = "";
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_RestoreProfileDefaultSetting(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile, NvU32 settingId);
+        private delegate NVAPI_STATUS DRS_RestoreProfileDefaultSettingDelegate(
+            [In] NvDRSSessionHandle drsSessionHandle,
+            [In] NvDRSProfileHandle drsProfileHandle,
+            [In] UInt32 drsSettingId);
+        private static readonly DRS_RestoreProfileDefaultSettingDelegate DRS_RestoreProfileDefaultSettingInternal;
+        /// <summary>
+        /// This API gets information about the given setting.
+        /// SUPPORTED OS: Windows 7 and higher
+        /// <param name="drsSessionHandle"></param>
+        /// <param name="drsProfileHandle"></param>
+        /// <returns></returns>
+        public static NVAPI_STATUS NvAPI_DRS_RestoreProfileDefaultSetting(NvDRSSessionHandle drsSessionHandle, NvDRSProfileHandle drsProfileHandle, UInt32 drsSettingId)
+        {
+            NVAPI_STATUS status;
+
+            if (DRS_RestoreProfileDefaultSettingInternal != null)
+            {
+                status = DRS_RestoreProfileDefaultSettingInternal(drsSessionHandle, drsProfileHandle, drsSettingId);
+            }
+            else
+            {
+                status = NVAPI_STATUS.NVAPI_FUNCTION_NOT_FOUND;
+            }
+
+            return status;
+        }
+
+        // NVAPI_INTERFACE NvAPI_DRS_CreateProfile(NvDRSSessionHandle hSession, NVDRS_PROFILE* pProfileInfo, NvDRSProfileHandle* phProfile)
+
+        // NVAPI_INTERFACE NvAPI_DRS_DeleteProfile(NvDRSSessionHandle hSession, NvDRSProfileHandle hProfile)
+
+        public static bool EqualButDifferentOrder<T>(IList<T> list1, IList<T> list2)
+        {
+
+            if (list1.Count != list2.Count)
+            {
+                return false;
+            }
+
+            // Now we need to go through the list1, checking that all it's items are in list2
+            foreach (T item1 in list1)
+            {
+                bool foundIt = false;
+                foreach (T item2 in list2)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            // Now we need to go through the list2, checking that all it's items are in list1
+            foreach (T item2 in list2)
+            {
+                bool foundIt = false;
+                foreach (T item1 in list1)
+                {
+                    if (item1.Equals(item2))
+                    {
+                        foundIt = true;
+                        break;
+                    }
+                }
+                if (!foundIt)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
     }
 }
