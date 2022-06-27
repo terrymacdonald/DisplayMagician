@@ -169,6 +169,10 @@ namespace DisplayMagicianShared.Windows
 
             SharedLogger.logger.Trace("WinLibrary/WinLibrary: Intialising Windows CCD library interface");
             _initialised = true;
+
+            // Set the DPI awareness for the process this thread is running within so that the DPI calls return the right values at the right times
+            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+
             _activeDisplayConfig = GetActiveConfig();
             _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
         }
@@ -564,9 +568,13 @@ namespace DisplayMagicianShared.Windows
                 }
             }
 
-            // Now cycle through the paths and grab the HDR state information
+            // Now cycle through the paths and grab the state information we need
             // and map the adapter name to adapter id
             // and populate the display source information
+
+            // Set the DPI awareness for the process this thread is running within so that the DPI calls return the right values
+            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
             List<uint> targetPathIdsToChange = new List<uint>();
             List<uint> targetModeIdsToChange = new List<uint>();
             List<uint> targetIdsFound = new List<uint>();
@@ -603,8 +611,18 @@ namespace DisplayMagicianShared.Windows
                 err = CCDImport.DisplayConfigGetDeviceInfo(ref displayScalingInfo);
                 if (err == WIN32STATUS.ERROR_SUCCESS)
                 {
-                    SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found DPI value for source {paths[i].SourceInfo.Id} is {CCDImport.DPI_VALUES[displayScalingInfo.CurrrentScaleRel]}%.");
-                    sourceDpiScalingRel = displayScalingInfo.CurrrentScaleRel;
+                    // Now we need to check if there is a strange value returned by the displayScalingInfo object. If so we reset it to 100% DPI
+                    if (displayScalingInfo.CurrrentScaleRel >= 0 && displayScalingInfo.CurrrentScaleRel < CCDImport.DPI_VALUES.Length)
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found DPI value for source {paths[i].SourceInfo.Id} is {CCDImport.DPI_VALUES[displayScalingInfo.CurrrentScaleRel]}%.");
+                        sourceDpiScalingRel = displayScalingInfo.CurrrentScaleRel;
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Found DPI value for source {paths[i].SourceInfo.Id} is out of range. Windows CCD returned an abnormal value. Using the default Windows DPI Scaling value instead of 100%");
+                        sourceDpiScalingRel = 0;
+                    }
+
                 }
                 else
                 {
@@ -773,6 +791,9 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Skipping getting HDR and SDR White levels information as display {paths[i].TargetInfo.Id} uses a {paths[i].TargetInfo.OutputTechnology} connector that doesn't support HDR.");
                 }
             }
+
+            // Set the DPI awareness for the process this thread is running within so that the DPI calls return the right values
+            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
             // Get all the DisplayAdapters currently in the system
             // This will be used for windows to translate the adapter details beween reboots
@@ -1510,6 +1531,7 @@ namespace DisplayMagicianShared.Windows
             System.Threading.Thread.Sleep(100);
 
             SharedLogger.logger.Trace($"WinLibrary/SetWindowsDisplayConfig: Attempting to set Windows DPI Scaling setting for display sources.");
+            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
             foreach (var displaySourceEntry in displayConfig.DisplaySources)
             {
                 // We only need to set the source on the first display source
@@ -1530,6 +1552,7 @@ namespace DisplayMagicianShared.Windows
                     SharedLogger.logger.Warn($"WinLibrary/SetWindowsDisplayConfig: WARNING - Unable to set DPI value for source {displaySourceEntry.Value[0].SourceId} to {CCDImport.DPI_VALUES[displayScalingInfo.ScaleRel]}%.");
                 }
             }
+            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
 
             // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting

@@ -19,6 +19,16 @@ namespace DisplayMagicianShared.Windows
         ERROR_BAD_CONFIGURATION = 1610,
     }
 
+    public enum DPI_AWARENESS_CONTEXT : Int32
+    {
+        DPI_AWARENESS_CONTEXT_UNDEFINED = 0, 
+        DPI_AWARENESS_CONTEXT_UNAWARE = -1, //' DPI unaware. This window does not scale for DPI changes and is always assumed to have a scale factor of 100% (96 DPI). It will be automatically scaled by the system on any other DPI setting.
+        DPI_AWARENESS_CONTEXT_SYSTEM_AWARE = -2, //' System DPI aware. This window does not scale for DPI changes. It will query for the DPI once and use that value for the lifetime of the process. If the DPI changes, the process will not adjust to the new DPI value. It will be automatically scaled up or down by the system when the DPI changes from the system value.
+        DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE = -3, // ' Per monitor DPI aware. This window checks for the DPI when it is created and adjusts the scale factor whenever the DPI changes. These processes are not automatically scaled by the system.
+        DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4, //' Also known as Per Monitor v2. An advancement over the original per-monitor DPI awareness mode, which enables applications to access new DPI-related scaling behaviors on a per top-level window basis.
+        DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED = -5, //' DPI unaware with improved quality of GDI-based content. This mode behaves similarly to DPI_AWARENESS_CONTEXT_UNAWARE, but also enables the system to automatically improve the rendering quality of text and other GDI-based primitives when the window is displayed on a high-DPI monitor.
+    };
+
     public enum DISPLAYCONFIG_DEVICE_INFO_TYPE : Int32
     {
         // MS Private API (which seems to use negative numbers)
@@ -1167,5 +1177,11 @@ namespace DisplayMagicianShared.Windows
         // SetDisplayConfig
         [DllImport("user32")]
         public static extern WIN32STATUS SetDisplayConfig([In] uint numPathArrayElements, [In] DISPLAYCONFIG_PATH_INFO[] pathArray, [In] uint numModeInfoArrayElements, [In] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, [In] SDC flags);
+
+        [DllImport("user32")]
+        public static extern bool SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT value);
+
+
+
     }
 }
