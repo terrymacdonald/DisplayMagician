@@ -236,6 +236,13 @@ namespace DisplayMagician
         #endregion
 
         #region Class Methods
+
+        ~ProgramSettings()
+        {
+            // Save the program settings on program exit
+            SaveSettings();
+        }
+
         public static ProgramSettings LoadSettings()
         {
             // NOTE: This function gets called before NLog has setup the logger, meaning
