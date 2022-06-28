@@ -668,7 +668,7 @@ namespace DisplayMagician.UIForms
                         NLog.LogManager.ResumeLogging();
 
                         SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Finished creating support zip file at {zipFilePath}.");
-                        MessageBox.Show($"Created DisplayMagician Support ZIP file {zipFilePath}. You can now attach this file to your GitHub issue.");
+                        MessageBox.Show($"Created DisplayMagician Support ZIP file {zipFilePath}. You can now attach this file to your GitHub issue using your Web Browser.");
                     }
                 }
             }
