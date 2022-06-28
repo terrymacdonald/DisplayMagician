@@ -1482,7 +1482,7 @@ namespace DisplayMagicianShared
                     catch (Exception ex)
                     {
                         // Guess that it is at the bottom (90% correct)
-                        SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                         screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                     }
 

@@ -262,7 +262,7 @@ namespace DisplayMagician {
             {
                 FileName = AppLogFilename,
                 DeleteOldFileOnStartup = true,
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}${onexception:EXCEPTION OCCURRED\\:${exception:format=type,message,method:maxInnerExceptionLevel=5:innerFormat=shortType,message,method}}"
+                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
             };
 
             // Create a logging rule to use the log file target
@@ -275,7 +275,7 @@ namespace DisplayMagician {
             // Create the log console target
             var logconsole = new NLog.Targets.ColoredConsoleTarget("logconsole")
             {
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}${onexception:EXCEPTION OCCURRED\\:${exception:format=type,message,method:maxInnerExceptionLevel=5:innerFormat=shortType,message,method}}"
+                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
             };
 
             // Create a logging rule to use the log console target
