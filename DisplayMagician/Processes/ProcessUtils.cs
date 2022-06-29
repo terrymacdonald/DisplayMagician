@@ -678,6 +678,33 @@ namespace DisplayMagician.Processes
             }
         }
 
+        public static ProcessPriority TranslateNameToPriority(string processPriorityName)
+        {
+            ProcessPriority wantedPriority = ProcessPriority.Normal;
+            switch (processPriorityName.ToLowerInvariant())
+            {
+                case "high":
+                    wantedPriority = ProcessPriority.High;
+                    break;
+                case "abovenormal":
+                    wantedPriority = ProcessPriority.AboveNormal;
+                    break;
+                case "normal":
+                    wantedPriority = ProcessPriority.Normal;
+                    break;
+                case "belownormal":
+                    wantedPriority = ProcessPriority.BelowNormal;
+                    break;
+                case "idle":
+                    wantedPriority = ProcessPriority.Idle;
+                    break;
+                default:
+                    wantedPriority = ProcessPriority.Normal;
+                    break;
+            }
+            return wantedPriority;
+        }
+
         public static ProcessPriorityClass TranslatePriorityToClass(ProcessPriority processPriorityClass)
         {
             ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
@@ -731,7 +758,7 @@ namespace DisplayMagician.Processes
             }
             return wantedPriorityClass;
         }
-
+        
     }
 
 }       
