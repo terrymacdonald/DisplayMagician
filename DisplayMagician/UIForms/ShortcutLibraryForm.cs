@@ -514,7 +514,9 @@ namespace DisplayMagician.UIForms
 
             // Bring the window back to the front
             Visible = true;
+            CenterToParent();
             Activate();
+            BringToFront();
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
