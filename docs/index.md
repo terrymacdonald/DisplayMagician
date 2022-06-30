@@ -51,6 +51,7 @@ DisplayMagician lets you set up the following information for each game or appli
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
 * Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display)
+* Supports Windows DPI Scaling, setting Refresh Rates and HDR
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
 
 ## Planned features
@@ -61,7 +62,7 @@ DisplayMagician lets you set up the following information for each game or appli
 
 ## Requirements
 
-* DisplayMagician only support 64-bit Windows 10
+* DisplayMagician only supports 64-bit Windows 10 (version 1809 or later) and 64-bit Windows 11
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
 
@@ -83,6 +84,8 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 <p align="center"><img src="https://github.com/terrymacdonald/DisplayMagician/raw/main/READMEAssets/DisplayMagicianShellExtension.png"/></p>
 
 ### Initial Setup:
+
+If you prefer to see a video on how to setup DisplayMagician, check out [this awesome 'How to Setup DisplayMagician' video from JDM PC Gaming](https://www.youtube.com/watch?v=xqguYAMNHLM). Otherwise, perform the steps shown below:
 
 1. Install 'DisplayMagician'
 2. Run 'DisplayMagician', and click on the 'Display Profiles' button
