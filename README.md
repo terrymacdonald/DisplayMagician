@@ -90,6 +90,8 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 
 ### Initial Setup:
 
+If you prefer to see a video on how to setup DisplayMagician, check out [this awesome 'How to Setup DisplayMagician' video from JDM PC Gaming](https://www.youtube.com/watch?v=xqguYAMNHLM). Otherwise, perform the steps shown below:
+
 1. Install 'DisplayMagician'
 2. Run 'DisplayMagician', and click on the 'Display Profiles' button
     * Use 'Windows Display Settings', 'NVIDIA Control Panel' or 'AMD Radeon Setup' to configure your display(s) exactly as you would like them
@@ -143,9 +145,24 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 ## Credits
-Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the names of these amazing people:
+I’m so very thankful for the help of the following people, who make DisplayMagician possible:
 
 * Sean at SimCraft (Thank you so much for your generous donation!)
+* Domenic (Thanks for the solid month of troubleshooting help and the monthly sponsorship!)
+* RBZL (thanks for the monthly donation)
+* Frcooper (thanks for the monthly donation)
+
+Also big thanks to:
+* Dogy007 (Thanks for the sponsorship)
+* Ceramed (Thank you for your donation and your help troubleshooting SuperDisplay and SpaceDesk screens)
+* Bjorg (Thank you for your donation)
+* MichaelDWheeler (Thank you for your donation)
+* Frank (Thank you for your donation)
+* Dan Clark (Thank you for your donation)
+* Fonzmonster (Thank you for your donation)
+* Logozo (Thank you for your donation)
+* 5th (Thank you for your donation)
+* Patrickdiezi (Thank you for your donation)
 * Fifowole (Thank you for your donation)
 * Brett Horton (Thank you for your donation)
 * Patrickdiezi  (Thank you for your donation)
