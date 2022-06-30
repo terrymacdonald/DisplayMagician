@@ -225,9 +225,11 @@ namespace DisplayMagician.UIForms
                 // Make this window top most if we're not minimised
                 if (!Program.AppProgramSettings.MinimiseOnStart)
                 {
-                    this.TopMost = true;
-                    this.Activate();
-                    this.TopMost = false;
+                    // Center the MainAppForm
+                    Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+                    // Bring the window back to the front            
+                    Utils.ActivateCenteredOnPrimaryScreen(this);
+
                 }
             }
 
@@ -494,14 +496,18 @@ namespace DisplayMagician.UIForms
 
         public void openApplicationWindow()
         {
-            allowVisible = true;
+            /*
             this.Restore();
             this.Show();
             this.Focus();
             this.BringToFront();
             this.TopMost = true;
             this.Activate();
-            this.TopMost = false;
+            this.TopMost = false;*/
+
+            allowVisible = true;
+            // Center the form on the primary screen
+            Utils.ActivateCenteredOnPrimaryScreen(this);
         }
 
         public void exitApplication()

@@ -112,6 +112,9 @@ namespace DisplayMagician.UIForms
                 logger.Warn(ex, $"ShortcutForm/ShortcutForm: Exception while trying to initialise CoreAudioController in ShortcutForm. Audio Chipset on your computer is not supported. You will be unable to set audio settings.");
             }
 
+            // Center the form on the primary screen
+            Utils.CenterOnPrimaryScreen(this);
+
         }    
 
         public ShortcutItem Shortcut

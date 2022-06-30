@@ -38,6 +38,8 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.AllowDrag = false;
             ilv_saved_profiles.AllowDrop = false;
             ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
+            // Center the form on the primary screen
+            Utils.CenterOnPrimaryScreen(this);
         }
 
         public DisplayProfileForm(ProfileItem profileToLoad) : this()
@@ -91,15 +93,11 @@ namespace DisplayMagician.UIForms
         private void RecenterWindow()
         {
             // Center the MainAppForm
-            Program.AppMainForm.Top = (Screen.PrimaryScreen.Bounds.Height - Program.AppMainForm.Height) / 2;
-            Program.AppMainForm.Left = (Screen.PrimaryScreen.Bounds.Width - Program.AppMainForm.Width) / 2;
-            Program.AppMainForm.Activate();
+            Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+            //Program.AppMainForm.Activate();
 
             // Bring the window back to the front
-            Visible = true;
-            CenterToParent();
-            Activate();
-            BringToFront();
+            Utils.ActivateCenteredOnPrimaryScreen(this);
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)

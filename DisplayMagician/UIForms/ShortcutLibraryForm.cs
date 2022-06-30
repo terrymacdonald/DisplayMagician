@@ -32,6 +32,8 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.AllowDrag = false;
             ilv_saved_shortcuts.AllowDrop = false;
             ilv_saved_shortcuts.SetRenderer(new ShortcutILVRenderer());
+            // Center the form on the primary screen
+            Utils.CenterOnPrimaryScreen(this);
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -512,11 +514,10 @@ namespace DisplayMagician.UIForms
             btn_cancel.Visible = false;
             btn_cancel.Enabled = false;
 
-            // Bring the window back to the front
-            Visible = true;
-            CenterToParent();
-            Activate();
-            BringToFront();
+            // Center the MainAppForm
+            Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+            // Bring the window back to the front            
+            Utils.ActivateCenteredOnPrimaryScreen(this);
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)

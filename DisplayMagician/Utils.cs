@@ -55,19 +55,27 @@ namespace DisplayMagician
             }
         }
 
-        public static void ShowCentered(this Form frm, Form owner)
+        public static void ActivateCenteredOnPrimaryScreen(this Form frm)
         {
-            Rectangle ownerRect = GetOwnerRect(frm, owner);
-            frm.Location = new Point(ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
-                                     ownerRect.Top + (ownerRect.Height - frm.Height) / 2);
-            frm.Show(owner);
+            CenterOnPrimaryScreen(frm);
+            frm.Visible = true;
+            frm.Activate();
+            frm.BringToFront();
         }
 
-        public static void CenterParent(this Form frm, Rectangle ownerRect)
+        public static void ShowCenteredOnPrimaryScreen(this Form frm)
         {
-            frm.Location = new Point(ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
-                                     ownerRect.Top + (ownerRect.Height - frm.Height) / 2);
+            CenterOnPrimaryScreen(frm);
+            frm.Show();
         }
+
+        public static void CenterOnPrimaryScreen(this Form frm)
+        {
+            frm.Top = (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2;
+            frm.Left = (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2;
+        }
+
+
 
         public static void ShowDialogCentered(this Form frm, Form owner)
         {
