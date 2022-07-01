@@ -92,18 +92,18 @@ namespace DisplayMagician.UIForms
 
         private void RecenterWindow()
         {
-            // Center the MainAppForm
-            Utils.CenterOnPrimaryScreen(Program.AppMainForm);
-            //Program.AppMainForm.Activate();
+            if (Program.AppMainForm is Form)
+            {
+                // Center the MainAppForm
+                Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+                // Also refresh the right-click menu (if we have a main form loaded)
+                Program.AppMainForm.RefreshNotifyIconMenus();
 
+            }
+            
             // Bring the window back to the front
             Utils.ActivateCenteredOnPrimaryScreen(this);
 
-            // Also refresh the right-click menu (if we have a main form loaded)
-            if (Program.AppMainForm is Form)
-            {
-                Program.AppMainForm.RefreshNotifyIconMenus();
-            }
         }
 
 

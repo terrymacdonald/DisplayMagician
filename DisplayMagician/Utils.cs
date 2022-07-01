@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using NLog;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -19,7 +20,8 @@ namespace DisplayMagician
 
         /// 2. Declare DownloadsFolder KNOWNFOLDERID
         private static Guid FolderDownloads = new Guid("374DE290-123F-4565-9164-39C4925E467B");
-    
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         /// 3. Import SHGetKnownFolderPath method
         /// <summary>
         /// Retrieves the full path of a known folder identified by the folder's KnownFolderID.
@@ -64,6 +66,11 @@ namespace DisplayMagician
 
         public static void ActivateCenteredOnPrimaryScreen(this Form frm)
         {
+            if (!(frm is Form))
+{
+                logger.Trace($"Utils/ActivateCenteredOnPrimaryScreen: frm passed in is not a Form. Not able to center the form.");
+                return;
+            }
             CenterOnPrimaryScreen(frm);
             frm.Visible = true;
             frm.Activate();
@@ -72,12 +79,22 @@ namespace DisplayMagician
 
         public static void ShowCenteredOnPrimaryScreen(this Form frm)
         {
+            if (!(frm is Form))
+            {
+                logger.Trace($"Utils/ShowCenteredOnPrimaryScreen: frm passed in is not a Form. Not able to center the form.");
+                return;
+            }
             CenterOnPrimaryScreen(frm);
             frm.Show();
         }
 
         public static void CenterOnPrimaryScreen(this Form frm)
         {
+            if (!(frm is Form))
+            {
+                logger.Trace($"Utils/CenterOnPrimaryScreen: frm passed in is not a Form. Not able to center the form.");
+                return;
+            }
             frm.Top = (Screen.PrimaryScreen.Bounds.Height - frm.Height) / 2;
             frm.Left = (Screen.PrimaryScreen.Bounds.Width - frm.Width) / 2;
         }
@@ -86,6 +103,16 @@ namespace DisplayMagician
 
         public static void ShowDialogCentered(this Form frm, Form owner)
         {
+            if (!(frm is Form))
+            {
+                logger.Trace($"Utils/ShowDialogCentered: frm passed in is not a Form. Not able to center the dialog.");
+                return;
+            }
+            if (!(owner is Form))
+            {
+                logger.Trace($"Utils/ShowDialogCentered: owner passed in is not a Form. Not able to center the dialog.");
+                return;
+            }
             Rectangle ownerRect = GetOwnerRect(frm, owner);
             frm.Location = new Point(ownerRect.Left + (ownerRect.Width - frm.Width) / 2,
                                      ownerRect.Top + (ownerRect.Height - frm.Height) / 2);

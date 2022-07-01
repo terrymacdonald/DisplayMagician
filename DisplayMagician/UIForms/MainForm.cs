@@ -225,8 +225,13 @@ namespace DisplayMagician.UIForms
                 // Make this window top most if we're not minimised
                 if (!Program.AppProgramSettings.MinimiseOnStart)
                 {
+                    if (Program.AppMainForm is Form)
                     // Center the MainAppForm
                     Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+                    {
+                        // Center the MainAppForm
+                        Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+                    }
                     // Bring the window back to the front            
                     Utils.ActivateCenteredOnPrimaryScreen(this);
 

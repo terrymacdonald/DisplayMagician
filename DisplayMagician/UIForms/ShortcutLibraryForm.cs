@@ -514,16 +514,17 @@ namespace DisplayMagician.UIForms
             btn_cancel.Visible = false;
             btn_cancel.Enabled = false;
 
-            // Center the MainAppForm
-            Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+            if (Program.AppMainForm is Form)
+            {
+                // Center the MainAppForm
+                Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+                // Also refresh the right-click menu (if we have a main form loaded)
+                Program.AppMainForm.RefreshNotifyIconMenus();
+
+            }
             // Bring the window back to the front            
             Utils.ActivateCenteredOnPrimaryScreen(this);
 
-            // Also refresh the right-click menu (if we have a main form loaded)
-            if (Program.AppMainForm is Form)
-            {
-                Program.AppMainForm.RefreshNotifyIconMenus();
-            }
 
         }
 
