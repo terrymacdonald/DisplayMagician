@@ -175,6 +175,7 @@ namespace DisplayMagician.GameLibraries
                 }
                 catch (Exception ex)
                 {
+                    logger.Warn(ex, $"EpicLibrary/IsRunning: Exception while trying to get the Epic Library processes with names: {_epicProcessList.ToString()}");
                     return false;
                 }
             }

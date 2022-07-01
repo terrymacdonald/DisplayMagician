@@ -167,6 +167,7 @@ namespace DisplayMagicianShared.AMD
         private IntPtr _adlContextHandle = IntPtr.Zero;
         private AMD_DISPLAY_CONFIG _activeDisplayConfig;
         public List<ADL_DISPLAY_CONNECTION_TYPE> SkippedColorConnectionTypes;
+        public List<string> _allConnectedDisplayIdentifiers;
 
         static AMDLibrary() { }
         public AMDLibrary()
@@ -205,6 +206,7 @@ namespace DisplayMagicianShared.AMD
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: AMD ADL2 library was initialised successfully");
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Running UpdateActiveConfig to ensure there is a config to use later");
                         _activeDisplayConfig = GetActiveConfig();
+                        _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
                     }
                     else
                     {
@@ -221,7 +223,7 @@ namespace DisplayMagicianShared.AMD
             {
                 // If we get here then the AMD ADL DLL wasn't found. We can't continue to use it, so we log the error and exit
                 SharedLogger.logger.Info(ex, $"AMDLibrary/AMDLibrary: Exception trying to load the AMD ADL DLL {ADLImport.ATI_ADL_DLL}. This generally means you don't have the AMD ADL driver installed.");
-            }            
+            }
 
         }
 
@@ -335,6 +337,7 @@ namespace DisplayMagicianShared.AMD
             try
             {
                 _activeDisplayConfig = GetActiveConfig();
+                _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
             }
             catch (Exception ex)
             {
@@ -934,7 +937,7 @@ namespace DisplayMagicianShared.AMD
                     }
 
                     myDisplayConfig.HdrConfigs = new Dictionary<int, AMD_HDR_CONFIG>();
-                    
+
                     // Now we need to get all the displays connected to this adapter so that we can get their HDR state
                     foreach (var displayTarget in displayTargetArray)
                     {
@@ -943,7 +946,7 @@ namespace DisplayMagicianShared.AMD
                         ADL_DISPLAY_CONNECTION_TYPE displayConnector;
                         try
                         {
-                            displayConnector = displayInfoArray.First(d => d.DisplayID == displayTarget.DisplayID).DisplayConnector;                            
+                            displayConnector = displayInfoArray.First(d => d.DisplayID == displayTarget.DisplayID).DisplayConnector;
                         }
                         catch (Exception ex)
                         {
@@ -1104,7 +1107,7 @@ namespace DisplayMagicianShared.AMD
 
                     SharedLogger.logger.Trace($"AMDLibrary/PrintActiveConfig: Converted ADL2_Adapter_AdapterInfoX4_Get memory buffer into a {adapterArray.Length} long array about AMD Adapter #{adapterIndex}.");
 
-                    AMD_ADAPTER_CONFIG savedAdapterConfig = new AMD_ADAPTER_CONFIG();
+                    //AMD_ADAPTER_CONFIG savedAdapterConfig = new AMD_ADAPTER_CONFIG();
                     ADL_ADAPTER_INFOX2 oneAdapter = adapterArray[0];
                     if (oneAdapter.Exist != 1)
                     {
@@ -1604,11 +1607,8 @@ namespace DisplayMagicianShared.AMD
             // We want to check the AMD profile can be used now
             SharedLogger.logger.Trace($"AMDLibrary/IsPossibleConfig: Testing whether the AMD display configuration is possible to be used now");
 
-            // Check the currently available displays (include the ones not active)
-            List<string> currentAllIds = GetAllConnectedDisplayIdentifiers();
-
             // Check that we have all the displayConfig DisplayIdentifiers we need available now
-            if (displayConfig.DisplayIdentifiers.All(value => currentAllIds.Contains(value)))
+            if (displayConfig.DisplayIdentifiers.All(value => _allConnectedDisplayIdentifiers.Contains(value)))
             {
                 SharedLogger.logger.Trace($"AMDLibrary/IsPossibleConfig: Success! The AMD display configuration is possible to be used now");
                 return true;
@@ -1631,7 +1631,9 @@ namespace DisplayMagicianShared.AMD
         {
             SharedLogger.logger.Trace($"AMDLibrary/GetAllConnectedDisplayIdentifiers: Getting all the display identifiers that can possibly be used");
             bool allDisplays = true;
-            return GetSomeDisplayIdentifiers(allDisplays);
+            _allConnectedDisplayIdentifiers = GetSomeDisplayIdentifiers(allDisplays);
+
+            return _allConnectedDisplayIdentifiers;
         }
 
         private List<string> GetSomeDisplayIdentifiers(bool allDisplays = false)
@@ -1728,7 +1730,7 @@ namespace DisplayMagicianShared.AMD
 
                     SharedLogger.logger.Trace($"AMDLibrary/GetSomeDisplayIdentifiers: Converted ADL2_Adapter_AdapterInfoX4_Get memory buffer into a {adapterArray.Length} long array about AMD Adapter #{adapterIndex}.");
 
-                    AMD_ADAPTER_CONFIG savedAdapterConfig = new AMD_ADAPTER_CONFIG();
+                    //AMD_ADAPTER_CONFIG savedAdapterConfig = new AMD_ADAPTER_CONFIG();
                     ADL_ADAPTER_INFOX2 oneAdapter = adapterArray[0];
                     if (oneAdapter.Exist != 1)
                     {

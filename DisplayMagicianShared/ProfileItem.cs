@@ -567,7 +567,7 @@ namespace DisplayMagicianShared
 
 
                     WshShell shell = new WshShell();
-                    IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutFileName);
+                    IWshShortcut shortcut = shell.CreateShortcut(shortcutFileName) as IWshShortcut;
 
                     shortcut.TargetPath = Application.ExecutablePath;
                     shortcut.Arguments = string.Join(" ", shortcutArgs);
@@ -1171,7 +1171,7 @@ namespace DisplayMagicianShared
                             catch (Exception ex)
                             {
                                 // Guess that it is at the bottom (90% correct)
-                                SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetInfo.DisplayId}");
+                                SharedLogger.logger.Warn(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetInfo.DisplayId}");
                                 screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                             }
 
@@ -1311,7 +1311,7 @@ namespace DisplayMagicianShared
                     catch (Exception ex)
                     {
                         // Guess that it is at the bottom (90% correct)
-                        SharedLogger.logger.Error(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        SharedLogger.logger.Warn(ex, $"ProfileItem/GetNVIDIAScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                         screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                     }
 
@@ -1473,13 +1473,16 @@ namespace DisplayMagicianShared
                     screen.ClonedCopies = 0;
                     try
                     {
+                        // IMPORTANT: This lookup WILL DEFINITELY CAUSE AN EXCEPTION right after windows changes back from 
+                        // NVIDIA Surround to a non-surround profile. This is expected, as it is caused bythe way Windows is SOOOO slow to update
+                        // the taskbar locations in memory (it takes up to 15 seconds!). Nothing I can do, except put this protection in place :( .
                         screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
                         SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
                     }
                     catch (Exception ex)
                     {
                         // Guess that it is at the bottom (90% correct)
-                        SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                        SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                         screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                     }
 
@@ -1558,13 +1561,21 @@ namespace DisplayMagicianShared
                         // rather than the MMStuckRect reg keys
                         try
                         {
-                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tb => tb.Value.RegKeyValue.Contains("Settings")).Value.Edge;
-                            SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                            if (_windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue.Contains("Settings")) > 0)
+                            {
+                                screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains("Settings")).Value.Edge;
+                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on the primary display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Warn($"ProfileItem/GetWindowsScreenPositions: Problem trying to get the position of the taskbar on primary display {targetId}. Assuming it's on the bottom edge.");
+                                screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                            }
                         }
                         catch (Exception ex)
                         {
                             // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
+                            SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on primary display {targetId}");
                             screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         }
 
@@ -1573,13 +1584,56 @@ namespace DisplayMagicianShared
                     {
                         try
                         {
-                            screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
-                            SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                            int numMatches = _windowsDisplayConfig.TaskBarLayout.Count(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}"));
+                            if (numMatches > 1)
+                            {
+                                var matchingTbls = (from tbl in _windowsDisplayConfig.TaskBarLayout where tbl.Value.RegKeyValue.Contains($"UID{targetId}") select tbl.Value).ToList();
+                                bool foundIt = false;
+                                foreach (var matchingTbl in matchingTbls)
+                                {
+                                    // find display source that matches.
+                                    foreach (var displaySource in _windowsDisplayConfig.DisplaySources)
+                                    {
+                                        foreach (var displayDevice in displaySource.Value)
+                                        {
+                                            // We want to find the displaydevice that has the same adapter id
+                                            if (displayDevice.AdapterId.Value == adapterId && displayDevice.DevicePath.Contains(matchingTbl.RegKeyValue))
+                                            {
+                                                // This is the actual display we want!
+                                                foundIt = true;
+                                                screen.TaskBarEdge = matchingTbl.Edge;
+                                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                                                break;
+                                            }
+                                        }         
+                                        // If we've found it already then stop looking
+                                        if (foundIt)
+                                        {
+                                            break;
+                                        }
+                                    }
+                                }                              
+                                if (!foundIt)
+                                {
+                                    screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
+                                    SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Couldn't find the taskbar location for display {targetId} when it had multiple matching UIDs. Assuming the screen edge is at the bottom of the screen.");
+                                }
+                            }
+                            else if (numMatches == 1)
+                            {
+                                screen.TaskBarEdge = _windowsDisplayConfig.TaskBarLayout.First(tbr => tbr.Value.RegKeyValue.Contains($"UID{targetId}")).Value.Edge;
+                                SharedLogger.logger.Trace($"ProfileItem/GetWindowsScreenPositions: Position of the taskbar on display {targetId} is on the {screen.TaskBarEdge } of the screen.");
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Warn($"ProfileItem/GetWindowsScreenPositions: Problem trying to get the position of the taskbar on display {targetId} as UID doesn't exist. Assuming it's on the bottom edge.");
+                                screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
+                            }
                         }
                         catch (Exception ex)
                         {
                             // Guess that it is at the bottom (90% correct)
-                            SharedLogger.logger.Error(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
+                            SharedLogger.logger.Warn(ex, $"ProfileItem/GetWindowsScreenPositions: Exception trying to get the position of the taskbar on display {targetId}");
                             screen.TaskBarEdge = TaskBarLayout.TaskBarEdge.Bottom;
                         }
                     }

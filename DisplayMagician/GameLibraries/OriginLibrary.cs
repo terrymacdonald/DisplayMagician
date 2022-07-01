@@ -176,6 +176,7 @@ namespace DisplayMagician.GameLibraries
                 }
                 catch (Exception ex)
                 {
+                    logger.Warn(ex, $"OriginLibrary/IsRunning: Exception while trying to get the Origin Library processes with names: {_originProcessList.ToString()}");
                     return false;
                 }
             }

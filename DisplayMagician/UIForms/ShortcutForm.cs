@@ -112,6 +112,9 @@ namespace DisplayMagician.UIForms
                 logger.Warn(ex, $"ShortcutForm/ShortcutForm: Exception while trying to initialise CoreAudioController in ShortcutForm. Audio Chipset on your computer is not supported. You will be unable to set audio settings.");
             }
 
+            // Center the form on the primary screen
+            Utils.CenterOnPrimaryScreen(this);
+
         }    
 
         public ShortcutItem Shortcut
@@ -3142,7 +3145,7 @@ namespace DisplayMagician.UIForms
             }
             catch(Exception ex)
             {
-
+                logger.Warn(ex, $"ShortcutForm/ilv_games_ItemClick: Exception while attempting to suggest shortcut name.");
             }
 
             try
@@ -3151,7 +3154,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-
+                logger.Warn(ex, $"ShortcutForm/ilv_games_ItemClick: Exception while figuring out if the save button shoud be enabled.");
             }            
         }
 

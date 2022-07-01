@@ -226,11 +226,13 @@ namespace DisplayMagician
             }
             catch (PlatformNotSupportedException ex)
             {
-                Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Cannot create a named pipe server. This NamedPipeServerStream function does not support this platform.");
+                //Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Cannot create a named pipe server. This NamedPipeServerStream function does not support this platform.");
+                logger.Warn(ex, $"SingleInstance/NamedPipeServerCreateServer: Cannot create a named pipe server. This NamedPipeServerStream function does not support this platform.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"SingleInstance/NamedPipeServerCreateServer: Exception - Source: {ex.Source} {ex.TargetSite} - {ex.Message} - {ex.StackTrace}");
+                logger.Warn(ex, $"SingleInstance/NamedPipeServerCreateServer: Exception - Source: {ex.Source} {ex.TargetSite} - {ex.Message} - {ex.StackTrace}");
             }
             // Begin async wait for connections
             _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);

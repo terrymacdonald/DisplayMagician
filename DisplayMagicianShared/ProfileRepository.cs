@@ -61,13 +61,14 @@ namespace DisplayMagicianShared
         private static VIDEO_MODE _currentVideoMode = VIDEO_MODE.WINDOWS;
         private static FORCED_VIDEO_MODE _forcedVideoMode = FORCED_VIDEO_MODE.DETECT;
         private static bool _pauseReadsUntilChangeCompleted = false;
+        private static bool _userChangingProfiles = false;
 
         // Other constants that are useful
         public static string AppDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static readonly string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.3.json");
+        private static readonly string _profileStorageJsonFileName = System.IO.Path.Combine(AppProfileStoragePath, $"DisplayProfiles_2.4.json");
         
 
 
@@ -225,6 +226,18 @@ namespace DisplayMagicianShared
             }
         }
 
+        public static bool UserChangingProfiles
+        {
+            get
+            {
+                return _userChangingProfiles;
+            }
+            set
+            {
+                _userChangingProfiles = value;
+            }
+        }
+
         #endregion
 
         #region Class Methods
@@ -295,10 +308,15 @@ namespace DisplayMagicianShared
             List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profile.UUID));
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
+                // Attempt to delete the icon
+
                 try
                 {
-                    File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
-                    File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                    if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                    {
+                        File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                    }
+                    
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -317,6 +335,31 @@ namespace DisplayMagicianShared
                     SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
 
+                // attempt to delete the wallpaper
+                try
+                {
+                    if (File.Exists(ProfileToRemove.WallpaperBitmapFilename))
+                    {
+                        File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                    }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename}.");
+                }
+                catch (ArgumentException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the parent folder isn't there.");
+                }
+
             }
 
             // Remove the Profile from the list.
@@ -326,6 +369,7 @@ namespace DisplayMagicianShared
             {
                 SaveProfiles();
                 IsPossibleRefresh();
+                UpdateActiveProfile();
                 return true;
             }
             else if (numRemoved == 0)
@@ -347,27 +391,58 @@ namespace DisplayMagicianShared
             List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.Name.Equals(profileName));
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
+                // Attempt to delete the icon
+
                 try
                 {
-                    File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
-                    File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                    if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                    {
+                        File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                    }
+
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
                 }
                 catch (ArgumentException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
                 }
                 catch (PathTooLongException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
                 }
                 catch (DirectoryNotFoundException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile2: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
+
+                // attempt to delete the wallpaper
+                try
+                {
+                    if (File.Exists(ProfileToRemove.WallpaperBitmapFilename))
+                    {
+                        File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                    }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename}.");
+                }
+                catch (ArgumentException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the parent folder isn't there.");
+                }
+
             }
 
             // Remove the Profile from the list.
@@ -377,6 +452,7 @@ namespace DisplayMagicianShared
             {
                 SaveProfiles();
                 IsPossibleRefresh();
+                UpdateActiveProfile();
                 return true;
             }
             else if (numRemoved == 0)
@@ -397,27 +473,58 @@ namespace DisplayMagicianShared
             List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profileId));
             foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
             {
+                // Attempt to delete the icon
+
                 try
                 {
-                    File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
-                    File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                    if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                    {
+                        File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                    }
+
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
                 }
                 catch (ArgumentException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
                 }
                 catch (PathTooLongException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
                 }
                 catch (DirectoryNotFoundException ex)
                 {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile3: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
                 }
+
+                // attempt to delete the wallpaper
+                try
+                {
+                    if (File.Exists(ProfileToRemove.WallpaperBitmapFilename))
+                    {
+                        File.Delete(ProfileToRemove.WallpaperBitmapFilename);
+                    }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename}.");
+                }
+                catch (ArgumentException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} due to an invalid argument.");
+                }
+                catch (PathTooLongException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the path is too long.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile wallpaper {ProfileToRemove.WallpaperBitmapFilename} as the parent folder isn't there.");
+                }
+
             }
 
             // Remove the Profile from the list.
@@ -427,6 +534,7 @@ namespace DisplayMagicianShared
             {
                 SaveProfiles();
                 IsPossibleRefresh();
+                UpdateActiveProfile();
                 return true;
             }
             else if (numRemoved == 0)
@@ -704,6 +812,8 @@ namespace DisplayMagicianShared
         {
             SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFileName} into the Profile Repository");
 
+            _profilesLoaded = false;
+
             if (File.Exists(_profileStorageJsonFileName))
             {
                 string json = "";
@@ -739,7 +849,14 @@ namespace DisplayMagicianShared
                                 args.ErrorContext.Handled = true;
                             },
                         };                       
-                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);                       
+                        _allProfiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+
+                        // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
+                        foreach (ProfileItem profile in _allProfiles)
+                        {
+                            WINDOWS_DISPLAY_CONFIG winProfile = profile.WindowsDisplayConfig;
+                            WinLibrary.GetLibrary().PatchWindowsDisplayConfig(ref winProfile);
+                        }
 
                     }
                     catch (JsonReaderException ex)
@@ -844,7 +961,32 @@ namespace DisplayMagicianShared
             // We do the actual change we were trying to do
             try
             {
-                // Nothing to patch at the moment!                
+                // Add in a default Windows DPI information we need
+                // This adds a 'SourceDpiScalingRel' with a default of 100% (integer 0) into each DisplaySources entry
+                // but only if the existing entry is a 'null'. This only occurs when the SourceDpiScalingRel is unset.
+                // This migration will add the default 100% scaling so that the ProfileRepository Load function works as intended.
+                SharedLogger.logger.Trace($"ProfileRepository/MigrateJsonToLatestVersion: Looking for missing Windows DPI settings.");
+                for (int i = 0; i < root.Count; i++)
+                {
+                    JObject profile = (JObject)root[i];
+
+                    //JObject WindowsTaskBarSettings = (JObject)profile.SelectToken("WindowsDisplayConfig.TaskBarSettings");                    
+                    var dsList = profile["WindowsDisplayConfig"]["DisplaySources"].Children();
+                    IList<DISPLAY_SOURCE> displaySources = new List<DISPLAY_SOURCE>();
+                    foreach (var dsListItem in dsList)
+                    {
+                        var displaySourceArray = dsListItem.Values().ToArray();
+                        for (int j=0; j<displaySourceArray.Length; j++)
+                        {
+                            if (displaySourceArray[j]["SourceDpiScalingRel"] == null)
+                            {
+                                displaySourceArray[j]["SourceDpiScalingRel"] = 0;
+                                changedJson = true;
+                            }
+                        }                        
+                    }
+
+                }
             }
             catch (JsonReaderException ex)
             {
@@ -1169,6 +1311,8 @@ namespace DisplayMagicianShared
                 // We stop the stop watch
                 stopWatch.Stop();
                 _pauseReadsUntilChangeCompleted = false;
+                // Pause for a bit to let things settle
+                Thread.Sleep(500);
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
                 string result = "failed";
@@ -1227,7 +1371,7 @@ namespace DisplayMagicianShared
 
                 // Figure out the Video Cards and see what mode we want
                 // Get a list of all the PCI Vendor IDs
-                List<string> videoCardVendors = WinLibrary.GetLibrary().GetCurrentPCIVideoCardVendors();
+                List<string> videoCardVendors = WinLibrary.GetLibrary().GetAllPCIVideoCardVendors();
                 if (NVIDIALibrary.GetLibrary().IsInstalled && NVIDIALibrary.GetLibrary().PCIVendorIDs.All(value => videoCardVendors.Contains(value)))
                 {
                     // We detected a NVIDIA video card in the computer
@@ -1245,7 +1389,7 @@ namespace DisplayMagicianShared
                 }
             }
 
-            if (_currentVideoMode == VIDEO_MODE.NVIDIA)
+            if (_currentVideoMode == VIDEO_MODE.NVIDIA && !(nvidiaLibrary is NVIDIALibrary))
             {
                 // Initialise the the NVIDIA NvAPI Library
                 try
@@ -1259,7 +1403,7 @@ namespace DisplayMagicianShared
                     return false;
                 }
             }
-            else if (_currentVideoMode == VIDEO_MODE.AMD)
+            else if (_currentVideoMode == VIDEO_MODE.AMD && !(amdLibrary is AMDLibrary))
             {
                 // Initialise the the AMD ADL Library
                 try

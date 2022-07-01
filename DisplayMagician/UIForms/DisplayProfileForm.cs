@@ -38,6 +38,8 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.AllowDrag = false;
             ilv_saved_profiles.AllowDrop = false;
             ilv_saved_profiles.SetRenderer(new ProfileILVRenderer());
+            // Center the form on the primary screen
+            Utils.CenterOnPrimaryScreen(this);
         }
 
         public DisplayProfileForm(ProfileItem profileToLoad) : this()
@@ -59,7 +61,8 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            
+            ProfileRepository.UserChangingProfiles = true;
+
             // Apply the Profile
             //if (ProfileRepository.ApplyProfile(_selectedProfile) == ApplyProfileResult.Successful)
             ApplyProfileResult result = Program.ApplyProfileTask(_selectedProfile);
@@ -81,9 +84,20 @@ namespace DisplayMagician.UIForms
                 logger.Error($"DisplayProfileForm/Apply_Click: Error applying the Profile {_selectedProfile.Name}. Unable to change the display layout.");
             }
 
+            // Recenter the Window
+            RecenterWindow();
+
+            ProfileRepository.UserChangingProfiles = false;
+        }
+
+        private void RecenterWindow()
+        {
+            // Center the MainAppForm
+            Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+            //Program.AppMainForm.Activate();
+
             // Bring the window back to the front
-            Visible = true;
-            Activate();
+            Utils.ActivateCenteredOnPrimaryScreen(this);
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)
@@ -530,6 +544,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_view_current_Click(object sender, EventArgs e)
         {
+            ProfileRepository.UserChangingProfiles = true;
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
             // Reload the profiles in case we swapped to another program to change it
@@ -538,14 +553,17 @@ namespace DisplayMagician.UIForms
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
             RefreshDisplayProfileUI();
+            // Recenter the Window
+            RecenterWindow();
+            ProfileRepository.UserChangingProfiles = false;
         }
 
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode.Equals(Keys.Enter))
             {
-                MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
+                //MessageBox.Show("Click works!", "Click works", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                btn_save.PerformClick();                
             }
         }
 
@@ -578,7 +596,10 @@ namespace DisplayMagician.UIForms
 
                 case WM_DISPLAYCHANGE:
                     logger.Trace($"DisplayProfileForm/WndProc: Windows just sent a msg telling us the display has changed. Updating the current view by running btn_view_current.");
-                    btn_view_current.PerformClick();
+                    if (!ProfileRepository.UserChangingProfiles)
+                    {
+                        btn_view_current.PerformClick();
+                    }                    
                     break;
 
                     // This auto taskbar detection logic just doesn't work at the moment

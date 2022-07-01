@@ -74,20 +74,22 @@ namespace DisplayMagicianShared.Windows
 
                                 if (value != null && value is int intValue)
                                 {
+                                    SharedLogger.logger.Trace($"TaskBarSettings/GetCurrent: Got taskbar setting {valueName} = {intValue}");
                                     taskBarOptions.Add(new Tuple<string, int>(valueName, intValue));
                                 }
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
-                                // ignored, as this will happen
+                                SharedLogger.logger.Error(ex,$"TaskBarSettings/GetCurrent: Exception getting taskbar setting {valueName}. It likely does not exist (which happens if it is not explicitly set).");
                             }
                         }
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignored
+                SharedLogger.logger.Error(ex, $"TaskBarSettings/GetCurrent: Exception opening taskbar setting registry key {AdvancedSettingsAddress}.");
             }
 
             if (taskBarOptions.Count == 0)

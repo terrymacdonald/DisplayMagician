@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DisplayMagician.Processes;
 
 namespace DisplayMagician.UIForms
 {
@@ -287,7 +288,7 @@ namespace DisplayMagician.UIForms
 
         private void cbx_start_program_priority_SelectedIndexChanged(object sender, EventArgs e)
         {
-            myStartProgram.ProcessPriority = (ProcessPriority)cbx_start_program_priority.SelectedValue;
+                myStartProgram.ProcessPriority = ProcessUtils.TranslateNameToPriority(cbx_start_program_priority.SelectedValue.ToString());
         }
 
         private void cb_run_as_administrator_CheckedChanged(object sender, EventArgs e)

@@ -40,7 +40,7 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.0.json");
+        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.2.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -410,6 +410,8 @@ namespace DisplayMagician
         {
 
             logger.Debug($"ShortcutRepository/LoadShortcuts: Loading shortcuts from {_shortcutStorageJsonFileName} into the Shortcut Repository");
+
+            _shortcutsLoaded = false;
 
             if (File.Exists(_shortcutStorageJsonFileName))
             {
@@ -1181,7 +1183,7 @@ namespace DisplayMagician
                     }
                     catch (Exception ex)
                     {
-                        logger.Error($"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
+                        logger.Error(ex, $"ShortcutRepository/RunShortcut: Exception while trying to find the user supplied executable to monitor: {shortcutToUse.DifferentExecutableToMonitor}.");
                         foundSomethingToMonitor = false;
                     }
                 }
@@ -2095,7 +2097,6 @@ namespace DisplayMagician
             {
                 // At the moment we only allow one stop program
                 StopProgram stopProg = shortcutToUse.StopPrograms[0];
-                uint processID = 0;
                 try
                 {
                     // Only start if not disabled

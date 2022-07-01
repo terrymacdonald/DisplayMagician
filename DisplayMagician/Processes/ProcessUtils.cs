@@ -175,17 +175,17 @@ namespace DisplayMagician.Processes
             }
             catch (ArgumentException ex)
             {
-                logger.Trace($"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: {process.Id} is not running, and the process ID has expired. This means the process has finished!");
                 return true;
             }
             catch (InvalidOperationException ex)
             {
-                logger.Warn($"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
+                logger.Warn(ex, $"ProcessUtils/ProcessExited: {process.Id} was not started by this process object. This likely means the process has finished!");
                 return true;
             }
             catch (Exception ex)
             {
-                logger.Trace($"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
+                logger.Trace(ex, $"ProcessUtils/ProcessExited: Exception when checking if {process.Id} is still running, so assuming the process has finished!");
                 return true;
             }
         }
@@ -530,7 +530,8 @@ namespace DisplayMagician.Processes
                         UseShellExecute = true,
                         Verb = "Runas",
                         CreateNoWindow = false,
-                        RedirectStandardOutput = false
+                        RedirectStandardOutput = false,
+                        WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
                 else
@@ -539,7 +540,8 @@ namespace DisplayMagician.Processes
                     {
                         UseShellExecute = false,
                         CreateNoWindow = false,
-                        RedirectStandardOutput = false
+                        RedirectStandardOutput = false,
+                        WorkingDirectory = Path.GetDirectoryName(executable)
                     };
                 }
                 
@@ -552,7 +554,8 @@ namespace DisplayMagician.Processes
                     UseShellExecute = true,
                     Verb = "Open",
                     CreateNoWindow = false,
-                    RedirectStandardOutput = false
+                    RedirectStandardOutput = false,
+                    WorkingDirectory = Path.GetDirectoryName(executable)
                 };
             }
 
@@ -675,6 +678,33 @@ namespace DisplayMagician.Processes
             }
         }
 
+        public static ProcessPriority TranslateNameToPriority(string processPriorityName)
+        {
+            ProcessPriority wantedPriority = ProcessPriority.Normal;
+            switch (processPriorityName.ToLowerInvariant())
+            {
+                case "high":
+                    wantedPriority = ProcessPriority.High;
+                    break;
+                case "abovenormal":
+                    wantedPriority = ProcessPriority.AboveNormal;
+                    break;
+                case "normal":
+                    wantedPriority = ProcessPriority.Normal;
+                    break;
+                case "belownormal":
+                    wantedPriority = ProcessPriority.BelowNormal;
+                    break;
+                case "idle":
+                    wantedPriority = ProcessPriority.Idle;
+                    break;
+                default:
+                    wantedPriority = ProcessPriority.Normal;
+                    break;
+            }
+            return wantedPriority;
+        }
+
         public static ProcessPriorityClass TranslatePriorityToClass(ProcessPriority processPriorityClass)
         {
             ProcessPriorityClass wantedPriorityClass = ProcessPriorityClass.Normal;
@@ -728,7 +758,7 @@ namespace DisplayMagician.Processes
             }
             return wantedPriorityClass;
         }
-
+        
     }
 
 }       

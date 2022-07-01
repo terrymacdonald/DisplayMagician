@@ -32,6 +32,8 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.AllowDrag = false;
             ilv_saved_shortcuts.AllowDrop = false;
             ilv_saved_shortcuts.SetRenderer(new ShortcutILVRenderer());
+            // Center the form on the primary screen
+            Utils.CenterOnPrimaryScreen(this);
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -301,8 +303,8 @@ namespace DisplayMagician.UIForms
         private void ShowShortcutLoadingWindow()
         {
             Program.AppShortcutLoadingSplashScreen = new ShortcutLoadingForm();
-            Program.AppShortcutLoadingSplashScreen.Title = "Preparing images...";
-            Program.AppShortcutLoadingSplashScreen.Description = "Preparing images before showing you the Shortcut information. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
+            Program.AppShortcutLoadingSplashScreen.Title = "Preparing Shortcut...";
+            Program.AppShortcutLoadingSplashScreen.Description = "Preparing the Shortcut ready for you to edit. You will be able to swap your shortcut icon to any image you want, or choose one from a list.";
             int resultX = this.DesktopLocation.X + ((this.Width - Program.AppShortcutLoadingSplashScreen.Width) / 2);
             int resultY = this.DesktopLocation.Y + ((this.Height - Program.AppShortcutLoadingSplashScreen.Height) / 2);
             Program.AppShortcutLoadingSplashScreen.WantedLocation = new Point(resultX, resultY);
@@ -512,9 +514,10 @@ namespace DisplayMagician.UIForms
             btn_cancel.Visible = false;
             btn_cancel.Enabled = false;
 
-            // Bring the window back to the front
-            Visible = true;
-            Activate();
+            // Center the MainAppForm
+            Utils.CenterOnPrimaryScreen(Program.AppMainForm);
+            // Bring the window back to the front            
+            Utils.ActivateCenteredOnPrimaryScreen(this);
 
             // Also refresh the right-click menu (if we have a main form loaded)
             if (Program.AppMainForm is Form)

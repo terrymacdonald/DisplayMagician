@@ -50,7 +50,8 @@ DisplayMagician lets you set up the following information for each game or appli
 * Or maybe just create a Shortcut that permanently changes to a different Display Profile! The options are endless.
 * Also comes with a Shell Extension that allows you to change to a different Display Profile by right-clicking on the desktop background!
 * Supports NVIDIA Surround setups, AMD Eyefinity setups and standard Windows multi-desktop views.
-* Supports USB display devices and works with SuperDisplay (Android Tablets as a display)
+* Supports USB display devices, wireless display devices and works with SuperDisplay and Spacedesk (Android Tablets as a display)
+* Supports Windows DPI Scaling, setting Refresh Rates and HDR
 * Supports cloned displays, extended displays, NVIDIA Surround with additional displays, and nearly anything else you can throw at it!
 
 ## Planned features
@@ -61,7 +62,7 @@ DisplayMagician lets you set up the following information for each game or appli
 
 ## Requirements
 
-* DisplayMagician only supports 64-bit Windows 10/11
+* DisplayMagician only supports 64-bit Windows 10 (version 1809 or later) and 64-bit Windows 11
 * NVIDIA Surround support requires NVIDIA Game Ready driver to be installed
 * AMD Eyefinity support requires AMD Radeon™ Software Adrenalin 2020 Edition 21.2.1 or later to be installed
 
@@ -88,6 +89,8 @@ I am doing this work to scratch a programming itch I've had for a while. It's pr
 
 
 ### Initial Setup:
+
+If you prefer to see a video on how to setup DisplayMagician, check out [this awesome 'How to Setup DisplayMagician' video from JDM PC Gaming](https://www.youtube.com/watch?v=xqguYAMNHLM). Otherwise, perform the steps shown below:
 
 1. Install 'DisplayMagician'
 2. Run 'DisplayMagician', and click on the 'Display Profiles' button
@@ -142,9 +145,24 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 ## Credits
-Thanks for the work and the time that all of our contributors put into making this a better project. Following is a short list, containing the names of these amazing people:
+I’m so very thankful for the help of the following people, who make DisplayMagician possible:
 
 * Sean at SimCraft (Thank you so much for your generous donation!)
+* Domenic (Thanks for the solid month of troubleshooting help and the monthly sponsorship!)
+* RBZL (thanks for the monthly donation)
+* Frcooper (thanks for the monthly donation)
+
+Also big thanks to:
+* Dogy007 (Thanks for the sponsorship)
+* Ceramed (Thank you for your donation and your help troubleshooting SuperDisplay and SpaceDesk screens)
+* Bjorg (Thank you for your donation)
+* MichaelDWheeler (Thank you for your donation)
+* Frank (Thank you for your donation)
+* Dan Clark (Thank you for your donation)
+* Fonzmonster (Thank you for your donation)
+* Logozo (Thank you for your donation)
+* 5th (Thank you for your donation)
+* Patrickdiezi (Thank you for your donation)
 * Fifowole (Thank you for your donation)
 * Brett Horton (Thank you for your donation)
 * Patrickdiezi  (Thank you for your donation)

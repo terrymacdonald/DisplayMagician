@@ -96,7 +96,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DesktopNotificationActivator.cs" />
     <Compile Include="GameLibraries\XboxGame.cs" />
     <Compile Include="GameLibraries\GOGGame.cs" />
     <Compile Include="GameLibraries\XboxLibrary.cs" />
@@ -311,7 +310,7 @@
       <Version>4.0.0-alpha5</Version>
     </PackageReference>
     <PackageReference Include="Autoupdater.NET.Official">
-      <Version>1.7.0</Version>
+      <Version>1.7.3</Version>
     </PackageReference>
     <PackageReference Include="BootMeUp">
       <Version>1.2.0</Version>
@@ -347,10 +346,10 @@
       <Version>2.1.0</Version>
     </PackageReference>
     <PackageReference Include="NLog">
-      <Version>4.7.15</Version>
+      <Version>5.0.1</Version>
     </PackageReference>
     <PackageReference Include="protobuf-net">
-      <Version>3.1.0</Version>
+      <Version>3.1.17</Version>
     </PackageReference>
     <PackageReference Include="QueryString.NET">
       <Version>1.0.0</Version>
@@ -408,6 +407,15 @@
       <WrapperTool>tlbimp</WrapperTool>
       <Isolated>False</Isolated>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="NETWORKLIST">
+      <Guid>{DCB00D01-570F-4A9B-8D69-199FDBA5723B}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
     <COMReference Include="Shell32">
       <Guid>{50A7E9B0-70EF-11D1-B75A-00A0C90564FE}</Guid>
