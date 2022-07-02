@@ -478,7 +478,7 @@ namespace DisplayMagicianShared
         }
 
 
-        public bool CreateProfileFromCurrentDisplaySettings()
+        public bool CreateProfileFromCurrentDisplaySettings(bool fastScan = true)
         {
             // Calling the 3 different libraries automatically gets the different configs from each of the 3 video libraries.
             // If the video library isn't in use then it also fills in the defaults so that the JSON file can save properly
@@ -495,16 +495,16 @@ namespace DisplayMagicianShared
                 if (VideoMode == VIDEO_MODE.NVIDIA && nvidiaLibrary.IsInstalled)
                 {
                     nvidiaLibrary.UpdateActiveConfig();
-                    winLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig(fastScan);
                 }
                 else if (VideoMode == VIDEO_MODE.AMD && amdLibrary.IsInstalled)
                 {
                     amdLibrary.UpdateActiveConfig();
-                    winLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig(fastScan);
                 }
                 else
                 {
-                    winLibrary.UpdateActiveConfig();
+                    winLibrary.UpdateActiveConfig(fastScan);
                 }                               
 
                 // Grab the profile data from the current stored config (that we just updated)

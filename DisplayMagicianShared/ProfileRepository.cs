@@ -696,7 +696,7 @@ namespace DisplayMagicianShared
             }
         }
 
-        public static void UpdateActiveProfile()
+        public static void UpdateActiveProfile(bool fastScan = true)
         {
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
@@ -751,7 +751,7 @@ namespace DisplayMagicianShared
             //ShellHelper.TellShellToWriteSettings();
             //WinLibrary.RefreshTaskBars();
 
-            profile.CreateProfileFromCurrentDisplaySettings();
+            profile.CreateProfileFromCurrentDisplaySettings(fastScan);
 
             if (_profilesLoaded && _allProfiles.Count > 0)
             {
