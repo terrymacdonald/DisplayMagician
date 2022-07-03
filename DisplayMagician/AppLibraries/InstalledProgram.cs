@@ -11,7 +11,7 @@ using System.Xml;
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
 
-namespace DisplayMagician
+namespace DisplayMagician.AppLibraries
 {
     class InstalledProgram
     {
@@ -378,7 +378,7 @@ namespace DisplayMagician
                         var name = manifest.SelectSingleNode(@"/*[local-name() = 'Package']/*[local-name() = 'Properties']/*[local-name() = 'DisplayName']").InnerText;
                         if (name.StartsWith("ms-resource"))
                         {
-                            name = MsResources.GetIndirectResourceString(package.Id.FullName, package.Id.Name, name);
+                            name = Utils.GetIndirectResourceString(package.Id.FullName, package.Id.Name, name);
                             if (String.IsNullOrEmpty(name))
                             {
                                 name = manifest.SelectSingleNode(@"/*[local-name() = 'Package']/*[local-name() = 'Identity']").Attributes["Name"].Value;

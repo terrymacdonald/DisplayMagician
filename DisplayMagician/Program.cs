@@ -23,6 +23,7 @@ using System.Threading;
 using Microsoft.Win32;
 using DisplayMagician.Processes;
 using NETWORKLIST;
+using DisplayMagician.AppLibraries;
 
 namespace DisplayMagician {
 
@@ -568,8 +569,10 @@ namespace DisplayMagician {
                     AppMainForm = new MainForm();
                     AppMainForm.Load += MainForm_LoadCompleted;
 
-                    // Load the games in background onexecute
+                    // Load the games in background on execute
                     GameLibrary.LoadGamesInBackground();
+                    // Load the apps in background on execute
+                    AppLibrary.LoadAppsInBackground();
 
                     // Close the splash screen
                     if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
@@ -884,7 +887,10 @@ namespace DisplayMagician {
                 // Try to load all the games in parallel to this process
                 //Task.Run(() => LoadGamesInBackground());
                 logger.Debug($"Program/Main: Try to load all the Games in the background to avoid locking the UI");
+                // Load the games in background on execute
                 GameLibrary.LoadGamesInBackground();
+                // Load the apps in background on execute
+                AppLibrary.LoadAppsInBackground();
 
                 // Set up the AppMainForm variable that we need to use later
                 AppMainForm = new MainForm();
