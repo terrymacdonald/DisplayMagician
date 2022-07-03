@@ -348,7 +348,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
             this.lbl_hotkey_assigned.Location = new System.Drawing.Point(21, 39);
             this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
-            this.lbl_hotkey_assigned.Size = new System.Drawing.Size(57, 16);
+            this.lbl_hotkey_assigned.Size = new System.Drawing.Size(56, 16);
             this.lbl_hotkey_assigned.TabIndex = 36;
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;

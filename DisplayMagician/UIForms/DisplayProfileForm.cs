@@ -548,7 +548,7 @@ namespace DisplayMagician.UIForms
             // Refresh the profiles to see whats valid
             ProfileRepository.IsPossibleRefresh();
             // Reload the profiles in case we swapped to another program to change it
-            ProfileRepository.UpdateActiveProfile();
+            ProfileRepository.UpdateActiveProfile(false);
             // Change to the current selected Profile
             ChangeSelectedProfile(ProfileRepository.GetActiveProfile());
             // Refresh the Profile UI
