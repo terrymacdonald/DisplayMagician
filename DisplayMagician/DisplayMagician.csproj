@@ -99,8 +99,9 @@
     <Compile Include="AppLibraries\App.cs" />
     <Compile Include="AppLibraries\LocalLibrary.cs" />
     <Compile Include="GameLibraries\GameLibrary.cs" />
-    <Compile Include="AppLibraries\LocalGame.cs" />
+    <Compile Include="AppLibraries\LocalApp.cs" />
     <Compile Include="GameLibraries\GOGGame.cs" />
+    <Compile Include="GameLibraries\XboxGame.cs" />
     <Compile Include="GameLibraries\XboxLibrary.cs" />
     <Compile Include="GameLibraries\GOGLibrary.cs" />
     <Compile Include="GameLibraries\Game.cs" />

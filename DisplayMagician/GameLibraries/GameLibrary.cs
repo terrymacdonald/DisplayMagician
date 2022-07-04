@@ -121,11 +121,22 @@ namespace DisplayMagician.GameLibraries
             logger.Trace($"Program/LoadGamesInBackground: Attempting to load games from detected game libraries.");
 
 
+            // Clear the game libraries in case this is a refresh
+            SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
+            steamLibrary.AllInstalledGames.Clear();
+            UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
+            uplayLibrary.AllInstalledGames.Clear();
+            OriginLibrary originLibrary = OriginLibrary.GetLibrary();
+            originLibrary.AllInstalledGames.Clear();
+            EpicLibrary epicLibrary = EpicLibrary.GetLibrary();
+            epicLibrary.AllInstalledGames.Clear();
+            GogLibrary gogLibrary = GogLibrary.GetLibrary();
+            gogLibrary.AllInstalledGames.Clear();
+
             // Now lets prepare loading all the Steam games we have installed
             Action loadSteamGamesAction = new Action(() =>
             {
                 // Check if Steam is installed
-                GameLibrary steamLibrary = SteamLibrary.GetLibrary();
                 if (steamLibrary.IsGameLibraryInstalled)
                 {
                     // Load Steam library games
@@ -147,7 +158,6 @@ namespace DisplayMagician.GameLibraries
             Action loadUplayGamesAction = new Action(() =>
             {
                 // Check if Uplay is installed
-                GameLibrary uplayLibrary = UplayLibrary.GetLibrary();
                 if (uplayLibrary.IsGameLibraryInstalled)
                 {
                     // Load Uplay library games
@@ -170,7 +180,6 @@ namespace DisplayMagician.GameLibraries
             Action loadOriginGamesAction = new Action(() =>
             {
                 // Check if Origin is installed
-                GameLibrary originLibrary = OriginLibrary.GetLibrary();
                 if (originLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
@@ -193,7 +202,6 @@ namespace DisplayMagician.GameLibraries
             Action loadEpicGamesAction = new Action(() =>
             {
                 // Check if Epic is installed
-                GameLibrary epicLibrary = EpicLibrary.GetLibrary();
                 if (epicLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
@@ -216,7 +224,6 @@ namespace DisplayMagician.GameLibraries
             Action loadGogGamesAction = new Action(() =>
             {
                 // Check if GOG is installed
-                GameLibrary gogLibrary = GogLibrary.GetLibrary();
                 if (gogLibrary.IsGameLibraryInstalled)
                 {
                     // Load Origin library games
@@ -261,20 +268,14 @@ namespace DisplayMagician.GameLibraries
                     logger.Error(ex, $"Program/LoadGamesInBackground: LoadGamesActions exception:");
                 }
             }
-
-            // Clear the game libraries in case this is a refresh
-            SteamLibrary.GetLibrary().AllInstalledGames.Clear();
-            UplayLibrary.GetLibrary().AllInstalledGames.Clear();
-            OriginLibrary.GetLibrary().AllInstalledGames.Clear();
-            EpicLibrary.GetLibrary().AllInstalledGames.Clear();
-            GogLibrary.GetLibrary().AllInstalledGames.Clear();
+            
             // Produce a single array of Games we can reference later
             GameLibrary.AllInstalledGamesInAllLibraries = new List<Game>();
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(SteamLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(UplayLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(OriginLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(EpicLibrary.GetLibrary().AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(GogLibrary.GetLibrary().AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(steamLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(uplayLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(originLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(epicLibrary.AllInstalledGames);
+            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(gogLibrary.AllInstalledGames);
 
             // Stop creating Game Bitmaps from the Games so the rest of the program is faster later
             //RefreshGameBitmaps();

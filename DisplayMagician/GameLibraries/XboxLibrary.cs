@@ -100,9 +100,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
-                // Load the Gog Games from Gog Client if needed
-                if (_allXboxGames.Count == 0)
-                    LoadInstalledGames();
+                // Disabled as we now do it manually when DM starts
+                // Load the Xbox Games from Xbox Client if needed
+                /*if (_allXboxGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allXboxGames;
             }
         }
@@ -215,29 +216,29 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override bool AddGame(Game XboxGame)
+        public override bool AddGame(Game xboxGame)
         {
-            if (!(XboxGame is XboxGame))
+            if (!(xboxGame is XboxGame))
                 return false;
             
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
-            if (ContainsGame(XboxGame))
+            if (ContainsGame(xboxGame))
             {
-                logger.Debug($"XboxLibrary/AddXboxGame: Updating Xbox game {XboxGame.Name} in our Xbox library");
+                logger.Debug($"XboxLibrary/AddXboxGame: Updating Xbox game {xboxGame.Name} in our Xbox library");
                 // We update the existing Shortcut with the data over
-                XboxGame XboxGameToUpdate = (XboxGame)GetGame(XboxGame.Id.ToString());
-                XboxGame.CopyTo(XboxGameToUpdate);
+                XboxGame XboxGameToUpdate = (XboxGame)GetGame(xboxGame.Id.ToString());
+                xboxGame.CopyTo(XboxGameToUpdate);
             }
             else
             {
-                logger.Debug($"XboxLibrary/AddXboxGame: Adding Xbox game {XboxGame.Name} to our Xbox library");
+                logger.Debug($"XboxLibrary/AddXboxGame: Adding Xbox game {xboxGame.Name} to our Xbox library");
                 // Add the XboxGame to the list of XboxGames
-                _allXboxGames.Add(XboxGame);
+                _allXboxGames.Add(xboxGame);
             }
 
             //Doublecheck it's been added
-            if (ContainsGame(XboxGame))
+            if (ContainsGame(xboxGame))
             {
                 return true;
             }
@@ -246,76 +247,76 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override bool RemoveGame(Game XboxGame)
+        public override bool RemoveGame(Game xboxGame)
         {
-            if (!(XboxGame is XboxGame))
+            if (!(xboxGame is XboxGame))
                 return false;
 
-            logger.Debug($"XboxLibrary/RemoveXboxGame: Removing Xbox game {XboxGame.Name} from our Xbox library");
+            logger.Debug($"XboxLibrary/RemoveXboxGame: Removing Xbox game {xboxGame.Name} from our Xbox library");
 
             // Remove the XboxGame from the list.
-            int numRemoved = _allXboxGames.RemoveAll(item => item.Id.Equals(XboxGame.Id));
+            int numRemoved = _allXboxGames.RemoveAll(item => item.Id.Equals(xboxGame.Id));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"XboxLibrary/RemoveXboxGame: Removed Xbox game with name {XboxGame.Name}");
+                logger.Debug($"XboxLibrary/RemoveXboxGame: Removed Xbox game with name {xboxGame.Name}");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"XboxLibrary/RemoveXboxGame: Didn't remove Xbox game with ID {XboxGame.Name} from the Xbox Library");
+                logger.Debug($"XboxLibrary/RemoveXboxGame: Didn't remove Xbox game with ID {xboxGame.Name} from the Xbox Library");
                 return false;
             }                
             else
                 throw new XboxLibraryException();
         }
 
-        public override bool RemoveGameById(string XboxGameId)
+        public override bool RemoveGameById(string xboxGameId)
         {
-            if (XboxGameId.Equals(0))
+            if (xboxGameId.Equals(0))
                 return false;
 
-            logger.Debug($"XboxLibrary/RemoveXboxGame2: Removing Xbox game with ID {XboxGameId} from the Xbox library");
+            logger.Debug($"XboxLibrary/RemoveXboxGame2: Removing Xbox game with ID {xboxGameId} from the Xbox library");
 
             // Remove the XboxGame from the list.
-            int numRemoved = _allXboxGames.RemoveAll(item => item.Id.Equals(XboxGameId));
+            int numRemoved = _allXboxGames.RemoveAll(item => item.Id.Equals(xboxGameId));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"XboxLibrary/RemoveXboxGame2: Removed Xbox game with ID {XboxGameId}");
+                logger.Debug($"XboxLibrary/RemoveXboxGame2: Removed Xbox game with ID {xboxGameId}");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"XboxLibrary/RemoveXboxGame2: Didn't remove Xbox game with ID {XboxGameId} from the Xbox Library");
+                logger.Debug($"XboxLibrary/RemoveXboxGame2: Didn't remove Xbox game with ID {xboxGameId} from the Xbox Library");
                 return false;
             }
             else
                 throw new XboxLibraryException();
         }
 
-        public override bool RemoveGame(string XboxGameNameOrId)
+        public override bool RemoveGame(string xboxGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(XboxGameNameOrId))
+            if (String.IsNullOrWhiteSpace(xboxGameNameOrId))
                 return false;
 
-            logger.Debug($"XboxLibrary/RemoveXboxGame3: Removing Xbox game with Name or ID {XboxGameNameOrId} from the Xbox library");
+            logger.Debug($"XboxLibrary/RemoveXboxGame3: Removing Xbox game with Name or ID {xboxGameNameOrId} from the Xbox library");
 
             int numRemoved;
-            Match match = Regex.Match(XboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(xboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
-                numRemoved = _allXboxGames.RemoveAll(item => XboxGameNameOrId.Equals(item.Id));
+                numRemoved = _allXboxGames.RemoveAll(item => xboxGameNameOrId.Equals(item.Id));
             else
-                numRemoved = _allXboxGames.RemoveAll(item => XboxGameNameOrId.Equals(item.Name));
+                numRemoved = _allXboxGames.RemoveAll(item => xboxGameNameOrId.Equals(item.Name));
 
             if (numRemoved == 1)
             {
-                logger.Debug($"XboxLibrary/RemoveXboxGame3: Removed Xbox game with Name or UUID {XboxGameNameOrId} ");
+                logger.Debug($"XboxLibrary/RemoveXboxGame3: Removed Xbox game with Name or UUID {xboxGameNameOrId} ");
                 return true;
             }
             else if (numRemoved == 0)
             {
-                logger.Debug($"XboxLibrary/RemoveXboxGame3: Didn't remove Xbox game with Name or UUID {XboxGameNameOrId} from the Xbox Library");
+                logger.Debug($"XboxLibrary/RemoveXboxGame3: Didn't remove Xbox game with Name or UUID {xboxGameNameOrId} from the Xbox Library");
                 return false;
             }
             else
@@ -323,25 +324,25 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override bool ContainsGame(Game XboxGame)
+        public override bool ContainsGame(Game xboxGame)
         {
-            if (!(XboxGame is XboxGame))
+            if (!(xboxGame is XboxGame))
                 return false;
 
             foreach (XboxGame testXboxGame in _allXboxGames)
             {
-                if (testXboxGame.Id.Equals(XboxGame.Id))
+                if (testXboxGame.Id.Equals(xboxGame.Id))
                     return true;
             }
 
             return false;
         }
 
-        public override bool ContainsGameById(string XboxGameId)
+        public override bool ContainsGameById(string xboxGameId)
         {
             foreach (XboxGame testXboxGame in _allXboxGames)
             {
-                if (XboxGameId == testXboxGame.Id)
+                if (xboxGameId == testXboxGame.Id)
                     return true;
             }
 
@@ -350,18 +351,18 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override bool ContainsGame(string XboxGameNameOrId)
+        public override bool ContainsGame(string xboxGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(XboxGameNameOrId))
+            if (String.IsNullOrWhiteSpace(xboxGameNameOrId))
                 return false;
 
 
-            Match match = Regex.Match(XboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(xboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
                 {
-                    if (XboxGameNameOrId.Equals(Convert.ToInt32(testXboxGame.Id)))
+                    if (xboxGameNameOrId.Equals(Convert.ToInt32(testXboxGame.Id)))
                         return true;
                 }
 
@@ -370,7 +371,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
                 {
-                    if (XboxGameNameOrId.Equals(testXboxGame.Name))
+                    if (xboxGameNameOrId.Equals(testXboxGame.Name))
                         return true;
                 }
 
@@ -381,17 +382,17 @@ namespace DisplayMagician.GameLibraries
         }
 
 
-        public override Game GetGame(string XboxGameNameOrId)
+        public override Game GetGame(string xboxGameNameOrId)
         {
-            if (String.IsNullOrWhiteSpace(XboxGameNameOrId))
+            if (String.IsNullOrWhiteSpace(xboxGameNameOrId))
                 return null;
 
-            Match match = Regex.Match(XboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(xboxGameNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
                 {
-                    if (XboxGameNameOrId.Equals(Convert.ToInt32(testXboxGame.Id)))
+                    if (xboxGameNameOrId.Equals(Convert.ToInt32(testXboxGame.Id)))
                         return testXboxGame;
                 }
 
@@ -400,7 +401,7 @@ namespace DisplayMagician.GameLibraries
             {
                 foreach (XboxGame testXboxGame in _allXboxGames)
                 {
-                    if (XboxGameNameOrId.Equals(testXboxGame.Name))
+                    if (xboxGameNameOrId.Equals(testXboxGame.Name))
                         return testXboxGame;
                 }
 
@@ -410,11 +411,11 @@ namespace DisplayMagician.GameLibraries
 
         }
 
-        public override Game GetGameById(string XboxGameId)
+        public override Game GetGameById(string xboxGameId)
         {
             foreach (XboxGame testXboxGame in _allXboxGames)
             {
-                if (XboxGameId == testXboxGame.Id)
+                if (xboxGameId == testXboxGame.Id)
                     return testXboxGame;
             }
 
@@ -458,34 +459,34 @@ namespace DisplayMagician.GameLibraries
 
                     string gameID = match.Groups[1].Value;
                     logger.Trace($"XboxLibrary/LoadInstalledGames: Found GameID {gameID} matching pattern in game directory name");
-                    string XboxGameInfoFilename = Path.Combine(gogSupportInstallerGameDir, $"XboxGame-{gameID}.info");
-                    logger.Trace($"XboxLibrary/LoadInstalledGames: Looking for games info file {XboxGameInfoFilename}");
-                    if (!File.Exists(XboxGameInfoFilename))
+                    string xboxGameInfoFilename = Path.Combine(gogSupportInstallerGameDir, $"XboxGame-{gameID}.info");
+                    logger.Trace($"XboxLibrary/LoadInstalledGames: Looking for games info file {xboxGameInfoFilename}");
+                    if (!File.Exists(xboxGameInfoFilename))
                     {
-                        logger.Warn($"XboxLibrary/LoadInstalledGames: Couldn't find games info file {XboxGameInfoFilename}. There seems to be a problem with your GOG installation.");
+                        logger.Warn($"XboxLibrary/LoadInstalledGames: Couldn't find games info file {xboxGameInfoFilename}. There seems to be a problem with your GOG installation.");
                         continue;
                     }
 
                     // Now we get the information from the Gog Info file to parse it
-                    XboxGameInfo XboxGameInfo;
+                    XboxGameInfo xboxGameInfo;
                     try
                     {
-                        XboxGameInfo = JsonConvert.DeserializeObject<XboxGameInfo>(File.ReadAllText(XboxGameInfoFilename));
+                        xboxGameInfo = JsonConvert.DeserializeObject<XboxGameInfo>(File.ReadAllText(xboxGameInfoFilename));
                     }
                     catch (Exception ex)
                     {
-                        logger.Warn(ex, $"XboxLibrary/LoadInstalledGames: Exception trying to convert the {XboxGameInfoFilename} to a JSON object to read the installed games. There seems to be a problem with your GOG installation.");
+                        logger.Warn(ex, $"XboxLibrary/LoadInstalledGames: Exception trying to convert the {xboxGameInfoFilename} to a JSON object to read the installed games. There seems to be a problem with your GOG installation.");
                         continue;
                     }
 
                     // Now we check this is a 'Root Game' i.e. it is a  base game, not something else
-                    if (XboxGameInfo.gameId != XboxGameInfo.rootGameId)
+                    if (xboxGameInfo.gameId != xboxGameInfo.rootGameId)
                     {
-                        logger.Trace($"XboxLibrary/LoadInstalledGames: Game {XboxGameInfo.name} is not a base game (probably DLC) so we're skipping it.");
+                        logger.Trace($"XboxLibrary/LoadInstalledGames: Game {xboxGameInfo.name} is not a base game (probably DLC) so we're skipping it.");
                     }
 
                     // Now we check the Gog game registry key too, to get some more information that we need
-                    string registryGogGalaxyGameKey = registryGogGalaxyGamesKey + XboxGameInfo.gameId;
+                    string registryGogGalaxyGameKey = registryGogGalaxyGamesKey + xboxGameInfo.gameId;
                     logger.Trace($"XboxLibrary/XboxLibrary: GOG Galaxy Games registry key = HKLM\\{registryGogGalaxyGameKey}");
                     RegistryKey GogGalaxyGameKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGameKey, RegistryKeyPermissionCheck.ReadSubTree);
                     if (GogGalaxyGameKey == null)
@@ -508,18 +509,18 @@ namespace DisplayMagician.GameLibraries
                     }*/
 
                     // Extract the info into a game object                    
-                    XboxGame XboxGame = new XboxGame();
-                    XboxGame.Id = XboxGameInfo.gameId;
-                    XboxGame.Name = XboxGameInfo.name;
-                    XboxGame.Directory = gameDirectory;
-                    XboxGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "").ToString();
-                    XboxGame.ExePath = gameExePath;
+                    XboxGame xboxGame = new XboxGame();
+                    xboxGame.Id = xboxGameInfo.gameId;
+                    xboxGame.Name = xboxGameInfo.name;
+                    xboxGame.Directory = gameDirectory;
+                    xboxGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "").ToString();
+                    xboxGame.ExePath = gameExePath;
                     //XboxGame.IconPath = gameIconPath;
-                    XboxGame.IconPath = gameExePath;
-                    XboxGame.ProcessName = Path.GetFileNameWithoutExtension(XboxGame.ExePath);
+                    xboxGame.IconPath = gameExePath;
+                    xboxGame.ProcessName = Path.GetFileNameWithoutExtension(xboxGame.ExePath);
 
                     // Add the Gog Game to the list of Gog Games
-                    _allXboxGames.Add(XboxGame);
+                    _allXboxGames.Add(xboxGame);
                 }
 
                 logger.Info($"XboxLibrary/LoadInstalledGames: Found {_allXboxGames.Count} installed GOG games");

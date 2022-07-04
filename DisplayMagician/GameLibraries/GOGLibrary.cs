@@ -100,9 +100,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Gog Games from Gog Client if needed
-                if (_allGogGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allGogGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allGogGames;
             }
         }

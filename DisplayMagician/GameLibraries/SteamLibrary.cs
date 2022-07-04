@@ -97,9 +97,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Steam Games from Steam Client if needed
-                if (_allSteamGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allSteamGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allSteamGames;
             }
         }

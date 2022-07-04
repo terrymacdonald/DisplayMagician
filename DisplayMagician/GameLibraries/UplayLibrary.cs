@@ -94,9 +94,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Uplay Games from Uplay Client if needed
-                if (_allGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allGames;
             }
         }

@@ -249,7 +249,7 @@ namespace DisplayMagician.AppLibraries
             });
         }
 
-        public static async Task<List<InstalledProgram>> GetInstalledPrograms(CancellationTokenSource cancelToken = null)
+        public static async Task<List<InstalledProgram>> GetInstalledProgramsAsync(CancellationTokenSource cancelToken = null)
         {
             var apps = new List<InstalledProgram>();
 

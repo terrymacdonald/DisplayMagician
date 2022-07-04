@@ -96,9 +96,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Origin Games from Origin Client if needed
-                if (_allOriginGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allOriginGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allOriginGames;
             }
         }

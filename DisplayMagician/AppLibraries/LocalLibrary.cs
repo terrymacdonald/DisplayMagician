@@ -12,6 +12,7 @@ using System.Web;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using DisplayMagician.Processes;
+using System.Threading.Tasks;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -100,9 +101,10 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
-                // Load the Gog Apps from Gog Client if needed
-                if (_allLocalApps.Count == 0)
-                    LoadInstalledApps();
+                // Disabled as we now do it manually when DM starts
+                // Load the Locally Installed Apps from Windows if needed
+                /*if (_allLocalApps.Count == 0)
+                    LoadInstalledApps();*/
                 return _allLocalApps;
             }
         }
@@ -152,7 +154,8 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
-                return _isLocalInstalled;
+                // As this library accesses all the installed apps within Windows, it is always installed.
+                return true;
             }
 
         }
@@ -161,26 +164,8 @@ namespace DisplayMagician.AppLibraries
         {
             get
             {
-                List<Process> LocalLibraryProcesses = new List<Process>();
-
-                try
-                {
-                    foreach (string LocalLibraryProcessName in _LocalProcessList)
-                    {
-                        // Look for the processes with the ProcessName we sorted out earlier
-                        LocalLibraryProcesses.AddRange(Process.GetProcessesByName(LocalLibraryProcessName));
-                    }
-
-                    // If we have found one or more processes then we should be good to go
-                    // so let's break, and get to the next step....
-                    if (LocalLibraryProcesses.Count > 0)
-                        return true;
-                    else
-                        return false;
-                }                
-                catch (Exception ex) { 
-                    return false; 
-                }
+                // As this 'library' is  Windows, it is always running.
+                return true;                
             }
 
         }
@@ -434,95 +419,36 @@ namespace DisplayMagician.AppLibraries
                     return false;
                 }
 
-                string gogSupportInstallerDir = Path.Combine(_gogLocalContent, "supportInstaller");
+                // Get the installed programs from registry and UWP package data
+                Task<List<InstalledProgram>> getInstalledProgram = InstalledProgram.GetInstalledProgramsAsync();
+                List<InstalledProgram> installedPrograms = getInstalledProgram.Result;
+                installedPrograms.AddRange(InstalledProgram.GetUWPApps());
 
-                logger.Trace($"LocalLibrary/LoadInstalledApps: supportInstaller Directory {gogSupportInstallerDir} exists!");
-                string[] gogSupportInstallerAppDirs = Directory.GetDirectories(gogSupportInstallerDir, "*", SearchOption.AllDirectories);
-                logger.Trace($"LocalLibrary/LoadInstalledApps: Found App directories in supportInstaller Directory {gogSupportInstallerDir}: {gogSupportInstallerAppDirs.ToString()}");
-
-                // If there are no Apps installed then return false
-                if (gogSupportInstallerAppDirs.Length == 0)
+                // Loop through the returned data, and create a list of DisplayMagician Apps
+                foreach (InstalledProgram installedProgram in installedPrograms)
                 {
-                    logger.Warn($"LocalLibrary/LoadInstalledApps: No GOG Apps installed in the GOG Galaxy library");
-                    return false;
-                }
-                foreach (string gogSupportInstallerAppDir in gogSupportInstallerAppDirs)
-                {
-                    logger.Trace($"LocalLibrary/LoadInstalledApps: Parsing {gogSupportInstallerAppDir} name to find AppID");
-                    Match match = Regex.Match(gogSupportInstallerAppDir, @"(\d{10})$");
-                    if (!match.Success)
+                    string localAppFilename = Path.GetFileName(installedProgram.Path);
+                    LocalApp localApp = new LocalApp();
+                    localApp.Id = localAppFilename;
+                    localApp.Name = installedProgram.Name;
+                    localApp.Directory = installedProgram.WorkDir;
+                    localApp.Executable = installedProgram.Path;
+                    localApp.ExePath = installedProgram.Path;
+                    if (!String.IsNullOrEmpty(installedProgram.Icon) && File.Exists(installedProgram.Icon))
                     {
-                        logger.Warn($"LocalLibrary/LoadInstalledApps: Failed to match the 10 digit App id from directory name {gogSupportInstallerAppDir} so ignoring App");
-                        continue;
+                        localApp.IconPath = installedProgram.Icon;
                     }
-
-                    string AppID = match.Groups[1].Value;
-                    logger.Trace($"LocalLibrary/LoadInstalledApps: Found AppID {AppID} matching pattern in App directory name");
-                    string LocalAppInfoFilename = Path.Combine(gogSupportInstallerAppDir, $"LocalApp-{AppID}.info");
-                    logger.Trace($"LocalLibrary/LoadInstalledApps: Looking for Apps info file {LocalAppInfoFilename}");
-                    if (!File.Exists(LocalAppInfoFilename))
+                    else
                     {
-                        logger.Warn($"LocalLibrary/LoadInstalledApps: Couldn't find Apps info file {LocalAppInfoFilename}. There seems to be a problem with your GOG installation.");
-                        continue;
+                        localApp.IconPath = installedProgram.Path;
                     }
+                    localApp.ProcessName = Path.GetFileNameWithoutExtension(localApp.ExePath);
 
-                    // Now we get the information from the Gog Info file to parse it
-                    LocalAppInfo LocalAppInfo;
-                    try
-                    {
-                        LocalAppInfo = JsonConvert.DeserializeObject<LocalAppInfo>(File.ReadAllText(LocalAppInfoFilename));
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, $"LocalLibrary/LoadInstalledApps: Exception trying to convert the {LocalAppInfoFilename} to a JSON object to read the installed Apps. There seems to be a problem with your GOG installation.");
-                        continue;
-                    }
+                    // Add the Locally Installed App to the list of Apps
+                    _allLocalApps.Add(localApp);
+                }                
 
-                    // Now we check this is a 'Root App' i.e. it is a  base App, not something else
-                    if (LocalAppInfo.AppId != LocalAppInfo.rootAppId)
-                    {
-                        logger.Trace($"LocalLibrary/LoadInstalledApps: App {LocalAppInfo.name} is not a base App (probably DLC) so we're skipping it.");
-                    }
-
-                    // Now we check the Gog App registry key too, to get some more information that we need
-                    string registryGogGalaxyAppKey = registryGogGalaxyAppsKey + LocalAppInfo.AppId;
-                    logger.Trace($"LocalLibrary/LocalLibrary: GOG Galaxy Apps registry key = HKLM\\{registryGogGalaxyAppKey}");
-                    RegistryKey GogGalaxyAppKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyAppKey, RegistryKeyPermissionCheck.ReadSubTree);
-                    if (GogGalaxyAppKey == null)
-                    {
-                        logger.Info($"LocalLibrary/LocalLibrary: Could not find the GOG Galaxy Apps registry key {registryGogGalaxyAppsKey} so can't get all the information about the App we need! There seems to be a problem with your GOG installation.");
-                        continue;
-                    }
-
-                    string AppDirectory = GogGalaxyAppKey.GetValue("path", "").ToString();
-                    string AppExePath = GogGalaxyAppKey.GetValue("exe", "").ToString();
-                    if (!File.Exists(AppExePath))
-                    {
-                        logger.Info($"LocalLibrary/LocalLibrary: Could not find the GOG Galaxy App file {AppExePath} so can't run the App later! There seems to be a problem with your GOG installation.");
-                        continue;
-                    }
-                    /*string AppIconPath = Path.Combine(AppDirectory, $"LocalApp-{AppID}.ico");                    
-                    if (!File.Exists(AppIconPath))
-                    {
-                        AppIconPath = AppExePath;
-                    }*/
-
-                    // Extract the info into a App object                    
-                    LocalApp LocalApp = new LocalApp();
-                    LocalApp.Id = LocalAppInfo.AppId;
-                    LocalApp.Name = LocalAppInfo.name;
-                    LocalApp.Directory = AppDirectory;
-                    LocalApp.Executable = GogGalaxyAppKey.GetValue("exeFile", "").ToString();
-                    LocalApp.ExePath = AppExePath;
-                    //LocalApp.IconPath = AppIconPath;
-                    LocalApp.IconPath = AppExePath;
-                    LocalApp.ProcessName = Path.GetFileNameWithoutExtension(LocalApp.ExePath);
-
-                    // Add the Gog App to the list of Gog Apps
-                    _allLocalApps.Add(LocalApp);
-                }
-
-                logger.Info($"LocalLibrary/LoadInstalledApps: Found {_allLocalApps.Count} installed GOG Apps");
+                logger.Info($"LocalLibrary/LoadInstalledApps: Found {_allLocalApps.Count} locally installed Apps");
 
             }
 
@@ -540,19 +466,19 @@ namespace DisplayMagician.AppLibraries
             }
             catch (SecurityException ex)
             {
-                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The user does not have the permissions required to read the GOG InstallDir registry key.");
+                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The user does not have the permissions required to read the locally installed InstallDir registry key.");
             }
             catch (ObjectDisposedException ex)
             {
-                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The Microsoft.Win32.RegistryKey is closed when trying to access the GOG InstallDir registry key (closed keys cannot be accessed).");
+                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The Microsoft.Win32.RegistryKey is closed when trying to access the locally installed InstallDir registry key (closed keys cannot be accessed).");
             }
             catch (IOException ex)
             {
-                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The GOG InstallDir registry key has been marked for deletion so we cannot access the value dueing the LocalLibrary check.");
+                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The locally installed InstallDir registry key has been marked for deletion so we cannot access the value dueing the LocalLibrary check.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The user does not have the necessary registry rights to check whether Gog is installed.");
+                logger.Warn(ex, "LocalLibrary/GetAllInstalledApps: The user does not have the necessary registry rights to check whether locally installed apps are installed.");
             }
 
             return true;

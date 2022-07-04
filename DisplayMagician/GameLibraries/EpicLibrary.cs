@@ -95,9 +95,10 @@ namespace DisplayMagician.GameLibraries
         {
             get
             {
+                // Disabled as we now do it manually when DM starts
                 // Load the Epic Games from Epic Client if needed
-                if (_allEpicGames.Count == 0)
-                    LoadInstalledGames();
+                /*if (_allEpicGames.Count == 0)
+                    LoadInstalledGames();*/
                 return _allEpicGames;
             }
         }

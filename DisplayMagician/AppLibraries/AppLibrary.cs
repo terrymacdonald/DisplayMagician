@@ -107,12 +107,15 @@ namespace DisplayMagician.AppLibraries
 
             logger.Trace($"AppLibrary/LoadAppsInBackground: Attempting to load Apps from detected App libraries.");
 
+            // Clear the App libraries in case this is a refresh
+            LocalLibrary localLibrary = LocalLibrary.GetLibrary();
+            localLibrary.AllInstalledApps.Clear();
 
             // Now lets prepare loading all the Local Apps we have installed
             Action loadLocalAppsAction = new Action(() =>
             {
                 // Check wht local apps are installed
-                LocalLibrary localLibrary = LocalLibrary.GetLibrary();
+                //LocalLibrary localLibrary = LocalLibrary.GetLibrary();
                 if (localLibrary.IsAppLibraryInstalled)
                 {
                     // Load local library Apps
@@ -149,12 +152,10 @@ namespace DisplayMagician.AppLibraries
             {
                 logger.Error(ae, $"AppLibrary/LoadAppsInBackground: One or more exception during execution of loadAppsActions");
             }
-
-            // Clear the App libraries in case this is a refresh
-            LocalLibrary.GetLibrary().AllInstalledApps.Clear();
+            
             // Produce a single array of Apps we can reference later
             AppLibrary.AllInstalledAppsInAllLibraries = new List<App>();
-            AppLibrary.AllInstalledAppsInAllLibraries.AddRange(LocalLibrary.GetLibrary().AllInstalledApps);
+            AppLibrary.AllInstalledAppsInAllLibraries.AddRange(localLibrary.AllInstalledApps);
 
             AppsLoaded = true;
 
