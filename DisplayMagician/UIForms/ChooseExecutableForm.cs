@@ -15,11 +15,20 @@ using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
 {
+    public enum ChooseExecutableFormMode : UInt32
+    {
+        AppMode = 0,
+        ExeMode = 1,
+    }
+
     public partial class ChooseExecutableForm : Form
     {
         private AppAdaptor _appAdaptor = new AppAdaptor();
         private App _selectedApp = null;
         private App _appToUse = null;
+        private string _exeToUse = null;
+        private string _previousExe = null;
+        private ChooseExecutableFormMode _chooseExecutableFormMode = ChooseExecutableFormMode.AppMode;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -48,162 +57,62 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        public string ExeToUse
+        {
+            get
+            {
+                return _exeToUse;
+            }
+            set
+            {
+                if (value is String)
+                {
+                    _exeToUse = value;
+                }
+            }
+        }
+
+        public string PreviousExe
+        {
+            get
+            {
+                return _previousExe;
+            }
+            set
+            {
+                if (value is String)
+                {
+                    _previousExe = value;
+                }
+            }
+        }
+
+        public ChooseExecutableFormMode Mode
+        {
+            get
+            {
+                return _chooseExecutableFormMode;
+            }
+            set
+            {
+                if (value is ChooseExecutableFormMode)
+                {
+                    _chooseExecutableFormMode = value;
+                }
+            }
+        }
+
         private void btn_back_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             this.Close();
         }
 
-        /*private void ChooseExecutableForm(object sender, EventArgs e)
-        {
-            UpdateImageListBox();
-        }
-
-        private void UpdateImageListBox()
-        {
-            lv_icons.Items.Clear();
-            if (AvailableImages.Count > 0)
-            {
-                foreach (ShortcutBitmap sc in AvailableImages)
-                {
-                    string[] stringsToAdd = new string[] {
-                        $"Image {sc.Order} from {sc.Name}",
-                        $"{sc.Size.Width} x {sc.Size.Height}"
-                    };
-                    ListViewItem lvi = new ListViewItem(stringsToAdd);
-                    lvi.Name = sc.UUID;
-                    if (ImageUtils.ImagesAreEqual(sc.Image,SelectedImage.Image))
-                    {
-                        lvi.Selected = true;
-                        lvi.Focused = true;
-                        lvi.EnsureVisible();
-                        pb_selected_icon.Image = SelectedImage.Image;
-                        _selectedImage = sc;
-                    }
-                    lv_icons.Items.Add(lvi);
-                }
-
-                // Select the first largest image listed if there isn't one already
-                if (lv_icons.SelectedItems.Count == 0)
-                {
-                    lv_icons.Items[0].Selected = true;
-                    pb_selected_icon.Image = AvailableImages[0].Image;
-                    _selectedImage = AvailableImages[0];
-                }
-            }
-        }
-
-
-        private void btn_select_Click(object sender, EventArgs e)
-        {
-            SelectedImage = _selectedImage;
-            DialogResult = DialogResult.OK;
-            this.Close();
-        }
-
-        private void ilv_installed_apps_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lv_icons.SelectedItems.Count > 0)
-            {
-                string uuidToFind = lv_icons.SelectedItems[0].Name;
-                foreach (ShortcutBitmap sc in AvailableImages)
-                {
-                    if (sc.UUID.Equals(uuidToFind))
-                    {
-                        pb_selected_icon.Image = sc.Image;
-                        _selectedImage = sc;
-                        break;
-                    }
-                }
-            }
-        }
-
-        private void btn_add_Click(object sender, EventArgs e)
-        {
-            dialog_open.InitialDirectory = Program.AppDownloadsPath;
-            dialog_open.DefaultExt = "*.exe; *.com; *.ico; *.bmp; *.jpg; *.png; *.tif; *.gif";
-            dialog_open.Filter = "All exe and image files (*.exe; *.com; *.ico; *.bmp; *.jpg; *.png; *.tif; *.gif) | *.exe; *.com; *.ico; *.bmp; *.jpg; *.png; *.tif; *.gif | All files(*.*) | *.*";
-            if (dialog_open.ShowDialog(this) == DialogResult.OK)
-            {
-                if (File.Exists(dialog_open.FileName))
-                {
-                    try
-                    {
-                        List<ShortcutBitmap> newImages = ImageUtils.GetMeAllBitmapsFromFile(dialog_open.FileName);
-                        if (newImages.Count == 0)
-                        {
-                            logger.Trace($"No new images found when parsing {dialog_open.FileName} for images. Are you sure it's a valid image format?");
-                            MessageBox.Show(
-                            $"No new images found when parsing {dialog_open.FileName} for images. Are you sure it's a valid image format?",
-                            "Add images to icon",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-                        }
-                        else
-                        {
-                            AvailableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(dialog_open.FileName));
-                            UpdateImageListBox();
-                            logger.Trace($"ChooseImageForm/btn_add_Click: Added {newImages.Count} image(s) from {dialog_open.FileName} to the end of this image list.");
-                            MessageBox.Show(
-                            $"Added {newImages.Count} image(s) from {dialog_open.FileName} to the end of this image list.",
-                            "Add images to icon",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-
-                        }
-                        dialog_open.FileName = string.Empty;
-                    }
-                    catch(Exception ex)
-                    {
-                        logger.Warn(ex, $"ChooseImageForm/btn_add_Click: Exception - unable to parse {dialog_open.FileName} for images. Are you sure it's a valid image format?");
-                        MessageBox.Show(
-                            $"Unable to parse {dialog_open.FileName} for images. Are you sure it's a valid image format?",
-                            "Add images to icon",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-
-                    }
-                }
-                else
-                {
-                    logger.Warn($"ChooseImageForm/btn_add_Click: Unable to open {dialog_open.FileName} to parse it for images. Are you sure you have the right file permissions?");
-                    MessageBox.Show(
-                        $"Unable to open {dialog_open.FileName} to parse it for images. Are you sure you have the right file permissions?",
-                        "Add images to icon",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
-            }
-        }
-
-        private void btn_remove_Click(object sender, EventArgs e)
-        {
-            if (lv_icons.SelectedItems.Count > 0)
-            {
-                string uuidToFind = lv_icons.SelectedItems[0].Name;
-                foreach (ShortcutBitmap sc in AvailableImages)
-                {
-                    if (sc.UUID.Equals(uuidToFind))
-                    {
-                        AvailableImages.Remove(sc);
-                        pb_selected_icon.Image = null;
-                        _selectedImage = default(ShortcutBitmap);
-                        UpdateImageListBox();
-                        return;
-                    }
-                }
-                // If we get here we didn't find anything to remove!
-                MessageBox.Show(
-                    $"Unable to remove selected item from the list of images!",
-                    "Remove image from icon",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Exclamation);
-            }
-        }*/
-
+        
         private string getExeFile()
         {
             dialog_open.InitialDirectory = Environment.SpecialFolder.ProgramFiles.ToString();
+            dialog_open.FileName = "";
             dialog_open.DefaultExt = "*.exe";
             dialog_open.Filter = "exe files (*.exe;*.com) | *.exe;*.com | All files(*.*) | *.*";
             string textToReturn = "";
@@ -228,6 +137,25 @@ namespace DisplayMagician.UIForms
 
         private void ChooseExecutableForm_Load(object sender, EventArgs e)
         {
+            if (!String.IsNullOrWhiteSpace(_previousExe))
+            {
+                // First lookup to see if this path is an app or just an exe
+                // If it is an app then select it
+                foreach (App installedApp in AppLibrary.AllInstalledAppsInAllLibraries)
+                {
+                    if (installedApp.ExePath.Equals(_previousExe))
+                    {
+                        _selectedApp = installedApp;
+                    }
+                }
+            }
+
+            // Set up the _selectedApp if we're passed something
+            if (_chooseExecutableFormMode == ChooseExecutableFormMode.AppMode && _appToUse is App)
+            {
+                _selectedApp = _appToUse;
+            }
+
             // Refresh the Installed Apps Library UI
             RefreshExecutableFormUI();
 
@@ -255,10 +183,11 @@ namespace DisplayMagician.UIForms
                 newItem = new ImageListViewItem(installedApp, installedApp.Name);
 
                 // Select it if its the selectedProfile
-                if (_selectedApp is ShortcutItem && _selectedApp.Equals(installedApp))
+                if (_selectedApp is App && _selectedApp.Equals(installedApp))
                 {
                     logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: This shortcut {installedApp.Name} is the selected one so selecting it in the UI");
                     newItem.Selected = true;
+                    btn_select_app.Enabled = true;                    
                 }
 
                 //ilv_saved_profiles.Items.Add(newItem);
@@ -270,6 +199,11 @@ namespace DisplayMagician.UIForms
 
             // Restart updating the saved_profiles listview
             ilv_installed_apps.ResumeLayout();
+
+            if (ilv_installed_apps.SelectedItems.Count > 0)
+            {
+                ilv_installed_apps.EnsureVisible(ilv_installed_apps.SelectedItems[0].Index);
+            }            
 
         }
 
@@ -299,10 +233,21 @@ namespace DisplayMagician.UIForms
         {
             if (_selectedApp is App && ilv_installed_apps.SelectedItems.Count > 0)
             {
+                _chooseExecutableFormMode = ChooseExecutableFormMode.AppMode;
                 _appToUse = _selectedApp;
+                _exeToUse = null;
                 DialogResult = DialogResult.OK;
                 this.Close();
             }
+        }
+
+        private void btn_select_exe_Click(object sender, EventArgs e)
+        {
+            _chooseExecutableFormMode = ChooseExecutableFormMode.ExeMode;
+            _appToUse = null;
+            _exeToUse = getExeFile();
+            DialogResult = DialogResult.OK;
+            this.Close();
         }
     }
 }

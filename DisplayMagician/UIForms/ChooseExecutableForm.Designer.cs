@@ -125,6 +125,7 @@ namespace DisplayMagician.UIForms
             this.btn_select_exe.TabIndex = 41;
             this.btn_select_exe.Text = "Choose Exe from your Computer";
             this.btn_select_exe.UseVisualStyleBackColor = true;
+            this.btn_select_exe.Click += new System.EventHandler(this.btn_select_exe_Click);
             // 
             // lbl_or
             // 

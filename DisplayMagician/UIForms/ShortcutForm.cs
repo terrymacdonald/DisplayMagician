@@ -2434,16 +2434,33 @@ namespace DisplayMagician.UIForms
         }
 
         private void btn_exe_to_start_Click(object sender, EventArgs e)
-        {
-            /*txt_executable.Text = getExeFile();
-            UpdateExeImagesUI();*/
-
+        {            
             ChooseExecutableForm exeForm = new ChooseExecutableForm();  
+            if (!String.IsNullOrWhiteSpace(txt_executable.Text))
+            {
+                exeForm.PreviousExe = txt_executable.Text;
+                if (_selectedApp is App)
+                {
+                    exeForm.Mode = ChooseExecutableFormMode.AppMode;
+                    exeForm.AppToUse = _selectedApp;
+                    exeForm.ExeToUse= null;
+                }
+            }
+
             if (exeForm.ShowDialog() == DialogResult.OK)
             {
-                _selectedApp = exeForm.AppToUse;
-                txt_executable.Text = _selectedApp.ExePath;
-                UpdateExeImagesUI(_selectedApp);
+                if (exeForm.Mode == ChooseExecutableFormMode.AppMode)
+                {
+                    _selectedApp = exeForm.AppToUse;
+                    txt_executable.Text = _selectedApp.ExePath;
+                    UpdateExeImagesUI(_selectedApp);
+                }
+                else
+                {
+                    _selectedApp = null;
+                    txt_executable.Text = exeForm.ExeToUse;
+                    UpdateExeImagesUI(_selectedApp);
+                }                
             }            
         }
 
