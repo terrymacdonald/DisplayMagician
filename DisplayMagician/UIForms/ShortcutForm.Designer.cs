@@ -1040,9 +1040,9 @@ namespace DisplayMagician.UIForms
             this.rb_standalone.ForeColor = System.Drawing.Color.White;
             this.rb_standalone.Location = new System.Drawing.Point(16, 53);
             this.rb_standalone.Name = "rb_standalone";
-            this.rb_standalone.Size = new System.Drawing.Size(222, 24);
+            this.rb_standalone.Size = new System.Drawing.Size(326, 24);
             this.rb_standalone.TabIndex = 45;
-            this.rb_standalone.Text = "Launch a Game executable";
+            this.rb_standalone.Text = "Launch a Game or Application executable ";
             this.rb_standalone.UseVisualStyleBackColor = true;
             this.rb_standalone.CheckedChanged += new System.EventHandler(this.rb_standalone_CheckedChanged);
             this.rb_standalone.Paint += new System.Windows.Forms.PaintEventHandler(this.radiobutton_Paint);
@@ -1611,7 +1611,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_assigned.ForeColor = System.Drawing.Color.White;
             this.lbl_hotkey_assigned.Location = new System.Drawing.Point(26, 907);
             this.lbl_hotkey_assigned.Name = "lbl_hotkey_assigned";
-            this.lbl_hotkey_assigned.Size = new System.Drawing.Size(57, 16);
+            this.lbl_hotkey_assigned.Size = new System.Drawing.Size(56, 16);
             this.lbl_hotkey_assigned.TabIndex = 37;
             this.lbl_hotkey_assigned.Text = "Hotkey: ";
             this.lbl_hotkey_assigned.Visible = false;

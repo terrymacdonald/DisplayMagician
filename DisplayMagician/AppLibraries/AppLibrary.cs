@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Threading.Tasks;
 using DisplayMagician;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -22,7 +24,7 @@ namespace DisplayMagician.AppLibraries
         public static List<App> AllInstalledAppsInAllLibraries { get; set; }
         public static bool AppsLoaded { get; set; } = false;
 
-        public static bool AppsImagesLoaded { get; set; } = false;
+        public static bool AppImagesLoaded { get; set; } = false;
 
         public virtual List<App> AllInstalledApps { get; set; }
 
@@ -215,7 +217,7 @@ namespace DisplayMagician.AppLibraries
                 App.AvailableAppBitmaps = bmList;
                 App.AppBitmap = ImageUtils.GetMeLargestAvailableBitmap(bmList);
             }
-            AppsImagesLoaded = true;
+            AppImagesLoaded = true;
         }
 
 

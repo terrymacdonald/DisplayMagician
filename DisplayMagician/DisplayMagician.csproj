@@ -153,6 +153,13 @@
     <Compile Include="ShortcutRepository.cs" />
     <Compile Include="Processes\SingleInstanceHelper.cs" />
     <Compile Include="SingleInstance.cs" />
+    <Compile Include="UIForms\ChooseExecutableForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\ChooseExecutableForm.Designer.cs">
+      <DependentUpon>ChooseExecutableForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIForms\AppAdaptor.cs" />
     <Compile Include="UIForms\GameAdaptor.cs" />
     <Compile Include="UIForms\HotkeyForm.cs">
       <SubType>Form</SubType>
@@ -244,6 +251,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Language.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\ChooseExecutableForm.resx">
+      <DependentUpon>ChooseExecutableForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\HotkeyForm.resx">
       <DependentUpon>HotkeyForm.cs</DependentUpon>

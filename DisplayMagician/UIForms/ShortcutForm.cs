@@ -14,6 +14,7 @@ using AudioSwitcher.AudioApi;
 using NHotkey.WindowsForms;
 using NHotkey;
 using System.Threading;
+using DisplayMagician.AppLibraries;
 
 namespace DisplayMagician.UIForms
 {
@@ -44,6 +45,7 @@ namespace DisplayMagician.UIForms
         private decimal _captureVolume = -1;
         private ShortcutItem _shortcutToEdit = null;
         Game _selectedGame = null;
+        App _selectedApp = null;
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
         private bool _autoName = true;
@@ -935,9 +937,17 @@ namespace DisplayMagician.UIForms
                 }
                 else if (rb_standalone.Checked && txt_executable.Text.Length > 0)
                 {
-                    string baseName = Path.GetFileNameWithoutExtension(txt_executable.Text);
-                    txt_shortcut_save_name.Text = $"{baseName} ({_profileToUse.Name})";
+                    if (_selectedApp is App)
+                    {                        
+                        txt_shortcut_save_name.Text = $"{_selectedApp.Name} ({_profileToUse.Name})";
+                    }
+                    else
+                    {
+                        string baseName = Path.GetFileNameWithoutExtension(txt_executable.Text);
+                        txt_shortcut_save_name.Text = $"{baseName} ({_profileToUse.Name})";
+                    }                    
                 }
+                
             }
         }
 
@@ -2011,6 +2021,12 @@ namespace DisplayMagician.UIForms
                 {
                     GameLibraries.GameLibrary.RefreshGameBitmaps();
                 }
+                if (!AppLibraries.AppLibrary.AppImagesLoaded)
+                {
+                    AppLibraries.AppLibrary.RefreshAppBitmaps();
+                }
+
+
 
                 _firstShow = false;
             }
@@ -2419,14 +2435,29 @@ namespace DisplayMagician.UIForms
 
         private void btn_exe_to_start_Click(object sender, EventArgs e)
         {
-            txt_executable.Text = getExeFile();
-            UpdateExeImagesUI();
+            /*txt_executable.Text = getExeFile();
+            UpdateExeImagesUI();*/
+
+            ChooseExecutableForm exeForm = new ChooseExecutableForm();  
+            if (exeForm.ShowDialog() == DialogResult.OK)
+            {
+                _selectedApp = exeForm.AppToUse;
+                txt_executable.Text = _selectedApp.ExePath;
+                UpdateExeImagesUI(_selectedApp);
+            }            
         }
 
-        private void UpdateExeImagesUI()
+        private void UpdateExeImagesUI(App selectedApp = null)
         {
             _availableImages = new List<ShortcutBitmap>();
-            _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_executable.Text));
+            if (selectedApp is App)
+            {
+                _availableImages.AddRange(selectedApp.AvailableAppBitmaps);
+            }            
+            else
+            {
+                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_executable.Text));
+            }
             if (rb_wait_alternative_executable.Checked && File.Exists(txt_alternative_executable.Text))
             {
                 _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(txt_alternative_executable.Text));

@@ -1,4 +1,5 @@
-﻿using DisplayMagician.GameLibraries;
+﻿using DisplayMagician.AppLibraries;
+using DisplayMagician.GameLibraries;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
@@ -9,20 +10,20 @@ using System.Text;
 
 namespace DisplayMagician.UIForms
 {
-    #region Game Adaptor
+    #region App Adaptor
     /// <summary>
-    /// A custom item adaptor for ImageListView that reads from a Profile.
+    /// A custom item adaptor for ImageListView that reads from an Application.
     /// </summary>
-    class GameAdaptor : ImageListView.ImageListViewItemAdaptor
+    class AppAdaptor : ImageListView.ImageListViewItemAdaptor
     {
 
         private bool disposed;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="GameAdaptor"/> class.
+        /// Initializes a new instance of the <see cref="AppAdaptor "/> class.
         /// </summary>
-        public GameAdaptor()
+        public AppAdaptor()
         {
             disposed = false;
         }
@@ -42,16 +43,16 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
+                App app = (App)key;
 
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
 
-                return game.GameBitmap.Image.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
+                return app.AppBitmap.Image.GetThumbnailImage(256, 256, myCallback, IntPtr.Zero);
 
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, "GameAdapter/GetThumbnail: Exception caused while trying to get the Game Bitmap.");
+                logger.Warn(ex, "AppAdapter/GetThumbnail: Exception caused while trying to get the Game Bitmap.");
 
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
@@ -76,13 +77,13 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
+                App app = (App)key;
 
-                return game.Name;
+                return app.Name;
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, "GameAdapter/GetUniqueIdentifier: Exception caused while trying to get the Game Unique Identifier.");
+                logger.Warn(ex, "AppAdapter/GetUniqueIdentifier: Exception caused while trying to get the Game Unique Identifier.");
                 // If we have a problem with converting the submitted key to a Shortcut
                 // Then we return null
                 return null;
@@ -101,12 +102,12 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
-                return game.Name;
+                App app = (App)key;
+                return app.Name;
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, "GameAdaptor/GetSourceImage : Exception caused while trying to get the Game source name.");
+                logger.Warn(ex, "AppAdapter/GetSourceImage : Exception caused while trying to get the Game source name.");
 
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
@@ -128,10 +129,10 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                Game game = (Game)key;
+                App app = (App)key;
 
                 // Get file info
-                if (game.GameBitmap is ShortcutBitmap)
+                if (app.AppBitmap is ShortcutBitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
                     // System.Drawing.Image exception created while accessing the Size
@@ -141,13 +142,13 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySize = game.GameBitmap.Size;
+                            mySize = app.AppBitmap.Size;
                             gotSize = true;
                         }
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
-                            logger.Warn(ex, "GameAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the GameBitmap Size as an Integer.");
+                            logger.Warn(ex, "AppAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the AppBitmap Size as an Integer.");
                         }
                     }
 
@@ -159,17 +160,17 @@ namespace DisplayMagician.UIForms
                     {
                         try
                         {
-                            mySizeF = game.GameBitmap.Image.PhysicalDimension;
+                            mySizeF = app.AppBitmap.Image.PhysicalDimension;
                             gotSizeF = true;
                         }
                         catch (Exception ex)
                         {
                             // catch the System.Drawing.Image exception created while accessing the Size
-                            logger.Warn(ex, "GameAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the GameBitmap Size as a Float.");
+                            logger.Warn(ex, "AppAdapter/GetDetails: System.Drawing.Image exception caused while trying to get the AppBitmap Size as a Float.");
                         }
                     }
 
-                    string name = game.Name;
+                    string name = app.Name;
                     //string filepath = Path.GetDirectoryName(shortcut.SavedShortcutIconCacheFilename);
                     //string filename = Path.GetFileName(shortcut.SavedShortcutIconCacheFilename);
                     DateTime now = DateTime.Now;
@@ -201,7 +202,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, "GameAdapter/Utility.Tuple: Exception caused while trying to add details to the Game ImageListViewItem.");
+                logger.Warn(ex, "AppAdapter/Utility.Tuple: Exception caused while trying to add details to the Game ImageListViewItem.");
                 // If we have a problem with converting the submitted key to a profile
                 // Then we return null
                 return null;
