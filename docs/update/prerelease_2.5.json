@@ -16,8 +16,8 @@
   },
   "extraDetails": {
     "manualUpgrade": true,
-    "updateDisplayProfiles": true,
-    "updateGameShortcuts": false,
-    "updateSettings": false
+    "updatesDisplayProfiles": true,
+    "updatesGameShortcuts": false,
+    "updatesSettings": false
   }
 }
