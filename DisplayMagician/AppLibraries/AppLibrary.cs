@@ -203,7 +203,7 @@ namespace DisplayMagician.AppLibraries
                     ShortcutBitmap bm = new ShortcutBitmap();
                     if (App.AppLibrary.Equals(SupportedAppLibraryType.Local))
                     {
-                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.Steam, "Steam Icon", App.ExePath, bmList.Count);
+                        bm = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Exe Icon", App.ExePath, bmList.Count);
                     }
                     else
                     {

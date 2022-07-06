@@ -187,6 +187,7 @@ namespace DisplayMagician.UIForms
                 {
                     logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: This shortcut {installedApp.Name} is the selected one so selecting it in the UI");
                     newItem.Selected = true;
+                    newItem.Focused = true;
                     btn_select_app.Enabled = true;                    
                 }
 
@@ -202,7 +203,9 @@ namespace DisplayMagician.UIForms
 
             if (ilv_installed_apps.SelectedItems.Count > 0)
             {
-                ilv_installed_apps.EnsureVisible(ilv_installed_apps.SelectedItems[0].Index);
+                // Make sure that if the item is selected that it's visible
+                int selectedIndex = ilv_installed_apps.SelectedItems[0].Index;                
+                ilv_installed_apps.EnsureVisible(selectedIndex);
             }            
 
         }

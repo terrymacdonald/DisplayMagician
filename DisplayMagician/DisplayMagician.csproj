@@ -409,6 +409,7 @@
     <None Include="Resources\nvidiablack.png" />
     <None Include="Resources\nvidiawhitee.png" />
     <None Include="Resources\nvidiawhite.png" />
+    <None Include="Resources\exe.png" />
     <Content Include="Resources\redarrows.png" />
   </ItemGroup>
   <ItemGroup>

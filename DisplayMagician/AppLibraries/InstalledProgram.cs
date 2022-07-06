@@ -10,6 +10,7 @@ using System.Threading;
 using System.Xml;
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
+using IWshRuntimeLibrary;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -92,7 +93,7 @@ namespace DisplayMagician.AppLibraries
             {
                 var data = GetLnkShortcutData(file.FullName);
                 var name = System.IO.Path.GetFileNameWithoutExtension(file.Name);
-                if (File.Exists(data.Path))
+                if (System.IO.File.Exists(data.Path))
                 {
                     var versionInfo = FileVersionInfo.GetVersionInfo(data.Path);
                     name = !string.IsNullOrEmpty(versionInfo.ProductName?.Trim()) ? versionInfo.ProductName : System.IO.Path.GetFileNameWithoutExtension(file.FullName);
@@ -154,10 +155,42 @@ namespace DisplayMagician.AppLibraries
         {
             var shell = new IWshRuntimeLibrary.WshShell();
             var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(lnkPath);
+            string iconLocation;
+            if (!String.IsNullOrWhiteSpace(link.IconLocation))
+            {
+                if (Regex.IsMatch(link.IconLocation, @"^,\d+$"))
+                {
+                    // This is an empty shortcut path, so we need to use the target path instead
+                    iconLocation = link.TargetPath;
+                }
+                else if (Regex.IsMatch(link.IconLocation, @",\d+$"))
+                {
+                    // This is a shortcut path, so we need to remove the icon number from the end
+                    Match myMatches = Regex.Match(link.IconLocation, @"^(.*?),\d+$");
+                    if (myMatches.Success)
+                    {
+                        iconLocation = myMatches.Groups[1].Value;
+                    }
+                    else
+                    {
+                        iconLocation = link.TargetPath;
+                    }
+                }
+                else
+                {
+                    iconLocation = link.IconLocation;
+                }
+            }
+            else
+            {
+                iconLocation = link.TargetPath;
+            }
+
+
             return new InstalledProgram()
             {
                 Path = link.TargetPath,
-                Icon = link.IconLocation == ",0" ? link.TargetPath : link.IconLocation,
+                Icon = iconLocation,
                 Arguments = link.Arguments,
                 WorkDir = link.WorkingDirectory,
                 Name = link.FullName
@@ -234,10 +267,43 @@ namespace DisplayMagician.AppLibraries
                         continue;
                     }
 
+                    string iconLocation;
+                    if (!String.IsNullOrWhiteSpace(link.IconLocation))
+                    {
+                        if (Regex.IsMatch(link.IconLocation, @"^,\d+$"))
+                        {
+                            // This is an empty shortcut path, so we need to use the target path instead
+                            iconLocation = link.TargetPath;
+                        }
+                        else if (Regex.IsMatch(link.IconLocation, @",\d+$"))
+                        {
+                            // This is a shortcut path, so we need to remove the icon number from the end
+                            Match myMatches = Regex.Match(link.IconLocation, @"^(.*?),\d+$");
+                            if (myMatches.Success)
+                            {
+                                iconLocation = myMatches.Groups[1].Value;
+                            }
+                            else
+                            {
+                                iconLocation = link.TargetPath;
+                            }
+                        }
+                        else
+                        {
+                            iconLocation = link.IconLocation;
+                        }
+                    }
+                    else
+                    {
+                        iconLocation = link.TargetPath;
+                    }
+                    
+
+
                     var app = new InstalledProgram()
                     {
                         Path = target,
-                        Icon = link.IconLocation,
+                        Icon = iconLocation,
                         Name = System.IO.Path.GetFileNameWithoutExtension(shortcut.Name),
                         WorkDir = link.WorkingDirectory
                     };
@@ -282,7 +348,7 @@ namespace DisplayMagician.AppLibraries
 
         private static string GetUWPGameIcon(string defPath)
         {
-            if (File.Exists(defPath))
+            if (System.IO.File.Exists(defPath))
             {
                 return defPath;
             }

@@ -24,21 +24,14 @@ namespace DisplayMagician.AppLibraries
         // .NET guarantees thread safety for static initialization
         private static readonly LocalLibrary _instance = new LocalLibrary();
 
-
         // Common items to the class
         private List<App> _allLocalApps = new List<App>();
-        private string GogAppIdRegex = @"/^[0-9A-F]{1,10}$";
         private string _LocalExe;
         private string _LocalPath;
-        private string _gogLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "GOG.com");
-        private string _gogProgramFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy");
         private bool _isLocalInstalled = false;
         private List<string> _LocalProcessList = new List<string>(){ "LocalAppServices" };
+        private string LocalAppIdRegex = @"/^[0-9A-F]{1,10}$";
 
-        internal string registryGogGalaxyClientKey = @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient"; 
-        internal string registryGogGalaxyClientPathKey = @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient\paths";
-        internal string registryGogGalaxyAppsKey = @"SOFTWARE\WOW6432Node\GOG.com\Apps\";     
-        //internal string registryGogLauncherKey = @"SOFTWARE\WOW6432Node\Gog";
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
 
@@ -50,49 +43,7 @@ namespace DisplayMagician.AppLibraries
 
         private LocalLibrary()
         {
-            try
-            {
-                logger.Trace($"LocalLibrary/LocalLibrary: Gog Online Services registry key = HKLM\\{registryGogGalaxyClientKey}");
-                // Find the GogExe location, and the GogPath for later
-                RegistryKey GogGalaxyClientKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientKey, RegistryKeyPermissionCheck.ReadSubTree);
-                if (GogGalaxyClientKey == null)
-                {
-                    logger.Info($"LocalLibrary/LocalLibrary: GOG library is not installed!");
-                    return;
-                }
-                string gogClientExeFilename = GogGalaxyClientKey.GetValue("clientExecutable", @"GalaxyClient.exe").ToString();
-
-                RegistryKey GogGalaxyClientPathKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyClientPathKey, RegistryKeyPermissionCheck.ReadSubTree);
-                string gogClientPath = GogGalaxyClientKey.GetValue("client", @"C:\Program Files (x86)\GOG Galaxy").ToString();
-                _LocalPath = Path.GetDirectoryName(gogClientPath);
-                _LocalExe = Path.Combine(gogClientPath, gogClientExeFilename);                
-                if (File.Exists(_LocalExe))
-                {
-                    logger.Info($"LocalLibrary/LocalLibrary: GOG library is installed in {_LocalPath}. Found {_LocalExe}");
-                    _isLocalInstalled = true;
-                }
-                else
-                {
-                    logger.Info($"LocalLibrary/LocalLibrary: GOG library is not installed!");
-                }
-                   
-            }
-            catch (SecurityException ex)
-            {
-                logger.Warn(ex, "LocalLibrary/LocalLibrary: The user does not have the permissions required to read the Gog Online Services registry key.");
-            }
-            catch(ObjectDisposedException ex)
-            {
-                logger.Warn(ex, "LocalLibrary/LocalLibrary: The Microsoft.Win32.RegistryKey is closed when trying to access the Gog Online Services registry key (closed keys cannot be accessed).");
-            }
-            catch (IOException ex)
-            {
-                logger.Warn(ex, "LocalLibrary/LocalLibrary: The Gog Online Services registry key has been marked for deletion so we cannot access the value dueing the LocalLibrary check.");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.Warn(ex, "LocalLibrary/LocalLibrary: The user does not have the necessary registry rights to check whether Gog is installed.");
-            }
+            _isLocalInstalled = true;
         }
         #endregion
 
@@ -122,7 +73,7 @@ namespace DisplayMagician.AppLibraries
         { 
             get 
             {
-                return "GOG";
+                return "Locally Installed";
             } 
         }
 
@@ -287,7 +238,7 @@ namespace DisplayMagician.AppLibraries
             logger.Debug($"LocalLibrary/RemoveLocalApp3: Removing Local App with Name or ID {LocalAppNameOrId} from the Local library");
 
             int numRemoved;
-            Match match = Regex.Match(LocalAppNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(LocalAppNameOrId, LocalAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
                 numRemoved = _allLocalApps.RemoveAll(item => LocalAppNameOrId.Equals(item.Id));
             else
@@ -341,7 +292,7 @@ namespace DisplayMagician.AppLibraries
                 return false;
 
 
-            Match match = Regex.Match(LocalAppNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(LocalAppNameOrId, LocalAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (LocalApp testLocalApp in _allLocalApps)
@@ -371,7 +322,7 @@ namespace DisplayMagician.AppLibraries
             if (String.IsNullOrWhiteSpace(LocalAppNameOrId))
                 return null;
 
-            Match match = Regex.Match(LocalAppNameOrId, GogAppIdRegex, RegexOptions.IgnoreCase);
+            Match match = Regex.Match(LocalAppNameOrId, LocalAppIdRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 foreach (LocalApp testLocalApp in _allLocalApps)
@@ -434,14 +385,7 @@ namespace DisplayMagician.AppLibraries
                     localApp.Directory = installedProgram.WorkDir;
                     localApp.Executable = installedProgram.Path;
                     localApp.ExePath = installedProgram.Path;
-                    if (!String.IsNullOrEmpty(installedProgram.Icon) && File.Exists(installedProgram.Icon))
-                    {
-                        localApp.IconPath = installedProgram.Icon;
-                    }
-                    else
-                    {
-                        localApp.IconPath = installedProgram.Path;
-                    }
+                    localApp.IconPath = installedProgram.Icon;                    
                     localApp.ProcessName = Path.GetFileNameWithoutExtension(localApp.ExePath);
 
                     // Add the Locally Installed App to the list of Apps
