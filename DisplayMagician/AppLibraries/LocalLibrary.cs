@@ -392,7 +392,7 @@ namespace DisplayMagician.AppLibraries
                     _allLocalApps.Add(localApp);
                 }                
 
-                logger.Info($"LocalLibrary/LoadInstalledApps: Found {_allLocalApps.Count} locally installed Apps");
+               logger.Info($"LocalLibrary/LoadInstalledApps: Found {_allLocalApps.Count} locally installed Apps");
 
             }
 

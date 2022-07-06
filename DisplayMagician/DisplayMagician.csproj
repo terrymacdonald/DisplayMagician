@@ -225,6 +225,12 @@
       <DependentUpon>StartProgramControl.cs</DependentUpon>
     </Compile>
     <Compile Include="AppLibraries\UninstallProgram.cs" />
+    <Compile Include="UIForms\UpgradeForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UIForms\UpgradeForm.Designer.cs">
+      <DependentUpon>UpgradeForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Utils.cs" />
     <Compile Include="Validators.cs" />
     <Compile Include="Resources\Language.Designer.cs">
@@ -298,6 +304,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\StartProgramControl.resx">
       <DependentUpon>StartProgramControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIForms\UpgradeForm.resx">
+      <DependentUpon>UpgradeForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
