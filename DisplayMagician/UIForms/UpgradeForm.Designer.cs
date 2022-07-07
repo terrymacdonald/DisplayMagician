@@ -107,7 +107,8 @@
             this.lbl_changelog.Name = "lbl_changelog";
             this.lbl_changelog.Size = new System.Drawing.Size(702, 32);
             this.lbl_changelog.TabIndex = 39;
-            this.lbl_changelog.Text = "For more information on what has changed please see the changelog : ";
+            this.lbl_changelog.Text = "For more information on what has changed in the new version please visit the chan" +
+    "gelog: ";
             this.lbl_changelog.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // lnk_changelog
