@@ -468,7 +468,7 @@ namespace DisplayMagician {
                     if (File.Exists(oldv22ShortcutsFile))
                     {
                         logger.Info($"Program/Main: Upgrading v2.2 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
-                        File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
+                        File.Copy(oldv22ShortcutsFile, targetShortcutsFile);
                     }
                     else if (File.Exists(oldv2ShortcutsFile))
                     {
@@ -480,6 +480,11 @@ namespace DisplayMagician {
                         logger.Info($"Program/Main: Upgrading v1.0 shortcut file {oldv1ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
                         File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
                     }                   
+
+                    // Load the Shortcuts so that they get populated with default values as part of the upgrade
+                    ShortcutRepository.LoadShortcuts();
+                    // Now save the shortcuts so the new default values get written to disk
+                    ShortcutRepository.SaveShortcuts();
 
                 }
                 else

@@ -406,7 +406,7 @@ namespace DisplayMagician
             }            
         }
 
-        private static bool LoadShortcuts()
+        public static bool LoadShortcuts()
         {
 
             logger.Debug($"ShortcutRepository/LoadShortcuts: Loading shortcuts from {_shortcutStorageJsonFileName} into the Shortcut Repository");

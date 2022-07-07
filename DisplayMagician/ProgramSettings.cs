@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -41,6 +42,7 @@ namespace DisplayMagician
         #endregion
 
         #region Class Properties
+        [DefaultValue(0)]
         public string DisplayMagicianVersion
         {
             get 
@@ -56,6 +58,8 @@ namespace DisplayMagician
                 _displayMagicianVersion = value;
             }
         }
+
+        [DefaultValue(false)]
         public bool StartOnBootUp
         {
             get
@@ -68,6 +72,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ShowSplashScreen
         {
             get
@@ -80,6 +85,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ShowMinimiseMessageInActionCenter
         {
             get
@@ -92,6 +98,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ShowStatusMessageInActionCenter
         {
             get
@@ -104,6 +111,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool UpgradeToPreReleases
         {
             get
@@ -116,6 +124,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool UpgradeEnabled
         {
             get
@@ -128,6 +137,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool MinimiseOnStart { 
             get
             {
@@ -139,6 +149,7 @@ namespace DisplayMagician
             } 
         }
 
+        [DefaultValue(true)]
         public bool InstalledDesktopContextMenu
         {
             get
@@ -151,6 +162,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(0)]
         public int LastMessageIdRead
         {
             get
@@ -163,6 +175,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<int>))]
         public List<int> MessagesToMonitor
         {
             get
@@ -175,6 +188,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("Trace")]
         public string LogLevel
         {
             get
@@ -212,6 +226,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(Keys.None)]
         public Keys HotkeyMainWindow
         {
             get
@@ -224,6 +239,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(Keys.None)]
         public Keys HotkeyDisplayProfileWindow
         {
             get
@@ -236,6 +252,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(Keys.None)]
         public Keys HotkeyShortcutLibraryWindow
         {
             get

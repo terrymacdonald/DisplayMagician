@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
 using System.Threading;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace DisplayMagicianShared
 {

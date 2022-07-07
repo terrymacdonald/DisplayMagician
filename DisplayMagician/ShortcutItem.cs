@@ -16,6 +16,7 @@ using IWshRuntimeLibrary;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
 using TsudaKageyu;
+using System.ComponentModel;
 
 namespace DisplayMagician
 {
@@ -195,10 +196,7 @@ namespace DisplayMagician
                 // If Autoname is on, and then lets autoname it!
                 // That populates all the right things
                 AutoSuggestShortcutName();
-            }
-
-            //RefreshValidity();
-
+            }            
         }
 
         public static Version Version
@@ -206,7 +204,7 @@ namespace DisplayMagician
             get => new Version(1, 0);
         }
 
-
+        [DefaultValue("")]
         public string UUID
         {
             get
@@ -222,6 +220,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string Name
         {
             get
@@ -234,6 +233,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool AutoName
         {
             get
@@ -269,6 +269,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string ProfileUUID { 
             get 
             {
@@ -287,6 +288,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutPermanence.Temporary)]
         public ShortcutPermanence DisplayPermanence 
         { 
             get 
@@ -300,6 +302,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutPermanence.Temporary)]
         public ShortcutPermanence AudioPermanence
         {
             get
@@ -313,6 +316,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutPermanence.Temporary)]
         public ShortcutPermanence CapturePermanence
         {
             get
@@ -326,6 +330,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ShortcutCategory.Game)]
         public ShortcutCategory Category
         {
             get
@@ -339,6 +344,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(ProcessPriority.Normal)]
         public ProcessPriority ProcessPriority
         {
             get
@@ -352,6 +358,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string DifferentExecutableToMonitor
         {
             get
@@ -365,6 +372,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string ExecutableNameAndPath
         {
             get
@@ -384,6 +392,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string ExecutableArguments
         {
             get
@@ -397,6 +406,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool ExecutableArgumentsRequired
         {
             get
@@ -410,6 +420,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool RunExeAsAdministrator
         {
             get
@@ -423,6 +434,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool ProcessNameToMonitorUsesExecutable
         {
             get
@@ -436,6 +448,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string GameAppId
         {
             get
@@ -449,6 +462,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string GameName
         {
             get
@@ -462,6 +476,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(SupportedGameLibraryType.Unknown)]
         public SupportedGameLibraryType GameLibrary
         {
             get
@@ -476,6 +491,7 @@ namespace DisplayMagician
         }
 
 #pragma warning disable CS3003 // Type is not CLS-compliant
+        [DefaultValue(Keys.None)]
         public Keys Hotkey
 #pragma warning restore CS3003 // Type is not CLS-compliant
         {
@@ -489,6 +505,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(20)]
         public int StartTimeout
         {
             get
@@ -502,6 +519,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string GameArguments
         {
             get
@@ -528,6 +546,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string DifferentGameExeToMonitor
         {
             get
@@ -554,7 +573,7 @@ namespace DisplayMagician
             }
         }
 
-
+        [DefaultValue("")]
         public string AudioDevice
         {
             get
@@ -568,6 +587,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool ChangeAudioDevice
         {
             get
@@ -581,7 +601,7 @@ namespace DisplayMagician
             }
         }
 
-
+        [DefaultValue(true)]
         public bool UseAsCommsAudioDevice
         {
             get
@@ -593,8 +613,9 @@ namespace DisplayMagician
             {
                 _useAsCommsAudioDevice = value;
             }
-        }        
+        }
 
+        [DefaultValue(50)]
         public decimal AudioVolume
         {
             get
@@ -608,6 +629,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool SetAudioVolume
         {
             get
@@ -621,6 +643,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string CaptureDevice
         {
             get
@@ -634,6 +657,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool ChangeCaptureDevice
         {
             get
@@ -647,6 +671,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(true)]
         public bool UseAsCommsCaptureDevice
         {
             get
@@ -660,6 +685,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(50)]
         public decimal CaptureVolume
         {
             get
@@ -673,6 +699,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(false)]
         public bool SetCaptureVolume
         {
             get
@@ -686,6 +713,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<StartProgram>))]
         public List<StartProgram> StartPrograms
         {
             get
@@ -699,6 +727,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<StopProgram>))]
         public List<StopProgram> StopPrograms
         {
             get
@@ -712,7 +741,7 @@ namespace DisplayMagician
             }
         }
 
-
+        [DefaultValue("")]
         public string OriginalIconPath {
             get
             {
@@ -728,6 +757,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap OriginalLargeBitmap
         {
@@ -747,6 +777,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public Bitmap ShortcutBitmap
         {
@@ -761,6 +792,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public string SavedShortcutIconCacheFilename
         {
             get
@@ -800,6 +832,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue("")]
         public ShortcutBitmap SelectedImage
         {
             get
@@ -814,6 +847,7 @@ namespace DisplayMagician
             }
         }
 
+        [DefaultValue(default(List<ShortcutBitmap>))]
         public List<ShortcutBitmap> AvailableImages
         {
             get

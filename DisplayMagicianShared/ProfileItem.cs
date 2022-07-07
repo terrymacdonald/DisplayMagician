@@ -14,6 +14,7 @@ using DisplayMagicianShared.AMD;
 using DisplayMagicianShared.NVIDIA;
 using DisplayMagicianShared.Windows;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace DisplayMagicianShared
 {
@@ -155,6 +156,8 @@ namespace DisplayMagicianShared
 
         #region Instance Properties
 
+        [DefaultValue("")]
+
         public string UUID
         {
             get
@@ -199,8 +202,11 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue(VIDEO_MODE.WINDOWS)]
+
         public virtual VIDEO_MODE VideoMode { get; set; } = VIDEO_MODE.WINDOWS;
 
+        [DefaultValue(Keys.None)]
         public Keys Hotkey {
             get 
             {
@@ -212,9 +218,11 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue("")]
+
         public virtual string Name { get; set; }
 
-        [JsonRequired]
+        [JsonRequired]       
         public NVIDIA_DISPLAY_CONFIG NVIDIADisplayConfig
         {
             get
@@ -291,13 +299,16 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue("")]
         public string SavedProfileIconCacheFilename { get; set; }
-        
 
+        [DefaultValue(Wallpaper.Mode.DoNothing)]
         public Wallpaper.Mode WallpaperMode { get; set; }
 
+        [DefaultValue(Wallpaper.Style.Fill)]
         public Wallpaper.Style WallpaperStyle { get; set; }
 
+        [DefaultValue("")]
         public string WallpaperBitmapFilename{ 
             get
             {
@@ -309,6 +320,7 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue(default(List<string>))]
         public virtual List<string> ProfileDisplayIdentifiers
         {
             get
@@ -326,6 +338,7 @@ namespace DisplayMagicianShared
             }
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public virtual Bitmap ProfileBitmap
         {
@@ -346,6 +359,7 @@ namespace DisplayMagicianShared
 
         }
 
+        [DefaultValue(default(Bitmap))]
         [JsonConverter(typeof(CustomBitmapConverter))]
         public virtual Bitmap ProfileTightestBitmap
         {
