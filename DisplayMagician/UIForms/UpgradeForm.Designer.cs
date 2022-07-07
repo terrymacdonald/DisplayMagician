@@ -33,7 +33,9 @@
             this.btn_upgrade = new System.Windows.Forms.Button();
             this.btn_remind_later = new System.Windows.Forms.Button();
             this.btn_skip = new System.Windows.Forms.Button();
-            this.lbl_message = new System.Windows.Forms.Label();
+            this.lbl_changelog = new System.Windows.Forms.Label();
+            this.lnk_changelog = new System.Windows.Forms.LinkLabel();
+            this.rtb_message = new System.Windows.Forms.RichTextBox();
             this.SuspendLayout();
             // 
             // lbl_title
@@ -55,7 +57,7 @@
             this.btn_upgrade.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_upgrade.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_upgrade.ForeColor = System.Drawing.Color.White;
-            this.btn_upgrade.Location = new System.Drawing.Point(183, 678);
+            this.btn_upgrade.Location = new System.Drawing.Point(183, 338);
             this.btn_upgrade.Name = "btn_upgrade";
             this.btn_upgrade.Size = new System.Drawing.Size(206, 40);
             this.btn_upgrade.TabIndex = 32;
@@ -71,7 +73,7 @@
             this.btn_remind_later.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_remind_later.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_remind_later.ForeColor = System.Drawing.Color.White;
-            this.btn_remind_later.Location = new System.Drawing.Point(448, 678);
+            this.btn_remind_later.Location = new System.Drawing.Point(448, 338);
             this.btn_remind_later.Name = "btn_remind_later";
             this.btn_remind_later.Size = new System.Drawing.Size(220, 40);
             this.btn_remind_later.TabIndex = 33;
@@ -87,7 +89,7 @@
             this.btn_skip.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_skip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_skip.ForeColor = System.Drawing.Color.White;
-            this.btn_skip.Location = new System.Drawing.Point(744, 709);
+            this.btn_skip.Location = new System.Drawing.Point(744, 369);
             this.btn_skip.Name = "btn_skip";
             this.btn_skip.Size = new System.Drawing.Size(94, 25);
             this.btn_skip.TabIndex = 34;
@@ -95,27 +97,51 @@
             this.btn_skip.UseVisualStyleBackColor = true;
             this.btn_skip.Click += new System.EventHandler(this.btn_skip_Click);
             // 
-            // lbl_message
+            // lbl_changelog
             // 
-            this.lbl_message.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lbl_message.BackColor = System.Drawing.Color.Transparent;
-            this.lbl_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_message.ForeColor = System.Drawing.Color.White;
-            this.lbl_message.Location = new System.Drawing.Point(74, 57);
-            this.lbl_message.Name = "lbl_message";
-            this.lbl_message.Size = new System.Drawing.Size(702, 82);
-            this.lbl_message.TabIndex = 38;
-            this.lbl_message.Text = "You have an upgrade available for DisplayMagician. Do you wish to upgrade now?";
-            this.lbl_message.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.lbl_message.Visible = false;
+            this.lbl_changelog.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.lbl_changelog.BackColor = System.Drawing.Color.Transparent;
+            this.lbl_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_changelog.ForeColor = System.Drawing.Color.White;
+            this.lbl_changelog.Location = new System.Drawing.Point(74, 261);
+            this.lbl_changelog.Name = "lbl_changelog";
+            this.lbl_changelog.Size = new System.Drawing.Size(702, 32);
+            this.lbl_changelog.TabIndex = 39;
+            this.lbl_changelog.Text = "For more information on what has changed please see the changelog : ";
+            this.lbl_changelog.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // lnk_changelog
+            // 
+            this.lnk_changelog.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.lnk_changelog.AutoSize = true;
+            this.lnk_changelog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lnk_changelog.LinkColor = System.Drawing.Color.LightSkyBlue;
+            this.lnk_changelog.Location = new System.Drawing.Point(233, 293);
+            this.lnk_changelog.Name = "lnk_changelog";
+            this.lnk_changelog.Size = new System.Drawing.Size(371, 16);
+            this.lnk_changelog.TabIndex = 40;
+            this.lnk_changelog.TabStop = true;
+            this.lnk_changelog.Text = "https://github.com/terrymacdonald/DisplayMagician/releases";
+            this.lnk_changelog.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lnk_changelog_LinkClicked);
+            // 
+            // rtb_message
+            // 
+            this.rtb_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rtb_message.Location = new System.Drawing.Point(12, 52);
+            this.rtb_message.Name = "rtb_message";
+            this.rtb_message.Size = new System.Drawing.Size(826, 206);
+            this.rtb_message.TabIndex = 41;
+            this.rtb_message.Text = "";
             // 
             // UpgradeForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(850, 746);
-            this.Controls.Add(this.lbl_message);
+            this.ClientSize = new System.Drawing.Size(850, 406);
+            this.Controls.Add(this.rtb_message);
+            this.Controls.Add(this.lnk_changelog);
+            this.Controls.Add(this.lbl_changelog);
             this.Controls.Add(this.btn_skip);
             this.Controls.Add(this.btn_remind_later);
             this.Controls.Add(this.btn_upgrade);
@@ -126,7 +152,7 @@
             this.MinimizeBox = false;
             this.Name = "UpgradeForm";
             this.ShowIcon = false;
-            this.Text = "UpgradeForm";
+            this.Text = "Upgrade DisplayMagician";
             this.TopMost = true;
             this.Load += new System.EventHandler(this.UpgradeForm_Load);
             this.ResumeLayout(false);
@@ -140,6 +166,8 @@
         private System.Windows.Forms.Button btn_upgrade;
         private System.Windows.Forms.Button btn_remind_later;
         private System.Windows.Forms.Button btn_skip;
-        private System.Windows.Forms.Label lbl_message;
+        private System.Windows.Forms.Label lbl_changelog;
+        private System.Windows.Forms.LinkLabel lnk_changelog;
+        private System.Windows.Forms.RichTextBox rtb_message;
     }
 }

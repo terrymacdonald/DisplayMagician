@@ -25,6 +25,7 @@ using DisplayMagician.Processes;
 using NETWORKLIST;
 using DisplayMagician.AppLibraries;
 using System.ComponentModel;
+using System.Text;
 
 namespace DisplayMagician {
 
@@ -1663,57 +1664,59 @@ namespace DisplayMagician {
                     DialogResult dialogResult;
                     UpgradeForm upgradeForm = new UpgradeForm();
 
-                    string message;
+                    StringBuilder message= new StringBuilder();
+                    message.Append(@"{\rtf1\ansi \qc \line \line ");
+                    
 
                     if (args.Mandatory.Value)
                     {
                         logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Mandatory upgrade.");
-                        message = $@"There is a new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is a mandatory update. ";
+                        message.Append($@"There is a new version {args.CurrentVersion} available. You are using version {args.InstalledVersion}. This is a mandatory update. \line \line ");
                     }
                     else
                     {
                         logger.Info($"Program/AutoUpdaterOnCheckForUpdateEvent - New version {args.CurrentVersion} available. Current version is {args.InstalledVersion}. Optional upgrade.");
 
-                        message = $@"There is a new version {args.CurrentVersion} available. You are currently using version {args.InstalledVersion}. ";
-                        
+                        message.Append($@"There is a new version {args.CurrentVersion} available. You are currently using version {args.InstalledVersion}. \line \line ");                        
                     }
 
                     if (Program.AppUpgradeExtraDetails.HasValue)
                     {
+                        message.Append(@"\b ");
                         if (AppUpgradeExtraDetails.Value.ManualUpgrade)
                         {
                             // Manual upgrade required. This list tells the user what steps that is.
                             if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to manually recreate your Display Profiles, recreate your Game Shortcuts and check your DisplayMagician settings. ";
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles, recreate your Game Shortcuts and check your DisplayMagician settings. ");
                             }
                             else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to manually recreate your Display Profiles and recreate your Game Shortcuts. ";
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles and recreate your Game Shortcuts. ");
                             }
                             else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to manually recreate your Display Profiles and check your DisplayMagician settings. ";
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles and check your DisplayMagician settings. ");
                             }
                             else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to manually recreate your Display Profiles. ";
+                                message.Append($@"The upgrade will require you to manually recreate your Display Profiles. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to recreate your Game Shortcuts and check your DisplayMagician settings. ";
+                                message.Append($@"The upgrade will require you to recreate your Game Shortcuts and check your DisplayMagician settings. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to manually recreate your Game Shortcuts. ";
+                                message.Append($@"The upgrade will require you to manually recreate your Game Shortcuts. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to manually check your DisplayMagician settings. ";
+                                message.Append($@"The upgrade will require you to manually check your DisplayMagician settings. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will require you to perform some manual upgrade tasks yourself. ";
+                                message.Append($@"The upgrade will require you to perform some manual upgrade tasks yourself. ");
                             }
                         }
                         else
@@ -1721,43 +1724,45 @@ namespace DisplayMagician {
                             // Automatic upgrade required. This list tells the user what steps that is.
                             if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your Display Profiles, your Game Shortcuts and DisplayMagician settings as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your Display Profiles, your Game Shortcuts and DisplayMagician settings as part of the upgrade process. ");
                             }
                             else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your Display Profiles and your Game Shortcuts as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your Display Profiles and your Game Shortcuts as part of the upgrade process. ");
                             }
                             else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your Display Profiles and DisplayMagician settings as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your Display Profiles and DisplayMagician settings as part of the upgrade process. ");
                             }
                             else if (AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your Display Profiles as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your Display Profiles as part of the upgrade process. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your Game Shortcuts and DisplayMagician settings as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your Game Shortcuts and DisplayMagician settings as part of the upgrade process. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your Game Shortcuts as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your Game Shortcuts as part of the upgrade process. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your DisplayMagician settings as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your DisplayMagician settings as part of the upgrade process. ");
                             }
                             else if (!AppUpgradeExtraDetails.Value.UpdatesDisplayProfiles && !AppUpgradeExtraDetails.Value.UpdatesGameShortcuts && !AppUpgradeExtraDetails.Value.UpdatesSettings)
                             {
-                                message += $@"The upgrade will automatically update your DisplayMagician configuration as part of the upgrade process. ";
+                                message.Append($@"The upgrade will automatically update your DisplayMagician configuration as part of the upgrade process. ");
                             }
                         }
                     }
+                    message.Append(@"\line \line ");
+                    message.Append(@"\b0 ");
 
+                    message.Append($@"Press 'Upgrade now' to update, 'Remind me later' to remind you again in a week's time, or 'Skip' to continue without upgrading.");
+                    message.Append(@"}");
 
-                    message += $@"Do you want to update the application now?";
-
-                    upgradeForm.Message = message;
+                    upgradeForm.Message = message.ToString();
 
                     dialogResult = upgradeForm.ShowDialog();
 

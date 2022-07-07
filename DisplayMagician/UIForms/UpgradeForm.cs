@@ -48,7 +48,14 @@ namespace DisplayMagician.UIForms
 
         private void UpgradeForm_Load(object sender, EventArgs e)
         {
-            lbl_message.Text = Message;
+            rtb_message.Rtf = Message;
+            Utils.CenterOnPrimaryScreen(this);
+        }
+
+        private void lnk_changelog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/releases";
+            System.Diagnostics.Process.Start(targetURL);
         }
     }
 }
