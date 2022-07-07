@@ -476,23 +476,7 @@ namespace DisplayMagician.UIForms
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                if (!Program.AppProgramSettings.MinimiseOnStart)
-                {
-
-                    // Get the MainForm so we can access the NotifyIcon on it.
-                    //MainForm mainForm = (MainForm)this.Owner;                    
-
-                    // Run the shortcut
-                    //ShortcutRepository.RunShortcut(_selectedShortcut, mainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut);
-
-                }
-                else
-                {
-                    // Run the shortcut
-                    //ShortcutRepository.RunShortcut(_selectedShortcut, Program.AppMainForm.notifyIcon);
-                    result = Program.RunShortcutTask(_selectedShortcut);
-                }
+                result = Program.RunShortcutTask(_selectedShortcut);
             }
             catch (OperationCanceledException ex)
             {

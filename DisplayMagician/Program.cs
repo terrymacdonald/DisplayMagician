@@ -1286,24 +1286,20 @@ namespace DisplayMagician {
             RunShortcutResult result = RunShortcutResult.Error;
             try
             {
-                //Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon), AppCancellationTokenSource.Token);
-                //result = taskToRun.GetAwaiter().GetResult();
-                // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
-                //result = await Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token, notifyIcon));
-
-                Task<RunShortcutResult> taskToRun = Task.Run(() => ShortcutRepository.RunShortcut(shortcutToUse, AppCancellationTokenSource.Token), AppCancellationTokenSource.Token);
-                //taskToRun.RunSynchronously();
-                while (!taskToRun.IsCompleted)
+                CancellationToken cancelToken = AppCancellationTokenSource.Token;
+                // Start the RunShortcut Task in a new thread
+                Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, ref cancelToken), cancelToken);
+                // And then wait here until the task completes
+                while (true)
                 {
-                    Thread.Sleep(1000);
                     Application.DoEvents();
-                    if (Program.AppCancellationTokenSource.Token.IsCancellationRequested)
+                    Thread.Sleep(2000);
+                    if (output.IsCompleted || cancelToken.IsCancellationRequested)
                     {
                         break;
                     }
                 }
-                taskToRun.Wait(Program.AppCancellationTokenSource.Token);
-                result = taskToRun.Result;
+                //output.Wait(cancelToken);                
             }
             catch (OperationCanceledException ex)
             {
