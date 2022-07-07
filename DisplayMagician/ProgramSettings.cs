@@ -27,6 +27,7 @@ namespace DisplayMagician
         private bool _showMinimiseMessageInActionCenter = true;
         private bool _showStatusMessageInActionCenter = true;
         private bool _upgradeToPrereleases = false;
+        private bool _upgradeEnabled = true;
         private bool _installedDesktopContextMenu = true;
         private int _lastMessageIdRead = 0;
         private List<int> _messagesToMonitor = new List<int>();
@@ -110,6 +111,18 @@ namespace DisplayMagician
             set
             {
                 _upgradeToPrereleases = value;
+            }
+        }
+
+        public bool UpgradeEnabled
+        {
+            get
+            {
+                return _upgradeEnabled;
+            }
+            set
+            {
+                _upgradeEnabled = value;
             }
         }
 

@@ -53,6 +53,7 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey_display_profile = new System.Windows.Forms.Button();
             this.btn_hotkey_main_window = new System.Windows.Forms.Button();
             this.gb_upgrades = new System.Windows.Forms.GroupBox();
+            this.cb_upgrade_enabled = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.cb_upgrade_prerelease = new System.Windows.Forms.CheckBox();
             this.gb_support = new System.Windows.Forms.GroupBox();
@@ -72,7 +73,7 @@ namespace DisplayMagician.UIForms
             this.btn_back.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Brown;
             this.btn_back.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_back.ForeColor = System.Drawing.Color.White;
-            this.btn_back.Location = new System.Drawing.Point(1034, 584);
+            this.btn_back.Location = new System.Drawing.Point(1034, 590);
             this.btn_back.Name = "btn_back";
             this.btn_back.Size = new System.Drawing.Size(75, 23);
             this.btn_back.TabIndex = 9;
@@ -109,7 +110,7 @@ namespace DisplayMagician.UIForms
             this.cb_show_status_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
             this.cb_show_status_action.Location = new System.Drawing.Point(28, 184);
             this.cb_show_status_action.Name = "cb_show_status_action";
-            this.cb_show_status_action.Size = new System.Drawing.Size(366, 20);
+            this.cb_show_status_action.Size = new System.Drawing.Size(365, 20);
             this.cb_show_status_action.TabIndex = 46;
             this.cb_show_status_action.Text = "Show status change messages in Windows Action Center";
             this.cb_show_status_action.UseVisualStyleBackColor = true;
@@ -123,7 +124,7 @@ namespace DisplayMagician.UIForms
             this.cb_show_minimise_action.ImeMode = System.Windows.Forms.ImeMode.NoControl;
             this.cb_show_minimise_action.Location = new System.Drawing.Point(28, 148);
             this.cb_show_minimise_action.Name = "cb_show_minimise_action";
-            this.cb_show_minimise_action.Size = new System.Drawing.Size(487, 20);
+            this.cb_show_minimise_action.Size = new System.Drawing.Size(486, 20);
             this.cb_show_minimise_action.TabIndex = 45;
             this.cb_show_minimise_action.Text = "Show reminder in Windows Action Center when DisplayMagician  is minimised";
             this.cb_show_minimise_action.UseVisualStyleBackColor = true;
@@ -164,7 +165,7 @@ namespace DisplayMagician.UIForms
             this.cb_show_splashscreen.ImeMode = System.Windows.Forms.ImeMode.NoControl;
             this.cb_show_splashscreen.Location = new System.Drawing.Point(28, 113);
             this.cb_show_splashscreen.Name = "cb_show_splashscreen";
-            this.cb_show_splashscreen.Size = new System.Drawing.Size(312, 20);
+            this.cb_show_splashscreen.Size = new System.Drawing.Size(311, 20);
             this.cb_show_splashscreen.TabIndex = 15;
             this.cb_show_splashscreen.Text = "Show DisplayMagician splash screen on startup";
             this.cb_show_splashscreen.UseVisualStyleBackColor = true;
@@ -178,7 +179,7 @@ namespace DisplayMagician.UIForms
             this.cb_start_on_boot.ImeMode = System.Windows.Forms.ImeMode.NoControl;
             this.cb_start_on_boot.Location = new System.Drawing.Point(28, 42);
             this.cb_start_on_boot.Name = "cb_start_on_boot";
-            this.cb_start_on_boot.Size = new System.Drawing.Size(389, 20);
+            this.cb_start_on_boot.Size = new System.Drawing.Size(388, 20);
             this.cb_start_on_boot.TabIndex = 14;
             this.cb_start_on_boot.Text = "Start DisplayMagician automatically when the computer starts";
             this.cb_start_on_boot.UseVisualStyleBackColor = true;
@@ -190,7 +191,7 @@ namespace DisplayMagician.UIForms
             this.label1.ForeColor = System.Drawing.Color.Transparent;
             this.label1.Location = new System.Drawing.Point(26, 225);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(137, 16);
+            this.label1.Size = new System.Drawing.Size(136, 16);
             this.label1.TabIndex = 13;
             this.label1.Text = "What type of logging?";
             // 
@@ -212,7 +213,7 @@ namespace DisplayMagician.UIForms
             this.cb_minimise_notification_area.ImeMode = System.Windows.Forms.ImeMode.NoControl;
             this.cb_minimise_notification_area.Location = new System.Drawing.Point(28, 78);
             this.cb_minimise_notification_area.Name = "cb_minimise_notification_area";
-            this.cb_minimise_notification_area.Size = new System.Drawing.Size(332, 20);
+            this.cb_minimise_notification_area.Size = new System.Drawing.Size(331, 20);
             this.cb_minimise_notification_area.TabIndex = 11;
             this.cb_minimise_notification_area.Text = "Start DisplayMagician minimised in notification area";
             this.cb_minimise_notification_area.UseVisualStyleBackColor = true;
@@ -299,7 +300,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_shortcut_library_description.AutoSize = true;
             this.lbl_hotkey_shortcut_library_description.Location = new System.Drawing.Point(25, 133);
             this.lbl_hotkey_shortcut_library_description.Name = "lbl_hotkey_shortcut_library_description";
-            this.lbl_hotkey_shortcut_library_description.Size = new System.Drawing.Size(197, 16);
+            this.lbl_hotkey_shortcut_library_description.Size = new System.Drawing.Size(196, 16);
             this.lbl_hotkey_shortcut_library_description.TabIndex = 41;
             this.lbl_hotkey_shortcut_library_description.Text = "Hotkey to open Shortcut Library:";
             // 
@@ -308,7 +309,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_display_profile_description.AutoSize = true;
             this.lbl_hotkey_display_profile_description.Location = new System.Drawing.Point(25, 83);
             this.lbl_hotkey_display_profile_description.Name = "lbl_hotkey_display_profile_description";
-            this.lbl_hotkey_display_profile_description.Size = new System.Drawing.Size(243, 16);
+            this.lbl_hotkey_display_profile_description.Size = new System.Drawing.Size(242, 16);
             this.lbl_hotkey_display_profile_description.TabIndex = 40;
             this.lbl_hotkey_display_profile_description.Text = "Hotkey to open Display Profile Window:";
             // 
@@ -317,7 +318,7 @@ namespace DisplayMagician.UIForms
             this.lbl_hotkey_main_window_description.AutoSize = true;
             this.lbl_hotkey_main_window_description.Location = new System.Drawing.Point(26, 35);
             this.lbl_hotkey_main_window_description.Name = "lbl_hotkey_main_window_description";
-            this.lbl_hotkey_main_window_description.Size = new System.Drawing.Size(185, 16);
+            this.lbl_hotkey_main_window_description.Size = new System.Drawing.Size(184, 16);
             this.lbl_hotkey_main_window_description.TabIndex = 39;
             this.lbl_hotkey_main_window_description.Text = "Hotkey to open Main Window:";
             // 
@@ -371,22 +372,39 @@ namespace DisplayMagician.UIForms
             // 
             // gb_upgrades
             // 
+            this.gb_upgrades.Controls.Add(this.cb_upgrade_enabled);
             this.gb_upgrades.Controls.Add(this.label2);
             this.gb_upgrades.Controls.Add(this.cb_upgrade_prerelease);
             this.gb_upgrades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_upgrades.ForeColor = System.Drawing.Color.White;
-            this.gb_upgrades.Location = new System.Drawing.Point(584, 435);
+            this.gb_upgrades.Location = new System.Drawing.Point(27, 441);
             this.gb_upgrades.Name = "gb_upgrades";
-            this.gb_upgrades.Size = new System.Drawing.Size(525, 120);
+            this.gb_upgrades.Size = new System.Drawing.Size(525, 172);
             this.gb_upgrades.TabIndex = 13;
             this.gb_upgrades.TabStop = false;
             this.gb_upgrades.Text = "Upgrade Settings";
+            // 
+            // cb_upgrade_enabled
+            // 
+            this.cb_upgrade_enabled.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.cb_upgrade_enabled.AutoSize = true;
+            this.cb_upgrade_enabled.Checked = true;
+            this.cb_upgrade_enabled.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cb_upgrade_enabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.cb_upgrade_enabled.ForeColor = System.Drawing.Color.White;
+            this.cb_upgrade_enabled.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            this.cb_upgrade_enabled.Location = new System.Drawing.Point(28, 40);
+            this.cb_upgrade_enabled.Name = "cb_upgrade_enabled";
+            this.cb_upgrade_enabled.Size = new System.Drawing.Size(399, 20);
+            this.cb_upgrade_enabled.TabIndex = 16;
+            this.cb_upgrade_enabled.Text = "Check if new DisplayMagician updates are available on startup";
+            this.cb_upgrade_enabled.UseVisualStyleBackColor = true;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(43, 71);
+            this.label2.Location = new System.Drawing.Point(43, 99);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(410, 13);
             this.label2.TabIndex = 15;
@@ -400,9 +418,9 @@ namespace DisplayMagician.UIForms
             this.cb_upgrade_prerelease.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.cb_upgrade_prerelease.ForeColor = System.Drawing.Color.White;
             this.cb_upgrade_prerelease.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.cb_upgrade_prerelease.Location = new System.Drawing.Point(28, 42);
+            this.cb_upgrade_prerelease.Location = new System.Drawing.Point(28, 77);
             this.cb_upgrade_prerelease.Name = "cb_upgrade_prerelease";
-            this.cb_upgrade_prerelease.Size = new System.Drawing.Size(411, 20);
+            this.cb_upgrade_prerelease.Size = new System.Drawing.Size(410, 20);
             this.cb_upgrade_prerelease.TabIndex = 14;
             this.cb_upgrade_prerelease.Text = "Upgrade DisplayMagician to latest beta versions when available";
             this.cb_upgrade_prerelease.UseVisualStyleBackColor = true;
@@ -413,7 +431,7 @@ namespace DisplayMagician.UIForms
             this.gb_support.Controls.Add(this.label3);
             this.gb_support.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gb_support.ForeColor = System.Drawing.Color.White;
-            this.gb_support.Location = new System.Drawing.Point(27, 436);
+            this.gb_support.Location = new System.Drawing.Point(584, 441);
             this.gb_support.Name = "gb_support";
             this.gb_support.Size = new System.Drawing.Size(525, 119);
             this.gb_support.TabIndex = 16;
@@ -452,7 +470,7 @@ namespace DisplayMagician.UIForms
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(1142, 631);
+            this.ClientSize = new System.Drawing.Size(1142, 637);
             this.Controls.Add(this.gb_support);
             this.Controls.Add(this.gb_upgrades);
             this.Controls.Add(this.gb_hotkeys);
@@ -510,5 +528,6 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_context_menu;
         private System.Windows.Forms.CheckBox cb_show_status_action;
         private System.Windows.Forms.CheckBox cb_show_minimise_action;
+        private System.Windows.Forms.CheckBox cb_upgrade_enabled;
     }
 }

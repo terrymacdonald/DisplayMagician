@@ -64,7 +64,7 @@ namespace DisplayMagician {
         private static bool _gamesLoaded = false;
         private static bool _tempShortcutRegistered = false;
         private static bool _bypassSingleInstanceMode = false;
-        public static System.Timers.Timer _remindLaterTimer;
+        public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
 
         public enum ERRORLEVEL: int
         {
@@ -1563,7 +1563,15 @@ namespace DisplayMagician {
 
         public static void CheckForUpdates()
         {
-            // First of all, check to see if there is any way to get to the internet on this computer.
+            // Firstly check if the user wants to upgrade at all
+            // If not, just return
+            if (!Program.AppProgramSettings.UpgradeEnabled)
+            {
+                logger.Warn($"Program/CheckForUpdates: User has set the Program Settings to ignore any DisplayMagician updates. Skipping the auto update.");
+                return;
+            }
+
+            // Second of all, check to see if there is any way to get to the internet on this computer.
             // If not, then why bother!
             try
             {              
@@ -1653,7 +1661,8 @@ namespace DisplayMagician {
         private static void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
         {
             if (args.Error == null)
-            {
+            {                
+
                 if (args.IsUpdateAvailable)
                 {
                     // Shut down the splash screen
@@ -1665,7 +1674,7 @@ namespace DisplayMagician {
                     UpgradeForm upgradeForm = new UpgradeForm();
 
                     StringBuilder message= new StringBuilder();
-                    message.Append(@"{\rtf1\ansi \qc \line \line ");
+                    message.Append(@"{\rtf1\ansi \qc \line \line \line ");
                     
 
                     if (args.Mandatory.Value)
@@ -1810,15 +1819,15 @@ namespace DisplayMagician {
 
                         var context = SynchronizationContext.Current;
 
-                        _remindLaterTimer = new System.Timers.Timer
+                        AppUpdateRemindLaterTimer = new System.Timers.Timer
                         {
                             Interval = Math.Max(1, timeSpan.TotalMilliseconds),
                             AutoReset = false
                         };
 
-                        _remindLaterTimer.Elapsed += delegate
+                        AppUpdateRemindLaterTimer.Elapsed += delegate
                         {
-                            _remindLaterTimer = null;
+                            AppUpdateRemindLaterTimer = null;
                             if (context != null)
                             {
                                 try
@@ -1836,7 +1845,7 @@ namespace DisplayMagician {
                             }
                         };
 
-                        _remindLaterTimer.Start();
+                        AppUpdateRemindLaterTimer.Start();
                         
                     }
                 }
@@ -1857,7 +1866,7 @@ namespace DisplayMagician {
                 else
                 {
                     logger.Warn(args.Error, $"Program/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}");
-                    MessageBox.Show(args.Error.Message,
+                    MessageBox.Show($"Program/AutoUpdaterOnCheckForUpdateEvent - There was a problem performing the update: {args.Error.Message}",
                         args.Error.GetType().ToString(), MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }

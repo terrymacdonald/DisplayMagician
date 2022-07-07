@@ -1,4 +1,5 @@
-﻿using DisplayMagicianShared;
+﻿using AutoUpdaterDotNET;
+using DisplayMagicianShared;
 using NHotkey;
 using NHotkey.WindowsForms;
 using System;
@@ -111,6 +112,17 @@ namespace DisplayMagician.UIForms
             {
                 cb_upgrade_prerelease.Checked = false;
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeToPreReleases set to false");
+            }
+
+            if (Program.AppProgramSettings.UpgradeEnabled == true)
+            {
+                cb_upgrade_enabled.Checked = true;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to true");
+            }
+            else
+            {
+                cb_upgrade_enabled.Checked = false;
+                logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to false");
             }
 
             if (Program.AppProgramSettings.InstalledDesktopContextMenu == true)
@@ -354,6 +366,26 @@ namespace DisplayMagician.UIForms
             {
                 Program.AppProgramSettings.UpgradeToPreReleases = false;
                 logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from upgrading to pre-release versions of software");
+            }
+
+            // save upgrade in prereleases setting
+            if (cb_upgrade_enabled.Checked)
+            {
+                Program.AppProgramSettings.UpgradeEnabled = true;
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully set DisplayMagician to look for upgrades when starting");
+            }
+            else
+            {
+                Program.AppProgramSettings.UpgradeEnabled = false;
+                // Stop any autoupdate reminder timers as we no longer want to upgrade
+                if (Program.AppUpdateRemindLaterTimer is System.Timers.Timer && Program.AppUpdateRemindLaterTimer.Enabled)
+                {
+                    Program.AppUpdateRemindLaterTimer.Stop(); 
+                    Program.AppUpdateRemindLaterTimer.Dispose();                   
+                }
+                AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
+                AutoUpdater.PersistenceProvider.SetRemindLater(DateTime.Now);
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully stopped DisplayMagician from looking for upgrades when starting");
             }
 
             // Save ProgramSettings
