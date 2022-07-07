@@ -140,10 +140,12 @@ namespace DisplayMagician
         private bool _monitorDifferentGameExe = false;
         private string _audioDevice = "";
         private bool _changeAudioDevice = false;
+        private bool _useAsCommsAudioDevice = true;
         private bool _setAudioVolume = false;
         private decimal _audioVolume = -1;
         private string _captureDevice = "";
         private bool _changeCaptureDevice;
+        private bool _useAsCommsCaptureDevice = true;
         private bool _setCaptureVolume = false;
         private decimal _captureVolume = -1;
         private ShortcutPermanence _displayPermanence = ShortcutPermanence.Temporary;
@@ -579,6 +581,20 @@ namespace DisplayMagician
             }
         }
 
+
+        public bool UseAsCommsAudioDevice
+        {
+            get
+            {
+                return _useAsCommsAudioDevice;
+            }
+
+            set
+            {
+                _useAsCommsAudioDevice = value;
+            }
+        }        
+
         public decimal AudioVolume
         {
             get
@@ -628,6 +644,19 @@ namespace DisplayMagician
             set
             {
                 _changeCaptureDevice = value;
+            }
+        }
+
+        public bool UseAsCommsCaptureDevice
+        {
+            get
+            {
+                return _useAsCommsCaptureDevice;
+            }
+
+            set
+            {
+                _useAsCommsCaptureDevice = value;
             }
         }
 
@@ -811,10 +840,12 @@ namespace DisplayMagician
             string originalIconPath,
             bool changeAudioDevice = false,
             string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
             bool setAudioVolume = false,
             decimal audioVolume = -1,
             bool changeCaptureDevice = false,
             string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
@@ -831,10 +862,12 @@ namespace DisplayMagician
             _profileToUse = profile;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
             _setAudioVolume = setAudioVolume;
             _audioVolume = audioVolume;
             _changeCaptureDevice = changeCaptureDevice;
             _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
             _setCaptureVolume = setCaptureVolume;
             _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
@@ -885,10 +918,12 @@ namespace DisplayMagician
             List<ShortcutBitmap> availableImages,
             bool changeAudioDevice = false,
             string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
             bool setAudioVolume = false,
             decimal audioVolume = -1,
             bool changeCaptureDevice = false,
             string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
@@ -915,10 +950,12 @@ namespace DisplayMagician
             _processPriority = game.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
             _setAudioVolume = setAudioVolume;
             _audioVolume = audioVolume;
             _changeCaptureDevice = changeCaptureDevice;
             _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
             _setCaptureVolume = setCaptureVolume;
             _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
@@ -966,10 +1003,12 @@ namespace DisplayMagician
             List<ShortcutBitmap> availableImages, 
             bool changeAudioDevice = false,
             string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
             bool setAudioVolume = false,
             decimal audioVolume = -1,
             bool changeCaptureDevice = false,
             string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
             bool setCaptureVolume = false,
             decimal captureVolume = -1,
             List<StartProgram> startPrograms = null,
@@ -994,10 +1033,12 @@ namespace DisplayMagician
             _processPriority = executable.ProcessPriority;
             _changeAudioDevice = changeAudioDevice;
             _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
             _setAudioVolume = setAudioVolume;
             _audioVolume = audioVolume;
             _changeCaptureDevice = changeCaptureDevice;
             _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
             _setCaptureVolume = setCaptureVolume;
             _captureVolume = captureVolume;
             _displayPermanence = displayPermanence;
@@ -1064,10 +1105,12 @@ namespace DisplayMagician
             shortcut.Errors.AddRange(Errors);
             shortcut.ChangeAudioDevice = ChangeAudioDevice;
             shortcut.AudioDevice = AudioDevice;
+            shortcut.UseAsCommsAudioDevice = UseAsCommsAudioDevice;
             shortcut.SetAudioVolume = SetAudioVolume;
             shortcut.AudioVolume = AudioVolume;
             shortcut.ChangeCaptureDevice = ChangeCaptureDevice;
             shortcut.CaptureDevice = CaptureDevice;
+            shortcut.UseAsCommsCaptureDevice     = UseAsCommsCaptureDevice;
             shortcut.SetCaptureVolume = SetCaptureVolume;
             shortcut.CaptureVolume = CaptureVolume;
             // shortcut.Hotkey = Hotkey; // We cannot duplicate the Hotkey as it breaks things

@@ -772,11 +772,15 @@ namespace DisplayMagician
             // Get the list of Audio Devices currently connected or unplugged (they can be plugged back in)
             bool needToChangeAudioDevice = false;
             CoreAudioDevice rollbackAudioDevice = null;
+            CoreAudioDevice rollbackCommunicationAudioDevice = null;
             double rollbackAudioVolume = 50;
+            double rollbackCommunicationAudioVolume = 50;
             List<CoreAudioDevice> activeAudioDevices = new List<CoreAudioDevice>();
             bool needToChangeCaptureDevice = false;
             CoreAudioDevice rollbackCaptureDevice = null;
+            CoreAudioDevice rollbackCommunicationCaptureDevice = null;
             double rollbackCaptureVolume = 50;
+            double rollbackCommunicationCaptureVolume = 50;            
             List<CoreAudioDevice> activeCaptureDevices = new List<CoreAudioDevice>();
 
             if (_audioController != null)
@@ -801,6 +805,13 @@ namespace DisplayMagician
                                     needToChangeAudioDevice = true;
                                 }
                                 
+                            }                           
+
+                            // record the old communications audio device
+                            rollbackCommunicationAudioDevice = _audioController.DefaultPlaybackCommunicationsDevice;
+                            if (rollbackCommunicationAudioDevice != null)
+                            {
+                                rollbackCommunicationAudioVolume = _audioController.DefaultPlaybackCommunicationsDevice.Volume;
                             }
 
                             if (needToChangeAudioDevice)
@@ -815,6 +826,16 @@ namespace DisplayMagician
                                         // use the Audio Device
                                         audioDevice.SetAsDefault();
                                         foundAudioDevice = true;
+                                        if (shortcutToUse.UseAsCommsAudioDevice)
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: Setting {audioDevice.Name} to be the Communications Audio Device too.");
+                                            audioDevice.SetAsDefaultCommunications();
+                                        }
+                                        else
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: No need to set {audioDevice.Name} to be the Communications Audio Device. Skipping");
+                                        }
+
                                         break;
                                     }
                                 }
@@ -830,7 +851,8 @@ namespace DisplayMagician
                             }
 
                             if (foundAudioDevice)
-                            {
+                            {                                
+
                                 if (shortcutToUse.SetAudioVolume)
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} volume level to {shortcutToUse.AudioVolume}%.");
@@ -840,6 +862,21 @@ namespace DisplayMagician
                                     });
                                     myTask.Start();
                                     myTask.Wait(2000);
+
+                                    if (shortcutToUse.UseAsCommsAudioDevice)
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} Communications Audio volume level to be {shortcutToUse.AudioVolume}%.");
+                                        myTask = new Task(() =>
+                                        {
+                                            _audioController.DefaultPlaybackCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                        });
+                                        myTask.Start();
+                                        myTask.Wait(2000);
+                                    }
+                                    else
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: No need to set {shortcutToUse.AudioDevice} Communications Audio volume level. Skipping");
+                                    }
                                 }
                                 else
                                 {
@@ -886,6 +923,13 @@ namespace DisplayMagician
                                 }
                             }
 
+                            // record the old communications capture device
+                            rollbackCommunicationCaptureDevice = _audioController.DefaultCaptureCommunicationsDevice;
+                            if (rollbackCommunicationCaptureDevice != null)
+                            {
+                                rollbackCommunicationCaptureVolume = _audioController.DefaultCaptureCommunicationsDevice.Volume;
+                            }
+
                             if (needToChangeCaptureDevice) 
                             {
                                 logger.Info($"ShortcutRepository/RunShortcut: Changing to the {shortcutToUse.CaptureDevice} capture (microphone) device.");
@@ -897,6 +941,15 @@ namespace DisplayMagician
                                         // use the Audio Device
                                         captureDevice.SetAsDefault();
                                         foundCaptureDevice = true;
+                                        if (shortcutToUse.UseAsCommsCaptureDevice)
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: Setting {captureDevice.Name} to be the Communications Capture Device too.");
+                                            captureDevice.SetAsDefaultCommunications();
+                                        }
+                                        else
+                                        {
+                                            logger.Info($"ShortcutRepository/RunShortcut: No need to set {captureDevice.Name} to be the Communications Capture  Device. Skipping");
+                                        }
                                         break;
                                     }
                                 }
@@ -912,7 +965,8 @@ namespace DisplayMagician
                             }
 
                             if (foundCaptureDevice)
-                            {
+                            {                                
+
                                 if (shortcutToUse.SetCaptureVolume)
                                 {
                                     logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.CaptureDevice} capture (microphone) level to {shortcutToUse.CaptureVolume}%.");
@@ -922,6 +976,21 @@ namespace DisplayMagician
                                     });
                                     myTask.Start();
                                     myTask.Wait(2000);
+
+                                    if (shortcutToUse.UseAsCommsAudioDevice)
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: Setting {shortcutToUse.AudioDevice} Communications Audio volume level to be {shortcutToUse.AudioVolume}%.");
+                                        myTask = new Task(() =>
+                                        {
+                                            _audioController.DefaultCaptureCommunicationsDevice.SetVolumeAsync(Convert.ToDouble(shortcutToUse.AudioVolume));
+                                        });
+                                        myTask.Start();
+                                        myTask.Wait(2000);
+                                    }
+                                    else
+                                    {
+                                        logger.Info($"ShortcutRepository/RunShortcut: No need to set {shortcutToUse.AudioDevice} Communications Audio volume level. Skipping");
+                                    }
                                 }
                                 else
                                 {
@@ -2009,15 +2078,40 @@ namespace DisplayMagician
                     // use the Audio Device
                     rollbackAudioDevice.SetAsDefault();
 
+                    if (shortcutToUse.UseAsCommsAudioDevice)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications audio device back to {rollbackCommunicationAudioDevice.Name} audio device");
+                        rollbackCommunicationAudioDevice.SetAsDefaultCommunications();
+                    }
+                    else
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Skipping reverting the default communications audio device as it wasn't changed.");
+                    }
+
                     if (shortcutToUse.SetAudioVolume)
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to {shortcutToUse.SetAudioVolume}% volume");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default audio volume back to orignal volume");
                         Task myTask = new Task(() =>
                         {
                             rollbackAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackAudioVolume));
                         });
                         myTask.Start();
                         myTask.Wait(2000);
+
+                        if (shortcutToUse.UseAsCommsAudioDevice)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications audio volume back to original volume");
+                            myTask = new Task(() =>
+                            {
+                                rollbackCommunicationAudioDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationAudioVolume));
+                            });
+                            myTask.Start();
+                            myTask.Wait(2000);
+                        }
+                        else
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Skipping reverting default communications audio device volume back to original volume as the default communications audio device wasn't changed.");
+                        }
                     }
                 }
                 else
@@ -2040,15 +2134,40 @@ namespace DisplayMagician
                     // use the Audio Device
                     rollbackCaptureDevice.SetAsDefault();
 
+                    if (shortcutToUse.UseAsCommsCaptureDevice)
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications capture (microphone) device back to {rollbackCommunicationCaptureDevice.Name} capture device");
+                        rollbackCommunicationCaptureDevice.SetAsDefaultCommunications();
+                    }
+                    else
+                    {
+                        logger.Debug($"ShortcutRepository/RunShortcut: Skipping reverting the default communications capture (microphone) device as it wasn't changed.");
+                    }
+
                     if (shortcutToUse.SetCaptureVolume)
                     {
-                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to {shortcutToUse.SetAudioVolume}% volume");
+                        logger.Debug($"ShortcutRepository/RunShortcut: Reverting default capture (microphone) volume back to original volume");
                         Task myTask = new Task(() =>
                         {
                             rollbackCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCaptureVolume));
                         });
                         myTask.Start();
                         myTask.Wait(2000);
+
+                        if (shortcutToUse.UseAsCommsAudioDevice)
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Reverting default communications capture device volume back to original volume");
+                            myTask = new Task(() =>
+                            {
+                                rollbackCommunicationCaptureDevice.SetVolumeAsync(Convert.ToDouble(rollbackCommunicationCaptureVolume));
+                            });
+                            myTask.Start();
+                            myTask.Wait(2000);
+                        }
+                        else
+                        {
+                            logger.Debug($"ShortcutRepository/RunShortcut: Skipping reverting default communications capture device volume back to original volume as the default communications capture device wasn't changed.");
+                        }
                     }
 
                 }

@@ -141,6 +141,8 @@ namespace DisplayMagician.UIForms
             this.btn_hotkey = new System.Windows.Forms.Button();
             this.lbl_hotkey_assigned = new System.Windows.Forms.Label();
             this.btn_help = new System.Windows.Forms.Button();
+            this.cb_audio_comms_device = new System.Windows.Forms.CheckBox();
+            this.cb_capture_comms_device = new System.Windows.Forms.CheckBox();
             this.tabc_shortcut.SuspendLayout();
             this.tabp_display.SuspendLayout();
             this.p_profiles.SuspendLayout();
@@ -402,15 +404,16 @@ namespace DisplayMagician.UIForms
             // gb_capture_settings
             // 
             this.gb_capture_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.gb_capture_settings.Controls.Add(this.cb_capture_comms_device);
             this.gb_capture_settings.Controls.Add(this.gb_capture_volume);
             this.gb_capture_settings.Controls.Add(this.btn_rescan_capture);
             this.gb_capture_settings.Controls.Add(this.cb_capture_device);
             this.gb_capture_settings.Controls.Add(this.rb_change_capture);
             this.gb_capture_settings.Controls.Add(this.rb_no_change_capture);
             this.gb_capture_settings.ForeColor = System.Drawing.Color.White;
-            this.gb_capture_settings.Location = new System.Drawing.Point(48, 317);
+            this.gb_capture_settings.Location = new System.Drawing.Point(48, 379);
             this.gb_capture_settings.Name = "gb_capture_settings";
-            this.gb_capture_settings.Size = new System.Drawing.Size(953, 256);
+            this.gb_capture_settings.Size = new System.Drawing.Size(953, 306);
             this.gb_capture_settings.TabIndex = 21;
             this.gb_capture_settings.TabStop = false;
             this.gb_capture_settings.Text = "Microphone Settings";
@@ -422,7 +425,7 @@ namespace DisplayMagician.UIForms
             this.gb_capture_volume.Controls.Add(this.lbl_capture_volume);
             this.gb_capture_volume.Controls.Add(this.nud_capture_volume);
             this.gb_capture_volume.ForeColor = System.Drawing.Color.White;
-            this.gb_capture_volume.Location = new System.Drawing.Point(327, 114);
+            this.gb_capture_volume.Location = new System.Drawing.Point(327, 144);
             this.gb_capture_volume.Name = "gb_capture_volume";
             this.gb_capture_volume.Size = new System.Drawing.Size(429, 128);
             this.gb_capture_volume.TabIndex = 20;
@@ -534,6 +537,7 @@ namespace DisplayMagician.UIForms
             // gb_audio_settings
             // 
             this.gb_audio_settings.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.gb_audio_settings.Controls.Add(this.cb_audio_comms_device);
             this.gb_audio_settings.Controls.Add(this.gb_audio_volume);
             this.gb_audio_settings.Controls.Add(this.btn_rescan_audio);
             this.gb_audio_settings.Controls.Add(this.cb_audio_device);
@@ -542,7 +546,7 @@ namespace DisplayMagician.UIForms
             this.gb_audio_settings.ForeColor = System.Drawing.Color.White;
             this.gb_audio_settings.Location = new System.Drawing.Point(48, 30);
             this.gb_audio_settings.Name = "gb_audio_settings";
-            this.gb_audio_settings.Size = new System.Drawing.Size(953, 272);
+            this.gb_audio_settings.Size = new System.Drawing.Size(953, 320);
             this.gb_audio_settings.TabIndex = 0;
             this.gb_audio_settings.TabStop = false;
             this.gb_audio_settings.Text = "Audio Output Settings";
@@ -554,7 +558,7 @@ namespace DisplayMagician.UIForms
             this.gb_audio_volume.Controls.Add(this.lbl_audio_volume);
             this.gb_audio_volume.Controls.Add(this.nud_audio_volume);
             this.gb_audio_volume.ForeColor = System.Drawing.Color.White;
-            this.gb_audio_volume.Location = new System.Drawing.Point(325, 113);
+            this.gb_audio_volume.Location = new System.Drawing.Point(325, 145);
             this.gb_audio_volume.Name = "gb_audio_volume";
             this.gb_audio_volume.Size = new System.Drawing.Size(429, 133);
             this.gb_audio_volume.TabIndex = 20;
@@ -1633,6 +1637,26 @@ namespace DisplayMagician.UIForms
             this.btn_help.UseVisualStyleBackColor = true;
             this.btn_help.Click += new System.EventHandler(this.btn_help_Click);
             // 
+            // cb_audio_comms_device
+            // 
+            this.cb_audio_comms_device.AutoSize = true;
+            this.cb_audio_comms_device.Location = new System.Drawing.Point(326, 112);
+            this.cb_audio_comms_device.Name = "cb_audio_comms_device";
+            this.cb_audio_comms_device.Size = new System.Drawing.Size(424, 24);
+            this.cb_audio_comms_device.TabIndex = 21;
+            this.cb_audio_comms_device.Text = "Also set this as the default communicatons audio output";
+            this.cb_audio_comms_device.UseVisualStyleBackColor = true;
+            // 
+            // cb_capture_comms_device
+            // 
+            this.cb_capture_comms_device.AutoSize = true;
+            this.cb_capture_comms_device.Location = new System.Drawing.Point(325, 114);
+            this.cb_capture_comms_device.Name = "cb_capture_comms_device";
+            this.cb_capture_comms_device.Size = new System.Drawing.Size(418, 24);
+            this.cb_capture_comms_device.TabIndex = 22;
+            this.cb_capture_comms_device.Text = "Also set this as the default communicatons microphone";
+            this.cb_capture_comms_device.UseVisualStyleBackColor = true;
+            // 
             // ShortcutForm
             // 
             this.AcceptButton = this.btn_save;
@@ -1816,5 +1840,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.CheckBox cb_run_exe_as_administrator;
         private System.Windows.Forms.CheckBox cb_run_cmd_afterwards_run_as_administrator;
         private System.Windows.Forms.Button btn_help;
+        private System.Windows.Forms.CheckBox cb_audio_comms_device;
+        private System.Windows.Forms.CheckBox cb_capture_comms_device;
     }
 }

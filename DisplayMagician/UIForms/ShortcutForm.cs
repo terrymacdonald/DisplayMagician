@@ -36,10 +36,12 @@ namespace DisplayMagician.UIForms
         List<StartProgram> _startPrograms = new List<StartProgram>();
         List<StopProgram> _stopPrograms = new List<StopProgram>();
         private string _audioDevice = "";
+        private bool _useAsCommsAudioDevice = true;
         private bool _changeAudioDevice = false;
         private bool _setAudioVolume = false;
         private decimal _audioVolume = -1;
         private string _captureDevice = "";
+        private bool _useAsCommsCaptureDevice = true;
         private bool _changeCaptureDevice = false;
         private bool _setCaptureVolume = false;
         private decimal _captureVolume = -1;
@@ -359,6 +361,14 @@ namespace DisplayMagician.UIForms
                         _audioDevice = "";
                     }
 
+                    if (cb_audio_comms_device.Checked)
+                    {
+                        _useAsCommsAudioDevice = true;
+                    }
+                    else
+                    {
+                        _useAsCommsAudioDevice = false;
+                    }
 
                     if (rb_set_audio_volume.Checked)
                     {
@@ -404,6 +414,14 @@ namespace DisplayMagician.UIForms
                         _captureDevice = "";
                     }
 
+                    if (cb_capture_comms_device.Checked)
+                    {
+                        _useAsCommsCaptureDevice = true;
+                    }
+                    else
+                    {
+                        _useAsCommsCaptureDevice = false;
+                    }
 
                     if (rb_set_capture_volume.Checked)
                     {
@@ -442,10 +460,12 @@ namespace DisplayMagician.UIForms
             {
                 _changeAudioDevice = false;
                 _audioDevice = "";
+                _useAsCommsAudioDevice = true;
                 _setAudioVolume = false;
                 _audioVolume = -1;
                 _changeCaptureDevice = false;
                 _captureDevice = "";
+                _useAsCommsCaptureDevice = true;
                 _setCaptureVolume = false;
                 _captureVolume = -1;
                 _audioPermanence = ShortcutPermanence.Temporary;
@@ -573,10 +593,12 @@ namespace DisplayMagician.UIForms
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -600,10 +622,12 @@ namespace DisplayMagician.UIForms
                         _availableImages, 
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -653,10 +677,12 @@ namespace DisplayMagician.UIForms
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -679,10 +705,12 @@ namespace DisplayMagician.UIForms
                         _availableImages,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -707,10 +735,12 @@ namespace DisplayMagician.UIForms
                         _executableToUse.ExecutableNameAndPath,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -730,10 +760,12 @@ namespace DisplayMagician.UIForms
                         _executableToUse.ExecutableNameAndPath,
                         _changeAudioDevice,
                         _audioDevice,
+                        _useAsCommsAudioDevice,
                         _setAudioVolume,
                         _audioVolume,
                         _changeCaptureDevice,
                         _captureDevice,
+                        _useAsCommsCaptureDevice,
                         _setCaptureVolume,
                         _captureVolume,
                         _startPrograms,
@@ -1058,6 +1090,7 @@ namespace DisplayMagician.UIForms
             // Populate all the audio devices in the audio devices select box
             if (audioController != null)
             {
+                cb_audio_comms_device.Checked = true;
                 cb_audio_device.Items.Clear();
                 try
                 {
@@ -1091,10 +1124,11 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Warn(ex, $"ShortcutForm/ShortcutForm_Load: Exception while trying to get active playback devices.");
-                }                
+                }
 
 
                 // Populate all the Capture devices in the capture devices list.
+                cb_capture_comms_device.Checked = true;
                 cb_capture_device.Items.Clear();
                 try
                 {
@@ -1142,8 +1176,10 @@ namespace DisplayMagician.UIForms
                 // We also force the audio settings to off, just in case
                 rb_change_audio.Checked = false;
                 rb_set_audio_volume.Checked = false;
+                cb_audio_comms_device.Checked = false;
                 rb_change_capture.Checked = false;
                 rb_set_capture_volume.Checked = false;
+                cb_capture_comms_device.Checked = false;                
             }          
 
 
@@ -1324,6 +1360,7 @@ namespace DisplayMagician.UIForms
                 if (audioController != null)
                 {
                     rb_change_audio.Checked = _shortcutToEdit.ChangeAudioDevice;
+                    cb_audio_comms_device.Checked = _shortcutToEdit.UseAsCommsAudioDevice;
                     if (audioDevices != null && audioDevices.Count > 0)
                     {
                         // If the shortcut is to change the audio device
@@ -1395,6 +1432,7 @@ namespace DisplayMagician.UIForms
                     // Set the Capture device to the shortcut capture device only if 
                     // the Change Capture radiobutton is set
                     rb_change_capture.Checked = _shortcutToEdit.ChangeCaptureDevice;
+                    cb_capture_comms_device.Checked = _shortcutToEdit.UseAsCommsCaptureDevice;
                     if (captureDevices != null && captureDevices.Count > 0)
                     {
                         // If the shortcut is to change the capture device
@@ -2035,7 +2073,8 @@ namespace DisplayMagician.UIForms
 
             CloseTheSplashScreen();
 
-            this.Focus();
+            Utils.CenterOnPrimaryScreen(this);
+            //this.Focus();
             this.BringToFront();
         }
 
