@@ -202,8 +202,20 @@ namespace DisplayMagician {
                     string oldv1SettingsFile = Path.Combine(AppDataPath, "Settings_1.0.json");
                     string oldv2SettingsFile = Path.Combine(AppDataPath, "Settings_2.0.json");
                     string oldv23SettingsFile = Path.Combine(AppDataPath, "Settings_2.3.json");
+                    string oldv24SettingsFile = Path.Combine(AppDataPath, "Settings_2.4.json");
 
-                    if (File.Exists(oldv23SettingsFile))
+                    if (File.Exists(oldv24SettingsFile))
+                    {
+                        File.Copy(oldv24SettingsFile, targetSettingsFile, true);
+                        upgradedSettingsFile = true;
+
+                        // Load the program settings to populate the extra additional settings with default values
+                        // as there are some new settings in there.
+                        AppProgramSettings = ProgramSettings.LoadSettings();
+                        // Save the updated program settings so they're baked in.
+                        AppProgramSettings.SaveSettings();
+                    }
+                    else if (File.Exists(oldv23SettingsFile))
                     {
                         File.Copy(oldv23SettingsFile, targetSettingsFile, true);
                         upgradedSettingsFile = true;
@@ -451,18 +463,24 @@ namespace DisplayMagician {
                 {
                     string oldv1ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_1.0.json");
                     string oldv2ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.0.json");
+                    string oldv22ShortcutsFile = Path.Combine(AppShortcutPath, "Shortcuts_2.2.json");
 
-                    if (File.Exists(oldv2ShortcutsFile))
+                    if (File.Exists(oldv22ShortcutsFile))
                     {
-                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv2ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        logger.Info($"Program/Main: Upgrading v2.2 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
+                        File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
+                    }
+                    else if (File.Exists(oldv2ShortcutsFile))
+                    {
+                        logger.Info($"Program/Main: Upgrading v2.0 shortcut file {oldv2ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
                         File.Copy(oldv2ShortcutsFile, targetShortcutsFile);
                     }
                     else if (File.Exists(oldv1ShortcutsFile))
                     {
-                        logger.Info($"Program/Main: Upgrading v1 shortcut file {oldv1ShortcutsFile} to v2.2 shortcut file {targetShortcutsFile}.");
+                        logger.Info($"Program/Main: Upgrading v1.0 shortcut file {oldv1ShortcutsFile} to latest shortcut file {targetShortcutsFile}.");
                         File.Copy(oldv1ShortcutsFile, targetShortcutsFile);
-                    }
-                    
+                    }                   
+
                 }
                 else
                 {

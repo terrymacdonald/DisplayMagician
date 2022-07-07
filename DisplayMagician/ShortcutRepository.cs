@@ -40,7 +40,7 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.2.json");
+        private static string _shortcutStorageJsonFileName = Path.Combine(AppShortcutStoragePath, $"Shortcuts_2.5.json");
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static CoreAudioController _audioController = null;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -466,6 +466,7 @@ namespace DisplayMagician
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
+                            ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
@@ -620,8 +621,10 @@ namespace DisplayMagician
                 JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
+                    DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
+                    MissingMemberHandling = MissingMemberHandling.Error,
+                    ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                     {
                         jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException.Source}:{args.ErrorContext.Error.InnerException.StackTrace} - {args.ErrorContext.Error.InnerException.Message}");
@@ -644,7 +647,7 @@ namespace DisplayMagician
                 logger.Error(ex, $"ShortcutRepository/SaveShortcuts: Unable to save the shortcut repository to the {_shortcutStorageJsonFileName}.");
             }
 
-            // If we have any JSON.net errors, then we need to records them in the logs
+            // If we have any JSON.net errors, then we need to record them in the logs
             if (jsonErrors.Count > 0)
             {
                 foreach (string jsonError in jsonErrors)
