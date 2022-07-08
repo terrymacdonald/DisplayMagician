@@ -2492,13 +2492,18 @@ namespace DisplayMagician.UIForms
                 {
                     _selectedApp = exeForm.AppToUse;
                     txt_executable.Text = _selectedApp.ExePath;
-                    UpdateExeImagesUI(_selectedApp);
+                    if (!String.IsNullOrEmpty(_selectedApp.Arguments))
+                    {
+                        txt_args_executable.Text = _selectedApp.Arguments;
+                        cb_args_executable.Checked = true;
+                    }                    
+                    //UpdateExeImagesUI(_selectedApp);
                 }
                 else
                 {
                     _selectedApp = null;
                     txt_executable.Text = exeForm.ExeToUse;
-                    UpdateExeImagesUI(_selectedApp);
+                    //UpdateExeImagesUI(_selectedApp);
                 }                
             }            
         }

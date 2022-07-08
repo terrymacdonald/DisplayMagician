@@ -79,13 +79,7 @@ namespace DisplayMagician.AppLibraries
             get => _LocalAppDir;
             set => _LocalAppDir = value;
         }
-
-        public override string Executable
-        {
-            get => _LocalAppExe;
-            set => _LocalAppExe = value;
-        }
-
+        
         public override string ProcessName
         {
             get => _LocalAppProcessName;

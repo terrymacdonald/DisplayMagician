@@ -174,6 +174,7 @@ namespace DisplayMagician.AppLibraries
                 List<ShortcutBitmap> bmList = new List<ShortcutBitmap>();
                 try
                 {
+
                     /*ArrayList filesToSearchForIcon = new ArrayList();
                     filesToSearchForIcon.Add(App.ExePath);
                     if (App.IconPath != App.ExePath)

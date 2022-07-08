@@ -451,11 +451,13 @@ namespace DisplayMagician.AppLibraries
                             }
                         }
 
+                        var windowsUWPPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows);
+
                         var app = new InstalledProgram()
                         {
                             Name = Utils.NormaliseGameName(name),
                             WorkDir = package.InstalledLocation.Path,
-                            Path = "explorer.exe",
+                            Path = $"{windowsUWPPath}\\explorer.exe",
                             Arguments = $"shell:AppsFolder\\{package.Id.FamilyName}!{appId}",
                             Icon = iconPath,
                             AppId = package.Id.FamilyName

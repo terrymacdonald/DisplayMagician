@@ -24,11 +24,11 @@ namespace DisplayMagician.AppLibraries
 
         public virtual string ExePath { get; set; }
 
+        public virtual string Arguments { get; set; }
+
         public virtual string IconPath { get; set; }
 
         public virtual string Directory { get; set; }
-
-        public virtual string Executable { get; set; }
 
         public virtual string ProcessName { get; set; }
 

@@ -383,8 +383,8 @@ namespace DisplayMagician.AppLibraries
                     localApp.Id = localAppFilename;
                     localApp.Name = installedProgram.Name;
                     localApp.Directory = installedProgram.WorkDir;
-                    localApp.Executable = installedProgram.Path;
                     localApp.ExePath = installedProgram.Path;
+                    localApp.Arguments = installedProgram.Arguments;                                                            
                     localApp.IconPath = installedProgram.Icon;                    
                     localApp.ProcessName = Path.GetFileNameWithoutExtension(localApp.ExePath);
 
