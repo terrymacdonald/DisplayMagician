@@ -380,7 +380,7 @@ namespace DisplayMagician.AppLibraries
                 {
                     string localAppFilename = Path.GetFileName(installedProgram.Path);
                     LocalApp localApp = new LocalApp();
-                    localApp.Id = localAppFilename;
+                    localApp.Id = installedProgram.AppId;
                     localApp.Name = installedProgram.Name;
                     localApp.Directory = installedProgram.WorkDir;
                     localApp.ExePath = installedProgram.Path;

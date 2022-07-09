@@ -17,6 +17,7 @@ using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi;
 using TsudaKageyu;
 using System.ComponentModel;
+using DisplayMagician.AppLibraries;
 
 namespace DisplayMagician
 {
@@ -75,7 +76,7 @@ namespace DisplayMagician
         public bool RunAsAdministrator;
     }
 
-    public struct Executable
+    public struct ExecutableShortcutData
     {
         public string DifferentExecutableToMonitor;
         public string ExecutableNameAndPath;
@@ -87,7 +88,19 @@ namespace DisplayMagician
         public ProcessPriority ProcessPriority;
     }
 
-    public struct GameStruct
+    public struct AppShortcutData
+    {
+        public App AppToUse;
+        public string DifferentExecutableToMonitor;
+        //public string ExecutableNameAndPath;
+        public bool RunAsAdministrator;
+        public int ExecutableTimeout;
+        //public string ExecutableArguments;
+        public bool ProcessNameToMonitorUsesExecutable;
+        public ProcessPriority ProcessPriority;
+    }
+
+    public struct GameShorcutData
     {
         public Game GameToPlay;
         public int StartTimeout;
@@ -125,6 +138,7 @@ namespace DisplayMagician
         private string _name = "";
         private ShortcutCategory _category = ShortcutCategory.Game;
         private string _differentExecutableToMonitor;
+        private string _executableAppId = "";
         private string _executableNameAndPath = "";
         private string _executableArguments = "";
         private bool _executableArgumentsRequired = false;
@@ -369,6 +383,21 @@ namespace DisplayMagician
             set
             {
                 _differentExecutableToMonitor = value;
+            }
+        }
+
+        [DefaultValue("")]
+        public string ExecutableAppId
+        {
+            get
+            {
+                return _executableAppId;
+            }
+
+            set
+            {
+                _executableAppId = value;                
+
             }
         }
 
@@ -943,7 +972,7 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            GameStruct game, 
+            GameShorcutData game, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
@@ -1028,7 +1057,7 @@ namespace DisplayMagician
 #pragma warning disable CS3001 // Argument type is not CLS-compliant
             ProfileItem profile, 
 #pragma warning restore CS3001 // Argument type is not CLS-compliant
-            Executable executable, 
+            ExecutableShortcutData executable, 
             ShortcutPermanence displayPermanence,
             ShortcutPermanence audioPermanence, 
             ShortcutPermanence capturePermanence,
@@ -1089,6 +1118,91 @@ namespace DisplayMagician
             // Now we need to find and populate the profileUuid
             _profileUuid = profile.UUID;
 
+            // We create the Bitmaps for the executable
+            _originalBitmap = selectedImage.Image;
+            // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it
+            _shortcutBitmap = ImageUtils.MakeBitmapOverlay(_originalBitmap, _profileToUse.ProfileTightestBitmap, 256, 256);
+
+            // Empty out the unused shortcut data
+            _gameAppId = "";
+            _gameArgumentsRequired = false;
+            _gameArguments = "";
+            _gameLibrary = SupportedGameLibraryType.Unknown;
+            _monitorDifferentGameExe = false;
+            _differentGameExeToMonitor = "";
+
+            ReplaceShortcutIconInCache();
+            RefreshValidity();
+        }
+
+        public void UpdateAppShortcut(
+            string name,
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
+            ProfileItem profile,
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
+            AppShortcutData app,
+            ShortcutPermanence displayPermanence,
+            ShortcutPermanence audioPermanence,
+            ShortcutPermanence capturePermanence,
+            ShortcutBitmap selectedImage,
+            List<ShortcutBitmap> availableImages,
+            bool changeAudioDevice = false,
+            string audioDevice = "",
+            bool useAsCommsAudioDevice = true,
+            bool setAudioVolume = false,
+            decimal audioVolume = -1,
+            bool changeCaptureDevice = false,
+            string captureDevice = "",
+            bool useAsCommsCaptureDevice = true,
+            bool setCaptureVolume = false,
+            decimal captureVolume = -1,
+            List<StartProgram> startPrograms = null,
+            List<StopProgram> stopPrograms = null,
+            bool autoName = true,
+            Keys hotkey = Keys.None,
+            string uuid = ""
+            )
+        {
+            if (!String.IsNullOrWhiteSpace(uuid))
+                _uuid = uuid;
+            _name = name;
+            _profileToUse = profile;
+            _category = ShortcutCategory.Application;
+            _executableAppId = app.AppToUse.Id;
+            _differentExecutableToMonitor = app.DifferentExecutableToMonitor;
+            _executableNameAndPath = app.AppToUse.ExePath;
+            _runExeAsAdministrator = app.RunAsAdministrator;
+            _startTimeout = app.ExecutableTimeout;
+            _executableArguments = app.AppToUse.Arguments;
+            _executableArgumentsRequired = app.AppToUse.ExecutableArgumentsRequired;
+            _processNameToMonitorUsesExecutable = app.ProcessNameToMonitorUsesExecutable;
+            _processPriority = app.ProcessPriority;
+            _changeAudioDevice = changeAudioDevice;
+            _audioDevice = audioDevice;
+            _useAsCommsAudioDevice = useAsCommsAudioDevice;
+            _setAudioVolume = setAudioVolume;
+            _audioVolume = audioVolume;
+            _changeCaptureDevice = changeCaptureDevice;
+            _captureDevice = captureDevice;
+            _useAsCommsCaptureDevice = useAsCommsCaptureDevice;
+            _setCaptureVolume = setCaptureVolume;
+            _captureVolume = captureVolume;
+            _displayPermanence = displayPermanence;
+            _audioPermanence = audioPermanence;
+            _capturePermanence = capturePermanence;
+            _autoName = autoName;
+            _startPrograms = startPrograms;
+            _stopPrograms = stopPrograms;
+            _selectedImage = selectedImage;
+            _availableImages = availableImages;
+            _hotkey = hotkey;
+
+            _originalIconPath = app.AppToUse.IconPath;
+
+            // Now we need to find and populate the profileUuid
+            _profileUuid = profile.UUID;
+
+            
             // We create the Bitmaps for the executable
             _originalBitmap = selectedImage.Image;
             // Now we use the originalBitmap or userBitmap, and create the shortcutBitmap from it

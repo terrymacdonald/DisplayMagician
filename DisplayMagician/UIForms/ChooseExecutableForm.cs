@@ -28,6 +28,7 @@ namespace DisplayMagician.UIForms
         private App _appToUse = null;
         private string _exeToUse = null;
         private string _previousExe = null;
+        private string _previousAppId = null;
         private ChooseExecutableFormMode _chooseExecutableFormMode = ChooseExecutableFormMode.AppMode;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -83,6 +84,21 @@ namespace DisplayMagician.UIForms
                 if (value is String)
                 {
                     _previousExe = value;
+                }
+            }
+        }
+
+        public string PreviousAppId
+        {
+            get
+            {
+                return _previousAppId;
+            }
+            set
+            {
+                if (value is String)
+                {
+                    _previousAppId = value;
                 }
             }
         }
@@ -143,7 +159,7 @@ namespace DisplayMagician.UIForms
                 // If it is an app then select it
                 foreach (App installedApp in AppLibrary.AllInstalledAppsInAllLibraries)
                 {
-                    if (installedApp.ExePath.Equals(_previousExe))
+                    if (installedApp.Id.Equals(_previousAppId))
                     {
                         _selectedApp = installedApp;
                     }

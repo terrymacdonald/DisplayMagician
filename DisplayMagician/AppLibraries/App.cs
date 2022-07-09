@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -23,6 +24,8 @@ namespace DisplayMagician.AppLibraries
         public virtual string Name { get; set; }
 
         public virtual string ExePath { get; set; }
+
+        public virtual bool ExecutableArgumentsRequired { get; set; }
 
         public virtual string Arguments { get; set; }
 

@@ -11,6 +11,8 @@ using System.Xml;
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
 using IWshRuntimeLibrary;
+using System.Windows.Forms;
+using static System.Windows.Forms.LinkLabel;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -86,7 +88,9 @@ namespace DisplayMagician.AppLibraries
                     Path = file.FullName,
                     Icon = file.FullName,
                     WorkDir = System.IO.Path.GetDirectoryName(file.FullName),
-                    Name = programName
+                    Name = programName,
+                    AppId = $"FromProgramData_{programName}",
+                    Arguments = ""
                 };
             }
             else if (file.Extension?.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) == true)
@@ -104,7 +108,8 @@ namespace DisplayMagician.AppLibraries
                     Path = data.Path,
                     WorkDir = data.WorkDir,
                     Arguments = data.Arguments,
-                    Name = name
+                    Name = name,
+                    AppId = $"FromProgramData_{name}"
                 };
 
                 if (!String.IsNullOrEmpty(data.Icon))
@@ -133,7 +138,10 @@ namespace DisplayMagician.AppLibraries
                 {
                     Path = file.FullName,
                     Name = System.IO.Path.GetFileNameWithoutExtension(file.FullName),
-                    WorkDir = System.IO.Path.GetDirectoryName(file.FullName)
+                    WorkDir = System.IO.Path.GetDirectoryName(file.FullName),
+                    AppId = $"FromProgramData_{System.IO.Path.GetFileNameWithoutExtension(file.FullName)}",
+                    Arguments = "",
+                    Icon = file.FullName
                 };
             }
 
@@ -193,7 +201,8 @@ namespace DisplayMagician.AppLibraries
                 Icon = iconLocation,
                 Arguments = link.Arguments,
                 WorkDir = link.WorkingDirectory,
-                Name = link.FullName
+                Name = link.FullName,
+                AppId = $"FromLink_{link.FullName}"
             };
         }
         public static async Task<List<InstalledProgram>> GetShortcutProgramsFromFolder(string path, CancellationTokenSource cancelToken = null)
@@ -297,15 +306,21 @@ namespace DisplayMagician.AppLibraries
                     {
                         iconLocation = link.TargetPath;
                     }
-                    
 
+                    string workingDir = link.WorkingDirectory;
+                    if (link.WorkingDirectory == null)
+                    {
+                        workingDir = System.IO.Path.GetFullPath(target);
+                    }
 
                     var app = new InstalledProgram()
                     {
                         Path = target,
                         Icon = iconLocation,
                         Name = System.IO.Path.GetFileNameWithoutExtension(shortcut.Name),
-                        WorkDir = link.WorkingDirectory
+                        WorkDir = workingDir,
+                        AppId = $"FromFolder_{System.IO.Path.GetFileNameWithoutExtension(shortcut.Name)}",
+                        Arguments = ""
                     };
 
                     apps.Add(app);

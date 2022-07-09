@@ -6,6 +6,8 @@ using System.Net;
 using DisplayMagician.Resources;
 using System.Diagnostics;
 using DisplayMagician.Processes;
+using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace DisplayMagician.AppLibraries
 {
@@ -16,6 +18,7 @@ namespace DisplayMagician.AppLibraries
         private string _LocalAppExePath;
         private string _LocalAppDir;
         private string _LocalAppExe;
+        private bool _LocalExecutableArgumentsRequired = false;
         private string _LocalAppProcessName;
         private List<Process> _LocalAppProcesses = new List<Process>();
         private string _LocalAppIconPath;
@@ -45,53 +48,68 @@ namespace DisplayMagician.AppLibraries
 
         }
 
+        [DefaultValue("")]
         public override string Id
         {
             get => _LocalAppId;
             set => _LocalAppId = value;
         }
 
+        [DefaultValue("")]
         public override string Name
         {
             get => _LocalAppName;
             set => _LocalAppName = value;
         }
 
+        [DefaultValue(SupportedAppLibraryType.Local)]
         public override SupportedAppLibraryType AppLibrary
         {
             get => SupportedAppLibraryType.Local;
         }
 
+        [DefaultValue("")]
         public override string IconPath
         {
             get => _LocalAppIconPath;
             set => _LocalAppIconPath = value;
         }
 
+        [DefaultValue("")]
         public override string ExePath
         {
             get => _LocalAppExePath;
             set => _LocalAppExePath = value;
         }
 
+        [DefaultValue(false)]
+        public override bool ExecutableArgumentsRequired {
+            get => _LocalExecutableArgumentsRequired;
+            set => _LocalExecutableArgumentsRequired = value;
+        }
+
+        [DefaultValue("")]
         public override string Directory
         {
             get => _LocalAppDir;
             set => _LocalAppDir = value;
         }
-        
+
+        [DefaultValue("")]
         public override string ProcessName
         {
             get => _LocalAppProcessName;
             set => _LocalAppProcessName = value;
         }
 
+        [DefaultValue(default(List<Process>))]
         public override List<Process> Processes
         {
             get => _LocalAppProcesses;
             set => _LocalAppProcesses = value;
         }
 
+        [JsonIgnore]
         public override bool IsRunning
         {
             get
@@ -135,7 +153,7 @@ namespace DisplayMagician.AppLibraries
             }
         }
 
-        // Have to do much more research to figure out how to detect when Gog is updating a App
+        [JsonIgnore]
         public override bool IsUpdating
         {
             get
